@@ -4,7 +4,7 @@
 History (not kept current): Phase A built and run on dev 2026-11-10 (committed 9ca8c679d; sign-ups auto-approve under capacity; password only in .env.local) · Parent: `PROSPECT_DEMO_PROGRAM_PLAN.md` (P1, P4c) · Brief: `MILTON_DEMO_WORLD_PM_BRIEF.md`
 Playbook (walkthrough): the "House League Demo Playbook" Artifact (republished from this plan's §6).
 Presentation run sheet (Phase B, the five demos): https://claude.ai/artifact/J7QuDbZoRg3tZQsbYCh76W (`MILTON_DEMO_RUN_SHEET.html`).
-Presentation deck (14 slides, everything outside the demos; built 2026-11-21 from the prep page's outline, /design and /marketing
+Presentation deck (16 slides since 2026-11-24: slide 8 "See what your families see" (two QR codes, the demo club's site and the Winter Classic; images in `MILTON_PRESENTATION_DECK/assets/`, uploaded to the deck) and slide 13 "Your club's website, today and next"; the prep page and run sheet were renumbered the same day; everything outside the demos; built 2026-11-21 from the prep page's outline, /design and /marketing
 passes applied): https://claude.ai/artifact/6z6xGQsVATLw8uRnQCsuc3, source `MILTON_PRESENTATION_DECK/` (publish from a copy of that
 folder; the speaker notes are readable by anyone with the link, so the never-say lists stay on the prep page's Security tab).
 Deck revised 2026-11-23 (deck version 12, source folder updated, not yet committed; owner 2026-11-23: meeting 2026-11-24 on the cover, the closing "Your questions" slide removed, slide 2 says only "since November 10" (that session was with the club's head of house league, not the board), slide 3 made generic to clubs, the last slide is "start with any part", and a new slide lists eighty live features in five groups): statuses trued up to the 11-22 and 11-23

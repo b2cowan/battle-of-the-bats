@@ -344,6 +344,15 @@
       "next": "The one walk for both plans: a Premium coach on a computer and a phone (rename, address, birthday, print options, deletion request, the old addresses), a Tournament and a Tournament Plus owner, an admin reading Owner only, a club's Settings unchanged.",
       "remains": "The production step for the team rename (before the promote), and the one walk.",
       "waitsOn": [], "finishesAfter": [],
-      "youOwe": [] }
+      "youOwe": [] },
+    { "id": "club-website", "name": "Club Website Enhancements", "track": "product", "state": "open", "checked": true,
+      "files": ["CLUB_WEBSITE_ENHANCEMENTS_PLAN.md","CLUB_WEBSITE_ENHANCEMENTS_PM_BRIEF.md"], "ledger": ["Club website"],
+      "roadmap": ["Game day on the club's home page","Club news, photos and a trophy case on the club's website","Sponsors on game day with a season report, and a scoreboard for the park","A prospect's own club website, made before the first meeting (on our version only, not the board's)"],
+      "goals": ["after"], "lane": "later", "order": 35, "phase": "Planning",
+      "stage": "Now: logged 24 Nov; you ruled the same day that the whole-site pass goes first, started with what is proposed, with Milton Bats' feedback added later; its kick-off prompt is written (nothing drawn, nothing built) → Next: the whole-site pass in a fresh session",
+      "next": "Run the whole-site pass in a fresh session from its kick-off prompt: today's club site walked on a phone and a computer, then every club page drawn once with all ten ideas in. Its asks wait for Milton's answers before you rule.",
+      "remains": "The whole-site pass, then ten ideas one at a time in dependency order: game day on the club home, field status, photos, news, sponsors with a report, scores that land in a second, the Big Board, a trophy case, a share kit, and a separate track that makes a prospect's own club site before a meeting.",
+      "waitsOn": [], "finishesAfter": ["team-structure"],
+      "youOwe": ["Paste Milton Bats' answers to the three website questions into the kick-off prompt's feedback slot (what they would miss, what families ask for, who updates the site)", "Rule three calls in the plan: sponsor tiers, a public page for a house league team, and moving a club demo ahead of 'the demo comes after launch'"] }
   ]
 }

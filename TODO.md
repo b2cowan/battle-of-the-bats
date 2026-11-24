@@ -41,6 +41,7 @@ This file is the **index** of open work: **one line per project**. **A project's
 - [ ] **The public face, warm** — status on the board · plan [PUBLIC_FACE_WARM_PLAN.md](docs/projects/active/PUBLIC_FACE_WARM_PLAN.md)
 - [ ] **Every tournament game on a real venue** — status on the board · plan [TOURNAMENT_REAL_VENUES_ONLY_PLAN.md](docs/projects/active/TOURNAMENT_REAL_VENUES_ONLY_PLAN.md)
 - [ ] **The Tournament plan's missing settings** — status on the board · plan [TOURNAMENT_PLAN_MISSING_SETTINGS_PLAN.md](docs/projects/active/TOURNAMENT_PLAN_MISSING_SETTINGS_PLAN.md)
+- [ ] **Club Website Enhancements** — status on the board · plan [CLUB_WEBSITE_ENHANCEMENTS_PLAN.md](docs/projects/active/CLUB_WEBSITE_ENHANCEMENTS_PLAN.md)
 
 ## Chores
 

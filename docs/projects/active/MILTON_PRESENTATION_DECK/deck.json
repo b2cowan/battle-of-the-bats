@@ -4,11 +4,11 @@
   "lists": "css",
   "format": { "v": 1, "shared": ["project/deck.css"] },
   "title": "FieldLogicHQ for Milton Bats",
-  "order": ["cover", "since", "today", "oneplace", "built", "wall", "demos", "more", "where", "promises", "roadmap", "roadmap2", "yourdata", "moving"],
+  "order": ["cover", "since", "today", "oneplace", "built", "wall", "demos", "phones", "more", "where", "promises", "roadmap", "website", "roadmap2", "yourdata", "moving"],
   "sections": {
     "open": { "description": "Why we are here, and what has gone live since November 10.", "start": "cover" },
     "picture": { "description": "How clubs run today, the same club in one place, and everything that is built.", "start": "today" },
-    "live": { "description": "Five live demos on a Milton Bats club.", "start": "demos" },
+    "live": { "description": "Five live demos on a Milton Bats club, then the club's pages on a phone.", "start": "demos" },
     "trust": { "description": "The rest of the product, and where the club's information lives.", "start": "more" },
     "ahead": { "description": "What is coming, and how a club can start with any part.", "start": "roadmap" }
   },

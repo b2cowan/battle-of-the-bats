@@ -85,6 +85,7 @@ column names, keep one item per row, and change a row's **Status** in the same u
 | Product | What the board asked for | Camps and clinics | Large | Not started | |
 | Product | The Club product | One Guardians section | Small | Not started | |
 | Product | The Club product | Smaller open items | Medium | In progress | Yes |
+| Product | The Club product | Game day on the club's home page | Large | Not started | |
 | Product | Switching and growth | Internal back office (on our version only, not the board's) | Large | In progress | Yes |
 | Technology | Reliability | Registration-day speed | Medium | Not started | |
 | Technology | Quality and infrastructure | Accessibility checks and a statement | Medium | Not started | |
@@ -98,6 +99,9 @@ Proposals, not yet discussed. **No second person, hire or support-cover goal app
 |---|---|---|---|---|---|
 | Product | What the board asked for | All eight asks live and used through a season | | Not started | |
 | Product | The Club product | A club runs a full season end to end | | Not started | |
+| Product | The Club product | Club news, photos and a trophy case on the club's website | Large | Not started | |
+| Product | The Club product | Sponsors on game day with a season report, and a scoreboard for the park | Large | Not started | |
+| Product | Switching and growth | A prospect's own club website, made before the first meeting (on our version only, not the board's) | Medium | Not started | |
 | Product | Switching and growth | Case studies and comparison pages | Small | Not started | |
 | Technology | Security | Security review repeated every year | | Not started | |
 | Technology | Reliability | A published uptime record | | Not started | |
@@ -307,6 +311,40 @@ Every ask on the 2026-11-14 review page and every conflict it raised was ruled b
   column, its Session 2 walk is owed and Session 3 is not started, and the roadmap is public; if it has not shipped by
   the Q1 review (end of January 2027) the row moves to Q1 and the line is corrected. The `/legal` read of the four "Your
   data is yours" lines is running in another session (2026-11-18).
+- 2026-11-24 — **Club Website Enhancements added (owner: "update the product roadmap to include what this project
+  intends to deliver… something a little more detailed than 'website enhancements'", not nine or ten rows).** The
+  project's ten ideas (`docs/projects/active/CLUB_WEBSITE_ENHANCEMENTS_PLAN.md` §5) are grouped into three rows by what
+  a family or a club gets, plus one row kept off the board's version. **All four placements are PROPOSALS (Ruled
+  blank): the owner asked for the rows, he has not placed them.** Nothing in the project is drawn or ruled.
+  - **"Game day on the club's home page"**, Q2 2027 (Targeted): tonight's games and the weekend's results across the
+    club's rep teams, house league and tournaments, a field closed with one tap and shown on every game it affects, and
+    scores that arrive within a second or two (ideas 2, 3, 9). Placed in Q2 because the spring season is when a club's
+    families use it; Large because it carries the project's whole-site pass and three deep dives.
+  - **"Club news, photos and a trophy case on the club's website"**, H2 2027 (Goals): news the site posts from what the
+    club already records plus the club's own posts, team photos and albums, and the club's championships year by year
+    (ideas 4, 7, 8). Guard: photos of children wait on `/legal` and a consent question at registration, so a public
+    line says "photos" and never promises albums of players. Nothing here names a child on a public page.
+  - **"Sponsors on game day with a season report, and a scoreboard for the park"**, H2 2027 (Goals): a club's sponsors
+    on its game-day pages and score images, a season report of what each placement earned, a screen for the park or
+    clubhouse, and a poster and share kit (ideas 5, 6, 10). Guard: the report's figures wait on `/legal` (counting
+    views) and the plan gate on `/strategy`, so a public line says "a season report" and names no figure.
+  - **"A prospect's own club website, made before the first meeting"**, H2 2027, on our version only (idea 1). A sales
+    tool, so it is never on a version a club sees. It moves "the demo comes after launch" (2026-11-17); that is the
+    owner's open call C3 in the plan.
+  - First shown: the Milton Bats deck gains one slide, "Your club's website", between the two roadmap slides (owner
+    2026-11-24: "replacing their website is one of the reasons they are coming to us"). Its three lines are these three
+    rows and claim no more than them.
+- 2026-11-24 — **The public roadmap drawing republished (owner: "go ahead and update … the public roadmap drawing").**
+  Same link (§6, 2026-11-16 entry), source `docs/projects/active/BOARD_READY_ROADMAP_BOARD_VERSION_DRAWINGS.html`.
+  What changed on it, each from a record that already existed: the three club website rows above (front page; the
+  fourth is on its "Left off" tab); the two product lines in ask 12 carry the owner's 2026-11-18 words and come onto the
+  front page, the journeys line as its two rows; the four "Your data is yours" lines carry the exact words `/legal`
+  cleared on 2026-11-21; the marks follow the Milton deck's roadmap slides, which are the saved copy of the statuses
+  after the 22 and 23 November releases (13 Live, 4 Under way); the release count is 50, June 28 to November 23 (tags
+  recounted 2026-11-24). The front page now carries 35 cards. This closes §4 item 4's two "when the public version is
+  next published" lines. **NOT done: this record's own §2 Status column still lags those two releases** (another
+  session was editing it; the drawing took its marks from the deck, not from §2), and the §7 snapshot is still owed
+  before the version is shown to anyone.
 
 ## 7. Versions shown
 
