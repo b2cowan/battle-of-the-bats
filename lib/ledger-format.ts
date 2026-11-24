@@ -16,6 +16,20 @@ import { formatStoredDate } from './timezone';
 /** A ledger row's date: the day, no year — "Oct 1". */
 export const ledgerRowDate = (d: string | null | undefined): string => formatStoredDate(d, { withYear: false });
 
+/**
+ * THE LEDGER'S KEYWORD SEARCH — ONE RULE, BOTH PORTALS (owner 2026-11-24). What the box finds is what the row prints:
+ * its What line (name and grey detail), Category and Item. Every typed word must be found (case ignored), in any of
+ * the fields. `ledgerSearchWords` splits what was typed; no words means no narrowing.
+ */
+export const ledgerSearchWords = (typed: string): string[] => typed.toLowerCase().split(/\s+/).filter(Boolean);
+
+/** True when every word is found somewhere in the row's fields. An empty word list matches every row. */
+export const ledgerRowMatches = (words: readonly string[], ...fields: (string | null | undefined)[]): boolean => {
+  if (words.length === 0) return true;
+  const hay = fields.filter(Boolean).join(' ').toLowerCase();
+  return words.every(w => hay.includes(w));
+};
+
 /** A balance line, named with its full date — "Starting balance · Sep 1, 2026". No date → the word alone. */
 export const ledgerBalanceLabel = (word: string, d: string | null | undefined): string =>
   d ? `${word} · ${formatStoredDate(d)}` : word;

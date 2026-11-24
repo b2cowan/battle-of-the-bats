@@ -50,12 +50,14 @@ import ck from '@/components/admin/kit/club/ClubKit.module.css';
 import { LoadFailed, RepChip, repKit, useDeferredLoad, useLatestRead } from '@/components/admin/kit/club/RepKit';
 import { CoachListToolbar, kit, ledgerKit } from '@/components/coaches/kit';
 import { CoachToolbarMenu, CoachToolbarMenuItem, CoachToolbarMenuSeparator } from '@/components/coaches/CoachToolbarMenu';
-import { ledgerBalanceLabel, ledgerRowDate } from '@/lib/ledger-format';
+import { ledgerBalanceLabel, ledgerRowDate, ledgerRowMatches, ledgerSearchWords } from '@/lib/ledger-format';
 import { clubSharesPayees } from '@/lib/team-payee-scope';
 import MultiSelectDropdown from '@/components/coaches/MultiSelectDropdown';
 import SingleSelectDropdown from '@/components/coaches/SingleSelectDropdown';
 import DateRangeDropdown from '@/components/coaches/DateRangeDropdown';
 import FilterGroup from '@/components/coaches/FilterGroup';
+import SearchField from '@/components/shared/SearchField';
+import tb from '@/components/admin/tournament/AdminToolbar.module.css';
 import pill from '@/components/shared/FilterPill.module.css';
 import { day, money, moneyFetch, moneyKit } from '@/components/admin/kit/club/money/MoneyKit';
 import { AddEntryWindow, LineWindow, TransferWindow, useBudgetWords, type BookRef } from '@/components/admin/kit/club/money/LedgerWindows';
@@ -110,6 +112,9 @@ export default function LedgerTab() {
      panel opens "these lines in the Ledger" — `?category=&item=` (the filing) and `?from=&to=` (the year). */
   const [cats, setCats] = useState<Set<string>>(() => new Set(search.getAll('category').filter(Boolean)));
   const [items, setItems] = useState<Set<string>>(() => new Set(search.getAll('item').filter(Boolean)));
+  /* The keyword search (owner 2026-11-24): words found in What (with its grey detail), Category or Item. Filtered here
+     with the other narrowings, never sent to the book's read. */
+  const [query, setQuery] = useState('');
   const [range, setRange] = useState<{ selection: DateRangeSelection; from: string; to: string }>(() => {
     const from = search.get('from'), to = search.get('to');
     if (from && to && /^\d{4}-\d{2}-\d{2}$/.test(from) && /^\d{4}-\d{2}-\d{2}$/.test(to)) return { selection: 'custom', from, to };
@@ -205,7 +210,13 @@ export default function LedgerTab() {
     const catSet = cats.size ? cats : null;
     const itemSet = items.size ? items : null;
     const statusSet = statuses as ReadonlySet<LineStatus>;
-    const shown = lines.filter(r => statusSet.has(r.status)
+    // Every typed word must be found in the row's What, detail, Category or Item (the coach's Ledger asks the same).
+    const wanted = ledgerSearchWords(query);
+    const searched = wanted.length === 0 ? lines : lines.filter(r => ledgerRowMatches(
+      // What the row prints: a void line shows its reason and who voided it in place of its detail.
+      wanted, r.what, r.status === 'void' ? [r.voided?.reason, r.voided?.by].filter(Boolean).join(' ') : r.detail, r.category, r.item,
+    ));
+    const shown = searched.filter(r => statusSet.has(r.status)
       && (!typeSet || typeSet.has(r.type))
       && (!catSet || (r.category !== null && catSet.has(r.category)))
       && (!itemSet || (r.item !== null && itemSet.has(r.item))));
@@ -232,11 +243,11 @@ export default function LedgerTab() {
       total: lines.length,
       typeCensus,
       // What ticking each Status / Type choice would list, given the other filters (Filter Counts D1 + D5).
-      optionCounts: ledgerOptionCounts(lines, { status: statusSet, types: typeSet, categories: catSet, items: itemSet }),
+      optionCounts: ledgerOptionCounts(searched, { status: statusSet, types: typeSet, categories: catSet, items: itemSet }),
       categoryNames,
       itemNames,
     };
-  }, [read, statuses, types, cats, items]);
+  }, [read, statuses, types, cats, items, query]);
 
   const changed = useCallback((text: string | null) => {
     if (text) setNotice({ tone: 'good', text });
@@ -260,7 +271,8 @@ export default function LedgerTab() {
      that move it, so either takes the column (and the Starting / Ending lines and the strip's figure)
      away; Status takes it only once Posted is off, because a pending or void line never moves the
      balance. The date window never does: the Starting balance carries everything before it. */
-  const showBalance = types.size === 0 && cats.size === 0 && items.size === 0 && statuses.has('posted');
+  const searching = query.trim() !== '';
+  const showBalance = types.size === 0 && cats.size === 0 && items.size === 0 && !searching && statuses.has('posted');
   const { optionCounts, itemNames, categoryNames } = view;
   /* The window's census decides which Types are OFFERED; the number beside each choice is what ticking it would
      list (Filter Counts D1 + D5): at the row's end, never in the name. */
@@ -353,10 +365,13 @@ export default function LedgerTab() {
               }}
             />
           </FilterGroup>
+          {/* The search: on the strip at a desk; its own full-width row under it on a phone (as Families, Deals). */}
+          <div className={tb.deskFilters}><SearchField value={query} onChange={setQuery} label="Search entries" /></div>
           {showBalance && read && (
             <span className={moneyKit.balance}>Balance <b>{money(read.balance)}</b></span>
           )}
         </div>
+        <div className={tb.phoneSearchRow}><SearchField value={query} onChange={setQuery} label="Search entries" layout="fill" /></div>
       </CoachListToolbar>
 
       {readFailed ? (
@@ -364,7 +379,7 @@ export default function LedgerTab() {
       ) : !read ? (
         <LoadingState label="Loading the ledger…" />
       ) : (
-        <Book read={read} rows={view.shown.slice(0, shownCount)} total={view.shown.length} showBalance={showBalance}
+        <Book read={read} rows={view.shown.slice(0, shownCount)} total={view.shown.length} showBalance={showBalance} searching={searching}
           onOpen={setOpen} onMore={() => setShownCount(n => n + PAGE)} />
       )}
 
@@ -407,8 +422,8 @@ function rangeWords(range: { selection: DateRangeSelection; from: string; to: st
 
 /** The book: oldest first between the Starting and Ending balance lines; a card per entry on a phone. `rows` are the
  *  lines drawn so far, `total` every line the filters admit. */
-function Book({ read, rows, total, showBalance, onOpen, onMore }: {
-  read: Read; rows: BookRowOut[]; total: number; showBalance: boolean; onOpen: (r: BookRowOut) => void;
+function Book({ read, rows, total, showBalance, searching, onOpen, onMore }: {
+  read: Read; rows: BookRowOut[]; total: number; showBalance: boolean; searching: boolean; onOpen: (r: BookRowOut) => void;
   onMore: () => void;
 }) {
   const from = read.window.from;
@@ -423,7 +438,7 @@ function Book({ read, rows, total, showBalance, onOpen, onMore }: {
           <table className={`${repKit.table} ${moneyKit.register}`}>
             <tbody>
               {showBalance && <BalanceRow label={startLabel} figure={read.startingBalance} cols={cols} />}
-              <tr className={moneyKit.moreRow}><td colSpan={cols}>Nothing on this book in this window.</td></tr>
+              <tr className={moneyKit.moreRow}><td colSpan={cols}>{searching ? 'Nothing matches that search.' : 'Nothing on this book in this window.'}</td></tr>
               {showBalance && <BalanceRow label={endLabel} figure={read.endingBalance} cols={cols} end />}
             </tbody>
           </table>

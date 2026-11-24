@@ -68,7 +68,9 @@ import LoadingState from '@/components/shared/LoadingState';
 import styles from '../../../../coaches.module.css';
 import { CoachListToolbar, kit, ledgerKit } from '@/components/coaches/kit';
 import { CoachToolbarMenu, CoachToolbarMenuItem } from '@/components/coaches/CoachToolbarMenu';
-import { ledgerBalanceLabel, ledgerRowDate } from '@/lib/ledger-format';
+import { ledgerBalanceLabel, ledgerRowDate, ledgerRowMatches, ledgerSearchWords } from '@/lib/ledger-format';
+import SearchField from '@/components/shared/SearchField';
+import tb from '@/components/admin/tournament/AdminToolbar.module.css';
 import LedgerLineWindow from '../LedgerLineWindow';
 import PayeesWindow from '../PayeesWindow';
 import BudgetItemManagerModal from '@/components/coaches/BudgetItemManagerModal';
@@ -1104,6 +1106,9 @@ function MoneyRecordsPanel({
    *  a difference nobody had ruled; it sits left of Item, as on the club's. Multi-select, empty = every category,
    *  and it takes the Balance away like every other narrowing. */
   const [selectedCategories, setSelectedCategories] = useState<Set<string>>(new Set());
+  /** ⚖ KEYWORD SEARCH (owner 2026-11-24, both Ledgers): words found in a row's What (name and detail), Category or
+   *  Item. A narrowing like the others — it takes the Balance away and is never part of the date window. */
+  const [ledgerQuery, setLedgerQuery] = useState('');
   /* ⚠⚠ ONE STATUS DROPDOWN, NOT TWO SEPARATE CONTROLS (owner call, 2026-08-19 — folded "Overdue"
      and "Include scheduled" together, matching the multi-select shape of Show/Item). Every row is
      exactly one of the three: Actual (settled), Overdue (unsettled, due date in the past),
@@ -3211,8 +3216,11 @@ function MoneyRecordsPanel({
       selectedKinds.size === 0 ? 'all' : 'expense', selectedCategories.size > 0 ? 'x' : '',
       selectedItems.size > 0 ? 'x' : '', filterTagIds.size > 0 ? 'x' : '',
       selectedStatus.size > 0 && !selectedStatus.has('actual') ? 'x' : '',
+      ledgerQuery.trim(),
     );
+    const searchWords = ledgerSearchWords(ledgerQuery);
     const matchesKindItem = (r: RegisterBookRow) => {
+      if (!ledgerRowMatches(searchWords, r.description, r.detail, r.categoryName, r.itemName)) return false;
       if (selectedKinds.size > 0 && !selectedKinds.has(r.kind)) return false;
       if (selectedCategories.size > 0 && (!r.categoryName || !selectedCategories.has(r.categoryName))) return false;
       if (selectedItems.size > 0 && (!r.itemName || !selectedItems.has(r.itemName))) return false;
@@ -3325,7 +3333,7 @@ function MoneyRecordsPanel({
         ...selectedItems,
       ])].sort((a, b) => a.localeCompare(b)),
     };
-  }, [book, selectedKinds, selectedCategories, selectedItems, filterTagIds, selectedStatus, dateRange, tagsByExpenseId]);
+  }, [book, selectedKinds, selectedCategories, selectedItems, ledgerQuery, filterTagIds, selectedStatus, dateRange, tagsByExpenseId]);
 
   /* ⚠ HOISTED ABOVE THE MEMO THAT READS THEM. These used to sit below the access guard with the
      rest of the render-time derivations — fine for JSX, illegal for a hook's dependency list. */
@@ -6422,7 +6430,7 @@ function MoneyRecordsPanel({
   const singleSelectedKind = selectedKinds.size === 1 ? [...selectedKinds][0] : null;
   /** Nothing narrowing the register at all — the season genuinely has no rows yet, as opposed to
    *  a filter combination that happens to match none. */
-  const noNarrowing = selectedKinds.size === 0 && selectedCategories.size === 0 && selectedItems.size === 0 && filterTagIds.size === 0;
+  const noNarrowing = selectedKinds.size === 0 && selectedCategories.size === 0 && selectedItems.size === 0 && filterTagIds.size === 0 && ledgerQuery.trim() === '';
   const registerExportLabel = selectedKinds.size === 0 ? 'Register'
     : singleSelectedKind ? REGISTER_FILTERS.find(f => f.id === singleSelectedKind)!.label
     : `Register (${selectedKinds.size} kinds)`;
@@ -7532,6 +7540,10 @@ function MoneyRecordsPanel({
             {tagFilterPill}
           </FilterGroup>
         )}
+        {/* ⚖ THE KEYWORD SEARCH (owner 2026-11-24, both Ledgers): on the Ledger face only. At a desk it sits after the
+            pills; on a phone it is NOT in this strip (its own full-width row would push Cash on hand to a third line of
+            a sticky toolbar) — it has its own row under the strip, below. */}
+        {!onPayables && <div className={tb.deskFilters}><SearchField room="coach" value={ledgerQuery} onChange={setLedgerQuery} label="Search entries" /></div>}
 
           {/* ⚖ CASH ON HAND rides the FILTER STRIP's right edge (owner amendment 2026-09-02,
               second look on the 08-19 "next to Add" call now taken): the figure answers the same
@@ -7546,6 +7558,9 @@ function MoneyRecordsPanel({
             </span>
           )}
         </div>)}
+        {!onBank && !onPayables && (
+          <div className={tb.phoneSearchRow}><SearchField room="coach" layout="fill" value={ledgerQuery} onChange={setLedgerQuery} label="Search entries" /></div>
+        )}
       </CoachListToolbar>
       {/* ⚠ THE ORG/TEAM COLOUR LEGEND IS GONE, and nothing was lost with it: the swatch now sits in
           each option of the tag pill, where the distinction is actually being used. The legend
