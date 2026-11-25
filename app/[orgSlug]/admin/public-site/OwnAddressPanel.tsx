@@ -62,6 +62,7 @@ export default function OwnAddressPanel({ orgSlug, query, clubName, ownerName, f
   const [askStop, setAskStop] = useState(false);
   const [busy, setBusy] = useState(false);
   const message = useCopyToClipboard();
+  // org-slug-ok: `call` below appends `query`, the page's "?orgSlug=…" query
   const base = `/api/admin/public-site/own-address`;
 
   async function call(path: string, init?: RequestInit) {

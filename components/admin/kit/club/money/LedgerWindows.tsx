@@ -89,6 +89,7 @@ export function useBudgetWords(q: string, wanted: boolean): WordList | null {
   useEffect(() => {
     if (!want) return;
     let live = true;
+    // org-slug-ok: `q` is the page's "orgSlug=…" query, passed in by the caller
     void moneyFetch<{ categories?: WordList }>(`/api/admin/accounting/budget-categories?scope=org&forPlanning=1&hostedEvents=1&${q}`)
       .then(r => { if (live) setWords(r.ok ? r.data.categories ?? [] : []); })
       .catch(() => { if (live) setWords([]); });

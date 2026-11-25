@@ -22,6 +22,7 @@ export function useOwnAddress(query: string) {
   const reload = useCallback(async () => {
     if (!query) return;
     try {
+      // org-slug-ok: `query` is the page's "?orgSlug=…" query, passed in by the caller
       const res = await fetch(`/api/admin/public-site/own-address${query}`);
       if (!res.ok) throw new Error('load');
       const data = (await res.json()) as { connection: DomainView | null; canEdit: boolean };
