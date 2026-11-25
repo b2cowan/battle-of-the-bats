@@ -205,6 +205,12 @@ Both came out of the 2026-11-07 external review of the club's navigation (`CLUB_
 - **Cancel a day across programs (F-XR-5).** Owner Ask 12 ruled it gets its own plan. A rainout that cancels games only is already ruled (9e·10) and is not this. The 13c drawing prompt points at it as "its own plan to come".
 - **A club-level "next season" door and roll-all for rep teams (F-XR-7).** Ruled "a rep teams item, not in Stage 13" (F-O4-1); no plan owns it. Today each team rolls on its own.
 
+Carried here when the project closed (2026-11-25):
+
+- **A closed year's Budget vs. Actual says revenue is under plan "so far".** The Overview says it "came in" under plan. Seen on the closing check; wording only.
+- **An admin who is also that rep team's head coach finds the rep half of a payment disabled in Families (F-XR-8).** Owner question, after launch (ruled 2026-11-23): let the record through in that one case?
+- **May the club supply a missing guardian contact on a rep player (F-XR-9)?** Owner question never asked; after launch (ruled 2026-11-23). Today the club can only ask the coaches.
+
 ## Club schedules: open slots and short teams (2026-11-24)
 
 Ruled "not now" on the schedule gaps drawings (`SCHEDULE_GAPS_DRAWINGS.html`, asks 6 and 7). Plan of record: [SCHEDULE_GAPS_PLAN.md](active/SCHEDULE_GAPS_PLAN.md).

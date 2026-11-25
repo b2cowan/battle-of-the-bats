@@ -14,7 +14,6 @@ This file is the **index** of open work: **one line per project**. **A project's
 
 - [ ] **Families pay online** — status on the board · plan [CLUB_TIER_STAGE12_PAYMENTS_PLAN.md](docs/projects/active/CLUB_TIER_STAGE12_PAYMENTS_PLAN.md) · [STRIPE_OWNED_PRICING_PLAN.md](docs/projects/active/STRIPE_OWNED_PRICING_PLAN.md)
 - [ ] **Club release** — status on the board · plan [CLUB_TIER_PRODUCTION_READINESS_PLAN.md](docs/projects/active/CLUB_TIER_PRODUCTION_READINESS_PLAN.md)
-- [ ] **Club journeys (Stage 13)** — status on the board · plan [CLUB_TIER_STAGE13_NAVIGATION_JOURNEYS_PLAN.md](docs/projects/active/CLUB_TIER_STAGE13_NAVIGATION_JOURNEYS_PLAN.md)
 - [ ] **A schedule on several permits** — status on the board · plan [CLUB_SCHEDULE_SEVERAL_PERMITS_PLAN.md](docs/projects/active/CLUB_SCHEDULE_SEVERAL_PERMITS_PLAN.md)
 - [ ] **House league** — status on the board · plan [HOUSE_LEAGUE_STAGE9_PLAN.md](docs/projects/active/HOUSE_LEAGUE_STAGE9_PLAN.md)
 - [ ] **Club Communications** — status on the board · plan [CLUB_COMMUNICATIONS_PLAN.md](docs/projects/active/CLUB_COMMUNICATIONS_PLAN.md)

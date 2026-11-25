@@ -1069,6 +1069,25 @@ ahead of the owner's rulings.
   AFTER LAUNCH**, drawn once the staging sweep has run (its own plan's note). **What remains on this project:** the closing check on staging
   (with the headroom sentence, the year-end file's new line and "1 part-paid" to read), then the owner closes it. 13f, 13g and 13h wait until
   after launch.
+- 2026-11-25 — **Closing check on staging: PASSED, all three items** (agent, owner "run the check on staging and fix the board line"). Read in a
+  browser on `dev.fieldlogichq.ca`. (1) Headroom, closed 2025–26: the Overview and Budget vs. Actual both say $1,200.00 of the revenue shortfall
+  is what the teams still owe, with $1,800.00 owed across every year. (2) Year-end file: Excel and PDF carry "2025–26 includes house league
+  fees $450.00 · Close Check Classic 2026 $1,250.00"; UAT Rep Club's closed year, with neither kind of money, carries no note. (3) Money's
+  Received reads "3 players · 1 part-paid". The first and the positive half of the second used a throwaway dev club (`s13-close-check`, year
+  closed through the product), removed the same day and read back clean; UAT Rep Club was read only. Not re-run: the layout sweep (last on
+  staging 2026-11-23, before items 2 and 3 reached it; wording only). **Found, not fixed (not a Stage 13 change):** (a) the variance-key
+  footnote in the year-end PDF and the Budget vs. Actual PDF prints letter-spaced with `"` for "−" (the minus sign reaches the PDF footnote
+  unconverted; table cells are converted in `lib/export/pdf.ts`; the wording is on `origin/master`; `check:pdf` has not flagged it; the coaches'
+  report shares the "+/−" wording in `lib/coach-money-report-notes.ts` and was not checked); (b) a closed year's Budget vs. Actual note says
+  "under plan so far" where the Overview says "came in under plan". **Next:** the owner closes the project.
+- 2026-11-25 (later) — **CLOSED by the owner** ("close it and fix the footnote"). **Finding (a) fixed**, committed `f4c04d98f` 2026-11-25: the shared table printer
+  (`buildTablePDF`) sets a true minus as a plain hyphen in every word it prints (title, subtitle, headings, rows, group labels, footnotes);
+  screens and Excel keep the real minus. Pinned in `pdf-export-contract.test.ts` (144/144), `check:pdf` clean (29 documents, 315 pages), the two
+  real footnotes printed with the real engine and read back; lint and the full type check clean. `/review` (two lenses): no defect in the change;
+  two test gaps closed; header and footer lines (typed names and settings) are drawn as given.
+  The drawn documents (not the table printer) were not tested for this; no literal minus was found in their words.
+  **Carried forward:** 13f, 13g, 13h and drawing `CLUB_BILL_AMEND_AFTER_MADE_PLAN.md` → the board's "Club, after launch"; finding (b), F-XR-8,
+  F-XR-9, and the earlier F-XR-5 / F-XR-7 → `docs/projects/IDEAS_BACKLOG.md`. These two plan files stay in `active/` (many live links).
 
 ## 11. The external review, cross-checked (2026-11-07)
 

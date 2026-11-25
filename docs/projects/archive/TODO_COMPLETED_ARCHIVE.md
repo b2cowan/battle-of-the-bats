@@ -6,6 +6,8 @@ Everything below was moved out of TODO.md verbatim on 2026-10-26. Add new comple
 
 (Newest additions go here.)
 
+- [x] **Club journeys (Stage 13)** — closed by the owner 2026-11-25: 13a to 13e and 13i walked, the closing check on staging passed all three items; release state in the release-history record · plan [CLUB_TIER_STAGE13_NAVIGATION_JOURNEYS_PLAN.md](../active/CLUB_TIER_STAGE13_NAVIGATION_JOURNEYS_PLAN.md)
+
 - [x] **Plan and billing** — closed by the owner 2026-11-23 after the final walk §563 passed 39/39 (plan-ending words §535 51/51; the two-step start and the live payment-provider steps done 22 Nov); release state in the release-history record · plan [PLAN_AND_BILLING_ONE_EXPERIENCE_PLAN.md](../active/PLAN_AND_BILLING_ONE_EXPERIENCE_PLAN.md) (stays in active/ with its sibling plans)
 
 - [x] **Bank check through a volunteer’s eyes** — closed by the owner 2026-11-23: every stage built and walked (S1b §497, S2 §503, S3 §505, S4 §523, save for later §558 28/28 and §559 26/26); release state in the release-history record · plan [BANK_CHECK_NOVICE_UX_PLAN.md](BANK_CHECK_NOVICE_UX_PLAN.md)
