@@ -1309,6 +1309,7 @@ project's session. As a result:
   the club site carries them.
 - **Still open, owner call:** who owns the photo question (12A here, against the club website's built-in question; the
   recommendation is the club website's Stage 3, with `/legal` to settle its shape).
+- **Club website outcome, 2026-11-25 (owner ruled its E1–E9, all A):** no Events tab (8A stays withdrawn); an event with an open sign-up is an Open now row on the club home, any other a "Coming up" row in News; **this project's Stage 5 builds the event page and the Open now row to `CLUB_WEBSITE_EVENTS_DRAWINGS.html`** (E4, E5); the photo question is the club website's Stage 3, asked by camps in the same words (E9, so 12A gives way). Open for this project: an event for part of the club (all rep teams, one division), from the owner's question that day (club website plan §7). Drawing drifts for this project to fix: the camp page's "17 left" / "Full" (19A says "17 spots left" / "Full · waitlist open") and the camp form's photo question ahead of the guardian line (12A).
 
 ### Stage 6 — Sponsorships (item 7)
 

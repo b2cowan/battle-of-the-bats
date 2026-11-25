@@ -11,6 +11,11 @@
 > **An eleventh idea was added after the drawings were published** (the club's own feed: photos and wins from coaches,
 > and Instagram; Milton Bats' meeting, 2026-11-24). It is in §5 and §5.1, PROPOSED, and it is **drawn as tab 11 of the
 > drawings** (republished 2026-11-24, version 2), with ten asks of its own. The page holds 26 asks, ruled 2026-11-24.
+> **Club events drawn into the end state 2026-11-25** (the owner split events work with Board Ready on 11-24; handover
+> [CLUB_WEBSITE_EVENTS_HANDOVER_PROMPT.md](CLUB_WEBSITE_EVENTS_HANDOVER_PROMPT.md)). Drawn on its own page,
+> [CLUB_WEBSITE_EVENTS_DRAWINGS.html](CLUB_WEBSITE_EVENTS_DRAWINGS.html) = https://claude.ai/artifact/QVdzG948rq23zPAxMUFhRk,
+> with nine asks E1–E9, **all ruled A 2026-11-25** (§7). `/design` ran before publish (12 findings, all applied).
+> Read it before Stage 1's drawing session.
 
 ## 1. Goal
 
@@ -66,7 +71,13 @@ marked ◦ are helper findings that were NOT re-opened; a build session re-check
 
 ### 2.4 Already planned elsewhere (not this project's to build twice)
 
-- Club events and camps "postable on the club site": Board Ready Stages 5 and 7 (`BOARD_READY_PLAN.md:38-43,99-101`).
+- Club events and camps: Board Ready Stages 5 and 7 own everything a person DOES with an event (the club side, sign-ups,
+  the sign-up path, and the one rule for what is public: shown to Everyone = public, Club staff never, gone the day
+  after it ends). **This project owns everything that SHOWS events to the public** (owner's split, 2026-11-24,
+  `BOARD_READY_PLAN.md` §5 Stage 5 "SPLIT"): where they sit on the home, the News page, each event's page, the champs
+  day's public page, events in Close a place, event sponsor places. Board Ready's 8A (an Events tab) is withdrawn to
+  here. Every sign-up gets a shareable link (ruled in Board Ready, 2026-11-24). Ruled 2026-11-25: §7 E1–E9, all A;
+  Board Ready Stage 5 builds the event page and the Open now row to the events drawing (E5).
 - Sponsors on tournament pages: the Public tournament pages project (drawing can start).
 - Families paying online (Stage 12) and the signed-in family app: built, switched off.
 - Every tournament game on a real venue: `TOURNAMENT_REAL_VENUES_ONLY_PLAN.md` (field status leans on it, §5 idea 3).
@@ -84,8 +95,10 @@ Read each ruling's REASON before leaning on it or proposing to re-open it. BD = 
   an alumni wall as drawn in the backlog.
 - **No pitch-by-pitch stats, no play-by-play** (same entry).
 - **Following and alerts live in the installed app only** (owner 2026-10-27/28, `PUBLIC_TOURNAMENT_SITE_REVIEW_PLAN.md`).
-- **No new no-login family doors.** Public = tournaments and team public pages (BD 2026-10-29 ◦). The public team page
-  is games only; practices are never public.
+- **No new sent links to families beyond Your sign-up and unsubscribe** (BD 2026-10-29, narrowed 2026-10-31). Public
+  pages are tournaments, team public pages, and what a club itself marks public: its seasons and tryouts, its news, and
+  its events shown to Everyone, a champs day's games among them. The public team page is games only; practices are
+  never public. *(Reworded 2026-11-25 with E1–E4's rulings; the line before quoted BD 10-29 as first written.)*
 - **No follower tier, no "share one link", no page for one game** (BD 2026-09-12 line 2864 and 2026-09-20 line 2801,
   verified). Marketing may never say "follow the team" or "share a game".
 - **Club pages advertise nothing of ours** beyond a quiet credit (BD 2026-10-19 ◦).
@@ -265,18 +278,25 @@ prompt → the build → `/simplify`, `/review`, `/legal` or `/accounting` where
   Stage 6 can change how fast it arrives without touching a page.
   *(Corrected by Stage 0: Open now stays first, capped at two rows; the games part sits after it, titled "Today" or
   "Latest results"; house league pages get the 30-second refresh here.)*
+  *(Club events, E1/E5/E6 ruled 2026-11-25: an event with an open sign-up is an Open now row; a champs day is one Today
+  row opening its page, its games left out of Today's own rows, and the champs page's games join here.)*
 - [ ] **Stage 2 — Field status (idea 3; F3).** Second tenant. *(Corrected by Stage 0: it is today's Rainout widened to
   a place ("Close a place"), not a third tool; tournament games ride their own Rain delay, so it does NOT wait on the
   real-venues project. It needs only a count of typed-only games first, dev, counts only.)*
+  *(Club events, E7: the window also lists the club's events at that place, each opening in Events.)*
 - [ ] **Stage 3 — The site's face (idea 7; F4).** `/legal` and the consent question first. Before news, so a news post
-  is built with its photo from the start.
-- [ ] **Stage 4 — News (idea 4).** Third tenant: the automatic posts and the admin's own.
+  is built with its photo from the start. *(Club events, E9: the one photo question is this stage's; camps ask it in
+  the same words.)*
+- [ ] **Stage 4 — News (idea 4).** Third tenant: the automatic posts and the admin's own. *(Club events, E1–E3: the
+  home's "Coming up" rows, the News page opening with "Coming up", the News tab shown for a coming event alone; no
+  Events tab.)*
 - [ ] **Stage 5 — Sponsors that prove themselves (idea 5; F5).** Club surfaces and the report. Sponsors on tournament
-  pages stay with the Public tournament pages project; the two drawings are read side by side.
+  pages stay with the Public tournament pages project; the two drawings are read side by side. *(Club events, E8: an
+  event is a sponsor place, a line on its page, counted in the season report.)*
 - [ ] **Stage 6 — Scores that land faster (idea 9; F6).** *(Corrected by Stage 0 Part 1: NOT a wait on `/db` — the
   old fast path was deleted. It is a choice: a faster check while a game is live, recommended because it adds no
   exposure, or instant updates over the open games read, only after `/db` says what that read exposes. It can run any
-  time after Stage 1.)* The motion (rows slide when a final lands) is applied once to every score surface that exists.
+  time after Stage 1.)* The motion (rows slide when a final lands) is applied once to every score surface that exists. *(The champs page counts as one.)*
 - [ ] **Stage 7 — The Big Board (idea 6).** Needs F2, field status, sponsors and the fast score.
 - [ ] **Stage 8 — Trophy case (idea 8).** Independent; placed late only because nothing waits on it.
 - [ ] **Stage 9 — Share kit (idea 10).** Last, so the poster and the social images carry the finished pages.
@@ -399,6 +419,44 @@ the demos follow the product and are curated with `/demos`, never as a build ste
     place to answer the question, no rep photo ever shows.
   - **C9 — How much a club may keep, and video.** Recommended: no video is stored (a link to where it was posted);
     a storage allowance and the gate are `/strategy` calls against `PLAN_PRICING_FACTS.md`.
+
+- [x] **Club events in the end state, E1–E9 — RULED 2026-11-25 (owner pasted "E1: A … E9: A", all nine as
+  recommended).** Wording as on the events drawing's Asks tab
+  ([CLUB_WEBSITE_EVENTS_DRAWINGS.html](CLUB_WEBSITE_EVENTS_DRAWINGS.html), tab 10). Each is option A:
+  - **E1** an event on the home: one row per event, an Open now row while its sign-up is open, otherwise a "Coming
+    up" row in the home's News part; never both.
+  - **E2** the News page opens with "Coming up" (every public event), then the posts; the News tab shows when there
+    is a post OR a coming event.
+  - **E3** no Events tab (the phone row already scrolls past its fifth tab; News makes six); Board Ready 8A stays withdrawn.
+  - **E4** one page per public event, lighting News; its address is the shareable sign-up link; after the event an
+    old link reads "This event has ended" with a door on.
+  - **E5** if Board Ready Stage 5 ships first, it builds the event page and the Open now row to this drawing; events
+    with nothing to sign up for travel by link until Stage 4; a champs day's games join its page with Stage 1.
+  - **E6** a champs day is one Today row opening the champs page (A3's pattern); the day after, one Latest results row
+    opening the season's schedule for that day.
+  - **E7** Close a place lists the club's events at that place, each opening in Events; nothing moves by itself.
+  - **E8** an event is a sponsor place: a line on its page, counted in the season report.
+  - **E9** this project's Stage 3 owns the one photo question; camps and clinics ask it in place of Board Ready's
+    12A; a photo filed under a camp follows the team rule; `/legal` settles required versus optional. **Still open,
+    owner call (not answered in the paste): `/legal` now, or when Stage 3 is drawn.**
+
+- [ ] **Club events on the schedules people read (owner question 2026-11-25; not drawn, not ruled).** Owner: *"will we
+  be able to link club events with certain calendars like house league and rep schedules? there might be an internal
+  banquet for all rep teams, or champs day is a part of house league so users will want to see that all in the same
+  schedule. has that been ironed out?"* **Settled already** (Board Ready §5 Stage 5 rulings 3, 5, 7 and 10): the club
+  calendar carries club events as a fourth program; a champs day names a house-league season and gathers that day's
+  games under it, one block that opens to them; the family app (built with it) lists coming events below the family's
+  teams and says when their child plays. **Not settled:**
+  - (a) *A champs day on the house-league season's own public schedule.* Its games are there already, with no word that
+    the day is champs day and no door to its page. This project's (what shows events); fits Stage 1, which already
+    gives the house league pages their refresh.
+  - (b) *An event for part of the club* (every rep team; one house-league division). "Shown to" is Everyone or Club
+    staff, with "Our families" only once the family app is on; "Who it's for" holds birth years for camps. An internal
+    rep banquet today is Club staff plus a Communications message. Board Ready's (it owns who an event is for).
+  - (c) *A club event on a club rep team's schedule* (the public team page is games only, §3; the coach's own schedule
+    is the coach's, D3 and the coach books ruling). Neither project has it; an owner call.
+  Session's recommendation, not ruled: draw (a)–(c) together as one more tab of the events drawing, each ask marked
+  with the project that rules it; (a) to be drawn into Stage 1's page.
 
 ## Progress
 
@@ -536,6 +594,33 @@ the demos follow the product and are curated with `/demos`, never as a build ste
   A13 and A16 unchanged; the logic is in the review. Nothing built, nothing committed.
 - 2026-11-24 — **The owner ruled both `/legal` calls: "yes soften it, take the middle path, commit".** C8 softened and
   A12 changed from B to the middle path; both recorded in §7.
+- 2026-11-25 — **Club events drawn into the end state (handover from the Board Ready Stages 5 + 7 session). Nine asks
+  E1–E9 wait; nothing built, nothing ruled.** Drawn on a page of its own
+  ([CLUB_WEBSITE_EVENTS_DRAWINGS.html](CLUB_WEBSITE_EVENTS_DRAWINGS.html)) so the ruled Stage 0 page is not reopened.
+  It uses the same stylesheet and script, Kestrel Bay as the club, and a June weekday, champs day and the day after.
+  Read from code and records on the way (the lines re-opened by the session):
+  1. *The shareable sign-up link is already ruled* (Board Ready plan, §5 Stage 5, "yes to the shareable link"). The
+     handover's question 2 said it was not, so E5 builds on it.
+  2. *The phone tab row scrolls sideways* (`components/public/OrgSectionTabs.tsx` header: Tournaments, fifth, is past
+     the edge at 390 px). News makes six tabs and an Events tab seven. This is E3's main reason.
+  3. *Open now's rows are "you can sign up now", nearest deadline first* (`ClubSiteHome.tsx`). An event's open sign-up
+     is that kind of row. It is E1's reason for one row per event, in the place that matches what a family can do.
+  4. *§3's "no new no-login family doors" line quotes BD 2026-10-29 as first written.* BD 2026-10-31 narrowed point 4 to
+     "no new SENT links beyond pay and unsubscribe". The reworded line is on the drawing's tab 9, and it goes into §3
+     when E1–E4 are ruled. Board Ready's Your sign-up is the pay-link pattern that 10-31 kept, so there is no conflict.
+  5. *Board Ready's drawing, two small drifts, for that project:* its camp page shows "17 left" and "Full" where its
+     ask 19 rules "17 spots left" and "Full · waitlist open". Its camp form also puts the photo question ahead of the
+     guardian line, which its 12A says comes first.
+  6. *Champs day scores expose nothing new:* `show_standings` (mig 423) hides only the table, so a game's score is
+     already on the public schedule.
+  Written down with no ask (tab 9): the champs page reads through the one house league public-games rule
+  (whichever of Stage 1 and the champs page builds first pulls it into one place, with a guard test); the 30-second
+  refresh and Stage 6's motion count the champs page; the staff-calendar guard names the event and champs pages.
+- 2026-11-25 — **Club events E1–E9 ruled, all A** (owner pasted "E1: A … E9: A"). §7 ticked; §3's no-login line
+  reworded to tab 9's text; each stage line in §6 now names its events piece (Stage 1 E1/E5/E6, Stage 2 E7, Stage 3
+  E9, Stage 4 E1–E3, Stage 5 E8, Stage 6 the champs page); one line added to Board Ready's Stage 5 split record. Still
+  open: whether `/legal` reads E9 now or when Stage 3 is drawn. In the same message the owner asked whether club
+  events reach the house league and rep schedules; logged in §7 as a new open item (a)–(c), not drawn.
 
 ## 8. Census questions for Stage 0 (answer from code, not from this plan)
 

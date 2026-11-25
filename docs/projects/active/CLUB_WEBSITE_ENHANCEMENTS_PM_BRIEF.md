@@ -40,6 +40,17 @@ posts the notice and marks every affected game. A rep game is marked for its coa
 photo shows only while everyone in it has agreed. The phone banner stays off, which keeps the October ruling. "Email me
 when registration opens" is built to anti-spam law, with the club as the sender.
 
+**Club events on the site (drawn and ruled 2026-11-25, all nine as recommended).** Board Ready builds the club's side of events
+(making one, sign-ups, camps, paying). This project decides where events show to the public. Ruled: an event with
+an open sign-up sits with the other sign-ups at the top of the home. Every other coming event sits in News, and the
+News page lists them all. Each event gets one row on the home, never two. There is no separate Events tab, because a
+phone's tab row is already full. Each event has its own page; that page is the link a club sends families, and the
+Sign up button on it opens Board Ready's form. A champs day is one line on the home on its day, opening a page of that
+day's games and scores. Closing a field also lists any camp or event booked there. An event can carry a sponsor who
+is counted in the season report. One photo question serves every sign-up, camps included. Success looks like: a camp
+sign-up is on the club home the day it opens, a champs day never floods the home, and a family never answers the
+photo question twice in two different ways. Still open: whether club events also show on the house-league and rep schedules families and coaches read (a champs day labelled on its season's schedule; an event for all rep teams or one division).
+
 **Added from Milton Bats' meeting (2026-11-24, proposed, not drawn or ruled): the club's own feed.** The club wants to
 promote wins and tournament trips on its site and already posts to Instagram. Proposed: a coach sends photos from a
 phone after a game or a trip; they reach the club already sorted by team, event and date because the schedule knows
