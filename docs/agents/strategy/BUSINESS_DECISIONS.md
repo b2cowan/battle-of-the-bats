@@ -8,6 +8,59 @@
 
 ---
 
+### 2026-11-24 — A prospect's own club website (Track P) starts now, alongside the launch work, and is made on production as a marked preview (Decided)
+**Status:** **Decided** (owner, 2026-11-24, Club Website Enhancements Stage 0 paste-back: **C3a: A**, **C3b: A**; logged on his
+"yes run /strategy" the same day). Ruling recorded in `docs/projects/active/CLUB_WEBSITE_ENHANCEMENTS_PLAN.md` §7 (commit
+`9584bc034`).
+**Decision:**
+1. **C3a, Track P moves up.** "Track P runs alongside the stages, starting now." Track P is the plan's idea 1: before a first
+   sales meeting, FieldLogicHQ builds the prospect club's own website on the product, so the prospect's first minute is their
+   own club, not a fictional one. It no longer waits for the Canadian launch.
+2. **C3b, where a prospect's club lives: production.** It is made on production, **unlisted**, marked as a preview by us
+   (Stage 0 `/legal`: a visible "Prepared by FieldLogicHQ for {club}. Not their site yet.", noindex, only the club's own
+   published logo, fictional sponsors). It is **removed 30 days after the meeting unless it is claimed in place**: the club
+   signs up into the club we built, with no copying from dev.
+**Not ruled, said plainly:** the Canadian launch's definition (2026-11-17: a club can onboard) is unchanged, and nothing in the
+ruling makes the launch wait for Track P; "alongside" is read as running in parallel, not as joining the launch's done-when.
+What a claim costs (the plan, the trial, the checkout) and whether a claimed preview counts as a sale in any report are open.
+**Rationale:** the plan's reason, which the owner accepted: Track P is the only item in the project that changes a prospect's
+first minute, and the Milton Bats meeting showed what a club's own site is worth in the room. Production because claiming needs
+the prospect's club and the real sign-up in the same database. The seed's four guards (dev host only and the rest,
+`scripts/seed-prospect-demo.mjs`) mean a dev-built world can never be claimed. **Pre-revenue realism:** a preview made
+before a meeting is effort spent per prospect with no payment. The 30-day removal caps how many unclaimed previews production
+carries, and how many it shows in a count.
+**Affects:** roadmap sequencing (Track P out of "after the launch"; the rest of Club Website stays where the board has it);
+production's counts and reports (a preview club is a real organization row on production with no customer behind it); the
+sales motion (`MILTON_*` prep and any later first meeting); the shared demos (Track P is not the Riverdale sandboxes, which
+are unchanged); the claim path (a real sign-up that accepts the Terms on a club we built).
+**Handoff:**
+HANDOFF → `/plan`
+- Track P's own drawing session, as the plan's §6 says (Stage 0 drew its frame on tab 12). It must settle: how a preview is
+  made on production without the seed's dev-only guards being weakened; the marking; the 30-day removal, done by itself;
+  the claim in place (who signs up, what they accept, what we built that they keep or discard); and **every production count
+  or report that must leave a preview out** (platform admin metrics, the owner's Bookkeeping, the board, the health check,
+  any "clubs on the plan" figure). A preview that a report counts as a customer is a defect.
+HANDOFF → `/legal`
+- The claim: Terms acceptance on a club someone else built, who is accountable for what was published before the claim, and
+  the removal record. The preview's marking is already reviewed (Stage 0); re-read it against the build.
+HANDOFF → `/billing`
+- No gate moves. At the drawing: what a preview runs on (no subscription; a preview state, not a free plan) and what the claim
+  starts (the normal checkout and trial for the plan the club picks). Reconcile against `PLAN_PRICING_FACTS.md` before anything
+  is written.
+HANDOFF → `/marketing`
+- The words of the preview's marking and of the claim offer, and the sales-meeting story ("here is your club, already built").
+  Both wait for the drawing. No pricing-page or public-page change now.
+HANDOFF → `/demos`
+- None now. The shared sandboxes stay as they are; if Track P reuses their seed content, the drawing says so.
+**Open item routed here, NOT decided (same rulings, C9 = A):** a per-club storage allowance for the photo shelf, and its plan
+gate. The owner ruled the shape (no video is stored, only a link; a photo nobody used is removed 12 months after it was sent)
+and sent the allowance and the gate to `/strategy`. To be decided before the Club Website Stage 3 (photo shelf) build prompt,
+against `PLAN_PRICING_FACTS.md`; the club site rides the public-site module today (League Plus and Club).
+**Supersedes:** in part, **2026-11-17 — "the Canadian launch = a club can onboard, with marketing and the demo after it"**,
+part 2's "the demo come[s] after it", **for Track P only**; part 1 and the launch's definition stand. **Relates to, does not
+supersede:** 2026-11-18 "no club demo for launch" (still true: the launch does not wait for a club demo, and the shared club
+sandbox it meant is a separate curation project, still unscheduled).
+
 ### 2026-11-24 — The window to take your data when a club leaves is 90 days, one number for a lapsed plan and a closed account (Decided)
 **Status:** **Decided** (owner, 2026-11-24, in the Milton Bats deck review: *"lets go with 90"*, with `/legal` and `/strategy` asked to opine).
 **Decision:** A club that closes its account has **90 days** to take everything with it, unless it asks us to delete sooner; then it
@@ -613,6 +666,8 @@ billed by our invoice) redundant once Stage 4 retires them; until then they stan
 
 ### 2026-11-17 — Launch in Canada first, the US after; the Canadian launch = a club can onboard, with marketing and the demo after it (Decided)
 **Status:** **Decided** (owner, 2026-11-17, One Board Session 1; logged on his yes in One Board Session 2 the same day).
+**Part 2 superseded IN PART by 2026-11-24 "A prospect's own club website (Track P) starts now…"**, for Track P only: it runs
+alongside, starting now. Part 1 and the launch's definition stand.
 **Decision:**
 1. **Canada first.** FieldLogicHQ launches in Canada first; the US launch comes after the Canadian launch.
 2. **What "the Canadian launch" means: functionally able to onboard a club.** A Canadian club can sign up, pay us on Stripe,
