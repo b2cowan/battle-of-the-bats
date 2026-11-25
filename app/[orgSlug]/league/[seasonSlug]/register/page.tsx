@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import type { Metadata } from 'next';
 import { getDivisionsForSeason } from '@/lib/db';
+import { isPublicLeagueSeason } from '@/lib/league-game-changes-server';
 import { clubDay, registrationState } from '@/lib/league-registration-state';
 import { resolvePublicLeagueContext } from '@/lib/public-league';
 import { clubPageMetadata, getClubSeason, getClubSiteContent } from '@/lib/club-page-meta';
@@ -26,7 +27,7 @@ export async function generateMetadata({ params }: { params: Promise<{ orgSlug: 
   const { orgSlug, seasonSlug } = await params;
   return clubPageMetadata(orgSlug, async club => {
     const season = await getClubSeason(club.id, seasonSlug);
-    return season && season.status !== 'draft' ? `Register for ${season.name}` : null;
+    return isPublicLeagueSeason(season) ? `Register for ${season.name}` : null;
   }, { path: `/league/${seasonSlug}/register` });
 }
 
@@ -44,7 +45,7 @@ export default async function RegisterPage({
 
   const season = await getClubSeason(org.id, seasonSlug);
   // Only show non-draft seasons publicly (sweep 3, small items): a draft season's name is not public yet.
-  if (!season || season.status === 'draft') notFound();
+  if (!isPublicLeagueSeason(season)) notFound();
 
   // The dates and the status together (9b-1 Part 4): the form shows only while it takes a sign-up, and a closed form
   // says why (copy §12).

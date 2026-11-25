@@ -172,10 +172,11 @@ describe('the public schedule (g1) reads every game and never a practice', () =>
   const read = (p: string) => readFileSync(new URL(`../../${p}`, import.meta.url), 'utf8');
   it('reads every status (a cancelled game used to vanish — C6-04) and passes no practices', () => {
     const page = read('app/[orgSlug]/league/[seasonSlug]/schedule/page.tsx');
-    // 9d-2b: through the published-only, last-sent read, which reads every status itself.
-    assert.match(page, /publicSeasonGames\(season\.id, divisions\)/);
+    // 9d-2b: through the published-only, last-sent read, which reads every status itself (Club Website Stage 1: it is
+    // handed the season, so it asks the draft question itself).
+    assert.match(page, /publicSeasonGames\(season, divisions\)/);
     assert.doesNotMatch(page, /getSeasonGamesEveryStatus/);
-    assert.match(read('lib/league-game-changes-server.ts'), /getSeasonGamesEveryStatus\(seasonId\)/);
+    assert.match(read('lib/league-game-changes-server.ts'), /getSeasonGamesEveryStatus\(season\.id\)/);
     assert.match(page, /practices: \[\],/);
     assert.equal(page.match(/timesInZoneSentence\(\)/g)?.length, 1, 'the zone is said once');
     const db = read('lib/db.ts');

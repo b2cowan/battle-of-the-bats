@@ -8,7 +8,8 @@ import {
 import { clubPublicContact } from './club-email-context';
 import { orgDayKey, zonedWallClockToUtc } from './timezone';
 import { publicState } from './league-game-changes';
-import { asLastSent, heldChangesOf, type GameFaceFields } from './league-game-changes-server';
+import { heldChangesOf } from './league-game-changes-server';
+import { asLastSent, type GameFaceFields } from './league-game-changes';
 import { computeStandings, getOrgPlaceNames } from './db';
 import { coachStandingLine, type CoachStandingLine, type LeagueStandings } from './league-standings';
 import { resultWords } from './league-season-calendar';

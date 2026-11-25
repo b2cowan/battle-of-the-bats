@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getLeagueSeasonBySlug } from '@/lib/db';
+import { isPublicLeagueSeason } from '@/lib/league-game-changes-server';
 import { resolvePublicLeagueContext } from '@/lib/public-league';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { withObservability } from '@/lib/observability';
@@ -33,7 +34,7 @@ export const GET = withObservability(async (req: Request,
   const org = await resolvePublicLeagueContext(orgSlug);
   if (!org) return gone(404, 'Not found');
   const season = await getLeagueSeasonBySlug(org.id, seasonSlug);
-  if (!season || season.status === 'draft') return gone(404, 'Not found');
+  if (!isPublicLeagueSeason(season)) return gone(404, 'Not found');
 
   const url = new URL(req.url);
   const versionId = url.searchParams.get('v') ?? '';

@@ -85,6 +85,30 @@ export type PublicTournamentPageData = {
   fanAlertsEnabled?: boolean;
 };
 
+/**
+ * A tournament's games as the scores feeds send them, read and gated in one place for the `scores` section and the club
+ * home's read: published divisions only, a held-back opponent blanked, the public game shape (no notes, no score-entry
+ * details). `gamesWithheld`: some game was left out. Three reads, in parallel.
+ */
+async function readScoresGames(
+  tournamentId: string,
+  /** The club home's all-or-nothing read: a failed read throws instead of reading as no games. */
+  strict = false,
+): Promise<{ games: Game[]; gamesWithheld: boolean; teams: Team[] }> {
+  const [games, teams, divisions] = await Promise.all([
+    getGames(tournamentId, { admin: true, strict }),
+    getTeams(tournamentId, { admin: true, strict }),
+    getDivisions(tournamentId, { admin: true, strict }),
+  ]);
+  const shown = onlyPublishedGames(games, divisions);
+  // A published division's crossover game must not name a held-back opponent: this feed's consumers resolve names from
+  // `teams`, which keeps every accepted team (the follow status counts them), so blank the held-back sides here.
+  const publishedIds = new Set(divisions.filter(d => d.scheduleVisibility === 'published').map(d => d.id));
+  // Every team of a published division, whatever its status: a withdrawn finalist is still the one who played the final.
+  const openTeamIds = new Set(teams.filter(t => publishedIds.has(t.divisionId)).map(t => t.id));
+  return { games: shown.map(g => publicFrameGame(publishedGameTeams(g, openTeamIds))), gamesWithheld: shown.length !== games.length, teams };
+}
+
 function isPublicStatus(tournament: Tournament) {
   return isPublicTournamentStatus(tournament.status);
 }
@@ -180,18 +204,8 @@ export async function getPublicTournamentPageData(
   // — this path is polled, so those extra round-trips would repeat every tick. Server-only: the
   // HTTP route does not serve it.
   if (section === 'scores') {
-    const [games, teams, divisions] = await Promise.all([
-      getGames(tournament.id, { admin: true }),
-      getTeams(tournament.id, { admin: true }),
-      getDivisions(tournament.id, { admin: true }),
-    ]);
-    const shown = onlyPublishedGames(games, divisions);
-    // A published division's crossover game must not name a held-back opponent: this feed's consumers resolve names from
-    // `teams`, which keeps every accepted team (the follow status counts them), so blank the held-back sides here.
-    const publishedIds = new Set(divisions.filter(d => d.scheduleVisibility === 'published').map(d => d.id));
-    // Every team of a published division, whatever its status: a withdrawn finalist is still the one who played the final.
-    const openTeamIds = new Set(teams.filter(t => publishedIds.has(t.divisionId)).map(t => t.id));
-    return { ...base, games: shown.map(g => publicFrameGame(publishedGameTeams(g, openTeamIds))), gamesWithheld: shown.length !== games.length, teams: teams.filter(t => t.status === 'accepted').map(t => toPublicTeam(t, tournament.coachNamesShowOnPublic === true)) };
+    const { games, gamesWithheld, teams } = await readScoresGames(tournament.id);
+    return { ...base, games, gamesWithheld, teams: teams.filter(t => t.status === 'accepted').map(t => toPublicTeam(t, tournament.coachNamesShowOnPublic === true)) };
   }
 
   if (section === 'schedule-preview') {
@@ -282,4 +296,44 @@ export async function getPublicTournamentPageData(
   }
 
   return base;
+}
+
+/** One of a club's tournaments with public games in a window (Club Website Stage 1, the home's one games read). */
+export interface PublicTournamentDayGames {
+  tournament: Pick<Tournament, 'id' | 'name' | 'slug'>;
+  /** The organizer's "a submitted score waits for confirmation" setting, as the tournament's pages read it. */
+  requireFinalization: boolean;
+  games: Game[];
+}
+
+/**
+ * A club's tournament games on [fromDay, toDay] (club days, YYYY-MM-DD), by THE tournament public rule — the `scores`
+ * section's, without re-reading the club per tournament: the club not cancelled, a public status (active or completed),
+ * the organizer's Schedule page on (while it is off, NO entry at all: the home would show dates, times and places, which is
+ * what the organizer hid — the cross-tournament scores feed's rule), published divisions only, a held-back opponent
+ * blanked, the public game shape. Like every tournament page, it never asks the club site's switch. One list read, then
+ * three reads per tournament whose dates reach the window. ⚠ Every read here throws on a failure (the home's read is all or
+ * nothing, Stage 1 G11), so a failed read can never look like a day with no games.
+ */
+export async function publicTournamentGamesBetween(
+  org: Pick<Organization, 'id' | 'planId' | 'subscriptionStatus' | 'requireScoreFinalization'>,
+  fromDay: string,
+  toDay: string,
+): Promise<PublicTournamentDayGames[]> {
+  if (org.subscriptionStatus === 'canceled') return [];
+  const reaching = (await getTournamentsByOrg(org.id, { admin: true, strict: true }))
+    .filter(isPublicStatus)
+    .filter(t => !!t.startDate && t.startDate <= toDay && (t.endDate ?? t.startDate) >= fromDay)
+    .map(t => withInviteOnlyPages(t, runsInviteOnlyEvents(org.planId)))
+    .filter(t => isPublicPageEnabled(t, 'schedule'));
+  const out = await Promise.all(reaching.map(async tournament => {
+    const { games } = await readScoresGames(tournament.id, true);
+    const inWindow = games.filter(g => !!g.date && g.date >= fromDay && g.date <= toDay);
+    return inWindow.length ? {
+      tournament: { id: tournament.id, name: tournament.name, slug: tournament.slug },
+      requireFinalization: tournament.requireScoreFinalization ?? org.requireScoreFinalization ?? true,
+      games: inWindow,
+    } : null;
+  }));
+  return out.filter((x): x is PublicTournamentDayGames => x !== null);
 }

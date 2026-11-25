@@ -2,6 +2,7 @@ import { forwardToOwnAddress } from '@/lib/club-forward';
 import { notFound } from 'next/navigation';
 import type { Metadata } from 'next';
 import { getLeagueSeasons } from '@/lib/db';
+import { isPublicLeagueSeason } from '@/lib/league-game-changes-server';
 import { resolvePublicLeagueContext } from '@/lib/public-league';
 import { clubPageMetadata } from '@/lib/club-page-meta';
 import { orgLinks } from '@/lib/org-links';
@@ -38,7 +39,7 @@ export default async function LeagueIndexPage({
   if (!org) notFound();
 
   const allSeasons = await getLeagueSeasons(org.id);
-  const visibleSeasons = allSeasons.filter(s => s.status !== 'draft');
+  const visibleSeasons = allSeasons.filter(isPublicLeagueSeason);
   // A club that runs no house league here has no league page: the club's "not found" says so, inside its site (F09,
   // Club Tier Stage 4a). This page used to say "No seasons have been published yet. Check back soon."
   if (visibleSeasons.length === 0) notFound();

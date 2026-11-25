@@ -110,7 +110,7 @@ describe('the host card\'s Open now list (Ask 4 / Ask B)', () => {
     assert.match(data, /const openNow = clubOpenNowRows\(publicLeagueSeasons, clubTryouts, today, href\);/);
     const body = data.slice(data.indexOf('export async function loadHostClubOpenNow'));
     assert.match(body, /if \(!isPublicClubSiteOpen\(org\) \|\| !hasModuleEntitlement\(org, 'module_public_site'\)\) return null;/);
-    assert.match(body, /clubOpenNowRows\(leagueSeasons\.filter\(s => s\.status !== 'draft'\), tryouts, today, href\)/);
+    assert.match(body, /clubOpenNowRows\(leagueSeasons\.filter\(isPublicLeagueSeason\), tryouts, today, href\)/);
   });
 });
 

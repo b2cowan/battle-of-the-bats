@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import type { Metadata } from 'next';
 import { getDivisionsForSeason, computeStandings } from '@/lib/db';
+import { isDivisionSchedulePublic, isPublicLeagueSeason } from '@/lib/league-game-changes-server';
 import { resolvePublicLeagueContext } from '@/lib/public-league';
 import { clubPageMetadata, getClubSeason } from '@/lib/club-page-meta';
 import { orgLinks } from '@/lib/org-links';
@@ -26,7 +27,7 @@ export async function generateMetadata({ params }: { params: Promise<{ orgSlug: 
   const { orgSlug, seasonSlug } = await params;
   return clubPageMetadata(orgSlug, async club => {
     const season = await getClubSeason(club.id, seasonSlug);
-    return season && season.status !== 'draft' ? `${season.name} standings` : null;
+    return isPublicLeagueSeason(season) ? `${season.name} standings` : null;
   }, { path: `/league/${seasonSlug}/standings` });
 }
 
@@ -57,13 +58,13 @@ export default async function PublicStandingsPage({
 
   const season = await getClubSeason(org.id, seasonSlug);
   if (!season) notFound();
-  if (season.status === 'draft') notFound();
+  if (!isPublicLeagueSeason(season)) notFound();
 
   const divisions = await getDivisionsForSeason(season.id);
   const kept = divisions.filter(d => d.showStandings);
   const asked = divisions.find(d => d.id === divisionIdParam) ?? null;
   const active: LeagueDivision | null = asked ?? kept[0] ?? null;
-  const published = !!active?.schedulePublishedAt;
+  const published = !!active && isDivisionSchedulePublic(active);
   const standings = active && active.showStandings && published ? await computeStandings(active.id, season.sport) : null;
   // Board Ready Stage 6 (ask 1): the active division's sponsors, a quiet line under its tab. A failed read draws no line.
   const sponsoredBy = active ? (await divisionSponsorsFor(org.id, [active.id]).catch((): Record<string, never[]> => ({})))[active.id] ?? [] : [];
@@ -93,7 +94,7 @@ export default async function PublicStandingsPage({
               href={href(`/league/${seasonSlug}/standings`) + `?d=${d.id}`}
               className={`${column.tab}${d.id === active?.id ? ` ${column.tabActive}` : ''}`}
             >
-              {d.schedulePublishedAt ? d.name : P.comingTab(d.name)}
+              {isDivisionSchedulePublic(d) ? d.name : P.comingTab(d.name)}
             </Link>
           ))}
         </div>

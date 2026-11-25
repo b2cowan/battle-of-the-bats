@@ -286,6 +286,12 @@ prompt → the build → `/simplify`, `/review`, `/legal` or `/accounting` where
   *(Club events on the schedules, E10/E11 ruled 2026-11-25: a "Champs day" band over that day's games on its season's
   schedule, in every division tab that plays that day, opening the champs page, kept the day after with no door; an
   Everyone event that names a season is a row in its week on that season's public schedule.)*
+  *(Session 1A, 2026-11-25: the rep running-score fix committed `45bb8676f`; Pass 1 — the one house league rule, the
+  one games read and its guards — built and reviewed (Progress). Club events do not exist in code yet, so Stage 1 builds
+  the PLACE for a champs day (first in Today's order, G4) and none of its rows: **E6** (a champs day as one Today row,
+  its games left out of Today's own rows), **E10** (the "Champs day" band on the season's schedule) and **E11**'s schedule
+  row ride with whichever of this stage and Board Ready Stage 5 lands second. Stage 1 lands first, so they ride with
+  Board Ready Stage 5, which builds them on the one games read and the house league rule (its split record says so).)*
 - [ ] **Stage 2 — Field status (idea 3; F3).** Second tenant. *(Corrected by Stage 0: it is today's Rainout widened to
   a place ("Close a place"), not a third tool; tournament games ride their own Rain delay, so it does NOT wait on the
   real-venues project. It needs only a count of typed-only games first, dev, counts only.)*
@@ -951,6 +957,65 @@ the demos follow the product and are curated with `/demos`, never as a build ste
   room and the claim; P4 the removal, the ended page and the one email (the nightly job asked for in P4 itself).
   Runs beside Stage 1; the one shared screen is the public club frame. No real preview on production before P4's
   removal is live there, or the owner removes each by hand.
+- 2026-11-25 — **Stage 1 Session 1A: the running-score fix committed, Pass 1 built and reviewed.** Start conditions held
+  (G1–G11 ticked; Milton's three answers still not in; no migration). **Part 0 committed `45bb8676f`** (owner "yes
+  commit"): one live rule (`lib/club-game-live.ts`, the tournament's window: start to scheduled end, or start plus the
+  booking length, plus 30 minutes, ended by the final) on the public rep team page and the family schedule; a coach's
+  running score reads "Live now" over "4–2", End game reads W/L/T as before, a score whose game was never ended reads
+  "4–2" with no letter once its window has passed (the season record counts results only), a game copied from a
+  tournament is never live there. **Pass 1** (nothing a visitor sees): the house league public rule is
+  `isPublicLeagueSeason` / `isDivisionSchedulePublic` inside `lib/league-game-changes-server.ts`, asked by the nine
+  public pages and routes and the two home readers (none tests "draft" or `schedulePublishedAt` itself), with a window
+  version applied after the as-last-sent view (`lastSentInWindow`, pure, pinned with a moved game; a sent move is found
+  by the day it left, `moved_from`); the rep batch `getPublicTeamGamesBetween` (three reads for every Public team);
+  the tournament part `publicTournamentGamesBetween` through the `scores` section's own gates; the one read
+  `lib/club-games-read.ts` (its own fields, all or nothing); the games-only check `GET /api/public/club-games/{club}`
+  (no query string, held at the edge 20 s, no serve-stale, never held on a refusal or a failure); the live rule for house
+  league and the check window (G6, G7). Guards: `club-website-stage1-reads-guard` (all nine of tab 7's, plus all or
+  nothing), `club-stage6d-feeds-guard` 1c (the batch), `public-games-guard` (the read joined its surfaces). `/review`
+  (four lenses) confirmed and fixed two Highs before hand-off: shared readers returned an empty list on a failed read
+  (now strict on the home's path only), and the club travelled in the query string (now in the path). Found on the way,
+  §9: the season status page and several sign-up routes ask no draft question; whether the edge honours `s-maxage`.
+- 2026-11-25 — **Track P Session P1 built: the preview marker and its build check (T1). Nothing a visitor sees; nothing
+  makes a preview yet.** Migration **535** (`organizations.is_preview` + `organization_previews`, kept after a claim and
+  after a removal, no FK on purpose; a trigger keeps the marker, a removed club stamps `removed_at`; a row for a club
+  with people is refused) **applied to dev 2026-11-25 at the owner's word** ("Apply 535 to dev now"), twice; triggers
+  probed rolled back; production pending on the steps list, ORDER before the promote that ships P1 (without the column
+  the sender refuses every club's mail). `/db` reshaped it before writing (the record must outlive the club; no stored
+  removal date; no stored plan; creation is ONE database step, P2's). The rule is `lib/preview-org.ts` +
+  `lib/preview-org-server.ts` (fail closed). **What reads it:** the door folds `PREVIEW_SECTIONS` (site, house league,
+  rep teams) onto the free plan, never a plan or free time; the three org mappers (`isPreview`, discoverable false);
+  Business numbers (the shared not-a-customer set, plus registrations, accounting entries, retention and subscription
+  events, which also counted the demos until now), Renewals, Clubs & portals, Bulk changes (page and a refusal), Plans
+  & pricing, Find (still finds one, labelled "Preview club"), the lead picker, Leads (accounts, sign-ups, offers, link),
+  Free time (list and a give refusal), Online payments, Stripe watch, the email opt-out list; the directory
+  (`getUnlistedOrgIds`, `scopeFollowableOrgs`: /discover, /scores, search, follows, every sitemap) and the coach link
+  finder; the org layout's "don't index". **Silent:** `sendEmail` now REQUIRES `orgId` (`null` = our own mail), so ~45
+  sends were given their club; it refuses a preview's mail before any log row, failing closed; the batch and template
+  senders too; `notify`, fan alerts, the marketing sender, the coach notices and `writePlatformEvent` refuse a preview.
+  Error alerts stay on. **`/billing`:** the fold is clean (no billing action reads it; `PREVIEW_SECTIONS` is the set the
+  public pages gate on; sample sponsors need none); applied: the preview read fails closed on the SNAPSHOT only (Today
+  and the menu counts warn and go on, the club list still drops previews by its own column), and the console's plan and
+  sections writers refuse a preview. For P2: the sections open the public sign-up pages, so P2's closed forms are what
+  keep people out (T3); a free-plan preview shows no tournament branding or tournament-place sponsors (a design call,
+  never a fake plan). **`/db` after the build and `/review` (four lenses), all applied:** the database now holds T3 and
+  "never billed" itself (PV001 on the marker however it is written and on an undone claim, PV002 a real club, PV003
+  nobody joins an open preview, PV004 the record stays with its club, a row lock against the join race, a CHECK that a
+  preview holds no Stripe ids, a 5-second lock wait), each probed rolled back on dev; **a High fixed:** a failed preview
+  read on a REAL club returned `skipped`, which several senders count as delivered, so it is now `provider_error` (failed,
+  retryable) and only a preview is `skipped`; only a "not a preview" answer is remembered, so a club the moment it is
+  claimed sends its welcome. For P2/P3: the public sign-up, tryout and registration POSTs must refuse a preview (the
+  sections open them; the database's "no people" covers members only); make the club with the marker set in one step;
+  a preview must hold no dues (the dues sweep would report failures daily); fan follows and the scores feed read clubs
+  by id (a preview is never followable through search, but a direct follow should refuse one). Pre-existing, seen on
+  the way: two dues routes stamp "reminder sent" whatever the send answered. **Build check:** `tests/unit/preview-org-guard.test.ts` (every platform-wide `organizations`
+  list or count decided as `rule`/`clean`; the other-table surfaces; the sender shape; indexing; alerts; the door).
+  **Shared frame with Stage 1:** P1 changed only the "don't index" line of `app/[orgSlug]/layout.tsx`; the home stays
+  Stage 1's. **Owner ruling 2026-11-25 ("go with your header recommendation"): no `X-Robots-Tag` response header.**
+  `proxy.ts` never sees a public club page, and putting every public visit through it for a database lookup would repeat
+  the page's own tag; instead the "don't index" page tag on every page, and **P2 refuses every non-page route** a preview
+  could serve (share images, posters, the calendar feed, PDFs), so nothing is left for a header to cover. **Left to P2 on purpose:** share
+  images, posters, the calendar feed and every form refusing a preview (no preview can exist before P2).
 
 ## 8. Census questions for Stage 0 (answer from code, not from this plan)
 
@@ -1033,6 +1098,19 @@ Answered 2026-11-24 (Stage 0 Part 1); evidence in the Progress block.
   admin events route); an organizer's later unpublish, time change or score stays on a Public team's page until then,
   and the public view has no field telling a copy from a typed game. Stage 1 drops every copied game from the home. To
   `/plan` for the team page itself.
+- [ ] **Some house league routes ask no draft question (Stage 1 Pass 1, 2026-11-25; pre-existing).** The public
+  status page by link (`app/[orgSlug]/league/[seasonSlug]/status/[token]/page.tsx`) and the sign-up routes
+  (`register`, `friends`, `withdraw-request`, `email-my-link`, `form/files/[fileId]`, `lib/club-form-family-route.ts`)
+  load a season without asking `isPublicLeagueSeason`. Each needs a token or a form a draft season never hands out, so
+  it may be fine; nobody has checked. Pass 1 left them alone (not Stage 1's). To `/plan`.
+- [ ] **Does the edge honour `s-maxage`? (Stage 1, 2026-11-25.)** The games check sends `public, max-age=0,
+  s-maxage=20` and puts the club in its path, so an edge keyed on the path alone cannot mix two clubs; nothing in the
+  repo shows whether Amplify's edge holds it at all (the calendar feed's comment is the same open question). Stage 1's
+  walk checks it on staging (two requests within 20 s, the second's age header). If it does not hold, every 30-second
+  check is a full read: the cost tab 7 priced, not a defect.
+- [ ] **The games check's window ends on the platform's game length for a tournament's last game (Stage 1, 2026-11-25).**
+  A tournament game's own length is the tournament's; the read counts it with the default 90 minutes plus 30, so a long
+  final can stop the home's checks before it ends (the tournament's own pages keep checking). Low; Stage 6 can widen it.
 
 ## 10. Words for /marketing
 

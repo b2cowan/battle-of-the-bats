@@ -66,6 +66,57 @@ export function repGamePhase(g: RepGameFacts, now: number = Date.now()): RepGame
 }
 
 /**
+ * A newer render that already shows "Final" ignores an older check still saying "Live now": the edge holds a check for up
+ * to 20 seconds, so a page rendered fresh can be newer than the check it fetches next. Compares the reads' `asOf`.
+ */
+export function isNewerGamesRead(incoming: { asOf: string }, shown: { asOf: string }): boolean {
+  return Date.parse(incoming.asOf) > Date.parse(shown.asOf);
+}
+
+/** The 30-second check opens this long before the day's first game (G6). */
+export const CHECK_OPENS_BEFORE_MINUTES = 30;
+
+/**
+ * WHEN A PAGE CHECKS FOR SCORES (G6, owner 2026-11-25): from half an hour before the day's first game to the end of the
+ * last game's live window — the home's games part and the house league schedule, standings and season page alike. Null
+ * on a day with no timed game: nothing checks. (Paused while the tab is hidden is the page's part.)
+ */
+export function gameDayCheckWindow(games: readonly { startsAt: string | null; endsAt?: string | null }[]): { fromMs: number; toMs: number } | null {
+  let fromMs = Infinity, toMs = -Infinity;
+  for (const g of games) {
+    const w = g.startsAt ? clubGameWindow({ startsAt: g.startsAt, endsAt: g.endsAt }) : null;
+    if (!w) continue;
+    fromMs = Math.min(fromMs, w.startMs - CHECK_OPENS_BEFORE_MINUTES * 60_000);
+    toMs = Math.max(toMs, w.endMs);
+  }
+  return fromMs < toMs ? { fromMs, toMs } : null;
+}
+
+/** Is the check on right now? */
+export function isGameDayCheckOn(window: { fromMs: number; toMs: number } | null, now: number = Date.now()): boolean {
+  return !!window && now >= window.fromMs && now < window.toMs;
+}
+
+/**
+ * Where a HOUSE-LEAGUE game stands (G7). House league has no running score: its score arrives as a final, so inside the
+ * window the row says "Score after the game" (`live`), and once the window has passed with no score it is a result still
+ * owed (`noScore`, "No score yet" under Latest results). Final is the shipped schedule's own test (`resultWords`,
+ * lib/league-season-calendar.ts): completed with both scores.
+ */
+export type LeagueGamePhase = 'cancelled' | 'postponed' | 'final' | 'live' | 'noScore' | 'coming';
+
+export function leagueGamePhase(g: {
+  scheduledAt: string | null; endsAt: string | null; status: string; homeScore: number | null; awayScore: number | null;
+}, now: number = Date.now()): LeagueGamePhase {
+  if (g.status === 'cancelled') return 'cancelled';
+  if (g.status === 'postponed') return 'postponed';
+  if (g.status === 'completed' && g.homeScore !== null && g.awayScore !== null) return 'final';
+  const w = g.scheduledAt ? clubGameWindow({ startsAt: g.scheduledAt, endsAt: g.endsAt }) : null;
+  if (!w || now < w.startMs) return 'coming';
+  return now < w.endMs ? 'live' : 'noScore';
+}
+
+/**
  * The two facts a rep schedule row carries (`lib/family-view.ts` FamilyScheduleEntry): is it OVER, and is it LIVE. Only the
  * team's OWN game (`ownGame`: a game the coach keeps, not one copied from a tournament) is ever live by this rule; any other
  * entry is over once something was saved against it, as before, and never live:

@@ -62,6 +62,26 @@ describe('1b · a visitor reads games and tournaments, never a practice (owner r
   });
 });
 
+describe('1c · the club batch asks the same question (Club Website Stage 1: the home reads every Public team at once)', () => {
+  const batch = () => {
+    const src = readCode(PREDICATE);
+    return src.slice(src.indexOf('export async function getPublicTeamGamesBetween'), src.indexOf('export function publicTeamFeedPath'));
+  };
+  it('from the same definitions: Public, the club not cancelled, the family layer by the one-team check’s rule', () => {
+    assert.match(batch(), /isOrgBillingSuspended\(\{ subscriptionStatus: org\.subscriptionStatus \?\? 'active' \}\)/);
+    assert.match(batch(), /teams\.filter\(t => isPubliclyVisible\(t\.scheduleVisibility\)\)/);
+    assert.match(batch(), /await familyLayerTeamIds\(\{ org, teamIds: publicTeams\.map\(t => t\.id\) \}\)/);
+    const access = readCode('lib/family-access.ts');
+    const layer = access.slice(access.indexOf('export async function familyLayerTeamIds'), access.indexOf('export async function getEnabledFamilyOrg'));
+    assert.match(layer, /if \(!isTeamWorkspaceOrg\(params\.org\)\) return new Set\(params\.teamIds\);/);
+    assert.match(layer, /getActiveTeamEntitledRepTeamIds\(params\.org\.id\)/);
+  });
+  it('the batch read is reached only through the predicate, and the predicate only by the one games read', () => {
+    assert.deepEqual(SOURCE.filter(f => /\bgetTeamGameEntriesBetween\(/.test(readCode(f))).sort(), ['lib/family-view.ts', PREDICATE].sort());
+    assert.deepEqual(SOURCE.filter(f => /\bgetPublicTeamGamesBetween\(/.test(readCode(f))).sort(), ['lib/club-games-read.ts', PREDICATE].sort());
+  });
+});
+
 describe('2 · a good read touches no counter', () => {
   for (const f of [COACH_FEED, PUBLIC_FEED, FAMILY_FEED]) {
     it(f, () => {

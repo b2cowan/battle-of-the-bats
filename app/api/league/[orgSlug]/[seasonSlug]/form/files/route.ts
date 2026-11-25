@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getLeagueSeasonBySlug } from '@/lib/db';
+import { isPublicLeagueSeason } from '@/lib/league-game-changes-server';
 import { resolvePublicLeagueContext } from '@/lib/public-league';
 import { withObservability } from '@/lib/observability';
 import { throttleSignupFiles } from '@/lib/public-form-throttle';
@@ -36,7 +37,7 @@ export const POST = withObservability(async (req: Request,
   const org = await resolvePublicLeagueContext(orgSlug);
   if (!org) return NextResponse.json({ error: 'Not found' }, { status: 404 });
   const season = await getLeagueSeasonBySlug(org.id, seasonSlug);
-  if (!season || season.status === 'draft') return NextResponse.json({ error: 'Not found' }, { status: 404 });
+  if (!isPublicLeagueSeason(season)) return NextResponse.json({ error: 'Not found' }, { status: 404 });
   if (isFinishedLeagueSeason(season)) return NextResponse.json({ error: W.fileFailed, code: 'finished' }, { status: 409 });
 
   // A body far over the limit is refused before it is read into memory (the form's own fields fit well inside 64 KB).

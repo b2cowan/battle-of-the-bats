@@ -4,7 +4,7 @@ import { effectiveOrgFactsOf } from './entitlement-grants';
 import { DOOR_COLUMNS, type DoorRow } from './free-time';
 import { hashNoLoginToken } from './no-login-token';
 import { normalizeGuardianEmail } from './guardian-email';
-import { getTeamScopedRepTeamAccess, isTeamWorkspaceOrg } from './team-workspace-entitlements';
+import { getActiveTeamEntitledRepTeamIds, getTeamScopedRepTeamAccess, isTeamWorkspaceOrg } from './team-workspace-entitlements';
 import { isOrgBillingSuspended } from './org-billing-access';
 import { fetchAllIn } from './supabase-paging';
 import { reachedEntry, teamsReached, type ReachMode, type ReachedTeam, type TeamEntry } from './family-link-reach';
@@ -142,6 +142,20 @@ export async function isFamilyLayerEnabled(params: {
     skipEntitlementCheck: !isTeamWorkspaceOrg(params.org),
   });
   return access.allowed;
+}
+
+/**
+ * The same question for many of one club's teams at once (Club Website Stage 1): which of them have the family layer?
+ * An org-native team is covered by the org's plan (no read); a standalone Coaches-Portal workspace needs each team's live
+ * entitlement (one read for the org). The caller passes teams it read BY THIS ORG, so team-belongs-to-org holds.
+ */
+export async function familyLayerTeamIds(params: {
+  org: Pick<Organization, 'id' | 'accountKind' | 'planId'>;
+  teamIds: readonly string[];
+}): Promise<Set<string>> {
+  if (!isTeamWorkspaceOrg(params.org)) return new Set(params.teamIds);
+  const entitled = await getActiveTeamEntitledRepTeamIds(params.org.id);
+  return new Set(params.teamIds.filter(id => entitled.has(id)));
 }
 
 /**

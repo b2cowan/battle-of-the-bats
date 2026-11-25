@@ -151,7 +151,8 @@ describe('5 · the page draws the two shapes', () => {
     }
   });
   it('the top three: listed = standings on and published; band from standingsTitle; first three rows; the empty card', () => {
-    assert.match(page, /rawDivisions\.filter\(d => d\.showStandings && d\.schedulePublishedAt\)/);
+    // "Published" is the house league rule's question (Club Website Stage 1), never the page's own test.
+    assert.match(page, /rawDivisions\.filter\(d => d\.showStandings && isDivisionSchedulePublic\(d\)\)/);
     assert.match(page, /Promise\.all\(listed\.map\(d => computeStandings\(d\.id, season\.sport\)\)\)/);
     assert.match(page, /\{anyScored && \(/);
     assert.match(page, /\{standingsTitle\(season\.status\)\}/);
@@ -173,8 +174,8 @@ describe('5 · the page draws the two shapes', () => {
   it('the sign-up shape carries the play links: Schedule once published, Standings with the first score, quiet buttons above the age groups', () => {
     const signupShape = page.slice(page.indexOf('const divisions: DivisionWithCount[]'));
     // The same two tests the season shape uses, so the two pages never disagree about when a table exists.
-    assert.match(signupShape, /const hasSchedule = rawDivisions\.some\(d => d\.schedulePublishedAt\)/);
-    assert.match(signupShape, /rawDivisions\.filter\(d => d\.showStandings && d\.schedulePublishedAt\)/);
+    assert.match(signupShape, /const hasSchedule = rawDivisions\.some\(isDivisionSchedulePublic\)/);
+    assert.match(signupShape, /rawDivisions\.filter\(d => d\.showStandings && isDivisionSchedulePublic\(d\)\)/);
     assert.match(signupShape, /playTables\.some\(t => t\.scored\)/);
     assert.match(signupShape, /\{hasSchedule && \(/);
     assert.match(signupShape, /\{hasStandings && \(/);

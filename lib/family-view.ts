@@ -3,6 +3,8 @@ import { supabaseAdmin } from './supabase-admin';
 import { countsTowardRecord } from './season-wrapped';
 import { COACH_GAME_EVENT_TYPES } from './coach-tournament-games';
 import { repEntryState } from './club-game-live';
+import { fetchAll } from './supabase-paging';
+import { LIVE_SEASON_STATUSES } from './season-live';
 import {
   isPubliclyVisible,
   isVisibleToFamilies,
@@ -244,7 +246,9 @@ export async function getFamilyTeamView(params: {
       .from('rep_program_years')
       .select('id, name, year, status')
       .eq('team_id', params.repTeamId)
-      .in('status', ['active', 'draft'])
+      // A team's LIVE season (lib/season-live.ts): draft or active, the newest by year — a Public team's draft season is
+      // public (the 2026-09-28 ruling). The club batch (getTeamGameEntriesBetween) reads it the same way.
+      .in('status', [...LIVE_SEASON_STATUSES])
       .order('year', { ascending: false })
       .limit(1)
       .maybeSingle(),
@@ -289,4 +293,54 @@ export async function getFamilyTeamView(params: {
     entries: rows.map(row => toEntry(row, nextUpId, now)),
     record: computeRecord(rows),
   };
+}
+
+// ── The club's batch (Club Website Stage 1, the one games read) ────────────────────────────
+
+/** A club's rep teams as the public-schedule question needs them: never archived. Throws on a failed read. */
+export async function getClubRepTeamsForSchedule(orgId: string): Promise<{ id: string; name: string; slug: string; scheduleVisibility: ScheduleVisibility }[]> {
+  const { data, error } = await supabaseAdmin
+    .from('rep_teams')
+    .select('id, name, slug, schedule_visibility')
+    .eq('org_id', orgId)
+    .eq('is_archived', false)
+    .order('name');
+  if (error) throw error;
+  return ((data ?? []) as { id: string; name: string; slug: string; schedule_visibility: string | null }[])
+    .map(t => ({ id: t.id, name: t.name, slug: t.slug, scheduleVisibility: normalizeVisibility(t.schedule_visibility) }));
+}
+
+/**
+ * These teams' GAMES in [fromIso, toIso), each from the team's live season, read the way `getFamilyTeamView` reads one
+ * team's (the same columns, the same live-season rule, the same row facts), in two reads for every team together. The
+ * caller has already asked the public question of each team (`getPublicTeamGamesBetween`, lib/public-team-schedule.ts).
+ * Only games: a practice, a team event and a multi-day tournament entry never come out, and neither does a game COPIED
+ * from a tournament (`source_tournament_game_id`) — it can be stale, and the club's tournaments reach the home through
+ * their own rule. ⚠ Throws on a failed read.
+ */
+export async function getTeamGameEntriesBetween(teamIds: readonly string[], fromIso: string, toIso: string, now: number = Date.now()): Promise<{ teamId: string; entry: FamilyScheduleEntry }[]> {
+  if (!teamIds.length) return [];
+  const { data: years, error: yearError } = await supabaseAdmin
+    .from('rep_program_years')
+    .select('id, team_id, year')
+    .in('team_id', [...teamIds])
+    .in('status', [...LIVE_SEASON_STATUSES])
+    .order('year', { ascending: false });
+  if (yearError) throw yearError;
+  const liveYear = new Map<string, string>();
+  for (const y of (years ?? []) as { id: string; team_id: string }[]) if (!liveYear.has(y.team_id)) liveYear.set(y.team_id, y.id);
+  if (!liveYear.size) return [];
+
+  const rows = await fetchAll<EventRow & { team_id: string }>((a, b) => supabaseAdmin
+    .from('rep_team_events')
+    .select(EVENT_COLUMNS + ', team_id')
+    .in('program_year_id', [...liveYear.values()])
+    .in('event_type', COACH_GAME_EVENT_TYPES)
+    .is('source_tournament_game_id', null)
+    .gte('starts_at', fromIso)
+    .lt('starts_at', toIso)
+    .order('starts_at', { ascending: true })
+    .order('id', { ascending: true })
+    .range(a, b));
+  return rows.map(row => ({ teamId: row.team_id, entry: toEntry(row, null, now) }));
 }

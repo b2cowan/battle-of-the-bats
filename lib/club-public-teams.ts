@@ -1,5 +1,6 @@
 import 'server-only';
 import { getDivisionsForSeason, getLeagueSeasons, getRepTeams } from './db';
+import { isPublicLeagueSeason } from './league-game-changes-server';
 import { clubTeamBands, runningLeagueSeason, teamRowDivision, type TeamBand } from './club-site-home';
 import { getClubTeamGroups, readClubTryouts } from './club-tryouts';
 import { bornFactsOf, hasBornYears, type BornFacts } from './club-born-public';
@@ -82,7 +83,7 @@ export interface ClubLeagueDivisions {
 /** `base` (Stage 4e): `{ ownHost: true }` on a club's own web address, so the season's link reads `/league/...`. Left out = our host. */
 export async function readClubLeagueDivisions(org: Organization, orgSlug: string, ownBase?: { ownHost: boolean }): Promise<ClubLeagueDivisions | null> {
   if (!hasModuleEntitlement(org, 'module_house_league')) return null;
-  const seasons = (await getLeagueSeasons(org.id)).filter(s => s.status !== 'draft');
+  const seasons = (await getLeagueSeasons(org.id)).filter(isPublicLeagueSeason);
   const season = runningLeagueSeason(seasons);
   if (!season) return null;
   const divisions = (await getDivisionsForSeason(season.id))

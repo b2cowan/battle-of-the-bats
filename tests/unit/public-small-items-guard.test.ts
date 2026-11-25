@@ -50,11 +50,12 @@ describe('a draft season is not named to the public', () => {
   for (const page of ['register', 'status']) {
     it(`/league/[season]/${page} answers 404 for a draft season`, () => {
       const code = readCode(`app/[orgSlug]/league/[seasonSlug]/${page}/page.tsx`);
-      assert.match(code, /if \(!season \|\| season\.status === 'draft'\) notFound\(\);/);
+      // Through the house league rule's one question (Club Website Stage 1), which is false for a draft season.
+      assert.match(code, /if \(!isPublicLeagueSeason\(season\)\) notFound\(\);/);
     });
   }
   it('the register page\'s tab does not name a draft season either', () => {
-    assert.match(readCode('app/[orgSlug]/league/[seasonSlug]/register/page.tsx'), /season && season\.status !== 'draft' \? `Register for \$\{season\.name\}` : null/);
+    assert.match(readCode('app/[orgSlug]/league/[seasonSlug]/register/page.tsx'), /isPublicLeagueSeason\(season\) \? `Register for \$\{season\.name\}` : null/);
   });
 });
 

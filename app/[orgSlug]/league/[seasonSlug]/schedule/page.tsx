@@ -7,7 +7,7 @@ import {
   getTeamsForSeason,
   getOrgPlaceNames,
 } from '@/lib/db';
-import { publicSeasonGames } from '@/lib/league-game-changes-server';
+import { isPublicLeagueSeason, publicSeasonGames } from '@/lib/league-game-changes-server';
 import { SCHEDULE_PUBLIC_WORDS as P } from '@/lib/league-schedule-words';
 import { resolvePublicLeagueContext } from '@/lib/public-league';
 import { clubPageMetadata, getClubSeason } from '@/lib/club-page-meta';
@@ -38,7 +38,7 @@ export async function generateMetadata({ params }: { params: Promise<{ orgSlug: 
   const { orgSlug, seasonSlug } = await params;
   return clubPageMetadata(orgSlug, async club => {
     const season = await getClubSeason(club.id, seasonSlug);
-    return season && season.status !== 'draft' ? `${season.name} schedule` : null;
+    return isPublicLeagueSeason(season) ? `${season.name} schedule` : null;
   }, { path: `/league/${seasonSlug}/schedule` });
 }
 
@@ -72,14 +72,14 @@ export default async function PublicSchedulePage({
 
   const season = await getClubSeason(org.id, seasonSlug);
   if (!season) notFound();
-  if (season.status === 'draft') notFound();
+  if (!isPublicLeagueSeason(season)) notFound();
 
   const [divisions, teams, places] = await Promise.all([
     getDivisionsForSeason(season.id),
     getTeamsForSeason(season.id),
     getOrgPlaceNames(org.id),
   ]);
-  const { games, published } = await publicSeasonGames(season.id, divisions);
+  const { games, published } = await publicSeasonGames(season, divisions);
 
   const activeDivision: LeagueDivision | null =
     divisions.find(d => d.id === divisionIdParam) ?? divisions[0] ?? null;

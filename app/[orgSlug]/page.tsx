@@ -5,6 +5,7 @@ import { redirect } from 'next/navigation';
 import { Calendar, ChevronRight, Users } from 'lucide-react';
 import { getTournamentsByOrg, getLeagueSeasons, getOpenTryoutsByOrg } from '@/lib/db';
 import type { OpenTryout } from '@/lib/db';
+import { isPublicLeagueSeason } from '@/lib/league-game-changes-server';
 import { hasModuleEntitlement } from '@/lib/module-entitlements';
 import { isFollowableOrg } from '@/lib/directory';
 import { requirePublicClubPage } from '@/lib/public-club-page';
@@ -122,7 +123,7 @@ export default async function HomePage({ params }: { params: Promise<{ orgSlug: 
     hasModuleEntitlement(org, 'module_rep_teams')    ? getOpenTryoutsByOrg(org.id) : Promise.resolve([]),
   ]) : [[], []];
 
-  const defaultPublicSeasons  = defaultLeagueSeasons.filter(s => s.status !== 'draft');
+  const defaultPublicSeasons  = defaultLeagueSeasons.filter(isPublicLeagueSeason);
   const defaultShowLeague     = defaultPublicSeasons.length > 0;
   // EVERY live season is a row (Club Tier Stage 9a, Q14) — the same rows as the league page and the site home. Before it
   // this home named only the newest (F04), in its own words ("Season in progress — …").

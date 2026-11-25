@@ -22,7 +22,11 @@ const PUBLIC_SURFACES = [
   'app/api/public',
   'app/api/consumer',
   'app/[orgSlug]/admin/tournaments/preview',
-].flatMap(dir => [...filesUnder(dir, '.ts'), ...filesUnder(dir, '.tsx')]);
+].flatMap(dir => [...filesUnder(dir, '.ts'), ...filesUnder(dir, '.tsx')]).concat([
+  // Club Website Stage 1: the club home's one games read answers an anonymous caller too; it reads tournament games only
+  // through getPublicTournamentPageData's own module (publicTournamentGamesBetween), never getGames or a games query.
+  'lib/club-games-read.ts',
+]);
 
 /** The public readers that read a tournament's games themselves — each must put them through the gate. */
 const GATED_READERS = [

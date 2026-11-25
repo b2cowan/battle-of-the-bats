@@ -703,11 +703,13 @@ export async function saveDivision(g: Omit<Division, 'id'>): Promise<void> {
 }
 
 // --- Teams ---
-export async function getTeams(tournamentId?: string, options: ReadOptions = {}): Promise<Team[]> {
+/** `strict`: a failed read THROWS instead of reading as none (an all-or-nothing reader: the club home's games read). */
+export async function getTeams(tournamentId?: string, options: ReadOptions & { strict?: boolean } = {}): Promise<Team[]> {
   const client = options.admin ? supabaseAdmin : supabase;
   let query = client.from('teams').select('*').order('name', { ascending: true });
   if (tournamentId) query = query.eq('tournament_id', tournamentId);
   const { data, error } = await query;
+  if (options.strict && (error || !data)) throw error ?? new Error('teams');
   if (error || !data) {
     if (error) console.error('getTeams error', error);
     return [];
@@ -907,11 +909,13 @@ export async function getTournamentRegistrationFieldAnswersForRegistrations(
 
 // --- Games ---
 // A PUBLIC read of a tournament's games goes through lib/public-games.ts (the publish gate, D1), never straight here.
-export async function getGames(tournamentId?: string, options: ReadOptions = {}): Promise<Game[]> {
+/** `strict`: a failed read THROWS instead of reading as none (an all-or-nothing reader: the club home's games read). */
+export async function getGames(tournamentId?: string, options: ReadOptions & { strict?: boolean } = {}): Promise<Game[]> {
   const client = options.admin ? supabaseAdmin : supabase;
   let query = client.from('games').select('*').order('game_date', { ascending: true }).order('game_time', { ascending: true });
   if (tournamentId) query = query.eq('tournament_id', tournamentId);
   const { data, error } = await query;
+  if (options.strict && (error || !data)) throw error ?? new Error('games');
   if (error || !data) {
     if (error) console.error('getGames error', error);
     return [];
@@ -1783,7 +1787,9 @@ function mapOrg(r: any): Organization {
     contactEmail:          r.contact_email ?? null,
     accountKind:           r.account_kind ?? 'organization',
     teamWorkspaceStatus:   r.team_workspace_status ?? null,
-    isDiscoverable:        r.is_discoverable ?? true,
+    // A preview club (Track P) is never listed, whatever is stored.
+    isDiscoverable:        (r.is_discoverable ?? true) && r.is_preview !== true,
+    isPreview:             r.is_preview === true,
     privacyPolicyUrl:      r.privacy_policy_url ?? null,
     // Club Shared Book (mig 227). Absent column / null → FALSE, never "on": the gate must
     // fail closed while the migration is unapplied, not open a cross-team read by accident.
@@ -2413,12 +2419,14 @@ function mapLeagueGame(row: any): LeagueGame {
 
 // ─── Season helpers ───────────────────────────────────────────────────────────
 
-export async function getLeagueSeasons(orgId: string): Promise<LeagueSeason[]> {
-  const { data } = await supabaseAdmin
+/** `strict`: a failed read THROWS instead of reading as none (an all-or-nothing reader: the club home's games read). */
+export async function getLeagueSeasons(orgId: string, options: { strict?: boolean } = {}): Promise<LeagueSeason[]> {
+  const { data, error } = await supabaseAdmin
     .from('league_seasons')
     .select('*')
     .eq('org_id', orgId)
     .order('created_at', { ascending: false });
+  if (options.strict && error) throw error;
   return (data ?? []).map(mapLeagueSeason);
 }
 
@@ -2536,13 +2544,15 @@ export async function deleteDraftLeagueSeason(seasonId: string, orgId: string): 
 
 // ─── Division helpers ─────────────────────────────────────────────────────────
 
-export async function getDivisionsForSeason(seasonId: string): Promise<LeagueDivision[]> {
-  const { data } = await supabaseAdmin
+/** `strict`: a failed read THROWS instead of reading as none (an all-or-nothing reader: the club home's games read). */
+export async function getDivisionsForSeason(seasonId: string, options: { strict?: boolean } = {}): Promise<LeagueDivision[]> {
+  const { data, error } = await supabaseAdmin
     .from('league_divisions')
     .select('*')
     .eq('season_id', seasonId)
     .order('sort_order', { ascending: true })
     .order('created_at', { ascending: true });
+  if (options.strict && error) throw error;
   return (data ?? []).map(mapLeagueDivision);
 }
 
@@ -2572,13 +2582,15 @@ export async function deleteDivision(divisionId: string): Promise<void> {
 
 // ─── Team helpers ─────────────────────────────────────────────────────────────
 
-export async function getTeamsForSeason(seasonId: string): Promise<LeagueTeam[]> {
-  const { data } = await supabaseAdmin
+/** `strict`: a failed read THROWS instead of reading as none (an all-or-nothing reader: the club home's games read). */
+export async function getTeamsForSeason(seasonId: string, options: { strict?: boolean } = {}): Promise<LeagueTeam[]> {
+  const { data, error } = await supabaseAdmin
     .from('league_teams')
     .select('*')
     .eq('season_id', seasonId)
     .order('sort_order', { ascending: true })
     .order('created_at', { ascending: true });
+  if (options.strict && error) throw error;
   return (data ?? []).map(mapLeagueTeam);
 }
 
@@ -2709,6 +2721,26 @@ export async function getSeasonGamesEveryStatus(seasonId: string): Promise<Leagu
     .order('id', { ascending: true })
     .range(from, to));
   return rows.map(mapLeagueGame);
+}
+
+/**
+ * A season's games, every status, whose start — or whose `moved_from`, the day families last heard (mig 409, kept by
+ * the database on every re-date, sent or not) — falls in [fromIso, toIso) (Club Website Stage 1, the "today" read). Two
+ * reads, merged by id. ⚠ Not a public read on its own: `publicSeasonGamesBetween` (lib/league-game-changes-server.ts)
+ * applies the public rule and the as-last-sent view. Paged.
+ */
+export async function getSeasonGamesBetween(seasonId: string, fromIso: string, toIso: string): Promise<LeagueGame[]> {
+  const read = (column: 'scheduled_at' | 'moved_from') => fetchAll<Record<string, unknown>>((from, to) => supabaseAdmin
+    .from('league_games')
+    .select('*')
+    .eq('season_id', seasonId)
+    .gte(column, fromIso)
+    .lt(column, toIso)
+    .order('id', { ascending: true })
+    .range(from, to));
+  const [starting, movedFrom] = await Promise.all([read('scheduled_at'), read('moved_from')]);
+  const byId = new Map([...starting, ...movedFrom].map(r => [r.id as string, r]));
+  return [...byId.values()].map(mapLeagueGame);
 }
 
 /**

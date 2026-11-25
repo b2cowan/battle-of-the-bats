@@ -8,6 +8,7 @@
  * asks no access question — each reader asks its own first (the home the one public rule, the preview the editor's).
  */
 import { getTournamentsByOrg, getLeagueSeasons, getDivisions, getTeams } from '@/lib/db';
+import { isPublicLeagueSeason } from '@/lib/league-game-changes-server';
 import { hasModuleEntitlement } from '@/lib/module-entitlements';
 import { isFollowableOrg } from '@/lib/directory';
 import { clubTeamsAddress, isPublicClubSiteOpen } from '@/lib/public-club-access';
@@ -80,7 +81,7 @@ export async function loadClubHome(org: Organization, orgSlug: string, base?: { 
   ]);
   // House league: a draft season is not public. EVERY live season is a row (Club Tier Stage 9a, Q14; before it the home
   // named only the newest, F04), labelled by what is happening; with none live, the one row is the door to the league page.
-  const publicLeagueSeasons = leagueSeasons.filter(s => s.status !== 'draft');
+  const publicLeagueSeasons = leagueSeasons.filter(isPublicLeagueSeason);
   const league = publicLeagueSeasons.length === 0 ? null : {
     href: href('/league'),
     title: 'House league',
@@ -145,5 +146,5 @@ export async function loadHostClubOpenNow(org: Organization, href: (path: string
       ? readClubTryouts(org.id, today).catch(() => ({ teams: [], groups: [] }))
       : Promise.resolve({ teams: [], groups: [] }),
   ]);
-  return clubOpenNowRows(leagueSeasons.filter(s => s.status !== 'draft'), tryouts, today, href);
+  return clubOpenNowRows(leagueSeasons.filter(isPublicLeagueSeason), tryouts, today, href);
 }

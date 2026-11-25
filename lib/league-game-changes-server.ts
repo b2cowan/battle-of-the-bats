@@ -1,9 +1,14 @@
 import 'server-only';
 import { supabaseAdmin } from './supabase-admin';
 import { fetchAll, fetchAllIn } from './supabase-paging';
-import { getSeasonGamesEveryStatus } from './db';
-import { heldGames, lastSentView, sendClaim, type GameSnapshot, type HeldChange, type HeldGame } from './league-game-changes';
-import type { LeagueDivision, LeagueGame } from './types';
+import { getDivisionsForSeason, getLeagueSeasons, getOrgPlaceNames, getSeasonGamesBetween, getSeasonGamesEveryStatus, getTeamsForSeason } from './db';
+import { asLastSent, heldGames, lastSentInWindow, sendClaim, type GameSnapshot, type HeldChange, type HeldGame } from './league-game-changes';
+import type { LeagueDivision, LeagueGame, LeagueSeason } from './types';
+import { orgDayKey } from './timezone';
+
+// The as-last-sent view moved to the pure module (Club Website Stage 1) so its window rule is unit-tested; kept reachable
+// here for the readers that import it from this module.
+export { asLastSent, snapshotOf, type GameFaceFields } from './league-game-changes';
 
 /**
  * ══════════════════════════════════════════════════════════════════════════════════════════════
@@ -14,23 +19,6 @@ import type { LeagueDivision, LeagueGame } from './types';
  * The league admin's own screen reads the games as they are, with the held changes beside them.
  * ══════════════════════════════════════════════════════════════════════════════════════════════
  */
-
-/** The fields of a game families read (mig 409's `league_game_snapshot`), plus its id. */
-export type GameFaceFields = Pick<LeagueGame, 'id' | 'scheduledAt' | 'endsAt' | 'location' | 'orgVenueId' | 'orgVenueFacilityId' | 'status' | 'movedFrom'>;
-
-export function snapshotOf(g: Omit<GameFaceFields, 'id'>): GameSnapshot {
-  return {
-    scheduledAt: g.scheduledAt, endsAt: g.endsAt, location: g.location, venueId: g.orgVenueId,
-    facilityId: g.orgVenueFacilityId, status: g.status, movedFrom: g.movedFrom,
-  };
-}
-
-function withSnapshot<G extends GameFaceFields>(g: G, s: GameSnapshot): G {
-  return {
-    ...g, scheduledAt: s.scheduledAt, endsAt: s.endsAt, location: s.location, orgVenueId: s.venueId,
-    orgVenueFacilityId: s.facilityId, status: s.status, movedFrom: s.movedFrom,
-  };
-}
 
 interface ChangeRow {
   id: string; game_id: string; kind: HeldChange['kind']; before: GameSnapshot | null; after: GameSnapshot;
@@ -50,18 +38,6 @@ export async function heldChangesOf(seasonId: string, divisionId?: string): Prom
     return q.order('created_at').order('id').range(a, b);
   });
   return rows.map(mapChange);
-}
-
-/** These games as families last heard them: a held change reads its `before`; a game added since is dropped. */
-export function asLastSent<G extends GameFaceFields>(games: readonly G[], held: readonly HeldChange[]): G[] {
-  const byGame = new Map<string, HeldChange[]>();
-  for (const c of held) (byGame.get(c.gameId) ?? byGame.set(c.gameId, []).get(c.gameId)!).push(c);
-  const out: G[] = [];
-  for (const g of games) {
-    const seen = lastSentView(snapshotOf(g), byGame.get(g.id) ?? []);
-    if (seen) out.push(withSnapshot(g, seen));
-  }
-  return out;
 }
 
 /** A held game with the division and the two teams it tells (f2's rows and who hears each). */
@@ -137,15 +113,117 @@ export async function sendHeldChanges(p: {
 }
 
 /**
- * The public schedule's games (g2): every status, published divisions only, as families last heard them. The divisions
- * not yet published come back by id, for "{division}'s schedule is coming".
+ * ══════════════════════════════════════════════════════════════════════════════════════════════
+ * THE HOUSE LEAGUE PUBLIC RULE (Club Website Stage 1, Pass 1). What a visitor with no account may read of a season:
+ *   · the season is not a draft (`isPublicLeagueSeason`) — every public page and route asks THIS, never the status itself;
+ *   · a division shows games once its schedule is published (`isDivisionSchedulePublic`) — same;
+ *   · a game reads as families last heard it (`asLastSent`).
+ * Before Stage 1 the draft check was repeated by each page (nine of them); the schedule had it, and the club home, a tenth
+ * reader, would have been one more page that could forget it. A guard (club-website-stage1-reads-guard) holds that no
+ * public house-league page or route tests "draft" or `schedulePublishedAt` itself.
+ * ══════════════════════════════════════════════════════════════════════════════════════════════
  */
-export async function publicSeasonGames(seasonId: string, divisions: readonly LeagueDivision[]) {
-  const published = new Set(divisions.filter(d => d.schedulePublishedAt).map(d => d.id));
-  if (!published.size) return { games: [] as LeagueGame[], published };
+
+/** Is this house-league season public? A draft season is not: no page names it, no game of it shows. Null → no. */
+export function isPublicLeagueSeason<S extends Pick<LeagueSeason, 'status'>>(season: S | null | undefined): season is S {
+  return !!season && season.status !== 'draft';
+}
+
+/** Is this division's schedule out? Before it is, the schedule says "{division}'s schedule is coming" and no game shows. */
+export function isDivisionSchedulePublic(division: Pick<LeagueDivision, 'schedulePublishedAt'>): boolean {
+  return !!division.schedulePublishedAt;
+}
+
+type PublicSeasonGames = { games: LeagueGame[]; published: Set<string> };
+
+/** The published divisions of a public season, or null when the season shows nothing (a draft, or nothing published). */
+function publishedOf(season: Pick<LeagueSeason, 'status'>, divisions: readonly LeagueDivision[]): Set<string> | null {
+  if (!isPublicLeagueSeason(season)) return null;
+  const published = new Set(divisions.filter(isDivisionSchedulePublic).map(d => d.id));
+  return published.size ? published : null;
+}
+
+/**
+ * The public schedule's games (g2): every status, published divisions only, as families last heard them. The divisions
+ * not yet published come back by id, for "{division}'s schedule is coming". A draft season has none.
+ */
+export async function publicSeasonGames(
+  season: Pick<LeagueSeason, 'id' | 'status'>, divisions: readonly LeagueDivision[],
+): Promise<PublicSeasonGames> {
+  const published = publishedOf(season, divisions);
+  if (!published) return { games: [], published: new Set() };
   // ⚠ The games first, THEN the held rows: a change landing between the two reads has its row by the time the rows are read
   // (the trigger writes both in one statement), so it reads as held. The other order shows an unsent date to the public.
-  const games = await getSeasonGamesEveryStatus(seasonId);
-  const held = await heldChangesOf(seasonId);
+  const games = await getSeasonGamesEveryStatus(season.id);
+  const held = await heldChangesOf(season.id);
   return { games: asLastSent(games.filter(g => published.has(g.divisionId)), held), published };
+}
+
+/**
+ * The same rule over a window of time, [fromIso, toIso) — "today and the two days before" for the club home (Stage 1 G2)
+ * — reading the window (by start, and by the day a game was moved off, which the database keeps on every re-date) and the
+ * held changes, instead of the whole season. Same order as `publicSeasonGames`: the games first, then the held rows.
+ */
+export async function publicSeasonGamesBetween(
+  season: Pick<LeagueSeason, 'id' | 'status'>, divisions: readonly LeagueDivision[], fromIso: string, toIso: string,
+): Promise<PublicSeasonGames> {
+  const published = publishedOf(season, divisions);
+  if (!published) return { games: [], published: new Set() };
+  const games = await getSeasonGamesBetween(season.id, fromIso, toIso);
+  const held = await heldChangesOf(season.id);
+  return { games: lastSentInWindow(games.filter(g => published.has(g.divisionId)), held, fromIso, toIso), published };
+}
+
+/** One public season's games in a window, with what a row names: its divisions (in the season's order) and teams. */
+export interface PublicLeagueSeasonGames {
+  season: Pick<LeagueSeason, 'id' | 'name' | 'slug'>;
+  divisions: LeagueDivision[];
+  teamName: Map<string, string>;
+  games: LeagueGame[];
+}
+
+/**
+ * Can a season have a game in a window that ends on `toDay` and starts on `fromDay` (club days)? Only to skip reads: an
+ * archived season, one that has not started by the window's end, or one COMPLETED before the window starts. A live season
+ * is read whatever its end date says — a make-up game can fall after it.
+ */
+function mayPlayIn(season: Pick<LeagueSeason, 'status' | 'seasonStartDate' | 'seasonEndDate'>, fromDay: string, toDay: string): boolean {
+  if (season.status === 'archived') return false;
+  if (season.seasonStartDate && season.seasonStartDate > toDay) return false;
+  return !(season.status === 'completed' && season.seasonEndDate && season.seasonEndDate < fromDay);
+}
+
+/**
+ * A club's house-league games in [fromIso, toIso), through the rule above, for the club home's one games read: every
+ * PUBLIC season (`isPublicLeagueSeason`) that may play in the window, its published divisions only, as families last heard
+ * them. A season with no game in the window is left out. ⚠ ALL OR NOTHING: every read here throws on a failure (the
+ * home's read, Stage 1 G11), so a failed read can never look like a quiet day.
+ * Trips per season: the divisions and the window together, then the held rows (after the games, as above) and the teams.
+ */
+export async function publicLeagueGamesBetween(orgId: string, fromIso: string, toIso: string): Promise<{
+  seasons: PublicLeagueSeasonGames[];
+  /** The club's places by id (a closed one's too), read only when a game is found. */
+  places: Awaited<ReturnType<typeof getOrgPlaceNames>>;
+}> {
+  const fromDay = orgDayKey(fromIso), toDay = orgDayKey(toIso);
+  const seasons = (await getLeagueSeasons(orgId, { strict: true }))
+    .filter(isPublicLeagueSeason)
+    .filter(s => mayPlayIn(s, fromDay, toDay));
+  const out = await Promise.all(seasons.map(async season => {
+    const [divisions, games] = await Promise.all([
+      getDivisionsForSeason(season.id, { strict: true }),
+      getSeasonGamesBetween(season.id, fromIso, toIso),
+    ]);
+    const published = publishedOf(season, divisions);
+    const mine = published ? games.filter(g => published.has(g.divisionId)) : [];
+    if (!mine.length) return null;
+    const [held, teams] = await Promise.all([heldChangesOf(season.id), getTeamsForSeason(season.id, { strict: true })]);
+    const shown = lastSentInWindow(mine, held, fromIso, toIso);
+    return shown.length ? {
+      season: { id: season.id, name: season.name, slug: season.slug },
+      divisions, games: shown, teamName: new Map(teams.map(t => [t.id, t.name])),
+    } : null;
+  }));
+  const found = out.filter((x): x is PublicLeagueSeasonGames => x !== null);
+  return { seasons: found, places: found.length ? await getOrgPlaceNames(orgId) : { venues: new Map(), facilities: new Map() } };
 }

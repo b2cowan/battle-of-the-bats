@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import type { Metadata } from 'next';
 import { computeStandings, getDivisionsForSeason, getLeagueSeasons } from '@/lib/db';
+import { isDivisionSchedulePublic, isPublicLeagueSeason } from '@/lib/league-game-changes-server';
 import { resolvePublicLeagueContext } from '@/lib/public-league';
 import { clubPageMetadata, getClubSeason } from '@/lib/club-page-meta';
 import { orgLinks } from '@/lib/org-links';
@@ -27,7 +28,7 @@ export async function generateMetadata({ params }: { params: Promise<{ orgSlug: 
   const { orgSlug, seasonSlug } = await params;
   return clubPageMetadata(orgSlug, async club => {
     const season = await getClubSeason(club.id, seasonSlug);
-    return season && season.status !== 'draft' ? season.name : null;
+    return isPublicLeagueSeason(season) ? season.name : null;
   }, { path: `/league/${seasonSlug}` });
 }
 
@@ -73,7 +74,7 @@ export default async function LeagueSeasonPage({
   if (!season) notFound();
 
   // Only show non-draft seasons publicly
-  if (season.status === 'draft') notFound();
+  if (!isPublicLeagueSeason(season)) notFound();
 
   const rawDivisions = await getDivisionsForSeason(season.id);
   const today = tournamentToday();
@@ -100,7 +101,7 @@ export default async function LeagueSeasonPage({
   if (seasonPageShape(season) === 'season') {
     // An age group is listed when the standings page would show its table: standings on and its schedule published (9e·4,
     // 9e·5). Their tables in parallel — the standings page's own read, one per age group — and the club's seasons for the card.
-    const listed = rawDivisions.filter(d => d.showStandings && d.schedulePublishedAt);
+    const listed = rawDivisions.filter(d => d.showStandings && isDivisionSchedulePublic(d));
     const [tables, seasons] = await Promise.all([
       Promise.all(listed.map(d => computeStandings(d.id, season.sport))),
       // The club's seasons only where the card can show: an old season's page.
@@ -217,8 +218,8 @@ export default async function LeagueSeasonPage({
   // The play links (owner 2026-11-10, HOUSE_LEAGUE_SIGNUP_PAGE_PLAY_LINKS_DRAWINGS): a season can be played while it still takes
   // sign-ups, so a family who already registered finds Schedule and Standings here too. Schedule once any age group has published
   // its schedule; Standings once a listed age group (the season shape's own test) has a scored game. Neither before.
-  const hasSchedule = rawDivisions.some(d => d.schedulePublishedAt);
-  const playListed = rawDivisions.filter(d => d.showStandings && d.schedulePublishedAt);
+  const hasSchedule = rawDivisions.some(isDivisionSchedulePublic);
+  const playListed = rawDivisions.filter(d => d.showStandings && isDivisionSchedulePublic(d));
   const playTables = await Promise.all(playListed.map(d => computeStandings(d.id, season.sport)));
   const hasStandings = playTables.some(t => t.scored);
 

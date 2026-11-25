@@ -4,6 +4,7 @@ import Link from 'next/link';
 import type { Metadata } from 'next';
 import { resolvePublicLeagueContext } from '@/lib/public-league';
 import { clubPageMetadata, getClubSeason } from '@/lib/club-page-meta';
+import { isPublicLeagueSeason } from '@/lib/league-game-changes-server';
 import { orgLinks } from '@/lib/org-links';
 import { SIGNUP_LINK_WORDS as SW } from '@/lib/league-pay-words';
 import EmailMyLinkForm from './EmailMyLinkForm';
@@ -36,7 +37,7 @@ export default async function EmailMyLinkPage({
   if (!org) notFound();
   const season = await getClubSeason(org.id, seasonSlug);
   // Only show non-draft seasons publicly (sweep 3, small items): this page prints the season's name.
-  if (!season || season.status === 'draft') notFound();
+  if (!isPublicLeagueSeason(season)) notFound();
 
   // The light ground, bar and footer come from the club's frame (Club Tier Stage 4b-1). A club form in the club page column
   // (club round C2): 640 on the logo edge. The back link opens the title block.
