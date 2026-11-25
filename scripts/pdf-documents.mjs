@@ -78,7 +78,7 @@ function cellFor(col, i) {
   if (col.format === 'date') return ['Jun 1, 2026', 'Aug 14, 2026', 'Oct 1, 2026', 'Sep 22, 2026', 'Jul 9, 2026'][i % 5];
   if (/player|name|payee|from/.test(label)) return [full(i), 'Harborview Sports Supply', 'Riverdale Minor Ball', full(i + 3), 'Cedar Falls Screenprinting'][i % 5];
   if (/status/.test(label)) return ['Up to date', 'Past due', 'Fully paid', 'Awaiting review', 'Approved'][i % 5];
-  if (/kind|direction|method/.test(label)) return ['Team expense', 'Fundraiser', 'Sponsorship', 'e-Transfer', 'Cheque'][i % 5];
+  if (/kind|direction|method/.test(label)) return ['Team expense', 'Fundraiser', 'Sponsorship', 'E-transfer', 'Cheque'][i % 5];
   if (/categor/.test(label)) return ['Tournament entry fees', 'Equipment & uniforms', 'Field rental', 'Umpires', 'Team travel'][i % 5];
   if (/tag/.test(label)) return ['Tournament · Equipment', 'Travel', '', 'Uniforms · Spring', 'Umpires'][i % 5];
   if (/item|line|allocation/.test(label)) return ['Provincial qualifier entry', 'Practice jerseys (18)', 'Diamond 3 — Tuesdays', 'Weekend umpire crew', 'Hotel block, 9 rooms'][i % 5];
@@ -1038,7 +1038,7 @@ export async function buildDocuments() {
       })],
       ['paid-in-full', (name, settings) => downloadSponsorInvoice(name, {
         ...invoiceBase, paidInFull: true, paidInFullLabel: 'Nov 4, 2026', paid: '$750.00', balance: '$0.00',
-        payments: [['Oct 30, 2026', 'Cheque', '$250.00'], ['Nov 4, 2026', 'E-Transfer', '$500.00']], settings,
+        payments: [['Oct 30, 2026', 'Cheque', '$250.00'], ['Nov 4, 2026', 'E-transfer', '$500.00']], settings,
       })],
     ],
   });

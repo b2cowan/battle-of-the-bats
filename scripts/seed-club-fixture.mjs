@@ -584,8 +584,8 @@ const general = await one('general ledger', db.from('accounting_ledgers').insert
 const teamLedger = await one('team ledger', db.from('accounting_ledgers').insert({ org_id: orgId, entity_type: 'team', entity_id: team['15u-aaa'].id, name: '15U AAA' }).select('id').single());
 const entry = (ledger_id, e) => db.from('accounting_entries').insert({ ledger_id, status: 'posted', created_by: OWNER, ...e });
 die('sponsorship', (await entry(general.id, { entry_date: daysFromNow(-50), description: 'Sponsorship — Maple Hardware', amount: 1500, entry_type: 'income', category: 'Sponsorship', payment_method: 'Cheque 1042' })).error);
-die('permit', (await entry(general.id, { entry_date: daysFromNow(-45), description: 'Diamond permits — spring block', amount: 2000, entry_type: 'expense', category: 'Facilities', payment_method: 'E-Transfer 5531' })).error);
-die('team income', (await entry(teamLedger.id, { entry_date: daysFromNow(-70), description: 'Player fee deposits', amount: 2400, entry_type: 'income', category: 'Player fees', payment_method: 'E-Transfer' })).error);
+die('permit', (await entry(general.id, { entry_date: daysFromNow(-45), description: 'Diamond permits — spring block', amount: 2000, entry_type: 'expense', category: 'Facilities', payment_method: 'E-transfer 5531' })).error);
+die('team income', (await entry(teamLedger.id, { entry_date: daysFromNow(-70), description: 'Player fee deposits', amount: 2400, entry_type: 'income', category: 'Player fees', payment_method: 'E-transfer' })).error);
 ok('ledgers: General (income + expense) and 15U AAA (income)');
 
 // ── Club Tier Stage 3a — the money loop the §E walks need, written through the REAL one-step moves
@@ -596,7 +596,7 @@ ok('ledgers: General (income + expense) and 15U AAA (income)');
 //   · Umpire fees — one installment each, later this season (Coming due's Due → Rest of the season).
 //   · Payment requests in every state: two WAITING (one To club, one From club — no team here has dues
 //     outstanding, so both read "holding up the payout"), approved, declined, and approved-then-REVERSED.
-const METHOD_WORD = { etransfer: 'E-Transfer', cheque: 'Cheque', cash: 'Cash', card: 'Card', other: 'Other' };
+const METHOD_WORD = { etransfer: 'E-transfer', cheque: 'Cheque', cash: 'Cash', card: 'Card', other: 'Other' };
 const TREASURER = people.TREASURER;
 async function move(fn, args, label) {
   const { data, error } = await db.rpc(fn, args);
@@ -656,10 +656,10 @@ await receive('15u-aaa', 2, { on: daysFromNow(-16), method: 'etransfer', referen
 await receive('15u-aa', 1, { on: daysFromNow(-44), method: 'cheque', reference: '1051' });
 await receive('13u-aaa', 1, { on: daysFromNow(-46), method: 'etransfer', reference: '3307' });
 await receive('11u-aa', 1, { on: daysFromNow(-40), method: 'etransfer', reference: '5520' });
-// 11U AA's e-Transfer came back from the bank: the club UNDOES it, with a reason the coach reads.
+// 11U AA's e-transfer came back from the bank: the club UNDOES it, with a reason the coach reads.
 await move('club_installment_undo', {
   p_installment: diamond.installments['11u-aa'][0].id, p_org: orgId, p_actor: TREASURER,
-  p_reason: 'The E-Transfer was returned by the bank',
+  p_reason: 'The e-transfer was returned by the bank',
 }, 'undo 11u-aa #1');
 // 13U AAA's coach says #2 is SENT — the coach's conditional update (no ledger line).
 die('13u-aaa sent', (await db.from('rep_allocation_installments').update({
@@ -771,7 +771,7 @@ await allocate({
 // The tournament's book takes money in of its own, beside its float (the Months grid's other-books row).
 die('tournament registrations', (await entry(tourBook.id, {
   entry_date: daysFromNow(-20), description: 'Team registrations — three visiting teams', amount: 1440, entry_type: 'income',
-  payment_method: 'E-Transfer', ...filed('Tournaments', 'Registration revenue'), created_by: TREASURER,
+  payment_method: 'E-transfer', ...filed('Tournaments', 'Registration revenue'), created_by: TREASURER,
 })).error);
 
 // Two teams record payments to the shared payee AFTER it was shared (the report counts from the share).
@@ -853,8 +853,8 @@ await receiveShare('14u-aa', 1, { on: addDays(TODAY, -5), method: 'etransfer', r
 await one(`${PREV.name} books`, db.from('accounting_entries').insert([
   { entry_date: inPrev(10, 20), description: 'Sponsorship — Halton Hills Dental', amount: 1500, entry_type: 'income', payment_method: 'Cheque 0981', ...filed('Sponsorship', 'Team sponsorship') },
   { entry_date: inPrev(3, 12), description: 'Sponsorship — Milton Home Hardware', amount: 1500, entry_type: 'income', payment_method: 'Cheque 1007', ...filed('Sponsorship', 'Team sponsorship') },
-  { entry_date: inPrev(11, 18), description: 'Town recreation grant', amount: 2000, entry_type: 'income', payment_method: 'E-Transfer 2210', ...filed('Sponsorship', 'Grant') },
-  { entry_date: inPrev(4, 2), description: 'Club insurance — annual premium', amount: 2380, entry_type: 'expense', payment_method: 'E-Transfer 7720', ...filed('Admin', 'Insurance') },
+  { entry_date: inPrev(11, 18), description: 'Town recreation grant', amount: 2000, entry_type: 'income', payment_method: 'E-transfer 2210', ...filed('Sponsorship', 'Grant') },
+  { entry_date: inPrev(4, 2), description: 'Club insurance — annual premium', amount: 2380, entry_type: 'expense', payment_method: 'E-transfer 7720', ...filed('Admin', 'Insurance') },
   { entry_date: inPrev(4, 18), description: 'Diamond permits — spring block (Town)', amount: 3900, entry_type: 'expense', payment_method: 'Cheque 2104', payee_id: town.id, payee_payer: 'Town of Milton', ...filed('Facilities', 'Diamond Permits') },
   { entry_date: inPrev(6, 9), description: 'Field line paint', amount: 185, entry_type: 'expense', category: 'Field supplies', payment_method: 'Card' },
   { entry_date: inPrev(8, 26), description: 'Fence repair — Lions Park', amount: 420, entry_type: 'expense', status: 'pending', payment_method: 'Cheque 2219', notes: 'Not cleared at the close', ...filed('Facilities', 'Diamond Permits') },
@@ -1099,7 +1099,7 @@ async function buildCalendarClub() {
   }
   const book = await one('calendar club ledger', db.from('accounting_ledgers').insert({ org_id: calOrg.id, entity_type: 'org', entity_id: null, name: `${CAL_NAME} — General` }).select('id').single());
   die('calendar club books', (await db.from('accounting_entries').insert([
-    { entry_date: `${C}-03-04`, description: 'Club insurance — annual premium', amount: 1180, entry_type: 'expense', payment_method: 'E-Transfer', budget_category_id: calWord('Admin', 'Insurance').category_id, budget_item_id: calWord('Admin', 'Insurance').id },
+    { entry_date: `${C}-03-04`, description: 'Club insurance — annual premium', amount: 1180, entry_type: 'expense', payment_method: 'E-transfer', budget_category_id: calWord('Admin', 'Insurance').category_id, budget_item_id: calWord('Admin', 'Insurance').id },
     { entry_date: `${C}-04-09`, description: 'Diamond permits — spring block', amount: 1950, entry_type: 'expense', payment_method: 'Cheque 301', budget_category_id: calWord('Facilities', 'Diamond Permits').category_id, budget_item_id: calWord('Facilities', 'Diamond Permits').id },
   ].map(e => ({ ledger_id: book.id, status: 'posted', created_by: owner.id, ...e })))).error);
   ok(`${CAL_NAME}: on January (no first month set) · plan ${C} (Diamond permits dated April, June and October; sponsors November only; insurance) and ${C + 1} · two lines on its General book · owner ${CAL_OWNER.email}`);

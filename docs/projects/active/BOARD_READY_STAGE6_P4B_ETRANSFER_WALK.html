@@ -1,0 +1,452 @@
+<title>E-transfer Spelling Walk</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: one reading column; a walk index of cards, one walk open at a time; steps as Do / You should see rows with a tick. */
+:root {
+  --bg: #f4f6f5; --surface: #ffffff; --ink: #18211d; --muted: #5b6862; --line: #d5ddd9;
+  --accent: #1f6b4f; --accent-soft: #e2efe9; --warn: #9a5b00; --warn-soft: #fbefd9; --bad: #a3322b; --bad-soft: #f8e3e1;
+  --font-body: "Instrument Sans", "Segoe UI", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, "Cascadia Mono", Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #121715; --surface: #1a211e; --ink: #e5ece8; --muted: #9aa8a1; --line: #2e3833;
+  --accent: #6fcca4; --accent-soft: #1f3a2f; --warn: #f0b75c; --warn-soft: #3a2c14; --bad: #f08a80; --bad-soft: #3d1f1c; color-scheme: dark; } }
+:root[data-theme="dark"] {
+  --bg: #121715; --surface: #1a211e; --ink: #e5ece8; --muted: #9aa8a1; --line: #2e3833;
+  --accent: #6fcca4; --accent-soft: #1f3a2f; --warn: #f0b75c; --warn-soft: #3a2c14; --bad: #f08a80; --bad-soft: #3d1f1c; color-scheme: dark; }
+body { background: var(--bg); color: var(--ink); font: 15px/1.55 var(--font-body); padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 24px 64px; }
+.wrap { max-width: 860px; margin: 0 auto; display: grid; gap: 20px; }
+h1 { font-size: 30px; line-height: 1.15; margin: 0; text-wrap: balance; letter-spacing: -0.01em; }
+h2 { font-size: 19px; margin: 0; text-wrap: balance; }
+h3 { font-size: 13px; margin: 0; text-transform: uppercase; letter-spacing: 0.07em; color: var(--muted); font-weight: 600; }
+p { margin: 0; max-width: 68ch; }
+.eyebrow { font: 600 12px/1 var(--font-mono); letter-spacing: 0.08em; text-transform: uppercase; color: var(--accent); }
+.lead { color: var(--muted); }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 18px; display: grid; gap: 12px; min-width: 0; }
+.signin { border-color: var(--accent); }
+.kv { display: grid; grid-template-columns: max-content 1fr; gap: 6px 16px; }
+.kv dt { color: var(--muted); }
+.kv dd { margin: 0; min-width: 0; overflow-wrap: anywhere; }
+code, .mono { font-family: var(--font-mono); font-size: 0.92em; }
+a { color: var(--accent); }
+pre { margin: 6px 0 0; padding: 10px 12px; background: var(--bg); border: 1px solid var(--line); border-radius: 8px; font: 12px/1.5 var(--font-mono); white-space: pre-wrap; overflow-wrap: anywhere; }
+.amt { font-family: var(--font-mono); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.note { background: var(--warn-soft); border-radius: 8px; padding: 10px 12px; }
+ul.plain { margin: 0; padding-left: 18px; display: grid; gap: 4px; }
+.index { display: grid; gap: 8px; }
+.wcard { display: grid; grid-template-columns: 1fr auto; gap: 4px 12px; align-items: center; text-align: left; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; font: inherit; color: inherit; cursor: pointer; }
+.wcard[aria-expanded="true"] { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent) inset; }
+.wcard:focus-visible, button:focus-visible, textarea:focus-visible, input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.wcard .t { font-weight: 600; }
+.wcard .j { grid-column: 1; color: var(--muted); font-size: 14px; }
+.chip { grid-row: 1 / span 2; grid-column: 2; font: 600 12px/1 var(--font-body); padding: 6px 9px; border-radius: 999px; background: var(--bg); color: var(--muted); border: 1px solid var(--line); white-space: nowrap; }
+.chip.prog { color: var(--accent); border-color: var(--accent); }
+.chip.pass { background: var(--accent-soft); color: var(--accent); border-color: transparent; }
+.chip.issue { background: var(--bad-soft); color: var(--bad); border-color: transparent; }
+.chip.call, .chip.thin { background: var(--warn-soft); color: var(--warn); border-color: transparent; }
+.walk { display: grid; gap: 14px; }
+.meta { display: grid; gap: 10px; }
+.meta div { display: grid; gap: 2px; }
+.steps { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+.step { display: grid; grid-template-columns: 28px 1fr; gap: 10px; padding: 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); }
+.step.done { border-color: var(--accent); background: var(--accent-soft); }
+.step.stop { border-style: dashed; border-color: var(--warn); }
+.step input[type="checkbox"] { width: 20px; height: 20px; margin: 2px 0 0; accent-color: var(--accent); }
+.step .body { display: grid; gap: 6px; min-width: 0; }
+.step .who { font: 600 11px/1 var(--font-mono); text-transform: uppercase; letter-spacing: 0.07em; color: var(--warn); }
+.step .lab { font-weight: 600; font-size: 12px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); }
+.opts { display: grid; gap: 6px; }
+.opts label { display: flex; gap: 8px; align-items: flex-start; }
+.verdict { display: flex; flex-wrap: wrap; gap: 8px; }
+.verdict button, .btn { font: 600 14px/1 var(--font-body); padding: 10px 14px; border-radius: 8px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); cursor: pointer; }
+.verdict button.on[data-v="pass"] { background: var(--accent); color: var(--surface); border-color: var(--accent); }
+.verdict button.on[data-v="issue"] { background: var(--bad); color: var(--surface); border-color: var(--bad); }
+.verdict button.on[data-v="call"] { background: var(--warn); color: var(--surface); border-color: var(--warn); }
+textarea { width: 100%; box-sizing: border-box; min-height: 80px; font: 14px/1.5 var(--font-body); padding: 10px; border-radius: 8px; border: 1px solid var(--line); background: var(--bg); color: var(--ink); }
+.out { font: 13px/1.5 var(--font-mono); white-space: pre-wrap; }
+.row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.progress { font-weight: 600; }
+@media (max-width: 520px) { .kv { grid-template-columns: 1fr; } .kv dt { margin-top: 6px; } h1 { font-size: 25px; } }
+@media (prefers-reduced-motion: no-preference) { .step { transition: background-color 0.15s, border-color 0.15s; } }
+</style>
+
+<div class="wrap">
+  <header class="card" style="gap:8px">
+    <span class="eyebrow">Board Ready Stage 6 · Part 4b · §569</span>
+    <h1>One spelling for e-transfer</h1>
+    <p class="lead">Labels and the starts of sentences read <b>E-transfer</b>. Inside a sentence it reads <b>e-transfer</b>. This walk opens the places a coach, a treasurer and a house league see it. Nothing needs saving: every window is closed again.</p>
+    <p class="lead">Four walks, in order. Written Nov 25, 2026. Everything runs on this computer. No email reaches anyone.</p>
+    <p class="progress" id="progress">Checked 0 of 0</p>
+  </header>
+
+  <section class="card signin" aria-labelledby="signin-h">
+    <h2 id="signin-h">Sign in as</h2>
+    <dl class="kv">
+      <dt>Where</dt><dd><code>http://localhost:3000/auth/login</code> on this computer, with the dev server running. <b>Not the staging site.</b></dd>
+      <dt>Treasurer (walk A)</dt><dd><code>uat-club-treasurer@uat-rep-club.local</code> · password <code>UATPassword2026!</code></dd>
+      <dt>13U AAA head coach (walk B)</dt><dd><code>uat-club-coach-13aaa@uat-rep-club.local</code> · password <code>UATPassword2026!</code></dd>
+      <dt>League owner (walk C)</dt><dd><code>league-owner@dev.local</code> · password <code>devpass123</code></dd>
+      <dt>Club owner (walk D)</dt><dd><code>uat-club-owner@uat-rep-club.local</code> · password <code>UATPassword2026!</code></dd>
+    </dl>
+    <p class="lead">Dev-only sign-ins. Keep this page private.</p>
+  </section>
+
+  <section class="card" aria-labelledby="before-h">
+    <h2 id="before-h">Before you start</h2>
+    <p class="note"><b>These are owed to the building session, not to you.</b> If one is not true, stop and tell me.</p>
+    <ul class="plain">
+      <li>The saved spelling was changed on the test data on Nov 25.</li>
+      <li>Lines in a <b>closed</b> fiscal year, and words a person typed themselves, keep the old spelling on purpose. They are not issues.</li>
+    </ul>
+  </section>
+
+  <section class="card" aria-labelledby="call-h">
+    <h2 id="call-h">Your call (not counted in the walk)</h2>
+    <p>Inside a sentence, every payment method now reads lowercase: <b>by cheque</b>, <b>(e-transfer)</b>. Sponsorships and family notices already wrote it this way.</p>
+    <div class="opts" role="radiogroup" aria-labelledby="call-h">
+      <label><input type="radio" name="case" id="case-all" value="Keep every method lowercase in sentences"> <span><b>Keep it</b> (recommended)</span></label>
+      <label><input type="radio" name="case" id="case-one" value="Only e-transfer lowercase in sentences"> <span>Only e-transfer lowercase; <b>by Cheque</b> stays as before</span></label>
+    </div>
+  </section>
+
+  <section aria-labelledby="index-h" style="display:grid;gap:10px">
+    <h2 id="index-h">The walks</h2>
+    <div class="index" id="index"></div>
+  </section>
+
+  <section id="walkHost"></section>
+
+  <section class="card" aria-labelledby="sum-h">
+    <h2 id="sum-h">Paste-back (all walks)</h2>
+    <div class="row">
+      <button class="btn" type="button" id="copyAll">Copy the summary</button>
+      <button class="btn" type="button" id="reset">Clear my ticks</button>
+      <span class="lead" id="copied" aria-live="polite"></span>
+    </div>
+    <div class="card out" id="out" tabindex="0"></div>
+  </section>
+</div>
+
+<script>
+(function () {
+  "use strict";
+  var KEY = "stage6-p4b-etransfer-walk-v1";
+  var PAGE = "Board Ready Stage 6 · Part 4b · e-transfer spelling · §569";
+  var WALKS = [
+ {
+  "id": "A",
+  "title": "The treasurer’s bill and ledger",
+  "job": "UAT Rep Club · treasurer",
+  "forText": "The club side of money: a bill the coach says is sent, and the ledger.",
+  "passes": "Labels read E-transfer, the confirm sentence reads “by e-transfer 88213”, and nothing is saved.",
+  "notIn": "Confirming the payment.",
+  "who": "The treasurer.",
+  "where": "Accounting → Allocations (coming due) and the General ledger.",
+  "steps": [
+   {
+    "d": "Sign in as the treasurer and open <a href=\"http://localhost:3000/uat-rep-club/admin/accounting/allocations?view=coming-due\" target=\"_blank\">bills coming due</a>.",
+    "s": "Under <b>Sent · waiting for you to confirm</b>, the 13U AAA row <b>Diamond fees 2026 (city fields), 2 of 3</b> carries <b>Sent Oct 5 · E-transfer 88213</b>. <b>Stop if the row is missing.</b>",
+    "stop": true
+   },
+   {
+    "d": "Click that row.",
+    "s": "The bill line reads <b>Due Sep 22 · sent Oct 5 by Priya Nair · E-transfer 88213</b>."
+   },
+   {
+    "d": "Press <b>Confirm received</b>.",
+    "s": "<b>Priya Nair recorded $450.00 sent on Oct 5 by e-transfer 88213. It counts as collected once you confirm it arrived.</b>"
+   },
+   {
+    "d": "Read <b>How it came</b>.",
+    "s": "<b>E-transfer</b> is already chosen."
+   },
+   {
+    "d": "Read the hint under <b>Reference</b>.",
+    "s": "<b>The cheque number or the e-transfer reference. It prints on the club’s ledger line and on 13U AAA’s Club page.</b>"
+   },
+   {
+    "d": "Press <b>Cancel</b> (do not press Confirm $450.00 received).",
+    "s": "The window closes and the row still waits."
+   },
+   {
+    "d": "Open the <a href=\"http://localhost:3000/uat-rep-club/admin/accounting/ledger\" target=\"_blank\">General ledger</a> and press <b>Add entry</b>.",
+    "s": "<b>How it was paid</b> lists <b>E-transfer</b>."
+   },
+   {
+    "d": "Read the empty <b>Reference</b> box.",
+    "s": "It says <b>Cheque or e-transfer number</b>."
+   },
+   {
+    "d": "Press <b>Cancel</b>, then type <b>Umpire clinic</b> in <b>Search entries</b>.",
+    "s": "The Sep 12 line <b>Paid to 13U AAA · Umpire clinic, two coaches</b>, $120.00, shows <b>E-transfer · request</b>."
+   }
+  ]
+ },
+ {
+  "id": "B",
+  "title": "The coach’s Club page",
+  "job": "UAT Rep Club · 13U AAA head coach",
+  "forText": "What the coach reads about money to and from the club, and the help that quotes it.",
+  "passes": "Sentences read “by e-transfer”, choices read E-transfer, and nothing is sent.",
+  "notIn": "Sending a bill or a request.",
+  "who": "The 13U AAA head coach.",
+  "where": "Money → Club, and Help.",
+  "steps": [
+   {
+    "d": "Sign out, sign in as the 13U AAA coach and open <a href=\"http://localhost:3000/uat-rep-club/coaches/teams/7474b814-4f13-42b5-bbcf-336edd33d30c/accounting?section=club\" target=\"_blank\">Money → Club</a>.",
+    "s": "The team’s Club page, with <b>What we’ve asked the club</b>.",
+    "stop": true
+   },
+   {
+    "d": "Open <b>Umpire clinic, two coaches</b>.",
+    "s": "The window says <b>Paid</b>, <b>$120.00 by e-transfer on Sep 12, 2026</b>, with <b>Reference 6602</b> under it."
+   },
+   {
+    "d": "Read <b>How you’d like the club to pay you</b>.",
+    "s": "<b>E-transfer</b>."
+   },
+   {
+    "d": "Close it, open the bill <b>Diamond fees 2026 (city fields)</b> and press <b>We’ve sent it</b> on installment 3.",
+    "s": "The title reads <b>Tell the club you’ve sent installment 3</b>, with the hint <b>The e-transfer reference or cheque number, so the club can match it.</b>"
+   },
+   {
+    "d": "Open the <b>How</b> list.",
+    "s": "It offers <b>E-transfer</b>."
+   },
+   {
+    "d": "Press <b>Cancel</b>, then <b>Make a request</b>.",
+    "s": "The hint under the method reads <b>Cash, e-transfer, cheque, card or other. Optional.</b>"
+   },
+   {
+    "d": "Pick <b>From the club</b>.",
+    "s": "The hint reads <b>Cash, e-transfer, cheque or other. Optional.</b> and the list offers <b>E-transfer</b>."
+   },
+   {
+    "d": "Press <b>Cancel</b> and open the <a href=\"http://localhost:3000/uat-rep-club/coaches/help#premium-money-org\" target=\"_blank\">help on money between your team and your club</a>.",
+    "s": "It quotes <b>$120.00 by e-transfer on Oct 19, 2026</b>."
+   }
+  ]
+ },
+ {
+  "id": "C",
+  "title": "House league fees",
+  "job": "Dev League Org · league owner",
+  "forText": "Received, refunded and about-to-be-recorded fees.",
+  "passes": "The list reads “· E-transfer”, the sentence reads “(e-transfer)”, and nothing is saved.",
+  "notIn": "The family’s own page and emails (they use the same sentence).",
+  "who": "The league owner.",
+  "where": "House league → Registrations.",
+  "steps": [
+   {
+    "d": "Sign out, sign in as the league owner, open <a href=\"http://localhost:3000/dev-league-org/admin/house-league/seasons/c820ff08-b303-4c50-abc2-7d3c31f70333/registrations?tab=active\" target=\"_blank\">Draft Test 2027 registrations</a> and search <b>Yuki Anderson</b>.",
+    "s": "The fee reads <b>$165 received</b> over <b>Jun 22 · E-transfer</b>.",
+    "stop": true
+   },
+   {
+    "d": "Press <b>More for Yuki Anderson</b>, then <b>Withdraw</b>.",
+    "s": "<b>Yuki Anderson’s family paid $165 on Jun 22 (e-transfer). What happens to it?</b>"
+   },
+   {
+    "d": "Press <b>Cancel</b>.",
+    "s": "The window closes; Yuki is still registered."
+   },
+   {
+    "d": "Open <a href=\"http://localhost:3000/dev-league-org/admin/house-league/seasons/a13b2a3b-b0da-4b1b-bccb-c4425504c3c6/registrations?tab=ended\" target=\"_blank\">the ended registrations</a> and find <b>Zoe Leblanc</b>.",
+    "s": "The fee reads <b>$150 refunded</b> over <b>Oct 25 · E-transfer</b>."
+   },
+   {
+    "d": "Open <a href=\"http://localhost:3000/dev-league-org/admin/house-league/seasons/a13b2a3b-b0da-4b1b-bccb-c4425504c3c6/registrations?tab=active\" target=\"_blank\">the active registrations</a> and press <b>Mark received</b> on <b>Sofia Rossi</b>.",
+    "s": "<b>How</b> starts on <b>Not recorded</b> and lists <b>E-transfer</b>."
+   },
+   {
+    "d": "Press <b>Cancel</b>.",
+    "s": "Sofia still owes $150."
+   }
+  ]
+ },
+ {
+  "id": "D",
+  "title": "Season setup, a tournament payment and help",
+  "job": "UAT Rep Club · club owner",
+  "forText": "The how-to-pay example, the shared tournament payment window and the house league help.",
+  "passes": "Each reads as below and nothing is saved.",
+  "notIn": "The public site’s sponsors door: the old sponsor list is not removed yet.",
+  "who": "The club owner.",
+  "where": "A house league season, Tournament registrations, Help.",
+  "steps": [
+   {
+    "d": "Sign out, sign in as the club owner, open <a href=\"http://localhost:3000/uat-rep-club/admin/house-league/seasons/0e94976d-4f01-4f5f-b18c-3c4d8b10bb77\" target=\"_blank\">the 2026 Fall season</a> and press the pencil on <b>Registration</b>.",
+    "s": "Under <b>How families pay</b>: <b>For example: “E-transfer to treasurer@yourclub.ca within 14 days of acceptance, with your child’s name in the message.”</b>",
+    "stop": true
+   },
+   {
+    "d": "Type nothing and press the tick.",
+    "s": "The block closes with nothing changed."
+   },
+   {
+    "d": "Open <a href=\"http://localhost:3000/uat-rep-club/admin/tournaments/registrations?tournamentId=366fd333-e21e-42ac-a905-556362513665\" target=\"_blank\">the Invitational’s registrations</a>, open <b>Tools</b> (⋯) and press <b>Select many</b>.",
+    "s": "Tick boxes appear beside the teams."
+   },
+   {
+    "d": "Tick <b>test email team</b> and <b>Walk Twice Team</b> (not the club’s own 15U AA).",
+    "s": "<b>Record one payment</b> appears."
+   },
+   {
+    "d": "Press <b>Record one payment</b>.",
+    "s": "In <b>One payment for several teams</b>, <b>How it arrived</b> starts on <b>E-transfer</b>."
+   },
+   {
+    "d": "Press <b>Cancel</b> (do not press Record).",
+    "s": "The window closes and nothing is recorded."
+   },
+   {
+    "d": "Open the <a href=\"http://localhost:3000/uat-rep-club/admin/help/house-league#family-signup-status-after\" target=\"_blank\">house league help on what the sign-up page says</a> and find <b>A refund</b>.",
+    "s": "It reads <b>$150 refunded on Oct 24 (e-transfer)</b>."
+   }
+  ]
+ }
+];
+  var state = { ticks: {}, verdict: {}, notes: {}, choice: {}, open: "A" };
+  try { var raw = localStorage.getItem(KEY); if (raw) { var got = JSON.parse(raw); state.ticks = got.ticks || {}; state.verdict = got.verdict || {}; state.notes = got.notes || {}; state.choice = got.choice || {}; state.open = got.open || "A"; } } catch (e) {}
+  function save() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} }
+  function el(tag, cls, html) { var n = document.createElement(tag); if (cls) n.className = cls; if (html != null) n.innerHTML = html; return n; }
+  function plain(html) { var d = document.createElement("div"); d.innerHTML = html; return d.textContent.replace(/\s+/g, " ").trim(); }
+  // A step added after the walk was published carries its own label ("7a"), so every other step keeps its number, and a
+  // tick already saved against it stays on the right step.
+  function num(w, i) { if (w.steps[i].n) return w.steps[i].n; var k = 0; for (var j = 0; j <= i; j++) if (!w.steps[j].n) k++; return String(k); }
+  function sid(w, i) { return w.id + "." + num(w, i); }
+  function counts(w) { var n = 0; w.steps.forEach(function (s, i) { if (state.ticks[sid(w, i)]) n++; }); return { done: n, all: w.steps.length }; }
+  var VWORD = { pass: "Passed", issue: "Issue", call: "Needs a call" };
+  function chipOf(w) {
+    var c = counts(w), v = state.verdict[w.id];
+    if (v === "pass" && c.done < c.all) return ["thin", "Passed · only " + c.done + " of " + c.all + " ticked"];
+    if (v) return [v, VWORD[v] + " · " + c.done + " of " + c.all];
+    if (c.done) return ["prog", "In progress · " + c.done + " of " + c.all];
+    return ["", "Not started · " + c.all + " steps"];
+  }
+
+  var index = document.getElementById("index"), host = document.getElementById("walkHost");
+  var cards = {};
+  WALKS.forEach(function (w, wi) {
+    var b = el("button", "wcard");
+    b.type = "button"; b.id = "card-" + w.id; b.setAttribute("aria-controls", "walk-" + w.id);
+    b.appendChild(el("span", "t", "Walk " + w.id + " · " + w.title));
+    b.appendChild(el("span", "j", w.job));
+    var chip = el("span", "chip"); b.appendChild(chip);
+    b.addEventListener("click", function () { state.open = w.id; save(); render(); document.getElementById("walk-" + w.id).scrollIntoView({ block: "start" }); });
+    index.appendChild(b);
+    cards[w.id] = { b: b, chip: chip };
+  });
+
+  function render() {
+    host.innerHTML = "";
+    WALKS.forEach(function (w, wi) {
+      var open = state.open === w.id;
+      cards[w.id].b.setAttribute("aria-expanded", open ? "true" : "false");
+      var ch = chipOf(w); cards[w.id].chip.className = "chip " + ch[0]; cards[w.id].chip.textContent = ch[1];
+      if (!open) return;
+      var sec = el("section", "card walk"); sec.id = "walk-" + w.id;
+      sec.appendChild(el("span", "eyebrow", "Walk " + w.id + " of " + WALKS.length + " · " + w.job));
+      sec.appendChild(el("h2", null, w.title));
+      var meta = el("div", "meta");
+      [["What this walk is for", w.forText], ["It passes when", w.passes], ["Not in this walk", w.notIn], ["Sign in as", w.who], ["Where and on what", w.where]].forEach(function (m) {
+        var d = el("div"); d.appendChild(el("h3", null, m[0])); d.appendChild(el("p", null, m[1])); meta.appendChild(d);
+      });
+      sec.appendChild(meta);
+      var ol = el("ol", "steps");
+      w.steps.forEach(function (s, i) {
+        var id = sid(w, i);
+        var li = el("li", "step" + (s.stop ? " stop" : "") + (state.ticks[id] ? " done" : ""));
+        var cb = el("input"); cb.type = "checkbox"; cb.id = "cb-" + id; cb.checked = !!state.ticks[id];
+        cb.setAttribute("aria-label", "Step " + num(w, i) + " done");
+        cb.addEventListener("change", function () { state.ticks[id] = cb.checked; save(); li.className = "step" + (s.stop ? " stop" : "") + (cb.checked ? " done" : ""); refresh(); });
+        li.appendChild(cb);
+        var body = el("div", "body");
+        if (s.stop || s.who) body.appendChild(el("span", "who", (s.stop ? "Stop check" : "") + (s.stop && s.who ? " · " : "") + (s.who || "")));
+        body.appendChild(el("span", "lab", num(w, i) + " · Do"));
+        body.appendChild(el("p", null, s.d));
+        body.appendChild(el("span", "lab", "You should see"));
+        body.appendChild(el("p", null, s.s));
+        li.appendChild(body);
+        ol.appendChild(li);
+      });
+      sec.appendChild(ol);
+      sec.appendChild(el("h3", null, "Your verdict on this walk"));
+      var vs = el("div", "verdict");
+      [["pass", "Pass"], ["issue", "Issue"], ["call", "Needs a call"]].forEach(function (v) {
+        var btn = el("button", state.verdict[w.id] === v[0] ? "on" : "", v[1]); btn.type = "button"; btn.setAttribute("data-v", v[0]);
+        btn.setAttribute("aria-pressed", state.verdict[w.id] === v[0] ? "true" : "false");
+        btn.addEventListener("click", function () { state.verdict[w.id] = state.verdict[w.id] === v[0] ? "" : v[0]; save(); render(); });
+        vs.appendChild(btn);
+      });
+      sec.appendChild(vs);
+      var lab = el("label", null, "<h3>Notes</h3>"); lab.setAttribute("for", "notes-" + w.id);
+      sec.appendChild(lab);
+      var ta = el("textarea"); ta.id = "notes-" + w.id; ta.value = state.notes[w.id] || "";
+      ta.placeholder = "What you saw, a word you would change, a question for me";
+      ta.addEventListener("input", function () { state.notes[w.id] = ta.value; save(); refresh(); });
+      sec.appendChild(ta);
+      var row = el("div", "row");
+      var cp = el("button", "btn", "Copy this walk’s summary"); cp.type = "button";
+      var msg = el("span", "lead"); msg.setAttribute("aria-live", "polite");
+      var out = el("div", "card out"); out.tabIndex = 0; out.textContent = walkSummary(w);
+      cp.addEventListener("click", function () { copy(walkSummary(w), out, msg); });
+      row.appendChild(cp);
+      if (wi + 1 < WALKS.length) {
+        var nx = el("button", "btn", "Next: walk " + WALKS[wi + 1].id); nx.type = "button";
+        nx.addEventListener("click", function () { state.open = WALKS[wi + 1].id; save(); render(); document.getElementById("walk-" + WALKS[wi + 1].id).scrollIntoView({ block: "start" }); });
+        row.appendChild(nx);
+      }
+      row.appendChild(msg);
+      sec.appendChild(row);
+      sec.appendChild(out);
+      sec._out = out; sec._w = w;
+      host.appendChild(sec);
+    });
+    refresh();
+  }
+
+  function walkSummary(w) {
+    var c = counts(w), v = state.verdict[w.id];
+    var lines = [w.id + " " + w.title + " · " + (v ? VWORD[v].toUpperCase() : "NO VERDICT") + " · " + c.done + " of " + c.all + " ticked"];
+    w.steps.forEach(function (s, i) { lines.push("  " + (state.ticks[sid(w, i)] ? "[x] " : "[ ] ") + num(w, i) + ". " + plain(s.d)); });
+    var n = (state.notes[w.id] || "").trim();
+    if (n) lines.push("  Notes: " + n.replace(/\n+/g, " / "));
+    return lines.join("\n");
+  }
+  function allSummary() {
+    var total = 0, done = 0;
+    WALKS.forEach(function (w) { var c = counts(w); total += c.all; done += c.done; });
+    return [PAGE, "Checked " + done + " of " + total, "Call · sentence casing: " + (state.choice["case"] || "not answered"), ""].concat(WALKS.map(walkSummary)).join("\n");
+  }
+  function refresh() {
+    var total = 0, done = 0;
+    WALKS.forEach(function (w) { var c = counts(w); total += c.all; done += c.done; var ch = chipOf(w); cards[w.id].chip.className = "chip " + ch[0]; cards[w.id].chip.textContent = ch[1]; });
+    document.getElementById("progress").textContent = "Checked " + done + " of " + total;
+    document.getElementById("out").textContent = allSummary();
+    var sec = host.querySelector(".walk"); if (sec && sec._out) sec._out.textContent = walkSummary(sec._w);
+  }
+  function copy(text, node, msg) {
+    function pick() { try { var r = document.createRange(); r.selectNodeContents(node); var s = window.getSelection(); s.removeAllRanges(); s.addRange(r); msg.textContent = "Selected: press Ctrl+C to copy."; } catch (e) {} }
+    try { navigator.clipboard.writeText(text).then(function () { msg.textContent = "Copied."; }, pick); } catch (e) { pick(); }
+  }
+  document.getElementById("copyAll").addEventListener("click", function () { copy(allSummary(), document.getElementById("out"), document.getElementById("copied")); });
+  var armed = false;
+  document.getElementById("reset").addEventListener("click", function () {
+    var b = document.getElementById("reset");
+    if (!armed) { armed = true; b.textContent = "Press again to clear every tick and note"; return; }
+    armed = false; b.textContent = "Clear my ticks";
+    Array.prototype.forEach.call(document.querySelectorAll('input[name="case"]'), function (r) { r.checked = false; });
+    state = { ticks: {}, verdict: {}, notes: {}, choice: {}, open: "A" }; save();
+    render();
+  });
+  Array.prototype.forEach.call(document.querySelectorAll('input[name="case"]'), function (r) {
+    r.checked = state.choice["case"] === r.value;
+    r.addEventListener("change", function () { state.choice["case"] = r.value; save(); refresh(); });
+  });
+  render();
+})();
+</script>

@@ -103,7 +103,7 @@ export function pickerSearch(q: string): FindSearch {
 
 /**
  * Does a line answer Find's search (BC3a)? An amount matches the line's own amount to the cent, in either direction; words
- * match the line's words or how it came ("Cheque 214", "E-Transfer"), any case. Nothing typed matches every line.
+ * match the line's words or how it came ("Cheque 214", "E-transfer"), any case. Nothing typed matches every line.
  */
 export function lineMatches(search: FindSearch, line: { amountCents: number; label?: string | null; how?: string | null }): boolean {
   if (search.kind === 'none') return true;

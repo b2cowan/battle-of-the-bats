@@ -566,7 +566,7 @@ function SentWindow({ installmentNumber, amount, clubName, busy, onCancel, onSen
           <label className={`${styles.field} ${styles.formGridFull}`} htmlFor="sent-ref">
             <span className={styles.label}>Reference</span>
             <input id="sent-ref" className={styles.input} value={reference} maxLength={100} onChange={e => setReference(e.target.value)} />
-            <span className={styles.formHint}>The E-Transfer reference or cheque number, so the club can match it.</span>
+            <span className={styles.formHint}>The e-transfer reference or cheque number, so the club can match it.</span>
           </label>
           {/* The portal's consequence hint (what the form is about to do), naming the club as drawn —
               /design 2026-10-01: both lines had been body-size paragraphs. */}

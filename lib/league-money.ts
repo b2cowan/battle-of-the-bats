@@ -94,7 +94,7 @@ const latest = (lines: readonly LeagueMoneyLine[], dir: 'in' | 'out') =>
     .sort((a, b) => (a.day === b.day ? a.createdAt.localeCompare(b.createdAt) : a.day.localeCompare(b.day)))
     .at(-1) ?? null;
 
-/** The latest payment received (posted), for the "Oct 24 · E-Transfer" sub-line and the ending window's sentence. */
+/** The latest payment received (posted), for the "Oct 24 · E-transfer" sub-line and the ending window's sentence. */
 export const lastPayment = (lines: readonly LeagueMoneyLine[]) => latest(lines, 'in');
 /** The latest refund (posted). */
 export const lastRefund = (lines: readonly LeagueMoneyLine[]) => latest(lines, 'out');

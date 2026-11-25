@@ -3,7 +3,7 @@
  * follow that file's (`regs.*`, `end.*`, `price.*`, `err.*`…) so a word can be traced back to its ruling. One home: a
  * screen, a route and an email read the same string. Methods are worded by `DUES_PAYMENT_METHOD_LABEL`, never typed here.
  */
-import { DUES_PAYMENT_METHOD_LABEL, type DuesPaymentMethod } from './types';
+import { DUES_PAYMENT_METHOD_LABEL, paymentMethodInSentence, type DuesPaymentMethod } from './types';
 import { joinWithAnd, pluralize, possessive } from './utils';
 import { FACT_LABELS, factRow, noticeFacts, type NoticeFacts } from './notification-facts';
 
@@ -16,10 +16,10 @@ export function paymentMethodWord(m: string | null | undefined): string {
   return DUES_PAYMENT_METHOD_LABEL[m as DuesPaymentMethod] ?? m;
 }
 
-/** " (E-Transfer)" after a date in a sentence; nothing for Other or Not recorded (copy §0). */
+/** " (e-transfer)" after a date in a sentence; nothing for Other or Not recorded (copy §0). */
 export function methodInBrackets(m: string | null | undefined): string {
   if (!m || m === 'other') return '';
-  return ` (${paymentMethodWord(m)})`;
+  return ` (${paymentMethodInSentence(paymentMethodWord(m))})`;
 }
 
 /** The owing threshold on the season's Registration block (copy §9, 9b·8). */

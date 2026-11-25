@@ -53,9 +53,9 @@ BEGIN
   VALUES (v_split, 3, 450, '2026-10-15', v_org, v_team) RETURNING id INTO v_i3;
 
   -- ── T1 · record received, twice: one pair of lines, the second refused ──
-  r := club_installment_receive(v_i1, v_org, v_user, 'unpaid', '2026-09-28', 'etransfer', 'E-Transfer', '4471', 'club words', 'team words', 'Team allocations');
+  r := club_installment_receive(v_i1, v_org, v_user, 'unpaid', '2026-09-28', 'etransfer', 'E-transfer', '4471', 'club words', 'team words', 'Team allocations');
   IF NOT (r->>'ok')::boolean THEN RAISE EXCEPTION 'FAIL T1: first receive refused: %', r; END IF;
-  r := club_installment_receive(v_i1, v_org, v_user, 'unpaid', '2026-09-28', 'etransfer', 'E-Transfer', '4471', 'club words', 'team words', 'Team allocations');
+  r := club_installment_receive(v_i1, v_org, v_user, 'unpaid', '2026-09-28', 'etransfer', 'E-transfer', '4471', 'club words', 'team words', 'Team allocations');
   IF (r->>'ok')::boolean OR r->>'state' IS DISTINCT FROM 'received' THEN RAISE EXCEPTION 'FAIL T1: a second receive was not refused: %', r; END IF;
   SELECT count(*) INTO n FROM accounting_entries WHERE source_entity_id = v_i1 AND status = 'posted';
   IF n <> 2 THEN RAISE EXCEPTION 'FAIL T1: a double submit left % lines, not one pair', n; END IF;
@@ -110,9 +110,9 @@ BEGIN
   -- ── T6 · approve, twice: one transfer, the second refused, the link kept ──
   INSERT INTO rep_team_payment_requests (org_id, team_id, program_year_id, request_type, amount, description, created_by, money_in_meaning)
   VALUES (v_org, v_team, v_py, 'charge_to_org', 120, 'ATOMICITY PROBE', v_user, 'funding') RETURNING id INTO v_r1;
-  r := club_request_approve(v_r1, v_org, v_user, '2026-09-05', 'etransfer', 'E-Transfer', NULL, 'Paid to team', 'From club', 'Team support');
+  r := club_request_approve(v_r1, v_org, v_user, '2026-09-05', 'etransfer', 'E-transfer', NULL, 'Paid to team', 'From club', 'Team support');
   IF NOT (r->>'ok')::boolean THEN RAISE EXCEPTION 'FAIL T6: approve refused: %', r; END IF;
-  r := club_request_approve(v_r1, v_org, v_user, '2026-09-05', 'etransfer', 'E-Transfer', NULL, 'Paid to team', 'From club', 'Team support');
+  r := club_request_approve(v_r1, v_org, v_user, '2026-09-05', 'etransfer', 'E-transfer', NULL, 'Paid to team', 'From club', 'Team support');
   IF (r->>'ok')::boolean OR r->>'state' IS DISTINCT FROM 'approved' THEN RAISE EXCEPTION 'FAIL T6: a double approval was not refused: %', r; END IF;
   SELECT count(*) INTO n FROM accounting_entries WHERE source_entity_id = v_r1 AND status = 'posted';
   IF n <> 2 THEN RAISE EXCEPTION 'FAIL T6: a double approval left % lines', n; END IF;
@@ -996,7 +996,7 @@ BEGIN
         VALUES (v_sorg, v_steam, v_spy, 'charge_to_org', 5, 'ATOMICITY forged', v_user, 'accepted'); n := -1;
   EXCEPTION WHEN raise_exception THEN n := CASE WHEN SQLERRM LIKE 'club_request%' THEN 0 ELSE -2 END; END;
   IF n <> 0 THEN RAISE EXCEPTION 'FAIL T37: an accepted request was made by hand (%)', n; END IF;
-  r := club_request_approve(v_sq, v_sorg, v_user, '2026-10-13', 'etransfer', 'E-Transfer', NULL, 'c', 't', 'Team support');
+  r := club_request_approve(v_sq, v_sorg, v_user, '2026-10-13', 'etransfer', 'E-transfer', NULL, 'c', 't', 'Team support');
   IF r->>'state' IS DISTINCT FROM 'asked' THEN RAISE EXCEPTION 'FAIL T37: a waiting ask''s request was approved apart from it: %', r; END IF;
   IF EXISTS (SELECT 1 FROM accounting_entries WHERE source_entity_id = v_sq) THEN RAISE EXCEPTION 'FAIL T37: a refused approval wrote lines'; END IF;
 
@@ -1032,10 +1032,10 @@ BEGIN
   IF r->>'code' IS DISTINCT FROM 'answered' THEN RAISE EXCEPTION 'FAIL T37: a second accept: %', r; END IF;
 
   -- (g) a payment the credit covered whole has nothing to receive; a received one writes what is DUE on it ($594)
-  BEGIN r := club_installment_receive(v_s4, v_sorg, v_user, 'unpaid', '2026-10-13', 'etransfer', 'E-Transfer', NULL, 'c', 't', 'Team allocations');
+  BEGIN r := club_installment_receive(v_s4, v_sorg, v_user, 'unpaid', '2026-10-13', 'etransfer', 'E-transfer', NULL, 'c', 't', 'Team allocations');
   EXCEPTION WHEN check_violation THEN r := '{"ok": false, "code": "raised"}'::jsonb; END;
   IF r->>'state' IS DISTINCT FROM 'credited' THEN RAISE EXCEPTION 'FAIL T37: a payment credited whole was received: %', r; END IF;
-  r := club_installment_receive(v_s3, v_sorg, v_user, 'unpaid', '2026-10-13', 'etransfer', 'E-Transfer', NULL, 'c', 't', 'Team allocations');
+  r := club_installment_receive(v_s3, v_sorg, v_user, 'unpaid', '2026-10-13', 'etransfer', 'E-transfer', NULL, 'c', 't', 'Team allocations');
   IF NOT coalesce((r->>'ok')::boolean, false) THEN RAISE EXCEPTION 'FAIL T37: receive Feb 1: %', r; END IF;
   SELECT count(*), min(amount), max(amount) INTO n, v_num, v_num2 FROM accounting_entries WHERE source_entity_id = v_s3 AND status = 'posted';
   IF n <> 2 OR v_num <> 594 OR v_num2 <> 594 THEN RAISE EXCEPTION 'FAIL T37: a received payment wrote % line(s) of % (its due is 594)', n, v_num; END IF;
@@ -1060,7 +1060,7 @@ BEGIN
   -- (i) nothing left to credit: Dec 1 SENT (a sent payment is never credited), Oct 1 received — so the next ask
   -- (two Sundays, $216) is all to pay: an accepted request the club settles with Record paying
   UPDATE rep_allocation_installments SET sent_at = now(), sent_on = '2026-10-13', sent_by = v_user, sent_method = 'cheque' WHERE id = v_s2;
-  r := club_installment_receive(v_s1, v_sorg, v_user, 'unpaid', '2026-10-13', 'etransfer', 'E-Transfer', NULL, 'c', 't', 'Team allocations');
+  r := club_installment_receive(v_s1, v_sorg, v_user, 'unpaid', '2026-10-13', 'etransfer', 'E-transfer', NULL, 'c', 't', 'Team allocations');
   IF NOT coalesce((r->>'ok')::boolean, false) THEN RAISE EXCEPTION 'FAIL T37: receive Oct 1: %', r; END IF;
   r := club_hand_back_ask(v_sorg, v_ssched, v_steam, v_user, 'remaining', jsonb_build_array(v_sall->4, v_sall->5), v_sreq);
   v_shb := (r->>'handBackId')::uuid; v_sq := (r->>'requestId')::uuid;
@@ -1069,7 +1069,7 @@ BEGIN
   IF (SELECT credited_amount FROM rep_allocation_installments WHERE id = v_s2) <> 108 THEN RAISE EXCEPTION 'FAIL T37: a SENT payment was credited'; END IF;
   IF NOT EXISTS (SELECT 1 FROM rep_team_payment_requests WHERE id = v_sq AND status = 'accepted' AND amount = 216) THEN
     RAISE EXCEPTION 'FAIL T37: the rest is not an accepted request to pay'; END IF;
-  r := club_request_approve(v_sq, v_sorg, v_user, '2026-10-15', 'etransfer', 'E-Transfer', NULL, 'Paid back', 'From club', 'Team support');
+  r := club_request_approve(v_sq, v_sorg, v_user, '2026-10-15', 'etransfer', 'E-transfer', NULL, 'Paid back', 'From club', 'Team support');
   IF NOT coalesce((r->>'ok')::boolean, false) THEN RAISE EXCEPTION 'FAIL T37: Record paying refused: %', r; END IF;
   SELECT count(*) INTO n FROM accounting_entries WHERE source_entity_id = v_sq AND status = 'posted' AND amount = 216;
   IF n <> 2 THEN RAISE EXCEPTION 'FAIL T37: Record paying wrote % line(s)', n; END IF;

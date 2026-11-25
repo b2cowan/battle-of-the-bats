@@ -308,7 +308,7 @@ export function RegistrationBlock({ season, canEdit, orgSlug, onSaved, door, cha
             <textarea className={ck.textarea} rows={3} value={draft.howToPay} maxLength={1000}
               onChange={e => setDraft(d => ({ ...d, howToPay: e.target.value }))}
               onBlur={() => draft.howToPay.trim() !== (season.howToPay ?? '') && commit({ howToPay: draft.howToPay.trim() || null })} />
-            <span className={ck.hint}>Shown to families once a child is accepted, and in their email. For example: “e-Transfer to treasurer@yourclub.ca within 14 days of acceptance, with your child’s name in the message.”</span>
+            <span className={ck.hint}>Shown to families once a child is accepted, and in their email. For example: “E-transfer to treasurer@yourclub.ca within 14 days of acceptance, with your child’s name in the message.”</span>
           </label>
           {charges && (
             <label className={ck.field}>

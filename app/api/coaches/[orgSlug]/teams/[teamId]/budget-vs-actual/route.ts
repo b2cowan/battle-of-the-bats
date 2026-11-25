@@ -51,7 +51,7 @@ import { DUES_PAYMENT_METHOD_LABEL, type DuesPaymentMethod } from '@/lib/types';
  * ⚠⚠ THE SHARED MAP, NOT THE STORED TOKEN (owner-found 2026-08-25). The drill-in shipped the raw
  * value straight to the screen, so a coach read "other" and "etransfer" in lower case beside
  * figures — while Player dues, the payout sheet and the recording conversation all printed
- * "E-Transfer" from `DUES_PAYMENT_METHOD_LABEL`. That map's own header records it being written to
+ * "E-transfer" from `DUES_PAYMENT_METHOD_LABEL`. That map's own header records it being written to
  * stop a THIRD copy; this was worse than a copy, it was no lookup at all.
  *
  * ⚠ "Other" IS DROPPED RATHER THAN PRINTED. It is the answer a coach gives when they did not say

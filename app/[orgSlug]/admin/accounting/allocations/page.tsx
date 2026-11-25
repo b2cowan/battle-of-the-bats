@@ -387,7 +387,7 @@ type DueRow = {
 
 const headCoachLine = (headCoach: string | null) => (headCoach ? `${headCoach}, head coach` : 'No head coach yet');
 
-/** "Sent Sep 29 · E-Transfer 88213" when the head coach sent it (their name is already under the team);
+/** "Sent Sep 29 · E-transfer 88213" when the head coach sent it (their name is already under the team);
  *  "Jordan Lee sent it Sep 29 · …" when someone else on the team did. `named` always names the sender. */
 function sentNote(t: DueTeam, named = false): string {
   const when = t.sentOn ? day(t.sentOn) : 'recently';

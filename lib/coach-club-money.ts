@@ -14,7 +14,7 @@
  * or the client bundle grows a service-role graph (the lesson `coach-budget-item-usage.ts` is split
  * out to record).
  */
-import { DUES_PAYMENT_METHODS, DUES_PAYMENT_METHOD_LABEL, type DuesPaymentMethod } from './types';
+import { DUES_PAYMENT_METHODS, DUES_PAYMENT_METHOD_LABEL, paymentMethodInSentence, type DuesPaymentMethod } from './types';
 import { formatStoredDate } from './timezone';
 import { fmt } from './coach-money-summary';
 import { methodWord } from './club-money-words';
@@ -325,7 +325,7 @@ export function resolveMoneyInMeaning(
 
 /* ══ HOW THE MONEY SHOULD MOVE — the coach's answer, in the codes Approve reads (Club Tier Stage 13d-9, owner 2026-11-13) ══
  *
- * The coach's request asked "Payment method" both ways and saved the display word ("Card", "E-Transfer"); the treasurer's
+ * The coach's request asked "Payment method" both ways and saved the display word ("Card", "E-transfer"); the treasurer's
  * Approve pre-fills only from the product's one method list (`DUES_PAYMENT_METHODS`), so it never pre-filled. The coach is
  * now asked what the treasurer needs, by direction, and the answer is saved as the code.
  *
@@ -361,7 +361,7 @@ export const CLUB_REQUEST_METHOD_WORDS = {
   asFiled: 'Payment method (as filed)',
   /** The old word in the coach's own picker, kept until they choose another. */
   asFiledOption: (word: string) => `${word} (as filed)`,
-  hint: (requestType: ClubRequestType) => `${joinOr(REQUEST_METHODS[requestType].map(m => DUES_PAYMENT_METHOD_LABEL[m]))}. Optional.`,
+  hint: (requestType: ClubRequestType) => `${joinOr(REQUEST_METHODS[requestType].map((m, i) => (i ? paymentMethodInSentence(DUES_PAYMENT_METHOD_LABEL[m]) : DUES_PAYMENT_METHOD_LABEL[m])))}. Optional.`,
   refuse: 'Choose how the money should move from the list.',
 } as const;
 
@@ -411,7 +411,7 @@ export function requestPaidFacts(
   if (r.requestType === 'payment_to_org') {
     return { label: 'Received', value: ['The club received it on ' + on, how, ref ? `reference ${ref}` : null].filter(Boolean).join(' · '), sub: null };
   }
-  return { label: 'Paid', value: `${fmt(r.amount)}${how ? ` by ${how}` : ''} on ${on}`, sub: ref ? `Reference ${ref}` : null };
+  return { label: 'Paid', value: `${fmt(r.amount)}${how ? ` by ${paymentMethodInSentence(how)}` : ''} on ${on}`, sub: ref ? `Reference ${ref}` : null };
 }
 
 /** The list row's chip: "Paid" with the day it moved, once the club recorded it. */

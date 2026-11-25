@@ -1,7 +1,7 @@
 'use client';
 /**
  * The dues-method dropdown — ONE renderer for the product's one method list (owner ruling
- * 2026-08-22, mig 260: E-Transfer · Cash · Cheque · Card · Other).
+ * 2026-08-22, mig 260: E-transfer · Cash · Cheque · Card · Other).
  *
  * The label map was centralized into `DUES_PAYMENT_METHOD_LABEL` the day `card` joined; this
  * finishes the job one level up — the `<select>` itself was still copy-pasted in the payout

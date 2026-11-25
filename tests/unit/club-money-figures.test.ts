@@ -243,7 +243,7 @@ describe('a book: one Balance, a true Starting balance, every row (C14)', () => 
 describe('the export: whole period, one signed Amount, voids kept and out of the totals (C14)', () => {
   const out = ledgerExportRows([
     { date: '2026-09-03', what: 'Insurance', detail: null, category: 'Insurance', item: 'League insurance', type: 'expense', moneyIn: null, moneyOut: 3200, status: 'posted', recordedBy: 'Priya', voidReason: null },
-    { date: '2026-09-10', what: 'Allocation received · 9U A', detail: 'E-Transfer 3307', category: 'Team allocations', item: 'Diamond fees 2026', type: 'team_allocations', moneyIn: 450, moneyOut: null, status: 'posted', recordedBy: 'Priya', voidReason: null },
+    { date: '2026-09-10', what: 'Allocation received · 9U A', detail: 'E-transfer 3307', category: 'Team allocations', item: 'Diamond fees 2026', type: 'team_allocations', moneyIn: 450, moneyOut: null, status: 'posted', recordedBy: 'Priya', voidReason: null },
     { date: '2026-09-18', what: 'Umpire clinic', detail: null, category: null, item: null, type: 'expense', moneyIn: null, moneyOut: 240, status: 'void', recordedBy: 'Priya', voidReason: 'Entered twice' },
     { date: '2026-09-26', what: 'Umpires', detail: 'Cheque 2230', category: 'Officials', item: 'Umpires', type: 'expense', moneyIn: null, moneyOut: 640, status: 'pending', recordedBy: null, voidReason: null },
   ]);

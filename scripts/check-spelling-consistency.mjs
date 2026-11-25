@@ -158,6 +158,15 @@ const ENFORCED_PATTERNS = [
     pattern: /\bCanceled\b/g,
     right: '"Cancelled" — the one spelling a person reads (the stored value `canceled` is unchanged)',
   },
+  /* ⚖ "e-transfer" IN A SENTENCE, "E-transfer" AT THE START OF A LABEL OR SENTENCE (owner, sponsorships round 2 ask 6,
+     2026-11-22): the two other spellings are gone, the stored method name included. CASE-sensitive, so a shape (the word
+     list above matches without case, and it could not tell the spellings apart). Identifiers carry no hyphen. Where a
+     capital or a small "e" belongs mid-line is judgement a pattern can't make, so only the two wrong forms are held. */
+  {
+    id: 'e-transfer-spelling',
+    pattern: /\bE-Transfer|\be-Transfer/g,
+    right: '"e-transfer" in a sentence, "E-transfer" at the start of a label or sentence (owner 2026-11-22)',
+  },
   {
     id: 'rep-teams-case',
     pattern: /\bRep Teams\b/g,

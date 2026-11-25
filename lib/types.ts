@@ -2942,7 +2942,7 @@ export type DuesPaymentMethod = 'etransfer' | 'cash' | 'cheque' | 'card' | 'othe
  * would have been accepted by one door and refused by the other, silently.
  *
  * ⚠ 'card' joined 2026-08-22 (mig 260, one-method-list ruling): the product's one shared method
- * list is E-Transfer · Cash · Cheque · Card · Other, and dues was the surface that couldn't say
+ * list is E-transfer · Cash · Cheque · Card · Other, and dues was the surface that couldn't say
  * Card. The DB CHECKs on payments AND payouts widened with it — they share this type.
  */
 export const DUES_PAYMENT_METHODS: readonly DuesPaymentMethod[] = ['etransfer', 'cash', 'cheque', 'card', 'other'];
@@ -2950,15 +2950,25 @@ export const DUES_PAYMENT_METHODS: readonly DuesPaymentMethod[] = ['etransfer', 
  * What each stored token is CALLED on screen — one map, every reader (2026-08-22). The payout
  * sheet and the dues panel each carried their own copy; the recording conversation would have
  * been the third. Casing follows the product's established method vocabulary
- * (`lib/payment-methods.ts`): 'E-Transfer', as the club's payment-request list has always spelled it.
+ * (`lib/payment-methods.ts`). 'E-transfer' starts a label; inside a sentence use `paymentMethodInSentence`
+ * (owner 2026-11-22, sponsorships round 2 ask 6).
  */
 export const DUES_PAYMENT_METHOD_LABEL: Record<DuesPaymentMethod, string> = {
-  etransfer: 'E-Transfer',
+  etransfer: 'E-transfer',
   cash:      'Cash',
   cheque:    'Cheque',
   card:      'Card',
   other:     'Other',
 };
+
+/**
+ * A method word inside a sentence: "by e-transfer", "by cheque 2210", "(online, card)". Only the leading method word is
+ * lowercased (an old stored "E-Transfer" included). ⚠ Pass it words that START with a method the product named, never a
+ * bare typed reference ("Cash App @jlee" is a person's own text): a caller whose record may have no method checks first.
+ */
+export function paymentMethodInSentence(how: string): string {
+  return how.replace(/^(e-transfer|cheque|cash|card|other|online)\b/i, w => w.toLowerCase());
+}
 
 /** A dues payment FACT (mig 232): what arrived, when, how much. Installments are the plan;
  *  coverage is derived (lib/dues-payments.ts) and projected onto installment paidAt. */

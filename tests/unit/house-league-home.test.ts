@@ -63,7 +63,7 @@ describe('1b · the checklist before Open registration (9b-1 copy §6; owner 9b�
   };
   const div = (over: Partial<ChecklistDivision> = {}): ChecklistDivision =>
     ({ capacity: 12, bornFromYear: 2017, bornToYear: 2018, price: 165, earlyPrice: null, ...over });
-  const ready = { ...season, registrationOpenAt: '2027-06-01T09:00:00Z', registrationCloseAt: '2027-08-01T17:00:00Z', howToPay: 'e-Transfer to the treasurer' };
+  const ready = { ...season, registrationOpenAt: '2027-06-01T09:00:00Z', registrationCloseAt: '2027-08-01T17:00:00Z', howToPay: 'E-transfer to the treasurer' };
 
   it('five lines: age groups, prices, dates, how to pay (when a price is above $0), the waiver (optional)', () => {
     const steps = seasonChecklist(season, []);

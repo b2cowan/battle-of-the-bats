@@ -37,6 +37,7 @@ import { formatStoredDate, orgDayKey } from '@/lib/timezone';
 import { barSentence, DEAL_WORDS as D } from '@/lib/club-sponsorship-deal-words';
 import { SPONSORSHIPS_WORDS as W, sponsorshipMoney as money } from '@/lib/club-sponsorships-words';
 import { canRecordPayment, canRevise, canWithdraw, checklistOf, checklistOpen, deliveryCount, holdersOf, isOverdue, linkTakesForm, LOGO_ITEM, reasonHasClock } from '@/lib/club-sponsorship-deals';
+import { paymentMethodInSentence } from '@/lib/types';
 import { refundsEndedDeal, invoiceStanding, paymentHow, refundCounts, refundDay, refundedTotal, refundEndsDeal, type DealPayment } from '@/lib/club-sponsor-invoice';
 import { DealPayments, PaymentWindow, RecordPaymentWindow, RefundWindow, VoidPaymentQuestion } from './DealPaymentWindows';
 import { send, sponsorshipsApi } from './api';
@@ -161,7 +162,7 @@ export default function DealScreen({ dealId }: { dealId: string }) {
   // The money band (round 1 tabs 5 and 7): Paid and Still owing from the payments recorded; Paid names how the last came.
   const standing = d.invoice ? invoiceStanding(d.invoice.total, data.payments) : null;
   const lastIn = standing?.live.at(-1);
-  const paidSub = lastIn ? paymentHow(lastIn).toLowerCase() : undefined;
+  const paidSub = lastIn ? paymentMethodInSentence(paymentHow(lastIn)) : undefined;
   const owingSub = d.invoice && standing && standing.owing > 0 ? D.deal.figDue(d.invoice.dueOn) : undefined;
   const back = refundedTotal(data.refunds);
   const lastBack = data.refunds.filter(refundCounts).at(-1);

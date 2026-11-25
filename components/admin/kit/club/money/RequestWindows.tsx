@@ -70,7 +70,7 @@ export function filedAs(r: RequestRow): { word: string | null; legacy: boolean }
   return { word: clubMoneyInWord(r), legacy: false };
 }
 
-/** The decided request's line: "Approved Sep 5 by Priya Nair · E-Transfer" / "Declined Sep 2 · “…”". */
+/** The decided request's line: "Approved Sep 5 by Priya Nair · E-transfer" / "Declined Sep 2 · “…”". */
 export function decisionLine(r: RequestRow): string | null {
   if (r.status === 'approved') {
     return [`Approved ${day(r.paidOn ?? r.reviewedAt)}${r.decidedBy ? ` by ${r.decidedBy}` : ''}`, methodWord(r.paidMethod)].filter(Boolean).join(' · ');
@@ -232,7 +232,7 @@ export function ApproveWindow({ r, q, onClose, onDone }: {
         <DayField id="ap-on" label={out ? 'Received on' : 'Paid on'} value={on} onChange={setOn} max={today} />
         <MethodField id="ap-how" label={out ? 'How it came' : 'How it was paid'} value={method} onChange={setMethod} />
       </div>
-      <TextField id="ap-ref" label="Reference" value={reference} onChange={setReference} maxLength={100} placeholder="E-Transfer or cheque reference" />
+      <TextField id="ap-ref" label="Reference" value={reference} onChange={setReference} maxLength={100} placeholder="E-transfer or cheque reference" />
       <Facts rows={[
         // The Record paying window reads what it pays for first (specimen 5); the rest of the built window is unchanged (D6).
         ...(paying ? [['For', `${r.description}${r.handBack ? ` · ${r.handBack.scheduleName}` : ''}`] as [string, string]] : []),

@@ -213,7 +213,7 @@ export interface RegisterRow {
    * A row another tab wrote opens a READ window on the Ledger — its facts, one sentence naming
    * where it is changed, one door there. `origin` picks the sentence (a payment is "recorded", a
    * promise is "pledged", an installment is "due"); `paidHow` is the "How it was paid" fact
-   * ("E-Transfer", "Cheque 1188"), in the method list's one spelling. Present on derived rows only
+   * ("E-transfer", "Cheque 1188"), in the method list's one spelling. Present on derived rows only
    * — a recorded row opens its own form, which already says both — and read by nothing that sums.
    */
   origin?: RegisterOrigin;

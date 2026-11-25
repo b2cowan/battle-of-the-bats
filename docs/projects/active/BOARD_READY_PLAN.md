@@ -1812,6 +1812,18 @@ in the card-network sentence); Privacy §5 (who sent an offer is kept with its r
   values saved as "E-Transfer": dev 63 ledger entries, 3 team expenses, 1 payment request; production 3 team expenses.
   Other findings for `/plan`: a shown or withdrawn sponsor logo is kept; a club can't delete a business that had a deal
   or its files; the sponsor page's privacy link shows only while its form is open.
+- **Part 4b step 2, the e-transfer sweep: built on dev 2026-11-25** (committed 2026-11-25 as two commits, owner: "commit the sweep and the data change as two commits"; walk §569 passed 30 of 30). Every screen, help
+  line, demo seed and the shared method name read "E-transfer" at the start of a label and "e-transfer" in a sentence;
+  method words inside a sentence are lowercase ("by cheque", as sponsorships and family notices already wrote them);
+  `check:spelling` refuses the two old forms. Mig 537 (data only) applied to dev: 27 ledger entries, 3 team expenses and
+  1 payment request re-cased (bill payments covered too, none on dev), 7 club lines in closed fiscal years left as typed; production waits for the release.
+  Words a person typed (void and undo reasons, a season's how-to-pay text, sent notices) are left alone.
+  `/review` 2026-11-25 (four lenses): a bill’s payments now covered by mig 537 (production run AFTER the new code serves);
+  a typed reference after "by" stays as typed; "(online, card)" reads lowercase too; tests added. Clean checkout: type
+  check clean, the full suite's 50 failures identical with and without the sweep; four money screens clean at 361.
+  Walk §569 published: https://claude.ai/artifact/Lnmcr3g9BvxYPspTSgxKpe (30 steps, one casing call).
+  - **Walk §569 PASSED 2026-11-25, 30 of 30** (owner paste-back; A 9, B 8, C 6, D 7; no notes). The casing call (every
+    method lowercase in a sentence, or only e-transfer) came back not answered: not ruled; the build stands as walked.
 - ~~The per-deal "Charge HST" switch carries no words telling a club WHEN to turn it on.~~ **Added 2026-11-22 (owner: "add
   the hint")**, words checked against CRA RC4081 then set in brand voice (`docs/agents/accounting/BOARD_READY_STAGE6_SPONSOR_PAYMENT_FEE_REVIEW.md`
   addendum): the switch's hint reads **"13% for an Ontario address, added to the amount. A sponsorship that shows a name or

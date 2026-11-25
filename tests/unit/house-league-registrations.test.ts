@@ -44,7 +44,7 @@ describe('the Fee cell (copy §1.3)', () => {
     assert.deepEqual([c.primary, c.sub, c.tone], ['$150 owing', null, 'plain']);
   });
   it('received, part, refunded, kept and free', () => {
-    assert.deepEqual([feeCell(reg(), SEASON, [line()], TODAY, []).primary, feeCell(reg(), SEASON, [line()], TODAY, []).sub], ['$150 received', 'Oct 24 · E-Transfer']);
+    assert.deepEqual([feeCell(reg(), SEASON, [line()], TODAY, []).primary, feeCell(reg(), SEASON, [line()], TODAY, []).sub], ['$150 received', 'Oct 24 · E-transfer']);
     assert.equal(feeCell(reg(), SEASON, [line()], TODAY, []).tone, 'good');
     assert.equal(feeCell(reg({ feeAmount: 180 }), SEASON, [line()], TODAY, []).primary, '$150 received · $30 owing');
     assert.equal(feeCell(reg({ status: 'declined' }), SEASON, [line(), line({ id: 'l2', dir: 'out', day: '2026-10-25' })], TODAY, []).primary, '$150 refunded');

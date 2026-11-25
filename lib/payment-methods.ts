@@ -22,13 +22,12 @@
 /**
  * The methods every Canadian club is assumed to use, in the casing we standardise on.
  *
- * ⚠ THE CASING HERE IS NOT A FRESH CHOICE — it matches the list the Payment requests form has
- * always shown ('Cash', 'E-Transfer', 'Cheque', … 'Other'). Inventing a tidier "E-transfer" here
- * would have made this the FOURTH payment-method vocabulary in the product and added the exact
- * spelling split this module exists to prevent.
+ * ⚠ THE SPELLING IS THE PRODUCT'S ONE SPELLING (owner 2026-11-22, sponsorships round 2 ask 6): "E-transfer" at the
+ * start of a label or sentence, "e-transfer" inside one; the spelling check refuses the other two forms. Values saved
+ * the old way were re-cased by a data migration, and the grouping below folds case either way.
  *
  * ⚠⚠ THE UNIFICATION THIS COMMENT USED TO DEFER IS NOW RULED (owner, 2026-08-22 — money
- * centralization P1; mig 260). The product has ONE method list: E-Transfer · Cash · Cheque ·
+ * centralization P1; mig 260). The product has ONE method list: E-transfer · Cash · Cheque ·
  * Card · Other. Dues stores it as lowercase tokens (DUES_PAYMENT_METHODS, lib/types.ts, widened
  * to include 'card'); the club's payment-request list already said exactly this; and this seed
  * list — the free-text surfaces' suggestions — says it now too. 'Credit card', 'Debit' and
@@ -37,7 +36,7 @@
  * longer TEACHES a second vocabulary by seeding it.
  */
 export const SEEDED_PAYMENT_METHODS = [
-  'E-Transfer',
+  'E-transfer',
   'Cash',
   'Cheque',
   'Card',

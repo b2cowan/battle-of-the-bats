@@ -419,7 +419,7 @@ describe('a line names the team (J4-016); old lines read right too', () => {
     assert.doesNotMatch(sql, /UPDATE accounting_entries SET (description|category)/, 'no backfill of words');
   });
   it('one spelling: the product\'s method list, and Declined for the stored "denied"', () => {
-    assert.equal(howItCame('etransfer', '4471'), 'E-Transfer 4471');
+    assert.equal(howItCame('etransfer', '4471'), 'E-transfer 4471');
     assert.equal(REQUEST_STATUS_WORD.denied, 'Declined');
     assert.equal(REQUEST_STATUS_WORD.reversed, 'Reversed');
   });

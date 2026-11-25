@@ -236,7 +236,7 @@ describe('the figures are the dues screen’s own arithmetic', () => {
     assert.equal(p.length, 4);
     assert.deepEqual(p.map(r => r[1]), ['Isla', 'Emmett', 'Emmett', 'Isla']);
     assert.equal(p[3][3], 'Cash');
-    assert.equal(p[0][3], 'E-Transfer');
+    assert.equal(p[0][3], 'E-transfer');
   });
 });
 

@@ -32,7 +32,7 @@ import { UNLINKED_PAYMENT, billOutstandingLine, lockedRecordWords } from '@/lib/
 import { HAND_BACK_WORDS } from '@/lib/club-hand-back-words';
 import fy from './FiscalYear.module.css';
 import { daysBetweenDateStrings, tournamentToday } from '@/lib/timezone';
-import { DUES_PAYMENT_METHODS, type DuesPaymentMethod } from '@/lib/types';
+import { DUES_PAYMENT_METHODS, paymentMethodInSentence, type DuesPaymentMethod } from '@/lib/types';
 import type { ClubBillFigures, ClubInstallmentState } from '@/lib/club-money-figures';
 import {
   DayField, Facts, FormError, LateChip, MethodField, ReasonQuestion, TextField, day, isStale, jsonInit, money, moneyFetch, moneyKit, moneyMove, refusalText,
@@ -259,7 +259,7 @@ export function RecordWindow({ mode, allocation, bill, installment, q, onClose, 
     >
       {sent && (
         <p className={moneyKit.lead1}>
-          {sent.sentBy ?? `${possessive(bill.teamName)} coach`} recorded {amount} sent on {day(sent.on)}{sent.how ? ` by ${sent.how}` : ''}. It counts as collected once you confirm it arrived.
+          {sent.sentBy ?? `${possessive(bill.teamName)} coach`} recorded {amount} sent on {day(sent.on)}{sent.how ? ` by ${sent.method ? paymentMethodInSentence(sent.how) : sent.how}` : ''}. It counts as collected once you confirm it arrived.
         </p>
       )}
       <FormError>{error}</FormError>
@@ -268,7 +268,7 @@ export function RecordWindow({ mode, allocation, bill, installment, q, onClose, 
         <MethodField id="rr-how" label="How it came" value={method} onChange={setMethod} />
       </div>
       <TextField id="rr-ref" label="Reference" value={reference} onChange={setReference} maxLength={100}
-        hint={`The cheque number or the E-Transfer reference. It prints on the club’s ledger line and on ${possessive(bill.teamName)} Club page.`} />
+        hint={`The cheque number or the e-transfer reference. It prints on the club’s ledger line and on ${possessive(bill.teamName)} Club page.`} />
       <Facts rows={[
         ['General ledger', `${amount} in`],
         ['The line reads', `Allocation received · ${bill.teamName}`],
@@ -305,7 +305,7 @@ export function UndoWindow({ allocation, bill, q, onClose, onDone }: {
         </label>
       )}
       lead={<>The General ledger’s line is voided: it stays, marked void, with your reason. The installment is due again. {possessive(bill.teamName)} coaches see it on their Club page and are told.</>}
-      placeholder="For example: the E-Transfer was returned by the bank"
+      placeholder="For example: the e-transfer was returned by the bank"
       hint="The coaches read this. Undo only a payment that didn’t happen or went against the wrong team."
       missing="Say why the payment is being undone."
       confirmLabel="Undo the payment"

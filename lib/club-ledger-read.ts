@@ -265,7 +265,7 @@ async function lookupsFor(orgId: string, page: readonly BookLine[]) {
 type Lookups = Awaited<ReturnType<typeof lookupsFor>>;
 
 /** How a line was paid, as the ledger reads it: a stored key ("online_card", "etransfer") in the product's own words
- *  ("Online, card", "E-Transfer"); a typed phrase ("Cheque 214") is already words and passes through. */
+ *  ("Online, card", "E-transfer"); a typed phrase ("Cheque 214") is already words and passes through. */
 function storedHow(method: string | null): string | null {
   return method ? paymentMethodWord(method) : null;
 }

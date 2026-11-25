@@ -46,7 +46,7 @@ export default function SharedPaymentDialog({ rows, tournamentId, orgSlug, onClo
     </label>)}
     <label className={ck.field}><span className={ck.label}>How it arrived</span>
       <select className={ck.select} value={method} onChange={e => setMethod(e.target.value)}>
-        <option value="etransfer">e-Transfer</option><option value="cash">Cash</option>
+        <option value="etransfer">E-transfer</option><option value="cash">Cash</option>
         <option value="cheque">Cheque</option><option value="card">Card</option><option value="other">Other</option>
       </select>
     </label>

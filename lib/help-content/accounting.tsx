@@ -160,7 +160,7 @@ const accountingHelp: HelpPageContent = {
             <li>On the <strong>Ledger</strong> tab, pick the book with the <strong>Book</strong> pill, then press <strong>Add entry</strong>.</li>
             <li>Choose <strong>Out — the club paid</strong> or <strong>In — the club received</strong>, and give the date.</li>
             <li>Say <strong>What</strong> it was, the <strong>Amount</strong> and what it is <strong>Filed under</strong> (required) — pick a budget word. Money out offers the money-out words, money in the money-in words, and a hint says whether the word is on this year’s plan.</li>
-            <li>Optionally name who it was <strong>Paid to</strong> (or <strong>Paid by</strong>), <strong>How it was paid</strong>, and the cheque or E-Transfer <strong>Reference</strong>.</li>
+            <li>Optionally name who it was <strong>Paid to</strong> (or <strong>Paid by</strong>), <strong>How it was paid</strong>, and the cheque or e-transfer <strong>Reference</strong>.</li>
             <li>Leave the status on <strong>Posted</strong>, or choose <strong>Pending</strong> for a cheque written that hasn’t cleared yet. Then add it.</li>
           </HelpSteps>
           <p>The word you pick decides where the line reports on Budget vs. Actual. A word with no line on the year’s plan still saves, and counts as off-plan. Money for a tournament your club hosts is filed under that tournament’s own words. See <a href="#categories">Filing a line under a budget word</a>.</p>
@@ -534,7 +534,7 @@ const accountingHelp: HelpPageContent = {
             <>
               <p>Money enters the club’s books only when the club says it arrived. On a team’s bill:</p>
               <ul>
-                <li><strong>Record received</strong> — on any installment still owed. Give the day it arrived, how it came, and the cheque or E-Transfer reference.</li>
+                <li><strong>Record received</strong> — on any installment still owed. Give the day it arrived, how it came, and the cheque or e-transfer reference.</li>
                 <li><strong>Confirm received</strong> — when the coach has said they sent it. The window is filled in from what the coach told you; check it against your bank and confirm.</li>
               </ul>
               <p>Either way, the General ledger gets one line, the installment reads <strong>Received</strong>, and the team’s coaches see it and are told.</p>
@@ -548,7 +548,7 @@ const accountingHelp: HelpPageContent = {
           title: 'Undoing a payment, and reminding a team',
           content: (
             <>
-              <p><strong>Undo a payment</strong> sits under the payments on a team’s bill once anything has been received. Choose the payment, and say why — <em>the E-Transfer was returned by the bank</em>. The General ledger line is voided (it stays, marked void, with your reason), the installment is due again, and the team’s coaches see it and are told why. Undo only a payment that didn’t happen or went against the wrong team. A payment recorded in a <a href="#fiscal-year-closed">closed fiscal year</a> has no Undo; one locked sentence says to reopen that year first.</p>
+              <p><strong>Undo a payment</strong> sits under the payments on a team’s bill once anything has been received. Choose the payment, and say why — <em>the e-transfer was returned by the bank</em>. The General ledger line is voided (it stays, marked void, with your reason), the installment is due again, and the team’s coaches see it and are told why. Undo only a payment that didn’t happen or went against the wrong team. A payment recorded in a <a href="#fiscal-year-closed">closed fiscal year</a> has no Undo; one locked sentence says to reopen that year first.</p>
               <p><strong>Remind</strong> on a bill emails that team’s head coaches what is overdue or due in the next 14 days. A team with no head coach yet says so, because there is nobody to remind. For every team at once, see <a href="#reminders">Reminders</a>.</p>
             </>
           ),

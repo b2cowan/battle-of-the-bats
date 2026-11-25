@@ -146,14 +146,11 @@ export function refundEndsDeal(payments: readonly DealPayment[], refunds: readon
 export const refundedTotal = (refunds: readonly DealRefund[]): number =>
   refunds.filter(refundCounts).reduce((s, r) => s + cents(r.amount), 0) / 100;
 
-/** "How it was paid" on a deal: the product's one method list (DUES_PAYMENT_METHODS), "E-transfer" as ruled (round 2 ask 6). */
-export const DEAL_METHOD_LABEL: Record<DuesPaymentMethod, string> = { ...DUES_PAYMENT_METHOD_LABEL, etransfer: 'E-transfer' };
-
 /** "Cheque 004417" — how it arrived, with its number when there is one. */
 export const paymentHow = (p: Pick<DealPayment, 'method' | 'reference'> & { card?: DealPayment['card'] }): string =>
   // A card payment names its card (the drawing's tab 1: "Card, Visa •••• 4242").
   p.card ? `Card, ${cardLabel(p.card.brand, p.card.last4)}`
-    : [DEAL_METHOD_LABEL[p.method] ?? p.method, p.reference?.trim() || null].filter(Boolean).join(' ');
+    : [DUES_PAYMENT_METHOD_LABEL[p.method] ?? p.method, p.reference?.trim() || null].filter(Boolean).join(' ');
 
 /** The invoice's row for a processing fee the sponsor paid by card (round 2 tab 2). */
 export const CARD_FEE_ROW = 'Processing fee';

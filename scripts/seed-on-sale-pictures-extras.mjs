@@ -301,26 +301,26 @@ const PLAN = [
   // ── money in
   { dir: 'in', w: () => fee(`${YEAR} House League`), wPrev: () => fee(`${YEAR - 1} House League`), description: 'House league registration fees', plan: [[9, 9000], [10, 4500], [11, 2000]], planPrev: [[10, 2000], [11, 1000]], book: 'season' },
   { dir: 'in', w: () => word('Tournaments', 'Registration revenue'), description: 'Tournament entry fees', plan: [[6, 2800], [10, 2800]], f: 0.9, lines: [
-    [6, 12, 'Spring Invitational — eight team entries', 2880, 'E-Transfer', 'Spring Invitational teams'],
-    [10, 3, 'Fall Classic — twelve team entries', 3120, 'E-Transfer', 'Fall Classic teams'],
+    [6, 12, 'Spring Invitational — eight team entries', 2880, 'E-transfer', 'Spring Invitational teams'],
+    [10, 3, 'Fall Classic — twelve team entries', 3120, 'E-transfer', 'Fall Classic teams'],
   ] },
   { dir: 'in', w: () => word('Sponsorship', 'Team sponsorship'), description: 'Club sponsors', plan: [[3, 4500], [9, 4500]], f: 0.88, lines: [
     [3, 5, 'Sponsorship — Harbourview Hardware', 2500, 'Cheque 1041', 'Harbourview Hardware'],
     [3, 18, 'Sponsorship — Kestrel Bay Marina', 2500, 'Cheque 1046', 'Kestrel Bay Marina'],
-    [4, 2, 'Sponsorship — Lakeside Dental', 2500, 'E-Transfer', 'Lakeside Dental'],
+    [4, 2, 'Sponsorship — Lakeside Dental', 2500, 'E-transfer', 'Lakeside Dental'],
     [9, 9, 'Sponsorship — Fenwick Family Pharmacy', 1000, 'Cheque 1058', 'Fenwick Family Pharmacy'],
   ] },
   { dir: 'in', w: () => word('Fundraising', 'Fundraising drive'), description: 'Fundraisers', plan: [[5, 1800], [10, 2200]], f: 1.3, lines: [
     [5, 24, 'Spring bottle drive', 1860, 'Cash deposit', null],
-    [10, 17, 'Fall raffle — ticket sales', 3350, 'E-Transfer', null],
+    [10, 17, 'Fall raffle — ticket sales', 3350, 'E-transfer', null],
   ] },
   { dir: 'in', w: () => word('Other Income', 'Donation'), description: 'Donations', plan: [[12, 1000]], f: 0.8, lines: [
     [6, 21, 'Donation — Kestrel Bay Lions Club', 850, 'Cheque 1049', 'Kestrel Bay Lions Club'],
-    [11, 8, 'Donation — Ashby family', 500, 'E-Transfer', null],
+    [11, 8, 'Donation — Ashby family', 500, 'E-transfer', null],
   ] },
   // Last year only: a one-time grant the club did not get this year (an Against last year row with a blank this-year side)
   { dir: 'in', prevOnly: true, w: () => word('Sponsorship', 'Grant'), description: 'Town recreation grant', plan: [[5, 4000]], planPrev: [[5, 4000]], f: 1, lines: [
-    [5, 15, 'Town recreation grant', 4000, 'E-Transfer', 'Town of Kestrel Bay'],
+    [5, 15, 'Town recreation grant', 4000, 'E-transfer', 'Town of Kestrel Bay'],
   ] },
   // ── money out
   { dir: 'out', w: () => word('Facilities', 'Diamond Permits'), description: 'Diamond permits', plan: [[4, 3000], [5, 3000], [8, 3000]], f: 0.93, lines: [
@@ -329,11 +329,11 @@ const PLAN = [
     [8, 29, 'Diamond permits — fall block', 2950, 'Cheque 2218', 'Town of Kestrel Bay'],
   ] },
   { dir: 'out', w: () => word('Officials', 'Umpire Fees'), description: 'Umpire fees', plan: [[5, 1500], [6, 1500], [7, 1500], [9, 1000], [10, 1000]], f: 0.9, lines: [
-    [5, 31, 'Umpire fees — May', 1480, 'E-Transfer', 'Kestrel Bay Umpires Association'],
-    [6, 28, 'Umpire fees — June', 1620, 'E-Transfer', 'Kestrel Bay Umpires Association'],
-    [7, 26, 'Umpire fees — July', 1505, 'E-Transfer', 'Kestrel Bay Umpires Association'],
-    [9, 27, 'Umpire fees — September', 1320, 'E-Transfer', 'Kestrel Bay Umpires Association'],
-    [10, 25, 'Umpire fees — October', 1315, 'E-Transfer', 'Kestrel Bay Umpires Association'],
+    [5, 31, 'Umpire fees — May', 1480, 'E-transfer', 'Kestrel Bay Umpires Association'],
+    [6, 28, 'Umpire fees — June', 1620, 'E-transfer', 'Kestrel Bay Umpires Association'],
+    [7, 26, 'Umpire fees — July', 1505, 'E-transfer', 'Kestrel Bay Umpires Association'],
+    [9, 27, 'Umpire fees — September', 1320, 'E-transfer', 'Kestrel Bay Umpires Association'],
+    [10, 25, 'Umpire fees — October', 1315, 'E-transfer', 'Kestrel Bay Umpires Association'],
   ] },
   { dir: 'out', w: () => word('Team Gear', 'Balls'), description: 'Game and practice balls', plan: [[4, 1800]], f: 1.05, lines: [
     [4, 10, 'Practice balls — six dozen', 640, 'Card', 'Larchwood Sports Supply'],
@@ -343,7 +343,7 @@ const PLAN = [
     [4, 14, 'Bases and home plates', 1240, 'Cheque 2205', 'Larchwood Sports Supply'],
   ] },
   { dir: 'out', w: () => word('Admin', 'Insurance'), description: 'Club insurance', plan: [[3, 2400]], f: 0.95, lines: [
-    [3, 4, 'Club insurance — annual premium', 2380, 'E-Transfer', 'Northgate Sport Insurance'],
+    [3, 4, 'Club insurance — annual premium', 2380, 'E-transfer', 'Northgate Sport Insurance'],
   ] },
   { dir: 'out', w: () => word('Team Gear', 'Jerseys'), description: 'Uniforms — jerseys', plan: [[3, 4200]], f: 0.92, lines: [
     [3, 21, 'Jerseys — U9 to U15', 3980, 'Cheque 2203', 'Pinewood Team Wear'],
@@ -352,15 +352,15 @@ const PLAN = [
     [3, 21, 'Team hats', 745, 'Cheque 2204', 'Pinewood Team Wear'],
   ] },
   { dir: 'out', w: () => word('Tournaments', 'Officials'), description: 'Tournament umpires', plan: [[6, 900], [10, 900]], f: 0.85, lines: [
-    [6, 14, 'Spring Invitational — umpires', 880, 'E-Transfer', 'Kestrel Bay Umpires Association'],
-    [10, 18, 'Fall Classic — umpires', 1270, 'E-Transfer', 'Kestrel Bay Umpires Association'],
+    [6, 14, 'Spring Invitational — umpires', 880, 'E-transfer', 'Kestrel Bay Umpires Association'],
+    [10, 18, 'Fall Classic — umpires', 1270, 'E-transfer', 'Kestrel Bay Umpires Association'],
   ] },
   { dir: 'out', w: () => word('Tournaments', 'Misc'), description: 'Tournament supplies and awards', plan: [[6, 300], [10, 300]], f: 1.1, lines: [
     [6, 13, 'Spring Invitational — ribbons and trophies', 235, 'Card', 'Larchwood Sports Supply'],
     [10, 14, 'Fall Classic — ribbons and water', 175, 'Card', 'Larchwood Sports Supply'],
   ] },
   { dir: 'out', w: () => word('Training', 'Coaching Clinics'), description: 'Coaching clinics', plan: [[4, 900]], f: 0.9, lines: [
-    [4, 20, 'Coach certification clinic — six coaches', 900, 'E-Transfer', null],
+    [4, 20, 'Coach certification clinic — six coaches', 900, 'E-transfer', null],
   ] },
   { dir: 'out', w: () => word('Admin', 'Software'), description: 'Registration software', plan: [[1, 600]], f: 0.95, lines: [
     [1, 12, 'Registration software — annual', 540, 'Card', null],

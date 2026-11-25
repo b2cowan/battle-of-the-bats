@@ -8,7 +8,7 @@
  * string a person can read lives here so a words pass touches one file.
  *
  * ⚖ ONE SPELLING (AGENCY_RULES, 2026-08-24): the methods are the product's one list
- * (`DUES_PAYMENT_METHOD_LABEL`: "E-Transfer", never "e-Transfer"); a request's decision is
+ * (`DUES_PAYMENT_METHOD_LABEL`: "E-transfer"); a request's decision is
  * Approved · Declined · Reversed on both sides (the stored `denied` is an identifier, not a word);
  * the directions are the coach's own "To club" / "From club"; the clock is never printed here.
  *
@@ -34,7 +34,7 @@ export function methodWord(m: string | null | undefined): string | null {
   return DUES_PAYMENT_METHOD_LABEL[m as DuesPaymentMethod] ?? m;
 }
 
-/** "E-Transfer 4471" · "Cheque 2210" · "Cash" — how it came, as one quiet detail. */
+/** "E-transfer 4471" · "Cheque 2210" · "Cash" — how it came, as one quiet detail. */
 export function howItCame(method: string | null | undefined, reference: string | null | undefined): string | null {
   const word = methodWord(method);
   const ref = reference?.trim() || null;

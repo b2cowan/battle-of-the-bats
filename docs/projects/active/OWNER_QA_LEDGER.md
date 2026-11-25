@@ -28898,3 +28898,18 @@ Committed 2026-11-25, ahead of the walk (owner: "yes commit now").
 
 **Left out (pinned by tests):** the five-open cap window, a crafted sign-up post refused on the server, the refused share images and calendar feed, a logo whose bytes are not the image it claims, a lost answer after the club was made.
 <!-- /§568 -->
+
+
+## §569 · Board Ready Stage 6 · Part 4b · One spelling for e-transfer — **labels and the starts of sentences read "E-transfer", inside a sentence "e-transfer" (method words in a sentence read lowercase), on the coach, club, house league and tournament money screens and their help**
+<!-- §569 -->
+**Walk published 2026-11-25.** [Interactive walk](https://claude.ai/artifact/Lnmcr3g9BvxYPspTSgxKpe) (walks A–D, 30 steps; one owner call, the lowercase method words) · [repository HTML](BOARD_READY_STAGE6_P4B_ETRANSFER_WALK.html). Mig 537 (data only) on dev (owner’s yes, 2026-11-25). Plan: `BOARD_READY_PLAN.md` §5 Stage 6 (Part 4b step 2).
+
+**Where:** `http://localhost:3000`. **Sign in:** `uat-club-treasurer@uat-rep-club.local`, `uat-club-coach-13aaa@uat-rep-club.local`, `uat-club-owner@uat-rep-club.local` (password `UATPassword2026!`); `league-owner@dev.local` / `devpass123`.
+
+**Walks:** A the treasurer’s bill and ledger (9) · B the coach’s Club page and help (8) · C house league fees (6) · D season setup, the shared tournament payment window and help (7).
+
+**Left out:** families’ pages and emails (the same sentence builder, pinned by tests); closed-year ledger lines keep the old spelling by design; the public site’s sponsors door waits for the old list’s removal.
+
+**✅ PASSED 2026-11-25, 30 of 30** (owner paste-back; A 9/9, B 8/8, C 6/6, D 7/7; no notes came back). The one owner call, whether every payment method reads lowercase inside a sentence, came back **not answered**: it is not ruled, and the build stands as walked (lowercase). Next: the commit at the owner's word.
+Committed 2026-11-25 as two commits (owner: "commit the sweep and the data change as two commits").
+<!-- /§569 -->

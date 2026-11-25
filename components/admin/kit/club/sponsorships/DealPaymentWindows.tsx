@@ -15,7 +15,7 @@ import { Callout, ClubSection, RepChip, repKit } from '../RepKit';
 import { DayField, Facts, MethodField, ReasonQuestion, TextField } from '../money/MoneyKit';
 import ck from '../ClubKit.module.css';
 import { DEAL_WORDS as D } from '@/lib/club-sponsorship-deal-words';
-import { DEAL_METHOD_LABEL, paymentHow, refundDay, refundedTotal, refundLeft, refundTaxPart, type DealPayment, type DealRefund } from '@/lib/club-sponsor-invoice';
+import { paymentHow, refundDay, refundedTotal, refundLeft, refundTaxPart, type DealPayment, type DealRefund } from '@/lib/club-sponsor-invoice';
 import { cardLabel, money, REFUND_WORDS as RW_ROOT } from '@/lib/online-payment-words';
 import { CARD_REFUND_WORDS } from '@/lib/house-league-money-words';
 import { clockOf } from '@/lib/league-card-refunds';
@@ -74,7 +74,7 @@ export function RecordPaymentWindow({ url, business, number, owing, today, onClo
       <div className={css.form}>
         <TextField id="deal-pay-amount" label={D.deal.recordAmount} required value={amount} onChange={setAmount} hint={D.deal.recordOwing(owing)} maxLength={12} />
         <DayField id="deal-pay-on" label={D.deal.recordDate} value={on} max={today} onChange={setOn} />
-        <MethodField id="deal-pay-how" label={D.deal.recordHow} value={method} onChange={setMethod} labels={DEAL_METHOD_LABEL} />
+        <MethodField id="deal-pay-how" label={D.deal.recordHow} value={method} onChange={setMethod} />
         <TextField id="deal-pay-ref" label={D.deal.recordRef} value={reference} onChange={setReference} hint={D.deal.recordRefHint} maxLength={60} />
         <TextField id="deal-pay-note" label={D.deal.recordNote} value={note} onChange={setNote} maxLength={300} />
         {error && <p className={css.error} role="alert">{error}</p>}

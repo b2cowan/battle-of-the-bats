@@ -1,6 +1,8 @@
 import { test, describe } from 'node:test';
 import assert from 'node:assert/strict';
 import { SEEDED_PAYMENT_METHODS, mergePaymentMethods } from '../../lib/payment-methods.ts';
+import { paymentMethodInSentence } from '../../lib/types.ts';
+import { methodInBrackets } from '../../lib/house-league-money-words.ts';
 
 /**
  * The whole point of the payment-method list is that a club stops accumulating three spellings of
@@ -23,6 +25,7 @@ describe('payment methods — the club vocabulary', () => {
     const transfer = options.filter(o => o.name.toLowerCase() === 'e-transfer');
     assert.equal(transfer.length, 1, 'three casings must not become three options');
     assert.equal(transfer[0].count, 14);
+    assert.equal(transfer[0].name, 'E-transfer', 'values saved the old way are offered in the one spelling');
   });
 
   test('a used value matching a seed is shown in the SEED casing, not the typed one', () => {
@@ -81,5 +84,20 @@ describe('payment methods — the club vocabulary', () => {
       SEEDED_PAYMENT_METHODS.map(s => ({ name: s.toUpperCase(), count: 1 })),
     );
     assert.equal(options.length, SEEDED_PAYMENT_METHODS.length);
+  });
+});
+
+describe('a method word inside a sentence (owner 2026-11-22: "e-transfer" in a sentence)', () => {
+  test('only the leading method word is lowercased, an old saved spelling included; a reference stays as typed', () => {
+    assert.equal(paymentMethodInSentence('E-transfer CA4471'), 'e-transfer CA4471');
+    assert.equal(paymentMethodInSentence('E-Transfer 4471'), 'e-transfer 4471');
+    assert.equal(paymentMethodInSentence('Card, Visa •••• 4242'), 'card, Visa •••• 4242');
+    assert.equal(paymentMethodInSentence('RBC bill payment'), 'RBC bill payment');
+  });
+
+  test('the brackets after a date read the same for hand and online payments', () => {
+    assert.equal(methodInBrackets('etransfer'), ' (e-transfer)');
+    assert.equal(methodInBrackets('online_card'), ' (online, card)');
+    assert.equal(methodInBrackets('other'), '');
   });
 });

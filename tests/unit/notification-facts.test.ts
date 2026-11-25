@@ -111,10 +111,10 @@ describe('the fifteen money notices (C): one wording per kind, rows from the sha
     card_refund_still_enrolled: [LW.enrolled({ amount: '$150.00', to: 'Visa •••• 4242', day: 'Nov 8', childFirst: 'Henry', owing: '$150.00' })],
     online_payment_not_recorded: [notRecordedNotice({ amount: '$150.00', bank: false, day: 'Nov 8', payer: 'Pat Doe', forWhat: 'Henry Doe', reason: 'the registration isn’t accepted', team: false })],
     online_payment_over: [OW.notice({ amount: '$450.00', receiptNo: '1042', day: 'Nov 8', extra: '$50.00', bank: false, whole: false })],
-    team_money_sent: [CLUB_MONEY_NOTICE.sent({ teamName: 'Ridge 12U', amount: 216, what: 'Winter dome, 2 of 4', sentOn: '2026-11-08', how: 'E-Transfer 4471' })],
+    team_money_sent: [CLUB_MONEY_NOTICE.sent({ teamName: 'Ridge 12U', amount: 216, what: 'Winter dome, 2 of 4', sentOn: '2026-11-08', how: 'E-transfer 4471' })],
     club_bill_arrived: [SCHEDULE_NOTICES.bill({ orgName: 'Riverdale', teamName: 'Ridge 12U', cents: 86_400, scheduleName: 'Winter dome', first: { installmentNumber: 1, amount: 216, dueDate: '2026-11-15' } as never, payments: 4 })],
     club_schedule_review: [SCHEDULE_NOTICES.review({ orgName: 'Riverdale', scheduleName: 'Winter dome', teamName: 'Ridge 12U', slots: 8, billCents: 86_400, replyBy: '2026-11-20' })],
-    club_payment_not_received: [FAMILY_HANDOFF_COACH_WORDS.admin({ team: 'Ridge 12U', child: 'Henry', amount: '$150.00', method: 'E-Transfer', receivedDay: 'Nov 8' })],
+    club_payment_not_received: [FAMILY_HANDOFF_COACH_WORDS.admin({ team: 'Ridge 12U', child: 'Henry', amount: '$150.00', method: 'E-transfer', receivedDay: 'Nov 8' })],
     club_hand_back_asked: [
       H.bellAsked({ teamName: 'Ridge 12U', count: 4, cents: 43_200, scheduleName: 'Winter dome', first: '2026-11-08', last: '2026-11-29' }),
       H.bellAskedLate({ teamName: 'Ridge 12U', count: 4, cents: null, scheduleName: 'Winter dome', first: '2026-11-08', last: '2026-11-29' }),
@@ -164,9 +164,9 @@ describe('the fifteen money notices (C): one wording per kind, rows from the sha
     assert.equal(teamCard.facts.next, 'Send the money another way, then record the refund.');
   });
   it('a club notice that can email keeps the one fact its email needs in the one line (Stage 2 review)', () => {
-    const notReceived = FAMILY_HANDOFF_COACH_WORDS.admin({ team: 'Ridge 12U', child: 'Henry', amount: '$150.00', method: 'E-Transfer', receivedDay: 'Nov 8' });
+    const notReceived = FAMILY_HANDOFF_COACH_WORDS.admin({ team: 'Ridge 12U', child: 'Henry', amount: '$150.00', method: 'E-transfer', receivedDay: 'Nov 8' });
     assert.match(notReceived.body, /e-transfer, Nov 8/, 'which payment: how, and the day');
-    assert.equal(CLUB_MONEY_NOTICE.sent({ teamName: 'Ridge 12U', amount: 150, what: 'Winter dome', sentOn: '2026-11-08', how: 'E-Transfer' }).body.includes('E-Transfer'), true);
+    assert.equal(CLUB_MONEY_NOTICE.sent({ teamName: 'Ridge 12U', amount: 150, what: 'Winter dome', sentOn: '2026-11-08', how: 'E-transfer' }).body.includes('E-transfer'), true);
   });
   it('every sender of a kind passes facts to its one entry — no sender writes its own paragraph', () => {
     const landing = readCode('lib/online-payment-landing.ts');

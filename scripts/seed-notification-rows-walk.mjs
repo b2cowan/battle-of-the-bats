@@ -96,7 +96,7 @@ add('owner', 'card_refund_still_enrolled', LW.enrolled({ amount: '$150.00', to: 
 add('owner', 'card_refund_whose', LW.whose({ children: ['Henry', 'Sam', 'Ella'], total: '$450.00', receiptNo: '1042' }), admin);
 add('owner', 'online_payment_not_recorded', notRecordedNotice({ amount: '$150.00', bank: false, day: 'Nov 8', payer: 'Pat Doe', forWhat: 'Henry Doe', reason: 'the registration isn’t accepted', team: false }), admin);
 add('owner', 'online_payment_over', OW.notice({ amount: '$450.00', receiptNo: '1042', day: 'Nov 8', extra: '$50.00', bank: false, whole: false }), admin);
-add('owner', 'club_payment_not_received', FAMILY_HANDOFF_COACH_WORDS.admin({ team: 'Ridge 12U', child: 'Henry', amount: '$150.00', method: 'E-Transfer', receivedDay: 'Nov 8' }), admin);
+add('owner', 'club_payment_not_received', FAMILY_HANDOFF_COACH_WORDS.admin({ team: 'Ridge 12U', child: 'Henry', amount: '$150.00', method: 'E-transfer', receivedDay: 'Nov 8' }), admin);
 add('owner', 'club_hand_back_asked', H.bellAsked({ teamName: 'Ridge 12U', count: 4, cents: 43_200, scheduleName: 'Winter dome', first: '2026-11-08', last: '2026-11-29' }), admin);
 add('owner', 'club_hand_back_unasked', H.bellUnasked({ name: 'Riley Chen', count: 4, scheduleName: 'Winter dome', first: '2026-11-08', cents: 43_200 }), admin);
 add('owner', 'club_schedule_league_changes', LEAGUE_ADMIN_NOTICE.notice({
@@ -124,7 +124,7 @@ add('owner', 'house_league_time_given', {
 }, admin, { timeChange: { schedule: 'Winter dome', season: 'Spring 2027', grows: false, blocks: [{ label: 'Gives', hours: '1 hour a week', range: 'Mar 13 – Apr 3', lines: ['Sat · 11:00 a.m.–12:00 p.m. · Diamond A'] }] } });
 
 // ── The coach's bell ─────────────────────────────────────────────────────────────────────────────────────────────────
-add('coach', 'team_money_sent', CLUB_MONEY_NOTICE.sent({ teamName: 'Ridge 12U', amount: 216, what: 'Winter dome, 2 of 4', sentOn: '2026-11-08', how: 'E-Transfer 4471' }), teamLink);
+add('coach', 'team_money_sent', CLUB_MONEY_NOTICE.sent({ teamName: 'Ridge 12U', amount: 216, what: 'Winter dome, 2 of 4', sentOn: '2026-11-08', how: 'E-transfer 4471' }), teamLink);
 add('coach', 'club_bill_arrived', SCHEDULE_NOTICES.bill({ orgName: 'Riverdale', teamName: 'Ridge 12U', cents: 86_400, scheduleName: 'Winter dome', first: { installmentNumber: 1, amount: 216, dueDate: '2026-11-15' }, payments: 4 }), teamLink);
 add('coach', 'club_schedule_review', SCHEDULE_NOTICES.review({ orgName: 'Riverdale', scheduleName: 'Winter dome', teamName: 'Ridge 12U', slots: 8, billCents: 86_400, replyBy: '2026-11-20' }), teamLink);
 add('coach', 'club_hand_back_answered', H.bellAnswered({ answer: 'accepted', late: false, scheduleName: 'Winter dome', count: 4, creditCents: 43_200, payCents: 10_800, teamName: 'Ridge 12U',

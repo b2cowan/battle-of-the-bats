@@ -26,8 +26,8 @@ import {
   type ClubDeal, type DealState, type OfferReason, stopsFollowingBusiness,
 } from './club-sponsorship-deals';
 import type { PackageItem, SponsorPlaceKind } from './club-sponsorships';
-import { creditNoteNumber, DEAL_METHOD_LABEL, invoiceStanding, type DealPayment, type DealRefund } from './club-sponsor-invoice';
-import type { DuesPaymentMethod } from './types';
+import { creditNoteNumber, invoiceStanding, type DealPayment, type DealRefund } from './club-sponsor-invoice';
+import { DUES_PAYMENT_METHOD_LABEL, paymentMethodInSentence, type DuesPaymentMethod } from './types';
 import { blocksRefund, disputeOutcome } from './online-payment-dispute';
 
 // ── Reading deals ──────────────────────────────────────────────────────────────────────────────────
@@ -71,7 +71,7 @@ function dealOf(r: DealRow, done: ClubDeal['done'], payments: readonly DealPayme
       }
       : null,
     revisedOn: r.revised_on, invoiceEmailedAt: r.invoice_emailed_at, paidOn: r.paid_on,
-    paidHow: last ? DEAL_METHOD_LABEL[last.method].toLowerCase() : null,
+    paidHow: last ? paymentMethodInSentence(DUES_PAYMENT_METHOD_LABEL[last.method]) : null,
     paidAmount: paid,
     withdrawn: r.withdrawn_at ? { at: r.withdrawn_at, byName: r.withdrawn_by_name ?? '', reason: r.withdrawn_reason ?? '' } : null,
     done, linkVersion: r.link_version,

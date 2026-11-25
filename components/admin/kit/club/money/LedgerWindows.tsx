@@ -356,7 +356,7 @@ export function AddEntryWindow({ book, q, orgSlug, words, fiscal = null, canMove
         label={entryType === 'income' ? 'Paid by' : 'Paid to'} />
       <div className={moneyKit.pair}>
         <MethodField id="ae-method" label="How it was paid" value={method} onChange={setMethod} required={false} />
-        <TextField id="ae-ref" label="Reference" value={reference} onChange={setReference} placeholder="Cheque or E-Transfer number" />
+        <TextField id="ae-ref" label="Reference" value={reference} onChange={setReference} placeholder="Cheque or e-transfer number" />
       </div>
       <StatusField id="ae-status" value={status} onChange={setStatus} hint={statusHint} />
       <label className={ck.field} htmlFor="ae-notes">

@@ -149,7 +149,7 @@ async function readOnItsWay(orgId: string, bookIds: readonly string[], date: str
 }
 
 /** A suspect as Find lists it: the engine's line, its book, whether it is an online payment, and how it came (the
- *  ledger's own phrase — "Cheque 214", "E-Transfer", `online_card` — worded by the screen; BC3a). */
+ *  ledger's own phrase — "Cheque 214", "E-transfer", `online_card` — worded by the screen; BC3a). */
 type SuspectLine = BankLine & { bookId: string; online: boolean; method: string | null };
 
 /** Posted lines of these books dated after `after` through `to` (the suspects' window), as the engine reads them. */

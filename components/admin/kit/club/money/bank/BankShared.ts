@@ -39,7 +39,7 @@ export const notCountedOf = (code: string | null): 'stripe_down' | 'unlisted' | 
 
 export type Figure = NonNullable<AccountView['figure']>;
 
-/** How a line came, as the Ledger words it ("Cheque 214", "E-Transfer", "Online, card"), or null when it doesn't say. */
+/** How a line came, as the Ledger words it ("Cheque 214", "E-transfer", "Online, card"), or null when it doesn't say. */
 export const howWord = (method: string | null | undefined): string | null => (method ? paymentMethodWord(method) : null);
 
 /** A typed amount in cents ("$5,402.10", "-12.40", "($50.00)"), or null — the engine's own parser. */
