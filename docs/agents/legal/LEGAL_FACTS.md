@@ -203,9 +203,10 @@ registered with ServiceOntario 2026-11-06** (renewal date still to be read off t
   settled before one is sent (`BUSINESS_DECISIONS.md` ~L3537).
 
 ## What does NOT exist
-- No cookie notice and no published subprocessor list (the Privacy Policy's §6 is the only one live). A list and data
-  terms for clubs are **drafted 2026-11-18** (`drafts/SUBPROCESSOR_LIST.md`, `drafts/DATA_TERMS_FOR_ORGANIZATIONS.md`),
-  not approved or published.
+- No cookie notice. ~~No published subprocessor list or data terms.~~ **Corrected 2026-11-24 (found stale by the Club
+  Website Stage 0 rulings review):** both are published in code, the subprocessor list as version 2026-11-23
+  (`lib/legal-documents/subprocessors/`) and the Data Terms as versions 2026-11-23 and 2026-11-24
+  (`lib/legal-documents/data-terms/`); the release history records when each reached production.
 - ~~No published Terms of Service or privacy policy; no legal links.~~ **Superseded 2026-11-17 (Stage 6 step 6.7):** both are
   published in code as version 2026-11-17 (frozen files in `lib/legal-documents/`, the switch `LEGAL_PAGES_PUBLISHED` on), with
   the links in the site footer, the account menu and page, and the sign-in and sign-up cards, and acceptance at every door. **On

@@ -35,6 +35,17 @@ The Stage 9 walk's fixture gave its 15 games a date, a time and a TYPED field na
 - ✅ **R2 — The spreadsheet import matches and creates; it saves no more text.** A name the file carries that isn't one of the
   tournament's diamonds is matched to one or created at the review step, before anything is saved.
 - ✅ **R3 — A small project of its own**, after the Stage 9 walk.
+- ⏳ **R4 — REQUESTED 2026-11-24, not yet scoped or ruled: every schedule, not only tournaments.** The owner, ruling Club
+  Website Stage 0 ask A6 (`CLUB_WEBSITE_ENHANCEMENTS_PLAN.md` §7): *"we already are working on stopping this from happening
+  in tournaments, can we ensure that all schedules that enter locations populate official venues? not necessarily in this
+  project but something to work on separately so we don't have to worry about exceptions like this."* What it reopens:
+  §2's "the coach and house-league Where box is untouched" line below. That line rests on Club Tier Ask 13 (2026-10-08),
+  which ruled ONE shape for every Where field and kept typed words "that say they aren't checked"; it did not rule that
+  typed words must stay. The shape questions the drawing has to answer before anyone builds: (1) a rep coach's away game
+  at another club's park, or a standalone coach with no club, becomes a **team place** added from where they are, not a
+  club venue; (2) a tryout day at a school, the same; (3) a coach cannot add a club venue, so who may; (4) the old typed
+  house league and rep games, listed once to link (A6's "link both" is the interim). Club Website's A6 = A stays the
+  answer until this ships.
 
 ## 2 · What stays as it is (decided in this plan, from the reasons in the old one)
 

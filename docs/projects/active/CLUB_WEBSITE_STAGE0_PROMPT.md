@@ -30,6 +30,18 @@ Their answers:
 
 > (not in yet)
 
+Other feedback from the meeting (the owner, 2026-11-24, after the demo; not an answer to the three questions):
+
+> The club is glad of scores and schedules for all rep teams and house league. It also wants to promote its wins,
+> tournament trips and the like through its site. It already uses the large social platforms, Instagram among them.
+> The owner's question from it: what are the options for an enhanced social feed, how items posted by coaches and club
+> admins are organized and categorized (media in a drop location, or an easy way to embed Instagram), where the images
+> go, and how they are collected, collated and selected for the site.
+
+This became **idea 11** in the plan (§5 and §5.1, foundation F8, calls C5–C9), PROPOSED. It is **not on the published
+drawings**. A session that picks this up draws it into the Stage 0 page before the asks are ruled (plan §6, the note
+under the ladder), after `/legal` has read the items in plan §9.
+
 **How to use it:** one club is one data point. Use an answer to test the end state (does a page they rely on have a
 home; is a thing families ask for answered in one look), never to redraw the product around one club. The roadmap's
 standing rule holds: nothing public points at one club's asks. If the slot is still empty when Part 2 is done, publish

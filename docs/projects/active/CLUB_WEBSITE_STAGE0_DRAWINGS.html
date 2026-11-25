@@ -239,13 +239,49 @@ dialog h4{margin:0 0 8px;font:700 16px var(--f-text)}
 dialog .k{font:700 11px var(--f-text);letter-spacing:.06em;text-transform:uppercase;color:var(--doc-soft);margin-top:10px}
 dialog button.close{float:right;border:0;background:none;color:var(--doc-soft);font-size:22px;cursor:pointer;line-height:1}
 dialog .go{margin-top:12px}
+/* idea 11: the club's feed */
+.thumbs{display:grid;grid-template-columns:repeat(5,1fr);gap:6px}
+.th2{aspect-ratio:1;border-radius:6px;background:linear-gradient(160deg,#6E8B5A,#A9B98A 55%,#D8C9A0);position:relative}
+.th2.v2{background:linear-gradient(160deg,#5D7F8C,#9FB9B4)}
+.th2.v3{background:linear-gradient(160deg,#7A5C8C,#B9A4C4)}
+.win .askm{position:absolute;z-index:3}
+.win.w39 .wf .s{flex:1 1 100%}
+.win.w39 .wf .s + .b{margin-left:auto}
+.win td.nw{white-space:nowrap}
+.th2.add{background:#fff;border:1px dashed #CFC8BA;display:grid;place-items:center;color:#6F675B;font:600 24px/1 var(--f-text)}
+.th2.on{outline:2px solid #3F5512;outline-offset:1px}
+.th2.on::after{content:"✓";position:absolute;right:4px;top:4px;width:20px;height:20px;border-radius:4px;background:#3F5512;color:#fff;display:grid;place-items:center;font:700 12px/1 var(--f-text)}
+.th2.off::after{content:"";position:absolute;right:4px;top:4px;width:20px;height:20px;border-radius:4px;border:2px solid #fff;background:rgba(255,255,255,.4)}
+.win .lnk{min-height:44px;display:flex;align-items:center;font:600 14px/1.3 var(--f-text)}
+.win.w39 .track button{min-height:44px;padding:0 16px}
+.fr .l44{font-size:14px;line-height:1.4;color:var(--soft)}
+.fr .l44 .ul{display:inline-flex;align-items:center;min-height:44px}
+.win .pl.n{background:#F6F5F2;color:#4E473D}
+.win .pl{white-space:nowrap}
+.fr .dots{display:flex;gap:6px;justify-content:center}
+.fr .dots i{width:6px;height:6px;border-radius:50%;background:var(--line2)}
+.fr .dots i.on{background:var(--text)}
+.fr .igh{border:1px solid var(--line);border-radius:8px;background:#fff;padding:16px;display:flex;flex-direction:column;gap:10px;align-items:flex-start}
+.fr .rad{display:flex;align-items:center;gap:10px;min-height:44px;font:500 16px/1.3 var(--f-text)}
+.fr .rad i{width:20px;height:20px;border-radius:50%;border:2px solid #8C8475;flex:0 0 auto}
+.fr .ig{border:1px dashed #9AA4AE;border-radius:4px;background:#fff;color:#262626;font:14px/1.3 var(--f-text);overflow:hidden}
+.fr .igt{display:flex;align-items:center;gap:10px;padding:10px 12px}
+.fr .igt i{width:32px;height:32px;border-radius:50%;background:#C9CFD6;flex:0 0 auto}
+.fr .igt span{margin-left:auto;background:#0095F6;color:#fff;border-radius:6px;padding:6px 10px;font:600 12px/1 var(--f-text)}
+.fr .igp{aspect-ratio:1;background:linear-gradient(160deg,#8A7A5A,#C9B98A 55%,#E4D8B8);position:relative}
+.fr .igb{padding:10px 12px;display:flex;flex-direction:column;gap:8px}
+.fr .igb .vm{color:#0095F6;font-weight:600;border-bottom:1px solid #EFEFEF;padding-bottom:8px}
+.fr .igb .ic{display:flex;gap:12px}
+.fr .igb .ic i{width:22px;height:22px;border:2px solid #262626;border-radius:50%}
+.fr .igb .lk{font-weight:600}
+.fr .igb .cm{color:#8E8E8E;border-top:1px solid #EFEFEF;padding-top:8px}
 .legend{display:flex;gap:8px;flex-wrap:wrap;align-items:center;font-size:12px;color:var(--doc-soft)}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 </style>
 
 <header class="top"><div class="wrap">
   <h1>Club Website Enhancements · Stage 0 · the end state</h1>
-  <p>Every public club page drawn once, as it stands when all ten ideas are in. Before = today's capture at true size; after = the frame, also true size. Nothing here is built. Click any tag on a frame to read what it is; purple tags jump to the ask they belong to. Reviewed by /ux, /design, /legal and /marketing before you saw it. Written 2026-11-24.</p>
+  <p>Every public club page drawn once, as it stands when all ten ideas are in. <b>Tab 11 is new:</b> an eleventh idea from the Milton Bats meeting, the club's own feed, with ten asks of its own. Before = today's capture at true size; after = the frame, also true size. Nothing here is built. Click any tag on a frame to read what it is; purple tags jump to the ask they belong to. Reviewed by /ux, /design, /legal and /marketing before you saw it. Written 2026-11-24.</p>
 </div></header>
 <nav class="tabs" aria-label="Sections"><div class="wrap" role="tablist">
   <button role="tab" data-tab="walk">1 · The walk</button>
@@ -258,11 +294,12 @@ dialog .go{margin-top:12px}
   <button role="tab" data-tab="board">8 · Big Board</button>
   <button role="tab" data-tab="kit">9 · Share kit</button>
   <button role="tab" data-tab="doors">10 · Admin doors</button>
-  <button role="tab" data-tab="trackp">11 · Track P</button>
-  <button role="tab" data-tab="teams">12 · Teams &amp; tryouts</button>
-  <button role="tab" data-tab="found">13 · Foundations</button>
-  <button role="tab" data-tab="ladder">14 · Ladder</button>
-  <button role="tab" data-tab="asks">15 · Asks</button>
+  <button role="tab" data-tab="feed">11 · The club's feed</button>
+  <button role="tab" data-tab="trackp">12 · Track P</button>
+  <button role="tab" data-tab="teams">13 · Teams &amp; tryouts</button>
+  <button role="tab" data-tab="found">14 · Foundations</button>
+  <button role="tab" data-tab="ladder">15 · Ladder</button>
+  <button role="tab" data-tab="asks">16 · Asks</button>
 </div></nav>
 
 <main><div class="wrap">
@@ -326,7 +363,7 @@ dialog .go{margin-top:12px}
           <div class="row chev"><div class="rt">Annual general meeting</div><div class="rs">Coming up · Tue, Jan 13 at 7:00 p.m. · Kestrel Bay Library</div></div>
         </div>
       </div>
-      <div class="sec dim"><button class="mk same tr" data-note="The Teams section as shipped. Its layout is not decided here: Team structure's Stage 0 draws it (tab 12).">Unchanged</button><h5>Teams</h5><div class="card"><div class="tile">Kestrel Bay U13 Ospreys</div></div></div>
+      <div class="sec dim"><button class="mk same tr" data-note="The Teams section as shipped. Its layout is not decided here: Team structure's Stage 0 draws it (tab 13).">Unchanged</button><h5>Teams</h5><div class="card"><div class="tile">Kestrel Bay U13 Ospreys</div></div></div>
       <div class="sec"><button class="mk new tr" data-note="Idea 10's 'Email me when it opens' (ask A10). A house league with no live season shows today's 'Past seasons and results' row. The end state adds a line with the date the admin typed for the next opening ('Registration opens Mar 1'), and one button. The window and its words are on tab 9. Stage 9.">New · S9</button><button class="askm tr2" data-ask="A10">A10</button>
         <h5>House league</h5>
         <div class="list"><div class="row"><div class="rt">2027 House League</div><div class="rs">Registration opens Mar 1</div><div style="margin-top:8px"><span class="btn o">Email me when it opens</span></div><div class="rs" style="margin-top:4px">One email when registration opens. Nothing else.</div></div><div class="row chev"><div class="rt">Past seasons and results</div></div></div>
@@ -540,7 +577,7 @@ dialog .go{margin-top:12px}
     <li>The photo, the sponsor line and Today are the only additions. Each is absent when it has nothing.</li>
     <li>A rep game at a closed place is <b>marked</b>, never moved: the schedule belongs to the team. The coach gets the email and moves it. <button class="askm" data-ask="A5">A5</button></li>
     <li>Coach names show only for coaches who switched their own name on, as shipped.</li>
-    <li>Whether the team appears on the Teams page, and in which group, is Team structure's to draw (tab 12).</li>
+    <li>Whether the team appears on the Teams page, and in which group, is Team structure's to draw (tab 13).</li>
   </ul>
   <h4 style="margin-top:16px">House league team page: only an option <button class="askm" data-ask="C2">C2</button></h4>
   <p>There is no public house league team page (owner 2026-11-22). If C2 changed that, the page would be the rep team page's twin: name, "Sponsored by", Today, and that team's division games, nothing else. The recommendation is to keep the ruling. The division's "Sponsored by" line and About already carry a team's sponsor.</p>
@@ -875,7 +912,265 @@ dialog .go{margin-top:12px}
 </tbody></table>
 </section>
 
-<!-- ============ 11 TRACK P ============ -->
+<!-- ============ 11 THE CLUB'S FEED (idea 11) ============ -->
+<section class="tab" id="feed">
+<h2 class="t">The club's feed: photos and wins, from the people who were there</h2>
+<p class="lead">Added after the Milton Bats meeting (2026-11-24). The club wants to promote its wins and tournament trips on its site, and it already posts to Instagram. This is idea 11. It is news (idea 4) and photos (idea 7) with three things neither had: more hands, one place to gather, and a pick between what is sent and what the public sees. Five steps, one per button. Drawn on Kestrel Bay so it reads with tab 5. <code>/legal</code> read it before it was drawn; <code>/ux</code>, <code>/design</code> and <code>/marketing</code> read the drawing, and what they changed is under step 1.</p>
+<div class="sub" role="group" aria-label="Steps of the feed">
+  <button data-state="feed-send" aria-pressed="true">1 · A coach sends</button>
+  <button data-state="feed-pick" aria-pressed="false">2 · The club picks</button>
+  <button data-state="feed-site" aria-pressed="false">3 · On the site</button>
+  <button data-state="feed-ig" aria-pressed="false">4 · An Instagram post</button>
+  <button data-state="feed-yes" aria-pressed="false">5 · A family's yes</button>
+</div>
+
+<!-- 1 · a coach sends -->
+<div class="state on" id="feed-send"><div class="pair">
+  <div class="spec"><span class="cap">Coaches Portal · phone · opened from a finished game, a tournament, or the team's home</span>
+  <div class="win w39"><div class="wh">Send to the club <span class="x">×</span></div><div class="wb">
+    <span class="track" role="group" aria-label="What to send" style="align-self:flex-start"><button aria-pressed="true">Photos</button><button aria-pressed="false">A link</button></span>
+    <div><div class="wl">From</div><div class="in dd">Sat, Nov 21 · beat Whitecliff 6–4</div><div class="sm">Kestrel Bay U13 Ospreys · Fall Classic</div></div>
+    <div><div class="wl">Photos *</div><div class="thumbs"><span class="th2"></span><span class="th2 v2"></span><span class="th2 v3"></span><span class="th2"></span><span class="th2 add">+</span></div><div class="sm">4 chosen. Tap one to remove it. Up to 12 at a time.</div></div>
+    <div><div class="wl">Who is in them</div><div class="in">Everyone on the roster · 13 players</div><div class="lnk"><u>Choose players</u></div></div>
+    <div class="opt"><span class="cb on"></span><div>Only our team is in these photos *<div class="sm">Nobody from the other team, and no photos taken in a change room.</div></div></div>
+    <div class="lnk"><u>Add a note for the club</u></div>
+  </div><div class="wf"><span class="s">Sending publishes nothing. Kestrel Bay's admins choose what shows on the club's site.</span><span class="b">Cancel</span><span class="b lime">Send 4 photos</span></div>
+  <button class="mk new" style="top:-12px;right:0" data-note="New in the Coaches Portal: today a coach can hand the club money requests and schedule hand-backs, and nothing else. The window opens already knowing the team, the game, the date and the score, so nobody types a label. Four things to do: choose photos, say who is in them (the whole roster unless the coach says otherwise, because the coach was there and the admin was not), tick that only this team is in them, send. Send stays off until the tick is on. Sending publishes nothing. Each picture is re-saved at web size on arrival, which removes a phone's hidden location data. Still to draw in Stage 3's own session, from captures of the Coaches Portal: where the door sits on each screen, and the sending state on poor signal (progress, retry, the selection kept). Stage 3.">New · S3</button><button class="askm" style="top:-12px;right:84px" data-ask="C6">C6</button></div>
+  <span class="cap" style="margin-top:14px">The other side of the switch · a link to a post already made</span>
+  <div class="win w39"><div class="wb" style="padding-top:18px">
+    <span class="track" role="group" aria-label="What to send" style="align-self:flex-start"><button aria-pressed="false">Photos</button><button aria-pressed="true">A link</button></span>
+    <div><div class="wl">Link to the post *</div><div class="in">https://www.instagram.com/p/DCx4kQ2vL9a/</div><div class="sm" style="color:#2C6A2A;font-weight:600">Instagram will show this post.</div></div>
+    <div class="lnk"><u>Add a note for the club</u></div>
+  </div><div class="wf"><span class="s">Sending publishes nothing. Kestrel Bay's admins choose what shows on the club's site.</span><span class="b">Cancel</span><span class="b lime">Send the link</span></div></div>
+  </div>
+
+  <div class="spec"><span class="cap">After sending · the team's home · the coach hears back</span>
+    <div class="toast">4 photos sent to Kestrel Bay. Nothing is public yet.</div>
+    <div class="win w39" style="margin-top:10px"><div class="wb" style="padding-top:18px">
+      <div class="wl">Sent to the club</div>
+      <div class="grp">
+        <div class="gr"><div>Fall Classic · 4 photos<div class="sm">On the site · 2 used in News · Nov 23</div></div></div>
+        <div class="gr"><div>Nov 28 · beat Harbour 5–2 · 3 photos<div class="sm">With the club since Nov 28</div></div><span class="n"><span class="pl w">Waiting</span></span></div>
+        <div class="gr"><div>Team photo day · 1 photo<div class="sm">Posted. The photo shows once 1 more family says yes.</div></div><span class="n"><span class="pl w">Waiting</span></span></div>
+        <div class="gr"><div>Whitecliff Invitational · 6 photos<div class="sm">Not used · "Players from the other team are in most of these." <u>Send different photos</u></div></div></div>
+      </div>
+      <div class="sm">12 of 13 families have said yes to photos on the club's site. 1 has not answered; Kestrel Bay can ask them.</div>
+    </div>
+    <button class="mk new" style="top:-12px;right:0" data-note="The coach sees what became of everything they sent, and who each wait is on: the club has not looked yet, or a family has not answered. The amber pill marks only the rows still waiting. A row the club did not use carries the club's reason and a way to send others. Counts only: the coach is never shown which family said no here. A rep player the coach typed in has no parent in the product while the family app is off, so that wait does not end by itself (ask A13). Stage 3.">New · S3</button></div>
+    <span class="cap" style="margin-top:14px">Choose players</span>
+    <div class="win w39"><div class="wb" style="padding-top:18px"><div class="wl">Who is in these photos</div><div class="grp">
+      <div class="gr"><span class="cb on"></span><div>A. Bell</div></div>
+      <div class="gr"><span class="cb on"></span><div>J. Costa</div></div>
+      <div class="gr"><span class="cb"></span><div>R. Diaz</div></div>
+      <div class="gr"><div class="sm">10 more players, all in ▸</div></div>
+    </div><div class="sm">Only the families of the players you tick are asked for a yes.</div></div></div>
+  </div>
+
+  <div class="why"><h4>Why the coach, and why from a game</h4><ul>
+    <li><b>They were there.</b> Ten seconds on the phone that took the photos. No shared folder, no email to the registrar.</li>
+    <li><b>It files itself.</b> The schedule already knows which team played where and the score. Sent from a game, a photo arrives with its team, its event, its date and its sender. Nobody types a category.</li>
+    <li><b>Sending publishes nothing.</b> The club picks what shows (step 2). <button class="askm" data-ask="C6">C6</button></li>
+    <li><b>The coach says who is in the photo.</b> The whole roster unless they say otherwise. Only those players' families need to have said yes. <button class="askm" data-ask="C8">C8</button></li>
+    <li><b>A link works the same way.</b> A coach who already posted to Instagram switches to A link and pastes it. It is checked on the spot and goes to the same shelf (step 4).</li>
+    <li>A coach's team with no club has no club site, so it has no Send to the club.</li>
+  </ul>
+  <h4 style="margin-top:16px">What the three reviews changed</h4><ul>
+    <li><code>/ux</code>: Photos and A link became one switch, not two fields in one form. The note is folded away. "Waiting" now says who it waits on. The coach, not the admin, says who is in a photo. The club got a Take down and a way to change an answer. An Instagram post that shows players became its own ask. <button class="askm" data-ask="A16">A16</button></li>
+    <li><code>/design</code>: the pick lost three fields. Photos stack on a post, with no dots to tap. Every link on a phone frame is 44 px tall. Instagram's box is marked as not ours.</li>
+    <li><code>/marketing</code>: 18 strings, chiefly "Sending publishes nothing", "Nothing is public yet", and the family's question saying plainly that anyone can see the photo.</li>
+  </ul></div>
+</div></div>
+
+<!-- 2 · the club picks -->
+<div class="state" id="feed-pick"><div class="pair">
+  <div class="spec"><span class="cap">Club admin · Public site › Photos · computer</span>
+  <div class="win w8"><div class="wh">Photos <span class="pl w" style="margin-left:10px">3 waiting</span></div><div class="wb">
+    <table><thead><tr><th>From</th><th>Team</th><th>Sent by</th><th>May it show?</th><th></th></tr></thead><tbody>
+    <tr><td>Fall Classic · Nov 21<div class="sm">4 photos · beat Whitecliff 6–4</div></td><td class="nw">U13 Ospreys</td><td class="nw">D. Okafor<div class="sm">Head coach</div></td><td>12 of 13 families said yes<div class="sm">1 has not answered</div></td><td><u>Open</u></td></tr>
+    <tr><td>Whitecliff Invitational · Nov 14–15<div class="sm">6 photos</div></td><td class="nw">U11 Herons</td><td class="nw">M. Tran<div class="sm">Assistant coach</div></td><td>Every family said yes</td><td><u>Open</u></td></tr>
+    <tr><td>A link to an Instagram post · Nov 22<div class="sm">instagram.com/p/…</div></td><td class="nw">U15 Kites</td><td class="nw">P. Iyer<div class="sm">Head coach</div></td><td>You check it when you add it</td><td><u>Open</u></td></tr>
+    </tbody></table>
+    <div class="grp">
+      <div class="gr gh">Earlier · 14</div>
+      <div class="gr"><div>Team photo day · U13 Ospreys<div class="sm">Posted Nov 19 · the photo is waiting for 1 family</div></div><span class="n"><u>Take down</u></span></div>
+      <div class="gr"><div>Harbour Park clean-up · no team<div class="sm">Posted Nov 11 · showing</div></div><span class="n"><u>Take down</u></span></div>
+      <div class="gr"><div class="sm">12 more ▸ · A photo nobody uses is removed 12 months after it was sent.</div></div>
+    </div>
+  </div>
+  <button class="mk new" style="top:-12px;right:0" data-note="One shelf for the whole club, grouped the way the photos arrived: by event and team. The waiting count is the amber pill, as everywhere, and it also shows on the Public site row of the club's menu so somebody opens it. 'May it show?' is read live from the families' answers. Earlier holds what was posted or not used; Take down acts at once and is where a parent's request ends up. The same shelf feeds the team photo, a News post and the trophy case: four places a picture can show, not four uploads. The 12-month clock is a recommendation (C9). Stage 3.">New · S3</button><button class="askm" style="top:-12px;right:84px" data-ask="C9">C9</button><button class="askm" style="top:-12px;right:118px" data-ask="C7">C7</button></div></div>
+
+  <div class="spec"><span class="cap">Open · the pick</span>
+  <div class="win"><div class="wh">Fall Classic · U13 Ospreys <span class="x">×</span></div><div class="wb">
+    <div><div class="wl">Photos to use *</div><div class="thumbs four"><span class="th2 on"></span><span class="th2 v2 on"></span><span class="th2 v3 off"></span><span class="th2 off"></span></div><div class="sm">2 of 4 chosen.</div></div>
+    <div class="grp">
+      <div class="gr"><div>In them: everyone on the roster, 13 players<div class="sm">D. Okafor said so when sending.</div></div><span class="n"><u>Change</u></span></div>
+      <div class="gr"><span class="pl w">Waiting</span><div>12 of 13 families said yes. 1 has not answered.<div class="sm">You can post now. The words show at once; the photos show once that family says yes. <u>Ask that family</u></div></div></div>
+      <div class="gr"><span class="pl b">Can't show</span><div>Drawn for the other case: a family said no.<div class="sm">These photos can't show while that player is in them. Change who is in them, or don't use them.</div></div></div>
+    </div>
+    <div><div class="wl">Where *</div>
+      <div class="opt"><span class="cb on"></span><div>A News post<div class="sm">On News, the home page and the U13 Ospreys' page.</div></div></div>
+      <div class="opt"><span class="cb"></span><div>The U13 Ospreys' team photo<div class="sm">Replaces the one there now.</div></div></div></div>
+    <div class="grp"><div class="gr"><div>Kestrel Bay U13 Ospreys won the Fall Classic U13 division<div class="sm">They beat Whitecliff 6–4 in the final.</div></div><span class="n"><u>Edit</u></span></div></div>
+    <div class="opt"><span class="cb on"></span><div>I've looked at each photo, and only our team is in it *</div></div>
+  </div><div class="wf"><span class="s">Photos show only while every family in them says yes. No name is ever shown with a photo.</span><span class="b">Don't use</span><span class="b lime">Post</span></div>
+  <button class="mk new" style="top:-12px;right:0" data-note="The pick has two decisions: which photos, and where. Who is in them arrives from the coach and can be changed. The words arrive written from the game's record in fixed sentence patterns (no AI); Edit opens the title and details, with the line 'This page is public: don't put a child's name here.' Post stays off until a photo, a place and the tick are chosen. If the site already posted this win by itself, the photos join that post; there is never a second one. 'Don't use' asks for one line, which the coach sees. No category is typed: team, event, date and sender came with the photos. Stage 3 (the shelf) and Stage 4 (the post).">New · S3–S4</button><button class="askm" style="top:-12px;right:98px" data-ask="C8">C8</button></div></div>
+
+  <div class="why"><h4>What the pick decides</h4><ul>
+    <li><b>Which photos, and where.</b> Two decisions. Everything else arrives filled in.</li>
+    <li><b>Words now, photos when allowed.</b> A post is never held up by an answer. Its words show, and its photos join once every family in them has said yes. Until then the News row shows no picture.</li>
+    <li><b>One no does not blank a team.</b> Leave that player out of the photo and the others' answers are the only ones that count. <button class="askm" data-ask="C8">C8</button></li>
+    <li><b>Categories nobody types.</b> Team, event, date and sender come with the photo, and the shelf is grouped by them.</li>
+    <li><b>Take down</b> is on every posted item and acts at once.</li>
+    <li><b>Who may do this.</b> Today only the owner or an admin can change the site. A club's social volunteer is usually neither. <button class="askm" data-ask="C7">C7</button></li>
+    <li>The Post news window on tab 10 stays for a post that came from nobody's phone. Its photo rule (no player can be recognized) is the rule for any photo filed under no team.</li>
+  </ul></div>
+</div></div>
+
+<!-- 3 · on the site -->
+<div class="state" id="feed-site"><div class="pair">
+  <div class="spec"><span class="cap">After · News · the same list as tab 5, now with pictures</span>
+  <div class="fr">
+    <div class="bar"><div class="logo">KB</div><div><div class="cn">Kestrel Bay Softball Association</div><div class="tg">House league softball for Kestrel Bay</div></div><div class="si">Sign in</div></div>
+    <div class="tabrow"><span>Home</span><span>Teams</span><span>House league</span><span>Tournaments</span><span class="on">News</span></div>
+    <div class="pg">
+      <div class="sec"><button class="mk res tr" data-note="Tab 5's News list, unchanged in shape: newest first, three-line rows, a thumbnail when a post has a picture showing. What is new is where the pictures come from (the shelf) and the Instagram row. A post whose photos are still waiting for a family shows as words only, with no picture and no photo count. No category, no filter, no likes, no comments.">Restyled · S4</button><button class="askm" style="top:-12px;right:112px" data-ask="A15">A15</button>
+        <div class="list">
+          <div class="post"><div class="dt">Mon, Nov 23</div><div class="hd">Kestrel Bay U13 Ospreys won the Fall Classic U13 division</div><div class="bd">They beat Whitecliff 6–4 in the final. · 2 photos</div><div class="th" style="background:linear-gradient(160deg,#6E8B5A,#A9B98A 55%,#D8C9A0)"></div></div>
+          <div class="post nopic"><div class="dt">Sun, Nov 22</div><div class="hd">U15 Kites at the provincial banquet</div><div class="bd">A post on Instagram</div></div>
+          <div class="post"><div class="dt">Mon, Nov 16</div><div class="hd">U11 Herons at the Whitecliff Invitational</div><div class="bd">Two wins and a tie over the weekend. · 6 photos</div><div class="th" style="background:linear-gradient(160deg,#7A5C8C,#B9A4C4)"></div></div>
+          <div class="post"><div class="dt">Wed, Nov 11</div><div class="hd">New backstops at Harbour Park</div><div class="bd">Diamonds 1 and 2 are ready for spring.</div><div class="th"></div></div>
+          <div class="row chev"><div class="rt">Show older posts</div></div>
+        </div></div>
+    </div>
+  </div></div>
+
+  <div class="spec"><span class="cap">After · one post, with photos from the shelf</span>
+  <div class="fr">
+    <div class="bar"><div class="logo">KB</div><div><div class="cn">Kestrel Bay Softball Association</div><div class="tg">House league softball for Kestrel Bay</div></div><div class="si">Sign in</div></div>
+    <div class="tabrow"><span>Home</span><span>Teams</span><span>House league</span><span>Tournaments</span><span class="on">News</span></div>
+    <div class="pg"><div class="sec"><button class="mk new tr" data-note="The win post Milton asked for. Its photos are filed under the team, so they show only while every family of the players in them says yes, checked every time the page is served. If one answer changes to no, the photos leave at once and the words stay. Photos stack down the page; nothing to swipe. The share preview is the club's ordinary one with the post's title, never the photo: a copy cannot be recalled. Stage 4.">New · S4</button><button class="askm tr2" data-ask="C8">C8</button>
+      <div class="meta">Mon, Nov 23</div><div class="h1">Kestrel Bay U13 Ospreys won the Fall Classic U13 division</div>
+      <p style="margin:0;font-size:16px;line-height:1.55">They beat Whitecliff 6–4 in the final.</p>
+      <div class="photo"><div class="pin">The team with the trophy</div></div>
+      <div class="photo" style="background:linear-gradient(160deg,#5D7F8C,#9FB9B4)"><div class="pin">The team on the diamond</div></div>
+      <div class="list door"><div class="row chev"><div class="rt">Kestrel Bay U13 Ospreys</div><div class="rs">Schedule and results</div></div></div>
+      <div class="l44">Is a photo of you or your child here, and you'd like it taken down? <span class="ul">Tell the club</span></div>
+    </div></div>
+  </div></div>
+
+  <div class="spec"><span class="cap">After · the U13 Ospreys' page · its own posts</span>
+  <div class="fr">
+    <div class="pg"><div class="sec"><button class="mk new tr" data-note="By team, with no filter to learn: a team's page lists the posts filed under that team, newest first, two at most, then 'More from this team' into News. Absent when the team has none. This is the 'organized by team' answer. Stage 4.">New · S4</button>
+      <h5>From this team</h5>
+      <div class="list">
+        <div class="post"><div class="dt">Mon, Nov 23</div><div class="hd">Kestrel Bay U13 Ospreys won the Fall Classic U13 division</div><div class="bd">They beat Whitecliff 6–4 in the final. · 2 photos</div><div class="th" style="background:linear-gradient(160deg,#6E8B5A,#A9B98A 55%,#D8C9A0)"></div></div>
+        <div class="post nopic"><div class="dt">Sat, Oct 3</div><div class="hd">Tryouts for the 2027 U13 Ospreys are open</div><div class="bd">Sign up by Oct 20.</div></div>
+        <div class="row chev"><div class="rt">More from this team</div></div>
+      </div></div></div>
+  </div>
+  <div class="why" style="max-width:392px;margin-top:8px"><h4>What a family sees</h4><ul>
+    <li><b>No new page and no new tab.</b> A post is the unit: one photo or several. Photos live in News, on the home page's News part, and on their team's page. <button class="askm" data-ask="A15">A15</button></li>
+    <li><b>No names, ever.</b> Not in the title, the words, the photo or its description.</li>
+    <li><b>A way to ask.</b> One line on every post with a photo, pointing at the club's contact. The club's Take down acts at once.</li>
+    <li><b>A club with no Instagram</b> gets the same lively site. That is what the shelf is for.</li>
+  </ul></div></div>
+</div></div>
+
+<!-- 4 · an Instagram post -->
+<div class="state" id="feed-ig"><div class="pair">
+  <div class="spec"><span class="cap">Club admin · Public site › Photos › Add an Instagram post · computer</span>
+  <div class="win"><div class="wh">Add an Instagram post <span class="x">×</span></div><div class="wb">
+    <div><div class="wl">Link to the post *</div><div class="in">https://www.instagram.com/p/DCx4kQ2vL9a/</div><div class="sm" style="color:#2C6A2A;font-weight:600">Instagram will show this post.</div></div>
+    <div><div class="wl">Title *</div><div class="in">U15 Kites at the provincial banquet</div><div class="sm">For the News list. Instagram gives a site no title or picture to list.</div></div>
+    <div><div class="wl">Team</div><div class="in dd">U15 Kites</div><div class="sm">1 family on the U15 Kites has said no to photos. <u>See who</u></div></div>
+    <div class="opt"><span class="cb on"></span><div>This is our club's own post, and nobody in it has said no to photos *</div></div>
+    <div class="opt"><span class="cb"></span><div>Show its caption<div class="sm">Leave this off if the caption names a child.</div></div></div>
+  </div><div class="wf"><span class="s">Shows in News. A visitor taps to load it from Instagram.</span><span class="b">Cancel</span><span class="b lime">Add post</span></div>
+  <button class="mk new" style="top:-12px;right:0" data-note="The same window opens, filled in, when a coach sent the link. The link is checked with Instagram when it is pasted: a post from a private account, an age-restricted one, or one whose owner does not allow it on other sites is refused in words, and nothing is added. We keep the link, never a copy of the picture. Our photo rule cannot see inside a post that lives on Instagram, so the admin is shown how many families on that team said no and confirms the post before adding it (A16). Kept links are checked again from time to time and a post that has gone from Instagram is hidden. Facebook posts ride the same Meta service; Stage 4 confirms it before the window names Facebook. Stage 4.">New · S4</button><button class="askm" style="top:-12px;right:84px" data-ask="C5">C5</button><button class="askm" style="top:-12px;right:118px" data-ask="A16">A16</button></div>
+  <span class="cap" style="margin-top:14px">When Instagram will not show it · Add post stays off</span>
+  <div class="win"><div class="wb" style="padding-top:18px"><div><div class="wl">Link to the post *</div><div class="in" style="border-color:#A3261C">https://www.instagram.com/p/DCx1a8…</div><div class="sm" style="color:#A3261C;font-weight:600">Instagram won't show this post. It may be from a private account, or its owner doesn't allow it to be shown on other sites.</div></div></div></div>
+  </div>
+
+  <div class="spec"><span class="cap">After · the post, before a visitor taps (recommended)</span>
+  <div class="fr">
+    <div class="bar"><div class="logo">KB</div><div><div class="cn">Kestrel Bay Softball Association</div><div class="tg">House league softball for Kestrel Bay</div></div><div class="si">Sign in</div></div>
+    <div class="tabrow"><span>Home</span><span>Teams</span><span>House league</span><span>Tournaments</span><span class="on">News</span></div>
+    <div class="pg"><div class="sec"><button class="mk new tr" data-note="Nothing reaches Instagram until the visitor asks. That is how map links already work in the product (nothing goes to a map service unless you click), and it keeps our published privacy promises true as they are written. One tap loads the post in place. Stage 4.">New · S4</button><button class="askm tr2" data-ask="A12">A12</button>
+      <div class="meta">Sun, Nov 22</div><div class="h1">U15 Kites at the provincial banquet</div>
+      <div class="igh"><div class="rt">A post on Instagram</div><div class="meta">Showing this post loads it from Instagram. Instagram will see that you opened it.</div><div class="btn o" style="width:100%">Show this post</div><div class="l44"><span class="ul">Open it on Instagram</span></div></div>
+      <div class="list door"><div class="row chev"><div class="rt">Kestrel Bay U15 Kites</div><div class="rs">Schedule and results</div></div></div>
+    </div></div>
+  </div></div>
+
+  <div class="spec"><span class="cap">After the tap · Instagram draws the box</span>
+  <div class="fr">
+    <div class="pg"><div class="sec"><button class="mk new tr" data-note="Everything inside the dashed box is Instagram's own: its layout, its buttons, its links back to Instagram, including its like and comment controls. Our own pages offer none of those; this is another company's box on the club's page, and whether that is acceptable is ask A16. We cannot restyle it and Instagram's rules say not to. It is 320 to 658 px wide, so it fits a phone. Its height is not known until it loads, so the page keeps a space for it. The caption is left off unless the admin turned it on.">New · S4</button><button class="askm tr2" data-ask="A16">A16</button>
+      <div class="rs">Instagram's own box. We do not draw or style what is inside it.</div>
+      <div class="ig">
+        <div class="igt"><i></i><b>kestrelbaysoftball</b><span>View profile</span></div>
+        <div class="igp"></div>
+        <div class="igb"><span class="vm">View more on Instagram</span><div class="ic"><i></i><i></i><i></i></div><div class="lk">42 likes</div><div class="cm">Add a comment…</div></div>
+      </div>
+    </div></div>
+  </div>
+  <div class="why" style="max-width:392px;margin-top:8px"><h4>Is this something Instagram offers? Yes.</h4><ul>
+    <li><b>It is official.</b> Instagram has a service that takes a post's link and returns the box that shows it. Since June 2026 it needs no approval from Meta and no account with them.</li>
+    <li><b>What works:</b> photos, carousels, videos and Reels from a public account. <b>What does not:</b> Stories, private accounts, age-restricted accounts, accounts that do not allow it.</li>
+    <li><b>One at a time.</b> There is no official way to show a club's whole feed. That needs the club to connect a professional account and Meta to approve us; parked. <button class="askm" data-ask="C5">C5</button></li>
+    <li><b>What can go wrong:</b> the post is deleted later and the box goes blank. We re-check kept links and hide a dead one.</li>
+    <li><b>The visitor's privacy</b> is why the tap is recommended. Loading at once is the other option. <button class="askm" data-ask="A12">A12</button></li>
+    <li><b>Our photo rule cannot reach inside it.</b> A family that said no on our form could still be in the club's Instagram post. <button class="askm" data-ask="A16">A16</button></li>
+  </ul></div></div>
+</div></div>
+
+<!-- 5 · a family's yes -->
+<div class="state" id="feed-yes"><div class="pair">
+  <div class="spec"><span class="cap">The question · house league registration and the tryout sign-up · phone</span>
+  <div class="fr">
+    <div class="bar"><div class="logo">KB</div><div><div class="cn">Kestrel Bay Softball Association</div><div class="tg">House league softball for Kestrel Bay</div></div><div class="si">Sign in</div></div>
+    <div class="pg"><div class="sec"><button class="mk new tr" data-note="Its own question, with neither answer chosen for the family, and a sign-up goes through on either answer. A regulator's finding in November 2025 went against a swimming pool that made a photo waiver a condition of lessons; the fix it accepted was an opt-in choice like this one. The family must pick one of the two, so the club is never left guessing; picking No costs nothing. The parent sees their own child's first name, as on the rest of their form. Asked every season. Stage 3, with the new Privacy Policy and Data Terms sentences published first.">New · S3</button><button class="askm tr2" data-ask="C8">C8</button>
+      <div class="card" style="display:flex;flex-direction:column;gap:10px">
+        <div class="rt">Photos on Kestrel Bay's website *</div>
+        <div class="meta">May Kestrel Bay show photos that include Avery on its public website? Anyone can see them. We never show a name with a photo.</div>
+        <div><div class="rad"><i></i>Yes, Kestrel Bay may show them</div><div class="rad"><i></i>No, please don't</div></div>
+        <div class="meta">Choose either one. It has no effect on Avery's place. You can change your answer any time: <span class="ul">tell Kestrel Bay</span> and the photos come down.</div>
+      </div></div></div>
+  </div></div>
+
+  <div class="spec"><span class="cap">Club admin · the U13 Ospreys · who has answered · computer</span>
+  <div class="win w8"><div class="wh">Photos on the site · U13 Ospreys <span class="x">×</span></div><div class="wb">
+    <table><thead><tr><th>Player</th><th>Answer</th><th>From</th><th></th></tr></thead><tbody>
+    <tr><td class="nw">A. Bell</td><td class="nw">Yes</td><td>A parent, on the tryout sign-up · Sep 3</td><td class="nw"><u>Change</u></td></tr>
+    <tr><td class="nw">J. Costa</td><td class="nw">Yes</td><td>Recorded by the club · K. Shaw, Nov 10 · paper form</td><td class="nw"><u>Change</u></td></tr>
+    <tr><td class="nw">M. Ferris</td><td class="nw">No</td><td>A parent, on the tryout sign-up · Sep 5</td><td class="nw"><u>Change</u></td></tr>
+    <tr><td class="nw">R. Diaz</td><td class="nw"><span class="pl w">No answer</span></td><td>Added by the coach, with no sign-up</td><td class="nw"><u>Record an answer</u></td></tr>
+    <tr><td colspan="4" class="sm">9 more players, all yes ▸</td></tr>
+    </tbody></table>
+    <div class="sm">A no, or no answer, keeps every photo that player is in off the site.</div>
+  </div><div class="wf"><span class="s">Changing an answer to no takes those photos down at once.</span><span class="b">Close</span></div>
+  <button class="mk new" style="top:-12px;right:0" data-note="Where a club sees the answers and changes one on a family's word. Change asks first: 'Photos with A. Bell come down now.' Today a family cannot change any answer in the product and nothing records a withdrawal: that is a finding, and this window is the first place that fixes it. A rep player the coach typed in has no parent in the product while the family app is off, so their answer is 'no answer' unless the club records one. A recorded answer says who recorded it, when and from what. Stage 3.">New · S3</button><button class="askm" style="top:-12px;right:84px" data-ask="A13">A13</button></div></div>
+
+  <div class="why"><h4>What the legal read set</h4><ul>
+    <li><b>A child's photo is sensitive information.</b> The yes must be the parent's own choice, asked on its own, never a condition of signing up.</li>
+    <li><b>Everyone in the photo, not everyone on the team.</b> The rule counts the players the coach says are in it.</li>
+    <li><b>Only this club's players.</b> A photo with the other team's children is not shown.</li>
+    <li><b>Asked each season.</b> A yes covers that season's photos for as long as they show, until it changes. <button class="askm" data-ask="A14">A14</button></li>
+    <li><b>Never in a poster, a share image or a sponsor's placement.</b> A copy cannot be recalled.</li>
+    <li><b>Our own published promise comes first.</b> The Privacy Policy and the Data Terms both say children's information "is never shown on public pages". A new version of each is published before any player photo is public, and it is most likely a change clubs must be told about.</li>
+  </ul></div>
+</div>
+<h3 class="t">Where the question is asked</h3>
+<table class="doc"><thead><tr><th>Who</th><th>Where they answer</th><th>Today</th></tr></thead><tbody>
+<tr><td>A house league family</td><td>At registration, every season</td><td>The sign-up form can already hold a club's own yes or no question. This one is built in, so its words and its rules are the same for every club.</td></tr>
+<tr><td>A rep family that signed up for a tryout</td><td>On the tryout sign-up</td><td>Three ticks are there now. This is a fourth question, on its own.</td></tr>
+<tr><td>A rep player the coach typed in</td><td>Nowhere, until the family app is switched on</td><td>No answer means no. Whether the club may record a family's written answer is ask <button class="askm" data-ask="A13">A13</button>.</td></tr>
+<tr><td>A family changing its mind</td><td>Tells the club; the admin changes it, and the photos come down at once</td><td>Nothing like it exists. No answer of any kind can be changed in the product today.</td></tr>
+</tbody></table>
+<div class="callout warn"><b>One thing to stop suggesting.</b> The house league help text gives "Photo release" as an example of a document a family must tick to register. A required tick is the pattern the regulator found against. Once the built-in question exists, the help text stops suggesting it.</div>
+</div>
+</section>
+
+<!-- ============ 12 TRACK P ============ -->
 <section class="tab" id="trackp">
 <h2 class="t">Track P: a prospect's club, made before the meeting <span class="mk res" style="font-size:12px">Waits on C3</span></h2>
 <p class="lead">Part 1 found that "claim it" cannot work from today's prospect seed. A prospect's club lives on dev (staging reads dev), and a real sign-up happens on production. So there are two shapes. Prospect clubs can be made <b>on production</b>, unlisted, and claimed in place. Or they can be made on dev, with one <b>copied into production</b> when it is claimed. Drawn here as the first. <button class="askm" data-ask="C3a">C3a</button> <button class="askm" data-ask="C3b">C3b</button></p>
@@ -925,9 +1220,9 @@ dialog .go{margin-top:12px}
 </div>
 </section>
 
-<!-- ============ 13 FOUNDATIONS ============ -->
+<!-- ============ 14 FOUNDATIONS ============ -->
 <section class="tab" id="found">
-<h2 class="t">The seven foundations: where each really starts</h2>
+<h2 class="t">The eight foundations: where each really starts</h2>
 <table class="doc"><thead><tr><th>Foundation</th><th>What exists</th><th>What is missing</th><th>What its stage adds</th></tr></thead><tbody>
 <tr><td><b>F1</b> The home's moving part</td><td>A fixed section order with Open now locked first; sections hide when empty.</td><td>Anything that changes by day.</td><td>The games part ("Today" / "Latest results") and News, in a fixed place after Open now; Open now capped at two rows. The games part is one component, reused on the season and team pages. Stage 1 (News in Stage 4).</td></tr>
 <tr><td><b>F2</b> The club's games, read once</td><td>Three public rules, one per program: rep, public-link teams; house league, published and sent; tournaments, published divisions. A staff calendar read with none of them.</td><td>A public read across the three.</td><td>One read that <b>calls</b> the three rules and never copies them, with a guard test that fails if it touches the staff calendar. Stage 1.</td></tr>
@@ -935,35 +1230,37 @@ dialog .go{margin-top:12px}
 <tr><td><b>F4</b> Photos and consent</td><td>Nothing: no consent question and no team photo; the banner is computer-only by ruling.</td><td>The question, each family's answer, a photo's state.</td><td>The question at registration and team sign-up. Consent kept per photo and checked every time the page is served. News photos with no recognizable players. The Data Terms and privacy policy wording first. Stage 3, <code>/legal</code> first. The phone banner only if A9 says so.</td></tr>
 <tr><td><b>F5</b> Sponsor places</td><td>One list; each sponsor picks its places; three places exist (home strip, About, "Sponsored by" on house league).</td><td>Team, Today, share image and Big Board places; any count.</td><td>Four places and a season report, counted per place with nothing about a visitor. Stage 5 (the Big Board place in Stage 7).</td></tr>
 <tr><td><b>F6</b> How fast a score arrives</td><td>Tournament pages check every 30 seconds (paused in a hidden tab). House league pages never refresh. The old instant path was deleted and a test keeps it out. The open games read is still there.</td><td>Refresh on house league pages; anything faster.</td><td>Stage 1 gives house league pages the 30-second refresh. Stage 6 is a choice: a faster check while a game is live (no new exposure), or instant updates over the open games read (only after <code>/db</code> says what that read lets anyone see).</td></tr>
+<tr><td><b>F8</b> The club's photo shelf <span class="mk new" style="cursor:default">New</span></td><td>Every picture has its own upload and its own rules: club logo, banner, sponsor logo, a coach's team crest. None is a photo of people. Only the sponsor logo is re-saved; the banner and logos are stored as sent, location data included.</td><td>One place a club's pictures live, each knowing who sent it, its team and event, whether it may show, and where it shows. A way for a coach to hand the club anything but money and schedule items.</td><td>The shelf, the coach's Send to the club, the club's Photos list and pick, every picture re-saved on arrival. Ideas 4, 7, 8 and 10 become places a shelf picture can show. Stage 3 (tab 11).</td></tr>
 <tr><td><b>F7</b> A club made before it buys</td><td>A hand-run seed for two named clubs, dev only, held by four guards.</td><td>Any way to claim; any way to make one without code.</td><td>Track P, shaped by C3b: prospect clubs on production, or a copy at claim.</td></tr>
 </tbody></table>
 </section>
 
-<!-- ============ 14 LADDER ============ -->
+<!-- ============ 15 LADDER ============ -->
 <section class="tab" id="ladder">
 <h2 class="t">The ladder, corrected by what the walk found</h2>
 <p class="lead">Ordered by dependency and the cost of redoing work. No dates. Every stage after Stage 0 is its own drawing session from these frames, then <code>/ux</code> and <code>/design</code>, the owner's asks, a build, review, <code>/docs</code> and one walk. <button class="askm" data-ask="C4">C4</button></p>
+<div class="callout"><b>Where idea 11 (the club's feed, tab 11) sits: it has no stage of its own.</b> Its shelf, the family's photo question and the coach's Send to the club land in <b>Stage 3</b>. Its public half lands in <b>Stage 4</b>: the win post with photos, a team's own posts, and an Instagram post from a pasted link. That is where a club first sees what Milton asked for. The made-for-Instagram image rides <b>Stage 9</b>. Stages 3 and 4 depend on Stage 1 only, so they could run ahead of field status with no rework; that is option C on the ask. <button class="askm" data-ask="C4">C4</button></div>
 <table class="doc"><thead><tr><th>Stage</th><th>Covers</th><th>Corrected by Part 1 and the reviews</th></tr></thead><tbody>
 <tr><td><b>0</b> This page</td><td>The walk, the end state, the asks</td><td>Done when ruled.</td></tr>
 <tr><td><b>1</b> The games part, with game day as its first tenant (idea 2, part of 9)</td><td>F1, F2; Open now capped; Today / Latest results; a running tournament as one row; house league pages refresh</td><td>The read must call the three programs' rules. Rep games will be thin, and the frame is drawn so that reads well. House league refresh moves here from "faster scores".</td></tr>
 <tr><td><b>2</b> Field status (idea 3)</td><td>F3; Close a place and Reopen; the strip; the reason line on every page</td><td>It is the Rainout widened to a place, not a third tool. It needs only the typed-games count first. Tournament games ride the Rain delay, so it does not wait on the real-venues project.</td></tr>
-<tr><td><b>3</b> The site's face (idea 7)</td><td>F4; the consent question; team photo; news photo rule</td><td><code>/legal</code> first, and the Data Terms and privacy policy wording. The phone banner only if A9 reverses the 2026-10-20 ruling. Before news, so a post is built with its photo.</td></tr>
-<tr><td><b>4</b> News (idea 4)</td><td>The News part; the club's own posts and the fixed-sentence kinds; the News page and <code>/news</code></td><td>The <code>/news</code> forward-after-finish bug is fixed here, or now as a chore on the owner's word.</td></tr>
+<tr><td><b>3</b> The photo shelf, then the site's face (idea 7, and the first half of <b>idea 11</b>)</td><td>F4, F8; the family's photo question and a way to change the answer; the coach's Send to the club; the club's Photos list, the pick and Take down; the team photo as the shelf's first user. The largest stage on the ladder: its own drawing session decides one build pass or two.</td><td><code>/legal</code> first, and the Data Terms and privacy policy wording. The phone banner only if A9 reverses the 2026-10-20 ruling. Before news, so a post is built with its photo. <b>Widened by idea 11:</b> the photo shelf (F8) comes first, with the coach's Send to the club and the club's pick; the team photo is its first user. Built as first drawn, this stage would have made three separate uploads and the feed a fourth.</td></tr>
+<tr><td><b>4</b> News, with the club's feed (idea 4, and the public half of <b>idea 11</b>)</td><td>The News part; the club's own posts and the fixed-sentence kinds; the News page and <code>/news</code>; a post with shelf photos; a team's own posts on its page; an Instagram post from a pasted link</td><td>The <code>/news</code> forward-after-finish bug is fixed here, or now as a chore on the owner's word. <b>Widened by idea 11:</b> a post carries shelf photos, a team's page lists its own posts, and a pasted Instagram or Facebook link shows as a post.</td></tr>
 <tr><td><b>5</b> Sponsors that prove themselves (idea 5)</td><td>F5; four new places; the season report</td><td>The tournament strip stays with its own project. The privacy policy gains one sentence.</td></tr>
 <tr><td><b>6</b> Scores that land faster (idea 9)</td><td>F6; rows slide when a final lands</td><td><b>Not a wait on <code>/db</code>.</b> It is a choice. A faster check while a game is live is recommended, because it adds no exposure; the alternative is instant updates over the open games read. It can run any time after Stage 1.</td></tr>
 <tr><td><b>7</b> The Big Board (idea 6)</td><td>The TV page</td><td>Needs Today, field status and the sponsor places. It does not need the instant path.</td></tr>
 <tr><td><b>8</b> Trophy case (idea 8)</td><td>The page, its About row and its admin door</td><td>Independent; late only because nothing waits on it.</td></tr>
-<tr><td><b>9</b> Share kit (idea 10)</td><td>Poster, social image, "Email me when it opens"</td><td>Last, so it carries the finished pages. Club share-preview images already exist; this reuses their maker. The email is built to anti-spam law (A10).</td></tr>
+<tr><td><b>9</b> Share kit (idea 10, and the last piece of <b>idea 11</b>)</td><td>Poster, social image, "Email me when it opens"; a win as a ready-made image for the club's own Instagram</td><td>Last, so it carries the finished pages. Club share-preview images already exist; this reuses their maker. The email is built to anti-spam law (A10). <b>Idea 11 adds:</b> a win as a ready-made image to download and post to the club's own Instagram, team-level, no player photo.</td></tr>
 <tr><td><b>P</b> Your club, already built (idea 1)</td><td>F7</td><td>Its real shape is C3b: prospect clubs on production, or a copy at claim. It starts on the owner's word (C3a).</td></tr>
 <tr><td><b>Outside</b></td><td>Teams page, the home's Teams section, Tryouts</td><td>Team structure draws them. This project asks only that the home's Teams section stays short.</td></tr>
 </tbody></table>
 </section>
 
-<!-- ============ 15 ASKS ============ -->
+<!-- ============ 16 ASKS ============ -->
 <section class="tab" id="asks">
 <h2 class="t">The asks</h2>
-<div class="mil" id="milton-line">Milton's answers are not in yet; rule after they are.</div>
-<p class="lead">Shape questions first, then the open calls C1–C4, then the ladder's order. The recommendation is always option A, in green. Nothing is ticked for you: an ask you skip pastes back as "not ruled". Tick, add a note if you like, and paste the block at the bottom back into the chat.</p>
+<div class="mil" id="milton-line">Milton's first feedback is in: it is tab 11, the club's feed. The three questions you asked in the room are not answered yet; rule after they are.</div>
+<p class="lead">Shape questions first, then the club's feed (idea 11, ten asks), then the open calls C1–C4, then the ladder's order. The recommendation is always option A, in green. Nothing is ticked for you: an ask you skip pastes back as "not ruled". Tick, add a note if you like, and paste the block at the bottom back into the chat.</p>
 <div id="asklist"></div>
 <h3 class="t">Paste-back</h3>
 <textarea id="paste" readonly aria-label="Paste-back summary"></textarea>
@@ -987,11 +1284,21 @@ var ASKS=[
  {g:"News, photos, sign-ups",id:"A9",t:"The banner photo on phones",q:"Idea 7 proposed it. It reverses 2026-10-20 ('phones leave it out'), and it would push Open now and Today about 140 px down a phone's first screen.",o:["A · Keep the ruling: the banner stays computer-only","B · Show it on phones too"],r:"The first phone screen of every home."},
  {g:"News, photos, sign-ups",id:"A10",t:"'Email me when it opens'",q:"/legal: a commercial message under anti-spam law, sent by the club. One email still needs the club's address and an unsubscribe.",o:["A · Build it as drawn on tab 9: the club named with its mailing address, one email with an unsubscribe, records kept, no confirmation email, rate-limited","B · As A, plus a confirmation email before the address is kept","C · Leave it out of idea 10"],r:"The quiet-day home; tab 9; one more email kind under the club's name."},
  {g:"News, photos, sign-ups",id:"A11",t:"What the trophy case holds",q:"The club may have wins the product never recorded (provincials, other clubs' tournaments).",o:["A · What the product recorded, plus rows the club adds, marked 'added by the club'","B · Only what the product recorded"],r:"The trophy page; its admin door."},
+ {g:"The club's feed (idea 11)",id:"C5",t:"C5 · Instagram on a club's page: how far",q:"Instagram officially lets a site show one public post from its link, with no approval from Meta. It has no official way to show a whole feed: that needs the club to connect a professional account and Meta to approve us.",o:["A · One post at a time from a pasted link, shown in News; connecting an account parked until a second club asks; no third-party feed widget","B · As A, and start now on connecting a club's account","C · Links to their accounts only, as today"],r:"Step 4 of tab 11; whether Meta's approval joins the work."},
+ {g:"The club's feed (idea 11)",id:"A12",t:"How an Instagram post loads",q:"Shown at once, Instagram's own script runs for every visitor to that page and Instagram sees them. /legal: no Canadian rule outside Quebec forbids it, but our privacy policy says we use no tracking cookies, and the site's audience includes children.",o:["A · Behind one tap, 'Show this post': nothing reaches Instagram until the visitor asks, and our published promises stay true as written","B · It loads at once: quicker to see; the privacy policy and the outside-services list are reworded first"],r:"Step 4; the privacy policy; what a Quebec club would need later."},
+ {g:"The club's feed (idea 11)",id:"A16",t:"An Instagram post that shows players",q:"Found by /ux. Our photo rule cannot see inside a post that lives on Instagram, so a family that said no on our form could still see their child on the club's site, inside the club's own Instagram post. Instagram's box also brings its own like and comment buttons, which our own pages never offer. /legal: the family's no was given for 'the club's public website', so it should hold here too.",o:["A · Show it, with the admin confirming two things when adding it: it is the club's own post, and nobody in it has said no to photos. The window shows how many families on that team said no","B · Never show the post on the club's page: a card that opens it on Instagram, and nothing else","C · Show it only when no player can be recognized in it"],r:"Step 4; whether a family's no means the same thing everywhere on the club's site."},
+ {g:"The club's feed (idea 11)",id:"C6",t:"C6 · Who sends, and who publishes",q:"Coaches are the people with the photos. Today only the owner or an admin can change the site.",o:["A · Coaches and team staff send photos or a link for their own team; nothing shows until the club picks it; the sender sees what became of it","B · As A, and a coach may also publish straight to their own team's page without the club"],r:"Steps 1 and 2; whether a post the club never read can be on the club's site."},
+ {g:"The club's feed (idea 11)",id:"C7",t:"C7 · A seat that can post and nothing else",q:"A club's social volunteer is usually not an admin. The owner can already grant single permissions to a member.",o:["A · Yes: one permission the owner grants, for News and Photos only; it sees the shelf and nothing of a family's record","B · No: the owner and admins only, as today"],r:"Who a club can hand this to; drawn with Team structure's people work so there is one set of permissions."},
+ {g:"The club's feed (idea 11)",id:"C8",t:"C8 · A recognizable child in a win photo",q:"A8 as drawn lets only the team photo show players; a news photo shows no recognizable player. The photo this club asked to post is a team with a trophy. /legal: sound if the yes is the parent's own opt-in choice and never a condition of signing up.",o:["A · A8's rule widens to any photo filed under a team: it shows only while every family of the players in it has said yes, checked each time; the coach says who is in it and the club can change that; only that team in the photo; a photo under no team shows no recognizable player; never in a poster, share image or sponsor placement","B · Keep A8 as drawn: the team photo only, so a win photo cannot run"],r:"Steps 2, 3 and 5; the new Privacy Policy and Data Terms sentences that must be published first."},
+ {g:"The club's feed (idea 11)",id:"A13",t:"Where a rep family's answer comes from",q:"A rep parent answers one form in the product, the tryout sign-up. A player the coach typed in has no parent in the product while the family app is off, so no answer, so no photo. Rep teams are the ones with wins and trips.",o:["A · Asked on the tryout sign-up and at house league registration; for a player with no answer the club may record a family's written yes or no, marked 'recorded by the club' with who and when","B · Only a family's own answer in the product counts: most rep photos wait for the family app"],r:"Whether rep photos show at all before the family app; the weight of the club's record."},
+ {g:"The club's feed (idea 11)",id:"A14",t:"How long a yes lasts",q:"Club Tier Stage 14c left open whether a photo answer carries across seasons.",o:["A · Asked every season; a yes covers that season's photos for as long as they show, until the family changes it","B · Asked once and carried forward until changed"],r:"Step 5; a child whose circumstances changed between seasons."},
+ {g:"The club's feed (idea 11)",id:"A15",t:"Where photos live on the site",q:"You asked how items are organized and categorized. Team, event, date and sender arrive with the photo; the admin's list sorts by them. This ask is the public side. Changed from the first write-up, which proposed a Photos page.",o:["A · A post is the unit. Photos live in News, on the home's News part and on their team's page. No Photos page, no filter, no public category","B · A Photos page as well, with its own tab and a filter by team"],r:"Step 3; a sixth tab on a phone; one more page to keep fresh."},
+ {g:"The club's feed (idea 11)",id:"C9",t:"C9 · What a club keeps",q:"Photos of children that nobody used should not be kept for good. Video is large and the club already has somewhere to post it.",o:["A · No video stored (a link to where it was posted); a photo nobody used is removed 12 months after it was sent; a storage allowance and the plan gate go to /strategy","B · Keep everything until the club deletes it"],r:"Storage cost; how much of other people's children the club and we hold."},
  {g:"The open calls",id:"C1",t:"C1 · Sponsor tiers",q:"Same-size tiles is the 2026-10-19 ruling.",o:["A · Keep same-size tiles everywhere; lead with the season report","B · Allow one larger 'presenting' tile"],r:"Sponsor strip, Today's sponsor line, the Big Board."},
  {g:"The open calls",id:"C2",t:"C2 · House league team pages",q:"Owner 2026-11-22: a team's sponsor shows on About only; there is no public house league team page.",o:["A · Keep the ruling: no public house league team page","B · A games-only public page per house league team (drawn on tab 3 as an option)"],r:"Where a house league team's sponsor shows."},
  {g:"The open calls",id:"C3a",t:"C3a · Move the club demo up as Track P",q:"The club demo was ruled to come after launch (2026-11-17). Track P is the only item that changes a prospect's first minute.",o:["A · Yes: Track P runs alongside the stages, starting now","B · No: keep 'the demo comes after launch'"],r:"Every sales meeting before launch."},
  {g:"The open calls",id:"C3b",t:"C3b · Where a prospect's club lives",q:"Claiming needs the prospect's club and the real sign-up in the same database.",o:["A · Made on production: unlisted, marked as a preview by us, removed 30 days after the meeting unless claimed in place","B · Made on dev, copied into production when it is claimed"],r:"Track P's whole build; every count and report on production."},
- {g:"The ladder",id:"C4",t:"C4 · The ladder's order",q:"Tab 14, corrected by the walk.",o:["A · 1 games part · 2 Field status · 3 Face · 4 News · 5 Sponsors · 6 Faster scores · 7 Big Board · 8 Trophy case · 9 Share kit · P alongside","B · As A, but News before the Face, with posts photo-less until the Face lands"],r:"What gets built first."}
+ {g:"The ladder",id:"C4",t:"C4 · The ladder's order",q:"Tab 15, corrected by the walk. Idea 11 adds no stage: it widens Stages 3 and 4, and Stage 9 gains the made-for-Instagram image.",o:["A · 1 games part · 2 Field status · 3 Photo shelf and face (idea 11 begins) · 4 News with the club's feed (idea 11 shows) · 5 Sponsors · 6 Faster scores · 7 Big Board · 8 Trophy case · 9 Share kit · P alongside","B · As A, but News before the photo shelf, with posts photo-less until it lands","C · As A, but the photo shelf and News (3 and 4) run before Field status, so the club's feed arrives sooner"],r:"What gets built first."}
 ];
 var host=document.getElementById("asklist"),lastG="";
 ASKS.forEach(function(a){

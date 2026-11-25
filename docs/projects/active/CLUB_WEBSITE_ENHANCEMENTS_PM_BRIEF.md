@@ -39,3 +39,14 @@ on a phone without scrolling. Closing a field is today's house league Rainout wi
 posts the notice and marks every affected game. A rep game is marked for its coach, never moved by the club. A player
 photo shows only while everyone in it has agreed. The phone banner stays off, which keeps the October ruling. "Email me
 when registration opens" is built to anti-spam law, with the club as the sender.
+
+**Added from Milton Bats' meeting (2026-11-24, proposed, not drawn or ruled): the club's own feed.** The club wants to
+promote wins and tournament trips on its site and already posts to Instagram. Proposed: a coach sends photos from a
+phone after a game or a trip; they reach the club already sorted by team, event and date because the schedule knows
+who played where; an admin picks what shows on the home's news, the team's page and a Photos page. A post the club
+already made on Instagram or Facebook shows by pasting its link. A win can be downloaded as a ready-made image for
+the club's own social accounts. Connecting a club's whole Instagram account is left for later: it needs Meta's
+approval of us and upkeep by every club. Success looks like: a club with no Instagram still has a lively site; a club
+with one never posts twice; and no child's picture shows unless every family on that team has agreed. Five calls of
+the owner's come with it (Instagram: how far; who sends and who publishes; a "can post, nothing else" permission; a
+recognizable child in a win photo; how much a club may keep).

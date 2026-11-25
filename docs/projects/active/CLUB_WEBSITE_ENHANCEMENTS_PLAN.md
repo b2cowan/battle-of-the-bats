@@ -4,9 +4,13 @@
 > **Created:** 2026-11-24 (owner: "log this as a project called Club Website Enhancements")
 > **Branch:** dev
 > **PM brief:** [CLUB_WEBSITE_ENHANCEMENTS_PM_BRIEF.md](CLUB_WEBSITE_ENHANCEMENTS_PM_BRIEF.md)
-> **Nothing is built or ruled.** The end state is drawn (Stage 0, 2026-11-24:
-> [CLUB_WEBSITE_STAGE0_DRAWINGS.html](CLUB_WEBSITE_STAGE0_DRAWINGS.html)); its asks wait. The stage ladder in §6 is
-> PROPOSED, not accepted.
+> **Nothing is built. Stage 0's 26 asks were RULED 2026-11-24** (§7; A on 25, and A12 the middle path after `/legal`;
+> C8 softened).
+> The end state is drawn ([CLUB_WEBSITE_STAGE0_DRAWINGS.html](CLUB_WEBSITE_STAGE0_DRAWINGS.html)). The stage ladder in
+> §6 is ACCEPTED as drawn (C4 = A).
+> **An eleventh idea was added after the drawings were published** (the club's own feed: photos and wins from coaches,
+> and Instagram; Milton Bats' meeting, 2026-11-24). It is in §5 and §5.1, PROPOSED, and it is **drawn as tab 11 of the
+> drawings** (republished 2026-11-24, version 2), with ten asks of its own. The page holds 26 asks, ruled 2026-11-24.
 
 ## 1. Goal
 
@@ -53,6 +57,7 @@ marked ◦ are helper findings that were NOT re-opened; a build session re-check
 | Area | Gap | Evidence |
 |---|---|---|
 | Content | No club news; no photo gallery; no custom pages; documents are links only ◦; contacts are a role and an email ◦ | `lib/club-shortcut.ts`; helper greps empty for news/blog/gallery/custom page |
+| Social and photos | The club's Instagram, Facebook and X are footer links only ◦; no page shows a post from them. No photo of a team or an event exists anywhere in the product. A coach can hand the club money and schedule items and nothing else ◦. Only the owner or an admin may change the site. | `lib/db.ts:1347-1348` (the link fields, verified); `components/public/ClubFooter.tsx:59-70` ◦; `lib/public-site-rules.ts:17`, verified; §5.1 |
 | Phones | The banner photo is left out on phones | `lib/public-site-words.ts:85` ("Phones leave it out"), verified |
 | Game day | No field or rainout status; no club-wide "tonight"; house league pages do not refresh ◦ | helper greps empty for rainout/field status/weather |
 | Sponsors | Every tile the same size; a team's sponsor shows on About only; no evidence of what a placement earned | `components/public/ClubSponsors.tsx:14-21,58-61`, verified |
@@ -103,10 +108,11 @@ Drawn one at a time with no shared picture, the ideas collide. Seven shared foun
 | F1 The home's moving part | One region of the club home that holds "what is happening": games, results, field status, news, events. "Open now" is locked first today (2026-10-19). | 2, 3, 4, Board Ready's club events |
 | F2 The club's games, read once | One read of the club's games today and this week across rep teams (only those whose schedule is public), published house league divisions and the club's tournaments. Must honour every publish and visibility rule (the Stage 0 D1 lesson: a draft schedule reached families). | 2, 3, 6, 9 |
 | F3 Places | A field can only be closed if games and permits point at the same real field. | 3, 6 |
-| F4 Photos and consent | Whose picture may be shown, asked at registration, before any photo surface. | 7, 4, 8 |
+| F4 Photos and consent | Whose picture may be shown, asked at registration, before any photo surface. | 7, 4, 8, 11 |
 | F5 Sponsor places | Where a sponsor can show and what gets counted. | 5, 6, 10 |
 | F6 How fast a score arrives | Today 30 seconds. The live bracket's faster path rests on an open database read that already has a `/db` follow-up owed. | 9, 2, 6 |
 | F7 A club made before it buys | The prospect world: today by hand, two named clubs, on dev. | 1 |
+| F8 The club's photo shelf (PROPOSED 2026-11-24, with idea 11) | ONE place a club's pictures live, each one knowing who sent it, which team and event it belongs to, whether it may be shown, and where it shows. Today every picture has its own upload and its own rules (logo, banner, sponsor logo, team crest), and none is a photo of people. Without it, ideas 4, 7, 8 and 10 each build their own photo upload. | 11, 7, 4, 8, 10 |
 
 ## 5. The ten ideas
 
@@ -124,12 +130,126 @@ Order = the session's recommendation. The owner sets the order.
 | 8 | Trophy case and club history | Every championship the club's teams have won, year by year, team level only. | (F4 for photos) | archives, finished house league seasons, tournament champions | What counts as a win the club did not host. Entered by hand, or only what the product recorded. |
 | 9 | Scores that land in a second | A score entered on a phone flips on the public page almost at once; standings rows slide. Backlog "Motion Pack" and "The Bracket Draws Itself". | F6 | every public score surface | The `/db` follow-up on the open games read comes FIRST. |
 | 10 | Fence poster and share kit | A printable QR poster, a "registration is open" social image, "tell me when registration opens". | F5 | staff kit QR, share images, registration pages | `/legal`: anti-spam consent for the email sign-up. |
+| 11 | The club's own feed (added 2026-11-24 from Milton Bats' meeting; PROPOSED, not drawn) | A coach sends photos from a phone after a win or a tournament trip. They reach the club already filed by team, event and date. An admin picks what shows: the home's News, the team's page, a Photos page. A post the club already made on Instagram or Facebook shows by pasting its link. | F8, F4, F1 | Coaches Portal (no way to hand the club content today), who may change the site, idea 4's News, idea 7's photos, the footer's social links | Calls C5–C9 (§7). `/legal` before it is drawn. Full write-up: §5.1. |
 
 **Left out, and why:** public player stats, trading cards, the alumni wall (the 2026-08-01 child ruling); following or
 alerts in a browser (ruled app only); AI-written recaps (the Data Terms); a merch store, French and volunteer sign-up
 (real gaps, none decides a purchase; volunteer sign-up belongs in the signed-in app).
 
-## 6. Stage ladder (PROPOSED 2026-11-24, not accepted)
+### 5.1 Idea 11 in full — the club's own feed (PROPOSED 2026-11-24; nothing ruled, nothing drawn)
+
+**What the club said** (Milton Bats, in the 2026-11-24 demo, as the owner reported it): scores and schedules for every
+rep team and for house league are welcome, and the organization also wants to promote its wins, tournament trips and
+the like through its site. It already uses the large social platforms, Instagram among them. The owner's question:
+what are the options for an enhanced social feed; how do items posted by coaches and club admins get organized and
+categorized; a drop location for media, or an easy way to embed Instagram; where the images go; how they are
+collected, collated and selected for the site.
+
+**The session's reading (not the owner's words):** this is not an eleventh feature beside the others. It is ideas 4
+(news) and 7 (photos) asked for by a real club, plus three things neither idea had: **more hands** (coaches, not only
+an admin), **one place to gather** (the shelf, F8) and **a pick step** between what is sent and what the public sees.
+One club is one data point (the Stage 0 prompt's rule): it tests the end state, it does not redraw the product.
+
+**What exists today** (helper census 2026-11-24; ◦ = not re-opened by the session):
+- Pictures the product stores are all marks, never people: club logo, banner, sponsor logos, tournament logo, a
+  coach's team crest ◦. No team photo, no event photo, no player photo ◦.
+- Each has its own upload and its own rules. The sponsor logo is opened and re-saved, which drops a phone's hidden
+  data (`lib/sponsor-logo-image.ts:31-35`, verified). **The banner photo is stored exactly as sent**
+  (`app/api/admin/org-hero-banner/route.ts:60-68`, verified), and the club and tournament logos the same ◦; see §9.
+- The club's Instagram, Facebook, X and website addresses are held (`lib/db.ts:1347-1348`, verified) and shown as
+  footer links ◦. No YouTube or TikTok ◦. Nothing from another site is shown inside any public page ◦.
+- Tournament news is a title and words, no picture, and belongs to one tournament ◦. There is no club news (§2.2).
+- A coach can upload a team crest and private player documents. A coach can hand the club money requests and
+  schedule hand-backs, and no content ◦.
+- Only the owner or an admin may change the public site (`lib/public-site-rules.ts:17`, verified). There is no
+  narrower "can post, nothing else" permission ◦.
+- No photo consent is asked anywhere (Progress item 6; `family_consents` holds three other scopes ◦).
+- Backlog ideas this touches, all still New: Memory Lane (staff, and parents if the coach opts in, drop photos into a
+  season timeline), the Season Reel (a video sized for Instagram), the Alumni Wall (`IDEAS_BACKLOG.md:41,44,48`, verified).
+
+**What Instagram allows a site like ours** (web research 2026-11-24 from Meta's developer pages; re-check before a
+build, this has changed three times in two years):
+- **One post at a time, no approval.** Since 2026-06-15 Meta's embed for a single public Instagram, Facebook or Threads
+  post needs no Meta app, no key and no review. The caption can be left off. Private accounts and accounts that turned
+  embedding off do not work. The embed loads Instagram's own script in each visitor's browser, so Meta sees the visit
+  (secondary source; what it sets in the browser was NOT confirmed).
+- **A club's whole feed: no official widget exists.** Reading an account's recent posts needs the account to be a
+  professional one (Business or Creator; a personal account cannot be read since 2024-12-04), the club to connect it,
+  and FieldLogicHQ to pass Meta's app review AND business verification before any club but ourselves can connect. The
+  connection lapses after 60 days unless renewed; a lapsed one needs the club to connect again. Picture addresses from
+  Meta should be treated as temporary, so a picture chosen for the site would be copied to our own shelf.
+- **Posting TO Instagram from us:** possible for professional accounts, behind the same review plus a publishing
+  permission; about 100 posts a day.
+- **Third-party feed widgets** (Elfsight, Smash Balloon, Behold and others) do the whole-feed job by having the
+  account owner connect through them. Competitors lean on these (TeamSnap and LeagueApps point clubs at such plugins;
+  SportsEngine shows single posts only; TeamLinkt lets any team member add to an album and mark a photo public).
+  Secondary sources, partly confirmed.
+- Meta's terms have no rule against showing a connected account's own posts on its own website; they do require
+  deleting the data when the club disconnects or asks.
+
+**Showing ONE post from a pasted link, in detail** (owner's follow-up question 2026-11-24; second research pass the
+same day, Meta's developer pages; "confirmed" = read on Meta's own page, "not confirmed" = Meta's pages are silent):
+- **Yes, Instagram offers it, officially.** Meta's oEmbed service takes a post's address and returns the block that
+  shows it. Since 2026-06-15 it needs no Meta app, no key and no review (confirmed: Meta's 2026-06-15 developer blog
+  and its Instagram oEmbed page). Facebook posts and videos are named in the same announcement; their options were
+  not read.
+- **What shows:** photo posts, carousels, videos and Reels from a public account, with the account's name and a link
+  to it. Not Stories. Not a private or age-restricted account, nor one that turned embedding off (confirmed). Whether
+  a carousel swipes and a Reel plays in place: not confirmed.
+- **Options we would use:** caption off (Meta's reference lists a hide-caption setting; whether it works on the
+  no-key service is not confirmed), width between 320 and 658 px, so it fits a 390 px phone (confirmed). The height
+  is not known until it loads, so the page keeps a space for it.
+- **What a build is:** a paste field; a check at save time that Meta will show the post, with a plain refusal when it
+  will not; the post's address kept, not a copy of its picture; a holder on the page that loads Instagram's script
+  only when the post is shown.
+- **What can go wrong later:** the post is deleted or the account goes private, and the embed goes blank. Meta does
+  not say how that looks or whether it can be detected. A build re-checks kept links and hides a dead one.
+- **Rules Meta sets:** use it only to show the content; no analytics on it; its platform terms apply (confirmed).
+  Nothing found on pasting someone else's post or on posts that show children: our rule, not Meta's.
+- **The visitor:** the embed's script comes from Instagram, so Instagram learns that a browser opened the club's
+  page. What it stores in a signed-out visitor's browser is NOT confirmed by Meta or a regulator (one consent-tool
+  vendor lists a two-year Facebook identifier). This is why the drawing shows the post behind a "Show this Instagram
+  post" tap (option B1) as well as loading at once (B2); `/legal` in §9.
+- **Not confirmed, to settle in a build spike:** the no-key service's request limit (the keyed one is 1,000 an
+  hour), whether the returned block may be kept, and which outside hosts a page must allow.
+
+**The options:**
+
+| | Option | What it takes from the club | What it costs us | Verdict |
+|---|---|---|---|---|
+| A | Links to their social accounts | Nothing | Shipped (footer) | Stays. Not a feed. |
+| B | Paste one post's link (Instagram or Facebook); it shows in News | A copy and a paste per post | Small; no approval from Meta | **Recommended, as the Instagram answer for now.** The admin chooses each one; caption off by default. |
+| C | Connect the club's Instagram; its posts arrive on the shelf to be picked | A professional account, connecting it, re-connecting when it lapses | Meta's review and business verification; a connection to keep alive per club | **Parked** until a second club asks. Arrives ON the shelf, so nothing built before it is redone. |
+| D | The club's photo shelf, fed by coaches, picked by the club | A coach's ten seconds after a game; an admin's pick | The real build: F8, F4, a coach's send, a club's inbox | **Recommended, as the spine.** The only option that works for a club with no Instagram, and the only one our consent rule can govern. |
+| E | Made-for-Instagram pictures OUT: a win or a result as a ready image to download and post | One download | Small; score share images already exist | **Recommended**, with idea 10's share kit. Publishing straight to Instagram is parked with C. |
+| F | A third-party feed widget on the club's page | An account with that company | Their script and their name on a club page | **No.** A club page advertises nothing of ours, let alone a stranger's; no consent rule reaches it. |
+
+**How D files itself (why the product is better placed than a shared folder):** the schedule already knows which team
+played where and what the score was. A coach sends from a game, a tournament or the team's home, so each photo arrives
+with its team, its event, its date and its sender and nobody types a label. The club's side is one inbox ("Photos to
+look at") grouped by team and event; each group says whether it may be shown (C8) and the admin picks where: a News
+post, the team's page, a Photos page that filters by team and by event. One optional label is added at the pick, from
+a short fixed list (a win, a tournament trip, a team photo, a club event, a thank-you to a sponsor). The coach sees
+what became of what they sent ("On the site" or "Not used"); a coach who never hears back stops sending.
+A win post is composed from what the product holds (the team, the tournament, the score) in fixed sentence patterns,
+with the picked photo; no AI (§3).
+
+**Where the pictures live:** in the club's own space in our storage, beside its logo and banner. Every picture is
+opened and re-saved at web sizes on arrival, which also removes a phone's hidden location data (the sponsor logo
+already works this way). No original is kept beyond one large web size. No video is stored: a video is a link to where
+the club already posted it. A storage allowance per club is a `/strategy` call (C9). A build checks that a phone's
+HEIC photos can be read.
+
+**What it changes in the other ideas:** idea 7's team photo, banner and albums and idea 4's news photo stop being four
+uploads and become four places a shelf picture can show. Idea 8's trophy case can show the shelf's photo of the win.
+Idea 10's share kit gains E. The record of "who sent it" is kept from the start so that a parent can become a sender
+later (the backlog's Memory Lane, inside the signed-in family app) without the shelf being rebuilt.
+
+**Not in this idea:** a parent uploading from a public page (no new no-login family doors, §3); comments, likes or
+follows on the club site (following is the installed app's, §3); the club site as a place a coach publishes with no
+club pick, unless C6 rules otherwise; a standalone coach's team with no club (it has no club site).
+
+## 6. Stage ladder (ACCEPTED 2026-11-24: C4 = A, with idea 11 widening Stages 3, 4 and 9)
 
 Sequenced by dependency and rework risk. No timing. Every stage after Stage 0 is one deep dive at a time:
 its own drawing session from real captures → `/ux` and `/design` before hand-off → the owner's asks ruled → a build
@@ -163,6 +283,26 @@ prompt → the build → `/simplify`, `/review`, `/legal` or `/accounting` where
 - [ ] **Track P — Your club, already built (idea 1; F7).** A separate track with its own drawing session. It shows
   whatever the site is, so it depends on no stage and gets better with each one. Starts on the owner's word (§7 C3).
 
+**What idea 11 would do to this ladder (PROPOSED 2026-11-24; the stages above are unchanged until the owner rules):**
+it adds no stage, it widens two and moves nothing ahead of Stage 1.
+- **Stage 3 becomes "the photo shelf, then the site's face"** (F8 and F4 first, idea 7's surfaces as their first
+  users). The coach's send and the club's inbox and pick arrive here. This is the rework guard: built as drawn before
+  idea 11, Stage 3 would have made a banner upload, a team photo upload and an album upload, and the feed would have
+  been a fourth.
+- **Stage 4 (News) gains the feed's public half:** a post carries shelf photos, the win post is composed from the
+  score, and a pasted Instagram or Facebook link shows as a post (option B).
+- **Stage 9 (share kit) gains option E.**
+- **Parked, no stage:** connecting an Instagram account (C) and posting to Instagram from the product.
+- **Where it sits, said plainly (owner asked 2026-11-24, "I don't see idea 11 in the ladder"):** no stage of its own.
+  Stage 3 = the shelf, the family's question, the coach's send, the club's pick (now the largest stage; its own
+  drawing session decides one build pass or two). Stage 4 = the public half, where a club first sees the win post and
+  an Instagram post. Stage 9 = the made-for-Instagram image. The Instagram post cannot ship ahead of Stage 3: it meets
+  the same published promise as a photo. Stages 3 and 4 depend on Stage 1 only, so they could run before Stage 2 with
+  no rework; that is option C on ask C4, and the session's recommendation stays field status second. The drawings'
+  Ladder tab now names idea 11 in rows 3, 4 and 9 and in a note above the table (version 3).
+- **Drawn 2026-11-24** as tab 11 of the Stage 0 page, after `/legal`, with `/ux`, `/design` and `/marketing` on the
+  drawing (Progress). It changes the shape of ask A8 (C8 widens it).
+
 **Standing rules for every build stage:** a migration is the first task, with `docs/agents/db/DATA_DICTIONARY.md` and
 `npm run refresh:snapshots` in the same unit of work; the plan gate goes to `/strategy` and `PLAN_PRICING_FACTS.md`
 before any gate is written (the club site rides the public site module today: League Plus and Club; team pages are
@@ -176,21 +316,89 @@ the demos follow the product and are curated with `/demos`, never as a build ste
   and add their feedback later?"). Kick-off prompt: [CLUB_WEBSITE_STAGE0_PROMPT.md](CLUB_WEBSITE_STAGE0_PROMPT.md); its
   feedback slot is where the meeting's answers go, and the asks are not ruled until that slot has been looked at.
   The rest of §6's ladder (the order after Stage 0) is still PROPOSED.
-- [ ] **C1 — Sponsor tiers.** Idea 5 is stronger with larger tiles for bigger sponsors; same-size tiles is the
+- [x] **Stage 0's 26 asks — RULED 2026-11-24 by the owner's paste-back** (before Milton's three answers reached the
+  prompt's feedback slot; the owner's call, so C0's "not ruled until that slot has been looked at" is spent). The
+  recommended option on 25; **A12 is B**. The wording ruled is the drawings' Asks tab (tab 16). His words where he
+  added any are quoted; what they ask for is in brackets.
+  - **A1–A5, A7, A10, A11: A** as recommended (fixed home order; one region in two parts; a running tournament as one
+    row; one Close a place window over the Rainout; rep games marked, coach emailed; `/{club}/news` = News with a door
+    to a live tournament; "Email me when it opens" to CASL, no confirmation email; trophy case = recorded rows plus
+    rows the club adds, marked).
+  - **A6: A** — *"we already are working on stopping this from happening in tournaments, can we ensure that all
+    schedules that enter locations populate official venues? not necessarily in this project but something to work on
+    separately so we don't have to worry about exceptions like this."* [Recorded against the `real-venues` project as a
+    request to widen it from tournament games to every schedule (house league, rep, tournament); not this project's
+    work. A6 = A stays the interim answer until that ships.]
+  - **A8: A** — *"can you confirm with legal about the stance here? how do apps like instagram and facebook get away
+    from posting whatever anyone wants to post and we are so restricted? its hard to show images of teams at a diamond
+    without potentially having someone else in the background. these are public parks"* [→ `/legal`.]
+  - **A9: A** — *"I would be interested to see the drawings of both, so when we get to this phase show both in the
+    drawings before I confirm."* [Stage 3's drawing session draws the banner on a phone AND without it; A9 is
+    confirmed there.]
+  - **A12: B** (it loads at once; the privacy policy and the outside-services list are reworded first) — *"i want to
+    have /legal review and let me know the ramifications of this decision. clearly loading at once is the better user
+    experience, and the loading of images is left to discretion of the club, it is a hard thing for us to have to
+    police. also it looks like so many products offer this like instagram and twitter and facebook"* [→ `/legal`: the
+    ramifications.] **⟶ CHANGED 2026-11-24 to the middle path** after `/legal`'s answer (owner: "take the middle
+    path"): the club's own picture shows at once from our copy of it, with "See this post on Instagram" as a plain
+    link. Nothing is sent to Meta unless the visitor taps the link, so Privacy §4 and the subprocessor list stay true
+    as written and the same page works for a Québec club. The picture goes through the photo rule like any shelf
+    photo, which also settles A16 for these posts. Instagram's own box (likes, comments) does not show. The admin
+    picks the picture as well as pasting the link (the coach has usually already sent it). Stage 4 draws the add
+    window again around this; whether the link alone (no picture) is ever allowed is for that drawing.
+    `docs/agents/legal/CLUB_WEBSITE_STAGE0_RULINGS_REVIEW.md`.
+  - **A16: A** — *"similar thought to A12, would like to hear the legal logic behind such restrictions."* [→ `/legal`.]
+  - **A13: A** — *"don't the clubs have their own terms and conditions that they need to follow? why are we policing
+    things like this?"* [→ `/legal`.]
+  - **C5, C6, C7, C8, A14, A15, C9: A** as recommended (one Instagram post at a time from a pasted link, connecting an
+    account parked; coaches send, the club picks; one "News and Photos" permission, drawn with Team structure; A8's
+    rule widens to any photo filed under a team; asked every season; a post is the unit, no Photos page; no video
+    stored, unused photos removed after 12 months, allowance and gate to `/strategy`).
+    **C8 SOFTENED 2026-11-24** after `/legal`'s answer to A8 (owner: "yes soften it"): "only that team in the photo"
+    becomes **"the players in it are from this team; anyone else is in the background, not the subject"**. The
+    coach's tick on the send window reads that way. A recognizable child from another team as a subject still does
+    not show (we hold no answer for them).
+  - **C1: A** (same-size tiles, lead with the season report) · **C2: A** (no public house league team page) ·
+    **C3a: A** (Track P runs alongside the stages, starting now) · **C3b: A** (a prospect's club is made on production,
+    unlisted, marked as our preview, removed 30 days after the meeting unless claimed in place) · **C4: A** (the
+    ladder's order as recommended, field status second).
+- [x] **C1 — Sponsor tiers. RULED A 2026-11-24** (above). Idea 5 is stronger with larger tiles for bigger sponsors; same-size tiles is the
   2026-10-19 ruling. Recommendation: keep the ruling, lead with the report.
-- [ ] **C2 — House league team pages.** A public games-only page per team is where a team's sponsor would show. On
+- [x] **C2 — House league team pages. RULED A 2026-11-24.** A public games-only page per team is where a team's sponsor would show. On
   2026-11-22 the owner kept a team's sponsor on About only ("there is no public team page").
-- [ ] **C3 — The demo ruling.** Idea 1 puts a club demo ahead of "the demo comes after launch". Recommendation: move
+- [x] **C3 — The demo ruling. RULED 2026-11-24: C3a A, C3b A.** Idea 1 puts a club demo ahead of "the demo comes after launch". Recommendation: move
   it up as Track P; it is the only item that changes a prospect's first minute. *(Stage 0 split it: **C3a** move it up,
   yes/no; **C3b** where a prospect's club lives: on production, unlisted and claimed in place (recommended), or on dev
   with a copy into production at claim.)*
-- [ ] **C4 — The order of the ten.** §5's order is a recommendation; the corrected ladder is on the drawings' Ladder tab.
-- [ ] **Stage 0 shape asks, A1–A11** (on the drawings' Asks tab, option A recommended each time, none ruled): A1 the
+- [x] **C4 — The order of the ten. RULED A 2026-11-24.** §5's order is a recommendation; the corrected ladder is on the drawings' Ladder tab.
+- [x] **Stage 0 shape asks, A1–A11** (RULED 2026-11-24, all A; see the first item of this section): A1 the
   home's order (fixed: Open now capped at two rows → games → News); A2 one region in two parts; A3 a running tournament
   as one row; A4 one Close a place act over the Rainout; A5 rep games marked, not moved; A6 typed-place games listed
   unticked; A7 `/{club}/news` = the club's News page with a door to a live tournament; A8 a player photo only while
   everyone in it has said yes; A9 the banner stays computer-only (keeps 2026-10-20); A10 "Email me when it opens"
   built to CASL, no confirmation email; A11 the trophy case holds recorded rows plus rows the club adds, marked.
+- [x] **Idea 11's ten asks are on the drawings' Asks tab** (tab 16, group "The club's feed"), RULED 2026-11-24, A
+  each time except A12 (B): C5, A12, A16, C6, C7, C8, A13, A14, A15, C9. The wording there is the current one; the five
+  calls below are as first written and are kept for the reasoning.
+- [x] **Idea 11's calls, C5–C9** (added 2026-11-24; RULED A 2026-11-24, in tab 16's wording):
+  - **C5 — Instagram on a club's page: how far.** Recommended: paste one post's link, chosen by the admin, shown in
+    News with the caption off (§5.1 option B); connecting an account parked until a second club asks; no third-party
+    widget. A pasted post is the club's own publication on Instagram, shown on a site that promises no child is named,
+    which is why the caption is off by default; `/legal` reads it, with Meta's script loading for every visitor.
+  - **C6 — Who sends, and who publishes.** Recommended: any coach or team staff sends for their own team; nothing
+    reaches the public until the club picks it; the sender sees what became of it. The other option: a coach publishes
+    to their own team's page with no club pick.
+  - **C7 — A "can post, nothing else" permission.** Today only the owner or an admin may change the site. A club's
+    social volunteer is usually neither. Recommended: yes, one narrow permission for news and photos, drawn with the
+    Team structure project's people work so there is one set of permissions.
+  - **C8 — A recognizable child in a win photo.** Stage 0's `/legal` read says a news photo shows no recognizable
+    player; the photo this club is asking to post is exactly that. Recommended: ask A8's rule widens to every photo
+    filed under a team (it shows only while everyone on that team's roster has said yes; a missing answer is no;
+    withdrawal hides it at once), and a photo filed under no team shows no recognizable player. `/legal` before it is
+    drawn. **The rep door comes first** (§9): rep teams are the ones with wins and trips, and if a rep family has no
+    place to answer the question, no rep photo ever shows.
+  - **C9 — How much a club may keep, and video.** Recommended: no video is stored (a link to where it was posted);
+    a storage allowance and the gate are `/strategy` calls against `PLAN_PRICING_FACTS.md`.
 
 ## Progress
 
@@ -276,6 +484,58 @@ the demos follow the product and are curated with `/demos`, never as a build ste
      the consent sentence, an unsubscribe even for one email, records 3 years. Track P: visible "Prepared by
      FieldLogicHQ for {club}. Not their site yet.", noindex, their own published logo only, fictional sponsors.
   Nothing built, nothing ruled, nothing committed.
+- 2026-11-24 — **Idea 11 added from Milton Bats' meeting (the club's own feed). PROPOSED; not drawn, not ruled.** The
+  owner brought one piece of feedback from the demo: the club wants to promote wins and tournament trips through its
+  site, already uses Instagram, and asked how items from coaches and admins would be gathered, sorted and chosen. Two
+  helper reads ran (what the product holds for pictures and posts; what Meta allows today) and the lines the
+  conclusions turn on were re-opened. Recorded: the gap row in §2.3, foundation F8 in §4, idea 11 in §5 with the full
+  write-up in §5.1 (six options, D + B + E recommended, C parked, F refused), the ladder note in §6, calls C5–C9 in
+  §7, two findings in §9, and the feedback itself in the kick-off prompt's slot. **The three questions the owner was
+  asking in the room are still unanswered in that slot.** The drawings do not show idea 11; drawing it in comes before
+  the asks are ruled, on the owner's word.
+- 2026-11-24 — **Idea 11 read by `/legal`, then drawn into the Stage 0 page as tab 11 (owner: "yes, run /legal first
+  then draw it in"). Republished, version 2, same address. Nothing built, nothing ruled, nothing committed.**
+  1. *`/legal` first* (topic `docs/agents/legal/MINORS_IMAGES_AND_CLUB_FEED.md`; primary sources and our own published
+     texts): a child's photo is sensitive information; the family's yes is its own question, neither answer chosen for
+     them, never a condition of signing up (OPC finding #2025-005, read twice); the club is the publisher and we host;
+     **the published Privacy Policy and Data Terms both say children's information "is never shown on public pages", so
+     a new version of each comes before any player photo is public**; an Instagram post should load on the visitor's
+     tap, which keeps "no tracking cookies" true as written; four product findings routed in §9.
+  2. *The owner's follow-up (one Instagram post from a link):* yes, Instagram offers it officially, with no approval
+     from Meta since 2026-06-15. Detail and what is not confirmed: §5.1.
+  3. *The tab, five steps:* a coach's Send to the club (phone; a Photos / A link switch; the coach says who is in the
+     photos); the club's Photos shelf and the pick (two decisions; Take down on everything posted); the public side
+     (News with pictures, one post with stacked photos, a team's own posts); an Instagram post (the add window, the
+     post behind "Show this post", Instagram's own box marked as not ours); a family's yes (the question, the club's
+     answers list with Change and Record an answer, where it is asked).
+  4. *What the reviews changed:* `/ux` (12 findings): Photos and A link are one switch, the note folds away, "Waiting"
+     says who it waits on, the coach and not the admin says who is in a photo, the club gets Take down and Change, and
+     an Instagram post that shows players became its own ask (A16). `/design` (12): the pick lost three fields
+     including the typed Kind, photos stack with no dots, phone links are 44 px, Instagram's box is dashed and
+     labelled, the answers table is 800 wide with an action column. `/marketing` (18 strings): "Sending publishes
+     nothing", "Nothing is public yet", the family's question now says "Anyone can see them". One local look at the
+     rendered page before and one after the redraw; no overflow at 1400 or 400 px, no script error, 26 asks render.
+  5. *Recommendations that changed from §5.1 as first written:* no separate Photos page (a post is the unit; photos
+     live in News, the home page and their team's page; ask A15); no typed category at all (team, event, date and
+     sender arrive with the photo); the window names Instagram only until Stage 4 confirms Facebook's options.
+  6. *The ten asks on tab 11:* C5 Instagram, how far · A12 how an Instagram post loads (a tap, recommended) · A16 an
+     Instagram post that shows players · C6 who sends and who publishes · C7 a seat that can post and nothing else ·
+     C8 a recognizable child in a win photo · A13 where a rep family's answer comes from · A14 how long a yes lasts ·
+     A15 where photos live on the site · C9 what a club keeps. Tabs after 10 moved down one (Track P is 12, Asks is 16).
+- 2026-11-24 — **Stage 0's 26 asks RULED by the owner's paste-back** (§7: A on 25, B on A12). A6's request (every
+  schedule saves a real place) recorded on the `real-venues` project as R4, not scoped. **`/legal` answered the four
+  "why" questions** (`docs/agents/legal/CLUB_WEBSITE_STAGE0_RULINGS_REVIEW.md`); no ruling changed. Two things come
+  back to the owner:
+  1. *Open call, recommended:* C8's "only that team in the photo" softens to "the players in it are from this team;
+     anyone else is in the background, not the subject". It answers the public-park point without weakening the rule.
+  2. *For A12 (B stands):* before Stage 4 ships, Privacy §4's cookie sentence and the subprocessor list's "not on this
+     list" gain an Instagram line (most likely a material change); build B with a setting, because a Québec club will
+     need the tap. **A middle path was offered, not ruled:** the club's own picture shown at once from our copy, with
+     "See this post on Instagram" as a link. It is as fast, sends nothing to Meta, and puts the post under our photo
+     rule (which also settles A16).
+  A13 and A16 unchanged; the logic is in the review. Nothing built, nothing committed.
+- 2026-11-24 — **The owner ruled both `/legal` calls: "yes soften it, take the middle path, commit".** C8 softened and
+  A12 changed from B to the middle path; both recorded in §7.
 
 ## 8. Census questions for Stage 0 (answer from code, not from this plan)
 
@@ -314,6 +574,23 @@ Answered 2026-11-24 (Stage 0 Part 1); evidence in the Progress block.
   commercial message, Track P's use of a real club's name and logo.
 - [ ] A rep team's family sign-up may sit behind the guardian tier (switched off). If so, the photo consent question
   has no rep door and a rep team photo never shows until it is on. Stage 3 checks.
+- [ ] **A banner photo is published exactly as it was uploaded (found 2026-11-24, idea 11's census).** The banner
+  upload stores the file as sent (`app/api/admin/org-hero-banner/route.ts:60-68`, verified), so a photo taken on a
+  phone can carry its hidden location and device data onto a public address. The club logo and tournament logo are
+  stored the same way ◦. The sponsor logo already re-saves and drops it (`lib/sponsor-logo-image.ts:31-35`). A small
+  privacy fix that does not wait on this project; the owner's word to build. F8 makes re-saving the rule for every picture.
+- [x] `/legal` read idea 11 before it was drawn (2026-11-24): topic file
+  `docs/agents/legal/MINORS_IMAGES_AND_CLUB_FEED.md`. What it set for the drawing: the photo question is its own
+  yes or no, neither chosen for the family, never a condition of signing up (OPC finding #2025-005); the all-yes rule
+  reads only the players the club says are in the photo; asked each season; a photo under no team shows no
+  recognizable player; an Instagram post loads on the visitor's tap; caption off by default; a coach sends a link, the
+  club publishes it; pictures re-saved without location data; one line on the public page for a parent who wants a
+  photo down. **Before any player photo is public:** the published Privacy Policy and Data Terms both say children's
+  information "is never shown on public pages"; a new version of each, most likely a material change, comes first.
+- [ ] **Four product findings from that read, for `/plan`:** a family cannot change or withdraw any consent answer in
+  the product and no code records a withdrawal; a parent has no way to ask for a photo to come down, and staff have no
+  take-down; the banner and logos carry location data (the entry above); the house league help text suggests a
+  required "photo release" document, the pattern the regulator found against.
 - [ ] DATA_DICTIONARY.md:1195 names the deleted `LogicSyncBracket` as a reader of the open games read; `/db` to correct,
   and to say whether `USING true` lets anyone read games in an unpublished division (Progress item 4).
 
