@@ -218,6 +218,39 @@ describe('D1: the header carries the identity, never the title', () => {
   });
 });
 
+// ── The true minus ───────────────────────────────────────────────────────────
+/* Club year-end and Budget vs. Actual PDFs printed their Variance footnote letter-spaced, with a stray quote for the
+   minus (found on staging 2026-11-25): the built-in font has no U+2212. */
+
+describe('a true minus never reaches the PDF’s font', () => {
+  it('footnotes, titles, headings, rows and groups all print a plain hyphen', () => {
+    const at = makeAutoTable();
+    const doc: MockDoc = buildTablePDF(MockDoc, at, {
+      title: 'Year − end', subtitle: 'Net −$1', headers: ['Net −'], rows: [], settings: settings(),
+      groups: [{ label: 'Costs −', rows: [['−$150'], [-900]] }],
+      notes: [{ text: 'Variance reads: revenue +/− against plan' }],
+    });
+    const drawn = [...doc.texts.map(t => t.str), ...at.calls.flatMap(c => [...c.head.flat(), ...c.body.flat()])];
+    assert.ok(drawn.includes('Variance reads: revenue +/- against plan'), 'the footnote');
+    assert.ok(drawn.includes('-$150'), 'a text figure');
+    assert.ok(drawn.includes(-900), 'a number passes through untouched');
+    assert.ok(!drawn.some(s => String(s).includes('−')), 'no true minus anywhere');
+  });
+
+  // The two paths the grouped document above never walks.
+  it('a flat table’s rows, and a group’s own headings, print a plain hyphen too', () => {
+    const flat = makeAutoTable();
+    buildTablePDF(MockDoc, flat, { title: 'T', headers: ['A'], rows: [['−$150']], settings: settings() });
+    assert.deepEqual(flat.calls[0].body, [['-$150']]);
+    const own = makeAutoTable();
+    buildTablePDF(MockDoc, own, {
+      title: 'T', headers: ['A'], rows: [], settings: settings(),
+      groups: [{ label: 'G', headers: ['Net −'], rows: [['1']] }],
+    });
+    assert.deepEqual(own.calls[0].head, [['Net -']]);
+  });
+});
+
 // ── D2 — declared shape ──────────────────────────────────────────────────────
 
 describe('D2: shape is the report’s property', () => {
