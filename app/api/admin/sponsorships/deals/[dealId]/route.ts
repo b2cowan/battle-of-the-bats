@@ -11,7 +11,10 @@ import {
 import { emailDealInvoice } from '@/lib/sponsor-invoice-email';
 import { readDealAnswers } from '@/lib/club-form-staff';
 import { dealLinkUrl, findTarget, offerContactOf } from '@/lib/club-sponsorship-deal-actions';
-import { bandOf, canRevise, dealFigures, emailBarFor, linkTakesForm } from '@/lib/club-sponsorship-deals';
+import { bandOf, canRevise, dealFigures, dealHolds, emailBarFor, holdingDeals, linkTakesForm, offerLapsed } from '@/lib/club-sponsorship-deals';
+import { loadFiscalSetting } from '@/lib/club-fiscal-year-server';
+import { fiscalYearOf } from '@/lib/club-fiscal-year';
+import { offerLapsedNow } from '@/lib/club-sponsorship-offer-lapsed';
 import { parsePrice } from '@/lib/club-sponsorships';
 import { DEAL_WORDS } from '@/lib/club-sponsorship-deal-words';
 import { SPONSORSHIPS_WORDS } from '@/lib/club-sponsorships-words';
@@ -43,12 +46,14 @@ export const GET = withObservability(async (req: Request, { params }: Params) =>
   const deal = await readDeal(org.id, dealId);
   if (!deal) return notFound();
   const today = tournamentToday(new Date());
-  const [business, offers, answers, bars, settings, targets, all] = await Promise.all([
+  const [business, offers, answers, bars, settings, targets, all, fiscal] = await Promise.all([
     readDealBusiness(org.id, dealId), readDealOffers(org.id, dealId), readDealAnswers(org.id, dealId), readOfferBars(org.id),
-    readSettings(org.id), readPlaceTargets(org.id), readDeals(org.id),
+    readSettings(org.id), readPlaceTargets(org.id), readDeals(org.id), loadFiscalSetting(org.id),
   ]);
   const address = deal.offeredTo ?? business?.email ?? null;
   const { linkVersion, payments, refunds, ...shown } = deal;
+  // An earlier year's open offer whose place has gone back: its link is dead, so the page offers none of the link's presses.
+  const lapsed = offerLapsed(deal, today, fiscalYearOf(today, fiscal));
   const rate = settings.registered ? gstHstRateOn(business?.address?.province ?? null, today) : null;
   return NextResponse.json({
     deal: { ...shown, band: bandOf(deal) },
@@ -63,14 +68,15 @@ export const GET = withObservability(async (req: Request, { params }: Params) =>
     answers,
     address,
     bar: emailBarFor(address, bars.stops, bars.family),
-    link: deal.state === 'withdrawn' ? null : dealLinkUrl(org.slug, deal.id, linkVersion),
+    link: deal.state === 'withdrawn' || lapsed ? null : dealLinkUrl(org.slug, deal.id, linkVersion),
+    lapsed,
     registered: settings.registered,
     hasMailingAddress: !!settings.mailingAddress,
     hasContact: !!(await offerContactOf(org.id, settings)),
     rate,
     targets,
-    holds: all.filter(d => d.state !== 'withdrawn' && d.id !== deal.id)
-      .map(d => ({ id: d.id, state: d.state, placeKind: d.placeKind, targetId: d.targetId, businessName: d.businessName })),
+    // Change place's "Taken: …" counts what holds a place today (Part 4a ruling 1A), as the Offer window does.
+    holds: dealHolds(holdingDeals(all, today, fiscalYearOf(today, fiscal)).filter(d => d.id !== deal.id)),
     today,
   });
 }, { route: '/api/admin/sponsorships/deals/[dealId]' });
@@ -83,6 +89,8 @@ export const PATCH = withObservability(async (req: Request, { params }: Params) 
   if (!isUuid(dealId)) return notFound();
   const deal = await readDeal(org.id, dealId);
   if (!deal || deal.state === 'withdrawn') return notFound();
+  // A lapsed offer isn't revived by editing it: its place may already be sold. The club offers a new deal.
+  if (await offerLapsedNow(org.id, deal)) return refused(DEAL_WORDS.deal.errLapsed, 409, 'lapsed');
   const b = (await req.json().catch(() => null) ?? {}) as Record<string, unknown>;
 
   // Everything is checked before anything is written, so a refused change never half-applies.

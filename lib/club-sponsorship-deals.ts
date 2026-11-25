@@ -185,7 +185,33 @@ export const dealPlaceUp = (d: Pick<ClubDeal, 'state' | 'logoOnSite' | 'done'>):
 
 // ── Packages: what has taken them (ask 7) ───────────────────────────────────────────────────────────
 
-/** Paid, invoiced and offered deals take a place; a withdrawn one frees it; a form received is still an offer. */
+/**
+ * Does a deal hold its place on `today` (Part 4a ruling 1A, owner 2026-11-25)? A withdrawn deal never does. Otherwise it holds
+ * it through the fiscal year it was offered in (`year` = today's), and after that only while its last day hasn't passed
+ * (inclusive, the club's day); a deal with no last day frees its place when the year turns. Full, a package's Taken and the
+ * Offer window's "Taken: …" all count only the deals this says hold one — before it, Full counted every year, so a package
+ * that sold out last year read Full on the first day of the next.
+ */
+export function holdsPlace(
+  d: Pick<ClubDeal, 'state' | 'offeredOn' | 'endsOn'>, today: string, year: { firstDay: string; lastDay: string },
+): boolean {
+  if (d.state === 'withdrawn') return false;
+  if (d.offeredOn >= year.firstDay && d.offeredOn <= year.lastDay) return true;
+  return !!d.endsOn && d.endsOn >= today;
+}
+
+/** An open offer whose place has gone back (owner 2026-11-25): its link takes no answers, so a freed place can't be bought twice. */
+export const offerLapsed = (
+  d: Pick<ClubDeal, 'state' | 'offeredOn' | 'endsOn'>, today: string, year: { firstDay: string; lastDay: string },
+): boolean => linkTakesForm(d) && !holdsPlace(d, today, year);
+
+/** The deals holding a place today (ruling 1A): what `takenOf` and `holdersOf` are handed. */
+export const holdingDeals = <T extends Pick<ClubDeal, 'state' | 'offeredOn' | 'endsOn'>>(
+  deals: readonly T[], today: string, year: { firstDay: string; lastDay: string },
+): T[] => deals.filter(d => holdsPlace(d, today, year));
+
+/** Paid, invoiced and offered deals take a place; a withdrawn one frees it; a form received is still an offer. Hand it
+ *  `holdingDeals(…)`, never every deal (ruling 1A). */
 export function takenOf(deals: readonly Pick<ClubDeal, 'state' | 'packageId'>[], packageId: string): PackageTaken {
   const t = { paid: 0, invoiced: 0, offered: 0 };
   for (const d of deals) {
@@ -196,6 +222,10 @@ export function takenOf(deals: readonly Pick<ClubDeal, 'state' | 'packageId'>[],
   }
   return t;
 }
+
+/** What a screen needs to say "Taken: …" about each place. Hand it `holdingDeals(…)`, never every deal (ruling 1A). */
+export const dealHolds = (deals: readonly ClubDeal[]) =>
+  deals.map(d => ({ id: d.id, state: d.state, placeKind: d.placeKind, targetId: d.targetId, businessName: d.businessName }));
 
 /** Who holds a place (the Offer window's "Taken: Kowalski Plumbing, invoiced" — it warns, never blocks, ask 6). */
 export function holdersOf(
@@ -318,8 +348,9 @@ export function parseOfferInput(b: Record<string, unknown>, today: string, error
     if (!e.ok || !e.value) return { ok: false, error: errors.email, field: 'email' };
     email = e.value.toLowerCase();
   }
-  // A new business needs an email only to be emailed; a link handed over in person needs none.
-  if (send && !email) return { ok: false, error: errors.email, field: 'email' };
+  // A new business needs an email only to be emailed; a link handed over in person needs none. A business on the list is
+  // emailed at the address on file, so nothing is typed: the send step answers when it has none (`offerSendCheck`).
+  if (send && !email && !sponsorId) return { ok: false, error: errors.email, field: 'email' };
   const packageId = isUuid(b.packageId) ? b.packageId : null;
   if (!packageId) return { ok: false, error: errors.pkg, field: 'package' };
   const targetId = isUuid(b.targetId) ? b.targetId : null;

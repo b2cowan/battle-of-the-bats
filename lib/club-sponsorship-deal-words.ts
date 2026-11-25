@@ -249,6 +249,7 @@ export const DEAL_WORDS = {
     errEmailFailedKept: 'The email didn’t go out. The deal and its link are kept. Try again.',
     errAlreadyEmailed: 'This offer was already emailed. Use Send the link again.',
     errEmailClosed: 'This deal is past its offer, so there’s nothing to email.',
+    errLapsed: 'This offer no longer holds a place. Offer a new deal instead.', // DRAFT
     errReason: 'Give a reason.', // DRAFT
     errPaid: 'A paid deal can’t be withdrawn.', // DRAFT
     // Part 3a: an invoiced deal's amount or tax changes as a revised invoice, while no payment stands on it. DRAFT.
@@ -307,6 +308,7 @@ export const DEAL_WORDS = {
     linkOnly: 'The link was made, not emailed. Copy it and give it to them in person.', // call (c) drawing, approved 1A (DRAFT)
     waitingFor: (business: string) => `Waiting for ${business}`,
     formReceived: (business: string) => `${business} sent their details and started to pay by card, but didn’t finish.`,
+    lapsed: 'This offer is from an earlier year and no longer holds a place, so its link takes no answers. Withdraw it, then offer a new deal.', // DRAFT
     invoicedTitle: 'Waiting for payment',
     // Round 1 tab 5, verbatim: "was emailed Mar 3". "issued" stays for an invoice whose email didn't go (it shows on the link).
     invoiced: (number: string, total: number, issued: string, due: string, emailed: boolean) =>
@@ -453,6 +455,7 @@ export const DEAL_WORDS = {
     withdrawn: (club: string) => `This offer was withdrawn. Contact ${club}.`,
     // Owner call (f), 2026-11-22 (/legal's re-check): a link "Send the link again" replaced, while the offer is still open.
     replaced: (club: string) => `This link has been replaced. Look for the club’s newer email, or contact ${club}.`,
+    ended: (club: string) => `This offer has ended. Contact ${club}.`, // DRAFT
     goneTitle: 'Sponsorship', // DRAFT
     notFound: 'This link doesn’t work. Ask the club for a new one.', // DRAFT (a forged or mangled token)
     // The Stage 4 global error box's words are the family form's (FAMILY_FORM_WORDS); these are the fixed fields'.

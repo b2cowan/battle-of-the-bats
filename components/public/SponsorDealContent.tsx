@@ -65,7 +65,7 @@ export default function SponsorDealContent({ initial }: { initial: SponsorPageVi
     return (
       <div className={css.closed}>
         {/* The club's address is in the frame's own foot below: one place, not two. */}
-        <p>{view.replaced ? P.replaced(view.club.name) : P.withdrawn(view.club.name)}</p>
+        <p>{view.replaced ? P.replaced(view.club.name) : view.ended ? P.ended(view.club.name) : P.withdrawn(view.club.name)}</p>
       </div>
     );
   }

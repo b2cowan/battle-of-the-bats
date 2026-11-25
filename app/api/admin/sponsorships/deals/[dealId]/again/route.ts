@@ -8,6 +8,7 @@ import {
 } from '@/lib/club-sponsorship-deals-server';
 import { actorOf, dealLinkUrl, emailDealOffer, offerContactOf, recordOfferSafely } from '@/lib/club-sponsorship-deal-actions';
 import { emailBarFor, linkTakesForm, reasonHolds } from '@/lib/club-sponsorship-deals';
+import { offerLapsedNow } from '@/lib/club-sponsorship-offer-lapsed';
 import { DEAL_WORDS } from '@/lib/club-sponsorship-deal-words';
 import { SPONSORSHIPS_WORDS } from '@/lib/club-sponsorships-words';
 import { payLinkSecret } from '@/lib/sponsor-deal-link';
@@ -34,6 +35,7 @@ export const POST = withObservability(async (req: Request, { params }: Params) =
   const deal = isUuid(dealId) ? await readDeal(org.id, dealId) : null;
   if (!deal || deal.state === 'withdrawn') return NextResponse.json({ error: SPONSORSHIPS_WORDS.say.notFound, code: 'not_found' }, { status: 404 });
   if (!payLinkSecret()) return refused(DEAL_WORDS.offer.noSecret, 503, 'no_secret');
+  if (await offerLapsedNow(org.id, deal)) return refused(DEAL_WORDS.deal.errLapsed, 409, 'lapsed');
 
   const [offers, settings, bars, business] = await Promise.all([
     readDealOffers(org.id, dealId), readSettings(org.id), readOfferBars(org.id), readDealBusiness(org.id, dealId),

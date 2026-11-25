@@ -8,6 +8,7 @@ import {
 } from '@/lib/club-sponsorship-deals-server';
 import { actorOf, emailDealOffer, offerContactOf, reasonErrors, recordOfferSafely } from '@/lib/club-sponsorship-deal-actions';
 import { emailBarFor, linkTakesForm, OFFER_NOTE_MAX, parseReasonInput } from '@/lib/club-sponsorship-deals';
+import { offerLapsedNow } from '@/lib/club-sponsorship-offer-lapsed';
 import { DEAL_WORDS } from '@/lib/club-sponsorship-deal-words';
 import { SPONSORSHIPS_WORDS } from '@/lib/club-sponsorships-words';
 import { payLinkSecret } from '@/lib/sponsor-deal-link';
@@ -36,6 +37,7 @@ export const POST = withObservability(async (req: Request, { params }: Params) =
   if (!deal || deal.state === 'withdrawn') return NextResponse.json({ error: SPONSORSHIPS_WORDS.say.notFound, code: 'not_found' }, { status: 404 });
   if (deal.emailedAt) return refused(DEAL_WORDS.deal.errAlreadyEmailed, 409, 'already_emailed');
   if (!linkTakesForm(deal)) return refused(DEAL_WORDS.deal.errEmailClosed, 409, 'not_open');
+  if (await offerLapsedNow(org.id, deal)) return refused(DEAL_WORDS.deal.errLapsed, 409, 'lapsed');
 
   const body = (await req.json().catch(() => null) ?? {}) as Record<string, unknown>;
   const today = tournamentToday(new Date());

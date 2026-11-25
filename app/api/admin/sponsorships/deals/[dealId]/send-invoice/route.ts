@@ -10,6 +10,7 @@ import { emailDealInvoice } from '@/lib/sponsor-invoice-email';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { tournamentToday } from '@/lib/timezone';
 import { DEAL_WORDS } from '@/lib/club-sponsorship-deal-words';
+import { offerLapsedNow } from '@/lib/club-sponsorship-offer-lapsed';
 import { SPONSORSHIPS_WORDS } from '@/lib/club-sponsorships-words';
 
 /**
@@ -33,6 +34,7 @@ export const POST = withObservability(async (req: Request, { params }: Params) =
   const deal = isUuid(dealId) ? await readDeal(org.id, dealId) : null;
   if (!deal) return NextResponse.json({ error: SPONSORSHIPS_WORDS.say.notFound, code: 'not_found' }, { status: 404 });
   if (deal.state !== 'form_received') return refused(C.errNotFormReceived, 409, 'not_form_received');
+  if (await offerLapsedNow(org.id, deal)) return refused(DEAL_WORDS.deal.errLapsed, 409, 'lapsed');
 
   // Money already taken by card and not recorded: an invoice would bill the business a second time.
   if (await unrecordedCardPayment(org.id, dealId)) return refused(C.errCardTaken, 409, 'card_paid');

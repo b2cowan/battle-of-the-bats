@@ -53,6 +53,7 @@ function callout(r: DealRead): { title?: string; text: string; tone: 'olive' | '
     return { text: refundsEndedDeal(r.refunds) ? D.card.calloutRefundedWithdrawn(d.withdrawn.at, d.withdrawn.byName, d.withdrawn.reason) : D.callout.withdrawn(d.withdrawn.at, d.withdrawn.byName, d.withdrawn.reason), tone: 'olive' };
   }
   if (r.unrecordedCard && d.state !== 'paid') return { title: D.card.unrecordedTitle, text: D.card.calloutUnrecorded(d.businessName, r.unrecordedCard.amount, r.unrecordedCard.reason), tone: 'warn' };
+  if (r.lapsed) return { text: D.callout.lapsed, tone: 'warn' };
   if (d.band === 'delivered') return { text: D.callout.delivered, tone: 'olive' };
   if (d.state === 'paid') { const c = deliveryCount(d); return { text: D.callout.paid(d.paidOn ?? d.invoice?.issuedOn ?? d.offeredOn, c.done, c.of), tone: 'olive' }; }
   if (d.state === 'invoiced' && d.invoice) {
@@ -196,7 +197,7 @@ export default function DealScreen({ dealId }: { dealId: string }) {
   const endedByRefund = d.state === 'withdrawn' && refundsEndedDeal(data.refunds) ? d.withdrawn?.at ?? null : null;
   const openedPayment = opened ? data.payments.find(x => x.id === opened) ?? null : null;
   // Send the invoice (round 1 tab 5): a deal its business left at Form received — an unfinished card payment.
-  const sendsInvoice = d.state === 'form_received' && !data.unrecordedCard;
+  const sendsInvoice = d.state === 'form_received' && !data.unrecordedCard && !data.lapsed;
 
   return (
     <>
@@ -218,7 +219,7 @@ export default function DealScreen({ dealId }: { dealId: string }) {
 
         {/* The pencil edits what this block lists: it sits in the block's head, as a season's Registration block's does. */}
         <ClubSection id="deal-block" className={css.flushSection} title={D.deal.cardDeal}
-          actions={d.state !== 'withdrawn' ? (
+          actions={d.state !== 'withdrawn' && !data.lapsed ? (
             <button type="button" className={css.iconBtn} aria-label={D.deal.edit} aria-haspopup="dialog" onClick={() => setAsking('edit')}><Pencil size={16} aria-hidden /></button>
           ) : undefined}>
           <dl className={css.pageFacts}>

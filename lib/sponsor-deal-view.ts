@@ -10,6 +10,7 @@ import 'server-only';
  *   · a link we did not sign, or for another club's address → notFound (no club, no deal named);
  *   · a replaced link, a withdrawn offer, or a place whose division/team/tournament has been removed → closed, which says
  *     only "This offer was withdrawn. Contact {club}." with the club's contact (round 1 tab 4) — no business details;
+ *   · an earlier year's open offer whose place has gone back → closed, "This offer has ended." (owner 2026-11-25);
  *   · offered / form received → the form; invoiced / paid → the thank-you view: the invoice, how to pay, its PDF, and once
  *     money arrives the payments received — paid in full, the receipt (Part 3a; the paid invoice IS the receipt, ask 10).
  */
@@ -28,6 +29,7 @@ import { sponsorCardFacts, unrecordedCardPayment } from './sponsor-card-server';
 import { cardLabel } from './online-payment-words';
 import { tournamentToday } from './timezone';
 import { payLinkSecret, readSponsorDealToken } from './sponsor-deal-link';
+import { offerLapsedNow } from './club-sponsorship-offer-lapsed';
 import type { SignupFormView } from './club-form-signup';
 import type { SponsorPlaceKind } from './club-sponsorships';
 import type { Organization } from './types';
@@ -93,7 +95,7 @@ export interface SponsorBusinessPrefill {
 
 export type SponsorPageView =
   | { state: 'notFound' }
-  | { state: 'closed'; club: SponsorClubFace; replaced?: true }
+  | { state: 'closed'; club: SponsorClubFace; replaced?: true; ended?: true }
   | {
     state: 'form' | 'done';
     token: string;
@@ -166,6 +168,8 @@ export async function buildSponsorPageView(orgSlug: string, token: string, opts:
   if (!deal || (deal.state === 'withdrawn' && !refundedAway(deal))) return { state: 'closed', club };
   const open = linkTakesForm(deal);
   if (open && !(await targetExists(deal.placeKind, deal.targetId))) return { state: 'closed', club };
+  // Money already taken by card and not yet recorded keeps the page open: it says the payment was received, whatever the year.
+  if (await offerLapsedNow(org.id, deal) && !(await unrecordedCardPayment(org.id, deal.id).catch(() => null))) return { state: 'closed', club, ended: true };
 
   const [pkg, formId, biz] = await Promise.all([
     readPackage(org.id, deal.packageId),

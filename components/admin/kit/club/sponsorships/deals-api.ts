@@ -43,6 +43,8 @@ export interface DealsRead {
 
 export interface DealRead {
   deal: ListedDeal;
+  /** An earlier year's open offer whose place has gone back (owner 2026-11-25): no link, no email, no invoice. */
+  lapsed: boolean;
   business: {
     name: string; contactName: string | null; email: string | null; phone: string | null; website: string | null;
     address: { street: string; city: string; province: string; postal: string } | null; logoUrl: string | null; logoWaiting: boolean;

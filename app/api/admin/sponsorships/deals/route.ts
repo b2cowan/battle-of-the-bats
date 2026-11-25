@@ -7,13 +7,13 @@ import {
   rememberSponsorEmail,
 } from '@/lib/club-sponsorship-deals-server';
 import { actorOf, dealLinkUrl, emailDealOffer, findTarget, offerContactOf, OFFER_ERRORS, recordOfferSafely } from '@/lib/club-sponsorship-deal-actions';
-import { bandOf, emailBarFor, parseOfferInput, takenOf, type ClubDeal, type DealState } from '@/lib/club-sponsorship-deals';
+import { bandOf, dealHolds, emailBarFor, holdingDeals, parseOfferInput, takenOf, type ClubDeal, type DealState } from '@/lib/club-sponsorship-deals';
 import { packageFull } from '@/lib/club-sponsorships';
 import { DEAL_WORDS } from '@/lib/club-sponsorship-deal-words';
 import { SPONSORSHIPS_WORDS } from '@/lib/club-sponsorships-words';
 import { payLinkSecret } from '@/lib/sponsor-deal-link';
 import { OfferEmailRefused } from '@/lib/sponsor-offer-email';
-import { resolveFiscalYear } from '@/lib/club-fiscal-year-server';
+import { loadFiscalSetting, resolveFiscalYear } from '@/lib/club-fiscal-year-server';
 import { fiscalYearOf, fiscalYearOptions } from '@/lib/club-fiscal-year';
 import { tournamentToday } from '@/lib/timezone';
 
@@ -21,7 +21,7 @@ import { tournamentToday } from '@/lib/timezone';
  * SPONSORSHIPS › DEALS (Board Ready Stage 6, Part 2; round 1 tabs 3 and 5).
  *   GET  — one fiscal year's deals (a deal belongs to the year it was offered in, its income lands in that year's books),
  *          the Year pill's years, the money band (before GST/HST), and what the Offer window needs: the packages with what
- *          has taken them (ask 7: Full counts paid, invoiced and offered — over every year), each business with why it
+ *          has taken them (ask 7: Full counts paid, invoiced and offered deals that hold a place today, Part 4a ruling 1A), each business with why it
  *          can't be emailed (ask 13), the places with who holds them (ask 6: warns, never blocks).
  *   POST — Offer a deal. A full or archived package is refused (no business opens a link for a place that has gone); a send
  *          waits for the mailing address and refuses a stopped or family-opted-out address (409, its code). The email goes
@@ -53,6 +53,10 @@ export const GET = withObservability(async (req: Request) => {
   for (const d of all) { const k = fiscalYearOf(d.offeredOn, setting).key; perYear[k] = (perYear[k] ?? 0) + 1; }
   const years = fiscalYearOptions(setting, today, perYear).filter(y => y.current || (perYear[y.key] ?? 0) > 0 || y.key === year.key);
 
+  // What holds a place today (ruling 1A): this fiscal year's deals, and an earlier one only while its last day hasn't passed.
+  const current = fiscalYearOf(today, setting);
+  const holding = holdingDeals(all, today, current);
+
   const live = inYear.filter(d => d.state !== 'withdrawn');
   const sum = (ds: readonly ClubDeal[]) => ({ amount: Math.round(ds.reduce((s, d) => s + d.amount * 100, 0)) / 100, count: ds.length });
   const figures = {
@@ -80,12 +84,12 @@ export const GET = withObservability(async (req: Request) => {
     deals: inYear.map(publicDeal).map(d => ({ ...d, band: bandOf(d) })),
     figures,
     packages: packages.filter(p => !p.archivedAt).map(p => {
-      const taken = takenOf(all, p.id);
+      const taken = takenOf(holding, p.id);
       return { ...p, taken, full: packageFull(p, taken) };
     }),
     sponsors,
     targets,
-    holds: all.filter(d => d.state !== 'withdrawn').map(d => ({ id: d.id, state: d.state, placeKind: d.placeKind, targetId: d.targetId, businessName: d.businessName })),
+    holds: dealHolds(holding),
     registered: settings.registered,
     hasMailingAddress: !!settings.mailingAddress,
     hasContact: !!(await offerContactOf(orgId, settings)),
@@ -104,13 +108,13 @@ export const POST = withObservability(async (req: Request) => {
   if (!parsed.ok) return NextResponse.json({ error: parsed.error, field: parsed.field ?? null }, { status: 400 });
   const v = parsed.value;
 
-  const [packages, targets, settings, contacts, all] = await Promise.all([
-    readPackages(org.id), readPlaceTargets(org.id), readSettings(org.id), readSponsorContacts(org.id), readDeals(org.id),
+  const [packages, targets, settings, contacts, all, fiscal] = await Promise.all([
+    readPackages(org.id), readPlaceTargets(org.id), readSettings(org.id), readSponsorContacts(org.id), readDeals(org.id), loadFiscalSetting(org.id),
   ]);
   const pkg = packages.find(p => p.id === v.packageId);
   if (!pkg) return refused(W.offer.errPkg);
   if (pkg.archivedAt) return refused(W.offer.errArchived, 409, 'archived');
-  if (packageFull(pkg, takenOf(all, pkg.id))) return refused(W.offer.fullReason, 409, 'full');
+  if (packageFull(pkg, takenOf(holdingDeals(all, today, fiscalYearOf(today, fiscal)), pkg.id))) return refused(W.offer.fullReason, 409, 'full');
   const target = findTarget(targets, pkg.placeKind, v.targetId);
   if (!target) return NextResponse.json({ error: W.offer.errTarget, field: 'target' }, { status: 400 });
 
