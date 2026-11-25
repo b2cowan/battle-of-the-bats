@@ -150,13 +150,41 @@ of requests, that becomes a migration and this stage's **first** task, with `doc
 - [ ] One walk (`/tasks`): a Tournament-plan owner renames the organization and sends a deletion request; a Tournament Plus
   owner the same; a non-owner per Q3; a club's Settings page untouched. May ride the sister plan's step 4 walk if they land
   together.
-- [ ] The owner's word closes it; plan and brief move to `docs/projects/archive/`.
+- [ ] The owner's word closes Stages 1–3. The project closes after Stage 5 (added 2026-11-25); plan and brief then move to
+  `docs/projects/archive/`.
+
+### Stage 5 — "Who can enter" on a tournament (added 2026-11-25, from Board Ready)
+
+**Where it came from:** Board Ready Stage 5 round 3 (team sign-ups), ruling **48A** (owner 2026-11-25): outside teams
+coming to *play* a club's event are a tournament, with a new per-tournament "Who can enter": **Anyone · Not listed · By
+invitation** (one link per team you add). "Handed to the tournament side as one item." The owner placed it here the same
+day. Source: `BOARD_READY_PLAN.md` §5 Stage 5 (round 3, ruling 48), drawn as a sketch on
+`BOARD_READY_STAGE5_TEAM_SIGNUPS_DRAWINGS.html` ("Tournament settings · Who can enter", for this side to draw properly).
+Independent of Stages 1–4; nothing here waits on them, and they do not wait on it.
+
+**Gate (binding input, `/strategy` 2026-11-25, `BUSINESS_DECISIONS.md` "A tournament's 'Who can enter' … adds NO plan
+gate"):** no new key. Who may register themselves stays `open_registration` (Tournament Plus and up). On a plan without it
+(the free Tournament plan, a Premium coach's event), every answer stays the invite-only event and the choice only decides
+listing. "By invitation" is the shipped Add team window and "Claim your team" email. "Not listed" extends the directory
+opt-out that already exists on every plan to the club site and search.
+
+**`/legal`'s rule from the Board Ready drawing:** one shared link may say only "Not listed"; only one link per team,
+working for that team's spot, may say "By invitation". Never "private" or "secure".
+
+- [ ] A drawing session (its own, with `/design`; `/legal` on the words): the setting in Tournament settings on a computer
+  and a phone, what each answer does on each plan, how an unlisted tournament stays off the club site, the directory and
+  search, and what a By invitation team's link opens.
+- [ ] Owner rules the drawing's asks.
+- [ ] Build (a column for the choice means a migration first, with `docs/agents/db/DATA_DICTIONARY.md` and
+  `npm run refresh:snapshots`), `/review`, `/docs`, and one walk.
 
 ## Plan gating
 
 Tournament and Tournament Plus only — every other plan already has both doors (a club or league on the Organization's
 Settings page; a Premium Coaches Portal through the sister plan's step 2). Nothing about it is a paid feature; no
 `/billing` or `/strategy` call is needed.
+
+Stage 5 ("Who can enter") is on every plan that has tournaments and adds no gate (`/strategy` 2026-11-25, see Stage 5).
 
 ## Architectural decisions
 

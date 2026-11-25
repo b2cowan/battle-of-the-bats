@@ -1,0 +1,1056 @@
+<title>Paid Club Events</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+/* Layout: sticky numbered tabs (one decision each) → a View row where a tab compares → framed true-size specimens with their explanation beside them; the last tab is the owner's asks with a paste-back. */
+:root {
+  /* document chrome: a cool neutral, so the warm product frames read as specimens */
+  --doc-bg: #EDEFF1; --doc-panel: #FFFFFF; --doc-ink: #1C2127; --doc-soft: #4C5560; --doc-line: rgba(28,33,39,0.12);
+  --doc-accent: #2F5D8A; --doc-accent-soft: rgba(47,93,138,0.10); --doc-red: #A3261B; --doc-red-bg: rgba(163,38,27,0.10);
+  --tag-new: #2E6B2F; --tag-new-bg: rgba(46,107,47,0.12); --tag-re: #8A5A0B; --tag-re-bg: rgba(138,90,11,0.12); --tag-same: #4C5560; --tag-same-bg: rgba(76,85,96,0.10);
+  --font-ui: Inter, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-head: "Space Grotesk", Inter, system-ui, sans-serif;
+  --font-data: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+  /* the product's warm palette (globals.css warm block), fixed inside every frame */
+  --home-paper: #F8F4ED; --home-card: #FFFFFF; --home-ink: #241E15; --home-ink-soft: #4A4235; --home-dim: #615A54; --home-faint: #7A726A;
+  --home-line: rgba(70,55,30,0.12); --home-line-strong: rgba(70,55,30,0.20); --home-olive: #57651E; --home-olive-soft: rgba(87,101,30,0.10);
+  --lime: #D9F99D; --lime-ink: #241E15; --warn: #8A5A0B; --warn-bg: rgba(138,90,11,0.10); --amber: #F59E0B;
+  --danger-ink: #B91C1C; --danger-bg: rgba(239,68,68,0.08); --danger-line: rgba(239,68,68,0.35); --good: #2E6B2F; --good-bg: rgba(46,107,47,0.10); --err: #B03A22;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --doc-bg: #14171B; --doc-panel: #1C2026; --doc-ink: #E8ECF0; --doc-soft: #A9B2BC; --doc-line: rgba(232,236,240,0.12);
+  --doc-accent: #8DB6DE; --doc-accent-soft: rgba(141,182,222,0.14); --doc-red: #F19A8F; --doc-red-bg: rgba(241,154,143,0.14);
+  --tag-new: #8FD18F; --tag-new-bg: rgba(143,209,143,0.14); --tag-re: #E3B465; --tag-re-bg: rgba(227,180,101,0.14); --tag-same: #A9B2BC; --tag-same-bg: rgba(169,178,188,0.12);
+  color-scheme: dark } }
+:root[data-theme="dark"] {
+  --doc-bg: #14171B; --doc-panel: #1C2026; --doc-ink: #E8ECF0; --doc-soft: #A9B2BC; --doc-line: rgba(232,236,240,0.12);
+  --doc-accent: #8DB6DE; --doc-accent-soft: rgba(141,182,222,0.14); --doc-red: #F19A8F; --doc-red-bg: rgba(241,154,143,0.14);
+  --tag-new: #8FD18F; --tag-new-bg: rgba(143,209,143,0.14); --tag-re: #E3B465; --tag-re-bg: rgba(227,180,101,0.14); --tag-same: #A9B2BC; --tag-same-bg: rgba(169,178,188,0.12);
+  color-scheme: dark }
+* { box-sizing: border-box; }
+body { background: var(--doc-bg); color: var(--doc-ink); font-family: var(--font-ui); font-size: 14px; line-height: 1.5; }
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--doc-panel); }
+.wrap { max-width: 1280px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 20px 60px; }
+header.top { display: grid; gap: 6px; margin-bottom: 14px; }
+.eyebrow { font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--doc-soft); font-weight: 600; }
+h1 { font-family: var(--font-head); font-size: 26px; line-height: 1.2; margin: 0; text-wrap: balance; }
+.lead { margin: 0; color: var(--doc-soft); max-width: 84ch; }
+nav.tabs { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; background: var(--doc-panel); border: 1px solid var(--doc-line); border-radius: 10px; display: flex; gap: 4px; padding: 5px; overflow-x: auto; }
+nav.tabs button { flex: 0 0 auto; border: 0; background: none; color: var(--doc-soft); font: inherit; font-weight: 600; padding: 8px 12px; border-radius: 7px; cursor: pointer; white-space: nowrap; }
+nav.tabs button[aria-selected="true"] { background: var(--doc-accent-soft); color: var(--doc-accent); }
+nav.tabs button:focus-visible, .btnDoc:focus-visible, .mark:focus-visible, .tag:focus-visible, .fl:focus-visible, .seg button:focus-visible { outline: 2px solid var(--doc-accent); outline-offset: 2px; }
+.viewRow { display: flex; align-items: center; gap: 10px; margin: 14px 0 4px; flex-wrap: wrap; }
+.viewRow .lbl { font-size: 12px; font-weight: 600; color: var(--doc-soft); }
+/* ONE white track, two options (the kit's ViewSwitch look) */
+.seg { display: inline-flex; background: #FFFFFF; border: 1px solid rgba(70,55,30,0.20); border-radius: 999px; padding: 3px; }
+.seg button { border: 0; background: none; font: inherit; font-size: 13px; padding: 5px 12px; border-radius: 999px; color: #4A4235; cursor: pointer; }
+.seg button[aria-pressed="true"] { background: rgba(87,101,30,0.14); color: #3E4815; font-weight: 600; }
+section.pane { display: grid; gap: 18px; margin-top: 14px; }
+.pane h2 { font-family: var(--font-head); font-size: 20px; margin: 0; text-wrap: balance; }
+.pane > p { margin: 0; max-width: 88ch; color: var(--doc-soft); }
+.pair { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 460px), 1fr)); gap: 18px; align-items: start; }
+.stack { display: grid; gap: 18px; min-width: 0; }
+.spec { min-width: 0; display: grid; gap: 8px; }
+.specHead { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.specHead b { font-size: 13px; }
+.chrome { font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--doc-soft); }
+.scroll { overflow-x: auto; padding: 14px; background: var(--doc-panel); border: 1px solid var(--doc-line); border-radius: 10px; }
+.explain { background: var(--doc-panel); border: 1px solid var(--doc-line); border-radius: 10px; padding: 14px 16px; display: grid; gap: 8px; min-width: 0; }
+.explain h3 { margin: 0; font-size: 14px; display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+.explain p, .explain li { margin: 0; color: var(--doc-soft); }
+.explain ul, .explain ol { margin: 0; padding-left: 18px; display: grid; gap: 5px; }
+.explain b { color: var(--doc-ink); }
+.tag { display: inline-flex; align-items: center; font-size: 10px; font-weight: 700; letter-spacing: 0.06em; padding: 2px 6px; border-radius: 4px; cursor: pointer; border: 0; font-family: var(--font-ui); vertical-align: middle; }
+.tag.new { color: var(--tag-new); background: var(--tag-new-bg); }
+.tag.re { color: var(--tag-re); background: var(--tag-re-bg); }
+.tag.same { color: var(--tag-same); background: var(--tag-same-bg); }
+.mark { display: inline-grid; place-items: center; min-width: 20px; height: 20px; padding: 0 5px; border-radius: 10px; background: #2F5D8A; color: #fff; font-size: 11px; font-weight: 700; border: 0; cursor: pointer; vertical-align: middle; flex: 0 0 auto; font-family: var(--font-ui); }
+.fl { display: inline-flex; align-items: center; font-size: 10px; font-weight: 700; letter-spacing: 0.04em; padding: 2px 6px; border-radius: 4px; cursor: pointer; border: 0; font-family: var(--font-ui); color: var(--doc-red); background: var(--doc-red-bg); vertical-align: middle; }
+.diffs .same-part { opacity: 0.22; }
+.docTbl { width: 100%; border-collapse: collapse; font-size: 13px; }
+.docTbl th { text-align: left; font-size: 11px; letter-spacing: 0.05em; text-transform: uppercase; color: var(--doc-soft); padding: 6px 8px; border-bottom: 1px solid var(--doc-line); }
+.docTbl td { padding: 8px; border-bottom: 1px solid var(--doc-line); vertical-align: top; color: var(--doc-ink); }
+.docTbl td.s { color: var(--doc-soft); }
+
+/* ─── product specimens (warm, fixed look) ─── */
+.frame { background: var(--home-paper); color: var(--home-ink); font-family: system-ui, -apple-system, "Segoe UI", sans-serif; border-radius: 8px; }
+/* true size: the content box is the product's reading (960) or table (1200) width */
+.adm { box-sizing: content-box; width: 960px; padding: 22px 28px 28px; display: grid; gap: 16px; }
+.adm.wide { width: 1200px; }
+.adm.w620 { width: 620px; } .adm.w560 { width: 560px; } .adm.w700 { width: 700px; } .adm.w520 { width: 520px; }
+.fam { box-sizing: content-box; width: 640px; padding: 28px 40px; }
+.phone { width: 390px; overflow: hidden; border: 1px solid var(--home-line-strong); border-radius: 22px; }
+.phead { display: grid; gap: 2px; padding-bottom: 12px; border-bottom: 1px solid var(--home-line); }
+.phead .back { font-size: 13px; color: var(--home-ink-soft); }
+.phead .ttl { font-family: var(--font-head); font-size: 20px; font-weight: 700; margin: 0; }
+.phead .sub { font-size: 13px; color: var(--home-dim); }
+.lockLine { font-size: 13px; color: var(--home-ink-soft); padding: 9px 13px; background: var(--home-card); border: 1px solid var(--home-line); border-left: 3px solid var(--home-dim); border-radius: 8px; }
+.card { background: var(--home-card); border: 1px solid var(--home-line); border-radius: 8px; padding: 16px 20px; display: grid; gap: 12px; }
+.cardTop { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.cardH { font-size: 16px; font-weight: 700; margin: 0; flex: 1; }
+.cardSum { font-size: 13px; color: var(--home-dim); }
+.lede { font-size: 14px; color: var(--home-ink-soft); margin: 0; flex: 1; }
+.lineTop { display: flex; align-items: center; gap: 12px; }
+/* band / group labels: the display face, uppercase, secondary ink (RepKit .rowBand) — mono is only for readouts */
+.capL { font-family: var(--font-head); font-size: 12px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; color: var(--home-dim); }
+.btnOut { font: inherit; font-size: 14px; background: var(--home-card); color: var(--home-ink); border: 1px solid var(--home-line-strong); border-radius: 8px; padding: 7px 14px; white-space: nowrap; display: inline-flex; gap: 6px; align-items: center; }
+.btnLime { font: inherit; font-size: 14px; font-weight: 600; background: var(--lime); color: var(--lime-ink); border: 0; border-radius: 8px; padding: 8px 14px; white-space: nowrap; }
+.btnLime.big { font-size: 16px; padding: 12px 20px; display: block; text-align: center; }
+.door { font-size: 14px; font-weight: 650; color: var(--home-olive); }
+.rlist { border: 1px solid var(--home-line); border-radius: 8px; overflow: hidden; background: var(--home-card); }
+.band { display: flex; align-items: center; gap: 8px; padding: 6px 14px; background: var(--home-paper); border-top: 1px solid var(--home-line); border-bottom: 1px solid var(--home-line); font-family: var(--font-head); font-size: 12px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; color: var(--home-dim); }
+.band:first-child { border-top: 0; }
+.band .bc { font-family: var(--font-data); font-size: 12px; font-weight: 600; letter-spacing: 0.02em; text-transform: none; }
+.qrow { display: grid; grid-template-columns: 30px minmax(0,1fr) 22px; gap: 8px; align-items: center; padding: 9px 14px 9px 6px; min-height: 52px; background: var(--home-card); }
+.qrow + .qrow { border-top: 1px solid var(--home-line); }
+.qrow.nogrip { grid-template-columns: minmax(0,1fr) 22px; padding-left: 14px; }
+.grip { color: var(--home-dim); font-size: 16px; text-align: center; }
+.qt { font-size: 14px; font-weight: 650; color: var(--home-ink); }
+.qc { font-size: 12px; color: var(--home-dim); margin-top: 1px; }
+.chev { color: var(--home-dim); font-size: 18px; text-align: right; }
+.chipH { font-size: 10px; font-weight: 700; letter-spacing: 0.05em; padding: 1px 5px; border-radius: 4px; background: rgba(70,55,30,0.08); color: var(--home-dim); margin-left: 6px; vertical-align: 1px; white-space: nowrap; }
+.chip { font-size: 11px; font-weight: 700; padding: 2px 6px; border-radius: 4px; background: var(--home-olive-soft); color: var(--home-olive); letter-spacing: 0.03em; white-space: nowrap; }
+.chip.warn { background: var(--warn-bg); color: var(--warn); }
+.chip.good { background: var(--good-bg); color: var(--good); }
+.fixedGrid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; }
+.fixedGrid ul { margin: 4px 0 0; padding-left: 16px; font-size: 14px; color: var(--home-ink); display: grid; gap: 3px; }
+.small { font-size: 12px; color: var(--home-dim); margin: 0; }
+.empty { display: grid; gap: 4px; padding: 18px; border: 1px dashed var(--home-line-strong); border-radius: 8px; text-align: center; }
+.empty b { font-size: 14px; }
+.facts { display: grid; grid-template-columns: 170px minmax(0,1fr); gap: 10px 16px; margin: 0; font-size: 14px; }
+.facts dt { color: var(--home-dim); }
+.facts dd { margin: 0; color: var(--home-ink); }
+.facts dd .s { display: block; font-size: 12px; color: var(--home-dim); }
+/* windows */
+.dimmer { background: rgba(36,30,21,0.18); padding: 28px; border-radius: 8px; }
+.win { width: 600px; background: var(--home-card); border: 1px solid rgba(87,101,30,0.30); border-radius: 12px; display: flex; flex-direction: column; box-shadow: 0 6px 28px rgba(36,30,21,0.12); }
+.win.sm { width: 460px; }
+.whead { display: flex; gap: 8px; align-items: flex-start; padding: 17px 22px 6px; }
+.wtitle { font-size: 16px; font-weight: 700; line-height: 1.25; margin: 0; }
+.wmeta { font-size: 12px; color: var(--home-dim); margin-top: 3px; }
+.ico { width: 32px; height: 32px; display: inline-grid; place-items: center; border-radius: 8px; color: var(--home-ink-soft); font-size: 15px; flex: 0 0 auto; }
+.wbody { padding: 8px 22px 16px; display: grid; gap: 14px; }
+.wfoot { display: flex; gap: 10px; justify-content: flex-end; align-items: center; padding: 13px 22px; border-top: 1px solid var(--home-line); }
+.wfoot .fs { margin-right: auto; font-size: 13px; color: var(--home-dim); }
+.sec { border-top: 1px solid var(--home-line); padding-top: 12px; display: grid; gap: 10px; }
+.secH { font-size: 11px; font-weight: 700; letter-spacing: 0.07em; text-transform: uppercase; color: var(--home-dim); margin: 0; display: flex; gap: 8px; align-items: center; }
+.notDrawn { font-size: 12px; color: var(--home-faint); font-style: italic; }
+.recAct { font-size: 14px; color: var(--home-ink-soft); display: inline-flex; gap: 6px; align-items: center; }
+/* fields */
+.fld { display: grid; gap: 5px; }
+.fld .l { font-size: 13px; font-weight: 600; color: var(--home-ink); }
+.req { color: var(--home-ink); }
+.inp { border: 1px solid var(--home-line-strong); border-radius: 8px; padding: 8px 11px; font-size: 14px; background: #fff; color: var(--home-ink); min-height: 38px; }
+.inp.ta { min-height: 76px; }
+.inp.sel { display: flex; justify-content: space-between; align-items: center; }
+.inp.err { border-color: var(--err); }
+.inp.locked { background: #F6F3EE; color: var(--home-dim); }
+.hint { font-size: 12px; color: var(--home-dim); }
+.errL { font-size: 12px; color: var(--err); font-weight: 600; }
+.two { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.swRows { display: grid; }
+.sw { display: grid; grid-template-columns: minmax(0,1fr) 44px; gap: 12px; align-items: center; padding: 10px 0; }
+.sw + .sw { border-top: 1px solid var(--home-line); }
+.sw .t { font-size: 14px; color: var(--home-ink); font-weight: 600; }
+.sw .h { font-size: 12px; color: var(--home-dim); font-weight: 400; display: block; margin-top: 1px; }
+.sw.off { opacity: 0.5; }
+.tog { width: 44px; height: 26px; border-radius: 13px; background: rgba(70,55,30,0.22); position: relative; }
+.tog::after { content: ""; position: absolute; top: 3px; left: 3px; width: 20px; height: 20px; border-radius: 50%; background: #fff; }
+.tog.on { background: var(--home-olive); }
+.tog.on::after { left: 21px; }
+.nudge { font-size: 13px; color: var(--home-ink); background: #fff; border: 1px solid var(--home-line); border-left: 3px solid var(--home-olive); border-radius: 8px; padding: 8px 12px; }
+.radioRow { display: grid; grid-template-columns: 20px minmax(0,1fr); gap: 8px; padding: 10px 12px; border: 1px solid var(--home-line-strong); border-radius: 8px; }
+.radioRow.on { border-color: var(--home-olive); background: var(--home-olive-soft); }
+.dot { width: 16px; height: 16px; border-radius: 50%; border: 2px solid var(--home-line-strong); margin-top: 2px; }
+.radioRow.on .dot { border: 5px solid var(--home-olive); }
+.radioRow .t { font-size: 14px; font-weight: 600; }
+.radioRow .h { font-size: 12px; color: var(--home-dim); }
+.box { width: 18px; height: 18px; border: 1.5px solid var(--home-line-strong); border-radius: 4px; flex: 0 0 auto; background: #fff; display: inline-grid; place-items: center; font-size: 12px; color: #fff; }
+.box.on { background: var(--home-olive); border-color: var(--home-olive); }
+.box.off { opacity: 0.5; }
+.tick { display: flex; gap: 10px; align-items: flex-start; font-size: 14px; color: var(--home-ink); }
+.tick.off { color: var(--home-dim); }
+/* family page */
+.famH { font-family: var(--font-head); font-size: 26px; font-weight: 700; margin: 4px 0 2px; }
+.famSub { font-size: 14px; color: var(--home-dim); margin: 0; }
+.fsec { display: grid; gap: 12px; padding: 20px 0; border-top: 1px solid var(--home-line); }
+.fsecH { font-size: 18px; font-weight: 700; margin: 0; display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+.fsecH .rm { font-size: 13px; font-weight: 500; color: var(--home-olive); }
+.divLine { font-size: 14px; color: var(--home-ink); background: #fff; border: 1px solid var(--home-line); border-radius: 8px; padding: 10px 12px; }
+.divLine .s { display: block; font-size: 12px; color: var(--home-dim); }
+.friends { border-left: 2px solid var(--home-line-strong); padding-left: 12px; display: grid; gap: 4px; }
+.subH { font-size: 14px; font-weight: 700; margin: 0; }
+.club { display: grid; gap: 12px; }
+.notice { font-size: 13px; color: var(--home-ink-soft); background: #fff; border: 1px solid var(--home-line); border-left: 3px solid var(--home-olive); border-radius: 8px; padding: 10px 13px; line-height: 1.5; }
+.healthL { font-size: 12px; color: var(--home-faint); }
+.choices { display: flex; gap: 18px; flex-wrap: wrap; font-size: 14px; }
+.choices span { display: inline-flex; gap: 7px; align-items: center; }
+.rad { width: 16px; height: 16px; border: 1.5px solid var(--home-line-strong); border-radius: 50%; display: inline-block; background: #fff; }
+.rad.on { border: 5px solid var(--home-olive); }
+.fileGot { display: flex; gap: 10px; align-items: center; font-size: 14px; padding: 8px 11px; border: 1px solid var(--home-line); border-radius: 8px; background: #fff; flex-wrap: wrap; }
+.fileGot.bad { border-color: rgba(176,58,34,0.35); }
+.bar { flex: 1 1 120px; height: 6px; border-radius: 3px; background: rgba(70,55,30,0.12); position: relative; overflow: hidden; }
+.bar::after { content: ""; position: absolute; inset: 0 40% 0 0; background: var(--home-olive); }
+.pdf { font-size: 10px; font-weight: 800; color: #fff; background: #A13A2A; border-radius: 3px; padding: 2px 4px; letter-spacing: 0.04em; }
+.txtDoc { font-size: 10px; font-weight: 800; color: #fff; background: #6B6255; border-radius: 3px; padding: 2px 4px; letter-spacing: 0.04em; }
+.docBlock { display: grid; gap: 10px; padding: 14px; border: 1px solid var(--home-line); border-radius: 8px; background: #fff; }
+.docName { display: flex; gap: 8px; align-items: center; font-size: 15px; font-weight: 700; }
+.waiverBox { max-height: 96px; overflow: hidden; font-size: 13px; color: var(--home-ink-soft); border: 1px solid var(--home-line); border-radius: 6px; padding: 8px 10px; background: #FBF9F5; }
+.globalErr { font-size: 14px; color: var(--home-ink); background: #fff; border: 1px solid rgba(176,58,34,0.35); border-left: 3px solid var(--err); border-radius: 8px; padding: 10px 13px; }
+.collapsedSec { font-size: 13px; color: var(--home-dim); padding: 12px 0; border-top: 1px solid var(--home-line); }
+/* phone */
+.pbar { display: flex; align-items: center; gap: 8px; padding: 10px 16px; border-bottom: 1px solid var(--home-line); background: var(--home-card); font-size: 15px; font-weight: 700; }
+.pbar .sm { display: block; font-size: 12px; font-weight: 400; color: var(--home-dim); }
+.pbody { padding: 14px 16px 20px; display: grid; gap: 12px; }
+.phone .qrow { grid-template-columns: 44px minmax(0,1fr) 22px; padding-left: 4px; min-height: 60px; }
+.phone .grip { width: 44px; height: 44px; border: 1px solid var(--home-line-strong); border-radius: 8px; display: grid; place-items: center; }
+.phone .card { padding: 14px 14px; }
+/* table */
+.toolbar { display: flex; align-items: center; gap: 8px; }
+.toolbar .sp { flex: 1; }
+.pill { font-size: 14px; border: 1px solid var(--home-line-strong); background: #fff; border-radius: 999px; padding: 6px 12px; display: inline-flex; gap: 6px; align-items: center; white-space: nowrap; }
+.pill.olive { border-color: rgba(87,101,30,0.45); color: var(--home-olive); font-weight: 600; }
+.amberN { background: #FDE9C4; color: #7A4B05; border-radius: 999px; font-size: 12px; font-weight: 700; padding: 0 7px; }
+.search { width: 16rem; border: 1px solid var(--home-line-strong); border-radius: 999px; padding: 6px 12px; font-size: 14px; color: #8F877E; background: #fff; }
+.sq { font-size: 14px; border: 1px solid var(--home-line-strong); background: #fff; border-radius: 8px; padding: 6px 12px; white-space: nowrap; }
+.sq.on { border-color: var(--home-olive); color: var(--home-olive); font-weight: 600; }
+.tbl { width: 100%; border-collapse: collapse; font-size: 14px; background: #fff; border: 1px solid var(--home-line); border-radius: 8px; overflow: hidden; }
+.tbl th { font-family: var(--font-head); text-transform: uppercase; font-size: 11px; letter-spacing: 0.06em; color: var(--home-dim); text-align: left; padding: 9px 12px; border-bottom: 1px solid var(--home-line); font-weight: 700; }
+.tbl td { padding: 10px 12px; border-bottom: 1px solid var(--home-line); vertical-align: top; }
+.tbl td .s { display: block; font-size: 12px; color: var(--home-dim); }
+.tbl .nm { font-weight: 650; }
+.tbl th.new, .tbl td.new { background: rgba(46,107,47,0.05); }
+.menuWrap { position: relative; }
+.menu { position: absolute; right: 0; top: 42px; width: 330px; background: #fff; border: 1px solid var(--home-line-strong); border-radius: 9px; box-shadow: 0 8px 26px rgba(36,30,21,0.16); padding: 6px; z-index: 2; display: grid; gap: 1px; }
+.mi { padding: 7px 10px; border-radius: 7px; display: grid; gap: 1px; font-size: 14px; }
+.mi .h { font-size: 12px; color: var(--home-dim); }
+.mi.g { font-family: var(--font-head); font-size: 11px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; color: var(--home-dim); padding-top: 10px; }
+.mi.ck { display: flex; gap: 8px; align-items: center; }
+.mdiv { height: 1px; background: var(--home-line); margin: 4px 6px; }
+.boardRow { display: grid; grid-template-columns: 44px minmax(0,1fr) 90px 40px 40px 44px; gap: 8px; align-items: center; padding: 8px 12px; font-size: 14px; background: #fff; border: 1px solid var(--home-line); border-radius: 8px; }
+.noteMk { width: 32px; height: 32px; border-radius: 8px; display: grid; place-items: center; background: var(--home-olive-soft); color: var(--home-olive); font-size: 14px; }
+.pop { width: 340px; background: #fff; border: 1px solid var(--home-line-strong); border-radius: 10px; box-shadow: 0 8px 26px rgba(36,30,21,0.16); padding: 12px 14px; display: grid; gap: 8px; margin: 6px 0 0 auto; }
+.popTitle { font-size: 14px; font-weight: 700; margin: 0; }
+.popQuote { font-size: 14px; color: var(--home-ink-soft); margin: 0; }
+.popFoot { font-size: 12px; color: var(--home-dim); margin: 0; border-top: 1px solid var(--home-line); padding-top: 8px; }
+/* asks */
+.ask { background: var(--doc-panel); border: 1px solid var(--doc-line); border-radius: 10px; padding: 14px 16px; display: grid; gap: 10px; }
+.ask h3 { margin: 0; font-size: 15px; display: flex; gap: 8px; align-items: center; text-wrap: balance; }
+.ask .why { margin: 0; color: var(--doc-soft); max-width: 90ch; }
+.opt { display: flex; gap: 10px; align-items: flex-start; padding: 8px 10px; border-radius: 8px; border: 1px solid var(--doc-line); cursor: pointer; }
+.opt:has(input:checked) { border-color: var(--doc-accent); background: var(--doc-accent-soft); }
+.opt input { margin-top: 3px; accent-color: var(--doc-accent); }
+.opt .rec { font-size: 11px; font-weight: 700; color: var(--doc-accent); margin-left: 6px; }
+textarea { width: 100%; min-height: 54px; font: inherit; padding: 8px; border-radius: 8px; border: 1px solid var(--doc-line); background: var(--doc-bg); color: var(--doc-ink); }
+.btnDoc { font: inherit; font-weight: 600; padding: 8px 14px; border-radius: 8px; border: 1px solid var(--doc-line); background: var(--doc-panel); color: var(--doc-ink); cursor: pointer; }
+.btnDoc.primary { background: var(--doc-accent); border-color: var(--doc-accent); color: #fff; }
+:root[data-theme="dark"] .btnDoc.primary { color: #0B1520; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .btnDoc.primary { color: #0B1520; } }
+pre.out { white-space: pre-wrap; background: var(--doc-bg); border: 1px solid var(--doc-line); border-radius: 8px; padding: 12px; font-size: 13px; min-height: 80px; overflow-x: auto; }
+dialog.note { max-width: min(620px, calc(100vw - 32px)); border: 1px solid var(--doc-line); border-radius: 12px; background: var(--doc-panel); color: var(--doc-ink); padding: 18px 20px; }
+dialog.note::backdrop { background: rgba(0,0,0,0.35); }
+dialog.note h3 { margin: 0 0 8px; font-size: 15px; }
+dialog.note p { margin: 0 0 10px; color: var(--doc-soft); }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+/* ─── Stage 6 additions ─── */
+/* the portal's joined money band (MoneySummaryBand): one frame, a hairline between figures */
+.mband { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0,1fr); background: var(--home-card); border: 1px solid var(--home-line); border-radius: 8px; }
+.mband > div { padding: 11px 16px; display: grid; gap: 2px; }
+.mband > div + div { border-left: 1px solid var(--home-line); }
+.mband .ml { font-size: 12px; color: var(--home-dim); }
+.mband .mv { font-size: 22px; font-weight: 700; font-variant-numeric: tabular-nums; color: var(--home-ink); }
+.mband .mc { font-size: 12px; color: var(--home-dim); }
+/* on a phone: figure ROWS, never tiles */
+.frows { background: var(--home-card); border: 1px solid var(--home-line); border-radius: 8px; }
+.frow { display: grid; grid-template-columns: minmax(0,1fr) auto 14px; gap: 10px; align-items: center; padding: 11px 14px; min-height: 52px; }
+.frow + .frow { border-top: 1px solid var(--home-line); }
+.frow .fl1 { font-size: 14px; font-weight: 600; } .frow .fc { display: block; font-size: 12px; color: var(--home-dim); font-weight: 400; }
+.frow .fv { font-size: 17px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.num { font-variant-numeric: tabular-nums; text-align: right; white-space: nowrap; }
+.tbl th.num { text-align: right; }
+.ptabs { display: flex; gap: 22px; border-bottom: 1px solid var(--home-line); font-size: 14px; }
+.ptabs span { padding: 8px 0 9px; color: var(--home-ink-soft); }
+.ptabs span.on { color: var(--home-ink); font-weight: 700; box-shadow: inset 0 -2px 0 var(--home-olive); }
+.stP { font-size: 12px; font-weight: 700; padding: 2px 8px; border-radius: 999px; background: rgba(70,55,30,0.08); color: var(--home-ink-soft); white-space: nowrap; }
+.stP.paid { background: var(--good-bg); color: var(--good); }
+.stP.inv { background: var(--warn-bg); color: var(--warn); }
+.stP.off { background: var(--home-olive-soft); color: var(--home-olive); }
+.callout { font-size: 14px; color: var(--home-ink); background: #fff; border: 1px solid var(--home-line); border-left: 3px solid var(--home-olive); border-radius: 8px; padding: 12px 14px; display: flex; gap: 14px; align-items: center; flex-wrap: wrap; }
+.callout .ct { flex: 1 1 260px; display: grid; gap: 2px; }
+.callout .ct b { font-size: 15px; }
+.callout .ct span { font-size: 13px; color: var(--home-ink-soft); }
+.ck { display: grid; grid-template-columns: 22px minmax(0,1fr) auto; gap: 10px; align-items: start; padding: 10px 0; }
+.ck + .ck { border-top: 1px solid var(--home-line); }
+.ck .t { font-size: 14px; font-weight: 600; } .ck .h { display: block; font-size: 12px; color: var(--home-dim); font-weight: 400; }
+.ck .when { font-size: 12px; color: var(--home-dim); white-space: nowrap; }
+.logoT { width: 64px; height: 32px; border: 1px solid var(--home-line); border-radius: 5px; display: grid; place-items: center; font-size: 10px; font-weight: 800; letter-spacing: 0.02em; background: #fff; color: var(--home-ink); flex: 0 0 auto; text-align: center; line-height: 1.1; padding: 0 3px; }
+.logoT.none { border-style: dashed; color: var(--home-faint); font-weight: 600; }
+.lg1 { color: #1F5E8C; } .lg2 { color: #8A3B12; } .lg3 { color: #2E6B2F; } .lg4 { color: #6B2E7A; }
+.srow { display: grid; grid-template-columns: 64px minmax(0,1fr) auto 22px; gap: 12px; align-items: center; padding: 10px 14px; min-height: 56px; background: var(--home-card); }
+.srow + .srow { border-top: 1px solid var(--home-line); }
+.srow .nm { font-size: 14px; font-weight: 650; } .srow .cap { display: block; font-size: 12px; color: var(--home-dim); }
+.srow.ended { opacity: 0.55; }
+.place { display: inline-flex; gap: 5px; align-items: center; font-size: 12px; color: var(--home-ink-soft); }
+.place::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: var(--home-olive); }
+/* the business's page */
+.pub { box-sizing: content-box; width: 640px; padding: 0 0 28px; }
+.pubBand { background: #2B3A1C; color: #F4F1E6; padding: 14px 40px; display: flex; gap: 12px; align-items: center; border-radius: 8px 8px 0 0; }
+.pubBand .crest { width: 34px; height: 34px; border-radius: 50%; background: #D9F99D; color: #2B3A1C; display: grid; place-items: center; font-weight: 800; font-size: 13px; }
+.pubBand b { font-size: 16px; }
+.pubIn { padding: 22px 40px 0; display: grid; gap: 18px; }
+.phone .pubBand { padding: 12px 16px; border-radius: 0; }
+.phone .pubIn { padding: 16px 16px 0; }
+.pkg { border: 1px solid var(--home-line); border-radius: 8px; background: #fff; padding: 16px; display: grid; gap: 10px; }
+.pkg .pr { font-size: 24px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.pkg ul { margin: 0; padding-left: 18px; display: grid; gap: 4px; font-size: 14px; }
+.sumT { width: 100%; border-collapse: collapse; font-size: 14px; }
+.sumT td { padding: 6px 0; border-top: 1px solid var(--home-line); }
+.sumT tr:first-child td { border-top: 0; }
+.sumT tr.tot td { font-weight: 700; border-top: 1px solid var(--home-line-strong); }
+.payOpt { display: grid; grid-template-columns: 20px minmax(0,1fr); gap: 8px; padding: 12px; border: 1px solid var(--home-line-strong); border-radius: 8px; background: #fff; }
+.payOpt.on { border-color: var(--home-olive); background: var(--home-olive-soft); }
+.payOpt .t { font-size: 15px; font-weight: 650; } .payOpt .h { font-size: 13px; color: var(--home-dim); }
+.receipt { border: 1px solid var(--home-line); border-radius: 8px; background: #fff; padding: 16px; display: grid; gap: 8px; }
+.receipt .rt { font-size: 18px; font-weight: 700; margin: 0; }
+/* email */
+.mail { width: 600px; background: #fff; border: 1px solid var(--home-line); border-radius: 8px; overflow: hidden; color: #241E15; }
+.mailHd { padding: 12px 18px; border-bottom: 1px solid var(--home-line); font-size: 13px; display: grid; gap: 2px; background: #FBF9F5; }
+.mailHd span { color: var(--home-dim); }
+.mailBd { padding: 22px 28px; display: grid; gap: 12px; font-size: 15px; line-height: 1.55; }
+.mailBd p { margin: 0; }
+.mailBtn { justify-self: start; background: #2B3A1C; color: #F4F1E6; font-weight: 700; padding: 11px 18px; border-radius: 8px; font-size: 15px; }
+.mailFt { padding: 14px 28px 20px; border-top: 1px solid var(--home-line); font-size: 12px; color: var(--home-dim); display: grid; gap: 4px; }
+/* invoice paper: Letter at 96 dpi is 816 px wide */
+.paper { width: 816px; background: #fff; color: #1d1d1d; font-family: Helvetica, Arial, sans-serif; border: 1px solid #d6d2ca; box-shadow: 0 2px 10px rgba(0,0,0,0.06); }
+.paper .acc { height: 8px; background: #2B3A1C; }
+.paper .pin { padding: 34px 56px 40px; display: grid; gap: 18px; font-size: 13px; }
+.paper .idb { display: flex; justify-content: space-between; gap: 20px; }
+.paper .idb b { font-size: 16px; display: block; }
+.paper h4 { font-size: 26px; margin: 0; letter-spacing: 0.01em; }
+.paper .subl { color: #555; margin-top: 2px; }
+.paper .pfig { display: grid; grid-template-columns: repeat(3, 1fr); border: 1px solid #d6d2ca; border-radius: 4px; }
+.paper .pfig > div { padding: 10px 14px; } .paper .pfig > div + div { border-left: 1px solid #d6d2ca; }
+.paper .pfig span { display: block; font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; color: #666; }
+.paper .pfig b { font-size: 18px; font-variant-numeric: tabular-nums; }
+.paper .lab { font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em; color: #666; font-weight: 700; margin-bottom: 4px; }
+.paper table { width: 100%; border-collapse: collapse; }
+.paper th { text-align: left; font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; color: #666; border-bottom: 1px solid #bbb; padding: 6px 0; }
+.paper td { padding: 8px 0; border-bottom: 1px solid #e3e0da; vertical-align: top; }
+.paper td.r, .paper th.r { text-align: right; font-variant-numeric: tabular-nums; }
+.paper .inc { margin: 4px 0 0; padding-left: 16px; color: #444; }
+.paper .tt td { border-bottom: 0; padding: 4px 0; }
+.paper .tt tr.big td { font-weight: 700; font-size: 15px; border-top: 1px solid #bbb; padding-top: 8px; }
+.paper .stamp { display: inline-block; border: 2px solid #2E6B2F; color: #2E6B2F; font-weight: 800; letter-spacing: 0.08em; padding: 4px 10px; border-radius: 4px; font-size: 13px; }
+.paper .foot { color: #777; font-size: 11px; display: flex; justify-content: space-between; border-top: 1px solid #e3e0da; padding-top: 8px; }
+.paper.mini { width: 816px; }
+/* public club site */
+.site { box-sizing: content-box; width: 960px; padding: 0 0 22px; }
+.siteBar { background: #2B3A1C; color: #F4F1E6; padding: 12px 28px; display: flex; gap: 22px; align-items: center; font-size: 14px; border-radius: 8px 8px 0 0; }
+.siteBar b { font-size: 16px; margin-right: auto; }
+.siteIn { padding: 20px 28px 0; display: grid; gap: 14px; }
+.strip { display: grid; grid-template-columns: repeat(auto-fill, 184px); gap: 12px; }
+.strip > div { min-height: 72px; border: 1px solid var(--home-line); border-radius: 8px; background: #fff; display: grid; place-items: center; font-weight: 800; font-size: 15px; text-align: center; padding: 6px; }
+.byLine { display: inline-flex; gap: 10px; align-items: center; font-size: 13px; color: var(--home-dim); border: 1px solid var(--home-line); background: #fff; border-radius: 8px; padding: 6px 10px; }
+.pcard { background: #fff; border: 1px solid var(--home-line); border-radius: 8px; padding: 12px 14px; display: grid; grid-template-columns: minmax(0,1fr) 18px; gap: 4px 8px; }
+.pcard .nm { font-size: 15px; font-weight: 650; } .pcard .s { font-size: 13px; color: var(--home-dim); grid-column: 1; }
+.pcard .chev { grid-row: 1 / span 3; grid-column: 2; align-self: start; }
+.pband { font-family: var(--font-head); font-size: 12px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; color: var(--home-dim); display: flex; gap: 8px; padding-top: 4px; }
+.lockedRow { opacity: 0.6; }
+.planTbl td.y { color: var(--tag-new); font-weight: 700; }
+.planTbl td.n { color: var(--doc-soft); }
+.chip.q { background: rgba(70,55,30,0.08); color: var(--home-dim); }
+.phone .btnLime, .phone .btnOut { min-height: 44px; display: inline-flex; align-items: center; justify-content: center; }
+.phone .ptabs span { padding: 12px 0; }
+.phone .ck { min-height: 44px; align-items: center; }
+.tap44 { min-width: 44px; min-height: 44px; padding: 0 10px; }
+.bandBtn { display: flex; gap: 8px; align-items: center; }
+/* ─── Stage 5 + 7 additions ─── */
+nav.tabs .grp { flex: 0 0 auto; align-self: center; font-size: 10px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--doc-soft); padding: 0 2px 0 10px; }
+nav.tabs .grp:first-child { padding-left: 4px; }
+.rail { width: 210px; background: var(--home-card); border-right: 1px solid var(--home-line); padding: 14px 10px; display: grid; gap: 2px; align-content: start; font-size: 14px; border-radius: 8px 0 0 8px; }
+.rail .g { font-family: var(--font-head); font-size: 11px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--home-dim); padding: 12px 10px 4px; }
+.rail .i { padding: 7px 10px; border-radius: 7px; color: var(--home-ink-soft); }
+.rail .i.on { background: var(--home-olive-soft); color: var(--home-olive); font-weight: 650; }
+.rail .i.nw { box-shadow: inset 0 0 0 1.5px var(--tag-new); color: var(--home-ink); font-weight: 650; }
+.shell { display: flex; width: 780px; min-height: 330px; }
+.shell .main { flex: 1; padding: 18px 22px; display: grid; gap: 12px; align-content: start; min-width: 0; }
+.vsw { display: inline-flex; background: #fff; border: 1px solid var(--home-line-strong); border-radius: 999px; padding: 3px; font-size: 13px; }
+.vsw span { padding: 4px 11px; border-radius: 999px; color: var(--home-ink-soft); }
+.vsw span.on { background: rgba(87,101,30,0.14); color: #3E4815; font-weight: 600; }
+.wk { display: grid; grid-template-columns: repeat(7, minmax(0,1fr)); gap: 6px; }
+.wkH { font-family: var(--font-head); font-size: 11px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; color: var(--home-dim); padding: 4px 2px; }
+.wkD { display: grid; gap: 6px; align-content: start; min-height: 210px; }
+.bk { background: #fff; border: 1px solid var(--home-line); border-left: 3px solid var(--c, rgba(70,55,30,0.30)); border-radius: 6px; padding: 5px 7px; font-size: 12px; line-height: 1.35; color: var(--home-ink); }
+.bk b { display: block; font-size: 12px; }
+.bk .w { color: var(--home-dim); }
+.bk.ev { --c: rgba(70,55,30,0.30); }
+.dash { color: var(--home-faint); font-size: 12px; padding: 4px 2px; }
+.sgT { border-collapse: collapse; font-size: 12px; background: #fff; border: 1px solid var(--home-line); }
+.sgT th { font-family: var(--font-head); font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--home-dim); text-align: left; padding: 7px 8px; border-bottom: 1px solid var(--home-line); font-weight: 700; }
+.sgT td { padding: 6px; border-bottom: 1px solid var(--home-line); border-left: 1px solid var(--home-line); vertical-align: top; width: 150px; }
+.sgT td.fac { width: 118px; border-left: 0; font-weight: 650; font-size: 13px; }
+.sgT td.fac .s { display: block; font-weight: 400; font-size: 11px; color: var(--home-dim); }
+.slot { border: 1px solid var(--home-line); border-left: 3px solid var(--c, rgba(70,55,30,0.30)); border-radius: 6px; padding: 4px 6px; background: #fff; line-height: 1.35; }
+.slot + .slot { margin-top: 4px; }
+.slot .w { display: block; color: var(--home-dim); }
+.slot.open { border-style: dashed; border-left-width: 1px; color: var(--home-dim); }
+.slot.ev { --c: rgba(70,55,30,0.30); }
+.siteBar .tabsIn { display: flex; gap: 20px; font-size: 15px; font-weight: 600; }
+.siteBar .tabsIn span { padding: 6px 0; }
+.siteBar .tabsIn span.on { box-shadow: inset 0 -3px 0 #D9F99D; }
+.siteBar .tabsIn span.nw { outline: 1.5px dashed #D9F99D; outline-offset: 3px; border-radius: 3px; }
+.siteBar .acct { font-size: 13px; opacity: 0.9; }
+.pTabRow { display: flex; gap: 18px; background: #fff; border-bottom: 1px solid var(--home-line); padding: 0 16px; font-size: 14px; font-weight: 600; overflow: hidden; white-space: nowrap; }
+.pTabRow span { padding: 12px 0; flex: 0 0 auto; }
+.pTabRow span.on { box-shadow: inset 0 -3px 0 var(--home-ink); }
+.pTabRow span.nw { outline: 1.5px dashed var(--tag-new); outline-offset: -2px; border-radius: 3px; padding-inline: 4px; }
+.att { display: grid; grid-template-columns: minmax(0,1fr) 44px 44px; gap: 6px; align-items: center; padding: 6px 10px 6px 14px; min-height: 60px; background: #fff; }
+.att + .att { border-top: 1px solid var(--home-line); }
+.att .nm { font-size: 15px; font-weight: 650; } .att .s { display: block; font-size: 12px; color: var(--home-dim); font-weight: 400; }
+.here { width: 44px; height: 44px; border-radius: 10px; border: 1.5px solid var(--home-line-strong); display: grid; place-items: center; font-size: 18px; color: #fff; background: #fff; }
+.here.on { background: var(--home-olive); border-color: var(--home-olive); }
+.hmark { width: 44px; height: 44px; display: grid; place-items: center; color: var(--home-ink-soft); font-size: 13px; font-weight: 800; border-radius: 10px; }
+.hmark.none { color: transparent; }
+.sheet { border: 1px solid var(--home-line-strong); border-radius: 16px 16px 0 0; background: #fff; padding: 16px; display: grid; gap: 10px; box-shadow: 0 -6px 24px rgba(36,30,21,0.12); }
+.sess { display: grid; grid-template-columns: minmax(0,1fr) 110px 90px 22px; gap: 14px; align-items: center; padding: 10px 14px; min-height: 56px; background: #fff; }
+.sess + .sess { border-top: 1px solid var(--home-line); }
+.sess .nm { font-size: 14px; font-weight: 650; } .sess .s { display: block; font-size: 12px; color: var(--home-dim); font-weight: 400; }
+.phone .sess { grid-template-columns: minmax(0,1fr) auto 18px; gap: 10px; }
+.famSess { display: grid; grid-template-columns: 20px minmax(0,1fr) auto; gap: 10px; align-items: center; padding: 10px 12px; border: 1px solid var(--home-line-strong); border-radius: 8px; background: #fff; }
+.famSess.on { border-color: var(--home-olive); background: var(--home-olive-soft); }
+.famSess .t { font-size: 14px; font-weight: 650; } .famSess .h { font-size: 12px; color: var(--home-dim); display: block; font-weight: 400; }
+.chips { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+.gameL { display: grid; grid-template-columns: 120px minmax(0,1fr) 110px; gap: 10px; padding: 8px 14px; font-size: 14px; background: #fff; align-items: center; }
+.gameL + .gameL { border-top: 1px solid var(--home-line); }
+.gameL .s { color: var(--home-dim); font-size: 12px; }
+.phone .gameL { grid-template-columns: 74px minmax(0,1fr) auto; padding: 10px 12px; }
+.wkPhone { display: grid; gap: 8px; }
+.dayH { font-family: var(--font-head); font-size: 12px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; color: var(--home-dim); }
+.mailMini { width: 520px; }
+.chgT td:first-child { font-weight: 600; white-space: nowrap; }
+.askCh { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 8px; }
+.askCh div { font-size: 12px; color: var(--doc-soft); background: var(--doc-bg); border-radius: 8px; padding: 6px 9px; }
+.askCh b { display: block; font-size: 10px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--doc-ink); }
+@media (max-width: 700px) { .askCh { grid-template-columns: 1fr; } }
+.ruled { font-size: 11px; font-weight: 700; color: var(--tag-new); }
+.fl.bl { color: var(--doc-accent); background: var(--doc-accent-soft); }
+.prow { display: grid; grid-template-columns: minmax(0,1fr) 18px; gap: 8px; align-items: center; padding: 10px 14px; min-height: 60px; background: #fff; }
+.prow + .prow { border-top: 1px solid var(--home-line); }
+.prow .nm { font-size: 16px; font-weight: 650; } .prow .s { display: block; font-size: 13px; color: var(--home-dim); margin-top: 2px; }
+.gRow { display: grid; gap: 3px; padding: 10px 14px; background: #fff; }
+.gRow + .gRow { border-top: 1px solid var(--home-line); }
+.gRow .hd { display: flex; justify-content: space-between; align-items: center; gap: 8px; font-size: 13px; color: var(--home-dim); }
+.gRow .tm { display: flex; justify-content: space-between; gap: 8px; font-size: 15px; color: var(--home-ink); } .gRow .tm b { font-variant-numeric: tabular-nums; }
+.gRow .tm.w { font-weight: 700; } .gRow .ns { font-size: 13px; color: var(--home-dim); }
+.linkRow { display: flex; justify-content: space-between; align-items: center; padding: 12px 14px; min-height: 48px; font-size: 15px; font-weight: 600; color: var(--home-olive); background: #fff; border-top: 1px solid var(--home-line); }
+.ico44 { width: 44px; height: 44px; display: inline-grid; place-items: center; color: var(--home-ink-soft); font-size: 17px; flex: 0 0 auto; }
+.mrow { display: grid; grid-template-columns: minmax(0,1fr) 44px; gap: 6px; align-items: center; padding: 8px 4px 8px 14px; background: #fff; }
+.mrow + .mrow { border-top: 1px solid var(--home-line); }
+.mrow .nm { font-size: 15px; font-weight: 650; display: block; } .mrow .s { display: block; font-size: 12px; color: var(--home-dim); }
+.mrow .act { display: inline-flex; align-items: center; min-height: 44px; font-size: 14px; font-weight: 650; color: var(--home-olive); }
+.card > .rlist.inset { border: 0; border-radius: 0; background: transparent; border-top: 1px solid var(--home-line); margin: 0 -20px -16px; }
+.site .srow, .pub .srow { min-height: 60px; } .site .srow .nm { font-size: 16px; } .site .srow .cap { font-size: 13px; }
+.pTabRow span { height: 44px; display: inline-flex; align-items: center; padding: 0; }
+/* ─── round 2 · paid events ─── */
+/* family pages wear the CLUB's colour (ClubKit .btnPrimary = --club-fill), not lime: round 1 drew lime there */
+.btnClub { font: inherit; font-size: 16px; font-weight: 650; background: #2B3A1C; color: #F4F1E6; border: 0; border-radius: 8px; min-height: 44px; padding: 0 18px; display: flex; align-items: center; justify-content: center; text-align: center; }
+.btnClubOut { font: inherit; font-size: 15px; font-weight: 600; background: #fff; color: #1F1B16; border: 1px solid #948B7D; border-radius: 8px; min-height: 44px; padding: 0 16px; display: flex; align-items: center; justify-content: center; }
+.chipOk { font-size: 12px; font-weight: 700; padding: 2px 8px; border-radius: 20px; background: #E6F0E2; color: #2C6A2A; white-space: nowrap; }
+.chipHeld { font-size: 12px; font-weight: 700; padding: 2px 8px; border-radius: 20px; background: rgba(138,90,11,0.10); color: #6B4105; white-space: nowrap; }
+.feeP { font-size: 12px; font-weight: 650; padding: 2px 9px; border-radius: 999px; white-space: nowrap; display: inline-block; }
+.feeP.good { color: #2A5222; background: rgba(46,107,47,0.08); box-shadow: inset 0 0 0 1px rgba(46,107,47,0.28); }
+.feeP.warn { color: #6B4105; background: rgba(138,90,11,0.08); box-shadow: inset 0 0 0 1px rgba(138,90,11,0.28); }
+.priceRow { display: grid; grid-template-columns: minmax(0,1fr) 130px 44px; gap: 10px; align-items: center; }
+.policy { font-size: 14px; color: var(--home-ink); background: #fff; border: 1px solid var(--home-line); border-radius: 8px; padding: 10px 12px; display: grid; gap: 6px; }
+.policy .fixed { font-size: 13px; color: var(--home-ink-soft); border-top: 1px solid var(--home-line); padding-top: 6px; }
+.seller { font-size: 12px; color: var(--home-dim); }
+.soldRow { opacity: 1; }
+.rt { font-variant-numeric: tabular-nums; }
+/* /design 2026-11-25: the kit's .btn.btn-danger (Warm: --danger-rgb 176,58,34, ink --home-live) */
+.btnDanger { font: inherit; font-size: 14px; font-weight: 600; background: rgba(176,58,34,0.15); color: #B03A22; border: 1px solid rgba(176,58,34,0.30); border-radius: 8px; padding: 7px 14px; white-space: nowrap; }
+/* /design: the later .phone .qrow rule overrode .qrow.nogrip on phones */
+.phone .qrow.nogrip { grid-template-columns: minmax(0,1fr) 22px; padding-left: 14px; }
+/* /design: 44 px tap targets for links on a phone */
+.phone .door, .phone .pbody > span.small:first-child { min-height: 44px; display: flex; align-items: center; }
+.cardsOn { font-size: 10px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; color: var(--doc-accent); background: var(--doc-accent-soft); padding: 2px 6px; border-radius: 4px; }
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <span class="eyebrow">Board Ready · Stage 5 · paid events · drawings written Nov 25, 2026 · round 2, after /legal, /accounting, a read of the shipped pay screens and /design</span>
+    <h1>Paid events: a banquet or a hosted dinner can charge, and a camp becomes an event with a price and sessions</h1>
+    <p class="lead">Round 1 (ruled Nov 24) gave a price only to camps, so a $40 banquet would have had to pretend to be a camp. This round draws a price as something any event can have. Drawn on Riverdale Minor Ball’s year-end banquet: Sat, Jun 26, 2027, 6:00 p.m., Riverdale Legion Hall, 120 spots, $40.00 an adult and $15.00 a child, as of Monday, April 12, 2027. Riverdale doesn’t take card payments yet, like every club today, so its own records show e-transfers; the screens that show cards are tagged “once Riverdale takes cards”. Click any number, tag or red flag to read what it refers to. The last tab holds your asks, numbered 20 to 33 so they don’t collide with round 1’s 1 to 19; the first answer is my recommendation and is already selected.</p>
+  </header>
+
+  <nav class="tabs" role="tablist" aria-label="Sections">
+    <button role="tab" id="t1" aria-selected="true" data-pane="p1">1 · The shape</button>
+    <button role="tab" id="t2" aria-selected="false" data-pane="p2">2 · Setting a price</button>
+    <button role="tab" id="t3" aria-selected="false" data-pane="p3">3 · Signing up</button>
+    <button role="tab" id="t4" aria-selected="false" data-pane="p4">4 · After signing up</button>
+    <button role="tab" id="t5" aria-selected="false" data-pane="p5">5 · The club’s side</button>
+    <button role="tab" id="t6" aria-selected="false" data-pane="p6">6 · Books, tax, receipt</button>
+    <button role="tab" id="t7" aria-selected="false" data-pane="p7">7 · Reviews</button>
+    <button role="tab" id="t8" aria-selected="false" data-pane="p8">8 · Asks</button>
+  </nav>
+
+  <!-- 1 · THE SHAPE -->
+  <section class="pane" id="p1" role="tabpanel" aria-labelledby="t1">
+    <h2>One way to pay for any event; a camp keeps its sessions, ages and waitlist on top</h2>
+    <p>A paid event isn’t a camp. It sells spots, usually first come with nobody to approve, at a price for each kind of person, and its tax usually runs the other way. So the price moves down from Stage 7 into the event itself, and a camp uses it. Seven things the reviews and the code turned up shaped the asks: <button class="fl" type="button" data-f="F1">F1</button> <button class="fl" type="button" data-f="F2">F2</button> <button class="fl" type="button" data-f="F3">F3</button> <button class="fl" type="button" data-f="F4">F4</button> <button class="fl" type="button" data-f="F5">F5</button> <button class="fl" type="button" data-f="F6">F6</button> <button class="fl" type="button" data-f="F7">F7</button></p>
+    <div class="explain">
+      <h3>A free event, a paid event and a camp, side by side</h3>
+      <table class="docTbl chgT">
+        <thead><tr><th></th><th>A free event (round 1, 6A)</th><th>A paid event (this round)</th><th>A camp (round 1, 11A–18A)</th></tr></thead>
+        <tbody>
+          <tr><td>Price</td><td class="s">None</td><td class="s">One price, or one for each kind of person: Adult $40.00, Child $15.00 <button class="mark" type="button" data-ask="20">20</button></td><td class="s">Each session’s own price, an early bird</td></tr>
+          <tr><td>Getting in</td><td class="s">Sign up while there are spots</td><td class="s">First come, nobody approves <button class="mark" type="button" data-ask="21">21</button></td><td class="s">The club accepts, unless it turns on “Accept sign-ups while there are spots”</td></tr>
+          <tr><td>Paying</td><td class="s">Nothing</td><td class="s">In full at sign-up once the club takes cards; until then spots are held for 7 days <button class="mark" type="button" data-ask="21">21</button></td><td class="s">After acceptance, on Your sign-up</td></tr>
+          <tr><td>When it’s full</td><td class="s">Full</td><td class="s">Sold out <button class="mark" type="button" data-ask="24">24</button></td><td class="s">A waitlist with a held spot</td></tr>
+          <tr><td>Not coming</td><td class="s">“Can’t come anymore” ends it at once</td><td class="s">“Ask to withdraw”, the club decides <button class="mark" type="button" data-ask="25">25</button></td><td class="s">“Ask to withdraw Maya”</td></tr>
+          <tr><td>GST/HST default</td><td class="s">None</td><td class="s">Taxable, for Banquet, AGM and Other <button class="mark" type="button" data-ask="28">28</button></td><td class="s">Exempt</td></tr>
+          <tr><td>Books</td><td class="s">None</td><td class="s">Club events › Event tickets <button class="mark" type="button" data-ask="30">30</button></td><td class="s">Camps and clinics › Camp and clinic fees</td></tr>
+          <tr><td>Receipt</td><td class="s">None</td><td class="s">Receipt for event tickets <button class="mark" type="button" data-ask="31">31</button></td><td class="s">Receipt for camp fees</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="explain">
+      <h3>What changes, for whom</h3>
+      <table class="docTbl chgT">
+        <thead><tr><th>Who</th><th>After this round</th></tr></thead>
+        <tbody>
+          <tr><td>A family</td><td class="s">Signs up for the banquet, checks every line and the refund policy, then pays or is told the date its spots are held until. Gets an email that is its copy of the sign-up, and a receipt once paid. Is told if the club cancels.</td></tr>
+          <tr><td>A coach</td><td class="s">Nothing.</td></tr>
+          <tr><td>A club admin</td><td class="s">Sets a price, spots and a closing day in the event window, marks e-transfers received, sees who is held and until when, and cancels with one window that tells people and refunds them. A registered club sees the event’s GST/HST choice, Taxable by default for a dinner.</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- 2 · SETTING A PRICE -->
+  <section class="pane" id="p2" role="tabpanel" aria-labelledby="t2" hidden>
+    <h2>The event window gains a price, how families pay, the refund policy and, for a registered club, GST/HST</h2>
+    <p>The Sign-ups section of the round 1 window, with “Free” and “A price for each person”. Drawn for Riverdale, which doesn’t take card payments yet and has no refund policy written, so the window asks for one. A club that takes cards sees one line in place of the holding days.</p>
+    <div class="pair">
+      <div class="spec">
+        <div class="specHead"><b>Edit the year-end banquet · Sign-ups and price</b><span class="chrome">KitDialog · form · 600</span><button class="mark" type="button" data-ask="20">20</button><button class="mark" type="button" data-ask="21">21</button><button class="mark" type="button" data-ask="23">23</button><button class="mark" type="button" data-ask="28">28</button><button class="mark" type="button" data-ask="29">29</button><button class="tag new" type="button" data-note="NEW SECTION in the round 1 event window. The price rows are a name and an amount; a row is removed with its 44 px ×. “Add a price” adds a row. The holding days field shows only while the club doesn’t take card payments. The refund policy field shows only while the club has none; once written it reads as text with “Change on Payouts”. GST/HST shows only to a club that said it is registered (Stage 6’s Invoice details).">NEW</button></div>
+        <div class="scroll"><div class="dimmer"><div class="win">
+          <div class="whead"><span class="ico">✎</span><div><p class="wtitle">Edit the year-end banquet</p><div class="wmeta">Banquet · Sat, Jun 26, 2027 · Riverdale Legion Hall</div></div></div>
+          <div class="wbody">
+            <div class="swRows"><div class="sw"><span class="t">Ask people to sign up<span class="h">Who’s coming, and the questions on the sign-up form</span></span><span class="tog on"></span></div></div>
+            <div class="two"><div class="fld"><span class="l">Spots</span><div class="inp">120</div></div><div class="fld"><span class="l">Sign-ups close</span><div class="inp">Sat, Jun 19</div></div></div>
+            <div class="sec">
+              <p class="secH">Price</p>
+              <div class="choices"><span><span class="rad"></span>Free</span><span><span class="rad on"></span>A price for each person</span></div>
+              <div class="priceRow"><div class="inp">Adult</div><div class="inp">$40.00</div><span class="ico44">×</span></div>
+              <div class="priceRow"><div class="inp">Child</div><div class="inp">$15.00</div><span class="ico44">×</span></div>
+              <div><span class="btnOut">+ Add a price</span></div>
+              <span class="hint">Prices include GST/HST. A family sees $40.00 and pays $40.00.</span>
+            </div>
+            <div class="sec">
+              <p class="secH">How families pay</p>
+              <div class="fld"><span class="l">Hold unpaid spots for</span><div class="two" style="grid-template-columns:110px minmax(0,1fr);align-items:center"><div class="inp">7 days</div><span class="hint">Never past the day sign-ups close. Then the spots are released and the family gets one email.</span></div></div>
+              <p class="small">Families pay you the way your “How to pay” says, and you mark it received. Once you take card payments, families pay by card or bank debit when they sign up, and nothing is held.</p>
+            </div>
+            <div class="sec">
+              <p class="secH">Refund policy</p>
+              <div class="fld"><span class="l">Refund policy <span class="req">*</span></span><div class="inp ta">Refunds until Jun 12. After that we can’t refund tickets, because we pay the caterer by then.</div><span class="hint">Saved as your club’s refund policy, so Payouts starts with it. Families see it before they sign up. A paid event can’t open sign-ups without one.</span></div>
+            </div>
+            <div class="sec">
+              <p class="secH">GST/HST</p>
+              <div class="radioRow on"><span class="dot"></span><div><div class="t">Taxable · HST 13%</div><div class="h">Dinners and event tickets are usually charged tax, even by a non-profit club. Choose Exempt only if your accountant says this one is not.</div></div></div>
+              <div class="radioRow"><span class="dot"></span><div><div class="t">Exempt</div><div class="h">A registered charity’s fundraising dinner may not be charged tax. Ask your accountant before choosing Exempt.</div></div></div>
+              <span class="hint">Ontario’s rate, because the banquet is at Riverdale Legion Hall. A Camp, Clinic or Champs day starts Exempt.</span>
+            </div>
+          </div>
+          <div class="wfoot"><span class="btnOut">Cancel</span><span class="btnLime">Save</span></div>
+        </div></div></div>
+      </div>
+      <div class="stack">
+        <div class="spec">
+          <div class="specHead"><b>The banquet’s page, with money</b><span class="chrome">club admin · desktop · 960</span><button class="mark" type="button" data-ask="21">21</button><button class="tag re" type="button" data-note="RESTYLED from round 1’s event page: the joined money band (MoneySummaryBand) arrives once an event has a price, as the camp page has it. 52 adults and 34 children are 86 people, worth $2,590.00: $2,400.00 received and $190.00 to pay on 2 held sign-ups.">RESTYLED</button></div>
+          <div class="scroll"><div class="frame adm">
+            <div class="phead"><span class="back">← Events</span><p class="ttl">Year-end banquet</p><span class="sub">Banquet · Riverdale Legion Hall · Sat, Jun 26, 2027 · 6:00 p.m. · Everyone</span></div>
+            <div class="mband"><div><span class="ml">Spots</span><span class="mv">86 of 120</span><span class="mc">52 adults · 34 children</span></div><div><span class="ml">Received</span><span class="mv">$2,400.00</span><span class="mc">29 sign-ups</span></div><div><span class="ml">To pay</span><span class="mv">$190.00</span><span class="mc">2 sign-ups held</span></div></div>
+            <div class="card">
+              <div class="cardTop"><p class="cardH">About the banquet</p><span class="recAct">✎ Edit</span></div>
+              <dl class="facts"><dt>Price</dt><dd>$40.00 an adult · $15.00 a child<span class="s">Includes HST 13%</span></dd><dt>Sign-ups</dt><dd>Open until Sat, Jun 19 · unpaid spots held 7 days</dd><dt>Refund policy</dt><dd>Refunds until Jun 12. After that we can’t refund tickets, because we pay the caterer by then.</dd><dt>GST/HST</dt><dd>Taxable · HST 13%</dd></dl>
+            </div>
+          </div></div>
+        </div>
+        <div class="explain">
+          <h3>What the window does, and doesn’t do</h3>
+          <ul>
+            <li><b>The price is per person.</b> One row is one price for everyone; two rows are Adult and Child, as Riverdale has. The kinds are the club’s words.</li>
+            <li><b>One payment per sign-up, in full.</b> Five people are one charge of $125.00, so the card’s fixed fee falls once (/accounting). No pay in part: house league has none either <button class="fl" type="button" data-f="F3">F3</button>.</li>
+            <li><b>The tax default follows the kind,</b> not whether there’s a price. The hint words are /accounting’s.</li>
+            <li><b>Who pays the card fee</b> follows the club’s choice on Payouts, “Who pays the processing fee”, as camps do. No third choice.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 3 · SIGNING UP -->
+  <section class="pane" id="p3" role="tabpanel" aria-labelledby="t3" hidden>
+    <h2>A family fills in who’s coming, then checks every line and the refund policy before it pays</h2>
+    <p>The round 1 banquet form with a price beside Adult and Child, and a separate health-marked food question <button class="mark" type="button" data-ask="32">32</button>. /legal: a paid sign-up is an online agreement, so a second step shows the seller, each line, the total in Canadian dollars and the refund policy, and lets the family change anything before it pays <button class="mark" type="button" data-ask="22">22</button>. Family pages wear the club’s colour, not lime <button class="fl" type="button" data-f="F2">F2</button>.</p>
+    <div class="pair">
+      <div class="spec">
+        <div class="specHead"><b>Sign up for the banquet</b><span class="chrome">public · desktop · 640</span><button class="mark" type="button" data-ask="20">20</button><button class="mark" type="button" data-ask="32">32</button><button class="tag re" type="button" data-note="RESTYLED from round 1’s free banquet form: the price now sits beside Adult and Child, the button goes to the check step, and the food question is split in two: an ordinary Meal and a health-marked “Allergies or other food needs”, each for each person. The button is the club’s primary button (ClubKit .btnPrimary, 44 px). Drawn with persons 1 and 4 open; persons 2, 3 and 5 (Arjun, an adult; Maya and Anika, children) are left out of the drawing to save space.">RESTYLED</button></div>
+        <div class="scroll"><div class="frame fam">
+          <span class="small">← Year-end banquet</span>
+          <p class="famH">Sign up for the year-end banquet</p>
+          <p class="famSub">Sat, Jun 26, 2027 · 6:00 p.m. · Riverdale Legion Hall · $40.00 an adult, $15.00 a child · 34 spots left</p>
+          <div class="fsec">
+            <p class="fsecH">Person 1</p>
+            <div class="two"><div class="fld"><span class="l">First name <span class="req">*</span></span><div class="inp">Priya</div></div><div class="fld"><span class="l">Last name <span class="req">*</span></span><div class="inp">Shah</div></div></div>
+            <div class="choices"><span><span class="rad on"></span>Adult · $40.00</span><span><span class="rad"></span>Child · $15.00</span></div>
+            <div class="fld"><span class="l">Meal <span class="req">*</span></span><div class="inp sel"><span>Chicken</span><span>▾</span></div></div>
+            <div class="fld"><span class="l">Allergies or other food needs</span><div class="inp">None</div><span class="healthL">Health · seen only by the people who run this event</span></div>
+          </div>
+          <div class="fsec">
+            <p class="fsecH">Person 4 <span class="rm">Remove</span></p>
+            <div class="two"><div class="inp">Dev</div><div class="inp">Shah</div></div>
+            <div class="choices"><span><span class="rad"></span>Adult · $40.00</span><span><span class="rad on"></span>Child · $15.00</span></div>
+            <div class="fld"><span class="l">Meal <span class="req">*</span></span><div class="inp sel"><span>Kids’ pasta</span><span>▾</span></div></div>
+            <div class="fld"><span class="l">Allergies or other food needs</span><div class="inp">Tree nuts</div><span class="healthL">Health · seen only by the people who run this event</span></div>
+            <div><span class="btnOut">+ Add another person</span></div>
+          </div>
+          <div class="fsec">
+            <p class="fsecH">Your contact</p>
+            <div class="two"><div class="inp">Priya Shah</div><div class="inp">priya@example.com</div></div>
+          </div>
+          <p style="margin:0 0 12px;font-size:14px"><b>$125.00</b> for 5 people: 2 adults, 3 children.</p>
+          <div class="btnClub">Next: check your sign-up</div>
+        </div></div>
+      </div>
+      <div class="stack">
+        <div class="pair" style="grid-template-columns:repeat(auto-fit,minmax(min(100%,400px),1fr))">
+          <div class="spec">
+            <div class="specHead"><b>Check your sign-up · a club that takes cards</b><span class="chrome">phone · 390</span><button class="mark" type="button" data-ask="22">22</button><button class="mark" type="button" data-ask="23">23</button><button class="tag new" type="button" data-note="NEW STEP. /legal’s minimum: the seller line, each price line, a processing fee as its own line when families pay it (Riverdale pays it, so there is none), the total in Canadian dollars, the refund policy open with the fixed line the club can’t edit, and a way back to change anything. The pay button opens the shipped secure payment page.">NEW</button></div>
+            <div class="scroll"><div class="frame phone">
+              <div class="pbody">
+                <span class="small">← Change who’s coming</span>
+                <p class="famH" style="font-size:22px;margin:0">Check your sign-up</p>
+                <p class="famSub">You can change anything here before you pay.</p>
+                <div class="card" style="gap:8px">
+                  <p class="cardH" style="font-size:15px">Year-end banquet · Sat, Jun 26, 6:00 p.m.</p>
+                  <table class="sumT"><tbody>
+                    <tr><td>2 adults × $40.00</td><td class="num">$80.00</td></tr>
+                    <tr><td>3 children × $15.00</td><td class="num">$45.00</td></tr>
+                    <tr class="tot"><td>Total (Canadian dollars)</td><td class="num">$125.00</td></tr>
+                  </tbody></table>
+                  <span class="small">Includes $14.38 HST</span>
+                </div>
+                <p class="subH">Refund policy</p>
+                <div class="policy"><span>Refunds until Jun 12. After that we can’t refund tickets, because we pay the caterer by then.</span><span class="fixed">If Riverdale Minor Ball cancels this event, it refunds what you paid.</span></div>
+                <div class="btnClub">Sign up and pay $125.00</div>
+                <p class="seller">Sold by Riverdale Minor Ball. FieldLogicHQ provides this page and is not part of the sale.</p>
+              </div>
+            </div></div>
+          </div>
+          <div class="spec">
+            <div class="specHead"><b>The same step until then</b><span class="chrome">phone · 390 · Riverdale today</span><button class="mark" type="button" data-ask="21">21</button><button class="tag new" type="button" data-note="NEW. The same check, with “Hold my spots” in place of paying. The line under it is /legal’s: nothing is charged here, how to pay, by when, and what happens after.">NEW</button></div>
+            <div class="scroll"><div class="frame phone">
+              <div class="pbody">
+                <span class="small">← Change who’s coming</span>
+                <p class="famH" style="font-size:22px;margin:0">Check your sign-up</p>
+                <p class="famSub">You can change anything here before you send it.</p>
+                <div class="card" style="gap:8px">
+                  <p class="cardH" style="font-size:15px">Year-end banquet · Sat, Jun 26, 6:00 p.m.</p>
+                  <table class="sumT"><tbody>
+                    <tr><td>2 adults × $40.00</td><td class="num">$80.00</td></tr>
+                    <tr><td>3 children × $15.00</td><td class="num">$45.00</td></tr>
+                    <tr class="tot"><td>Total (Canadian dollars)</td><td class="num">$125.00</td></tr>
+                  </tbody></table>
+                  <span class="small">Includes $14.38 HST</span>
+                </div>
+                <p class="subH">Refund policy</p>
+                <div class="policy"><span>Refunds until Jun 12. After that we can’t refund tickets, because we pay the caterer by then.</span><span class="fixed">If Riverdale Minor Ball cancels this event, it refunds what you paid.</span></div>
+                <div class="btnClub">Hold my spots</div>
+                <p class="small" style="color:var(--home-ink)">Nothing is charged here. Pay Riverdale Minor Ball by e-transfer to treasurer@riverdaleball.ca by Mon, Apr 19. Your spots are held until then, then released.</p>
+                <p class="seller">Sold by Riverdale Minor Ball. FieldLogicHQ provides this page and is not part of the sale.</p>
+              </div>
+            </div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 4 · AFTER SIGNING UP -->
+  <section class="pane" id="p4" role="tabpanel" aria-labelledby="t4" hidden>
+    <h2>Your sign-up shows what’s paid or held, the receipt, and a request to withdraw; the email is the family’s copy</h2>
+    <p>The round 1 Your sign-up page with the house-league pay block. A paid sign-up can’t be ended at once, because money has moved: “Ask to withdraw” is the house-league request <button class="mark" type="button" data-ask="25">25</button>. A held, unpaid one still can. The email stands alone, because it is the family’s copy of the agreement <button class="mark" type="button" data-ask="27">27</button>.</p>
+    <div class="pair">
+      <div class="spec">
+        <div class="specHead"><b>Your sign-up · paid</b><span class="chrome">phone · 390</span><span class="cardsOn">once Riverdale takes cards</span><button class="mark" type="button" data-ask="25">25</button><button class="mark" type="button" data-ask="31">31</button><button class="tag re" type="button" data-note="RESTYLED from round 1’s free Your sign-up: one row per person with a meal, the shipped receipt card (“Paid, thank you”, the amount, how and when), a “Receipt for event tickets” link, the refund policy and “Ask to withdraw” in place of “Can’t come anymore”. Allergies don’t show in the list; they open from “Change your answers”.">RESTYLED</button></div>
+        <div class="scroll"><div class="frame phone">
+          <div class="pbody">
+            <span class="small">← Year-end banquet</span>
+            <p class="famH" style="font-size:22px;margin:0">Your sign-up</p>
+            <p class="famSub">Year-end banquet · Sat, Jun 26, 6:00 p.m.</p>
+            <p class="small">Reference: <b>RB-4821</b> · quote it if you contact the club</p>
+            <div class="rlist">
+              <div class="qrow nogrip"><div><div class="qt">Priya <span class="chipOk">Coming</span></div><div class="qc">Adult · Chicken</div></div><span></span></div>
+              <div class="qrow nogrip"><div><div class="qt">Arjun <span class="chipOk">Coming</span></div><div class="qc">Adult · Fish</div></div><span></span></div>
+              <div class="qrow nogrip"><div><div class="qt">Maya <span class="chipOk">Coming</span></div><div class="qc">Child · Kids’ pasta</div></div><span></span></div>
+              <div class="qrow nogrip"><div><div class="qt">Dev <span class="chipOk">Coming</span></div><div class="qc">Child · Kids’ pasta</div></div><span></span></div>
+              <div class="qrow nogrip"><div><div class="qt">Anika <span class="chipOk">Coming</span></div><div class="qc">Child · Kids’ pasta</div></div><span></span></div>
+            </div>
+            <div class="card" style="gap:6px"><p class="cardH" style="font-size:15px">Paid, thank you</p><span style="font-size:20px;font-weight:700" class="rt">$125.00 to Riverdale Minor Ball</span><span class="small">Visa •••• 4242 · Apr 12 · receipt 1</span><span class="door">Receipt for event tickets</span></div>
+            <span class="door">Change your answers</span>
+            <div class="btnClubOut">Ask to withdraw</div>
+            <p class="small">Anyone with this link can open this page. It stops working 30 days after the event; “Email me my link” sends a fresh one.</p>
+          </div>
+        </div></div>
+      </div>
+      <div class="spec">
+        <div class="specHead"><b>Your sign-up · held, not paid yet</b><span class="chrome">phone · 390 · Riverdale today</span><button class="mark" type="button" data-ask="21">21</button><button class="tag re" type="button" data-note="RESTYLED from the shipped “To pay” card for a club that doesn’t take cards: the total, How to pay (the club’s words), Payable to the club. New: a short “Held” chip on each person, and the held-until date once, in the card. Words say “To pay”, never “You owe” (/legal). A held sign-up can still be ended at once.">RESTYLED</button></div>
+        <div class="scroll"><div class="frame phone">
+          <div class="pbody">
+            <span class="small">← Year-end banquet</span>
+            <p class="famH" style="font-size:22px;margin:0">Your sign-up</p>
+            <p class="small">Reference: <b>RB-4836</b> · quote it if you contact the club</p>
+            <div class="rlist">
+              <div class="qrow nogrip"><div><div class="qt">Ada <span class="chipHeld">Held</span></div><div class="qc">Adult · Fish</div></div><span></span></div>
+              <div class="qrow nogrip"><div><div class="qt">Sam <span class="chipHeld">Held</span></div><div class="qc">Adult · Chicken</div></div><span></span></div>
+              <div class="qrow nogrip"><div><div class="qt">Noah <span class="chipHeld">Held</span></div><div class="qc">Child · Kids’ pasta</div></div><span></span></div>
+              <div class="qrow nogrip"><div><div class="qt">Grace <span class="chipHeld">Held</span></div><div class="qc">Child · Kids’ pasta</div></div><span></span></div>
+            </div>
+            <div class="card" style="gap:6px"><p class="cardH">To pay</p><span style="font-size:20px;font-weight:700" class="rt">$110.00</span><span class="small" style="color:var(--home-ink)">How to pay: e-transfer to treasurer@riverdaleball.ca, with RB-4836 in the message.</span><span class="small">Pay by Mon, Apr 19. Your spots are held until then, then released.</span><span class="small">Payable to Riverdale Minor Ball.</span></div>
+            <div class="btnClubOut">Can’t come anymore</div>
+          </div>
+        </div></div>
+      </div>
+    </div>
+    <div class="pair">
+      <div class="spec">
+        <div class="specHead"><b>The confirmation email · paid</b><span class="chrome">email · 600</span><span class="cardsOn">once Riverdale takes cards</span><button class="mark" type="button" data-ask="27">27</button><button class="tag new" type="button" data-note="NEW for a paid sign-up. A free sign-up’s email stays link-only (6A). This one stands alone: the opener /legal wrote, each line, the total and how it was paid, the refund policy and the fixed line, then the link. Nothing about other events, camps or a calendar, so it stays a transactional email (CASL).">NEW</button></div>
+        <div class="scroll"><div class="mail">
+          <div class="mailHd"><b>Your sign-up for the year-end banquet</b><span>From Riverdale Minor Ball · to priya@example.com</span></div>
+          <div class="mailBd">
+            <p>This is your copy of your sign-up. Keep it.</p>
+            <p><b>Year-end banquet</b><br>Sat, Jun 26, 2027 · 6:00 p.m. · Riverdale Legion Hall</p>
+            <table class="sumT"><tbody><tr><td>2 adults × $40.00</td><td class="num">$80.00</td></tr><tr><td>3 children × $15.00</td><td class="num">$45.00</td></tr><tr class="tot"><td>Paid by Visa on Apr 12</td><td class="num">$125.00</td></tr></tbody></table>
+            <p><b>Refund policy:</b> Refunds until Jun 12. After that we can’t refund tickets, because we pay the caterer by then. If Riverdale Minor Ball cancels this event, it refunds what you paid.</p>
+            <span class="mailBtn">Open your sign-up</span>
+          </div>
+          <div class="mailFt"><span>Riverdale Minor Ball · 42 Lions Park Rd, Riverdale ON</span><span>You’re getting this because you signed up for this event. Reference RB-4821.</span></div>
+        </div></div>
+      </div>
+      <div class="spec">
+        <div class="specHead"><b>The sign-up page when it’s full</b><span class="chrome">public · desktop · 640</span><button class="mark" type="button" data-ask="24">24</button><button class="tag new" type="button" data-note="NEW STATE. No waitlist for a ticketed event (/legal). The page stays, so a family holding the link reads why it can’t sign up. If the club adds spots, the form comes back.">NEW</button></div>
+        <div class="scroll"><div class="frame fam">
+          <span class="small">← Year-end banquet</span>
+          <p class="famH">Sign up for the year-end banquet</p>
+          <p class="famSub">Sat, Jun 26, 2027 · 6:00 p.m. · Riverdale Legion Hall · $40.00 an adult, $15.00 a child</p>
+          <div class="empty" style="margin-top:16px"><b>Sold out</b><span class="small">All 120 spots are taken. Riverdale Minor Ball may add more; if it does, sign-ups open here again.</span></div>
+        </div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 5 · THE CLUB'S SIDE -->
+  <section class="pane" id="p5" role="tabpanel" aria-labelledby="t5" hidden>
+    <h2>Who’s coming shows what each sign-up paid; the club marks e-transfers received and cancels in one window</h2>
+    <p>Round 1’s Who’s coming card becomes a table with the house-league Fee pills, and its row opens the shipped Mark received window. Cancelling a paid event isn’t silent: the window shows who has paid, the email to them is ticked, and everything paid is refunded <button class="mark" type="button" data-ask="26">26</button>. Allergies never show in this list or the plain export; the caterer’s list comes from the logged health export <button class="mark" type="button" data-ask="32">32</button> <button class="fl" type="button" data-f="F4">F4</button>.</p>
+    <div class="spec">
+      <div class="specHead"><b>Year-end banquet › Who’s coming</b><span class="chrome">club admin · desktop · 960</span><button class="mark" type="button" data-ask="21">21</button><button class="tag re" type="button" data-note="RESTYLED. Round 1’s Who’s coming list as a table, because a column (Fee) answers the club’s question (F-17). The Fee pills are the shipped house-league ones: “$125.00 received” green; “$110.00 owing” amber. One change from the shipped pill: where house league says how many days it has been owing (“· 12 days”), a held sign-up says the day its spots are released (“· Apr 19”). Export is the shipped plain export (meals, no allergies); “Health answers” is the logged health export.">RESTYLED</button></div>
+      <div class="scroll"><div class="frame adm">
+        <div class="toolbar"><span class="pill olive"><span style="color:var(--home-dim);font-weight:500">View</span> Everyone ▾</span><span class="sp"></span><span class="search">Search names</span><span class="sq">Export</span><span class="sq">Health answers</span><span class="sq">⋯</span></div>
+        <table class="tbl"><thead><tr><th>Sign-up</th><th>People</th><th>Meals</th><th class="num">Fee</th><th style="width:22px"></th></tr></thead><tbody>
+          <tr><td><span class="nm">Priya Shah</span><span class="s">Signed up Apr 12 · RB-4821</span></td><td>2 adults · 3 children</td><td>Chicken, Fish, 3 Kids’ pasta</td><td class="num"><span class="feeP good">$125.00 received</span><span class="s">Apr 12 · E-Transfer</span></td><td class="chev">›</td></tr>
+          <tr><td><span class="nm">Ada Okafor</span><span class="s">Signed up Apr 12 · RB-4836</span></td><td>2 adults · 2 children</td><td>Fish, Chicken, 2 Kids’ pasta</td><td class="num"><span class="feeP warn">$110.00 owing · Apr 19</span></td><td class="chev">›</td></tr>
+          <tr><td><span class="nm">Tom Brooks</span><span class="s">Signed up Apr 11 · RB-4830</span></td><td>2 adults</td><td>2 Chicken</td><td class="num"><span class="feeP warn">$80.00 owing · Apr 18</span></td><td class="chev">›</td></tr>
+          <tr><td><span class="nm">Wei Chen</span><span class="s">Signed up Apr 10 · RB-4809</span></td><td>2 adults</td><td>Fish, Chicken</td><td class="num"><span class="feeP good">$80.00 received</span><span class="s">Apr 10 · E-Transfer</span></td><td class="chev">›</td></tr>
+        </tbody></table>
+        <p class="small">31 sign-ups · 86 people · 34 spots left · closes Jun 19</p>
+      </div></div>
+    </div>
+    <div class="pair">
+      <div class="spec">
+        <div class="specHead"><b>Phone · the banquet’s page and Who’s coming</b><span class="chrome">390 · figures as rows · one framed list</span><button class="mark" type="button" data-ask="21">21</button><button class="tag re" type="button" data-note="RESTYLED for a phone: the money band becomes figure rows (never tiles), and the table becomes one framed list, a row per sign-up with its Fee pill under the name. The row opens the sign-up; Mark received is in its ⋯ (a 44 px symbol).">RESTYLED</button></div>
+        <div class="scroll"><div class="frame phone">
+          <div class="pbar"><span>← Year-end banquet<span class="sm">Banquet · Sat, Jun 26</span></span></div>
+          <div class="pbody">
+            <div class="frows">
+              <div class="frow"><span class="fl1">Spots<span class="fc">52 adults · 34 children</span></span><span class="fv">86 of 120</span><span></span></div>
+              <div class="frow"><span class="fl1">Received<span class="fc">29 sign-ups</span></span><span class="fv">$2,400.00</span><span></span></div>
+              <div class="frow"><span class="fl1">To pay<span class="fc">2 sign-ups held</span></span><span class="fv">$190.00</span><span></span></div>
+            </div>
+            <p class="capL" style="margin:0">Who’s coming</p>
+            <div class="rlist">
+              <div class="mrow"><div><span class="nm">Priya Shah</span><span class="s">2 adults · 3 children</span><span class="feeP good">$125.00 received</span></div><span class="ico44">⋯</span></div>
+              <div class="mrow"><div><span class="nm">Ada Okafor</span><span class="s">2 adults · 2 children</span><span class="feeP warn">$110.00 owing · Apr 19</span></div><span class="ico44">⋯</span></div>
+              <div class="mrow"><div><span class="nm">Tom Brooks</span><span class="s">2 adults</span><span class="feeP warn">$80.00 owing · Apr 18</span></div><span class="ico44">⋯</span></div>
+            </div>
+          </div>
+        </div></div>
+      </div>
+      <div class="explain">
+        <h3>The same page on a phone</h3>
+        <ul>
+          <li><b>Figures are rows,</b> as the camp page’s are in round 1.</li>
+          <li><b>Who’s coming is one framed list,</b> not cards. Meals open from the sign-up.</li>
+          <li><b>Mark received</b> is in the row’s ⋯ and opens the same shipped window as a sheet.</li>
+        </ul>
+      </div>
+    </div>
+    <div class="pair">
+      <div class="spec">
+        <div class="specHead"><b>Mark the Okafors’ sign-up received</b><span class="chrome">the shipped window · small</span><button class="tag same" type="button" data-note="UNCHANGED. The shipped house-league Mark received window: the amount is shown, never typed; Date received and How (Not recorded, E-Transfer, Cash, Cheque, Card, Other); the foot names where it is recorded. Only the eyebrow and the book change.">UNCHANGED</button></div>
+        <div class="scroll"><div class="dimmer"><div class="win sm">
+          <div class="whead"><span class="ico">$</span><div><div class="wmeta" style="margin:0 0 2px">Year-end banquet · RB-4836</div><p class="wtitle">Mark the Okafors’ sign-up received</p></div></div>
+          <div class="wbody">
+            <div class="fld"><span class="l">Amount</span><div class="inp locked">$110.00</div><span class="hint">This is the whole amount still owing.</span></div>
+            <div class="two"><div class="fld"><span class="l">Date received</span><div class="inp">Apr 14, 2027</div></div><div class="fld"><span class="l">How</span><div class="inp sel"><span>E-Transfer</span><span>▾</span></div></div></div>
+          </div>
+          <div class="wfoot"><span class="fs">Records $110.00 received in the club’s book.</span><span class="btnOut">Cancel</span><span class="btnLime">Mark received</span></div>
+        </div></div></div>
+      </div>
+      <div class="spec">
+        <div class="specHead"><b>Cancel the year-end banquet?</b><span class="chrome">KitDialog · confirm · 600</span><span class="cardsOn">once Riverdale takes cards, so both kinds of payment show</span><button class="mark" type="button" data-ask="26">26</button><button class="tag new" type="button" data-note="NEW WINDOW. Opens from the event’s ⋯ when the event has paid sign-ups. The tick is on by default; the email is /legal’s cancel notice, sent only when the club presses Cancel the event. Card and bank payments are refunded through Payouts by themselves; payments the club recorded are listed for it to refund by hand and mark refunded. Moving the date opens the same window with a “move” notice instead.">NEW</button></div>
+        <div class="scroll"><div class="dimmer"><div class="win">
+          <div class="whead"><span class="ico">!</span><div><p class="wtitle">Cancel the year-end banquet?</p><div class="wmeta">Sat, Jun 26, 2027 · 31 sign-ups · 86 people</div></div></div>
+          <div class="wbody">
+            <dl class="facts" style="grid-template-columns:200px minmax(0,1fr)"><dt>Paid by card or bank</dt><dd class="rt">8 sign-ups · $655.00<span class="s">Refunded back the way they paid</span></dd><dt>Paid you directly</dt><dd class="rt">21 sign-ups · $1,745.00<span class="s">Listed for you to refund and mark refunded</span></dd><dt>Held, not paid</dt><dd>2 sign-ups · nothing to refund</dd></dl>
+            <div class="tick"><span class="box on">✓</span><span>Tell the people signed up<span class="hint" style="display:block">“Riverdale Minor Ball has cancelled the year-end banquet on Sat, Jun 26. It will refund what you paid, back the way you paid. Your bank decides when it shows.”</span></span></div>
+          </div>
+          <div class="wfoot"><span class="btnOut">Keep the event</span><span class="btnDanger">Cancel the event</span></div>
+        </div></div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 6 · BOOKS, TAX, RECEIPT -->
+  <section class="pane" id="p6" role="tabpanel" aria-labelledby="t6" hidden>
+    <h2>Ticket money lands under Club events; a taxable ticket’s tax is posted beside it; a paid sign-up has its own receipt</h2>
+    <p>A new money-in heading, <b>Club events</b>, with <b>Event tickets</b>, its own Payment processing and, when taxable, GST/HST collected <button class="mark" type="button" data-ask="30">30</button>. The prices include the tax, so $125.00 is $110.62 of tickets and $14.38 of HST <button class="mark" type="button" data-ask="29">29</button>. Camps and clinics keep their own heading (17A). The receipt is /accounting’s list, with counts and no guest names <button class="mark" type="button" data-ask="31">31</button>.</p>
+    <div class="spec">
+      <div class="specHead"><b>The General ledger, filtered to Club events</b><span class="chrome">Accounting · desktop · 960</span><button class="mark" type="button" data-ask="30">30</button><button class="tag re" type="button" data-note="RESTYLED. The shipped ledger rows with a new heading. Each line names the event and its date, never a person. $80.00 is $70.80 of tickets and $9.20 of HST. Riverdale records e-transfers today, so there is no fee. Once it takes cards and pays the fee itself, each card payment’s fee posts beside it as Club events › Payment processing, money out.">RESTYLED</button></div>
+      <div class="scroll"><div class="frame adm">
+        <table class="tbl"><thead><tr><th>Date</th><th>What</th><th>Heading</th><th class="num">In</th><th class="num">Out</th></tr></thead><tbody>
+          <tr><td>Apr 12</td><td>Year-end banquet · Jun 26 · e-transfer</td><td>Club events › Event tickets</td><td class="num">$110.62</td><td class="num"></td></tr>
+          <tr><td>Apr 12</td><td>Year-end banquet · Jun 26 · e-transfer</td><td>Club events › GST/HST collected</td><td class="num">$14.38</td><td class="num"></td></tr>
+          <tr><td>Apr 10</td><td>Year-end banquet · Jun 26 · e-transfer</td><td>Club events › Event tickets</td><td class="num">$70.80</td><td class="num"></td></tr>
+          <tr><td>Apr 10</td><td>Year-end banquet · Jun 26 · e-transfer</td><td>Club events › GST/HST collected</td><td class="num">$9.20</td><td class="num"></td></tr>
+        </tbody></table>
+      </div></div>
+    </div>
+    <div class="spec">
+      <div class="specHead"><b>Receipt for event tickets</b><span class="chrome">PDF · Letter · 816</span><button class="mark" type="button" data-ask="31">31</button><button class="tag new" type="button" data-note="NEW DOCUMENT, offered on Your sign-up once paid. Laid out like round 1’s camp receipt. Counts and prices, never the guests’ names (/legal, /accounting). A taxable event prints the club’s GST/HST number and the tax it includes, and always the payer’s name, because a business may buy a table and claim the tax. The foot line is /accounting’s, word for word. FieldLogicHQ’s name isn’t on it.">NEW</button></div>
+      <div class="scroll"><div class="paper">
+        <div class="acc"></div>
+        <div class="pin">
+          <div class="idb"><div><b>Riverdale Minor Ball</b><span class="subl">42 Lions Park Rd, Riverdale ON</span><span class="subl" style="display:block">GST/HST 81234 5678 RT0001</span></div><div style="text-align:right"><h4>Receipt for event tickets</h4><div class="subl">RB-4821 · issued Apr 12, 2027</div></div></div>
+          <div class="idb"><div><div class="lab">Paid by</div>Priya Shah</div><div><div class="lab">Event</div>Year-end banquet<br>Sat, Jun 26, 2027 · 6:00 p.m.<br>Riverdale Legion Hall</div><div><div class="lab">Paid</div>E-Transfer · Apr 12, 2027</div></div>
+          <table><thead><tr><th>Tickets</th><th class="r">Price</th><th class="r">Amount</th></tr></thead><tbody><tr><td>2 adults</td><td class="r">$40.00</td><td class="r">$80.00</td></tr><tr><td>3 children</td><td class="r">$15.00</td><td class="r">$45.00</td></tr></tbody></table>
+          <table class="tt"><tbody><tr class="big"><td>Total received</td><td class="r">$125.00</td></tr><tr><td>Includes HST (13%)</td><td class="r">$14.38</td></tr></tbody></table>
+          <p style="margin:0;color:#555">This is a receipt for tickets you bought. It is not a donation receipt and it is not an income tax receipt.</p>
+          <div class="foot"><span>Issued by Riverdale Minor Ball, treasurer: J. Alvarez</span><span>Page 1 of 1</span></div>
+        </div>
+      </div></div>
+    </div>
+  </section>
+
+  <!-- 7 · REVIEWS -->
+  <section class="pane" id="p7" role="tabpanel" aria-labelledby="t7" hidden>
+    <h2>The reviews this round went through, and what they found</h2>
+    <div class="pair">
+      <div class="explain">
+        <h3>Reviews run before this hand-off</h3>
+        <ul>
+          <li><b>/legal</b> (2026-11-25): the paid email is the family’s copy and stands alone; the refund policy shows open before paying, with one fixed line; the Payments Terms must name event tickets (in the version that carries the sponsorship addendum); charge only for a held spot, and refund a payment that lands on a gone one by itself; Stripe gets the event and the counts only; the retention clock must take event forms (16A, not built yet); a club can’t cancel a paid event silently. Privacy §5 and Data Terms §12 gain guest names, meals and allergies. Flags for a lawyer: Ontario’s internet-agreement text and whether the Ticket Sales Act reaches a banquet weren’t opened.</li>
+          <li><b>/accounting</b> (2026-11-25): our own books are unchanged, apart from a new source kind on the per-fee record. Dinner and event tickets are usually taxable for a non-profit club (CRA RC4081); the fundraising-dinner exemption is for charities and public institutions with a real gift. Default by kind; hint words on tab 2; one charge per sign-up, paid in full; a taxable refund issues a credit note, as Stage 6 does. Flags: each club’s charity status is for its accountant; whether we return our own fee when a club cancels is a /strategy call; donations, raffles and alcohol are left out.</li>
+          <li><b>Shipped pay screens</b> (read 2026-11-25): every word on tabs 3 to 5 that isn’t new is the shipped one (Your sign-up, the pay block, Mark received, the Fee pills, “Who pays the processing fee”, “Refund policy”).</li>
+          <li><b>/design</b> (2026-11-25): five must-fixes applied. The cancel button is the kit’s danger button. The phone person rows no longer break. Phone links are 44 px. The banquet’s page and Who’s coming have a phone view (tab 5). Riverdale’s own records show e-transfers, and the card screens are tagged “once Riverdale takes cards”. Also applied: every person drawn on Your sign-up, a short “Held” chip with the date once, the folded-persons note moved out of the frame, and the Fee pill’s change from the shipped one named.</li>
+        </ul>
+      </div>
+      <div class="explain">
+        <h3>Left out on purpose</h3>
+        <ul>
+          <li>Donations, raffles and a bar at the banquet (/accounting, /legal).</li>
+          <li>A waitlist for a ticketed event (ask 24).</li>
+          <li>Pay in part, or a deposit (house league has neither).</li>
+          <li>Where the banquet shows on the club site: that is the Club Website project’s now (the split, Nov 24). This round draws only the sign-up page a link opens, which is ours.</li>
+        </ul>
+      </div>
+    </div>
+    <div class="explain">
+      <h3>Findings</h3>
+      <div class="chips"><button class="fl" type="button" data-f="F1">F1 Card payments are per club</button><button class="fl" type="button" data-f="F2">F2 The club’s colour, not lime</button><button class="fl" type="button" data-f="F3">F3 No pay in part</button><button class="fl" type="button" data-f="F4">F4 The health export exists</button><button class="fl" type="button" data-f="F5">F5 Only Payouts has a refund policy</button><button class="fl" type="button" data-f="F6">F6 The Payments Terms</button><button class="fl" type="button" data-f="F7">F7 Spots, not places</button></div>
+    </div>
+  </section>
+
+  <!-- 8 · ASKS -->
+  <section class="pane" id="p8" role="tabpanel" aria-labelledby="t8" hidden>
+    <h2>Your asks</h2>
+    <p>Numbered 20 to 33, after round 1’s 1 to 19. Each says what it changes for a family, a coach and a club admin. The first answer is my recommendation and is selected. Change any you disagree with, add a note, then press Build the summary and paste it into the chat. Your picks are kept in this browser only.</p>
+    <div id="asks" style="display:grid;gap:14px"></div>
+    <div class="ask">
+      <h3>Paste-back</h3>
+      <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btnDoc primary" id="build" type="button">Build the summary</button><button class="btnDoc" id="copy" type="button">Copy</button></div>
+      <pre class="out" id="out">Press Build the summary.</pre>
+    </div>
+  </section>
+</div>
+
+<dialog class="note" id="note"><h3 id="noteT"></h3><div id="noteB"></div><div style="display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap"><button class="btnDoc" id="noteGo" type="button" hidden>Go to the ask</button><button class="btnDoc primary" id="noteX" type="button">Close</button></div></dialog>
+
+<script>
+(function(){
+var LAST = "p8";
+var ASKS = [
+  {n:20, t:"Which events can have a price", why:"Round 1 gave a price only to camps. A banquet or a hosted dinner often charges, and setting it up as a camp would ask for birth years, put the money under Camps and clinics and print a camp receipt.", o:[
+    "Any event can have a price: one price, or one for each kind of person (Adult $40.00, Child $15.00), in the club’s words. A camp is an event with a price, sessions and ages, so there is one way to pay",
+    "Only camps and clinics charge, as round 1 ruled; a paid dinner is set up as a clinic",
+    "Any event can have one price per person, with no adult and child prices"],
+    ch:["Can pay for the banquet with its sign-up.","Nothing.","A Price section in the event window."]},
+  {n:21, t:"How a paid sign-up is paid", why:"House league and camps wait for the club to accept before anything is owed. A banquet has nobody to accept: the first 120 people get in. Card payment is switched on club by club, once Payouts is set up (F1), and no club takes cards live yet.", o:[
+    "First come, nobody approves. A club that takes card payments: the family pays in full when it signs up, by card or bank debit. Until then the family’s spots are held for the days the club sets (7 by default, never past the day sign-ups close) while it pays the club the way the club says; the club marks it received; unpaid spots are released with one email",
+    "The club approves each paid sign-up first, as camps do (14A), and the family pays after",
+    "No holding: until the club takes cards, families pay at the door and the product tracks nothing"],
+    ch:["Pays at sign-up, or knows the date its spots are held until.","Nothing.","Marks e-transfers received; sees who is held and until when."]},
+  {n:22, t:"Checking before paying", why:"/legal: a paid sign-up is an online agreement, so before paying the family sees who sells it, each price line, any processing fee, the total in Canadian dollars and the refund policy, and can fix anything.", o:[
+    "A second step, “Check your sign-up”, before the pay button: each line, a processing fee as its own line when families pay it, the total, the refund policy open with its fixed line, “Sign up and pay $125.00” (or “Hold my spots”), and “Sold by {club}. FieldLogicHQ provides this page and is not part of the sale.”",
+    "The same facts on the form itself, above the button, with no second step"],
+    ch:["Sees the total and the refund policy before paying, and can go back.","Nothing.","Nothing to set up."]},
+  {n:23, t:"The refund policy", why:"F5: today the only refund policy is on Payouts, written when a club sets up card payments. A club taking e-transfers may have none, and /legal says a paid event must show one.", o:[
+    "A paid event uses the club’s one refund policy. If the club hasn’t written one, the event window asks for it and saves it as the club’s, so Payouts starts with it. Paid sign-ups can’t open without one. The family also reads one fixed line the club can’t edit: “If {club} cancels this event, it refunds what you paid.”",
+    "Each paid event writes its own refund words, with the same fixed line"],
+    ch:["Reads the refund policy before signing up.","Nothing.","Writes the policy once, from the first paid event or from Payouts."]},
+  {n:24, t:"When it’s full", why:"/legal: a waitlist for a ticketed event adds a held-spot offer and a deadline for something a family can simply miss. Camps keep theirs (13A).", o:[
+    "“Sold out”, with no waitlist for a ticketed event. The club can add spots, and sign-ups open again",
+    "A waitlist with an offered, held spot, as camps have"],
+    ch:["Reads “Sold out” on the sign-up page.","Nothing.","Adds spots if the hall allows."]},
+  {n:25, t:"After paying: changes and withdrawing", why:"/accounting: one charge per sign-up, paid in full. Round 1 (6A): “Can’t come anymore” ends a free sign-up at once.", o:[
+    "A paid sign-up’s Your sign-up shows the receipt and “Ask to withdraw”, the house-league request (“Asked on {date}. {club} decides under its refund policy above.”); the refund is the club’s call. Adding a person later is a new sign-up with its own payment. A held, unpaid sign-up can still be ended at once with “Can’t come anymore”",
+    "A paid family can remove a person itself and is refunded that person’s price"],
+    ch:["Asks to withdraw; the club replies.","Nothing.","Decides each request under its policy."]},
+  {n:26, t:"The club cancels or moves the event", why:"/legal: a club can’t cancel a paid event silently. 9A says Events sends no email by itself; this is the one exception, and the club presses it. Whether FieldLogicHQ returns its own fee then is a /strategy call, not part of this ask.", o:[
+    "Cancelling a paid event opens a window that shows who has paid, with a ticked “Tell the people signed up” email, and refunds everything paid: card and bank payments go back the way they came; payments the club recorded are listed for it to refund by hand. Moving the date sends the same kind of notice and lets any family ask to withdraw",
+    "The club cancels, and tells families itself with a Communications message"],
+    ch:["Is told the event is off and gets its money back.","Nothing.","One window: who paid, the email, the refunds."]},
+  {n:27, t:"The confirmation email", why:"Round 1 (6A) gives a free sign-up a link-only email. /legal: a paid sign-up’s email is the family’s copy of the agreement, so it must stand alone.", o:[
+    "For a paid sign-up: “This is your copy of your sign-up. Keep it.”, each line, the total and how it was paid (or the date the spots are held until), the refund policy with its fixed line, and the Your sign-up link. Nothing about other events or camps. A free event’s email stays as 6A",
+    "The same link-only email as a free event"],
+    ch:["Keeps the email as its record.","Nothing.","Nothing to write; the product sends it."]},
+  {n:28, t:"GST/HST on a ticket", why:"/accounting (CRA RC4081): dinners and admissions are usually taxable even for a non-profit club; the fundraising-dinner exemption is for charities and public institutions with a real gift. Camps run the other way (Exempt by default, 17A). Shown only to a club registered for GST/HST.", o:[
+    "The default follows the kind: Banquet, AGM and Other start Taxable; Camp, Clinic and Champs day start Exempt. Hints: “Dinners and event tickets are usually charged tax, even by a non-profit club. Choose Exempt only if your accountant says this one is not.” and “A registered charity’s fundraising dinner may not be charged tax. Ask your accountant before choosing Exempt.”",
+    "Every event starts Exempt, as camps do"],
+    ch:["Nothing changes on the page; the tax is inside the price (ask 29).","Nothing.","A registered club sees Taxable picked for a dinner."]},
+  {n:29, t:"Is the tax inside the price?", why:"/accounting: say it once, and show the all-in total before paying.", o:[
+    "The price the club types includes GST/HST. A family sees $40.00 and pays $40.00; the check step and the receipt say “Includes $14.38 HST”",
+    "Tax is added on top: $40.00 shows as $45.20 at the check step"],
+    ch:["Pays the price it was shown.","Nothing.","Types the price families pay."]},
+  {n:30, t:"Books", why:"The camp heading (17A) is Camps and clinics. A banquet isn’t instruction, and its tax differs.", o:[
+    "A new money-in heading, Club events: Event tickets, its own Payment processing, and GST/HST collected when taxable. Camps and clinics keep their own heading (17A). Each line names the event and its date, never a person",
+    "Ticket money goes under Camps and clinics"],
+    ch:["Nothing.","Nothing.","Banquet money is its own line in Budget vs. Actual."]},
+  {n:31, t:"The receipt", why:"A family, or a business that bought a table, wants a receipt. /legal and /accounting: counts and prices, no guest names, and nothing that reads as a donation or tax receipt.", o:[
+    "Once paid, Your sign-up offers “Receipt for event tickets”: paid by, the event with its date, time and venue, the counts and prices with no guest names, the amount net of refunds (card fees apart), how and when paid, the club’s name and address, the issuer and the issue date, and for a taxable event the club’s GST/HST number and the tax it includes. Its foot: “This is a receipt for tickets you bought. It is not a donation receipt and it is not an income tax receipt.” The link lasts 30 days past the event; “Email me my link” gives a fresh one",
+    "No receipt; the confirmation email is the record"],
+    ch:["A receipt to keep.","Nothing.","Names an issuer once in Setup, as for camps."]},
+  {n:32, t:"Meals and food allergies", why:"/legal: an allergy is health information, and a dietary choice can point to belief. Stage 4’s health export is the only way a health answer leaves, and each use is logged (F4).", o:[
+    "The banquet’s form asks, for each person, an ordinary “Meal” question and a separate health-marked “Allergies or other food needs”. The caterer’s list comes from the logged health export; Who’s coming and the plain export show meals, never allergies",
+    "One question, “Meal or dietary needs”, not marked health"],
+    ch:["Tells the club about an allergy, seen only by the people running the event.","Nothing.","Exports the allergy list for the caterer; the export is logged."]},
+  {n:33, t:"Where it’s built", why:"The free sign-up is Stage 5’s third part. Card payment for a club waits for that club’s Payouts, so everything up to the pay button can ship first.", o:[
+    "Paid events are a fourth Stage 5 part, after the free sign-up and before camps; a club records payments until it takes cards. Camps (Stage 7) then add sessions, ages, the waitlist and the camp receipt on top",
+    "Paid events ship with camps in Stage 7"],
+    ch:["Can pay for a banquet before camps exist.","Nothing.","Paid events arrive with Stage 5."]}
+];
+var NOTES = {
+  20:"Ask 20 · Which events. Recommended: any event can have a price; a camp is an event with a price plus sessions.",
+  21:"Ask 21 · Paying. Recommended: first come; pay at sign-up once the club takes cards, held 7 days until then.",
+  22:"Ask 22 · Check step. Recommended: a second step with every line, the total and the refund policy before paying.",
+  23:"Ask 23 · Refund policy. Recommended: the club’s one policy, asked for by the first paid event if missing.",
+  24:"Ask 24 · Full. Recommended: Sold out, no waitlist.",
+  25:"Ask 25 · After paying. Recommended: Ask to withdraw; the club decides.",
+  26:"Ask 26 · Cancelling. Recommended: one window that shows who paid, tells them and refunds them.",
+  27:"Ask 27 · Email. Recommended: the family’s copy, standing alone.",
+  28:"Ask 28 · Tax default. Recommended: by kind; a dinner starts Taxable.",
+  29:"Ask 29 · Tax inside. Recommended: the price includes the tax.",
+  30:"Ask 30 · Books. Recommended: a Club events heading.",
+  31:"Ask 31 · Receipt. Recommended: Receipt for event tickets, counts and no names.",
+  32:"Ask 32 · Food. Recommended: Meal plus a health-marked allergies question.",
+  33:"Ask 33 · Where. Recommended: Stage 5, Part 4."
+};
+var FINDINGS = {
+  F1:["F1 · Card payments are switched on club by club", "What the code does: there is no product-wide switch. A club takes card payments once its Payouts account is connected with card payments active, a refund policy written and the current fee setting. The production real-money walk (Nov 24) still waits on its first club.", "What this drawing does: every paid screen has a version for a club that takes cards and one for a club that doesn’t (ask 21)."],
+  F2:["F2 · Family pages wear the club’s colour, not lime", "What the code does: public pages use the club’s own fill for the main button (ClubKit .btnPrimary, 44 px, radius 8) and a white button with a #948B7D edge for the second. Round 1 drew lime on its family pages.", "What this drawing does: draws the shipped club button. The build follows the shipped kit, for round 1’s pages too."],
+  F3:["F3 · House league has no pay in part", "What the code does: the house-league pay block pays what is owing; the only partial words are “$15.00 left of $40.00”. A deposit or full choice exists only on team pay.", "What this drawing does: a paid event is paid in full, one charge per sign-up (/accounting)."],
+  F4:["F4 · The health export already exists, and is logged", "What the code does: Stage 4 built a separate export for health answers; its audit line is written first and nothing goes out without it. The plain export carries no health answers.", "What this drawing does: the caterer’s allergy list is that export (ask 32)."],
+  F5:["F5 · Only Payouts has a refund policy", "What the code does: “Refund policy” is a required field on Payouts, written when a club sets up card payments, and families see it as a link beside Pay. A club that takes only e-transfers has none.", "What this drawing does: the first paid event asks for it and saves it as the club’s (ask 23)."],
+  F6:["F6 · The Payments Terms don’t cover a ticket", "What /legal found: the Payments Terms §2 and §9 describe registration fees and sponsorships, not a dinner ticket.", "What is owed: name event tickets and camps in the one new Payments Terms version that also carries the sponsorship addendum, before any club connects (/legal writes it)."],
+  F7:["F7 · Spots, not places", "What /legal wrote: “Hold my places”, “Your places are held”. What round 1 ruled (19A): “spots”, never “places”.", "What this drawing does: “Hold my spots”, “Your spots are held until …”."]
+};
+var KEY = "br-stage5-paid-events-v1";
+var S = { pick:{}, note:{}, tab:"p1", seg:{} };
+try { var raw = localStorage.getItem(KEY); if (raw) { var got = JSON.parse(raw); if (got && typeof got === "object") S = Object.assign(S, got); } } catch (e) {}
+function save(){ try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} }
+
+var host = document.getElementById("asks");
+function pickOf(a){ return S.pick[a.n] != null ? S.pick[a.n] : 0; }
+function esc(s){ return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;"); }
+ASKS.forEach(function(a){
+  var box = document.createElement("div"); box.className = "ask"; box.id = "ask" + a.n;
+  var h = "<h3><span class=\"mark\" aria-hidden=\"true\" style=\"cursor:default\">" + a.n + "</span>" + esc(a.t) + "</h3><p class=\"why\">" + esc(a.why) + "</p>";
+  h += "<div class=\"askCh\"><div><b>A family</b>" + esc(a.ch[0]) + "</div><div><b>A coach</b>" + esc(a.ch[1]) + "</div><div><b>A club admin</b>" + esc(a.ch[2]) + "</div></div>";
+  a.o.forEach(function(o, i){
+    var id = "a" + a.n + "o" + i;
+    h += "<label class=\"opt\" for=\"" + id + "\"><input type=\"radio\" name=\"a" + a.n + "\" id=\"" + id + "\" value=\"" + i + "\"><span><b>" + String.fromCharCode(65 + i) + ".</b> " + esc(o) + (i === 0 ? "<span class=\"rec\">RECOMMENDED</span>" : "") + "</span></label>";
+  });
+  h += "<label for=\"n" + a.n + "\" style=\"font-size:12px;color:var(--doc-soft)\">Note</label><textarea id=\"n" + a.n + "\"></textarea>";
+  box.innerHTML = h; host.appendChild(box);
+  var r = document.getElementById("a" + a.n + "o" + pickOf(a)); if (r) r.checked = true;
+  var ta = document.getElementById("n" + a.n); ta.value = S.note[a.n] || "";
+  box.addEventListener("change", function(ev){ if (ev.target.name === "a" + a.n) { S.pick[a.n] = Number(ev.target.value); save(); } });
+  ta.addEventListener("input", function(){ S.note[a.n] = ta.value; save(); });
+});
+
+function build(){
+  var L = ["Board Ready Stage 5, paid events (drawings Nov 25, 2026, round 2)", ""];
+  ASKS.forEach(function(a){
+    var p = pickOf(a);
+    L.push(a.n + String.fromCharCode(65 + p) + " · " + a.t + ": " + a.o[p] + (p === 0 ? " (recommended)" : ""));
+    var n = (S.note[a.n] || "").trim(); if (n) L.push("   note: " + n);
+  });
+  L.push(""); L.push("Short form: " + ASKS.map(function(a){ return a.n + String.fromCharCode(65 + pickOf(a)); }).join(" · "));
+  document.getElementById("out").textContent = L.join("\n");
+}
+document.getElementById("build").addEventListener("click", build);
+document.getElementById("copy").addEventListener("click", function(){
+  build(); var txt = document.getElementById("out").textContent; var btn = this;
+  function sel(){ var r = document.createRange(); r.selectNodeContents(document.getElementById("out")); var s = window.getSelection(); s.removeAllRanges(); s.addRange(r); btn.textContent = "Selected, press Ctrl+C"; }
+  try { navigator.clipboard.writeText(txt).then(function(){ btn.textContent = "Copied"; }, sel); } catch (e) { sel(); }
+});
+
+var tabs = Array.prototype.slice.call(document.querySelectorAll("nav.tabs button"));
+function show(id){
+  tabs.forEach(function(b){ var on = b.getAttribute("data-pane") === id; b.setAttribute("aria-selected", on ? "true" : "false"); document.getElementById(b.getAttribute("data-pane")).hidden = !on; });
+  S.tab = id; save();
+}
+tabs.forEach(function(b){ b.addEventListener("click", function(){ show(b.getAttribute("data-pane")); }); });
+show(S.tab && document.getElementById(S.tab) ? S.tab : "p1");
+
+var dlg = document.getElementById("note"), goBtn = document.getElementById("noteGo"), goTo = null;
+function open(title, paras, ask){
+  document.getElementById("noteT").textContent = title;
+  var b = document.getElementById("noteB"); b.innerHTML = "";
+  paras.forEach(function(t){ var p = document.createElement("p"); p.textContent = t; b.appendChild(p); });
+  goTo = ask || null; goBtn.hidden = !ask;
+  if (dlg.showModal) dlg.showModal(); else dlg.setAttribute("open", "");
+}
+document.getElementById("noteX").addEventListener("click", function(){ dlg.close ? dlg.close() : dlg.removeAttribute("open"); });
+goBtn.addEventListener("click", function(){ dlg.close ? dlg.close() : dlg.removeAttribute("open"); show(LAST); var el = document.getElementById("ask" + goTo); if (el) el.scrollIntoView({ block: "start" }); });
+document.addEventListener("click", function(ev){
+  var m = ev.target.closest(".mark[data-ask]");
+  if (m) { var n = Number(m.getAttribute("data-ask")); var a = ASKS.filter(function(x){ return x.n === n; })[0]; open("Ask " + n + " · " + a.t, [NOTES[n] || a.why], n); return; }
+  var f = ev.target.closest(".fl[data-f]");
+  if (f) { var F = FINDINGS[f.getAttribute("data-f")]; if (F) open(F[0], [F[1], F[2]], null); return; }
+  var t = ev.target.closest(".tag[data-note]");
+  if (t) { ev.preventDefault(); open(t.textContent.trim(), [t.getAttribute("data-note")], null); }
+});
+})();
+</script>

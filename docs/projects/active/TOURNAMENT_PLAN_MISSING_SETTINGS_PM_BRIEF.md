@@ -27,3 +27,12 @@ build, then one walk.
 **Success criteria:** a Tournament-plan owner and a Tournament Plus owner can each rename the organization and send a
 deletion request from their own settings; the wording has passed `/legal`; the Premium coach's settings and these match in
 shape; a club's Settings page is unchanged.
+
+**Added 2026-11-25: "Who can enter" on a tournament.** A club hosting a Saturday jamboree for three neighbouring teams
+needs a tournament that isn't advertised. Today a tournament is public or a draft. A new setting gives three answers:
+**Anyone**, **Not listed** (off the club site, the directory and search; anyone with the link can open it) and **By
+invitation** (one link for each team the host adds). It changes no plan: who may register themselves is still a Tournament
+Plus feature, and on the free plan the host still adds every team, so there the choice only decides whether the event is
+listed. It came from Board Ready's team sign-ups (ruled 2026-11-25). It is drawn in its own session, then ruled and built,
+and the project closes after it. Success: a host runs an invitation-only jamboree that no stranger finds, and every
+invited team gets in through its own link.

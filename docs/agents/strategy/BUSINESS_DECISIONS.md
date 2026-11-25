@@ -8,6 +8,40 @@
 
 ---
 
+### 2026-11-25 — A tournament's "Who can enter" (Anyone · Not listed · By invitation) adds NO plan gate; it rides the keys that exist (Decided)
+**Status:** **Decided** (owner, 2026-11-25, Board Ready Stage 5 round 3 paste-back, ruling **48A**: "Handed to the
+tournament side as one item; /strategy confirms it changes no plan gate"; placed the same day as a stage of the
+`tournament-settings` project at the owner's word). This entry is that confirmation.
+**Decision:** A new per-tournament "Who can enter" choice (Anyone · Not listed · By invitation) is **not** a packaging
+change. No new gate key, no price, plan name, inclusion list or capacity moves. Each answer is built from what a plan
+already has:
+- **Who may register themselves is still `open_registration` (Tournament Plus and up).** The new choice never grants it.
+  On a plan without it (the free Tournament plan, a Premium coach's event), every answer stays the invite-only event: the
+  host adds every team and the coach claims it. There the choice only decides whether the event is listed.
+- **"By invitation"** is the shipped Add team window and "Claim your team" email, on every plan today. On a plan with
+  open registration, choosing it turns public registration off for that one event. Choosing to sell less is not a paid
+  feature.
+- **"Not listed"** extends the directory opt-out that is already on every plan (2026-07-22, "Tournaments are DISCOVERABLE
+  BY DEFAULT (opt-out)": "Available on all plans (no tier gate)") to the club site and search. On Tournament Plus, a
+  shared link that anyone can register through is still `open_registration`. The Powered-by badge stays on an unlisted
+  event's public pages, so the free plan's acquisition surface keeps the reach it has from every link that is passed on.
+**Rationale:** The value a plan sells is who can register and what the event runs (payments, the waitlist, volunteers),
+not whether the event is advertised. Hiding an event was never gated. Gating it now would charge for privacy and break the
+2026-07-22 ruling. Keying "who registers" to the existing `open_registration` key means the drawing needs no new rule and
+the free plan's invite-only event (2026-10-12) is unchanged.
+**Affects:** The tournament settings drawing and build (`TOURNAMENT_PLAN_MISSING_SETTINGS_PLAN.md`, its Stage for "Who
+can enter"); the directory and club-site listing for tournaments. **No price, plan-name, tier, inclusion or gate change;
+`PLAN_PRICING_FACTS.md` and `lib/plan-config.ts` unchanged.**
+**Handoff:**
+HANDOFF → `/billing` — none (no key added or moved). The build reads `open_registration` exactly as
+`lib/invite-only-event.ts` does today.
+HANDOFF → `/marketing` — none now. If a card or page ever names "invite-only" as a free-plan limit, it stays true: on free,
+the host still adds every team.
+HANDOFF → `/plan` — the "Who can enter" stage of `tournament-settings` is drawn in its own session, with this mapping as a
+binding input. `/legal`'s rule from the Board Ready drawing holds: only one link per team may say "By invitation".
+**Supersedes:** nothing. Consistent with 2026-07-22 (directory opt-out on every plan) and 2026-10-12 (the free plan is
+the invite-only event).
+
 ### 2026-11-24 — A prospect's own club website (Track P) starts now, in parallel with the website stages, and is made on production as a marked preview (Decided)
 **Status:** **Decided** (owner, 2026-11-24, Club Website Enhancements Stage 0 paste-back: **C3a: A**, **C3b: A**; logged on his
 "yes run /strategy" the same day). Ruling recorded in `docs/projects/active/CLUB_WEBSITE_ENHANCEMENTS_PLAN.md` §7 (commit

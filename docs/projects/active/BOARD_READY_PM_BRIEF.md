@@ -74,3 +74,15 @@ the session, a Camps and clinics heading in the books, and a "Receipt for camp f
 matters: these are the club's own days and its second paid program, and today they live in spreadsheets and separate
 sign-up tools. Success: a registrar runs a camp from sign-up to receipt without leaving the club's space, and an
 instructor sees only their own children and only what the club chose to share. Nothing is built yet.
+
+**Team sign-ups for a club event (drawn and ruled 2026-11-25, all 16 asks as recommended).** An event can be signed up
+for by each family, by each team, or both. A club offers an event, such as the year-end banquet, to some or all of its own
+teams. The head coach lists who is coming (players from the roster, family contacts, staff, anyone else by name) and
+sends it, which puts one Bill for event tickets on the team's Club tab, with the event's tax, paid the way team bills are
+paid today. A club can also invite another club's team to a social event by its own link, with the event kept off the
+website ("Only people with the link"). The invited team lists adults by full name and children by first name and last
+initial, and pays once. Its names are deleted 60 days after the event. Outside teams coming to *play* get a tournament
+with a new "Who can enter" choice, handed to the tournament side. Why it matters: a banquet with 26 people from one team
+becomes one list and one bill instead of 26 sign-ups and a spreadsheet. Success: a coach sends the team's list in one
+sitting and the club sees every team's answer, bill and payment on the event's Who's coming. It is built after paid events
+(round 2), whose 14 asks aren't ruled yet. Nothing is built.

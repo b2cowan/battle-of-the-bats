@@ -1311,6 +1311,101 @@ project's session. As a result:
   recommendation is the club website's Stage 3, with `/legal` to settle its shape).
 - **Club website outcome, 2026-11-25 (owner ruled its E1–E9, all A):** no Events tab (8A stays withdrawn); an event with an open sign-up is an Open now row on the club home, any other a "Coming up" row in News; **this project's Stage 5 builds the event page and the Open now row to `CLUB_WEBSITE_EVENTS_DRAWINGS.html`** (E4, E5); the photo question is the club website's Stage 3, asked by camps in the same words (E9, so 12A gives way). For this project, drawn on the club website's events drawing, tab 10, and **ruled A 2026-11-25** (owner paste-back, no notes): **E11**, "Also on these schedules" in the event window (None · a house league season, all divisions or some · rep teams, all or some; nothing ticked by default); it decides where the event is listed, never who may see it ("Shown to" still does), and an Everyone event for a season is a row in its week on that season's public schedule; **E12**, a read-only row on the schedule of each club team the event names, in the coaches portal, "From the club · Club event", opening the event with "Ask the club", never on the public team page; the team's families see it only if shown to Everyone or, with the family app, Our families (a Club staff event stays with the team's staff); built here (Stage 5) beside the calendar. `/legal` answered E9 the same day (`docs/agents/legal/CLUB_WEBSITE_E9_PHOTO_QUESTION_REVIEW.md`): for the camp form, the guardian line first, the photo question optional and exempt from the answers-closed lock, and no photo question at all if Stage 7 builds before the club website's Stage 3 (its P1–P5 ruled as recommended 2026-11-25: optional with blank = No; one Yes names the website and the club's own social pages; a camp Yes separate from a team Yes, accepted sign-ups only; changeable after the lock while Your sign-up works; fixed, versioned words). Drawing drifts for this project to fix: the camp page's "17 left" / "Full" (19A says "17 spots left" / "Full · waitlist open") and the camp form's photo question ahead of the guardian line (12A).
 
+**Round 2, PAID EVENTS — drawn 2026-11-25, asks 20–33 owed (nothing ruled).** The owner asked (2026-11-24): *"do we need to
+make these events always free at sign up? what if there is a hosted dinner that people have to pay for?"* Round 1 gave a
+price only to camps. Drawing: https://claude.ai/artifact/AZ7sSezJQzbStt7zCiJ2CA, source
+`BOARD_READY_STAGE5_PAID_EVENTS_DRAWINGS.html` (after `/legal`, `/accounting`, a census of the shipped pay screens and
+`/design`). Reviews: `docs/agents/legal/BOARD_READY_STAGE5_PAID_EVENTS_REVIEW.md`,
+`docs/agents/accounting/BOARD_READY_STAGE5_PAID_EVENTS_REVIEW.md`. Stage 5's sign-up part waits for these rulings; its
+first two parts (the Events place and window; permit time and the calendar) do not.
+
+**Round 3, TEAM SIGN-UPS — logged and drawn 2026-11-25 (owner: "yes, log it and draw round 3"), and ALL 16 ASKS RULED
+2026-11-25, every one as recommended (A), no notes** — 34A · 35A · 36A · 37A · 38A · 39A · 40A · 41A · 42A · 43A · 44A ·
+45A · 46A · 47A · 48A · 49A (owner paste-back; the rulings are listed after the history below). Drawing: https://claude.ai/artifact/PYZ1ewhJmPQNBQ1v18v3oB, source
+`BOARD_READY_STAGE5_TEAM_SIGNUPS_DRAWINGS.html` (after `/legal`, `/accounting`, a census of the shipped Club tab, team
+bills, roster, sponsor link and tournament registration screens, and `/design`). Reviews:
+`docs/agents/legal/BOARD_READY_STAGE5_TEAM_SIGNUPS_REVIEW.md`,
+`docs/agents/accounting/BOARD_READY_STAGE5_TEAM_SIGNUPS_REVIEW.md`. Raised for round 2's ask 23 (F9 on the drawing): a
+club's one refund policy written from its first paid event will name that event.
+The owner asked (2026-11-25): *"is there a way to provide the option to offer an event to teams, either internally or
+externally (like tournament registration)? … a club may want their teams to figure out how many tickets they want for the
+year end banquet, they provide the org their list of players, parents and coaches who will attend, and make 1 payment for
+the team … or they host an event and invite 3 neighbouring teams, may or may not make this registration public (could
+send a link to a team like we do sponsors)."* The shape put to him before drawing (asks numbered from 34; history, the
+rulings below hold):
+- **The club's own teams:** the club offers an event to some or all of its teams; the coach picks who is coming from the
+  roster in the coaches portal; the club bills the team once on the bill path that already exists (the team's Club tab,
+  "We've sent it", the club confirms), so it lands in both books. This also answers round 1's open "an event for part of
+  the club".
+- **Outside teams coming to play** are a tournament; the gap there is an "invite only, not listed" choice on a
+  tournament (today a tournament is public or a draft, and invite-only comes from the plan, not the event). That belongs
+  to the tournament side.
+- **Outside teams coming to something social:** a "For a team" sign-up and one link per invited team (the sponsor-link
+  idea: invited / signed up / not answered, stop and send again). "Only people with the link" is a new "who it's for"
+  answer, which the club website session hears about before it is drawn.
+- **Raised before drawing:** a coach entering other adults' food needs (`/legal`); people counted twice when families
+  and teams both sign up; GST/HST on a club's bill to its own team (`/accounting`). Round 2's asks 20–33 are unchanged by
+  this and can be ruled now.
+
+The round 3 rulings, as ruled (2026-11-25):
+34. **Who signs up:** the event says who signs up: Each family, Each team, or Families and teams. Each family is round 1
+    and 2's page; Each team has no family page; both shows both and warns about names on both lists (ask 41).
+35. **Offering an event to the club's own teams:** the club picks which of its teams the event is offered to (all, or
+    some) and a Teams pay by day. Each team sees it on its schedule as a club event with its answer beside it, and each
+    head coach gets one notice, the late-bill kind.
+36. **The team's list:** players ticked from the roster, adults picked from each player's family contact and the coaching
+    staff, anyone else added by name; adult or child set by where they come from; the event's ordinary per-person
+    questions (Meal) optional on each row; `/legal`'s words above the list; "We're not coming as a team" as an answer.
+37. **Who sends it:** any team staff can build and save the list; only the head coach sends it, which bills the team.
+    Other staff read "{head coach} sends the bill."
+38. **How the team pays:** sending makes one Bill for event tickets on the team's Club tab, at the event's prices, due on
+    Teams pay by, paid the shipped way ("We've sent it", the club confirms). The club sees it on the event's Who's coming
+    and in Allocations' Coming due.
+39. **Changing the list after it's sent:** until sign-ups close, adding people raises the bill at once; taking people off
+    asks the club, which decides under its refund policy and credits the bill (a credit note when taxable).
+40. **Food needs on a team list:** no food-needs question on any team list. The list carries `/legal`'s note: each person,
+    or a parent for a child, tells the club their own food needs by the Teams pay by day, at the club's contact.
+41. **The same name on two lists:** a count warning: "{n} names appear on both a team list and a family sign-up (matched
+    by name only, not merged)", with Show them; the club decides. Spots count each list's people and say so.
+42. **Inviting another club's team:** the club invites each team by name, with a contact and the reason it may email them
+    (a purchase in two years, an inquiry in six months, an address given or published), or makes the link to give by
+    hand. One link per team, built like the sponsor link: opened or not, signed up or not, Send the link again (the old
+    link stops working), Withdraw the invitation. The email is `/legal`'s.
+43. **"Only people with the link":** a third "Who it's for" choice, with `/legal`'s words: "Not listed on your website, or
+    in search. Anyone who has the link can open it." and "Send this only to people you want at the event. Anyone who is
+    sent it can pass it on." Kept off the site, calendar feed, News, Open now, schedules and search.
+44. **What another club's team lists:** adults by full name, children by first name and last initial, the notice above and
+    the required tick ("The people on this list know I am giving their names to {club} for this event."), round 2's
+    check step and seller line, and one payment. With cards: "Any refund goes back to the card that paid. {club} does
+    not refund individual people."
+45. **How long another club's names are kept:** deleted 60 days after the event. The counts, the payment and the contact
+    who paid stay with the payment record.
+46. **One stop list for offers and invitations:** one stop list per club for offers and invitations: an address stopped
+    from a sponsor offer or a team invitation gets neither again.
+47. **Tax, books and the team's papers:** a team pays the event's own tax, with no separate switch; the hint reads "Teams
+    pay the same tax as families. Tax follows the tickets, not who pays for them." The bill shows the tax it includes;
+    the club's books split it into Event tickets and GST/HST collected under Club events; the team's book has one line to
+    the club. "Bill for event tickets" (the tax invoice) becomes "Receipt for event tickets" once confirmed: the team,
+    its contact, counts by kind, no names.
+48. **Teams coming to play:** a tournament, with a new per-tournament "Who can enter": Anyone · Not listed · By invitation
+    (one link per team you add). Handed to the tournament side as one item; `/strategy` confirms it changes no plan gate.
+49. **Where it's built:** Stage 5 Part 5, after paid events: the club's own teams first, then invited teams. The tournament
+    choice is the tournament side's own item.
+
+What these rulings lean on, checked the same day (facts, not rulings):
+- **35 needs the club website's E12 row, and has it.** E12 was ruled A on 2026-11-25 (above), so the drawing's F6
+  fallback (a card on the team's Club tab) isn't needed.
+- **Round 3 builds on round 2.** 34 (round 2's page), 38 (the event's prices), 44 (round 2's check step and seller line,
+  the card refund line) and 39 (the refund policy) all need round 2's asks 20–33, which are **not ruled**. No Part 5
+  build prompt until round 2 is ruled. Round 2's F9 (one refund policy written from one event, ask 23) stays open with it.
+- **46 changes a shipped list.** Stage 6's sponsor-offer stop list becomes the club's one list for offers and
+  invitations, so Part 5 touches Stage 6's stop path.
+- **43 reaches the club website project.** Its listing rules (E4, E5, E11, E12) must leave an "Only people with the link"
+  event out; noted in `CLUB_WEBSITE_ENHANCEMENTS_PLAN.md`.
+- **48 is handed over (owner 2026-11-25):** a Stage 5 of `TOURNAMENT_PLAN_MISSING_SETTINGS_PLAN.md` (board id
+  `tournament-settings`). `/strategy` confirmed the same day that it changes no plan gate (`BUSINESS_DECISIONS.md`, "A
+  tournament's 'Who can enter' … adds NO plan gate"): who may register themselves stays `open_registration`.
+
 ### Stage 6 — Sponsorships (item 7)
 
 **Drawn 2026-11-22 (round 1, after /design, /legal, /accounting) and ALL 15 ASKS RULED 2026-11-22** — 1A · 2A · 3C · 4A ·
@@ -1739,7 +1834,7 @@ parallel.
 | 7 | **Stage 2** Group email to coaches | 2 | 1 (done) | yes | **Drawn 2026-11-16** (https://claude.ai/artifact/WVuNq47ywkxKgmFSYew2eF), asks 1–13 owed; nothing built. The public roadmap carries it as Committed for 2026 only if it is built before the roadmap is first shown (roadmap ask 11) |
 | 8 | **Stage 3** The club's people + documents with expiry | 3 | nothing (adds groups to 7) | yes | Not started, not drawn |
 | 9 | **Stage 4** Custom forms (house-league sign-up first) | 3 | nothing | yes | **✅ COMPLETE 2026-11-22 (owner's word): Parts 1–3 and 4.P built and walked; the production promote of Parts 1–3 is what remains.** History: **Drawn 2026-11-20** (round 2 after `/legal`, `/ux`, `/design`): https://claude.ai/artifact/THVuyR2zxwU8ezeFti5of9, source `BOARD_READY_STAGE4_FORMS_DRAWINGS.html`; **all 20 asks ruled 2026-11-20 as recommended** (§5 Stage 4); build prompt `BOARD_READY_STAGE4_FORMS_BUILD_PROMPT.md` (three parts) and the tournament fixes `BOARD_READY_TOURNAMENT_QUESTION_FIXES_PROMPT.md` written 2026-11-20; nothing built. **First in the owner's order of 2026-11-20** (prompt `BOARD_READY_STAGE4_FORMS_DRAWING_PROMPT.md`) |
-| 10 | **Stage 5** Club events | 3 | ~~Q7~~ (ruled yes 2026-11-15) | yes | **Drawn 2026-11-24** with Stage 7 (https://claude.ai/artifact/RdoaEjuySmXcVLyEQc6RtD); its asks 1–10 and 19 **ruled 2026-11-24, all as recommended** (§5 Stage 5). Not built; no build prompt yet |
+| 10 | **Stage 5** Club events | 3 | ~~Q7~~ (ruled yes 2026-11-15) | yes | **Drawn 2026-11-24** with Stage 7 (https://claude.ai/artifact/RdoaEjuySmXcVLyEQc6RtD); its asks 1–10 and 19 **ruled 2026-11-24, all as recommended** (§5 Stage 5). Round 2, paid events (https://claude.ai/artifact/AZ7sSezJQzbStt7zCiJ2CA), drawn 2026-11-25, asks 20–33 owed. Round 3, team sign-ups (https://claude.ai/artifact/PYZ1ewhJmPQNBQ1v18v3oB), drawn 2026-11-25, **asks 34–49 ruled 2026-11-25, all as recommended**; it builds as Part 5, after paid events. Not built; no build prompt yet |
 | 11 | **Stage 6** Sponsorships | 4 | 9 (10 no longer, owner 2026-11-20: a club event joins later); live card pay waits on Club Tier Stage 12 | yes | Drawn 2026-11-22 (round 1) and all 15 asks ruled the same day (§5 Stage 6); round 2 (the "sponsor pays the fee" case) and the build prompt next. Not built. Sponsors on the public tournament pages wait for this stage (owner 2026-11-20); their drawing can now start |
 | 12 | **Stage 7** Camps & clinics | 4 | 9, 10; live card pay waits on Club Tier Stage 12 | yes | **Drawn 2026-11-24** with Stage 5; its asks 11–18 **ruled 2026-11-24, all as recommended** (§5 Stage 7). Not built; no build prompt yet |
 | — | **0d** Continuity message points + `/legal` + write-up | when the owner calls it; **not in the pack (owner 2026-11-16)** | — | no |

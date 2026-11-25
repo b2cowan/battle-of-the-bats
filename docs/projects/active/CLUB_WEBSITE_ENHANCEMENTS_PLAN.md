@@ -712,6 +712,10 @@ the demos follow the product and are curated with `/demos`, never as a build ste
   recorded in its own words; Stage 1 names E10/E11, Stage 3 names P1–P5. E11 and E12 recorded on Board Ready's side
   (its Stage 5 builds both); the drawing's asks tab shows them as ruled; `/legal`'s review and index note the five
   calls ruled. Nothing built.
+- 2026-11-25 — **From Board Ready Stage 5 round 3 (team sign-ups), ruled 43A:** "Only people with the link" is a third
+  "Who it's for" choice on a club event. Such an event is kept off the site, the calendar feed, News, Open now,
+  schedules and search, so this project's listing pieces (E4 and E5's Open now and Coming up rows, E10 to E12's schedule
+  rows) leave it out. Recorded in full in `BOARD_READY_PLAN.md` §5 Stage 5. Nothing built.
 - 2026-11-25 — **Club events E1–E9 ruled, all A** (owner pasted "E1: A … E9: A"). §7 ticked; §3's no-login line
   reworded to tab 9's text; each stage line in §6 now names its events piece (Stage 1 E1/E5/E6, Stage 2 E7, Stage 3
   E9, Stage 4 E1–E3, Stage 5 E8, Stage 6 the champs page); one line added to Board Ready's Stage 5 split record. Still

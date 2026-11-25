@@ -1,0 +1,1266 @@
+<title>Team Sign-ups for Club Events</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+/* Layout: sticky numbered tabs (one decision each) → a View row where a tab compares → framed true-size specimens with their explanation beside them; the last tab is the owner's asks with a paste-back. */
+:root {
+  /* document chrome: a cool neutral, so the warm product frames read as specimens */
+  --doc-bg: #EDEFF1; --doc-panel: #FFFFFF; --doc-ink: #1C2127; --doc-soft: #4C5560; --doc-line: rgba(28,33,39,0.12);
+  --doc-accent: #2F5D8A; --doc-accent-soft: rgba(47,93,138,0.10); --doc-red: #A3261B; --doc-red-bg: rgba(163,38,27,0.10);
+  --tag-new: #2E6B2F; --tag-new-bg: rgba(46,107,47,0.12); --tag-re: #8A5A0B; --tag-re-bg: rgba(138,90,11,0.12); --tag-same: #4C5560; --tag-same-bg: rgba(76,85,96,0.10);
+  --font-ui: Inter, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-head: "Space Grotesk", Inter, system-ui, sans-serif;
+  --font-data: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+  /* the product's warm palette (globals.css warm block), fixed inside every frame */
+  --home-paper: #F8F4ED; --home-card: #FFFFFF; --home-ink: #241E15; --home-ink-soft: #4A4235; --home-dim: #615A54; --home-faint: #7A726A;
+  --home-line: rgba(70,55,30,0.12); --home-line-strong: rgba(70,55,30,0.20); --home-olive: #57651E; --home-olive-soft: rgba(87,101,30,0.10);
+  --lime: #D9F99D; --lime-ink: #241E15; --warn: #8A5A0B; --warn-bg: rgba(138,90,11,0.10); --amber: #F59E0B;
+  --danger-ink: #B91C1C; --danger-bg: rgba(239,68,68,0.08); --danger-line: rgba(239,68,68,0.35); --good: #2E6B2F; --good-bg: rgba(46,107,47,0.10); --err: #B03A22;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --doc-bg: #14171B; --doc-panel: #1C2026; --doc-ink: #E8ECF0; --doc-soft: #A9B2BC; --doc-line: rgba(232,236,240,0.12);
+  --doc-accent: #8DB6DE; --doc-accent-soft: rgba(141,182,222,0.14); --doc-red: #F19A8F; --doc-red-bg: rgba(241,154,143,0.14);
+  --tag-new: #8FD18F; --tag-new-bg: rgba(143,209,143,0.14); --tag-re: #E3B465; --tag-re-bg: rgba(227,180,101,0.14); --tag-same: #A9B2BC; --tag-same-bg: rgba(169,178,188,0.12);
+  color-scheme: dark } }
+:root[data-theme="dark"] {
+  --doc-bg: #14171B; --doc-panel: #1C2026; --doc-ink: #E8ECF0; --doc-soft: #A9B2BC; --doc-line: rgba(232,236,240,0.12);
+  --doc-accent: #8DB6DE; --doc-accent-soft: rgba(141,182,222,0.14); --doc-red: #F19A8F; --doc-red-bg: rgba(241,154,143,0.14);
+  --tag-new: #8FD18F; --tag-new-bg: rgba(143,209,143,0.14); --tag-re: #E3B465; --tag-re-bg: rgba(227,180,101,0.14); --tag-same: #A9B2BC; --tag-same-bg: rgba(169,178,188,0.12);
+  color-scheme: dark }
+* { box-sizing: border-box; }
+body { background: var(--doc-bg); color: var(--doc-ink); font-family: var(--font-ui); font-size: 14px; line-height: 1.5; }
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--doc-panel); }
+.wrap { max-width: 1280px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 20px 60px; }
+header.top { display: grid; gap: 6px; margin-bottom: 14px; }
+.eyebrow { font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--doc-soft); font-weight: 600; }
+h1 { font-family: var(--font-head); font-size: 26px; line-height: 1.2; margin: 0; text-wrap: balance; }
+.lead { margin: 0; color: var(--doc-soft); max-width: 84ch; }
+nav.tabs { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; background: var(--doc-panel); border: 1px solid var(--doc-line); border-radius: 10px; display: flex; gap: 4px; padding: 5px; overflow-x: auto; }
+nav.tabs button { flex: 0 0 auto; border: 0; background: none; color: var(--doc-soft); font: inherit; font-weight: 600; padding: 8px 12px; border-radius: 7px; cursor: pointer; white-space: nowrap; }
+nav.tabs button[aria-selected="true"] { background: var(--doc-accent-soft); color: var(--doc-accent); }
+nav.tabs button:focus-visible, .btnDoc:focus-visible, .mark:focus-visible, .tag:focus-visible, .fl:focus-visible, .seg button:focus-visible { outline: 2px solid var(--doc-accent); outline-offset: 2px; }
+.viewRow { display: flex; align-items: center; gap: 10px; margin: 14px 0 4px; flex-wrap: wrap; }
+.viewRow .lbl { font-size: 12px; font-weight: 600; color: var(--doc-soft); }
+/* ONE white track, two options (the kit's ViewSwitch look) */
+.seg { display: inline-flex; background: #FFFFFF; border: 1px solid rgba(70,55,30,0.20); border-radius: 999px; padding: 3px; }
+.seg button { border: 0; background: none; font: inherit; font-size: 13px; padding: 5px 12px; border-radius: 999px; color: #4A4235; cursor: pointer; }
+.seg button[aria-pressed="true"] { background: rgba(87,101,30,0.14); color: #3E4815; font-weight: 600; }
+section.pane { display: grid; gap: 18px; margin-top: 14px; }
+.pane h2 { font-family: var(--font-head); font-size: 20px; margin: 0; text-wrap: balance; }
+.pane > p { margin: 0; max-width: 88ch; color: var(--doc-soft); }
+.pair { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 460px), 1fr)); gap: 18px; align-items: start; }
+.stack { display: grid; gap: 18px; min-width: 0; }
+.spec { min-width: 0; display: grid; gap: 8px; }
+.specHead { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.specHead b { font-size: 13px; }
+.chrome { font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--doc-soft); }
+.scroll { overflow-x: auto; padding: 14px; background: var(--doc-panel); border: 1px solid var(--doc-line); border-radius: 10px; }
+.explain { background: var(--doc-panel); border: 1px solid var(--doc-line); border-radius: 10px; padding: 14px 16px; display: grid; gap: 8px; min-width: 0; }
+.explain h3 { margin: 0; font-size: 14px; display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+.explain p, .explain li { margin: 0; color: var(--doc-soft); }
+.explain ul, .explain ol { margin: 0; padding-left: 18px; display: grid; gap: 5px; }
+.explain b { color: var(--doc-ink); }
+.tag { display: inline-flex; align-items: center; font-size: 10px; font-weight: 700; letter-spacing: 0.06em; padding: 2px 6px; border-radius: 4px; cursor: pointer; border: 0; font-family: var(--font-ui); vertical-align: middle; }
+.tag.new { color: var(--tag-new); background: var(--tag-new-bg); }
+.tag.re { color: var(--tag-re); background: var(--tag-re-bg); }
+.tag.same { color: var(--tag-same); background: var(--tag-same-bg); }
+.mark { display: inline-grid; place-items: center; min-width: 20px; height: 20px; padding: 0 5px; border-radius: 10px; background: #2F5D8A; color: #fff; font-size: 11px; font-weight: 700; border: 0; cursor: pointer; vertical-align: middle; flex: 0 0 auto; font-family: var(--font-ui); }
+.fl { display: inline-flex; align-items: center; font-size: 10px; font-weight: 700; letter-spacing: 0.04em; padding: 2px 6px; border-radius: 4px; cursor: pointer; border: 0; font-family: var(--font-ui); color: var(--doc-red); background: var(--doc-red-bg); vertical-align: middle; }
+.diffs .same-part { opacity: 0.22; }
+.docTbl { width: 100%; border-collapse: collapse; font-size: 13px; }
+.docTbl th { text-align: left; font-size: 11px; letter-spacing: 0.05em; text-transform: uppercase; color: var(--doc-soft); padding: 6px 8px; border-bottom: 1px solid var(--doc-line); }
+.docTbl td { padding: 8px; border-bottom: 1px solid var(--doc-line); vertical-align: top; color: var(--doc-ink); }
+.docTbl td.s { color: var(--doc-soft); }
+
+/* ─── product specimens (warm, fixed look) ─── */
+.frame { background: var(--home-paper); color: var(--home-ink); font-family: system-ui, -apple-system, "Segoe UI", sans-serif; border-radius: 8px; }
+/* true size: the content box is the product's reading (960) or table (1200) width */
+.adm { box-sizing: content-box; width: 960px; padding: 22px 28px 28px; display: grid; gap: 16px; }
+.adm.wide { width: 1200px; }
+.adm.w620 { width: 620px; } .adm.w560 { width: 560px; } .adm.w700 { width: 700px; } .adm.w520 { width: 520px; }
+.fam { box-sizing: content-box; width: 640px; padding: 28px 40px; }
+.phone { width: 390px; overflow: hidden; border: 1px solid var(--home-line-strong); border-radius: 22px; }
+.phead { display: grid; gap: 2px; padding-bottom: 12px; border-bottom: 1px solid var(--home-line); }
+.phead .back { font-size: 13px; color: var(--home-ink-soft); }
+.phead .ttl { font-family: var(--font-head); font-size: 20px; font-weight: 700; margin: 0; }
+.phead .sub { font-size: 13px; color: var(--home-dim); }
+.lockLine { font-size: 13px; color: var(--home-ink-soft); padding: 9px 13px; background: var(--home-card); border: 1px solid var(--home-line); border-left: 3px solid var(--home-dim); border-radius: 8px; }
+.card { background: var(--home-card); border: 1px solid var(--home-line); border-radius: 8px; padding: 16px 20px; display: grid; gap: 12px; }
+.cardTop { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.cardH { font-size: 16px; font-weight: 700; margin: 0; flex: 1; }
+.cardSum { font-size: 13px; color: var(--home-dim); }
+.lede { font-size: 14px; color: var(--home-ink-soft); margin: 0; flex: 1; }
+.lineTop { display: flex; align-items: center; gap: 12px; }
+/* band / group labels: the display face, uppercase, secondary ink (RepKit .rowBand) — mono is only for readouts */
+.capL { font-family: var(--font-head); font-size: 12px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; color: var(--home-dim); }
+.btnOut { font: inherit; font-size: 14px; background: var(--home-card); color: var(--home-ink); border: 1px solid var(--home-line-strong); border-radius: 8px; padding: 7px 14px; white-space: nowrap; display: inline-flex; gap: 6px; align-items: center; }
+.btnLime { font: inherit; font-size: 14px; font-weight: 600; background: var(--lime); color: var(--lime-ink); border: 0; border-radius: 8px; padding: 8px 14px; white-space: nowrap; }
+.btnLime.big { font-size: 16px; padding: 12px 20px; display: block; text-align: center; }
+.door { font-size: 14px; font-weight: 650; color: var(--home-olive); }
+.rlist { border: 1px solid var(--home-line); border-radius: 8px; overflow: hidden; background: var(--home-card); }
+.band { display: flex; align-items: center; gap: 8px; padding: 6px 14px; background: var(--home-paper); border-top: 1px solid var(--home-line); border-bottom: 1px solid var(--home-line); font-family: var(--font-head); font-size: 12px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; color: var(--home-dim); }
+.band:first-child { border-top: 0; }
+.band .bc { font-family: var(--font-data); font-size: 12px; font-weight: 600; letter-spacing: 0.02em; text-transform: none; }
+.qrow { display: grid; grid-template-columns: 30px minmax(0,1fr) 22px; gap: 8px; align-items: center; padding: 9px 14px 9px 6px; min-height: 52px; background: var(--home-card); }
+.qrow + .qrow { border-top: 1px solid var(--home-line); }
+.qrow.nogrip { grid-template-columns: minmax(0,1fr) 22px; padding-left: 14px; }
+.grip { color: var(--home-dim); font-size: 16px; text-align: center; }
+.qt { font-size: 14px; font-weight: 650; color: var(--home-ink); }
+.qc { font-size: 12px; color: var(--home-dim); margin-top: 1px; }
+.chev { color: var(--home-dim); font-size: 18px; text-align: right; }
+.chipH { font-size: 10px; font-weight: 700; letter-spacing: 0.05em; padding: 1px 5px; border-radius: 4px; background: rgba(70,55,30,0.08); color: var(--home-dim); margin-left: 6px; vertical-align: 1px; white-space: nowrap; }
+.chip { font-size: 11px; font-weight: 700; padding: 2px 6px; border-radius: 4px; background: var(--home-olive-soft); color: var(--home-olive); letter-spacing: 0.03em; white-space: nowrap; }
+.chip.warn { background: var(--warn-bg); color: var(--warn); }
+.chip.good { background: var(--good-bg); color: var(--good); }
+.fixedGrid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; }
+.fixedGrid ul { margin: 4px 0 0; padding-left: 16px; font-size: 14px; color: var(--home-ink); display: grid; gap: 3px; }
+.small { font-size: 12px; color: var(--home-dim); margin: 0; }
+.empty { display: grid; gap: 4px; padding: 18px; border: 1px dashed var(--home-line-strong); border-radius: 8px; text-align: center; }
+.empty b { font-size: 14px; }
+.facts { display: grid; grid-template-columns: 170px minmax(0,1fr); gap: 10px 16px; margin: 0; font-size: 14px; }
+.facts dt { color: var(--home-dim); }
+.facts dd { margin: 0; color: var(--home-ink); }
+.facts dd .s { display: block; font-size: 12px; color: var(--home-dim); }
+/* windows */
+.dimmer { background: rgba(36,30,21,0.18); padding: 28px; border-radius: 8px; }
+.win { width: 600px; background: var(--home-card); border: 1px solid rgba(87,101,30,0.30); border-radius: 12px; display: flex; flex-direction: column; box-shadow: 0 6px 28px rgba(36,30,21,0.12); }
+.win.sm { width: 460px; }
+.whead { display: flex; gap: 8px; align-items: flex-start; padding: 17px 22px 6px; }
+.wtitle { font-size: 16px; font-weight: 700; line-height: 1.25; margin: 0; }
+.wmeta { font-size: 12px; color: var(--home-dim); margin-top: 3px; }
+.ico { width: 32px; height: 32px; display: inline-grid; place-items: center; border-radius: 8px; color: var(--home-ink-soft); font-size: 15px; flex: 0 0 auto; }
+.wbody { padding: 8px 22px 16px; display: grid; gap: 14px; }
+.wfoot { display: flex; gap: 10px; justify-content: flex-end; align-items: center; padding: 13px 22px; border-top: 1px solid var(--home-line); }
+.wfoot .fs { margin-right: auto; font-size: 13px; color: var(--home-dim); }
+.sec { border-top: 1px solid var(--home-line); padding-top: 12px; display: grid; gap: 10px; }
+.secH { font-size: 11px; font-weight: 700; letter-spacing: 0.07em; text-transform: uppercase; color: var(--home-dim); margin: 0; display: flex; gap: 8px; align-items: center; }
+.notDrawn { font-size: 12px; color: var(--home-faint); font-style: italic; }
+.recAct { font-size: 14px; color: var(--home-ink-soft); display: inline-flex; gap: 6px; align-items: center; }
+/* fields */
+.fld { display: grid; gap: 5px; }
+.fld .l { font-size: 13px; font-weight: 600; color: var(--home-ink); }
+.req { color: var(--home-ink); }
+.inp { border: 1px solid var(--home-line-strong); border-radius: 8px; padding: 8px 11px; font-size: 14px; background: #fff; color: var(--home-ink); min-height: 38px; }
+.inp.ta { min-height: 76px; }
+.inp.sel { display: flex; justify-content: space-between; align-items: center; }
+.inp.err { border-color: var(--err); }
+.inp.locked { background: #F6F3EE; color: var(--home-dim); }
+.hint { font-size: 12px; color: var(--home-dim); }
+.errL { font-size: 12px; color: var(--err); font-weight: 600; }
+.two { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.swRows { display: grid; }
+.sw { display: grid; grid-template-columns: minmax(0,1fr) 44px; gap: 12px; align-items: center; padding: 10px 0; }
+.sw + .sw { border-top: 1px solid var(--home-line); }
+.sw .t { font-size: 14px; color: var(--home-ink); font-weight: 600; }
+.sw .h { font-size: 12px; color: var(--home-dim); font-weight: 400; display: block; margin-top: 1px; }
+.sw.off { opacity: 0.5; }
+.tog { width: 44px; height: 26px; border-radius: 13px; background: rgba(70,55,30,0.22); position: relative; }
+.tog::after { content: ""; position: absolute; top: 3px; left: 3px; width: 20px; height: 20px; border-radius: 50%; background: #fff; }
+.tog.on { background: var(--home-olive); }
+.tog.on::after { left: 21px; }
+.nudge { font-size: 13px; color: var(--home-ink); background: #fff; border: 1px solid var(--home-line); border-left: 3px solid var(--home-olive); border-radius: 8px; padding: 8px 12px; }
+.radioRow { display: grid; grid-template-columns: 20px minmax(0,1fr); gap: 8px; padding: 10px 12px; border: 1px solid var(--home-line-strong); border-radius: 8px; }
+.radioRow.on { border-color: var(--home-olive); background: var(--home-olive-soft); }
+.dot { width: 16px; height: 16px; border-radius: 50%; border: 2px solid var(--home-line-strong); margin-top: 2px; }
+.radioRow.on .dot { border: 5px solid var(--home-olive); }
+.radioRow .t { font-size: 14px; font-weight: 600; }
+.radioRow .h { font-size: 12px; color: var(--home-dim); }
+.box { width: 18px; height: 18px; border: 1.5px solid var(--home-line-strong); border-radius: 4px; flex: 0 0 auto; background: #fff; display: inline-grid; place-items: center; font-size: 12px; color: #fff; }
+.box.on { background: var(--home-olive); border-color: var(--home-olive); }
+.box.off { opacity: 0.5; }
+.tick { display: flex; gap: 10px; align-items: flex-start; font-size: 14px; color: var(--home-ink); }
+.tick.off { color: var(--home-dim); }
+/* family page */
+.famH { font-family: var(--font-head); font-size: 26px; font-weight: 700; margin: 4px 0 2px; }
+.famSub { font-size: 14px; color: var(--home-dim); margin: 0; }
+.fsec { display: grid; gap: 12px; padding: 20px 0; border-top: 1px solid var(--home-line); }
+.fsecH { font-size: 18px; font-weight: 700; margin: 0; display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+.fsecH .rm { font-size: 13px; font-weight: 500; color: var(--home-olive); }
+.divLine { font-size: 14px; color: var(--home-ink); background: #fff; border: 1px solid var(--home-line); border-radius: 8px; padding: 10px 12px; }
+.divLine .s { display: block; font-size: 12px; color: var(--home-dim); }
+.friends { border-left: 2px solid var(--home-line-strong); padding-left: 12px; display: grid; gap: 4px; }
+.subH { font-size: 14px; font-weight: 700; margin: 0; }
+.club { display: grid; gap: 12px; }
+.notice { font-size: 13px; color: var(--home-ink-soft); background: #fff; border: 1px solid var(--home-line); border-left: 3px solid var(--home-olive); border-radius: 8px; padding: 10px 13px; line-height: 1.5; }
+.healthL { font-size: 12px; color: var(--home-faint); }
+.choices { display: flex; gap: 18px; flex-wrap: wrap; font-size: 14px; }
+.choices span { display: inline-flex; gap: 7px; align-items: center; }
+.rad { width: 16px; height: 16px; border: 1.5px solid var(--home-line-strong); border-radius: 50%; display: inline-block; background: #fff; }
+.rad.on { border: 5px solid var(--home-olive); }
+.fileGot { display: flex; gap: 10px; align-items: center; font-size: 14px; padding: 8px 11px; border: 1px solid var(--home-line); border-radius: 8px; background: #fff; flex-wrap: wrap; }
+.fileGot.bad { border-color: rgba(176,58,34,0.35); }
+.bar { flex: 1 1 120px; height: 6px; border-radius: 3px; background: rgba(70,55,30,0.12); position: relative; overflow: hidden; }
+.bar::after { content: ""; position: absolute; inset: 0 40% 0 0; background: var(--home-olive); }
+.pdf { font-size: 10px; font-weight: 800; color: #fff; background: #A13A2A; border-radius: 3px; padding: 2px 4px; letter-spacing: 0.04em; }
+.txtDoc { font-size: 10px; font-weight: 800; color: #fff; background: #6B6255; border-radius: 3px; padding: 2px 4px; letter-spacing: 0.04em; }
+.docBlock { display: grid; gap: 10px; padding: 14px; border: 1px solid var(--home-line); border-radius: 8px; background: #fff; }
+.docName { display: flex; gap: 8px; align-items: center; font-size: 15px; font-weight: 700; }
+.waiverBox { max-height: 96px; overflow: hidden; font-size: 13px; color: var(--home-ink-soft); border: 1px solid var(--home-line); border-radius: 6px; padding: 8px 10px; background: #FBF9F5; }
+.globalErr { font-size: 14px; color: var(--home-ink); background: #fff; border: 1px solid rgba(176,58,34,0.35); border-left: 3px solid var(--err); border-radius: 8px; padding: 10px 13px; }
+.collapsedSec { font-size: 13px; color: var(--home-dim); padding: 12px 0; border-top: 1px solid var(--home-line); }
+/* phone */
+.pbar { display: flex; align-items: center; gap: 8px; padding: 10px 16px; border-bottom: 1px solid var(--home-line); background: var(--home-card); font-size: 15px; font-weight: 700; }
+.pbar .sm { display: block; font-size: 12px; font-weight: 400; color: var(--home-dim); }
+.pbody { padding: 14px 16px 20px; display: grid; gap: 12px; }
+.phone .qrow { grid-template-columns: 44px minmax(0,1fr) 22px; padding-left: 4px; min-height: 60px; }
+.phone .grip { width: 44px; height: 44px; border: 1px solid var(--home-line-strong); border-radius: 8px; display: grid; place-items: center; }
+.phone .card { padding: 14px 14px; }
+/* table */
+.toolbar { display: flex; align-items: center; gap: 8px; }
+.toolbar .sp { flex: 1; }
+.pill { font-size: 14px; border: 1px solid var(--home-line-strong); background: #fff; border-radius: 999px; padding: 6px 12px; display: inline-flex; gap: 6px; align-items: center; white-space: nowrap; }
+.pill.olive { border-color: rgba(87,101,30,0.45); color: var(--home-olive); font-weight: 600; }
+.amberN { background: #FDE9C4; color: #7A4B05; border-radius: 999px; font-size: 12px; font-weight: 700; padding: 0 7px; }
+.search { width: 16rem; border: 1px solid var(--home-line-strong); border-radius: 999px; padding: 6px 12px; font-size: 14px; color: #8F877E; background: #fff; }
+.sq { font-size: 14px; border: 1px solid var(--home-line-strong); background: #fff; border-radius: 8px; padding: 6px 12px; white-space: nowrap; }
+.sq.on { border-color: var(--home-olive); color: var(--home-olive); font-weight: 600; }
+.tbl { width: 100%; border-collapse: collapse; font-size: 14px; background: #fff; border: 1px solid var(--home-line); border-radius: 8px; overflow: hidden; }
+.tbl th { font-family: var(--font-head); text-transform: uppercase; font-size: 11px; letter-spacing: 0.06em; color: var(--home-dim); text-align: left; padding: 9px 12px; border-bottom: 1px solid var(--home-line); font-weight: 700; }
+.tbl td { padding: 10px 12px; border-bottom: 1px solid var(--home-line); vertical-align: top; }
+.tbl td .s { display: block; font-size: 12px; color: var(--home-dim); }
+.tbl .nm { font-weight: 650; }
+.tbl th.new, .tbl td.new { background: rgba(46,107,47,0.05); }
+.menuWrap { position: relative; }
+.menu { position: absolute; right: 0; top: 42px; width: 330px; background: #fff; border: 1px solid var(--home-line-strong); border-radius: 9px; box-shadow: 0 8px 26px rgba(36,30,21,0.16); padding: 6px; z-index: 2; display: grid; gap: 1px; }
+.mi { padding: 7px 10px; border-radius: 7px; display: grid; gap: 1px; font-size: 14px; }
+.mi .h { font-size: 12px; color: var(--home-dim); }
+.mi.g { font-family: var(--font-head); font-size: 11px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; color: var(--home-dim); padding-top: 10px; }
+.mi.ck { display: flex; gap: 8px; align-items: center; }
+.mdiv { height: 1px; background: var(--home-line); margin: 4px 6px; }
+.boardRow { display: grid; grid-template-columns: 44px minmax(0,1fr) 90px 40px 40px 44px; gap: 8px; align-items: center; padding: 8px 12px; font-size: 14px; background: #fff; border: 1px solid var(--home-line); border-radius: 8px; }
+.noteMk { width: 32px; height: 32px; border-radius: 8px; display: grid; place-items: center; background: var(--home-olive-soft); color: var(--home-olive); font-size: 14px; }
+.pop { width: 340px; background: #fff; border: 1px solid var(--home-line-strong); border-radius: 10px; box-shadow: 0 8px 26px rgba(36,30,21,0.16); padding: 12px 14px; display: grid; gap: 8px; margin: 6px 0 0 auto; }
+.popTitle { font-size: 14px; font-weight: 700; margin: 0; }
+.popQuote { font-size: 14px; color: var(--home-ink-soft); margin: 0; }
+.popFoot { font-size: 12px; color: var(--home-dim); margin: 0; border-top: 1px solid var(--home-line); padding-top: 8px; }
+/* asks */
+.ask { background: var(--doc-panel); border: 1px solid var(--doc-line); border-radius: 10px; padding: 14px 16px; display: grid; gap: 10px; }
+.ask h3 { margin: 0; font-size: 15px; display: flex; gap: 8px; align-items: center; text-wrap: balance; }
+.ask .why { margin: 0; color: var(--doc-soft); max-width: 90ch; }
+.opt { display: flex; gap: 10px; align-items: flex-start; padding: 8px 10px; border-radius: 8px; border: 1px solid var(--doc-line); cursor: pointer; }
+.opt:has(input:checked) { border-color: var(--doc-accent); background: var(--doc-accent-soft); }
+.opt input { margin-top: 3px; accent-color: var(--doc-accent); }
+.opt .rec { font-size: 11px; font-weight: 700; color: var(--doc-accent); margin-left: 6px; }
+textarea { width: 100%; min-height: 54px; font: inherit; padding: 8px; border-radius: 8px; border: 1px solid var(--doc-line); background: var(--doc-bg); color: var(--doc-ink); }
+.btnDoc { font: inherit; font-weight: 600; padding: 8px 14px; border-radius: 8px; border: 1px solid var(--doc-line); background: var(--doc-panel); color: var(--doc-ink); cursor: pointer; }
+.btnDoc.primary { background: var(--doc-accent); border-color: var(--doc-accent); color: #fff; }
+:root[data-theme="dark"] .btnDoc.primary { color: #0B1520; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .btnDoc.primary { color: #0B1520; } }
+pre.out { white-space: pre-wrap; background: var(--doc-bg); border: 1px solid var(--doc-line); border-radius: 8px; padding: 12px; font-size: 13px; min-height: 80px; overflow-x: auto; }
+dialog.note { max-width: min(620px, calc(100vw - 32px)); border: 1px solid var(--doc-line); border-radius: 12px; background: var(--doc-panel); color: var(--doc-ink); padding: 18px 20px; }
+dialog.note::backdrop { background: rgba(0,0,0,0.35); }
+dialog.note h3 { margin: 0 0 8px; font-size: 15px; }
+dialog.note p { margin: 0 0 10px; color: var(--doc-soft); }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+/* ─── Stage 6 additions ─── */
+/* the portal's joined money band (MoneySummaryBand): one frame, a hairline between figures */
+.mband { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0,1fr); background: var(--home-card); border: 1px solid var(--home-line); border-radius: 8px; }
+.mband > div { padding: 11px 16px; display: grid; gap: 2px; }
+.mband > div + div { border-left: 1px solid var(--home-line); }
+.mband .ml { font-size: 12px; color: var(--home-dim); }
+.mband .mv { font-size: 22px; font-weight: 700; font-variant-numeric: tabular-nums; color: var(--home-ink); }
+.mband .mc { font-size: 12px; color: var(--home-dim); }
+/* on a phone: figure ROWS, never tiles */
+.frows { background: var(--home-card); border: 1px solid var(--home-line); border-radius: 8px; }
+.frow { display: grid; grid-template-columns: minmax(0,1fr) auto 14px; gap: 10px; align-items: center; padding: 11px 14px; min-height: 52px; }
+.frow + .frow { border-top: 1px solid var(--home-line); }
+.frow .fl1 { font-size: 14px; font-weight: 600; } .frow .fc { display: block; font-size: 12px; color: var(--home-dim); font-weight: 400; }
+.frow .fv { font-size: 17px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.num { font-variant-numeric: tabular-nums; text-align: right; white-space: nowrap; }
+.tbl th.num { text-align: right; }
+.ptabs { display: flex; gap: 22px; border-bottom: 1px solid var(--home-line); font-size: 14px; }
+.ptabs span { padding: 8px 0 9px; color: var(--home-ink-soft); }
+.ptabs span.on { color: var(--home-ink); font-weight: 700; box-shadow: inset 0 -2px 0 var(--home-olive); }
+.stP { font-size: 12px; font-weight: 700; padding: 2px 8px; border-radius: 999px; background: rgba(70,55,30,0.08); color: var(--home-ink-soft); white-space: nowrap; }
+.stP.paid { background: var(--good-bg); color: var(--good); }
+.stP.inv { background: var(--warn-bg); color: var(--warn); }
+.stP.off { background: var(--home-olive-soft); color: var(--home-olive); }
+.callout { font-size: 14px; color: var(--home-ink); background: #fff; border: 1px solid var(--home-line); border-left: 3px solid var(--home-olive); border-radius: 8px; padding: 12px 14px; display: flex; gap: 14px; align-items: center; flex-wrap: wrap; }
+.callout .ct { flex: 1 1 260px; display: grid; gap: 2px; }
+.callout .ct b { font-size: 15px; }
+.callout .ct span { font-size: 13px; color: var(--home-ink-soft); }
+.ck { display: grid; grid-template-columns: 22px minmax(0,1fr) auto; gap: 10px; align-items: start; padding: 10px 0; }
+.ck + .ck { border-top: 1px solid var(--home-line); }
+.ck .t { font-size: 14px; font-weight: 600; } .ck .h { display: block; font-size: 12px; color: var(--home-dim); font-weight: 400; }
+.ck .when { font-size: 12px; color: var(--home-dim); white-space: nowrap; }
+.logoT { width: 64px; height: 32px; border: 1px solid var(--home-line); border-radius: 5px; display: grid; place-items: center; font-size: 10px; font-weight: 800; letter-spacing: 0.02em; background: #fff; color: var(--home-ink); flex: 0 0 auto; text-align: center; line-height: 1.1; padding: 0 3px; }
+.logoT.none { border-style: dashed; color: var(--home-faint); font-weight: 600; }
+.lg1 { color: #1F5E8C; } .lg2 { color: #8A3B12; } .lg3 { color: #2E6B2F; } .lg4 { color: #6B2E7A; }
+.srow { display: grid; grid-template-columns: 64px minmax(0,1fr) auto 22px; gap: 12px; align-items: center; padding: 10px 14px; min-height: 56px; background: var(--home-card); }
+.srow + .srow { border-top: 1px solid var(--home-line); }
+.srow .nm { font-size: 14px; font-weight: 650; } .srow .cap { display: block; font-size: 12px; color: var(--home-dim); }
+.srow.ended { opacity: 0.55; }
+.place { display: inline-flex; gap: 5px; align-items: center; font-size: 12px; color: var(--home-ink-soft); }
+.place::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: var(--home-olive); }
+/* the business's page */
+.pub { box-sizing: content-box; width: 640px; padding: 0 0 28px; }
+.pubBand { background: #2B3A1C; color: #F4F1E6; padding: 14px 40px; display: flex; gap: 12px; align-items: center; border-radius: 8px 8px 0 0; }
+.pubBand .crest { width: 34px; height: 34px; border-radius: 50%; background: #D9F99D; color: #2B3A1C; display: grid; place-items: center; font-weight: 800; font-size: 13px; }
+.pubBand b { font-size: 16px; }
+.pubIn { padding: 22px 40px 0; display: grid; gap: 18px; }
+.phone .pubBand { padding: 12px 16px; border-radius: 0; }
+.phone .pubIn { padding: 16px 16px 0; }
+.pkg { border: 1px solid var(--home-line); border-radius: 8px; background: #fff; padding: 16px; display: grid; gap: 10px; }
+.pkg .pr { font-size: 24px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.pkg ul { margin: 0; padding-left: 18px; display: grid; gap: 4px; font-size: 14px; }
+.sumT { width: 100%; border-collapse: collapse; font-size: 14px; }
+.sumT td { padding: 6px 0; border-top: 1px solid var(--home-line); }
+.sumT tr:first-child td { border-top: 0; }
+.sumT tr.tot td { font-weight: 700; border-top: 1px solid var(--home-line-strong); }
+.payOpt { display: grid; grid-template-columns: 20px minmax(0,1fr); gap: 8px; padding: 12px; border: 1px solid var(--home-line-strong); border-radius: 8px; background: #fff; }
+.payOpt.on { border-color: var(--home-olive); background: var(--home-olive-soft); }
+.payOpt .t { font-size: 15px; font-weight: 650; } .payOpt .h { font-size: 13px; color: var(--home-dim); }
+.receipt { border: 1px solid var(--home-line); border-radius: 8px; background: #fff; padding: 16px; display: grid; gap: 8px; }
+.receipt .rt { font-size: 18px; font-weight: 700; margin: 0; }
+/* email */
+.mail { width: 600px; background: #fff; border: 1px solid var(--home-line); border-radius: 8px; overflow: hidden; color: #241E15; }
+.mailHd { padding: 12px 18px; border-bottom: 1px solid var(--home-line); font-size: 13px; display: grid; gap: 2px; background: #FBF9F5; }
+.mailHd span { color: var(--home-dim); }
+.mailBd { padding: 22px 28px; display: grid; gap: 12px; font-size: 15px; line-height: 1.55; }
+.mailBd p { margin: 0; }
+.mailBtn { justify-self: start; background: #2B3A1C; color: #F4F1E6; font-weight: 700; padding: 11px 18px; border-radius: 8px; font-size: 15px; }
+.mailFt { padding: 14px 28px 20px; border-top: 1px solid var(--home-line); font-size: 12px; color: var(--home-dim); display: grid; gap: 4px; }
+/* invoice paper: Letter at 96 dpi is 816 px wide */
+.paper { width: 816px; background: #fff; color: #1d1d1d; font-family: Helvetica, Arial, sans-serif; border: 1px solid #d6d2ca; box-shadow: 0 2px 10px rgba(0,0,0,0.06); }
+.paper .acc { height: 8px; background: #2B3A1C; }
+.paper .pin { padding: 34px 56px 40px; display: grid; gap: 18px; font-size: 13px; }
+.paper .idb { display: flex; justify-content: space-between; gap: 20px; }
+.paper .idb b { font-size: 16px; display: block; }
+.paper h4 { font-size: 26px; margin: 0; letter-spacing: 0.01em; }
+.paper .subl { color: #555; margin-top: 2px; }
+.paper .pfig { display: grid; grid-template-columns: repeat(3, 1fr); border: 1px solid #d6d2ca; border-radius: 4px; }
+.paper .pfig > div { padding: 10px 14px; } .paper .pfig > div + div { border-left: 1px solid #d6d2ca; }
+.paper .pfig span { display: block; font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; color: #666; }
+.paper .pfig b { font-size: 18px; font-variant-numeric: tabular-nums; }
+.paper .lab { font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em; color: #666; font-weight: 700; margin-bottom: 4px; }
+.paper table { width: 100%; border-collapse: collapse; }
+.paper th { text-align: left; font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; color: #666; border-bottom: 1px solid #bbb; padding: 6px 0; }
+.paper td { padding: 8px 0; border-bottom: 1px solid #e3e0da; vertical-align: top; }
+.paper td.r, .paper th.r { text-align: right; font-variant-numeric: tabular-nums; }
+.paper .inc { margin: 4px 0 0; padding-left: 16px; color: #444; }
+.paper .tt td { border-bottom: 0; padding: 4px 0; }
+.paper .tt tr.big td { font-weight: 700; font-size: 15px; border-top: 1px solid #bbb; padding-top: 8px; }
+.paper .stamp { display: inline-block; border: 2px solid #2E6B2F; color: #2E6B2F; font-weight: 800; letter-spacing: 0.08em; padding: 4px 10px; border-radius: 4px; font-size: 13px; }
+.paper .foot { color: #777; font-size: 11px; display: flex; justify-content: space-between; border-top: 1px solid #e3e0da; padding-top: 8px; }
+.paper.mini { width: 816px; }
+/* public club site */
+.site { box-sizing: content-box; width: 960px; padding: 0 0 22px; }
+.siteBar { background: #2B3A1C; color: #F4F1E6; padding: 12px 28px; display: flex; gap: 22px; align-items: center; font-size: 14px; border-radius: 8px 8px 0 0; }
+.siteBar b { font-size: 16px; margin-right: auto; }
+.siteIn { padding: 20px 28px 0; display: grid; gap: 14px; }
+.strip { display: grid; grid-template-columns: repeat(auto-fill, 184px); gap: 12px; }
+.strip > div { min-height: 72px; border: 1px solid var(--home-line); border-radius: 8px; background: #fff; display: grid; place-items: center; font-weight: 800; font-size: 15px; text-align: center; padding: 6px; }
+.byLine { display: inline-flex; gap: 10px; align-items: center; font-size: 13px; color: var(--home-dim); border: 1px solid var(--home-line); background: #fff; border-radius: 8px; padding: 6px 10px; }
+.pcard { background: #fff; border: 1px solid var(--home-line); border-radius: 8px; padding: 12px 14px; display: grid; grid-template-columns: minmax(0,1fr) 18px; gap: 4px 8px; }
+.pcard .nm { font-size: 15px; font-weight: 650; } .pcard .s { font-size: 13px; color: var(--home-dim); grid-column: 1; }
+.pcard .chev { grid-row: 1 / span 3; grid-column: 2; align-self: start; }
+.pband { font-family: var(--font-head); font-size: 12px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; color: var(--home-dim); display: flex; gap: 8px; padding-top: 4px; }
+.lockedRow { opacity: 0.6; }
+.planTbl td.y { color: var(--tag-new); font-weight: 700; }
+.planTbl td.n { color: var(--doc-soft); }
+.chip.q { background: rgba(70,55,30,0.08); color: var(--home-dim); }
+.phone .btnLime, .phone .btnOut { min-height: 44px; display: inline-flex; align-items: center; justify-content: center; }
+.phone .ptabs span { padding: 12px 0; }
+.phone .ck { min-height: 44px; align-items: center; }
+.tap44 { min-width: 44px; min-height: 44px; padding: 0 10px; }
+.bandBtn { display: flex; gap: 8px; align-items: center; }
+/* ─── Stage 5 + 7 additions ─── */
+nav.tabs .grp { flex: 0 0 auto; align-self: center; font-size: 10px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--doc-soft); padding: 0 2px 0 10px; }
+nav.tabs .grp:first-child { padding-left: 4px; }
+.rail { width: 210px; background: var(--home-card); border-right: 1px solid var(--home-line); padding: 14px 10px; display: grid; gap: 2px; align-content: start; font-size: 14px; border-radius: 8px 0 0 8px; }
+.rail .g { font-family: var(--font-head); font-size: 11px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--home-dim); padding: 12px 10px 4px; }
+.rail .i { padding: 7px 10px; border-radius: 7px; color: var(--home-ink-soft); }
+.rail .i.on { background: var(--home-olive-soft); color: var(--home-olive); font-weight: 650; }
+.rail .i.nw { box-shadow: inset 0 0 0 1.5px var(--tag-new); color: var(--home-ink); font-weight: 650; }
+.shell { display: flex; width: 780px; min-height: 330px; }
+.shell .main { flex: 1; padding: 18px 22px; display: grid; gap: 12px; align-content: start; min-width: 0; }
+.vsw { display: inline-flex; background: #fff; border: 1px solid var(--home-line-strong); border-radius: 999px; padding: 3px; font-size: 13px; }
+.vsw span { padding: 4px 11px; border-radius: 999px; color: var(--home-ink-soft); }
+.vsw span.on { background: rgba(87,101,30,0.14); color: #3E4815; font-weight: 600; }
+.wk { display: grid; grid-template-columns: repeat(7, minmax(0,1fr)); gap: 6px; }
+.wkH { font-family: var(--font-head); font-size: 11px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; color: var(--home-dim); padding: 4px 2px; }
+.wkD { display: grid; gap: 6px; align-content: start; min-height: 210px; }
+.bk { background: #fff; border: 1px solid var(--home-line); border-left: 3px solid var(--c, rgba(70,55,30,0.30)); border-radius: 6px; padding: 5px 7px; font-size: 12px; line-height: 1.35; color: var(--home-ink); }
+.bk b { display: block; font-size: 12px; }
+.bk .w { color: var(--home-dim); }
+.bk.ev { --c: rgba(70,55,30,0.30); }
+.dash { color: var(--home-faint); font-size: 12px; padding: 4px 2px; }
+.sgT { border-collapse: collapse; font-size: 12px; background: #fff; border: 1px solid var(--home-line); }
+.sgT th { font-family: var(--font-head); font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--home-dim); text-align: left; padding: 7px 8px; border-bottom: 1px solid var(--home-line); font-weight: 700; }
+.sgT td { padding: 6px; border-bottom: 1px solid var(--home-line); border-left: 1px solid var(--home-line); vertical-align: top; width: 150px; }
+.sgT td.fac { width: 118px; border-left: 0; font-weight: 650; font-size: 13px; }
+.sgT td.fac .s { display: block; font-weight: 400; font-size: 11px; color: var(--home-dim); }
+.slot { border: 1px solid var(--home-line); border-left: 3px solid var(--c, rgba(70,55,30,0.30)); border-radius: 6px; padding: 4px 6px; background: #fff; line-height: 1.35; }
+.slot + .slot { margin-top: 4px; }
+.slot .w { display: block; color: var(--home-dim); }
+.slot.open { border-style: dashed; border-left-width: 1px; color: var(--home-dim); }
+.slot.ev { --c: rgba(70,55,30,0.30); }
+.siteBar .tabsIn { display: flex; gap: 20px; font-size: 15px; font-weight: 600; }
+.siteBar .tabsIn span { padding: 6px 0; }
+.siteBar .tabsIn span.on { box-shadow: inset 0 -3px 0 #D9F99D; }
+.siteBar .tabsIn span.nw { outline: 1.5px dashed #D9F99D; outline-offset: 3px; border-radius: 3px; }
+.siteBar .acct { font-size: 13px; opacity: 0.9; }
+.pTabRow { display: flex; gap: 18px; background: #fff; border-bottom: 1px solid var(--home-line); padding: 0 16px; font-size: 14px; font-weight: 600; overflow: hidden; white-space: nowrap; }
+.pTabRow span { padding: 12px 0; flex: 0 0 auto; }
+.pTabRow span.on { box-shadow: inset 0 -3px 0 var(--home-ink); }
+.pTabRow span.nw { outline: 1.5px dashed var(--tag-new); outline-offset: -2px; border-radius: 3px; padding-inline: 4px; }
+.att { display: grid; grid-template-columns: minmax(0,1fr) 44px 44px; gap: 6px; align-items: center; padding: 6px 10px 6px 14px; min-height: 60px; background: #fff; }
+.att + .att { border-top: 1px solid var(--home-line); }
+.att .nm { font-size: 15px; font-weight: 650; } .att .s { display: block; font-size: 12px; color: var(--home-dim); font-weight: 400; }
+.here { width: 44px; height: 44px; border-radius: 10px; border: 1.5px solid var(--home-line-strong); display: grid; place-items: center; font-size: 18px; color: #fff; background: #fff; }
+.here.on { background: var(--home-olive); border-color: var(--home-olive); }
+.hmark { width: 44px; height: 44px; display: grid; place-items: center; color: var(--home-ink-soft); font-size: 13px; font-weight: 800; border-radius: 10px; }
+.hmark.none { color: transparent; }
+.sheet { border: 1px solid var(--home-line-strong); border-radius: 16px 16px 0 0; background: #fff; padding: 16px; display: grid; gap: 10px; box-shadow: 0 -6px 24px rgba(36,30,21,0.12); }
+.sess { display: grid; grid-template-columns: minmax(0,1fr) 110px 90px 22px; gap: 14px; align-items: center; padding: 10px 14px; min-height: 56px; background: #fff; }
+.sess + .sess { border-top: 1px solid var(--home-line); }
+.sess .nm { font-size: 14px; font-weight: 650; } .sess .s { display: block; font-size: 12px; color: var(--home-dim); font-weight: 400; }
+.phone .sess { grid-template-columns: minmax(0,1fr) auto 18px; gap: 10px; }
+.famSess { display: grid; grid-template-columns: 20px minmax(0,1fr) auto; gap: 10px; align-items: center; padding: 10px 12px; border: 1px solid var(--home-line-strong); border-radius: 8px; background: #fff; }
+.famSess.on { border-color: var(--home-olive); background: var(--home-olive-soft); }
+.famSess .t { font-size: 14px; font-weight: 650; } .famSess .h { font-size: 12px; color: var(--home-dim); display: block; font-weight: 400; }
+.chips { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+.gameL { display: grid; grid-template-columns: 120px minmax(0,1fr) 110px; gap: 10px; padding: 8px 14px; font-size: 14px; background: #fff; align-items: center; }
+.gameL + .gameL { border-top: 1px solid var(--home-line); }
+.gameL .s { color: var(--home-dim); font-size: 12px; }
+.phone .gameL { grid-template-columns: 74px minmax(0,1fr) auto; padding: 10px 12px; }
+.wkPhone { display: grid; gap: 8px; }
+.dayH { font-family: var(--font-head); font-size: 12px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; color: var(--home-dim); }
+.mailMini { width: 520px; }
+.chgT td:first-child { font-weight: 600; white-space: nowrap; }
+.askCh { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 8px; }
+.askCh div { font-size: 12px; color: var(--doc-soft); background: var(--doc-bg); border-radius: 8px; padding: 6px 9px; }
+.askCh b { display: block; font-size: 10px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--doc-ink); }
+@media (max-width: 700px) { .askCh { grid-template-columns: 1fr; } }
+.ruled { font-size: 11px; font-weight: 700; color: var(--tag-new); }
+.fl.bl { color: var(--doc-accent); background: var(--doc-accent-soft); }
+.prow { display: grid; grid-template-columns: minmax(0,1fr) 18px; gap: 8px; align-items: center; padding: 10px 14px; min-height: 60px; background: #fff; }
+.prow + .prow { border-top: 1px solid var(--home-line); }
+.prow .nm { font-size: 16px; font-weight: 650; } .prow .s { display: block; font-size: 13px; color: var(--home-dim); margin-top: 2px; }
+.gRow { display: grid; gap: 3px; padding: 10px 14px; background: #fff; }
+.gRow + .gRow { border-top: 1px solid var(--home-line); }
+.gRow .hd { display: flex; justify-content: space-between; align-items: center; gap: 8px; font-size: 13px; color: var(--home-dim); }
+.gRow .tm { display: flex; justify-content: space-between; gap: 8px; font-size: 15px; color: var(--home-ink); } .gRow .tm b { font-variant-numeric: tabular-nums; }
+.gRow .tm.w { font-weight: 700; } .gRow .ns { font-size: 13px; color: var(--home-dim); }
+.linkRow { display: flex; justify-content: space-between; align-items: center; padding: 12px 14px; min-height: 48px; font-size: 15px; font-weight: 600; color: var(--home-olive); background: #fff; border-top: 1px solid var(--home-line); }
+.ico44 { width: 44px; height: 44px; display: inline-grid; place-items: center; color: var(--home-ink-soft); font-size: 17px; flex: 0 0 auto; }
+.mrow { display: grid; grid-template-columns: minmax(0,1fr) 44px; gap: 6px; align-items: center; padding: 8px 4px 8px 14px; background: #fff; }
+.mrow + .mrow { border-top: 1px solid var(--home-line); }
+.mrow .nm { font-size: 15px; font-weight: 650; display: block; } .mrow .s { display: block; font-size: 12px; color: var(--home-dim); }
+.mrow .act { display: inline-flex; align-items: center; min-height: 44px; font-size: 14px; font-weight: 650; color: var(--home-olive); }
+.card > .rlist.inset { border: 0; border-radius: 0; background: transparent; border-top: 1px solid var(--home-line); margin: 0 -20px -16px; }
+.site .srow, .pub .srow { min-height: 60px; } .site .srow .nm { font-size: 16px; } .site .srow .cap { font-size: 13px; }
+.pTabRow span { height: 44px; display: inline-flex; align-items: center; padding: 0; }
+/* ─── round 2 · paid events ─── */
+/* family pages wear the CLUB's colour (ClubKit .btnPrimary = --club-fill), not lime: round 1 drew lime there */
+.btnClub { font: inherit; font-size: 16px; font-weight: 650; background: #2B3A1C; color: #F4F1E6; border: 0; border-radius: 8px; min-height: 44px; padding: 0 18px; display: flex; align-items: center; justify-content: center; text-align: center; }
+.btnClubOut { font: inherit; font-size: 15px; font-weight: 600; background: #fff; color: #1F1B16; border: 1px solid #948B7D; border-radius: 8px; min-height: 44px; padding: 0 16px; display: flex; align-items: center; justify-content: center; }
+.chipOk { font-size: 12px; font-weight: 700; padding: 2px 8px; border-radius: 20px; background: #E6F0E2; color: #2C6A2A; white-space: nowrap; }
+.chipHeld { font-size: 12px; font-weight: 700; padding: 2px 8px; border-radius: 20px; background: rgba(138,90,11,0.10); color: #6B4105; white-space: nowrap; }
+.feeP { font-size: 12px; font-weight: 650; padding: 2px 9px; border-radius: 999px; white-space: nowrap; display: inline-block; }
+.feeP.good { color: #2A5222; background: rgba(46,107,47,0.08); box-shadow: inset 0 0 0 1px rgba(46,107,47,0.28); }
+.feeP.warn { color: #6B4105; background: rgba(138,90,11,0.08); box-shadow: inset 0 0 0 1px rgba(138,90,11,0.28); }
+.priceRow { display: grid; grid-template-columns: minmax(0,1fr) 130px 44px; gap: 10px; align-items: center; }
+.policy { font-size: 14px; color: var(--home-ink); background: #fff; border: 1px solid var(--home-line); border-radius: 8px; padding: 10px 12px; display: grid; gap: 6px; }
+.policy .fixed { font-size: 13px; color: var(--home-ink-soft); border-top: 1px solid var(--home-line); padding-top: 6px; }
+.seller { font-size: 12px; color: var(--home-dim); }
+.soldRow { opacity: 1; }
+.rt { font-variant-numeric: tabular-nums; }
+/* /design 2026-11-25: the kit's .btn.btn-danger (Warm: --danger-rgb 176,58,34, ink --home-live) */
+.btnDanger { font: inherit; font-size: 14px; font-weight: 600; background: rgba(176,58,34,0.15); color: #B03A22; border: 1px solid rgba(176,58,34,0.30); border-radius: 8px; padding: 7px 14px; white-space: nowrap; }
+/* /design: the later .phone .qrow rule overrode .qrow.nogrip on phones */
+.phone .qrow.nogrip { grid-template-columns: minmax(0,1fr) 22px; padding-left: 14px; }
+/* /design: 44 px tap targets for links on a phone */
+.phone .door, .phone .pbody > span.small:first-child { min-height: 44px; display: flex; align-items: center; }
+.cardsOn { font-size: 10px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; color: var(--doc-accent); background: var(--doc-accent-soft); padding: 2px 6px; border-radius: 4px; }
+/* ─── round 3 · team sign-ups ─── */
+.feeP.neutral { color: #4A4235; background: rgba(70,55,30,0.06); box-shadow: inset 0 0 0 1px rgba(70,55,30,0.22); }
+.tbl tr.bandRow td { background: #FBF9F5; font-family: var(--font-head); font-size: 12px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; color: var(--home-dim); padding: 7px 12px; }
+.tbl tr.bandRow td .m { text-transform: none; letter-spacing: 0; font-family: system-ui, -apple-system, "Segoe UI", sans-serif; font-weight: 500; margin-left: 8px; }
+.nudge.amber { border-left-color: var(--amber); display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+.schedRow { display: grid; grid-template-columns: 110px minmax(0,1fr) auto; gap: 12px; align-items: center; padding: 10px 14px; background: #fff; min-height: 56px; }
+.schedRow + .schedRow { border-top: 1px solid var(--home-line); }
+.schedRow.dim { opacity: 0.45; }
+.schedRow .d { font-size: 13px; color: var(--home-dim); } .schedRow .d b { display: block; color: var(--home-ink); font-size: 14px; }
+.schedRow .w b { display: block; font-size: 15px; } .schedRow .w span { font-size: 12px; color: var(--home-dim); }
+.pickRow { display: grid; grid-template-columns: 22px minmax(0,1fr) auto; gap: 10px; align-items: center; padding: 9px 0; min-height: 44px; }
+.pickRow + .pickRow { border-top: 1px solid var(--home-line); }
+.pickRow .t { font-size: 14px; font-weight: 600; } .pickRow .h { display: block; font-size: 12px; color: var(--home-dim); font-weight: 400; }
+.pickRow .meal { font-size: 13px; border: 1px solid var(--home-line-strong); border-radius: 6px; padding: 4px 8px; background: #fff; white-space: nowrap; color: var(--home-ink-soft); }
+.pickRow.more { grid-template-columns: minmax(0,1fr); color: var(--home-dim); font-size: 13px; }
+.subTitle { display: flex; justify-content: space-between; align-items: center; gap: 8px; font-size: 13px; font-weight: 700; color: var(--home-ink); margin: 4px 0 0; }
+.subTitle .cnt { font-size: 12px; font-weight: 600; color: var(--home-olive); background: var(--home-olive-soft); padding: 2px 8px; border-radius: 999px; }
+.subTitle .lk { font-size: 13px; font-weight: 600; color: var(--home-olive); }
+.wfoot .left { margin-right: auto; }
+.phone .pickRow { min-height: 52px; }
+.billTiles { display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); border: 1px solid var(--home-line); border-radius: 8px; background: #fff; }
+.billTiles > div { padding: 10px 12px; } .billTiles > div + div { border-left: 1px solid var(--home-line); }
+/* /design round 3: phone text links reach 44 px; a sticky foot; public pages wear the club's fill */
+.phone .subTitle .lk { min-height: 44px; display: inline-flex; align-items: center; }
+.pfoot { border-top: 1px solid var(--home-line-strong); background: #fff; padding: 12px 16px 16px; display: grid; gap: 10px; box-shadow: 0 -4px 14px rgba(36,30,21,0.08); }
+.clubPage .subTitle .cnt { color: #2B3A1C; background: rgba(43,58,28,0.08); }
+.clubPage .subTitle .lk, .clubPage .door { color: #2B3A1C; }
+.clubPage .box.on { background: #2B3A1C; border-color: #2B3A1C; }
+.billTiles span { display: block; font-size: 12px; color: var(--home-dim); } .billTiles b { font-size: 17px; font-variant-numeric: tabular-nums; }
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <span class="eyebrow">Board Ready · Stage 5 · team sign-ups · drawings written Nov 25, 2026 · round 3, after /legal, /accounting, a read of the shipped screens and /design</span>
+    <h1>Team sign-ups: a club’s own team orders once and pays one bill, and a neighbouring team signs up through its own link</h1>
+    <p class="lead">You asked (Nov 25): a club may want each of its teams to work out how many banquet tickets it needs, send the club one list of players, parents and coaches, and pay once; or it may invite three neighbouring teams, perhaps without making the sign-up public, by sending each one a link the way it does a sponsor. Drawn on Riverdale Minor Ball as of Monday, April 12, 2027, on two events. The <b>year-end banquet</b> (round 2’s: $40.00 an adult, $15.00 a child, spots raised to 160) is offered to Riverdale’s five rep teams. A <b>guest speaker night</b> ($10.00 a person) invites three U13 teams from other clubs. Teams coming to <i>play</i> are a tournament, and that part is on tab 8. Riverdale doesn’t take card payments yet, so its records show e-transfers. Click any number, tag or red flag to read what it refers to. Your asks are on the last tab, numbered 34 to 49, after round 2’s 20 to 33.</p>
+  </header>
+
+  <nav class="tabs" role="tablist" aria-label="Sections">
+    <button role="tab" id="t1" aria-selected="true" data-pane="p1">1 · The shape</button>
+    <button role="tab" id="t2" aria-selected="false" data-pane="p2">2 · Offering it to our teams</button>
+    <button role="tab" id="t3" aria-selected="false" data-pane="p3">3 · A coach’s list</button>
+    <button role="tab" id="t4" aria-selected="false" data-pane="p4">4 · The team’s bill</button>
+    <button role="tab" id="t5" aria-selected="false" data-pane="p5">5 · Who’s coming, with teams</button>
+    <button role="tab" id="t6" aria-selected="false" data-pane="p6">6 · Inviting other clubs’ teams</button>
+    <button role="tab" id="t7" aria-selected="false" data-pane="p7">7 · An invited team signs up</button>
+    <button role="tab" id="t8" aria-selected="false" data-pane="p8">8 · Teams coming to play</button>
+    <button role="tab" id="t9" aria-selected="false" data-pane="p9">9 · Reviews</button>
+    <button role="tab" id="t10" aria-selected="false" data-pane="p10">10 · Asks</button>
+  </nav>
+
+  <!-- 1 · THE SHAPE -->
+  <section class="pane" id="p1" role="tabpanel" aria-labelledby="t1">
+    <h2>Three kinds of team sign-up, and only one of them needs anything new on the public side</h2>
+    <p>A club’s own team already has a money line to its club: the club bills it, the coach presses “We’ve sent it”, and the club confirms. A team order for the banquet uses that line, so it lands in both books. Another club’s team has no such line, so it signs up the way a family does, through its own link, with a names-only list. A team coming to play is a tournament entry, which already exists. Eight things the reviews and the code turned up shaped the asks: <button class="fl" type="button" data-f="F1">F1</button> <button class="fl" type="button" data-f="F2">F2</button> <button class="fl" type="button" data-f="F3">F3</button> <button class="fl" type="button" data-f="F4">F4</button> <button class="fl" type="button" data-f="F5">F5</button> <button class="fl" type="button" data-f="F6">F6</button> <button class="fl" type="button" data-f="F7">F7</button> <button class="fl" type="button" data-f="F8">F8</button>. A ninth is about round 2, and showed up only because this round draws a second paid event: <button class="fl" type="button" data-f="F9">F9</button></p>
+    <div class="explain">
+      <h3>The three, side by side</h3>
+      <table class="docTbl chgT">
+        <thead><tr><th></th><th>The club’s own team</th><th>Another club’s team, to a social event</th><th>Another club’s team, to play</th></tr></thead>
+        <tbody>
+          <tr><td>Example</td><td class="s">U13 Ospreys orders 26 banquet tickets</td><td class="s">Millbrook’s U13 Mustangs come to the guest speaker night</td><td class="s">Three teams come to a Saturday jamboree</td></tr>
+          <tr><td>Where it starts</td><td class="s">The club offers the event to some or all of its teams <button class="mark" type="button" data-ask="35">35</button></td><td class="s">The club invites each team and gets one link for each <button class="mark" type="button" data-ask="42">42</button></td><td class="s">A tournament, with a new “Who can enter” choice <button class="mark" type="button" data-ask="48">48</button></td></tr>
+          <tr><td>Who lists the people</td><td class="s">Team staff, ticking players from the roster; the head coach sends it <button class="mark" type="button" data-ask="36">36</button> <button class="mark" type="button" data-ask="37">37</button></td><td class="s">The team’s contact, on the link, with no account</td><td class="s">The coach submits a roster, as today</td></tr>
+          <tr><td>What the list holds</td><td class="s">Names from the roster, adult or child, and a meal if the event asks one. No allergies <button class="mark" type="button" data-ask="40">40</button></td><td class="s">Adults’ names, children’s first names and last initials. No allergies, emails or phone numbers <button class="mark" type="button" data-ask="44">44</button></td><td class="s">As tournaments do today</td></tr>
+          <tr><td>How it’s paid</td><td class="s">One bill on the team’s Club tab <button class="mark" type="button" data-ask="38">38</button></td><td class="s">One payment, as a family pays in round 2</td><td class="s">The team’s entry fee, as today</td></tr>
+          <tr><td>Tax</td><td class="s" colspan="2">The event’s own: a team pays the same tax as a family <button class="mark" type="button" data-ask="47">47</button></td><td class="s">No change</td></tr>
+          <tr><td>Built on</td><td class="s">The club’s team bills (Allocations, the Club tab)</td><td class="s">The sponsor link (Stage 6) and round 2’s sign-up</td><td class="s">Tournament registration</td></tr>
+          <tr><td>Where it’s built</td><td class="s" colspan="2">Stage 5 Part 5, after paid events <button class="mark" type="button" data-ask="49">49</button></td><td class="s">The tournament side’s own item</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="explain">
+      <h3>What changes, for whom</h3>
+      <table class="docTbl chgT">
+        <thead><tr><th>Who</th><th>After this round</th></tr></thead>
+        <tbody>
+          <tr><td>A family on one of the club’s teams</td><td class="s">Tells the coach it’s coming; the team collects its share. Tells the club its own food needs. Signs up itself only if the club also lets families sign up.</td></tr>
+          <tr><td>A coach</td><td class="s">Sees the banquet on the team’s schedule, ticks who’s coming from the roster, and the head coach sends it. The bill arrives on the Club tab beside the club’s other bills.</td></tr>
+          <tr><td>A club admin</td><td class="s">Offers an event to its teams and sees which have answered. Invites other clubs’ teams one link at a time and sees who opened theirs and who signed up. Confirms team payments the way it confirms team bills today.</td></tr>
+          <tr><td>Another club’s team contact</td><td class="s">Gets an email or a link, lists the team’s names, checks the total and the refund policy, and pays once.</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- 2 · OFFERING IT TO OUR TEAMS -->
+  <section class="pane" id="p2" role="tabpanel" aria-labelledby="t2" hidden>
+    <h2>The event window says who signs up and which of the club’s teams it’s offered to, with a day teams pay by</h2>
+    <p>Round 2’s Sign-ups and price section gains “Who signs up” <button class="mark" type="button" data-ask="34">34</button> and, when teams can sign up, “Offer it to our teams” <button class="mark" type="button" data-ask="35">35</button>. The GST/HST hint gains one line from /accounting: a team pays the same tax as a family <button class="mark" type="button" data-ask="47">47</button>.</p>
+    <div class="pair">
+      <div class="spec">
+        <div class="specHead"><b>Edit the year-end banquet · Sign-ups and price</b><span class="chrome">KitDialog · form · 600</span><button class="mark" type="button" data-ask="34">34</button><button class="mark" type="button" data-ask="35">35</button><button class="mark" type="button" data-ask="47">47</button><button class="tag re" type="button" data-note="RESTYLED from round 2’s section. New: “Who signs up” (three choices), and, while teams can sign up, “Offer it to our teams” with a team picker (all rep teams, or some), “Teams pay by” and one line saying what happens. Spots went from 120 to 160 when Riverdale offered the banquet to its teams. Price, holding days and the refund policy are round 2’s, folded here to one line each. The GST/HST hint is round 2’s plus /accounting’s line for teams.">RESTYLED</button></div>
+        <div class="scroll"><div class="dimmer"><div class="win">
+          <div class="whead"><span class="ico">✎</span><div><p class="wtitle">Edit the year-end banquet</p><div class="wmeta">Banquet · Sat, Jun 26, 2027 · Riverdale Legion Hall</div></div></div>
+          <div class="wbody">
+            <div class="two"><div class="fld"><span class="l">Spots</span><div class="inp">160</div></div><div class="fld"><span class="l">Sign-ups close</span><div class="inp">Sat, Jun 19</div></div></div>
+            <div class="sec">
+              <p class="secH">Who signs up</p>
+              <div class="radioRow"><span class="dot"></span><div><div class="t">Each family</div><div class="h">One sign-up for each household, on the sign-up page</div></div></div>
+              <div class="radioRow"><span class="dot"></span><div><div class="t">Each team</div><div class="h">A team sends one list and pays once</div></div></div>
+              <div class="radioRow on"><span class="dot"></span><div><div class="t">Families and teams</div><div class="h">Both. If a name is on both a team list and a family sign-up, you’re told, and nothing is merged.</div></div></div>
+            </div>
+            <div class="sec">
+              <p class="secH">Offer it to our teams</p>
+              <div class="fld"><span class="l">Teams</span><div class="inp sel"><span>All 5 rep teams</span><span>▾</span></div></div>
+              <div class="fld"><span class="l">Teams pay by <span class="req">*</span></span><div class="inp" style="max-width:200px">Fri, Jun 11</div><span class="hint">Never past the day sign-ups close.</span></div>
+              <p class="small">Each team’s staff ticks who’s coming from its roster, and its head coach sends the list. Riverdale Minor Ball then bills the team once, at the prices above, on the team’s Club tab. The team collects from its own families.</p>
+            </div>
+            <div class="sec">
+              <p class="secH">Price, paying and refunds</p>
+              <p class="small">$40.00 an adult · $15.00 a child · unpaid family spots held 7 days · refund policy: Refunds until Jun 12 · <span class="door">Change</span></p>
+            </div>
+            <div class="sec">
+              <p class="secH">GST/HST</p>
+              <div class="radioRow on"><span class="dot"></span><div><div class="t">Taxable · HST 13%</div><div class="h">Dinners and event tickets are usually charged tax, even by a non-profit club. Choose Exempt only if your accountant says this one is not.</div></div></div>
+              <span class="hint">Teams pay the same tax as families. Tax follows the tickets, not who pays for them.</span>
+            </div>
+          </div>
+          <div class="wfoot"><span class="btnOut">Cancel</span><span class="btnLime">Save</span></div>
+        </div></div></div>
+      </div>
+      <div class="stack">
+        <div class="explain">
+          <h3>What the section does, and doesn’t do</h3>
+          <ul>
+            <li><b>“Who signs up” decides which doors exist.</b> “Each family” is round 1 and 2’s sign-up page. “Each team” has no family page at all. “Families and teams” has both, and the club is told about names on both lists <button class="mark" type="button" data-ask="41">41</button>.</li>
+            <li><b>Offering to teams is the club’s own teams only.</b> The picker lists the club’s rep teams, all or some (“U11 and U13”, or one division). That also answers round 1’s open question about an event for part of the club.</li>
+            <li><b>No email is sent by saving.</b> Each head coach gets one notice that the club is offering the event, the same kind the late-bill notice is (/legal: not a commercial message, because it’s inside the club) <button class="mark" type="button" data-ask="35">35</button>.</li>
+            <li><b>Inviting other clubs’ teams is a different door</b> (tab 6), because the club has no bill line to them.</li>
+          </ul>
+        </div>
+        <div class="spec">
+          <div class="specHead"><b>Phone · the same section</b><span class="chrome">390 · KitDialog as a sheet</span><button class="mark" type="button" data-ask="34">34</button><button class="tag re" type="button" data-note="RESTYLED for a phone: the window becomes the kit’s full-height sheet; each choice is a 52 px row; the team picker opens a list sheet with a tick per team. Nothing else changes.">RESTYLED</button></div>
+          <div class="scroll"><div class="frame phone">
+            <div class="pbar"><span>Edit the year-end banquet<span class="sm">Sign-ups and price</span></span></div>
+            <div class="pbody">
+              <p class="secH" style="margin:0">Who signs up</p>
+              <div class="radioRow"><span class="dot"></span><div><div class="t">Each family</div></div></div>
+              <div class="radioRow"><span class="dot"></span><div><div class="t">Each team</div></div></div>
+              <div class="radioRow on"><span class="dot"></span><div><div class="t">Families and teams</div></div></div>
+              <p class="secH" style="margin:0">Offer it to our teams</p>
+              <div class="inp sel"><span>All 5 rep teams</span><span>▾</span></div>
+              <div class="fld"><span class="l">Teams pay by <span class="req">*</span></span><div class="inp">Fri, Jun 11</div></div>
+            </div>
+          </div></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 3 · A COACH'S LIST -->
+  <section class="pane" id="p3" role="tabpanel" aria-labelledby="t3" hidden>
+    <h2>The coach finds the banquet on the team’s schedule, ticks who’s coming from the roster, and the head coach sends it</h2>
+    <p>Jordan Lee is U13 Ospreys’ head coach. The banquet shows on the team’s schedule as a club event, with the team’s answer beside it <button class="fl" type="button" data-f="F6">F6</button>. Opening it shows the team’s list: players ticked from the roster <button class="fl" type="button" data-f="F3">F3</button>, adults picked from each player’s family contact and the coaching staff <button class="fl" type="button" data-f="F1">F1</button>, and anyone else added by name <button class="mark" type="button" data-ask="36">36</button>. /legal’s words above and below the list are verbatim <button class="mark" type="button" data-ask="40">40</button>. Only the head coach sends it, because sending bills the team <button class="mark" type="button" data-ask="37">37</button>.</p>
+    <div class="spec">
+      <div class="specHead"><b>U13 Ospreys › Schedule, list · rows only</b><span class="chrome">coaches portal · desktop · 960</span><button class="mark" type="button" data-ask="35">35</button><button class="tag new" type="button" data-note="NEW ROW, on the club website’s E12 row (drawn on its events drawing, tab 10, NOT RULED): a read-only “From the club · Club event” row on the schedule of each team the event names. This round adds the team’s answer on the right: “Your list: not sent” (amber) until the head coach sends it, then “26 coming · billed $740.00”. A team the event isn’t offered to sees the row without an answer, if E11/E12 put it there at all. The dimmed rows are the shipped schedule. On a phone the chip sits under the title (drawn beside).">NEW</button></div>
+      <div class="pair" style="grid-template-columns:repeat(auto-fit,minmax(min(100%,420px),1fr))">
+      <div class="scroll"><div class="frame phone">
+        <div class="pbar"><span>U13 Ospreys<span class="sm">Schedule</span></span></div>
+        <div class="pbody">
+          <p class="capL" style="margin:0">June 2027</p>
+          <div class="rlist">
+            <div class="mrow"><div><span class="s">Sat, Jun 26 · 6:00 p.m.</span><span class="nm">Year-end banquet</span><span class="s">Riverdale Legion Hall · From the club · Club event</span><span class="chipHeld">Your list: not sent</span></div><span class="chev">›</span></div>
+            <div class="mrow" style="opacity:0.45"><div><span class="s">Sun, Jun 27 · 11:00 a.m.</span><span class="nm">at Millbrook Mustangs</span><span class="s">Millbrook Fields · Diamond 3</span></div><span class="chev">›</span></div>
+          </div>
+        </div>
+      </div></div>
+      <div class="scroll"><div class="frame adm">
+        <p class="capL" style="margin:0">June 2027</p>
+        <div class="rlist" style="border:1px solid var(--home-line);border-radius:8px;overflow:hidden">
+          <div class="schedRow dim"><span class="d"><b>Thu, Jun 24</b>6:30 p.m.</span><span class="w"><b>Practice</b><span>Lions Park · Diamond 2 · From Spring training · the club’s schedule</span></span><span></span></div>
+          <div class="schedRow"><span class="d"><b>Sat, Jun 26</b>6:00 p.m.</span><span class="w"><b>Year-end banquet</b><span>Riverdale Legion Hall · From the club · Club event</span></span><span class="chipHeld">Your list: not sent</span></div>
+          <div class="schedRow dim"><span class="d"><b>Sun, Jun 27</b>11:00 a.m.</span><span class="w"><b>at Millbrook Mustangs</b><span>Millbrook Fields · Diamond 3</span></span><span></span></div>
+        </div>
+      </div></div>
+      </div>
+    </div>
+    <div class="pair">
+      <div class="spec">
+        <div class="specHead"><b>Our list for the year-end banquet</b><span class="chrome">coaches portal · KitDialog · 600</span><button class="mark" type="button" data-ask="36">36</button><button class="mark" type="button" data-ask="37">37</button><button class="mark" type="button" data-ask="38">38</button><button class="mark" type="button" data-ask="40">40</button><button class="tag new" type="button" data-note="NEW WINDOW. Players use the shipped tournament roster pick’s checkbox rows and its “{n} selected” pill; “Everyone · No one” is the development session sheet’s shipped pair, new on this pick. Only the name is taken from the roster: no birthday, medical note or contact (/legal A1). Adults: each player’s family contact on file, the coaching staff, and “+ Add an adult” for anyone else, by name only. Meal is the event’s own non-health question for each person, optional; a blank one reaches the club as “Not chosen”. 12 of 13 players are children: 12 × $15.00 = $180.00. 10 family contacts + 3 staff + Helen Marsh = 14 adults: 14 × $40.00 = $560.00. $740.00 in all. Other staff see “Save the list” and “Jordan Lee sends the bill” in place of the send button.">NEW</button></div>
+        <div class="scroll"><div class="dimmer"><div class="win">
+          <div class="whead"><span class="ico">✓</span><div><p class="wtitle">Our list for the year-end banquet</p><div class="wmeta">Riverdale Minor Ball · Sat, Jun 26, 2027 · 6:00 p.m. · Riverdale Legion Hall</div></div></div>
+          <div class="wbody">
+            <div class="notice">Tick the players who are coming. The families tell the team; this list is the team’s, not the parents’ answer. Add the parents, guardians and coaches who are coming.</div>
+            <p class="subTitle"><span>Players · $15.00 each</span><span><span class="cnt">12 of 13 selected</span> <span class="lk">Everyone · No one</span></span></p>
+            <div>
+              <div class="pickRow"><span class="box on">✓</span><span class="t">#4 Maya Shah</span><span class="meal">Kids’ pasta ▾</span></div>
+              <div class="pickRow"><span class="box on">✓</span><span class="t">#7 Leo Chen</span><span class="meal">Meal ▾</span></div>
+              <div class="pickRow"><span class="box on">✓</span><span class="t">#9 Ava Okafor</span><span class="meal">Kids’ pasta ▾</span></div>
+              <div class="pickRow"><span class="box"></span><span class="t" style="color:var(--home-dim)">#12 Noah Brooks</span><span></span></div>
+              <div class="pickRow more"><span>9 more players, all ticked ·<span class="door">Show all</span></span></div>
+            </div>
+            <p class="subTitle"><span>Adults · $40.00 each</span><span class="cnt">14</span></p>
+            <div>
+              <div class="pickRow"><span class="box on">✓</span><span class="t">Priya Shah<span class="h">Maya’s family contact</span></span><span class="meal">Chicken ▾</span></div>
+              <div class="pickRow"><span class="box on">✓</span><span class="t">Wei Chen<span class="h">Leo’s family contact</span></span><span class="meal">Meal ▾</span></div>
+              <div class="pickRow more"><span>8 more family contacts ticked, 3 not · <span class="door">Show all</span></span></div>
+              <div class="pickRow"><span class="box on">✓</span><span class="t">Jordan Lee (you)<span class="h">Head coach</span></span><span class="meal">Fish ▾</span></div>
+              <div class="pickRow"><span class="box on">✓</span><span class="t">Sam Rivera<span class="h">Assistant coach</span></span><span class="meal">Meal ▾</span></div>
+              <div class="pickRow"><span class="box on">✓</span><span class="t">Dee Morgan<span class="h">Team manager</span></span><span class="meal">Chicken ▾</span></div>
+              <div class="pickRow"><span class="box on">✓</span><span class="t">Helen Marsh<span class="h">Added by you · <span class="door" style="font-size:12px">Remove</span></span></span><span class="meal">Meal ▾</span></div>
+            </div>
+            <div><span class="btnOut">+ Add an adult</span></div>
+            <div class="notice" style="border-left-color:var(--home-dim)">We don’t ask food allergies on a team list. Each person coming, or a parent for a child, tells Riverdale Minor Ball their own food needs by Fri, Jun 11: events@riverdaleball.ca. Riverdale Minor Ball will not know unless they do.</div>
+            <p class="small" style="color:var(--home-ink)"><b>Riverdale Minor Ball bills your team once:</b> 14 adults × $40.00, 12 children × $15.00, $740.00 in all. It goes on your team’s Club tab. Your team collects from its own families.</p>
+          </div>
+          <div class="wfoot"><span class="btnOut left">We’re not coming as a team</span><span class="btnOut">Save the list</span><span class="btnLime">Send the list · $740.00</span></div>
+        </div></div></div>
+      </div>
+      <div class="stack">
+        <div class="spec">
+          <div class="specHead"><b>Phone · the same list</b><span class="chrome">coaches portal · 390</span><button class="mark" type="button" data-ask="36">36</button><button class="tag new" type="button" data-note="NEW, for a phone: one framed list per group, a 52 px row per person, the tick on the left, the meal under the name (tap the row to change it). The total and the send button are a foot pinned to the bottom of the screen while the list scrolls. “We’re not coming as a team” is in the ⋯ at the top.">NEW</button></div>
+          <div class="scroll"><div class="frame phone">
+            <div class="pbar"><span>← Year-end banquet<span class="sm">Our list · Sat, Jun 26</span></span><span style="margin-left:auto" class="ico44">⋯</span></div>
+            <div class="pbody">
+              <p class="subTitle"><span>Players · 12 of 13</span><span class="lk">Everyone · No one</span></p>
+              <div class="rlist">
+                <div class="pickRow" style="padding:6px 12px;background:#fff"><span class="box on">✓</span><span class="t">#4 Maya Shah<span class="h">Child · Kids’ pasta</span></span><span class="chev">›</span></div>
+                <div class="pickRow" style="padding:6px 12px;background:#fff"><span class="box on">✓</span><span class="t">#7 Leo Chen<span class="h">Child · Meal not chosen</span></span><span class="chev">›</span></div>
+                <div class="pickRow" style="padding:6px 12px;background:#fff"><span class="box"></span><span class="t" style="color:var(--home-dim)">#12 Noah Brooks</span><span></span></div>
+              </div>
+              <p class="subTitle"><span>Adults · 14</span><span class="lk">+ Add an adult</span></p>
+              <div class="rlist">
+                <div class="pickRow" style="padding:6px 12px;background:#fff"><span class="box on">✓</span><span class="t">Priya Shah<span class="h">Maya’s family contact · Chicken</span></span><span class="chev">›</span></div>
+                <div class="pickRow" style="padding:6px 12px;background:#fff"><span class="box on">✓</span><span class="t">Jordan Lee (you)<span class="h">Head coach · Fish</span></span><span class="chev">›</span></div>
+              </div>
+              <p class="small">We don’t ask food allergies on a team list. Each person coming, or a parent for a child, tells Riverdale Minor Ball their own food needs by Fri, Jun 11: events@riverdaleball.ca.</p>
+            </div>
+            <div class="pfoot">
+              <div class="frows"><div class="frow"><span class="fl1">The team’s bill<span class="fc">14 adults · 12 children</span></span><span class="fv">$740.00</span><span></span></div></div>
+              <span class="btnLime" style="width:100%">Send the list · $740.00</span>
+            </div>
+          </div></div>
+        </div>
+        <div class="explain">
+          <h3>What the list does, and doesn’t do</h3>
+          <ul>
+            <li><b>Only the name comes from the roster.</b> No birthday, medical note or contact goes onto an event list (/legal).</li>
+            <li><b>A tick isn’t a parent’s consent,</b> and the words never say it is. The team asks its families; the list says who told the team yes.</li>
+            <li><b>Meal is optional</b> and never a health question. A blank meal reaches the club as “Not chosen”.</li>
+            <li><b>“We’re not coming as a team”</b> answers the club, so the team doesn’t sit in “Not answered”. Families can still sign up themselves if the club lets them.</li>
+            <li><b>Changing it after sending</b>: adding people raises the bill; taking people off asks the club, which decides under its refund policy <button class="mark" type="button" data-ask="39">39</button>.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 4 · THE TEAM'S BILL -->
+  <section class="pane" id="p4" role="tabpanel" aria-labelledby="t4" hidden>
+    <h2>The bill lands on the team’s Club tab beside the club’s other bills, shows the tax it includes, and pays the shipped way</h2>
+    <p>Sending the list makes a <b>Bill for event tickets</b> from the event’s prices, due on the club’s “Teams pay by” day <button class="mark" type="button" data-ask="38">38</button>. Today’s team bills carry no tax and no event, so this is a new kind of bill, not an Allocation with a note on it <button class="fl" type="button" data-f="F2">F2</button>. In the club’s books it splits into Event tickets and GST/HST collected, exactly as a family’s ticket does; in the team’s book it is one line to the club, with no tax split <button class="mark" type="button" data-ask="47">47</button>.</p>
+    <div class="spec">
+      <div class="specHead"><b>U13 Ospreys › Money › Club</b><span class="chrome">coaches portal · desktop · 960</span><button class="mark" type="button" data-ask="38">38</button><button class="tag re" type="button" data-note="RESTYLED, one new row. The shipped Club tab: “Still to pay the club”, “What the club has billed us”, columns What · Files under · Amount · Status. The diamond-fees row is an ordinary Allocation, drawn for context. The banquet row is new: its sub-line names “Bill for event tickets”; it starts Not filed, like any bill, until the coach files it under one of the team’s own budget words. $300.00 + $740.00 = $1,040.00. “Still to pay the club” is red, as shipped. On a phone the same rows are one framed list (drawn beside the bill room below).">RESTYLED</button></div>
+      <div class="scroll"><div class="frame adm">
+        <div class="mband"><div><span class="ml">Still to pay the club</span><span class="mv" style="color:#B03A22">$1,040.00</span><span class="mc">2 installments</span></div><div><span class="ml">Waiting on the club</span><span class="mv">$0.00</span><span class="mc">nothing awaiting a decision</span></div><div><span class="ml">Settled this season</span><span class="mv">$300.00</span><span class="mc">$300.00 out · $0.00 in</span></div></div>
+        <table class="tbl"><thead><tr><th>What</th><th>Files under</th><th class="num">Amount</th><th>Status</th><th style="width:22px"></th></tr></thead><tbody>
+          <tr class="bandRow"><td colspan="5">What the club has billed us<span class="m">2 bills · $1,040.00 still to pay</span></td></tr>
+          <tr><td><span class="nm">Diamond fees · spring</span><span class="s">$300.00 paid of $600.00</span></td><td>Fields · Diamond fees</td><td class="num">$300.00</td><td><span class="chip good">On track</span></td><td class="chev">›</td></tr>
+          <tr><td><span class="nm">Year-end banquet · 26 people</span><span class="s">Bill for event tickets · $0.00 paid of $740.00</span></td><td><span style="color:var(--home-dim)">Not filed</span></td><td class="num">$740.00</td><td><span class="chip good">On track</span></td><td class="chev">›</td></tr>
+        </tbody></table>
+      </div></div>
+    </div>
+    <div class="pair">
+      <div class="spec">
+        <div class="specHead"><b>Phone · the banquet bill</b><span class="chrome">coaches portal · 390 · the shipped bill room</span><button class="mark" type="button" data-ask="38">38</button><button class="mark" type="button" data-ask="39">39</button><button class="mark" type="button" data-ask="47">47</button><button class="tag re" type="button" data-note="RESTYLED from the shipped bill room. The figures are rows on a phone (Billed, Paid, Left, Next due). New: the counts and the tax it includes under the title, “Bill for event tickets” (the document), and “Change our list”. The installment row and “We’ve sent it” are the shipped ones, so the club confirms it the shipped way.">RESTYLED</button></div>
+        <div class="scroll"><div class="frame phone">
+          <div class="pbar"><span>← Club<span class="sm">Year-end banquet · 26 people</span></span></div>
+          <div class="pbody">
+            <p class="capL" style="margin:0">On the Club tab</p>
+            <div class="rlist">
+              <div class="mrow"><div><span class="nm">Diamond fees · spring</span><span class="s">$300.00 paid of $600.00 · $300.00 left</span><span class="chip good">On track</span></div><span class="chev">›</span></div>
+              <div class="mrow"><div><span class="nm">Year-end banquet · 26 people</span><span class="s">Bill for event tickets · $740.00 left</span><span class="chip good">On track</span></div><span class="chev">›</span></div>
+            </div>
+            <p class="capL" style="margin:0">The banquet bill, opened</p>
+            <p class="small">14 adults × $40.00 · 12 children × $15.00 · includes $85.13 HST (13%)</p>
+            <div class="frows">
+              <div class="frow"><span class="fl1">Billed</span><span class="fv">$740.00</span><span></span></div>
+              <div class="frow"><span class="fl1">Paid</span><span class="fv">$0.00</span><span></span></div>
+              <div class="frow"><span class="fl1">Left</span><span class="fv">$740.00</span><span></span></div>
+              <div class="frow"><span class="fl1">Next due<span class="fc">Fri, Jun 11</span></span><span class="fv">$740.00</span><span></span></div>
+            </div>
+            <div class="rlist"><div class="mrow"><div><span class="nm">#1 · $740.00</span><span class="s">Due Jun 11 · Unpaid</span></div><span></span></div></div>
+            <span class="btnOut" style="width:100%">We’ve sent it</span>
+            <span class="door">Bill for event tickets</span>
+            <span class="door">Change our list</span>
+          </div>
+        </div></div>
+      </div>
+      <div class="explain">
+        <h3>How the money lands</h3>
+        <table class="docTbl"><thead><tr><th>Book</th><th>Line</th><th style="text-align:right">Amount</th></tr></thead><tbody>
+          <tr><td>The club’s ledger</td><td class="s">Club events › Event tickets · Year-end banquet · Jun 26 · U13 Ospreys</td><td style="text-align:right">$654.87 in</td></tr>
+          <tr><td>The club’s ledger</td><td class="s">Club events › GST/HST collected · the same</td><td style="text-align:right">$85.13 in</td></tr>
+          <tr><td>The team’s book</td><td class="s">To the club · Year-end banquet · 26 people (one line, no tax split: a team can’t claim the tax back)</td><td style="text-align:right">$740.00 out</td></tr>
+        </tbody></table>
+        <ul>
+          <li><b>Nothing posts until the club confirms</b>, as with every team bill today. “We’ve sent it” writes no ledger line.</li>
+          <li><b>The club sees team bills where it sees team money</b>: on the event’s Who’s coming (tab 5), and in Allocations’ Coming due view with the other team installments.</li>
+          <li><b>A smaller list later</b> is a credit on the bill, which for a taxable event is a credit note, as Stage 6 does.</li>
+          <li><b>No family-facing money.</b> No pay link, receipt or seller line goes to the team’s families: the team isn’t selling them anything through FieldLogicHQ (/legal).</li>
+        </ul>
+      </div>
+    </div>
+    <div class="spec">
+      <div class="specHead"><b>Bill for event tickets</b><span class="chrome">PDF · Letter · 816</span><button class="mark" type="button" data-ask="47">47</button><button class="tag new" type="button" data-note="NEW DOCUMENT, laid out like round 2’s Receipt for event tickets. It is the tax invoice: the club’s GST/HST number, the tax it includes, the team and the contact who sent the list, counts by kind and no names. Once the club confirms payment, the same document is offered as “Receipt for event tickets”, with the PAID stamp, how and when, and round 2’s foot line. FieldLogicHQ’s name isn’t on it. $740.00 ÷ 1.13 = $654.87 of tickets and $85.13 of HST.">NEW</button></div>
+      <div class="scroll"><div class="paper">
+        <div class="acc"></div>
+        <div class="pin">
+          <div class="idb"><div><b>Riverdale Minor Ball</b><span class="subl">42 Lions Park Rd, Riverdale ON</span><span class="subl" style="display:block">GST/HST 81234 5678 RT0001</span></div><div style="text-align:right"><h4>Bill for event tickets</h4><div class="subl">EB-0007 · issued Apr 12, 2027 · due Jun 11, 2027</div></div></div>
+          <div class="idb"><div><div class="lab">Billed to</div>U13 Ospreys<br>Jordan Lee, head coach</div><div><div class="lab">Event</div>Year-end banquet<br>Sat, Jun 26, 2027 · 6:00 p.m.<br>Riverdale Legion Hall</div><div><div class="lab">Pay by</div>Fri, Jun 11, 2027<br>on your team’s Club tab</div></div>
+          <table><thead><tr><th>Tickets</th><th class="r">Price</th><th class="r">Amount</th></tr></thead><tbody><tr><td>14 adults</td><td class="r">$40.00</td><td class="r">$560.00</td></tr><tr><td>12 children</td><td class="r">$15.00</td><td class="r">$180.00</td></tr></tbody></table>
+          <table class="tt"><tbody><tr class="big"><td>Total</td><td class="r">$740.00</td></tr><tr><td>Includes HST (13%)</td><td class="r">$85.13</td></tr></tbody></table>
+          <div class="foot"><span>Issued by Riverdale Minor Ball, treasurer: J. Alvarez</span><span>Page 1 of 1</span></div>
+        </div>
+      </div></div>
+    </div>
+  </section>
+
+  <!-- 5 · WHO'S COMING, WITH TEAMS -->
+  <section class="pane" id="p5" role="tabpanel" aria-labelledby="t5" hidden>
+    <h2>Who’s coming shows the teams first, with their answer or bill, then the families; names on both lists are counted and flagged, never merged</h2>
+    <p>Round 2’s Who’s coming table gains a Teams band: one row for each team the event was offered to, showing its list and its bill, or “Not answered”, or “Not coming as a team”. A team row opens the team’s list and the shipped Confirm received window <button class="mark" type="button" data-ask="38">38</button>. Names on both a team list and a family sign-up get a count warning; nothing is matched for the club beyond the name, and nothing is merged <button class="mark" type="button" data-ask="41">41</button>.</p>
+    <div class="spec">
+      <div class="specHead"><b>Year-end banquet › Who’s coming</b><span class="chrome">club admin · desktop · 960</span><button class="mark" type="button" data-ask="38">38</button><button class="mark" type="button" data-ask="41">41</button><button class="tag re" type="button" data-note="RESTYLED from round 2’s table: a Teams band above the families. Spots: 86 family people + 20 (U11 Comets) + 26 (U13 Ospreys) = 132 of 160, 28 left, counting each list’s people (/legal: say so). Received: $2,400.00 from families + $550.00 from the Comets = $2,950.00. To pay: $190.00 on 2 held family sign-ups + the Ospreys’ $740.00 bill = $930.00. The warning’s “Show them” filters the table to the three pairs; the club decides what to do. The Fee pills are the shipped ones; “billed · due Jun 11” is the neutral form for a bill not yet due.">RESTYLED</button></div>
+      <div class="scroll"><div class="frame adm">
+        <div class="mband"><div><span class="ml">Spots</span><span class="mv">132 of 160</span><span class="mc">Families 86 · teams 46</span></div><div><span class="ml">Received</span><span class="mv">$2,950.00</span><span class="mc">29 sign-ups · 1 team</span></div><div><span class="ml">To pay</span><span class="mv">$930.00</span><span class="mc">2 sign-ups held · 1 team bill</span></div></div>
+        <div class="nudge amber"><span style="flex:1 1 300px">3 names appear on both a team list and a family sign-up (matched by name only, not merged).</span><span class="door">Show them</span></div>
+        <div class="toolbar"><span class="pill olive"><span style="color:var(--home-dim);font-weight:500">View</span> Everyone ▾</span><span class="sp"></span><span class="search">Search names</span><span class="sq">Export</span><span class="sq">Health answers</span><span class="sq">⋯</span></div>
+        <table class="tbl"><thead><tr><th>Sign-up</th><th>People</th><th>Meals</th><th class="num">Fee</th><th style="width:22px"></th></tr></thead><tbody>
+          <tr class="bandRow"><td colspan="5">Teams<span class="m">2 of 5 sent a list</span></td></tr>
+          <tr><td><span class="nm">U13 Ospreys</span><span class="s">Jordan Lee, head coach · sent Apr 12</span></td><td>14 adults · 12 children</td><td>18 chosen · 8 not chosen</td><td class="num"><span class="feeP neutral">$740.00 billed · due Jun 11</span></td><td class="chev">›</td></tr>
+          <tr><td><span class="nm">U11 Comets</span><span class="s">Lena Ortiz, head coach · sent Apr 9</span></td><td>10 adults · 10 children</td><td>20 chosen</td><td class="num"><span class="feeP good">$550.00 received</span><span class="s">Apr 11 · E-Transfer</span></td><td class="chev">›</td></tr>
+          <tr><td><span class="nm">U9 Sparks</span><span class="s">Kim Nguyen, head coach</span></td><td colspan="2"><span class="chip q">Not answered</span></td><td></td><td class="chev">›</td></tr>
+          <tr><td><span class="nm">U15 Falcons</span><span class="s">Ravi Singh, head coach</span></td><td colspan="2"><span class="chip q">Not answered</span></td><td></td><td class="chev">›</td></tr>
+          <tr><td><span class="nm">U17 Hawks</span><span class="s">Chris Martin, head coach</span></td><td colspan="2"><span style="color:var(--home-dim)">Not coming as a team · Apr 10</span></td><td></td><td class="chev">›</td></tr>
+          <tr class="bandRow"><td colspan="5">Families<span class="m">31 sign-ups</span></td></tr>
+          <tr><td><span class="nm">Priya Shah</span><span class="s">Signed up Apr 12 · RB-4821</span></td><td>2 adults · 3 children</td><td>Chicken, Fish, 3 Kids’ pasta</td><td class="num"><span class="feeP good">$125.00 received</span><span class="s">Apr 12 · E-Transfer</span></td><td class="chev">›</td></tr>
+          <tr><td><span class="nm">Ada Okafor</span><span class="s">Signed up Apr 12 · RB-4836</span></td><td>2 adults · 2 children</td><td>Fish, Chicken, 2 Kids’ pasta</td><td class="num"><span class="feeP warn">$110.00 owing · Apr 19</span></td><td class="chev">›</td></tr>
+        </tbody></table>
+        <p class="small">31 family sign-ups and 2 teams · 132 people, counting each list · 28 spots left · closes Jun 19</p>
+      </div></div>
+    </div>
+    <div class="pair">
+      <div class="spec">
+        <div class="specHead"><b>Phone · Who’s coming, with teams</b><span class="chrome">club admin · 390 · one framed list per band</span><button class="mark" type="button" data-ask="41">41</button><button class="tag re" type="button" data-note="RESTYLED for a phone as round 2’s: figures as rows, then one framed list per band. A team row shows its answer or its pill under the name; the ⋯ holds Confirm received, Remind the coach and Open the list.">RESTYLED</button></div>
+        <div class="scroll"><div class="frame phone">
+          <div class="pbar"><span>← Year-end banquet<span class="sm">Banquet · Sat, Jun 26</span></span></div>
+          <div class="pbody">
+            <div class="frows">
+              <div class="frow"><span class="fl1">Spots<span class="fc">Families 86 · teams 46</span></span><span class="fv">132 of 160</span><span></span></div>
+              <div class="frow"><span class="fl1">Received<span class="fc">29 sign-ups · 1 team</span></span><span class="fv">$2,950.00</span><span></span></div>
+              <div class="frow"><span class="fl1">To pay<span class="fc">2 sign-ups held · 1 team bill</span></span><span class="fv">$930.00</span><span></span></div>
+            </div>
+            <p class="small" style="color:var(--home-ink)">3 names appear on both a team list and a family sign-up (matched by name only, not merged). <span class="door">Show them</span></p>
+            <p class="capL" style="margin:0">Teams · 2 of 5 sent a list</p>
+            <div class="rlist">
+              <div class="mrow"><div><span class="nm">U13 Ospreys</span><span class="s">14 adults · 12 children</span><span class="feeP neutral">$740.00 billed · due Jun 11</span></div><span class="ico44">⋯</span></div>
+              <div class="mrow"><div><span class="nm">U11 Comets</span><span class="s">10 adults · 10 children</span><span class="feeP good">$550.00 received</span></div><span class="ico44">⋯</span></div>
+              <div class="mrow"><div><span class="nm">U9 Sparks</span><span class="s">Not answered</span></div><span class="ico44">⋯</span></div>
+            </div>
+          </div>
+        </div></div>
+      </div>
+      <div class="explain">
+        <h3>What the club can do from a team row</h3>
+        <ul>
+          <li><b>Open the list</b>: names, adult or child, and meals. Never allergies: the caterer’s allergy list comes from the families’ own answers, through the logged health export (round 2’s ask 32).</li>
+          <li><b>Confirm received / Record received</b>: the shipped team-bill window, which posts the money to Club events.</li>
+          <li><b>Remind the coach</b>: for a team that hasn’t answered, the same kind of notice as a late-bill reminder.</li>
+          <li><b>Remove a name</b> when a person asks the club to: the club can always do it, and the bill changes under the club’s refund policy (/legal).</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- 6 · INVITING OTHER CLUBS' TEAMS -->
+  <section class="pane" id="p6" role="tabpanel" aria-labelledby="t6" hidden>
+    <h2>The club invites each team by name and gets one link for it; the event can be left off the website and the calendar</h2>
+    <p>Riverdale’s guest speaker night is for three U13 teams from other clubs, so its sign-up is “Each team” and it is shown to “Only people with the link” <button class="mark" type="button" data-ask="43">43</button>. Each invited team gets its own link, built like the sponsor link: the club sees whether it was opened, can send it again (the old one stops working) and can withdraw it <button class="mark" type="button" data-ask="42">42</button> <button class="fl" type="button" data-f="F4">F4</button>. An invitation to a paid event is a commercial message, so the product emails it only when the club says why it may write to that person <button class="fl" type="button" data-f="F7">F7</button>.</p>
+    <div class="pair">
+      <div class="spec">
+        <div class="specHead"><b>New event · Who it’s for</b><span class="chrome">KitDialog · form · 600 · one section</span><button class="mark" type="button" data-ask="43">43</button><button class="tag re" type="button" data-note="RESTYLED from round 1’s ask 3 (Everyone / Club staff): a third choice. Its two lines are /legal’s, word for word. Never “private”, “secure” or “invite only”. The event is kept off the club site, the calendar feed, News and Open now, the share image and every schedule (the club website project’s E11/E12 rows), and the page tells search engines not to list it. On a phone: the kit’s full-height sheet, each choice a 52 px row.">RESTYLED</button></div>
+        <div class="scroll"><div class="dimmer"><div class="win">
+          <div class="whead"><span class="ico">+</span><div><p class="wtitle">New event</p><div class="wmeta">Other · Fri, May 14, 2027 · 7:00 p.m. · Riverdale Legion Hall</div></div></div>
+          <div class="wbody">
+            <div class="fld"><span class="l">Name <span class="req">*</span></span><div class="inp">Guest speaker night</div></div>
+            <div class="sec">
+              <p class="secH">Who it’s for</p>
+              <div class="radioRow"><span class="dot"></span><div><div class="t">Everyone</div><div class="h">On your website and calendar</div></div></div>
+              <div class="radioRow"><span class="dot"></span><div><div class="t">Club staff</div><div class="h">On your calendar only</div></div></div>
+              <div class="radioRow on"><span class="dot"></span><div><div class="t">Only people with the link</div><div class="h">Not listed on your website, or in search. Anyone who has the link can open it.</div></div></div>
+              <span class="hint">Send this only to people you want at the event. Anyone who is sent it can pass it on.</span>
+            </div>
+            <div class="sec">
+              <p class="secH">Who signs up</p>
+              <div class="radioRow"><span class="dot"></span><div><div class="t">Each family</div></div></div>
+              <div class="radioRow on"><span class="dot"></span><div><div class="t">Each team</div><div class="h">A team sends one list and pays once</div></div></div>
+              <div class="radioRow"><span class="dot"></span><div><div class="t">Families and teams</div></div></div>
+              <p class="small">$10.00 a person · 150 spots · sign-ups close Fri, May 7</p>
+            </div>
+          </div>
+          <div class="wfoot"><span class="btnOut">Cancel</span><span class="btnLime">Add the event</span></div>
+        </div></div></div>
+      </div>
+      <div class="spec">
+        <div class="specHead"><b>Invite a team</b><span class="chrome">KitDialog · form · 460</span><button class="mark" type="button" data-ask="42">42</button><button class="mark" type="button" data-ask="46">46</button><button class="tag new" type="button" data-note="NEW WINDOW, opened from “+ Invite a team” on the event. The four reasons are /legal’s CASL bases in plain words: a purchase in the last two years (a tournament entry counts), an inquiry in the last six months, an address the person gave or publishes for their team. Picking “None of these” turns the button into “Make the link”, and nothing is emailed. The reason is kept with the invitation, as the sponsor offer keeps its own. Without the club’s mailing address in Setup, only “Make the link” is offered. An address on the club’s stop list can’t be emailed.">NEW</button></div>
+        <div class="scroll"><div class="dimmer"><div class="win sm">
+          <div class="whead"><span class="ico">+</span><div><p class="wtitle">Invite a team</p><div class="wmeta">Guest speaker night · Fri, May 14</div></div></div>
+          <div class="wbody">
+            <div class="fld"><span class="l">Team <span class="req">*</span></span><div class="inp">Millbrook Minor Ball · U13 Mustangs</div></div>
+            <div class="two"><div class="fld"><span class="l">Contact</span><div class="inp">Erin Walsh</div></div><div class="fld"><span class="l">Email</span><div class="inp">erin@example.com</div></div></div>
+            <div class="sec">
+              <p class="secH">Why you may email them</p>
+              <div class="radioRow on"><span class="dot"></span><div><div class="t">They paid us in the last two years</div><div class="h">A tournament entry, for example</div></div></div>
+              <div class="radioRow"><span class="dot"></span><div><div class="t">They asked us about it in the last six months</div></div></div>
+              <div class="radioRow"><span class="dot"></span><div><div class="t">They gave us this address, or publish it for their team</div></div></div>
+              <div class="radioRow"><span class="dot"></span><div><div class="t">None of these</div><div class="h">We won’t email them. Make the link and give it to them yourself.</div></div></div>
+            </div>
+          </div>
+          <div class="wfoot"><span class="btnOut">Cancel</span><span class="btnLime">Email the invitation</span></div>
+        </div></div></div>
+      </div>
+    </div>
+    <div class="spec">
+      <div class="specHead"><b>Guest speaker night › Invited teams</b><span class="chrome">club admin · desktop · 960</span><button class="mark" type="button" data-ask="42">42</button><button class="tag new" type="button" data-note="NEW CARD on the event page. The grey line under each team is the sponsor list’s, word for word (“Sent {date} · not opened”, “Sent {date} · opened {date}”, “Link made {date}, not emailed”). The row’s ⋯ holds the sponsor screen’s link actions: Copy the link; Send the link again (the old link stops working); Withdraw the invitation. Mustangs: 8 adults and 10 children at $10.00 = $180.00, held until Apr 17 (signed up Apr 10, 7 days). Only the club sees this card; no team ever sees another team’s name or list.">NEW</button></div>
+      <div class="scroll"><div class="frame adm">
+        <div class="mband"><div><span class="ml">Invited</span><span class="mv">3 teams</span><span class="mc">2 emailed · 1 link given by hand</span></div><div><span class="ml">Signed up</span><span class="mv">1 team</span><span class="mc">18 people</span></div><div><span class="ml">To pay</span><span class="mv">$180.00</span><span class="mc">held until Apr 17</span></div></div>
+        <div class="toolbar"><span class="sp"></span><span class="btnLime">+ Invite a team</span></div>
+        <table class="tbl"><thead><tr><th>Team</th><th>People</th><th class="num">Fee</th><th style="width:44px"></th></tr></thead><tbody>
+          <tr><td><span class="nm">U13 Mustangs · Millbrook Minor Ball</span><span class="s">Erin Walsh · signed up Apr 10</span></td><td>8 adults · 10 children</td><td class="num"><span class="feeP warn">$180.00 owing · Apr 17</span></td><td class="chev">⋯</td></tr>
+          <tr><td><span class="nm">U13 Lightning · Lakeview Ball</span><span class="s">Sent Apr 8 · opened Apr 9</span></td><td><span class="chip q">Not answered</span></td><td></td><td class="chev">⋯</td></tr>
+          <tr><td><span class="nm">U13 Orioles · Oakridge Baseball</span><span class="s">Link made Apr 8, not emailed</span></td><td><span class="chip q">Not answered</span></td><td></td><td class="chev">⋯</td></tr>
+        </tbody></table>
+      </div></div>
+    </div>
+    <div class="pair">
+      <div class="spec">
+        <div class="specHead"><b>The invitation email</b><span class="chrome">email · 600</span><button class="mark" type="button" data-ask="42">42</button><button class="mark" type="button" data-ask="46">46</button><button class="tag new" type="button" data-note="NEW EMAIL. The opening line and the foot are /legal’s, word for word: the club is the sender, its mailing address, a stop link, and our name only as the software. No marketing, no link to other events, no calendar link. The stop link adds the address to the club’s one list for offers and invitations (ask 46).">NEW</button></div>
+        <div class="scroll"><div class="mail">
+          <div class="mailHd"><b>Riverdale Minor Ball invites U13 Mustangs to a guest speaker night</b><span>From Riverdale Minor Ball · to erin@example.com</span></div>
+          <div class="mailBd">
+            <p>Riverdale Minor Ball would like U13 Mustangs to come to Guest speaker night on Fri, May 14.</p>
+            <p>7:00 p.m. at Riverdale Legion Hall. $10.00 a person. Sign-ups close Fri, May 7.</p>
+            <span class="mailBtn">See the invitation</span>
+          </div>
+          <div class="mailFt"><span>Sent by Riverdale Minor Ball. 42 Lions Park Rd, Riverdale ON.</span><span>Stop invitations from Riverdale Minor Ball: <u>stop link</u></span><span>Sent through FieldLogicHQ, the software Riverdale Minor Ball uses.</span></div>
+        </div></div>
+      </div>
+      <div class="spec">
+        <div class="specHead"><b>Phone · Invited teams</b><span class="chrome">club admin · 390</span><button class="mark" type="button" data-ask="42">42</button><button class="tag new" type="button" data-note="NEW, for a phone: figures as rows, one framed list, the grey line under each team, the ⋯ a 44 px symbol. “+ Invite a team” opens the window as a sheet.">NEW</button></div>
+        <div class="scroll"><div class="frame phone">
+          <div class="pbar"><span>← Guest speaker night<span class="sm">Other · Fri, May 14</span></span></div>
+          <div class="pbody">
+            <div class="frows">
+              <div class="frow"><span class="fl1">Invited</span><span class="fv">3 teams</span><span></span></div>
+              <div class="frow"><span class="fl1">Signed up<span class="fc">18 people</span></span><span class="fv">1 team</span><span></span></div>
+            </div>
+            <div class="rlist">
+              <div class="mrow"><div><span class="nm">U13 Mustangs</span><span class="s">Millbrook · signed up Apr 10</span><span class="feeP warn">$180.00 owing · Apr 17</span></div><span class="ico44">⋯</span></div>
+              <div class="mrow"><div><span class="nm">U13 Lightning</span><span class="s">Lakeview · Sent Apr 8 · opened Apr 9</span></div><span class="ico44">⋯</span></div>
+              <div class="mrow"><div><span class="nm">U13 Orioles</span><span class="s">Oakridge · Link made Apr 8, not emailed</span></div><span class="ico44">⋯</span></div>
+            </div>
+            <span class="btnLime" style="width:100%">+ Invite a team</span>
+          </div>
+        </div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 7 · AN INVITED TEAM SIGNS UP -->
+  <section class="pane" id="p7" role="tabpanel" aria-labelledby="t7" hidden>
+    <h2>The invited team’s contact lists names only, says the people know, checks the total and pays once</h2>
+    <p>Erin Walsh opens Millbrook’s link on her phone. The page is round 2’s sign-up with a team list in place of a household: adults by full name, children by first name and last initial <button class="mark" type="button" data-ask="44">44</button>, /legal’s notice above the list and a required tick under it. No emails, phone numbers, allergies or photo question for the people listed. Then round 2’s check step, with one more line when the team pays by card: a refund goes back to the card, not to each person. The names are deleted 60 days after the event <button class="mark" type="button" data-ask="45">45</button>. Family pages wear the club’s colour, as round 2 found.</p>
+    <div class="pair">
+      <div class="spec">
+        <div class="specHead"><b>The invitation page</b><span class="chrome">public · phone · 390</span><button class="mark" type="button" data-ask="44">44</button><button class="mark" type="button" data-ask="45">45</button><button class="tag new" type="button" data-note="NEW PAGE, opened only by Millbrook’s link. The browser title and the share card say “Guest speaker night”, never the team’s name. The notice and the tick are /legal’s, word for word; the tick is kept as a yes with the date. Adults: first and last name. Children: first name and last initial. Erin’s own name and email are the buyer’s contact, as a family’s is. 8 adults and 10 children at $10.00 = $180.00. The list can be changed through this link until sign-ups close; after that, or after the club withdraws the link, the page says only “This invitation has ended.”">NEW</button></div>
+        <div class="scroll"><div class="frame phone clubPage">
+          <div class="pbody">
+            <p class="famH" style="font-size:22px;margin:0">Guest speaker night</p>
+            <p class="famSub">Riverdale Minor Ball invites U13 Mustangs · Fri, May 14, 2027 · 7:00 p.m. · Riverdale Legion Hall · $10.00 a person</p>
+            <div class="notice"><b>Riverdale Minor Ball is collecting these names to plan Guest speaker night and to contact your team about it.</b> Only list people who know they are on this list. Riverdale Minor Ball deletes the names 60 days after the event.</div>
+            <p class="subH">Your contact</p>
+            <div class="two"><div class="inp">Erin Walsh</div><div class="inp">erin@example.com</div></div>
+            <p class="subTitle"><span>Adults · 8</span><span class="lk">+ Add an adult</span></p>
+            <div class="rlist">
+              <div class="mrow"><div><span class="nm">Erin Walsh</span></div><span class="ico44">×</span></div>
+              <div class="mrow"><div><span class="nm">Marcus Bell</span></div><span class="ico44">×</span></div>
+              <div class="mrow"><div><span class="s">6 more adults · <span class="door">Show all</span></span></div><span></span></div>
+            </div>
+            <p class="subTitle"><span>Children · 10</span><span class="lk">+ Add a child</span></p>
+            <span class="hint">First name and last initial.</span>
+            <div class="rlist">
+              <div class="mrow"><div><span class="nm">Liam W.</span></div><span class="ico44">×</span></div>
+              <div class="mrow"><div><span class="nm">Ava B.</span></div><span class="ico44">×</span></div>
+              <div class="mrow"><div><span class="s">8 more children · <span class="door">Show all</span></span></div><span></span></div>
+            </div>
+            <div class="tick"><span class="box on">✓</span><span><b>The people on this list know I am giving their names to Riverdale Minor Ball for this event.</b></span></div>
+            <p style="margin:0;font-size:14px"><b>$180.00</b> for 18 people: 8 adults, 10 children.</p>
+            <div class="btnClub">Next: check your sign-up</div>
+            <p class="small">Anyone who has this link can open this page and change your team’s list until Fri, May 7.</p>
+          </div>
+        </div></div>
+      </div>
+      <div class="spec">
+        <div class="specHead"><b>Check your sign-up · the team, Riverdale today</b><span class="chrome">public · phone · 390</span><button class="mark" type="button" data-ask="44">44</button><button class="tag re" type="button" data-note="RESTYLED from round 2’s check step, for a team: “Hold our spots”, and the e-transfer line names the team. Once Riverdale takes cards, the button is “Sign up and pay $180.00” and one more line sits under the refund policy, /legal’s: “Any refund goes back to the card that paid. Riverdale Minor Ball does not refund individual people.” The seller line is round 2’s, unchanged. $180.00 ÷ 1.13 = $159.29 of tickets and $20.71 of HST. ⚠ The refund policy is Riverdale’s one policy (round 2, ask 23), written from the banquet, so it names the banquet’s date and caterer on a speaker night. That is a flaw in round 2’s example, not in this round: if you rule 23A, the event window should ask for a policy that isn’t about one event.">RESTYLED</button><button class="fl bl" type="button" data-f="F9">F9</button></div>
+        <div class="scroll"><div class="frame phone">
+          <div class="pbody">
+            <span class="small">← Change who’s coming</span>
+            <p class="famH" style="font-size:22px;margin:0">Check your sign-up</p>
+            <p class="famSub">You can change anything here before you send it.</p>
+            <div class="card" style="gap:8px">
+              <p class="cardH" style="font-size:15px">Guest speaker night · Fri, May 14, 7:00 p.m.</p>
+              <table class="sumT"><tbody>
+                <tr><td>U13 Mustangs · 18 people × $10.00</td><td class="num">$180.00</td></tr>
+                <tr class="tot"><td>Total (Canadian dollars)</td><td class="num">$180.00</td></tr>
+              </tbody></table>
+              <span class="small">Includes $20.71 HST</span>
+            </div>
+            <p class="subH">Refund policy</p>
+            <div class="policy"><span>Refunds until Jun 12. After that we can’t refund tickets, because we pay the caterer by then.</span><span class="fixed">If Riverdale Minor Ball cancels this event, it refunds what you paid.</span></div>
+            <div class="btnClub">Hold our spots</div>
+            <p class="small" style="color:var(--home-ink)">Nothing is charged here. Pay Riverdale Minor Ball by e-transfer to treasurer@riverdaleball.ca by Sat, Apr 17, with “U13 Mustangs” in the message. Your spots are held until then, then released.</p>
+            <p class="seller">Sold by Riverdale Minor Ball. FieldLogicHQ provides this page and is not part of the sale.</p>
+          </div>
+        </div></div>
+      </div>
+    </div>
+    <div class="explain">
+      <h3>What this page never does</h3>
+      <ul>
+        <li><b>No other team’s name or list,</b> and no count of teams signed up (/legal).</li>
+        <li><b>No allergy, medical, birthday, email, phone or photo question</b> for the people listed.</li>
+        <li><b>No forward button</b> and no box to add other addresses: passing the link on is the contact’s choice, not the product’s.</li>
+        <li><b>Nobody’s name in the link,</b> the browser title, the share card or any notification.</li>
+        <li><b>The names go nowhere else in the club’s records:</b> not the families book, not Find a child, not house league. They belong to the event, and are deleted with it 60 days after.</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- 8 · TEAMS COMING TO PLAY -->
+  <section class="pane" id="p8" role="tabpanel" aria-labelledby="t8" hidden>
+    <h2>Teams coming to play are a tournament, with one new choice: who can enter</h2>
+    <p>A Saturday jamboree with three neighbouring teams is a tournament: outside teams register without an account, pay as one team, pay by card through their own link, and the club can split one transfer across teams. What’s missing is the private version. Today a tournament is public or a draft, and “invite only” (the club adds every team) comes from the plan, not from the tournament <button class="fl" type="button" data-f="F5">F5</button>. The tournament side would add one choice <button class="mark" type="button" data-ask="48">48</button>.</p>
+    <div class="pair">
+      <div class="spec">
+        <div class="specHead"><b>Tournament settings · Who can enter</b><span class="chrome">tournament admin · KitDialog · 600 · one section</span><button class="mark" type="button" data-ask="48">48</button><button class="tag new" type="button" data-note="NEW SECTION, for the tournament side to draw properly in its own session. The three answers follow /legal’s rule: one shared link may say only “Not listed”; only one link per team, working for that team’s spot, may say “By invitation”. “By invitation” uses the shipped Add team window and the shipped “Claim your team” email; what is new is choosing it on a plan that has open registration, and keeping the tournament off the club site and the directory. /strategy to confirm this changes no plan gate. On a phone: the kit’s full-height sheet, each choice a 52 px row.">NEW</button></div>
+        <div class="scroll"><div class="dimmer"><div class="win">
+          <div class="whead"><span class="ico">✎</span><div><p class="wtitle">Riverdale U13 Jamboree · Registration</p><div class="wmeta">Sat, Jun 5, 2027 · Lions Park</div></div></div>
+          <div class="wbody">
+            <div class="sec">
+              <p class="secH">Who can enter</p>
+              <div class="radioRow"><span class="dot"></span><div><div class="t">Anyone</div><div class="h">Listed on your website, with a Register page</div></div></div>
+              <div class="radioRow"><span class="dot"></span><div><div class="t">Not listed</div><div class="h">Not on your website, or in search. Anyone who has the Register link can open it.</div></div></div>
+              <div class="radioRow on"><span class="dot"></span><div><div class="t">By invitation</div><div class="h">You add each team, and each gets its own link to claim its spot. There’s no Register page.</div></div></div>
+            </div>
+          </div>
+          <div class="wfoot"><span class="btnOut">Cancel</span><span class="btnLime">Save</span></div>
+        </div></div></div>
+      </div>
+      <div class="explain">
+        <h3>Why this isn’t built into events</h3>
+        <ul>
+          <li><b>Tournaments already do the hard parts</b> for a team that comes to play: divisions, spots, a schedule, scores, entry fees, a pay link per team and shared payments.</li>
+          <li><b>An event with teams that play</b> would need all of that again. A second team registration is the drift this repo keeps paying for.</li>
+          <li><b>The club’s own teams enter free</b> on every plan (“Our team”), so a jamboree with Riverdale’s own teams in it works today.</li>
+          <li><b>Handed to the tournament side</b> as one item, with its own drawing, if you rule 48A.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- 9 · REVIEWS -->
+  <section class="pane" id="p9" role="tabpanel" aria-labelledby="t9" hidden>
+    <h2>The reviews this round went through, and what they found</h2>
+    <div class="pair">
+      <div class="explain">
+        <h3>Reviews run before this hand-off</h3>
+        <ul>
+          <li><b>/legal</b> (2026-11-25): own teams are fine with rules: only the name comes from the roster; a tick is the team’s answer, not a parent’s consent; only the head coach commits the bill; no family-facing money. Another club’s team: names only, no allergies on any team list, the notice and a required tick, children as first name and last initial, deleted 60 days after the event. “Only people with the link” is honest only as “Not listed … anyone who has the link can open it”; never “private”. An invitation to a paid event is a commercial message: the club is the sender, it needs a reason it may write, its mailing address and a stop link. Four owner calls (asks 40, 44, 45, 46) and six points for a lawyer, listed on the right.</li>
+          <li><b>/accounting</b> (2026-11-25): tax follows the tickets, not who pays, so a team pays the event’s own tax and there is no separate switch; the team bill is a new event-tied kind that shows the tax it includes; the club’s books split it into Event tickets and GST/HST collected; the team’s book carries one line with no tax split; the bill is the tax invoice and becomes the receipt once paid. A team from another province or the US pays the same. Tournaments: no change. Our own fee: nothing on the team-bill path, which is recorded by hand; an invited team’s card payment carries the same fee as a family’s, once per team.</li>
+          <li><b>Shipped screens</b> (read 2026-11-25): the Club tab, the bill room and “We’ve sent it”; the club’s Allocations and Confirm received; the roster, its family contact and the coaching staff; the tournament roster pick; the sponsor deal list and its link actions; tournament registrations and the invite-only Add team window. Every word on these tabs that isn’t tagged new is the shipped one.</li>
+          <li><b>/design</b> (2026-11-25): four must-fixes applied. The player count (“9 more players”) now adds up to 12 of 13. “Everyone · No one” is marked as the session sheet’s pair, new on this pick. Phone text links are 44 px. Every new view has a phone version or a phone line: the schedule row and the Club tab row are drawn, and the two windows are specified as sheets. Also applied: the coach’s total and send button are a pinned foot; “Who signs up” is drawn one way; the invited team’s page wears the club’s colour throughout; “Still to pay the club” is red, as shipped; ask 49 has a mark. Every figure was checked and adds up.</li>
+        </ul>
+      </div>
+      <div class="explain">
+        <h3>For a lawyer’s eye (none blocks a ruling)</h3>
+        <ul>
+          <li>Consent given through the person who lists the names.</li>
+          <li>Whether a free invitation to a stranger’s address is a commercial message.</li>
+          <li>A coach committing a team to a bill.</li>
+          <li>The club’s duty when it asks nothing about allergies.</li>
+          <li>Québec children under 14.</li>
+          <li>Whether a volunteer club is a “supplier” under Ontario consumer law.</li>
+        </ul>
+        <h3>Left out on purpose</h3>
+        <ul>
+          <li>A team paying its banquet bill by card inside the product: team bills are recorded by hand today, and a card path is its own piece (/accounting).</li>
+          <li>Families paying their coach through the product for the team’s order: the team collects itself (/legal).</li>
+          <li>A link for each person on a team list to give their own food needs (ask 40’s second answer).</li>
+        </ul>
+      </div>
+    </div>
+    <div class="explain">
+      <h3>Findings</h3>
+      <div class="chips"><button class="fl" type="button" data-f="F1">F1 One family contact per player</button><button class="fl" type="button" data-f="F2">F2 Team bills have no tax or event</button><button class="fl" type="button" data-f="F3">F3 The roster pick exists</button><button class="fl" type="button" data-f="F4">F4 The sponsor link exists</button><button class="fl" type="button" data-f="F5">F5 Invite-only is a plan thing</button><button class="fl" type="button" data-f="F6">F6 The schedule row isn’t ruled</button><button class="fl" type="button" data-f="F7">F7 An invitation is a commercial message</button><button class="fl" type="button" data-f="F8">F8 Not listed, never private</button><button class="fl" type="button" data-f="F9">F9 One refund policy, written from one event</button></div>
+    </div>
+  </section>
+
+  <!-- 10 · ASKS -->
+  <section class="pane" id="p10" role="tabpanel" aria-labelledby="t10" hidden>
+    <h2>Your asks</h2>
+    <p>Numbered 34 to 49, after round 2’s 20 to 33. Round 2’s asks are unchanged by this round and can be ruled on their own. Each ask says what it changes for a family, a coach and a club admin. The first answer is my recommendation and is selected. Change any you disagree with, add a note, then press Build the summary and paste it into the chat. Your picks are kept in this browser only.</p>
+    <div id="asks" style="display:grid;gap:14px"></div>
+    <div class="ask">
+      <h3>Paste-back</h3>
+      <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btnDoc primary" id="build" type="button">Build the summary</button><button class="btnDoc" id="copy" type="button">Copy</button></div>
+      <pre class="out" id="out">Press Build the summary.</pre>
+    </div>
+  </section>
+</div>
+
+<dialog class="note" id="note"><h3 id="noteT"></h3><div id="noteB"></div><div style="display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap"><button class="btnDoc" id="noteGo" type="button" hidden>Go to the ask</button><button class="btnDoc primary" id="noteX" type="button">Close</button></div></dialog>
+
+<script>
+(function(){
+var LAST = "p10";
+var ASKS = [
+  {n:34, t:"Who signs up", why:"Round 1 and 2 have one door: a family’s sign-up. A banquet may want teams to order, a speaker night may want only teams, and a club may want both.", o:[
+    "The event says who signs up: Each family, Each team, or Families and teams. Each family is round 1 and 2’s page; Each team has no family page; both shows both and warns about names on both lists (ask 41)",
+    "Teams only ever add to families: a team list is always allowed beside the family page"],
+    ch:["Signs up itself only when the club allows it.","Sends a list when the club offers it.","Picks one of three in the event window."]},
+  {n:35, t:"Offering an event to the club’s own teams", why:"The club already bills its own teams and the coach already sees those bills. Round 1 left open an event for part of the club (all rep teams, one division).", o:[
+    "The club picks which of its teams the event is offered to (all, or some) and a Teams pay by day. Each team sees it on its schedule as a club event with its answer beside it, and each head coach gets one notice, the late-bill kind",
+    "The club emails its coaches the family sign-up link, and each coach fills it in like a family"],
+    ch:["Nothing.","Sees the banquet on the team’s schedule with “Your list: not sent”.","Offers the event to its teams in the event window."]},
+  {n:36, t:"The team’s list", why:"The roster already holds the players, one family contact each, and the coaching staff (F1). The tournament roster pick is a shipped tick list (F3). /legal: only the name comes across.", o:[
+    "Players ticked from the roster, adults picked from each player’s family contact and the coaching staff, anyone else added by name; adult or child set by where they come from; the event’s ordinary per-person questions (Meal) optional on each row; /legal’s words above the list; “We’re not coming as a team” as an answer",
+    "Counts only: the coach types 14 adults and 12 children, with no names"],
+    ch:["Tells the team it’s coming; the team’s list says so.","Ticks names in a minute or two, from people already on the roster.","Sees names and meals for each team."]},
+  {n:37, t:"Who sends it", why:"/legal: sending bills the team, a financial commitment on the team’s books, so the seat that signs the team’s bills sends it.", o:[
+    "Any team staff can build and save the list; only the head coach sends it, which bills the team. Other staff read “{head coach} sends the bill.”",
+    "Any team staff can send it"],
+    ch:["Nothing.","Assistants build it; the head coach sends it.","Nothing."]},
+  {n:38, t:"How the team pays", why:"Today’s team bill is the club’s line to its team: on the Club tab, “We’ve sent it”, the club confirms, and both books are written. It has no tax and no event today (F2).", o:[
+    "Sending makes one Bill for event tickets on the team’s Club tab, at the event’s prices, due on Teams pay by, paid the shipped way (“We’ve sent it”, the club confirms). The club sees it on the event’s Who’s coming and in Allocations’ Coming due",
+    "The coach pays like a family on the sign-up page, by e-transfer or card, and the money isn’t tied to the team’s book"],
+    ch:["Pays the team, not the club.","One bill beside the club’s other bills.","Confirms one payment per team."]},
+  {n:39, t:"Changing the list after it’s sent", why:"Round 2’s ask 25: after paying, a family asks to withdraw and the club decides. A team’s list moves more: a parent drops out, a grandparent joins.", o:[
+    "Until sign-ups close, adding people raises the bill at once; taking people off asks the club, which decides under its refund policy and credits the bill (a credit note when taxable)",
+    "The coach changes the list freely until Teams pay by, and the bill follows it both ways"],
+    ch:["Nothing.","Adds freely; asks to take people off.","Decides each removal under the refund policy."]},
+  {n:40, t:"Food needs on a team list", why:"/legal: an allergy is health information, and a coach can’t give that consent for another adult or someone else’s child. Not even a yes/no “has allergies” flag.", o:[
+    "No food-needs question on any team list. The list carries /legal’s note: each person, or a parent for a child, tells the club their own food needs by the Teams pay by day, at the club’s contact",
+    "As A, plus an optional link for each person on the list to give their own food needs, off by default (a later piece)"],
+    ch:["Tells the club its own allergies.","Never types anyone’s allergy.","Gets allergies only from the people themselves."]},
+  {n:41, t:"The same name on two lists", why:"With Families and teams, a parent may sign up and also be on the team’s list. /legal: the Stage 14 rule, a person joins only by a fact or their own yes, so nothing is matched by name for the club.", o:[
+    "A count warning: “{n} names appear on both a team list and a family sign-up (matched by name only, not merged)”, with Show them; the club decides. Spots count each list’s people and say so",
+    "The product removes the family’s duplicate automatically"],
+    ch:["Nothing, unless the club asks.","Nothing.","Sees the warning and decides."]},
+  {n:42, t:"Inviting another club’s team", why:"A sponsor already gets its own link the club can track, send again and withdraw (F4). An invitation to a paid event is a commercial message (F7).", o:[
+    "The club invites each team by name, with a contact and the reason it may email them (a purchase in two years, an inquiry in six months, an address given or published), or makes the link to give by hand. One link per team, built like the sponsor link: opened or not, signed up or not, Send the link again (the old link stops working), Withdraw the invitation. The email is /legal’s",
+    "One shared link for every invited team, with no tracking"],
+    ch:["Nothing.","Another club’s coach gets an email or a link.","Sees who opened, who signed up, who hasn’t."]},
+  {n:43, t:"“Only people with the link”", why:"Round 1’s ask 3 has Everyone and Club staff. A link anyone can open isn’t private (F8). What is public belongs to the club website project, which hears about this before it is built.", o:[
+    "A third “Who it’s for” choice, with /legal’s words: “Not listed on your website, or in search. Anyone who has the link can open it.” and “Send this only to people you want at the event. Anyone who is sent it can pass it on.” Kept off the site, calendar feed, News, Open now, schedules and search",
+    "No new choice: invited-team links work on any event, and the event itself stays Everyone or Club staff"],
+    ch:["Doesn’t see the event on the club site.","Doesn’t see it on the team schedule.","One more choice in the event window."]},
+  {n:44, t:"What another club’s team lists", why:"/legal: the club has no relationship with these people, so it takes the least: names for a head count or a name tag. Round 2’s rules apply in full to the person paying.", o:[
+    "Adults by full name, children by first name and last initial, the notice above and the required tick (“The people on this list know I am giving their names to {club} for this event.”), round 2’s check step and seller line, and one payment. With cards: “Any refund goes back to the card that paid. {club} does not refund individual people.”",
+    "As A, with children’s full names"],
+    ch:["Nothing.","Another club’s contact lists names and pays once.","Sees adults’ names and children’s initials."]},
+  {n:45, t:"How long another club’s names are kept", why:"Round 2 keeps a family’s sign-up while the organization exists. /legal: right for a family’s own sign-up, the wrong default for strangers. The house-league friend request uses 60 days.", o:[
+    "Deleted 60 days after the event. The counts, the payment and the contact who paid stay with the payment record",
+    "Kept like a family’s sign-up",
+    "60 days after the event for every event sign-up, families too (a change to round 2)"],
+    ch:["Nothing.","Nothing.","Can’t look up another club’s list after 60 days."]},
+  {n:46, t:"One stop list for offers and invitations", why:"/legal: a person who presses stop must not be emailed again by that club. Sponsors already have a stop list (“Do not offer again”).", o:[
+    "One stop list per club for offers and invitations: an address stopped from a sponsor offer or a team invitation gets neither again",
+    "Separate lists for sponsors and teams"],
+    ch:["Nothing.","Presses stop once, and it holds.","One list to check."]},
+  {n:47, t:"Tax, books and the team’s papers", why:"/accounting: tax follows the tickets, not who pays. Today’s team bill has no tax line (F2).", o:[
+    "A team pays the event’s own tax, with no separate switch; the hint reads “Teams pay the same tax as families. Tax follows the tickets, not who pays for them.” The bill shows the tax it includes; the club’s books split it into Event tickets and GST/HST collected under Club events; the team’s book has one line to the club. “Bill for event tickets” (the tax invoice) becomes “Receipt for event tickets” once confirmed: the team, its contact, counts by kind, no names",
+    "Team bills carry no tax, like other team bills"],
+    ch:["Nothing.","A bill and a receipt the team can keep.","Team ticket money lands under Club events, with its tax."]},
+  {n:48, t:"Teams coming to play", why:"Tournaments already register outside teams, take team payments and pay links. There is no private version except the plan-driven invite-only (F5).", o:[
+    "A tournament, with a new per-tournament “Who can enter”: Anyone · Not listed · By invitation (one link per team you add). Handed to the tournament side as one item; /strategy confirms it changes no plan gate",
+    "Events gain team play sign-ups"],
+    ch:["Nothing.","Another club’s coach claims a spot through their own link.","A jamboree without a public Register page."]},
+  {n:49, t:"Where it’s built", why:"Team sign-ups need round 2’s prices, refund policy and check step. The own-team part rests on the shipped team bills; the invited-team part on the sponsor link.", o:[
+    "Stage 5 Part 5, after paid events: the club’s own teams first, then invited teams. The tournament choice is the tournament side’s own item",
+    "With camps, in Stage 7"],
+    ch:["Nothing.","Team orders arrive after paid events.","Team sign-ups arrive with Stage 5."]}
+];
+var NOTES = {
+  34:"Ask 34 · Who signs up. Recommended: Each family, Each team, or Families and teams.",
+  35:"Ask 35 · Our teams. Recommended: the club offers it to some or all of its teams; the coach sees it on the schedule.",
+  36:"Ask 36 · The list. Recommended: ticked from the roster, adults from family contacts and staff, Meal optional.",
+  37:"Ask 37 · Who sends. Recommended: only the head coach, because it bills the team.",
+  38:"Ask 38 · Paying. Recommended: one Bill for event tickets on the Club tab, paid the shipped way.",
+  39:"Ask 39 · Changes. Recommended: adding raises the bill; taking off asks the club.",
+  40:"Ask 40 · Food needs. Recommended: none on a team list; each person tells the club.",
+  41:"Ask 41 · Two lists. Recommended: a count warning, nothing merged.",
+  42:"Ask 42 · Invitations. Recommended: one link per team, built like the sponsor link.",
+  43:"Ask 43 · Link only. Recommended: a third Who it’s for, in /legal’s words.",
+  44:"Ask 44 · Their list. Recommended: adults’ names, children’s first names and initials, the notice and the tick.",
+  45:"Ask 45 · Keeping names. Recommended: deleted 60 days after the event.",
+  46:"Ask 46 · Stop list. Recommended: one list for offers and invitations.",
+  47:"Ask 47 · Tax and papers. Recommended: the event’s tax; Bill for event tickets, then the receipt.",
+  48:"Ask 48 · To play. Recommended: a tournament, with Who can enter.",
+  49:"Ask 49 · Where. Recommended: Stage 5 Part 5, after paid events."
+};
+var FINDINGS = {
+  F1:["F1 · One family contact per player", "What the code does: a roster player carries one parent or guardian contact (name, email, phone); there is no second-guardian field on the roster. The coaching staff is its own page.", "What this drawing does: adults are picked from each player’s family contact and the coaching staff, and anyone else is added by name (ask 36)."],
+  F2:["F2 · Team bills have no tax and no event", "What the code does: the club’s bill to a team (an Allocation) has no tax field and no link to an event; money received files under From the teams.", "What this drawing does: a new kind of bill, Bill for event tickets, tied to the event and showing the tax it includes, which posts under Club events (ask 47). How a payment splits into two ledger lines is a build question."],
+  F3:["F3 · A roster tick list already exists", "What the code does: the tournament roster submit is a tick list from the roster (“Pick the players going to this event from your master roster.”, “{n} selected”). The development session sheet has “Everyone · No one” beside its own tick list.", "What this drawing does: the players part of the team’s list uses those rows, the pill and that pair, with only the name taken. The adults part is new."],
+  F4:["F4 · The sponsor link already exists", "What the code does: a sponsor’s link needs no sign-in, can’t be guessed, and is stopped by “Send the link again (the old link stops working)”. The list shows “Sent {date} · not opened” and the like. It is live on production.", "What this drawing does: an invited team’s link is built the same way, with the same words (ask 42)."],
+  F5:["F5 · Invite-only tournaments come from the plan", "What the code does: a tournament is public once active, or a draft. On a plan without open registration the host adds every team and the Register page redirects away; a club on a paid plan can’t choose that for one tournament.", "What this drawing does: hands a per-tournament “Who can enter” to the tournament side (ask 48)."],
+  F6:["F6 · The schedule row isn’t ruled yet", "What the club website project drew (its events drawing, tab 10, E12, NOT RULED): a read-only “From the club · Club event” row on a club team’s schedule.", "What this drawing does: puts the team’s answer on that row. If E12 isn’t ruled A, the offer needs another home on the team (a card on the team’s Club tab is the fallback)."],
+  F7:["F7 · An invitation to a paid event is a commercial message", "What /legal found: the club is the sender and needs a reason it may write to that address (a purchase in two years, an inquiry in six months, an address given or published for the role). Being an opposing coach is not a reason by itself.", "What this drawing does: the club picks the reason, or makes the link to give by hand (ask 42); the email carries the club’s address and a stop link (ask 46)."],
+  F9:["F9 · One club refund policy, written from one event", "What round 2 recommends (ask 23): a club has one refund policy; the first paid event asks for it and saves it as the club’s. Riverdale’s was written for the banquet (“Refunds until Jun 12 … we pay the caterer by then”), so it reads wrongly on a May speaker night.", "What is owed: if you rule 23A, the window that asks for it should say it covers every paid event, and suggest wording in days before an event rather than a date. Raised here because this round is the first to show a second paid event."],
+  F8:["F8 · Not listed, never private", "What /legal found: a page anyone with the link can open isn’t private. Never “private”, “secure” or “invite only”.", "What this drawing does: “Only people with the link” with /legal’s two lines (ask 43); a tournament with one shared link says “Not listed”, and only one link per team may say “By invitation” (ask 48)."]
+};
+var KEY = "br-stage5-team-signups-v1";
+var S = { pick:{}, note:{}, tab:"p1" };
+try { var raw = localStorage.getItem(KEY); if (raw) { var got = JSON.parse(raw); if (got && typeof got === "object") S = Object.assign(S, got); } } catch (e) {}
+function save(){ try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} }
+
+var host = document.getElementById("asks");
+function pickOf(a){ return S.pick[a.n] != null ? S.pick[a.n] : 0; }
+function esc(s){ return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;"); }
+ASKS.forEach(function(a){
+  var box = document.createElement("div"); box.className = "ask"; box.id = "ask" + a.n;
+  var h = "<h3><span class=\"mark\" aria-hidden=\"true\" style=\"cursor:default\">" + a.n + "</span>" + esc(a.t) + "</h3><p class=\"why\">" + esc(a.why) + "</p>";
+  h += "<div class=\"askCh\"><div><b>A family</b>" + esc(a.ch[0]) + "</div><div><b>A coach</b>" + esc(a.ch[1]) + "</div><div><b>A club admin</b>" + esc(a.ch[2]) + "</div></div>";
+  a.o.forEach(function(o, i){
+    var id = "a" + a.n + "o" + i;
+    h += "<label class=\"opt\" for=\"" + id + "\"><input type=\"radio\" name=\"a" + a.n + "\" id=\"" + id + "\" value=\"" + i + "\"><span><b>" + String.fromCharCode(65 + i) + ".</b> " + esc(o) + (i === 0 ? "<span class=\"rec\">RECOMMENDED</span>" : "") + "</span></label>";
+  });
+  h += "<label for=\"n" + a.n + "\" style=\"font-size:12px;color:var(--doc-soft)\">Note</label><textarea id=\"n" + a.n + "\"></textarea>";
+  box.innerHTML = h; host.appendChild(box);
+  var r = document.getElementById("a" + a.n + "o" + pickOf(a)); if (r) r.checked = true;
+  var ta = document.getElementById("n" + a.n); ta.value = S.note[a.n] || "";
+  box.addEventListener("change", function(ev){ if (ev.target.name === "a" + a.n) { S.pick[a.n] = Number(ev.target.value); save(); } });
+  ta.addEventListener("input", function(){ S.note[a.n] = ta.value; save(); });
+});
+
+function build(){
+  var L = ["Board Ready Stage 5, team sign-ups (drawings Nov 25, 2026, round 3)", ""];
+  ASKS.forEach(function(a){
+    var p = pickOf(a);
+    L.push(a.n + String.fromCharCode(65 + p) + " · " + a.t + ": " + a.o[p] + (p === 0 ? " (recommended)" : ""));
+    var n = (S.note[a.n] || "").trim(); if (n) L.push("   note: " + n);
+  });
+  L.push(""); L.push("Short form: " + ASKS.map(function(a){ return a.n + String.fromCharCode(65 + pickOf(a)); }).join(" · "));
+  document.getElementById("out").textContent = L.join("\n");
+}
+document.getElementById("build").addEventListener("click", build);
+document.getElementById("copy").addEventListener("click", function(){
+  build(); var txt = document.getElementById("out").textContent; var btn = this;
+  function sel(){ var r = document.createRange(); r.selectNodeContents(document.getElementById("out")); var s = window.getSelection(); s.removeAllRanges(); s.addRange(r); btn.textContent = "Selected, press Ctrl+C"; }
+  try { navigator.clipboard.writeText(txt).then(function(){ btn.textContent = "Copied"; }, sel); } catch (e) { sel(); }
+});
+
+var tabs = Array.prototype.slice.call(document.querySelectorAll("nav.tabs button"));
+function show(id){
+  tabs.forEach(function(b){ var on = b.getAttribute("data-pane") === id; b.setAttribute("aria-selected", on ? "true" : "false"); document.getElementById(b.getAttribute("data-pane")).hidden = !on; });
+  S.tab = id; save();
+}
+tabs.forEach(function(b){ b.addEventListener("click", function(){ show(b.getAttribute("data-pane")); }); });
+show(S.tab && document.getElementById(S.tab) ? S.tab : "p1");
+
+var dlg = document.getElementById("note"), goBtn = document.getElementById("noteGo"), goTo = null;
+function open(title, paras, ask){
+  document.getElementById("noteT").textContent = title;
+  var b = document.getElementById("noteB"); b.innerHTML = "";
+  paras.forEach(function(t){ var p = document.createElement("p"); p.textContent = t; b.appendChild(p); });
+  goTo = ask || null; goBtn.hidden = !ask;
+  if (dlg.showModal) dlg.showModal(); else dlg.setAttribute("open", "");
+}
+document.getElementById("noteX").addEventListener("click", function(){ dlg.close ? dlg.close() : dlg.removeAttribute("open"); });
+goBtn.addEventListener("click", function(){ dlg.close ? dlg.close() : dlg.removeAttribute("open"); show(LAST); var el = document.getElementById("ask" + goTo); if (el) el.scrollIntoView({ block: "start" }); });
+document.addEventListener("click", function(ev){
+  var m = ev.target.closest(".mark[data-ask]");
+  if (m) { var n = Number(m.getAttribute("data-ask")); var a = ASKS.filter(function(x){ return x.n === n; })[0]; open("Ask " + n + " · " + a.t, [NOTES[n] || a.why], n); return; }
+  var f = ev.target.closest(".fl[data-f]");
+  if (f) { var F = FINDINGS[f.getAttribute("data-f")]; if (F) open(F[0], [F[1], F[2]], null); return; }
+  var t = ev.target.closest(".tag[data-note]");
+  if (t) { ev.preventDefault(); open(t.textContent.trim(), [t.getAttribute("data-note")], null); }
+});
+})();
+</script>
