@@ -13,8 +13,11 @@
  * Phase B (scripts/lib/prospect-demo-rep.mjs, when the config has `repTeams`): the rep teams and everything under them, the
  * club's schedules, permits, club bills, shared drills, bank checks and tournaments — rebuilt every run (plan §8).
  * ⚖ WHAT IT NEVER TOUCHES: auth users, their passwords, the organization's row (name, plan, theme, logo), its public-site
- * content, its venues, its owner/League admin memberships. An open browser session survives a reset. A password is set
- * ONLY when an account is first created.
+ * content, its venues, anyone's club membership (pending invitations included). An open browser session survives a reset.
+ * A password is set ONLY when an account is first created.
+ * ⚖ WHAT IT SAVES AND PUTS BACK (owner 2026-11-25; scripts/lib/prospect-demo-access.mjs): rep team staff, house-league
+ * coaches, pending team-staff invitations, and members' rep-group / tournament limits, which would otherwise go with the
+ * world. THE ONE EXCEPTION: the `+registrar` walk address (Walk 5 invites it live), whose seat is removed so the walk repeats.
  *
  * ⚠ DEV ONLY. Refuses any database that is not the dev project, and any organization whose slug is not the chosen club's
  * (`CLUBS` below: `milton-bats`, or `kestrel-bay` with --club=kestrel) or that this script did not create. Every delete
@@ -39,9 +42,11 @@ import {
   addDays, saturdayAfter, onOrAfter, torontoInstant, minutesLater, mulberry32, buildWorld, snakeDraft, tally,
 } from './lib/prospect-demo-world.mjs';
 // Phase B — the rep side (the rep teams, the dome, the dressed team, the tournament), when the club config has `repTeams`.
-import { repConfigured, resetRep, buildRep } from './lib/prospect-demo-rep.mjs';
+import { repConfigured, dressingProblem, resetRep, buildRep } from './lib/prospect-demo-rep.mjs';
 // Demo 5 — the club's own sign-up questions and the U9 friend requests, when the club config has `signupForm`.
 import { planSignupForm, writeSignupForm } from './lib/prospect-demo-signup-form.mjs';
+// People's access, saved before the reset and put back after the build.
+import { saveAccess, restoreAccess } from './lib/prospect-demo-access.mjs';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const DEV_REF = 'npgnrxaitgbtbtvvykto';
@@ -126,6 +131,8 @@ const { regs, previous, prevDivs } = world;
 // Demo 5: picked before anything is written, so a config the world cannot carry stops the build before the reset.
 // Sets the live friend's fixed friend code on her registration (everyone else: null, and the trigger makes one).
 const formPlan = planSignupForm(cfg, regs);
+const dressing = dressingProblem(cfg);
+if (dressing) { console.error(`✗ ${dressing}`); process.exit(1); }
 const divCfg = Object.fromEntries(cfg.divisions.map(d => [d.code, d]));
 
 head(`Prospect demo · ${cfg.name} (${SLUG}) · demo day ${DEMO_DAY} · coming Saturday ${SAT0}${DRY ? ' · DRY RUN (nothing is written)' : ''}`);
@@ -185,8 +192,9 @@ if (DRY) {
   const mine = (s) => regs.filter(r => r.status === s).length;
   console.log(`  ${regs.length} children (${mine('active')} accepted · ${mine('pending')} to review · ${mine('waitlisted')} waitlisted), ${new Set(regs.map(r => r.household)).size} households`);
   console.log(`  money lines: ${regs.filter(r => r.pay).length} receipts + ${previous.length} for the finished season, through club_league_money`);
-  if (repConfigured(cfg)) console.log(`  Phase B (rep side): ${cfg.repTeams.length} rep teams, the dome "${cfg.dome.venue.name}" and its permit, ${cfg.dome.part1.name} sent and billed, ${cfg.dressed.team} dressed, "${cfg.tournament.name}" — rebuilt in full`);
-  console.log('  would NOT touch: auth users, passwords, memberships (except a pending/walk-made +registrar one), org row, theme, logo, public-site content, venues.');
+  if (repConfigured(cfg)) console.log(`  Phase B (rep side): ${cfg.repTeams.length} rep teams, the dome "${cfg.dome.venue.name}" and its permit, ${cfg.dome.part1.name} sent and billed, ${[cfg.dressed, ...(cfg.alsoDressed ?? [])].map(d => d.team ?? '').join(' and ')} dressed, "${cfg.tournament.name}" — rebuilt in full`);
+  console.log('  would NOT touch: auth users, passwords, memberships and pending invitations (except the +registrar walk seat), org row, theme, logo, public-site content, venues.');
+  console.log('  would save and put back: rep team staff, house-league coaches, team-staff invitations, rep-group and tournament limits. Family connections are cleared.');
   for (const p of [cfg.people.owner, cfg.people.admin, cfg.people.coach]) console.log(`  account ${p.email}: ${(await findUserByEmail(db, p.email)) ? 'exists (password untouched)' : 'would be created (password set once)'}`);
   console.log('\nDry run done. Nothing was written.');
   process.exit(0);
@@ -288,6 +296,8 @@ ok(`venues: ${cfg.venues.map(v => `${v.name} (${v.facilities.length})`).join(' �
 
 // ══ RESET ════════════════════════════════════════════════════════════════════════════════════════════════════════
 head(`Reset — only rows ${cfg.name} owns`);
+const accessCtx = { db, ORG, one, ok, root: ROOT, slug: SLUG };
+const savedAccess = await saveAccess(accessCtx); // before ANY delete: the seasons and teams below take people's seats with them
 const before = await ownedCounts();
 // 1. Money first: the seasons' books (their lines have no foreign key to a registration), then the seasons (which cascade
 //    divisions, teams, registrations, games, scores, notices, email rows, coaches, ratings, price changes, slot uses).
@@ -312,10 +322,9 @@ const keepPeople = new Set((await one('rep people', db.from('rep_roster_players'
 for (const r of await one('tryout people', db.from('rep_tryout_registrations').select('person_id').eq('org_id', ORG).not('person_id', 'is', null))) keepPeople.add(r.person_id);
 const people = (await one('people', db.from('org_people').select('id').eq('org_id', ORG))).map(r => r.id).filter(id => !keepPeople.has(id));
 for (const part of chunk(people, 200)) die('delete people', (await db.from('org_people').delete().eq('org_id', ORG).in('id', part)).error);
-// 4. The pending registrar invitation (and the registrar membership Walk 5 makes) — memberships the seed did not make.
-//    The auth users stay; only the invited-but-unaccepted rows and the +registrar seat are removed.
+// 4. The ONE membership a rebuild removes: the +registrar walk seat (invited or accepted), so Walk 5 can invite it again.
+//    Every other member and pending invitation stays (owner 2026-11-25). The auth user stays too.
 const seeded = new Set([OWNER, ADMIN]);
-die('delete pending invitations', (await db.from('organization_members').delete().eq('organization_id', ORG).eq('status', 'invited')).error);
 const registrar = await findUserByEmail(db, cfg.people.registrar.email);
 if (registrar && !seeded.has(registrar.id)) die('delete registrar seat', (await db.from('organization_members').delete().eq('organization_id', ORG).eq('user_id', registrar.id)).error);
 const after = await ownedCounts();
@@ -641,6 +650,10 @@ const rep = repConfigured(cfg)
   ? await buildRep({ db, cfg, ORG, OWNER, DEMO_DAY, die, one, ok, head, insertAll, sql, q, account, nowIso })
   : null;
 
+// ── people's access, back as it was (after both builds: the teams, seasons and tournaments must exist) ───────────
+head('Access');
+await restoreAccess(accessCtx, savedAccess);
+
 // ── people, last ─────────────────────────────────────────────────────────────────────────────────────────────────
 die('families attach', (await db.rpc('families_attach_people', { p_org_id: ORG })).error);
 ok('Families: parents and children attached');
@@ -671,6 +684,7 @@ console.log(`  ${cfg.people.parent.email} is the guardian contact of Ella (U9) a
 if (rep) {
   console.log(`\n  Rep side: ${rep.dressed.name} → http://localhost:3000/${SLUG}/coaches/teams/${rep.dressed.id}  (sign in ${cfg.repPeople.headCoach.email}; assistant ${cfg.repPeople.assistant.email})`);
   console.log(`  Dome: "${rep.dome.permit}" · part 1 ${rep.dome.part1.join(' – ')} sent and billed (${rep.dome.total.toLocaleString('en-CA', { style: 'currency', currency: 'CAD' })}) · Demo 1 builds part 2 from ${rep.dome.part2From} (off ${rep.dome.datesOff.join(', ')}) as ${cfg.people.owner.email}`);
+  for (const t of rep.alsoDressed) console.log(`  Also stocked: ${t.name} → http://localhost:3000/${SLUG}/coaches/teams/${t.id}  (cash on hand about ${t.cashEstimate.toLocaleString('en-CA', { style: 'currency', currency: 'CAD' })})`);
   console.log(`  Next dome practice (Demo 3 starts its plan): ${rep.dressed.nextDome} · cash on hand about ${rep.dressed.cashEstimate.toLocaleString('en-CA', { style: 'currency', currency: 'CAD' })}`);
   console.log(`  Tournament: http://localhost:3000/${SLUG}/${rep.tournament.slug} (${rep.tournament.day}; ${rep.tournament.champions.join(' · ')})`);
 }

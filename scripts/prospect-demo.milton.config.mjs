@@ -200,7 +200,8 @@ export default {
     invited: { email: 'renee.castellano@milton-bats.local', name: 'Renee Castellano', role: 'treasurer', title: 'Treasurer' },
   },
   /**
-   * [age group, tier, head coach name (a .local account; the dressed team's is `repPeople.headCoach`)]. Jan 1 cut-off.
+   * [age group, tier, head coach name (a .local account; the dressed team's is `repPeople.headCoach`; null elsewhere = NO
+   * head coach, someone is invited by hand — U13 Rep Purple, owner 2026-11-25)]. Jan 1 cut-off.
    * The club's structure (owner 2026-11-24): each age group has two levels, Rep and Select, and each level a senior team
    * (Purple, the older birth year) and a junior team (White, the younger). A tier is "<level> <side>"; the level is the
    * team's group on the public site and the admin's Rep teams screen (`repGroups`), the side picks its birth year
@@ -208,7 +209,7 @@ export default {
    */
   repTeams: [
     ['U11', 'Rep Purple', 'Lauren Petrakis'], ['U11', 'Rep White', 'Kevin Osei'], ['U11', 'Select Purple', 'Rosa Delgado'], ['U11', 'Select White', 'Dana Whitlock'],
-    ['U13', 'Rep Purple', 'Brian Kowalczyk'], ['U13', 'Rep White', 'Monique Baptiste'], ['U13', 'Select Purple', 'Graham Tennant'], ['U13', 'Select White', 'Sam Achterberg'],
+    ['U13', 'Rep Purple', null], ['U13', 'Rep White', 'Monique Baptiste'], ['U13', 'Select Purple', 'Graham Tennant'], ['U13', 'Select White', 'Sam Achterberg'],
     ['U15', 'Rep Purple', null], ['U15', 'Rep White', 'Aisha Rahimi'], ['U15', 'Select Purple', 'Patrick Doucet'], ['U15', 'Select White', 'Erin Moffatt'],
     ['U17', 'Rep Purple', 'Heather McLeod'], ['U17', 'Rep White', 'Victor Lindgren'], ['U17', 'Select Purple', 'Simone Arsenault'], ['U17', 'Select White', 'Megan Thibault'],
     ['U19', 'Rep Purple', 'Darren Fitzpatrick'], ['U19', 'Rep White', 'Nadia Volkova'], ['U19', 'Select Purple', 'Owen Gallant'], ['U19', 'Select White', 'Andre Lafleur'],
@@ -220,7 +221,7 @@ export default {
   /** Born-in years for the 2027 season, by age group (Jan 1 cut-off), older year first. */
   repBirthYears: { U11: [2016, 2017], U13: [2014, 2015], U15: [2012, 2013], U17: [2010, 2011], U19: [2008, 2009] },
   repSeason: { name: '2027 Season', year: 2027, previousName: '2026 Season', previousYear: 2026 },
-  /** Light rosters for the other nineteen; the dressed team has its own twelve. */
+  /** Light rosters for the teams that are not dressed; each dressed team has its own twelve. */
   repRosterSize: [11, 12],
   /** Teams with tryouts open on the public site (Demo 5). */
   repTryoutsOpen: { teams: ['U11 Rep Purple', 'U11 Rep White'], description: 'Tryouts for the 2027 season: U11 Rep Purple is players born 2016, U11 Rep White players born 2017. Two sessions in the dome; bring a glove, a helmet if you have one, and water.' },
@@ -253,6 +254,19 @@ export default {
     fundraiser: { name: 'Fall bottle drive', rebatePercent: 50, startOffset: -74, endOffset: -58 },
     sponsor: { name: 'Main Street Physio & Sport', pledged: 1500, received: 750, receivedOffset: -30, contact: 'Alana Brooks', email: 'alana@mainstreetphysio.local', address: '210 Main St E, Milton, ON' },
   },
+
+  /**
+   * More teams with the same depth of data (owner 2026-11-25). U13 Rep Purple is the president's own: it has NO head
+   * coach in `repTeams`, so he is invited to an empty seat the way a board member who also coaches would be.
+   */
+  alsoDressed: [
+    {
+      team: 'U13 Rep Purple',
+      dues: { total: 1400, installments: 4, dueOffsets: [-60, 12, 52, 110] },
+      fundraiser: { name: 'Fall bottle drive', rebatePercent: 50, startOffset: -74, endOffset: -58 },
+      sponsor: { name: 'Derry Road Family Dental', pledged: 1200, received: 600, receivedOffset: -26, contact: 'Priyesh Anand', email: 'hello@derryroaddental.local', address: '88 Derry Rd, Milton, ON' },
+    },
+  ],
 
   /** The public tournament (Demo 5). Name invented — owed by the owner. Free: no fee book, no team payments. */
   tournament: {

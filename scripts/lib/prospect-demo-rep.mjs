@@ -19,7 +19,8 @@
  *
  * ⚖ WHAT A RESET CLEARS: every rep team of the club (which takes its seasons, rosters, events, money, drills and staff rows
  * with it), the club's shared drills and tags, its schedules, permits and club bills, its bank checks and tournaments.
- * Auth users and the club's memberships are never touched; venues are kept (the dome's included).
+ * Auth users and the club's memberships are never touched; venues are kept (the dome's included). Team staff and members'
+ * limits are saved before this reset and put back after the build (prospect-demo-access.mjs).
  *
  * Team and season ids are DERIVED from the club's slug and the team's slug, so a team's Coaches Portal address survives every
  * rebuild (the run sheet links to them).
@@ -32,6 +33,18 @@ import { splitDomeSlots } from './dome-practice-split.mjs';
 import { addDays, onOrAfter, torontoInstant, minutesLater, NAME_GROUPS } from './prospect-demo-world.mjs';
 
 export const repConfigured = (cfg) => Array.isArray(cfg.repTeams) && cfg.repTeams.length > 0;
+
+/** Why the config's dressed teams cannot be built, or null. Asked BEFORE the reset, so a bad list deletes nothing. */
+export function dressingProblem(cfg) {
+  if (!repConfigured(cfg)) return null;
+  const wanted = [cfg.dressed, ...(cfg.alsoDressed ?? [])].map(d => d?.team);
+  const listed = new Set(cfg.repTeams.map(([age, tier]) => `${age} ${tier}`));
+  const missing = wanted.filter(t => !listed.has(t));
+  if (missing.length) return `dressed teams not in repTeams: ${missing.join(', ')}`;
+  if (new Set(wanted).size !== wanted.length) return `a team is dressed twice: ${wanted.join(', ')}`;
+  if (wanted.length > KITS.length) return `only ${KITS.length} dressing kits exist; add one to prospect-demo-rep.mjs`;
+  return null;
+}
 
 /** A stable id for `key` inside this club (a v4-shaped uuid from a hash), so addresses survive a rebuild. */
 export function stableId(cfg, key) {
@@ -97,9 +110,9 @@ const SCOUTING = [
 ];
 const PLAYER_NOTES = [[2, 'Asked to try catching in the dome this winter. Start her on blocking in January.'], [6, 'Best week of throws to first all fall. Tell her parents at pick-up.']];
 /** Two emails already sent to the families: [days before the demo day, subject, body]. */
-const TEAM_EMAILS = [
-  [-52, 'Bottle drive results, and thank you', 'Hi families,\n\nThe fall bottle drive raised $1,015. Half of what each family collected comes off that player’s dues, and you will see it on your next statement.\n\nThank you to everyone who drove a route on both Saturdays.\n\nMorgan'],
-  [-33, 'Winter dome practices start Sunday', 'Hi families,\n\nOur winter practices are at the Escarpment Indoor Dome, an hour and a half on Sundays. Rep teams practise more often than Select teams, and the time moves from week to week, so please check the team schedule each Friday.\n\nBring indoor shoes, a water bottle and your own helmet. No cleats in the dome.\n\nMorgan'],
+const teamEmails = (raised, signOff) => [
+  [-52, 'Bottle drive results, and thank you', `Hi families,\n\nThe fall bottle drive raised ${raised}. Half of what each family collected comes off that player’s dues, and you will see it on your next statement.\n\nThank you to everyone who drove a route on both Saturdays.\n\n${signOff}`],
+  [-33, 'Winter dome practices start Sunday', `Hi families,\n\nOur winter practices are at the Escarpment Indoor Dome, an hour and a half on Sundays. Rep teams practise more often than Select teams, and the time moves from week to week, so please check the team schedule each Friday.\n\nBring indoor shoes, a water bottle and your own helmet. No cleats in the dome.\n\n${signOff}`],
 ];
 /** Fall ball: [days from the demo day, home/away, team score, opponent score]. Eight games, a W-L-T record with a story. */
 const FALL_GAMES = [[-84, 'home', 7, 3], [-80, 'away', 2, 5], [-77, 'home', 9, 8], [-73, 'away', 4, 4], [-70, 'home', 6, 1], [-66, 'away', 3, 6], [-63, 'home', 10, 2], [-56, 'away', 5, 4]];
@@ -140,6 +153,37 @@ const TESTS = [
 const SKILL = { name: 'Fielding ground balls', method: 'Watched during the ground-ball circuit.', descriptors: ['Getting there', 'Steady', 'Strong'] };
 const FOCUS = ['Stay through the ball', 'Footwork on ground balls', 'Leads and reading the pitcher', 'Throwing accuracy to first', 'Pitch location low in the zone',
   'Blocking pitches in the dirt', 'Reading the fly ball off the bat', 'Two-strike approach', 'Quick release on the relay', 'Bunting for a hit', 'First step on the steal', 'Calling the ball in the outfield'];
+
+// ── the second dressed team (owner 2026-11-25): same depth, its own people and numbers. Positions match the first
+// roster's order, because the awards, notes and lineups are written by roster index ───────────────────────────────
+const SECOND_ROSTER = [
+  { first: 'Mila', last: 'Fontaine', number: '4', primary: 'SS', secondary: '2B', bats: 'R', throws: 'R' },
+  { first: 'Ruby', last: 'Ostrowski', number: '10', primary: 'P', secondary: '1B', bats: 'R', throws: 'R' },
+  { first: 'Anika', last: 'Raman', number: '8', primary: 'C', secondary: '3B', bats: 'R', throws: 'R' },
+  { first: 'Quinn', last: 'Halloran', number: '21', primary: '1B', secondary: 'LF', bats: 'L', throws: 'L' },
+  { first: 'Elise', last: 'Gagnon', number: '1', primary: '2B', secondary: 'SS', bats: 'R', throws: 'R' },
+  { first: 'Tessa', last: 'Boateng', number: '14', primary: 'CF', secondary: 'LF', bats: 'L', throws: 'R' },
+  { first: 'Juniper', last: 'Walsh', number: '17', primary: '3B', secondary: 'SS', bats: 'R', throws: 'R' },
+  { first: 'Simran', last: 'Gill', number: '19', primary: 'LF', secondary: 'CF', bats: 'R', throws: 'R' },
+  { first: 'Freya', last: 'Moreau', number: '13', primary: 'RF', secondary: '1B', bats: 'R', throws: 'R' },
+  { first: 'Daniela', last: 'Ferrante', number: '16', primary: 'P', secondary: 'RF', bats: 'L', throws: 'L' },
+  { first: 'Hazel', last: 'Novak', number: '23', primary: 'OF', secondary: '2B', bats: 'R', throws: 'R' },
+  { first: 'Imani', last: 'Clarke', number: '25', primary: 'C', secondary: '1B', bats: 'R', throws: 'R' },
+];
+const SECOND_GUARDIANS = ['Colette', 'Pawel', 'Divya', 'Siobhan', 'Martin', 'Akosua', 'Brendan', 'Manpreet', 'Camille', 'Luca', 'Katarina', 'Devon'];
+const SECOND_EMERGENCY = ['Remi', 'Agata', 'Suresh', 'Declan', 'Josee', 'Kofi', 'Maeve', 'Jaspreet', 'Olivier', 'Giulia', 'Marek', 'Tanisha'];
+/** The same days as the first team's fall ball, with its own scores (the opponent book and award notes still fit them). */
+const SECOND_GAMES = [[-84, 'home', 5, 2], [-80, 'away', 3, 6], [-77, 'home', 8, 7], [-73, 'away', 5, 5], [-70, 'home', 9, 1], [-66, 'away', 4, 7], [-63, 'home', 6, 4], [-56, 'away', 3, 2]];
+/**
+ * What differs between dressed teams, in order: the config's `dressed` takes the first, each `alsoDressed` the next.
+ * Home parks and dome fields differ so no two teams share a diamond; `slower` and `weaker` age the test results.
+ */
+const KITS = [
+  { roster: DRESSED_ROSTER, guardians: GUARDIAN_FIRSTS, emergency: EMERGENCY_FIRSTS, homeVenue: 'Sherwood Park', domeField: 0, games: FALL_GAMES, slower: 1, weaker: 1,
+    raised: [[0, 140], [1, 95], [2, 180], [3, 60], [4, 120], [5, 85], [7, 150], [9, 110], [11, 75]] },
+  { roster: SECOND_ROSTER, guardians: SECOND_GUARDIANS, emergency: SECOND_EMERGENCY, homeVenue: 'Kinsmen Park', domeField: 1, games: SECOND_GAMES, slower: 1.07, weaker: 0.88,
+    raised: [[0, 110], [2, 150], [3, 75], [4, 90], [5, 130], [6, 65], [8, 100], [9, 85], [11, 120]] },
+];
 
 /** Practice-plan blocks. `stations` rotate (two or more do by default); each station names a drill of the library. */
 function planOf(kind, drillId, playerIds) {
@@ -235,36 +279,46 @@ export async function buildRep(ctx) {
   // ── B1 · accounts, teams, seasons, coaches, rosters ─────────────────────────────────────────────────────────────
   head('Rep teams, seasons, coaches, rosters (Phase B)');
   const dressedKey = cfg.dressed.team;
+  // The teams that get the full set of data. The first is the demo coach's; the rest come from `alsoDressed`.
+  const kits = [{ primary: true, key: dressedKey, money: cfg.dressed, ...KITS[0] },
+    ...(cfg.alsoDressed ?? []).map((m, i) => ({ primary: false, key: m.team, money: m, ...KITS[i + 1] }))];
   const headUser = await account(cfg.repPeople.headCoach.email, cfg.repPeople.headCoach.name);
   const assistantUser = await account(cfg.repPeople.assistant.email, cfg.repPeople.assistant.name);
   const teams = [];
   for (const [i, [age, tier, coachName]] of cfg.repTeams.entries()) {
     const key = `${age} ${tier}`;
-    const isDressed = key === dressedKey;
-    const coach = isDressed ? { ...cfg.repPeople.headCoach, user: headUser }
-      : { name: coachName, email: `${ascii(coachName).toLowerCase().replace(/[^a-z]+/g, '.')}@milton-bats.local` };
-    if (!coach.user) coach.user = await account(coach.email, coach.name);
+    const isDressed = kits.some(k => k.key === key);
+    // No name in the list (and not the demo coach's team) = a team with NO head coach: someone is invited to it by hand.
+    const coach = key === dressedKey ? { ...cfg.repPeople.headCoach, user: headUser }
+      : coachName ? { name: coachName, email: `${ascii(coachName).toLowerCase().replace(/[^a-z]+/g, '.')}@milton-bats.local` } : null;
+    if (coach && !coach.user) coach.user = await account(coach.email, coach.name);
     teams.push({ key, age, tier, i, isDressed, coach, id: stableId(cfg, `rep:${slugOf(age, tier)}`), slug: slugOf(age, tier), name: teamName(age, tier),
       pyId: stableId(cfg, `rep:${slugOf(age, tier)}:${S.year}`) });
   }
-  const dressed = teams.find(t => t.isDressed);
+  for (const kit of kits) {
+    kit.team = teams.find(t => t.key === kit.key);
+    if (!kit.team) die('dressed team', { message: `the config's dressed team "${kit.key}" is not in repTeams` });
+    kit.authorId = kit.team.coach?.user.id ?? ctx.OWNER; // who the dressed records say wrote them
+    kit.authorName = kit.team.coach?.name ?? 'Coaching staff';
+    kit.signOff = kit.team.coach?.name.split(' ')[0] ?? 'Your coaches';
+  }
+  const dressed = kits[0].team; // the demo coach's team: the assistant, the finished season's coach, the run sheet
   // A team's born-in years: its age group's two, or one of them when its tier ends in a side (`repSides`: Purple the older).
   const yearsOf = (t) => {
     const [older, younger] = cfg.repBirthYears[t.age];
     const side = cfg.repSides?.[t.tier.split(' ').at(-1)];
     return side === 'older' ? [older, older] : side === 'younger' ? [younger, younger] : [older, younger];
   };
-  if (!dressed) die('dressed team', { message: `the config's dressed team "${dressedKey}" is not in repTeams` });
 
   // Club memberships: only the missing ones (a reset never edits a membership).
   const members = await one('members', db.from('organization_members').select('user_id').eq('organization_id', ORG));
   const have = new Set(members.map(m => m.user_id));
-  const memberRows = [...teams.map(t => t.coach), { ...cfg.repPeople.assistant, user: assistantUser }]
+  const memberRows = [...teams.map(t => t.coach).filter(Boolean), { ...cfg.repPeople.assistant, user: assistantUser }]
     .filter((c, k, all) => !have.has(c.user.id) && all.findIndex(x => x.user.id === c.user.id) === k)
     .map(c => ({ organization_id: ORG, user_id: c.user.id, role: 'coach', status: 'active', display_name: c.name, invited_at: nowIso, accepted_at: nowIso }));
   if (memberRows.length) await insertAll('organization_members', memberRows, 'user_id');
-  // One invitation still waiting, so Members shows what "Invited" looks like (plan §10). The reset removes every invited
-  // row, so this is re-added on each build; the row is the shape the product's own invite writes for an existing account.
+  // One invitation still waiting, so Members shows what "Invited" looks like (plan §10). Added only when that account has
+  // no seat (a rebuild keeps invitations); the row is the shape the product's own invite writes for an existing account.
   if (cfg.repPeople.invited) {
     const invitee = await account(cfg.repPeople.invited.email, cfg.repPeople.invited.name);
     if (!have.has(invitee.id)) die('pending invitation', (await db.from('organization_members').insert({ organization_id: ORG, user_id: invitee.id, role: cfg.repPeople.invited.role,
@@ -290,26 +344,33 @@ export async function buildRep(ctx) {
   }));
   // The dressed team's finished season (its plans feed "start from a past season").
   const prevPyId = stableId(cfg, `rep:${dressed.slug}:${S.previousYear}`);
-  die('previous season', (await db.from('rep_program_years').insert({ id: prevPyId, team_id: dressed.id, org_id: ORG, name: S.previousName, year: S.previousYear, status: 'completed' })).error);
-  await insertAll('rep_team_staff_memberships', teams.map(t => ({ org_id: ORG, team_id: t.id, user_id: t.coach.user.id, coach_role: 'head_coach', status: 'active', capabilities: null })));
-  await insertAll('rep_team_coaches', teams.map(t => ({ program_year_id: t.pyId, team_id: t.id, org_id: ORG, user_id: t.coach.user.id, coach_role: 'head_coach', capabilities: null })));
+  for (const kit of kits) {
+    kit.prevPyId = kit.primary ? prevPyId : stableId(cfg, `rep:${kit.team.slug}:${S.previousYear}`);
+    die('previous season', (await db.from('rep_program_years').insert({ id: kit.prevPyId, team_id: kit.team.id, org_id: ORG, name: S.previousName, year: S.previousYear, status: 'completed' })).error);
+  }
+  const coached = teams.filter(t => t.coach);
+  await insertAll('rep_team_staff_memberships', coached.map(t => ({ org_id: ORG, team_id: t.id, user_id: t.coach.user.id, coach_role: 'head_coach', status: 'active', capabilities: null })));
+  await insertAll('rep_team_coaches', coached.map(t => ({ program_year_id: t.pyId, team_id: t.id, org_id: ORG, user_id: t.coach.user.id, coach_role: 'head_coach', capabilities: null })));
   die('previous season coach', (await db.from('rep_team_coaches').insert({ program_year_id: prevPyId, team_id: dressed.id, org_id: ORG, user_id: headUser.id, coach_role: 'head_coach', capabilities: null })).error);
   const grants = { schedule: true, scheduleManage: false, registerTournaments: false, tournaments: false };
   die('assistant seat', (await db.from('rep_team_staff_memberships').insert({ org_id: ORG, team_id: dressed.id, user_id: assistantUser.id, coach_role: 'assistant_coach', status: 'active', staff_kind: 'assistant', capabilities: grants })).error);
   die('assistant season', (await db.from('rep_team_coaches').insert({ program_year_id: dressed.pyId, team_id: dressed.id, org_id: ORG, user_id: assistantUser.id, coach_role: 'assistant_coach', capabilities: grants })).error);
 
-  // Rosters. The dressed team's twelve are named; the others are drawn from the world's name pool, deterministically.
+  // Rosters. Each dressed team's twelve are named; the others are drawn from the world's name pool, deterministically.
   const guardianEmail = (first, last) => `${ascii(first).toLowerCase()}.${ascii(last).toLowerCase().replace(/[^a-z]/g, '')}@miltonfamilies.local`;
   const rosterRows = [];
   const dob = (team, k) => { const [from, to] = yearsOf(team); const y = k % 2 ? from : to; return `${y}-${String(1 + (k * 5) % 12).padStart(2, '0')}-${String(1 + (k * 7) % 27).padStart(2, '0')}`; };
-  dressed.playerIds = DRESSED_ROSTER.map((_, k) => stableId(cfg, `rep:${dressed.slug}:player:${k}`));
-  DRESSED_ROSTER.forEach((p, k) => rosterRows.push({ id: dressed.playerIds[k], program_year_id: dressed.pyId, team_id: dressed.id, org_id: ORG,
-    player_first_name: p.first, player_last_name: p.last, player_date_of_birth: dob(dressed, k), player_number: p.number, primary_position: p.primary, secondary_position: p.secondary,
-    bats: p.bats, throws: p.throws, guardian_first_name: GUARDIAN_FIRSTS[k], guardian_last_name: p.last, guardian_email: guardianEmail(GUARDIAN_FIRSTS[k], p.last),
-    guardian_phone: `905-555-02${String(10 + k).padStart(2, '0')}`, status: 'active', source: 'admin_manual', display_order: k,
-    // The "Family & paperwork" tab (plan §10): an emergency contact for everyone, a medical note for two.
-    emergency_contact_name: `${EMERGENCY_FIRSTS[k]} ${p.last}`, emergency_contact_phone: `905-555-03${String(10 + k).padStart(2, '0')}`,
-    medical_notes: k === 3 ? 'Asthma. Carries an inhaler in her bat bag.' : k === 8 ? 'Allergic to bee stings. An EpiPen is in the first-aid kit.' : null }));
+  for (const [n, kit] of kits.entries()) {
+    const t = kit.team;
+    t.playerIds = kit.roster.map((_, k) => stableId(cfg, `rep:${t.slug}:player:${k}`));
+    kit.roster.forEach((p, k) => rosterRows.push({ id: t.playerIds[k], program_year_id: t.pyId, team_id: t.id, org_id: ORG,
+      player_first_name: p.first, player_last_name: p.last, player_date_of_birth: dob(t, k), player_number: p.number, primary_position: p.primary, secondary_position: p.secondary,
+      bats: p.bats, throws: p.throws, guardian_first_name: kit.guardians[k], guardian_last_name: p.last, guardian_email: guardianEmail(kit.guardians[k], p.last),
+      guardian_phone: `905-555-0${2 + n * 2}${String(10 + k).padStart(2, '0')}`, status: 'active', source: 'admin_manual', display_order: k,
+      // The "Family & paperwork" tab (plan §10): an emergency contact for everyone, a medical note for two.
+      emergency_contact_name: `${kit.emergency[k]} ${p.last}`, emergency_contact_phone: `905-555-0${3 + n * 2}${String(10 + k).padStart(2, '0')}`,
+      medical_notes: k === 3 ? 'Asthma. Carries an inhaler in her bat bag.' : k === 8 ? 'Allergic to bee stings. An EpiPen is in the first-aid kit.' : null }));
+  }
   const POSITIONS = ['P', 'C', '1B', '2B', '3B', 'SS', 'LF', 'CF', 'RF', 'OF', 'P', 'C'];
   for (const t of teams.filter(x => !x.isDressed)) {
     const size = cfg.repRosterSize[t.i % 2];
@@ -324,7 +385,8 @@ export async function buildRep(ctx) {
     }
   }
   await insertAll('rep_roster_players', rosterRows);
-  ok(`${teams.length} rep teams in ${ages.length} age groups (each on a live "${S.name}" with an accepted head coach) · ${rosterRows.length} players`);
+  ok(`${teams.length} rep teams in ${ages.length} age groups (each on a live "${S.name}"; ${teams.length - teams.filter(t => t.coach).length} seeded with no head coach) · ${rosterRows.length} players`);
+  for (const k of kits.slice(1)) ok(`${k.team.name}: dressed like ${dressed.name}, ${k.team.coach ? `${k.team.coach.name} head coach` : 'no head coach seeded (someone invited by hand keeps the seat)'}`);
   ok(`${dressed.name}: ${cfg.repPeople.headCoach.email} head coach · ${cfg.repPeople.assistant.email} assistant · "${S.previousName}" finished behind it`);
   if (tryouts.size) ok(`tryouts open on the public site: ${teams.filter(t => tryouts.has(t.key)).map(t => t.name).join(', ')}`);
 
@@ -408,292 +470,299 @@ export async function buildRep(ctx) {
   // Dated as sent weeks ago (the step stamps now).
   const sentAt = torontoInstant(addDays(D, -DM.part1.sentDaysBefore), '20:10');
   sql(`UPDATE club_schedules SET finalized_at = ${q(sentAt)}, finalized_by = ${q(ctx.OWNER)}, sent_at = ${q(sentAt)}, sent_by = ${q(ctx.OWNER)}, created_at = ${q(minutesLater(sentAt, -60 * 24 * 5))} WHERE id = ${q(scheduleId)} AND org_id = ${q(ORG)};
-       UPDATE club_schedule_sends SET sent_at = ${q(sentAt)}, sent_by = ${q(ctx.OWNER)}, people_count = ${teams.length}, failed_count = 0, landed_at = ${q(minutesLater(sentAt, 1))} WHERE schedule_id = ${q(scheduleId)} AND org_id = ${q(ORG)};
+       UPDATE club_schedule_sends SET sent_at = ${q(sentAt)}, sent_by = ${q(ctx.OWNER)}, people_count = ${teams.filter(t => t.coach).length}, failed_count = 0, landed_at = ${q(minutesLater(sentAt, 1))} WHERE schedule_id = ${q(scheduleId)} AND org_id = ${q(ORG)};
        UPDATE rep_cost_allocations SET created_at = ${q(sentAt)} WHERE id = ${q(fin.allocationId)} AND org_id = ${q(ORG)};`);
-  // Ten of the coaches have paid the club's first payment; the dressed team is one of them.
-  const firstPaid = new Set([dressed.id, ...teams.filter(t => !t.isDressed).slice(0, 9).map(t => t.id)]);
+  // Ten teams have paid the club's first payment; every dressed team is one of them.
+  const firstPaid = new Set([...kits.map(k => k.team.id), ...teams.filter(t => !t.isDressed).slice(0, 10 - kits.length).map(t => t.id)]);
   const allocSplits = await one('splits', db.from('rep_allocation_splits').select('id, team_id, amount').eq('allocation_id', fin.allocationId));
   const inst1 = await one('installments', db.from('rep_allocation_installments').select('id, team_id, installment_number, amount, due_date').eq('org_id', ORG).in('split_id', allocSplits.map(s => s.id)));
   const paidIds = inst1.filter(i => i.installment_number === 1 && firstPaid.has(i.team_id)).map(i => i.id);
-  const coachOfTeam = new Map(teams.map(t => [t.id, t.coach.user.id]));
+  const coachOfTeam = new Map(teams.map(t => [t.id, t.coach?.user.id ?? ctx.OWNER])); // a vacant team's: the club records it
   for (const i of inst1.filter(x => paidIds.includes(x.id))) {
     die('club installment paid', (await db.from('rep_allocation_installments').update({ paid_at: torontoInstant(addDays(i.due_date, -2), '19:30'), paid_by: coachOfTeam.get(i.team_id) }).eq('id', i.id)).error);
   }
-  const dressedSplit = allocSplits.find(s => s.team_id === dressed.id);
-  const dressedInst = inst1.filter(i => i.team_id === dressed.id).sort((a, b) => a.installment_number - b.installment_number);
   const pastDome = part1.filter(d => d < D).length;
   ok(`"${DM.part1.name}": ${part1[0]} – ${part1.at(-1)} (${pastDome} Sundays played, ${part1.length - pastDome} to come) · ${rows.length} practices on ${teams.length} team schedules · ${hours.length * DM.venue.fields.length} practices each Sunday`);
-  ok(`billed ${money(shares.totalCents / 100)} (the time's price; the open hour is the club's) · ${dressed.name}'s share ${money(dressedSplit.amount)} in ${dressedInst.length} payments (${dressedInst.map(i => `${money(i.amount)} ${i.due_date}`).join(', ')}) · ${firstPaid.size} teams have paid the first`);
+  ok(`billed ${money(shares.totalCents / 100)} (the time's price; the open hour is the club's) · ${firstPaid.size} teams have paid the first payment`);
   ok(`Demo 1 builds part 2 live: start a schedule from "${P.name}" dated from ${heldSundays[P.offAfter]} (the first Sunday after ${offDays.join(' and ')})`);
 
-  // ── B3 · the dressed team's book ──────────────────────────────────────────────────────────────────────────────────
-  head(`${dressed.name} — the books`);
-  const T = { team_id: dressed.id, org_id: ORG, program_year_id: dressed.pyId };
-  const pids = dressed.playerIds;
-  const coachId = headUser.id;
-  const { budgetLineKindForItem } = await appModule('lib/coach-budget-totals.ts');
-  // Every word below is a platform word (none is invented), so no word source is derived here.
-  const cats = await one('budget categories', db.from('budget_categories').select('id, name, income_source').is('org_id', null).in('scope', ['team', 'both']));
-  const catId = new Map(cats.map(c => [c.name, c.id]));
-  const words = await one('budget words', db.from('budget_items').select('id, name, category_id, direction, actual_source').is('org_id', null).in('category_id', cats.map(c => c.id)));
-  const word = (cat, item) => {
-    const w = words.find(x => x.category_id === catId.get(cat) && x.name === item);
-    if (!w) die('budget word', { message: `${cat} / ${item} is not a platform word` });
-    return { budget_category_id: w.category_id, budget_item_id: w.id, kind: budgetLineKindForItem({ direction: w.direction, actualSource: w.actual_source }) };
-  };
-  const PLAN = [
-    { cat: 'Facilities', item: 'Dome Time', description: 'Winter dome (the club’s bill)', total: 1800, month: 0 },
-    { cat: 'League & Fees', item: 'League registration', description: 'Fall ball league', total: 1450, month: -3 },
-    { cat: 'Officials', item: 'Umpire Fees', description: 'Umpires, fall and spring', total: 1400, month: -2 },
-    { cat: 'Team Gear', item: 'Jerseys', description: 'Jerseys and pants', total: 1560, month: -2 },
-    { cat: 'Team Gear', item: 'Balls', description: 'Practice and game balls', total: 400, month: -3 },
-    { cat: 'Training', item: 'Practice equipment', description: 'Hitting net and tees', total: 350, month: -1 },
-    { cat: 'Tournaments', item: 'Entry Fees', description: 'Three spring tournaments', total: 1950, month: 4 },
-    { cat: 'Fundraising', item: 'Fundraising drive', description: 'Bottle drive and spring raffle', total: 1800, month: -2 },
-    { cat: 'Sponsorship', item: 'Team sponsorship', description: 'Team sponsors', total: 1500, month: -1 },
-    { cat: 'Events', item: 'Year-End Party', description: 'Season-end party', total: 600, month: null },
-  ];
-  const lineRows = PLAN.map((l, k) => { const w = word(l.cat, l.item); return { id: crypto.randomUUID(), ...T, category_id: w.budget_category_id, item_id: w.budget_item_id, description: l.description, total_amount: l.total, sort_order: k, line_kind: w.kind }; });
-  await insertAll('rep_budget_lines', lineRows);
-  const monthOf = (offsetMonths) => { const d = new Date(`${D.slice(0, 7)}-01T12:00:00Z`); d.setUTCMonth(d.getUTCMonth() + offsetMonths); return d.toISOString().slice(0, 7); };
-  await insertAll('rep_budget_periods', PLAN.map((l, k) => (l.month == null ? null : { budget_line_id: lineRows[k].id, period_label: monthOf(l.month), period_date: `${monthOf(l.month)}-01`, amount: l.total, sort_order: 0 })).filter(Boolean), 'id');
-  const costTotal = PLAN.filter((_, k) => lineRows[k].line_kind === 'cost').reduce((n, l) => n + l.total, 0);
-  die('season estimate', (await db.from('rep_program_years').update({ budget_amount: costTotal }).eq('id', dressed.pyId)).error);
-  // The club's dome bill filed under the team's own Dome Time line (the coach files a club bill on its split).
-  const dome = word('Facilities', 'Dome Time');
-  die('file the dome bill', (await db.from('rep_allocation_splits').update({ budget_category_id: dome.budget_category_id, budget_item_id: dome.budget_item_id }).eq('id', dressedSplit.id)).error);
-
-  // Player dues: four payments; the first paid by all but one family (overdue), the second paid early by four and half
-  // paid by one, the last two still ahead.
-  const DU = cfg.dressed.dues;
-  const each = DU.total / DU.installments;
-  const dueDates = DU.dueOffsets.map(o => addDays(D, o));
-  const OVERDUE = 8, PART = 6, EARLY = [0, 3, 5, 10];
-  let duesIn = 0;
-  for (const [k, pid] of pids.entries()) {
-    const scheduleRow = await one('dues schedule', db.from('rep_player_dues_schedules').insert({ program_year_id: dressed.pyId, player_id: pid, team_id: dressed.id, org_id: ORG, total_amount: DU.total }).select('id').single());
-    const paid = (n) => (n === 0 ? k !== OVERDUE : n === 1 ? EARLY.includes(k) : false);
-    // Never dated after the demo day: a payment "made early" on a due date still ahead is one made in the last few days.
-    const paidDay = (n) => { const day = addDays(dueDates[n], n === 0 ? -(k % 5) : -(3 + (k % 6))); return day > D ? addDays(D, -1 - (k % 4)) : day; };
-    await insertAll('rep_player_dues_installments', dueDates.map((due, n) => ({ schedule_id: scheduleRow.id, player_id: pid, installment_number: n + 1, amount: each, due_date: due,
-      paid_at: paid(n) ? `${paidDay(n)}T17:00:00.000Z` : null, org_id: ORG, team_id: dressed.id, source: 'manual' })));
-    const pays = dueDates.map((_, n) => n).filter(paid).map(n => ({ amount: each, day: paidDay(n) }));
-    if (k === PART) pays.push({ amount: 150, day: addDays(D, -20) }, { amount: 100, day: addDays(D, -6) });
-    if (pays.length) await insertAll('rep_dues_payments', pays.map(p => ({ program_year_id: dressed.pyId, player_id: pid, org_id: ORG, team_id: dressed.id, amount: p.amount, received_date: p.day,
-      method: 'etransfer', source: 'recorded', created_at: `${p.day}T17:00:00.000Z` })));
-    duesIn += pays.reduce((n, p) => n + p.amount, 0);
-  }
-  // The bottle drive: closed; half of what each family raised comes off its dues.
-  const FR = cfg.dressed.fundraiser;
-  const fr = word('Fundraising', 'Fundraising drive');
-  const frId = crypto.randomUUID();
-  die('fundraiser', (await db.from('rep_fundraisers').insert({ id: frId, ...T, name: FR.name, description: 'Bottles and cans collected door to door, two Saturdays.', player_rebate_percent: FR.rebatePercent,
-    start_date: addDays(D, FR.startOffset), end_date: addDays(D, FR.endOffset), is_active: false, budget_category_id: fr.budget_category_id, budget_item_id: fr.budget_item_id })).error);
-  const RAISED = [[0, 140], [1, 95], [2, 180], [3, 60], [4, 120], [5, 85], [7, 150], [9, 110], [11, 75]];
-  let raised = 0;
-  for (const [k, amt] of RAISED) {
-    const rebate = Math.round(amt * FR.rebatePercent) / 100;
-    const day = addDays(D, FR.endOffset + (k % 3));
-    const entryId = crypto.randomUUID();
-    die('fundraiser entry', (await db.from('rep_fundraiser_entries').insert({ id: entryId, fundraiser_id: frId, org_id: ORG, team_id: dressed.id, player_id: pids[k], amount_raised: amt,
-      rebate_percent: FR.rebatePercent, rebate_amount: rebate, received_date: day })).error);
-    const creditId = crypto.randomUUID();
-    die('rebate credit', (await db.from('rep_dues_credits').insert({ id: creditId, program_year_id: dressed.pyId, player_id: pids[k], amount: rebate, description: `Fundraiser rebate — ${FR.name}`,
-      credit_type: 'fundraiser', credit_date: day, fundraiser_entry_id: entryId })).error);
-    die('link credit', (await db.from('rep_fundraiser_entries').update({ credit_id: creditId }).eq('id', entryId)).error);
-    raised += amt;
-  }
-  // The sponsor: promised, half received. ⚠ The stored status is 'received' from the FIRST cheque (the product's own
-  // Record door flips it); "part received" is worked out from the money. A 'pledged' row with an arrival is a state the
-  // product never makes, and its register then counts none of the cheque.
-  const SP = cfg.dressed.sponsor;
-  const sp = word('Sponsorship', 'Team sponsorship');
-  const spId = crypto.randomUUID();
-  die('sponsor', (await db.from('rep_fundraisers').insert({ id: spId, ...T, kind: 'sponsor', sponsor_status: SP.received > 0 ? 'received' : 'pledged', pledged_amount: SP.pledged, name: SP.name,
-    description: 'Jersey sleeve patch and the banner at the dome.', player_rebate_percent: 0, start_date: addDays(D, SP.receivedOffset - 10), end_date: null, is_active: true,
-    budget_category_id: sp.budget_category_id, budget_item_id: sp.budget_item_id })).error);
-  die('sponsor arrival', (await db.from('rep_fundraiser_entries').insert({ fundraiser_id: spId, org_id: ORG, team_id: dressed.id, player_id: null, amount_raised: SP.received, rebate_percent: 0,
-    rebate_amount: 0, received_date: addDays(D, SP.receivedOffset), method: 'cheque' })).error);
-  die('sponsor invoice details', (await db.from('rep_teams').update({ sponsor_payment_details: { payTo: dressed.name, instructions: `E-transfer to the team treasurer, or a cheque payable to Milton Bats Softball Association with "${dressed.key}" on the memo line.` } }).eq('id', dressed.id)).error);
-  // Costs and bills: paid, part-paid, one a family paid out of pocket, one still ahead.
-  const COSTS = [
-    { cat: 'League & Fees', item: 'League registration', description: 'Fall ball league fee', payee: 'Halton Fall Ball League', pieces: [{ amount: 1450, due: -88, paid: -86 }] },
-    { cat: 'Officials', item: 'Umpire Fees', description: 'Fall ball umpires', payee: 'Milton Umpires Association', pieces: [{ amount: 360, due: -63, paid: -63 }, { amount: 360, due: -42, paid: -41 }] },
-    { cat: 'Team Gear', item: 'Jerseys', description: 'Jerseys and pants', payee: 'Halton Sportswear', pieces: [{ amount: 780, due: -75, paid: -75 }, { amount: 780, due: 20, paid: null }] },
-    { cat: 'Team Gear', item: 'Balls', description: 'Two dozen softballs', payee: 'Halton Hardware & Supply', pieces: [{ amount: 310, due: -82, paid: -82, frontedBy: 4 }] },
-    { cat: 'Training', item: 'Practice equipment', description: 'Hitting net and two tees', payee: 'Halton Hardware & Supply', pieces: [{ amount: 289.5, due: -33, paid: -33 }] },
-    { cat: 'Tournaments', item: 'Entry Fees', description: 'Spring Opener entry', payee: 'Spring Opener (Kelso Ridge)', type: 'tournament_payable', pieces: [{ amount: 200, due: -20, paid: -19 }, { amount: 450, due: 75, paid: null }] },
-  ];
-  let spent = 0;
-  for (const c of COSTS) {
-    const w = word(c.cat, c.item);
-    const expenseId = await insertCommitmentWithRecords(db, {
-      row: { ...T, expense_type: c.type ?? 'expense', description: c.description, category: c.cat, budget_category_id: w.budget_category_id, budget_item_id: w.budget_item_id, payee_payer: c.payee, created_by: coachId },
-      installments: c.pieces.map(p => ({ amount: p.amount, dueDate: addDays(D, p.due) })),
-      payments: c.pieces.map((p, n) => (p.paid == null ? null : { amount: p.amount, paidDate: addDays(D, p.paid), installmentNumber: n + 1, paidByPlayerId: p.frontedBy != null ? pids[p.frontedBy] : null, method: 'etransfer' })).filter(Boolean),
-    });
-    for (const p of c.pieces.filter(x => x.frontedBy != null)) {
-      die('out-of-pocket credit', (await db.from('rep_dues_credits').insert({ program_year_id: dressed.pyId, player_id: pids[p.frontedBy], expense_id: expenseId, amount: p.amount,
-        description: `Paid out of pocket — ${c.description}`, credit_type: 'reimbursement', credit_date: addDays(D, p.paid), created_by: coachId })).error);
-    }
-    spent += c.pieces.filter(p => p.paid != null && p.frontedBy == null).reduce((n, p) => n + p.amount, 0);
-  }
-  const clubPaid = dressedInst.filter(i => i.installment_number === 1).reduce((n, i) => n + Number(i.amount), 0);
-  const cashEstimate = Math.round((duesIn + raised + SP.received - spent - clubPaid) * 100) / 100;
-  ok(`budget ${lineRows.length} lines (costs ${money(costTotal)}) · dues ${money(DU.total)} in ${DU.installments} (one family overdue, one part-paid, four paid the second early) · ${money(duesIn)} received`);
-  ok(`"${FR.name}" raised ${money(raised)} (half to the families) · ${SP.name} ${money(SP.received)} of ${money(SP.pledged)} · ${COSTS.length} costs, ${money(spent)} paid by the team · club dome bill filed under Dome Time, first payment paid`);
-  ok(`cash on hand should read about ${money(cashEstimate)} (check it on the team's Money page before the balance check)`);
-
-  // ── B4 · events, practice plans, drills, templates, the club's shared set ─────────────────────────────────────────
-  head(`${dressed.name} — practices, plans and drills`);
-  const sherwood = await one('Sherwood Park', db.from('org_venues').select('id, address').eq('org_id', ORG).eq('name', 'Sherwood Park').maybeSingle());
-  const sherwoodFac = sherwood ? (await one('Sherwood diamond', db.from('org_venue_facilities').select('id').eq('org_venue_id', sherwood.id).limit(1).maybeSingle()))?.id : null;
-  const drillRows = TEAM_DRILLS.map(d => ({ id: crypto.randomUUID(), org_id: ORG, team_id: dressed.id, name: d.name, usual_minutes: d.minutes, goal: d.goal, setup: d.setup,
-    coaching_points: d.points, equipment: d.equipment, is_active: true, created_by: coachId }));
-  await insertAll('rep_team_drills', drillRows);
+  // The club's shared drill set: one per club, whichever teams are dressed.
   await insertAll('rep_team_drills', SHARED_DRILLS.map(d => ({ org_id: ORG, team_id: null, name: d.name, usual_minutes: d.minutes, goal: d.goal, setup: d.setup,
     coaching_points: d.points, equipment: d.equipment, is_active: true, created_by: ctx.OWNER })));
-  const drillId = (name) => drillRows.find(d => d.name === name)?.id ?? null;
-  await insertAll('rep_team_plan_templates', [
-    { org_id: ORG, team_id: dressed.id, name: 'Dome hour: hitting', plan: stripPeople(planOf('dome-hitting', drillId, [])), is_active: true, created_by: coachId },
-    { org_id: ORG, team_id: dressed.id, name: 'Dome hour: defence', plan: stripPeople(planOf('dome-defence', drillId, [])), is_active: true, created_by: coachId },
-  ]);
-  const circuit = planOf('dome-hitting', drillId, []).blocks[1];
-  die('saved circuit', (await db.from('rep_team_circuits').insert({ org_id: ORG, team_id: dressed.id, name: 'Three-station hitting circuit', block: { ...circuit, rotation: { ...circuit.rotation, groups: [] } }, is_active: true, created_by: coachId })).error);
 
-  // Fall ball: games and practices (Sherwood Park, rep only); then the dome practices the club's schedule wrote.
-  const evRows = [];
-  const games = FALL_GAMES.map(([o, ha, us, them], g) => {
-    const day = addDays(D, o);
-    const start = torontoInstant(day, o % 7 === 0 ? '10:00' : '18:30');
-    const id = crypto.randomUUID();
-    evRows.push({ id, ...T, event_type: 'league_game', name: `${ha === 'home' ? 'vs' : 'at'} ${OPPONENTS[g % 4]}`, starts_at: start, ends_at: minutesLater(start, 105),
-      location: ha === 'home' ? 'Sherwood Park · Diamond 1' : `${OPPONENTS[g % 4].split(' ')[0]} Park`, org_venue_id: ha === 'home' ? sherwood?.id ?? null : null,
-      org_venue_facility_id: ha === 'home' ? sherwoodFac ?? null : null, opponent: OPPONENTS[g % 4], home_away: ha, team_score: us, opponent_score: them,
-      result: us > them ? 'win' : us < them ? 'loss' : 'tie', status: 'scheduled', arrival_time: null });
-    return { id, g, past: true };
-  });
-  const fallPractices = FALL_PRACTICES.map((o, k) => {
-    const start = torontoInstant(addDays(D, o), '18:30');
-    const id = crypto.randomUUID();
-    evRows.push({ id, ...T, event_type: 'practice', name: 'Practice', starts_at: start, ends_at: minutesLater(start, 90), location: 'Sherwood Park · Diamond 1',
-      org_venue_id: sherwood?.id ?? null, org_venue_facility_id: sherwoodFac ?? null, status: 'scheduled',
-      practice_plan: k === 1 ? null : planOf('field', drillId, pids), practice_recap: k === 1 ? 'Rained out after 40 minutes. We got through the infield work.' : null });
-    return { id, k };
-  });
-  await insertAll('rep_team_events', evRows);
-  const domeEvents = (await one('dome practices', db.from('rep_team_events').select('id, starts_at').eq('team_id', dressed.id).eq('program_year_id', dressed.pyId).not('club_schedule_slot_id', 'is', null)))
-    .sort((a, b) => a.starts_at.localeCompare(b.starts_at));
-  const nowMs = Date.now();
-  const pastDomeEv = domeEvents.filter(e => Date.parse(e.starts_at) < nowMs);
-  for (const [k, e] of pastDomeEv.entries()) {
-    die('dome plan', (await db.from('rep_team_events').update({ practice_plan: planOf(k % 2 ? 'dome-defence' : 'dome-hitting', drillId, pids) }).eq('id', e.id)).error);
-  }
-  // The finished season's practices with plans (summer), so "start from a past season" has something to offer.
-  const prevPlans = [-170, -156, -142, -128].map((o, k) => { const s = torontoInstant(addDays(D, o), '18:30'); return { program_year_id: prevPyId, team_id: dressed.id, org_id: ORG, event_type: 'practice', name: 'Practice',
-    starts_at: s, ends_at: minutesLater(s, 90), location: 'Sherwood Park · Diamond 1', status: 'scheduled', practice_plan: planOf(k % 2 ? 'dome-defence' : 'field', () => null, []) }; });
-  await insertAll('rep_team_events', prevPlans);
-  const nextDome = domeEvents.find(e => Date.parse(e.starts_at) >= nowMs);
-  ok(`${TEAM_DRILLS.length} drills in the coach's library · ${SHARED_DRILLS.length} in the club's shared set · 2 templates · 1 saved circuit`);
-  ok(`${FALL_GAMES.length} fall-ball games and ${FALL_PRACTICES.length} practices at Sherwood Park (${FALL_PRACTICES.length - 1} with plans) · ${pastDomeEv.length} past dome practices with plans · ${S.previousName}: ${prevPlans.length} practices with plans`);
-  ok(`the next dome practice (${nextDome ? dayOf(nextDome.starts_at) : 'none'}) has NO plan: Demo 3 starts it from a past practice and sends it to ${cfg.repPeople.assistant.name}`);
+  // ── B3–B5b · each dressed team: books, practices and plans, attendance, lineups, skills, the extras ──────────────
+  for (const kit of kits) {
+    const dressed = kit.team;
+    const dressedSplit = allocSplits.find(s => s.team_id === dressed.id);
+    const dressedInst = inst1.filter(i => i.team_id === dressed.id).sort((a, b) => a.installment_number - b.installment_number);
+    // ── B3 · the dressed team's book ──────────────────────────────────────────────────────────────────────────────────
+    head(`${dressed.name} — the books`);
+    const T = { team_id: dressed.id, org_id: ORG, program_year_id: dressed.pyId };
+    const pids = dressed.playerIds;
+    const coachId = kit.authorId;
+    const { budgetLineKindForItem } = await appModule('lib/coach-budget-totals.ts');
+    // Every word below is a platform word (none is invented), so no word source is derived here.
+    const cats = await one('budget categories', db.from('budget_categories').select('id, name, income_source').is('org_id', null).in('scope', ['team', 'both']));
+    const catId = new Map(cats.map(c => [c.name, c.id]));
+    const words = await one('budget words', db.from('budget_items').select('id, name, category_id, direction, actual_source').is('org_id', null).in('category_id', cats.map(c => c.id)));
+    const word = (cat, item) => {
+      const w = words.find(x => x.category_id === catId.get(cat) && x.name === item);
+      if (!w) die('budget word', { message: `${cat} / ${item} is not a platform word` });
+      return { budget_category_id: w.category_id, budget_item_id: w.id, kind: budgetLineKindForItem({ direction: w.direction, actualSource: w.actual_source }) };
+    };
+    const PLAN = [
+      { cat: 'Facilities', item: 'Dome Time', description: 'Winter dome (the club’s bill)', total: 1800, month: 0 },
+      { cat: 'League & Fees', item: 'League registration', description: 'Fall ball league', total: 1450, month: -3 },
+      { cat: 'Officials', item: 'Umpire Fees', description: 'Umpires, fall and spring', total: 1400, month: -2 },
+      { cat: 'Team Gear', item: 'Jerseys', description: 'Jerseys and pants', total: 1560, month: -2 },
+      { cat: 'Team Gear', item: 'Balls', description: 'Practice and game balls', total: 400, month: -3 },
+      { cat: 'Training', item: 'Practice equipment', description: 'Hitting net and tees', total: 350, month: -1 },
+      { cat: 'Tournaments', item: 'Entry Fees', description: 'Three spring tournaments', total: 1950, month: 4 },
+      { cat: 'Fundraising', item: 'Fundraising drive', description: 'Bottle drive and spring raffle', total: 1800, month: -2 },
+      { cat: 'Sponsorship', item: 'Team sponsorship', description: 'Team sponsors', total: 1500, month: -1 },
+      { cat: 'Events', item: 'Year-End Party', description: 'Season-end party', total: 600, month: null },
+    ];
+    const lineRows = PLAN.map((l, k) => { const w = word(l.cat, l.item); return { id: crypto.randomUUID(), ...T, category_id: w.budget_category_id, item_id: w.budget_item_id, description: l.description, total_amount: l.total, sort_order: k, line_kind: w.kind }; });
+    await insertAll('rep_budget_lines', lineRows);
+    const monthOf = (offsetMonths) => { const d = new Date(`${D.slice(0, 7)}-01T12:00:00Z`); d.setUTCMonth(d.getUTCMonth() + offsetMonths); return d.toISOString().slice(0, 7); };
+    await insertAll('rep_budget_periods', PLAN.map((l, k) => (l.month == null ? null : { budget_line_id: lineRows[k].id, period_label: monthOf(l.month), period_date: `${monthOf(l.month)}-01`, amount: l.total, sort_order: 0 })).filter(Boolean), 'id');
+    const costTotal = PLAN.filter((_, k) => lineRows[k].line_kind === 'cost').reduce((n, l) => n + l.total, 0);
+    die('season estimate', (await db.from('rep_program_years').update({ budget_amount: costTotal }).eq('id', dressed.pyId)).error);
+    // The club's dome bill filed under the team's own Dome Time line (the coach files a club bill on its split).
+    const dome = word('Facilities', 'Dome Time');
+    die('file the dome bill', (await db.from('rep_allocation_splits').update({ budget_category_id: dome.budget_category_id, budget_item_id: dome.budget_item_id }).eq('id', dressedSplit.id)).error);
 
-  // ── B5 · attendance, lineups, skills, goals ───────────────────────────────────────────────────────────────────────
-  head(`${dressed.name} — attendance, lineups, skills`);
-  const att = [];
-  const attOf = (eventId, n) => pids.forEach((pid, i) => att.push({ event_id: eventId, player_id: pid, program_year_id: dressed.pyId, team_id: dressed.id, org_id: ORG,
-    status: (i * 3 + n) % 11 === 0 ? 'absent' : (i + n * 2) % 13 === 0 ? 'late' : 'attending' }));
-  games.forEach(g => attOf(g.id, g.g));
-  fallPractices.forEach(p => attOf(p.id, p.k + 20));
-  pastDomeEv.forEach((e, k) => attOf(e.id, k + 40));
-  await insertAll('rep_team_event_attendance', att, 'event_id');
-  for (const g of games) {
-    const lineupId = crypto.randomUUID();
-    // Marked ready the evening before its game, as a coach who finished it would have (a played game's lineup is not a draft).
-    die('lineup', (await db.from('rep_team_lineups').insert({ id: lineupId, event_id: g.id, ...T, lineup_mode: 'everyone_bats', inning_count: 7,
-      status: 'ready', ready_at: torontoInstant(addDays(D, FALL_GAMES[g.g][0] - 1), '20:15'), ready_by: coachId })).error);
-    const grid = lineupGrid(g.g);
-    const order = [...Array(12).keys()].map(i => (i + g.g) % 12);
-    await insertAll('rep_team_lineup_entries', order.map((i, pos) => ({ lineup_id: lineupId, player_id: pids[i], batting_order: pos + 1, starter: true,
-      inning_positions: Object.fromEntries(grid.map((inning, n) => [String(n + 1), inning[i]])) })), 'lineup_id');
-  }
-  die('arm care', (await db.from('rep_program_years').update({ lineup_settings: { maxInningsPerPosition: null, pitcherMaxInningsDefault: 4, minInningsPerPlayer: 4 } }).eq('id', dressed.pyId)).error);
-  // Two testing days: the first fall practice, and the third dome Sunday.
-  const typeIds = TESTS.map(() => crypto.randomUUID());
-  await insertAll('rep_team_measurable_types', TESTS.map((t, k) => ({ id: typeIds[k], org_id: ORG, team_id: dressed.id, name: t.name, unit: t.unit, kind: 'test', aim: t.aim, method: t.method,
-    attempts_per_session: t.attempts, headline: 'best', sort_order: k, is_active: true, created_by: coachId })));
-  const skillId = crypto.randomUUID();
-  die('observed skill', (await db.from('rep_team_measurable_types').insert({ id: skillId, org_id: ORG, team_id: dressed.id, name: SKILL.name, unit: null, kind: 'skill', aim: 'record', method: SKILL.method,
-    attempts_per_session: 1, headline: 'last', descriptors: SKILL.descriptors, sort_order: TESTS.length, is_active: true, created_by: coachId })).error);
-  const testing = [
-    { date: addDays(D, FALL_PRACTICES[0]), event: fallPractices[0].id, note: 'Fall baseline', absent: [10] },
-    { date: pastDomeEv[2] ? dayOf(pastDomeEv[2].starts_at) : addDays(D, -14), event: pastDomeEv[2]?.id ?? null, note: 'Winter re-test in the dome', absent: [4] },
-  ];
-  const sessionIds = testing.map(() => crypto.randomUUID());
-  await insertAll('rep_team_evaluation_sessions', testing.map((s, k) => ({ id: sessionIds[k], org_id: ORG, team_id: dressed.id, program_year_id: dressed.pyId, session_date: s.date, event_id: s.event,
-    note: s.note, created_by: coachId, scope_metric_ids: [...typeIds, skillId], scope_player_ids: pids.filter((_, i) => !s.absent.includes(i)),
-    scope_attempts: Object.fromEntries(typeIds.map((id, t) => [id, TESTS[t].attempts])) })));
-  const readings = [];
-  testing.forEach((s, si) => pids.forEach((pid, i) => {
-    if (s.absent.includes(i)) return;
-    TESTS.forEach((t, ti) => {
-      const base = t.base + (((i * 37 + ti * 11) % 100) / 100 - 0.5) * t.spread;
-      for (let a = 0; a < t.attempts; a++) {
-        const v = base + si * t.gain * (1 + ((i + ti) % 3) / 2) + (a - 1) * (t.digits ? 1.5 : 0.04) * (t.aim === 'lower' ? -1 : 1) * ((a + i) % 2 ? 1 : -1);
-        readings.push({ org_id: ORG, team_id: dressed.id, player_id: pid, measurable_type_id: typeIds[ti], value: Number(v.toFixed(t.digits)), attempt_no: a + 1, unit: t.unit,
-          recorded_on: s.date, session_id: sessionIds[si], created_by: coachId });
+    // Player dues: four payments; the first paid by all but one family (overdue), the second paid early by four and half
+    // paid by one, the last two still ahead.
+    const DU = kit.money.dues;
+    const each = DU.total / DU.installments;
+    const dueDates = DU.dueOffsets.map(o => addDays(D, o));
+    const OVERDUE = 8, PART = 6, EARLY = [0, 3, 5, 10];
+    let duesIn = 0;
+    for (const [k, pid] of pids.entries()) {
+      const scheduleRow = await one('dues schedule', db.from('rep_player_dues_schedules').insert({ program_year_id: dressed.pyId, player_id: pid, team_id: dressed.id, org_id: ORG, total_amount: DU.total }).select('id').single());
+      const paid = (n) => (n === 0 ? k !== OVERDUE : n === 1 ? EARLY.includes(k) : false);
+      // Never dated after the demo day: a payment "made early" on a due date still ahead is one made in the last few days.
+      const paidDay = (n) => { const day = addDays(dueDates[n], n === 0 ? -(k % 5) : -(3 + (k % 6))); return day > D ? addDays(D, -1 - (k % 4)) : day; };
+      await insertAll('rep_player_dues_installments', dueDates.map((due, n) => ({ schedule_id: scheduleRow.id, player_id: pid, installment_number: n + 1, amount: each, due_date: due,
+        paid_at: paid(n) ? `${paidDay(n)}T17:00:00.000Z` : null, org_id: ORG, team_id: dressed.id, source: 'manual' })));
+      const pays = dueDates.map((_, n) => n).filter(paid).map(n => ({ amount: each, day: paidDay(n) }));
+      if (k === PART) pays.push({ amount: 150, day: addDays(D, -20) }, { amount: 100, day: addDays(D, -6) });
+      if (pays.length) await insertAll('rep_dues_payments', pays.map(p => ({ program_year_id: dressed.pyId, player_id: pid, org_id: ORG, team_id: dressed.id, amount: p.amount, received_date: p.day,
+        method: 'etransfer', source: 'recorded', created_at: `${p.day}T17:00:00.000Z` })));
+      duesIn += pays.reduce((n, p) => n + p.amount, 0);
+    }
+    // The bottle drive: closed; half of what each family raised comes off its dues.
+    const FR = kit.money.fundraiser;
+    const fr = word('Fundraising', 'Fundraising drive');
+    const frId = crypto.randomUUID();
+    die('fundraiser', (await db.from('rep_fundraisers').insert({ id: frId, ...T, name: FR.name, description: 'Bottles and cans collected door to door, two Saturdays.', player_rebate_percent: FR.rebatePercent,
+      start_date: addDays(D, FR.startOffset), end_date: addDays(D, FR.endOffset), is_active: false, budget_category_id: fr.budget_category_id, budget_item_id: fr.budget_item_id })).error);
+    const RAISED = kit.raised;
+    let raised = 0;
+    for (const [k, amt] of RAISED) {
+      const rebate = Math.round(amt * FR.rebatePercent) / 100;
+      const day = addDays(D, FR.endOffset + (k % 3));
+      const entryId = crypto.randomUUID();
+      die('fundraiser entry', (await db.from('rep_fundraiser_entries').insert({ id: entryId, fundraiser_id: frId, org_id: ORG, team_id: dressed.id, player_id: pids[k], amount_raised: amt,
+        rebate_percent: FR.rebatePercent, rebate_amount: rebate, received_date: day })).error);
+      const creditId = crypto.randomUUID();
+      die('rebate credit', (await db.from('rep_dues_credits').insert({ id: creditId, program_year_id: dressed.pyId, player_id: pids[k], amount: rebate, description: `Fundraiser rebate — ${FR.name}`,
+        credit_type: 'fundraiser', credit_date: day, fundraiser_entry_id: entryId })).error);
+      die('link credit', (await db.from('rep_fundraiser_entries').update({ credit_id: creditId }).eq('id', entryId)).error);
+      raised += amt;
+    }
+    // The sponsor: promised, half received. ⚠ The stored status is 'received' from the FIRST cheque (the product's own
+    // Record door flips it); "part received" is worked out from the money. A 'pledged' row with an arrival is a state the
+    // product never makes, and its register then counts none of the cheque.
+    const SP = kit.money.sponsor;
+    const sp = word('Sponsorship', 'Team sponsorship');
+    const spId = crypto.randomUUID();
+    die('sponsor', (await db.from('rep_fundraisers').insert({ id: spId, ...T, kind: 'sponsor', sponsor_status: SP.received > 0 ? 'received' : 'pledged', pledged_amount: SP.pledged, name: SP.name,
+      description: 'Jersey sleeve patch and the banner at the dome.', player_rebate_percent: 0, start_date: addDays(D, SP.receivedOffset - 10), end_date: null, is_active: true,
+      budget_category_id: sp.budget_category_id, budget_item_id: sp.budget_item_id })).error);
+    die('sponsor arrival', (await db.from('rep_fundraiser_entries').insert({ fundraiser_id: spId, org_id: ORG, team_id: dressed.id, player_id: null, amount_raised: SP.received, rebate_percent: 0,
+      rebate_amount: 0, received_date: addDays(D, SP.receivedOffset), method: 'cheque' })).error);
+    die('sponsor invoice details', (await db.from('rep_teams').update({ sponsor_payment_details: { payTo: dressed.name, instructions: `E-transfer to the team treasurer, or a cheque payable to Milton Bats Softball Association with "${dressed.key}" on the memo line.` } }).eq('id', dressed.id)).error);
+    // Costs and bills: paid, part-paid, one a family paid out of pocket, one still ahead.
+    const COSTS = [
+      { cat: 'League & Fees', item: 'League registration', description: 'Fall ball league fee', payee: 'Halton Fall Ball League', pieces: [{ amount: 1450, due: -88, paid: -86 }] },
+      { cat: 'Officials', item: 'Umpire Fees', description: 'Fall ball umpires', payee: 'Milton Umpires Association', pieces: [{ amount: 360, due: -63, paid: -63 }, { amount: 360, due: -42, paid: -41 }] },
+      { cat: 'Team Gear', item: 'Jerseys', description: 'Jerseys and pants', payee: 'Halton Sportswear', pieces: [{ amount: 780, due: -75, paid: -75 }, { amount: 780, due: 20, paid: null }] },
+      { cat: 'Team Gear', item: 'Balls', description: 'Two dozen softballs', payee: 'Halton Hardware & Supply', pieces: [{ amount: 310, due: -82, paid: -82, frontedBy: 4 }] },
+      { cat: 'Training', item: 'Practice equipment', description: 'Hitting net and two tees', payee: 'Halton Hardware & Supply', pieces: [{ amount: 289.5, due: -33, paid: -33 }] },
+      { cat: 'Tournaments', item: 'Entry Fees', description: 'Spring Opener entry', payee: 'Spring Opener (Kelso Ridge)', type: 'tournament_payable', pieces: [{ amount: 200, due: -20, paid: -19 }, { amount: 450, due: 75, paid: null }] },
+    ];
+    let spent = 0;
+    for (const c of COSTS) {
+      const w = word(c.cat, c.item);
+      const expenseId = await insertCommitmentWithRecords(db, {
+        row: { ...T, expense_type: c.type ?? 'expense', description: c.description, category: c.cat, budget_category_id: w.budget_category_id, budget_item_id: w.budget_item_id, payee_payer: c.payee, created_by: coachId },
+        installments: c.pieces.map(p => ({ amount: p.amount, dueDate: addDays(D, p.due) })),
+        payments: c.pieces.map((p, n) => (p.paid == null ? null : { amount: p.amount, paidDate: addDays(D, p.paid), installmentNumber: n + 1, paidByPlayerId: p.frontedBy != null ? pids[p.frontedBy] : null, method: 'etransfer' })).filter(Boolean),
+      });
+      for (const p of c.pieces.filter(x => x.frontedBy != null)) {
+        die('out-of-pocket credit', (await db.from('rep_dues_credits').insert({ program_year_id: dressed.pyId, player_id: pids[p.frontedBy], expense_id: expenseId, amount: p.amount,
+          description: `Paid out of pocket — ${c.description}`, credit_type: 'reimbursement', credit_date: addDays(D, p.paid), created_by: coachId })).error);
       }
-    });
-  }));
-  await insertAll('rep_player_measurables', readings);
-  const goalIds = pids.map(() => crypto.randomUUID());
-  await insertAll('rep_player_development_goals', pids.map((pid, i) => ({ id: goalIds[i], org_id: ORG, team_id: dressed.id, player_id: pid, focus_area: FOCUS[i % FOCUS.length],
-    note: i === 0 ? 'Gets under the ball on the outside pitch. Working the tee lane every Sunday.' : null, status: i === 6 || i === 9 ? 'achieved' : 'working', origin: 'coach', created_by: coachId })));
-  const obs = [];
-  testing.forEach((s, si) => pids.forEach((pid, i) => {
-    if (s.absent.includes(i) || i % 2 !== si % 2 && i !== 0) return;
-    obs.push({ org_id: ORG, team_id: dressed.id, player_id: pid, measurable_type_id: skillId, metric_kind: 'skill', observed_on: s.date, descriptor: SKILL.descriptors[Math.min(2, (i % 3) + si)],
-      note: i === 0 ? (si ? 'Glove out front now; still rushing the throw.' : 'Fields it cleanly; feet stop early.') : null, goal_id: i === 1 ? goalIds[1] : null, session_id: sessionIds[si], created_by: coachId });
-  }));
-  await insertAll('rep_player_observations', obs);
-  ok(`attendance on ${games.length} games and ${fallPractices.length + pastDomeEv.length} practices · ${games.length} lineups (7 innings, everyone bats, two pitchers)`);
-  ok(`${TESTS.length} tests over 2 testing days (${testing.map(s => s.date).join(', ')}) · ${readings.length} readings · ${obs.length} observations · a goal for every player`);
+      spent += c.pieces.filter(p => p.paid != null && p.frontedBy == null).reduce((n, p) => n + p.amount, 0);
+    }
+    const clubPaid = dressedInst.filter(i => i.installment_number === 1).reduce((n, i) => n + Number(i.amount), 0);
+    const cashEstimate = Math.round((duesIn + raised + SP.received - spent - clubPaid) * 100) / 100;
+    ok(`budget ${lineRows.length} lines (costs ${money(costTotal)}) · dues ${money(DU.total)} in ${DU.installments} (one family overdue, one part-paid, four paid the second early) · ${money(duesIn)} received`);
+    ok(`"${FR.name}" raised ${money(raised)} (half to the families) · ${SP.name} ${money(SP.received)} of ${money(SP.pledged)} · ${COSTS.length} costs, ${money(spent)} paid by the team · club dome bill filed under Dome Time, first payment paid`);
+    ok(`cash on hand should read about ${money(cashEstimate)} (check it on the team's Money page before the balance check)`);
 
-  // ── B5b · the off-script dressing (plan §10): upcoming games, awards, the opponent book, notes, sent emails ──────────
-  head(`${dressed.name} — upcoming games, awards, the opponent book, emails`);
-  // Three winter exhibition games on Saturdays (the dome schedule is Sundays), the first at least a week out, so the NEXT
-  // thing on the team's schedule is still the dome practice Demo 3 plans. No lineup is made for them: "Build lineup" from a
-  // past one is the live step, and a seeded lineup for an unplayed game would be counted nowhere a coach expects.
-  const firstSaturday = onOrAfter(addDays(D, 7), 6);
-  const upcoming = [0, 1, 2].map(k => {
-    const away = k === 1;
-    const opp = OPPONENTS[(k + 1) % 4];
-    const start = torontoInstant(addDays(firstSaturday, 7 * k), away ? '13:00' : '10:00');
-    return { id: crypto.randomUUID(), ...T, event_type: 'league_game', name: `${away ? 'at' : 'vs'} ${opp}`, starts_at: start, ends_at: minutesLater(start, 90),
-      location: away ? `${opp.split(' ')[0]} Fieldhouse` : `${DM.venue.name} · ${DM.venue.fields[0]}`, org_venue_id: away ? null : domeVenue.id,
-      org_venue_facility_id: away ? null : field[DM.venue.fields[0]], opponent: opp, home_away: away ? 'away' : 'home', status: 'scheduled', arrival_time: null };
-  });
-  await insertAll('rep_team_events', upcoming);
-  const awardTypeIds = AWARD_TYPES.map(() => crypto.randomUUID());
-  await insertAll('rep_team_award_types', AWARD_TYPES.map((t, k) => ({ id: awardTypeIds[k], org_id: ORG, team_id: dressed.id, name: t.name, emoji: t.emoji, sort_order: k, created_by: coachId })));
-  await insertAll('rep_player_awards', AWARDS.map(([g, p, t, note]) => ({ org_id: ORG, team_id: dressed.id, player_id: pids[p], award_type_id: awardTypeIds[t], event_id: games[g].id,
-    awarded_at: addDays(D, FALL_GAMES[g][0]), note, created_by: coachId })));
-  // The opponent book, keyed by the product's own name key so each line meets its games.
-  const { normalizeOpponentName } = await appModule('lib/opponent-name-key.ts');
-  const bookIds = SCOUTING.map(() => crypto.randomUUID());
-  const lastGameOf = (o) => Math.max(...FALL_GAMES.map((_, g) => (g % 4 === o ? g : -1)));
-  await insertAll('rep_team_opponents', SCOUTING.map((s, o) => ({ id: bookIds[o], org_id: ORG, team_id: dressed.id, display_name: OPPONENTS[o], normalized_name: normalizeOpponentName(OPPONENTS[o]),
-    summary: s.summary, updated_by: coachId, last_note_updated_at: torontoInstant(addDays(D, FALL_GAMES[lastGameOf(o)][0]), '21:00') })));
-  await insertAll('rep_team_opponent_observations', SCOUTING.flatMap((s, o) => s.notes.map(([g, tag, body]) => ({ opponent_id: bookIds[o], org_id: ORG, team_id: dressed.id,
-    event_id: g == null ? null : games[g].id, body, tag, created_by: coachId, created_by_name: cfg.repPeople.headCoach.name,
-    created_at: torontoInstant(addDays(D, FALL_GAMES[g ?? lastGameOf(o)][0]), '21:00') }))));
-  await insertAll('rep_player_notes', PLAYER_NOTES.map(([p, body], k) => ({ org_id: ORG, team_id: dressed.id, player_id: pids[p], noted_on: addDays(D, k ? -9 : -16), body, created_by: coachId })));
-  // Emails already sent to the families (history only: nothing here calls the mailer).
-  await insertAll('rep_team_announcements', TEAM_EMAILS.map(([o, subject, body]) => { const at = torontoInstant(addDays(D, o), '19:40'); return { ...T, subject, body,
-    recipient_count: pids.length, sent_count: pids.length, failed_count: 0, status: 'sent', sent_at: at, created_by: coachId, created_at: at }; }));
-  ok(`${upcoming.length} upcoming games (${upcoming.map(e => dayOf(e.starts_at)).join(', ')}; the next event is still the dome practice) · ${games.length} lineups marked ready`);
-  ok(`${AWARDS.length} awards of ${AWARD_TYPES.length} kinds · the opponent book: ${SCOUTING.length} opponents, ${SCOUTING.reduce((n, s) => n + s.notes.length, 0)} notes · ${PLAYER_NOTES.length} player notes · ${TEAM_EMAILS.length} emails sent to the families`);
-  ok('emergency contacts on every player, a medical note on two · one invitation waiting in Members');
+    // ── B4 · events, practice plans, drills, templates, the club's shared set ─────────────────────────────────────────
+    head(`${dressed.name} — practices, plans and drills`);
+    const home = await one(kit.homeVenue, db.from('org_venues').select('id, address').eq('org_id', ORG).eq('name', kit.homeVenue).maybeSingle());
+    const homeFac = home ? (await one('home diamond', db.from('org_venue_facilities').select('id').eq('org_venue_id', home.id).eq('name', 'Diamond 1').maybeSingle()))?.id : null;
+    const drillRows = TEAM_DRILLS.map(d => ({ id: crypto.randomUUID(), org_id: ORG, team_id: dressed.id, name: d.name, usual_minutes: d.minutes, goal: d.goal, setup: d.setup,
+      coaching_points: d.points, equipment: d.equipment, is_active: true, created_by: coachId }));
+    await insertAll('rep_team_drills', drillRows);
+    const drillId = (name) => drillRows.find(d => d.name === name)?.id ?? null;
+    await insertAll('rep_team_plan_templates', [
+      { org_id: ORG, team_id: dressed.id, name: 'Dome hour: hitting', plan: stripPeople(planOf('dome-hitting', drillId, [])), is_active: true, created_by: coachId },
+      { org_id: ORG, team_id: dressed.id, name: 'Dome hour: defence', plan: stripPeople(planOf('dome-defence', drillId, [])), is_active: true, created_by: coachId },
+    ]);
+    const circuit = planOf('dome-hitting', drillId, []).blocks[1];
+    die('saved circuit', (await db.from('rep_team_circuits').insert({ org_id: ORG, team_id: dressed.id, name: 'Three-station hitting circuit', block: { ...circuit, rotation: { ...circuit.rotation, groups: [] } }, is_active: true, created_by: coachId })).error);
+
+    // Fall ball: games and practices (Sherwood Park, rep only); then the dome practices the club's schedule wrote.
+    const evRows = [];
+    const games = kit.games.map(([o, ha, us, them], g) => {
+      const day = addDays(D, o);
+      const start = torontoInstant(day, o % 7 === 0 ? '10:00' : '18:30');
+      const id = crypto.randomUUID();
+      evRows.push({ id, ...T, event_type: 'league_game', name: `${ha === 'home' ? 'vs' : 'at'} ${OPPONENTS[g % 4]}`, starts_at: start, ends_at: minutesLater(start, 105),
+        location: ha === 'home' ? `${kit.homeVenue} · Diamond 1` : `${OPPONENTS[g % 4].split(' ')[0]} Park`, org_venue_id: ha === 'home' ? home?.id ?? null : null,
+        org_venue_facility_id: ha === 'home' ? homeFac ?? null : null, opponent: OPPONENTS[g % 4], home_away: ha, team_score: us, opponent_score: them,
+        result: us > them ? 'win' : us < them ? 'loss' : 'tie', status: 'scheduled', arrival_time: null });
+      return { id, g, past: true };
+    });
+    const fallPractices = FALL_PRACTICES.map((o, k) => {
+      const start = torontoInstant(addDays(D, o), '18:30');
+      const id = crypto.randomUUID();
+      evRows.push({ id, ...T, event_type: 'practice', name: 'Practice', starts_at: start, ends_at: minutesLater(start, 90), location: `${kit.homeVenue} · Diamond 1`,
+        org_venue_id: home?.id ?? null, org_venue_facility_id: homeFac ?? null, status: 'scheduled',
+        practice_plan: k === 1 ? null : planOf('field', drillId, pids), practice_recap: k === 1 ? 'Rained out after 40 minutes. We got through the infield work.' : null });
+      return { id, k };
+    });
+    await insertAll('rep_team_events', evRows);
+    const domeEvents = (await one('dome practices', db.from('rep_team_events').select('id, starts_at').eq('team_id', dressed.id).eq('program_year_id', dressed.pyId).not('club_schedule_slot_id', 'is', null)))
+      .sort((a, b) => a.starts_at.localeCompare(b.starts_at));
+    const nowMs = Date.now();
+    const pastDomeEv = domeEvents.filter(e => Date.parse(e.starts_at) < nowMs);
+    for (const [k, e] of pastDomeEv.entries()) {
+      die('dome plan', (await db.from('rep_team_events').update({ practice_plan: planOf(k % 2 ? 'dome-defence' : 'dome-hitting', drillId, pids) }).eq('id', e.id)).error);
+    }
+    // The finished season's practices with plans (summer), so "start from a past season" has something to offer.
+    const prevPlans = [-170, -156, -142, -128].map((o, k) => { const s = torontoInstant(addDays(D, o), '18:30'); return { program_year_id: kit.prevPyId, team_id: dressed.id, org_id: ORG, event_type: 'practice', name: 'Practice',
+      starts_at: s, ends_at: minutesLater(s, 90), location: `${kit.homeVenue} · Diamond 1`, status: 'scheduled', practice_plan: planOf(k % 2 ? 'dome-defence' : 'field', () => null, []) }; });
+    await insertAll('rep_team_events', prevPlans);
+    const nextDome = domeEvents.find(e => Date.parse(e.starts_at) >= nowMs);
+    ok(`${TEAM_DRILLS.length} drills in the coach's library · ${SHARED_DRILLS.length} in the club's shared set · 2 templates · 1 saved circuit`);
+    ok(`${kit.games.length} fall-ball games and ${FALL_PRACTICES.length} practices at ${kit.homeVenue} (${FALL_PRACTICES.length - 1} with plans) · ${pastDomeEv.length} past dome practices with plans · ${S.previousName}: ${prevPlans.length} practices with plans`);
+    ok(`the next dome practice (${nextDome ? dayOf(nextDome.starts_at) : 'none'}) has NO plan${kit.primary ? `: Demo 3 starts it from a past practice and sends it to ${cfg.repPeople.assistant.name}` : ''}`);
+
+    // ── B5 · attendance, lineups, skills, goals ───────────────────────────────────────────────────────────────────────
+    head(`${dressed.name} — attendance, lineups, skills`);
+    const att = [];
+    const attOf = (eventId, n) => pids.forEach((pid, i) => att.push({ event_id: eventId, player_id: pid, program_year_id: dressed.pyId, team_id: dressed.id, org_id: ORG,
+      status: (i * 3 + n) % 11 === 0 ? 'absent' : (i + n * 2) % 13 === 0 ? 'late' : 'attending' }));
+    games.forEach(g => attOf(g.id, g.g));
+    fallPractices.forEach(p => attOf(p.id, p.k + 20));
+    pastDomeEv.forEach((e, k) => attOf(e.id, k + 40));
+    await insertAll('rep_team_event_attendance', att, 'event_id');
+    for (const g of games) {
+      const lineupId = crypto.randomUUID();
+      // Marked ready the evening before its game, as a coach who finished it would have (a played game's lineup is not a draft).
+      die('lineup', (await db.from('rep_team_lineups').insert({ id: lineupId, event_id: g.id, ...T, lineup_mode: 'everyone_bats', inning_count: 7,
+        status: 'ready', ready_at: torontoInstant(addDays(D, kit.games[g.g][0] - 1), '20:15'), ready_by: coachId })).error);
+      const grid = lineupGrid(g.g);
+      const order = [...Array(12).keys()].map(i => (i + g.g) % 12);
+      await insertAll('rep_team_lineup_entries', order.map((i, pos) => ({ lineup_id: lineupId, player_id: pids[i], batting_order: pos + 1, starter: true,
+        inning_positions: Object.fromEntries(grid.map((inning, n) => [String(n + 1), inning[i]])) })), 'lineup_id');
+    }
+    die('arm care', (await db.from('rep_program_years').update({ lineup_settings: { maxInningsPerPosition: null, pitcherMaxInningsDefault: 4, minInningsPerPlayer: 4 } }).eq('id', dressed.pyId)).error);
+    // Two testing days: the first fall practice, and the third dome Sunday.
+    const typeIds = TESTS.map(() => crypto.randomUUID());
+    await insertAll('rep_team_measurable_types', TESTS.map((t, k) => ({ id: typeIds[k], org_id: ORG, team_id: dressed.id, name: t.name, unit: t.unit, kind: 'test', aim: t.aim, method: t.method,
+      attempts_per_session: t.attempts, headline: 'best', sort_order: k, is_active: true, created_by: coachId })));
+    const skillId = crypto.randomUUID();
+    die('observed skill', (await db.from('rep_team_measurable_types').insert({ id: skillId, org_id: ORG, team_id: dressed.id, name: SKILL.name, unit: null, kind: 'skill', aim: 'record', method: SKILL.method,
+      attempts_per_session: 1, headline: 'last', descriptors: SKILL.descriptors, sort_order: TESTS.length, is_active: true, created_by: coachId })).error);
+    const testing = [
+      { date: addDays(D, FALL_PRACTICES[0]), event: fallPractices[0].id, note: 'Fall baseline', absent: [10] },
+      { date: pastDomeEv[2] ? dayOf(pastDomeEv[2].starts_at) : addDays(D, -14), event: pastDomeEv[2]?.id ?? null, note: 'Winter re-test in the dome', absent: [4] },
+    ];
+    const sessionIds = testing.map(() => crypto.randomUUID());
+    await insertAll('rep_team_evaluation_sessions', testing.map((s, k) => ({ id: sessionIds[k], org_id: ORG, team_id: dressed.id, program_year_id: dressed.pyId, session_date: s.date, event_id: s.event,
+      note: s.note, created_by: coachId, scope_metric_ids: [...typeIds, skillId], scope_player_ids: pids.filter((_, i) => !s.absent.includes(i)),
+      scope_attempts: Object.fromEntries(typeIds.map((id, t) => [id, TESTS[t].attempts])) })));
+    const readings = [];
+    testing.forEach((s, si) => pids.forEach((pid, i) => {
+      if (s.absent.includes(i)) return;
+      TESTS.forEach((t, ti) => {
+        const base = t.base * (t.aim === 'lower' ? kit.slower : kit.weaker) + (((i * 37 + ti * 11) % 100) / 100 - 0.5) * t.spread;
+        for (let a = 0; a < t.attempts; a++) {
+          const v = base + si * t.gain * (1 + ((i + ti) % 3) / 2) + (a - 1) * (t.digits ? 1.5 : 0.04) * (t.aim === 'lower' ? -1 : 1) * ((a + i) % 2 ? 1 : -1);
+          readings.push({ org_id: ORG, team_id: dressed.id, player_id: pid, measurable_type_id: typeIds[ti], value: Number(v.toFixed(t.digits)), attempt_no: a + 1, unit: t.unit,
+            recorded_on: s.date, session_id: sessionIds[si], created_by: coachId });
+        }
+      });
+    }));
+    await insertAll('rep_player_measurables', readings);
+    const goalIds = pids.map(() => crypto.randomUUID());
+    await insertAll('rep_player_development_goals', pids.map((pid, i) => ({ id: goalIds[i], org_id: ORG, team_id: dressed.id, player_id: pid, focus_area: FOCUS[i % FOCUS.length],
+      note: i === 0 ? 'Gets under the ball on the outside pitch. Working the tee lane every Sunday.' : null, status: i === 6 || i === 9 ? 'achieved' : 'working', origin: 'coach', created_by: coachId })));
+    const obs = [];
+    testing.forEach((s, si) => pids.forEach((pid, i) => {
+      if (s.absent.includes(i) || i % 2 !== si % 2 && i !== 0) return;
+      obs.push({ org_id: ORG, team_id: dressed.id, player_id: pid, measurable_type_id: skillId, metric_kind: 'skill', observed_on: s.date, descriptor: SKILL.descriptors[Math.min(2, (i % 3) + si)],
+        note: i === 0 ? (si ? 'Glove out front now; still rushing the throw.' : 'Fields it cleanly; feet stop early.') : null, goal_id: i === 1 ? goalIds[1] : null, session_id: sessionIds[si], created_by: coachId });
+    }));
+    await insertAll('rep_player_observations', obs);
+    ok(`attendance on ${games.length} games and ${fallPractices.length + pastDomeEv.length} practices · ${games.length} lineups (7 innings, everyone bats, two pitchers)`);
+    ok(`${TESTS.length} tests over 2 testing days (${testing.map(s => s.date).join(', ')}) · ${readings.length} readings · ${obs.length} observations · a goal for every player`);
+
+    // ── B5b · the off-script dressing (plan §10): upcoming games, awards, the opponent book, notes, sent emails ──────────
+    head(`${dressed.name} — upcoming games, awards, the opponent book, emails`);
+    // Three winter exhibition games on Saturdays (the dome schedule is Sundays), the first at least a week out, so the NEXT
+    // thing on the team's schedule is still the dome practice Demo 3 plans. No lineup is made for them: "Build lineup" from a
+    // past one is the live step, and a seeded lineup for an unplayed game would be counted nowhere a coach expects.
+    const firstSaturday = onOrAfter(addDays(D, 7), 6);
+    const upcoming = [0, 1, 2].map(k => {
+      const away = k === 1;
+      const opp = OPPONENTS[(k + 1) % 4];
+      const start = torontoInstant(addDays(firstSaturday, 7 * k), away ? '13:00' : '10:00');
+      return { id: crypto.randomUUID(), ...T, event_type: 'league_game', name: `${away ? 'at' : 'vs'} ${opp}`, starts_at: start, ends_at: minutesLater(start, 90),
+        location: away ? `${opp.split(' ')[0]} Fieldhouse` : `${DM.venue.name} · ${DM.venue.fields[kit.domeField]}`, org_venue_id: away ? null : domeVenue.id,
+        org_venue_facility_id: away ? null : field[DM.venue.fields[kit.domeField]], opponent: opp, home_away: away ? 'away' : 'home', status: 'scheduled', arrival_time: null };
+    });
+    await insertAll('rep_team_events', upcoming);
+    const awardTypeIds = AWARD_TYPES.map(() => crypto.randomUUID());
+    await insertAll('rep_team_award_types', AWARD_TYPES.map((t, k) => ({ id: awardTypeIds[k], org_id: ORG, team_id: dressed.id, name: t.name, emoji: t.emoji, sort_order: k, created_by: coachId })));
+    await insertAll('rep_player_awards', AWARDS.map(([g, p, t, note]) => ({ org_id: ORG, team_id: dressed.id, player_id: pids[p], award_type_id: awardTypeIds[t], event_id: games[g].id,
+      awarded_at: addDays(D, kit.games[g][0]), note, created_by: coachId })));
+    // The opponent book, keyed by the product's own name key so each line meets its games.
+    const { normalizeOpponentName } = await appModule('lib/opponent-name-key.ts');
+    const bookIds = SCOUTING.map(() => crypto.randomUUID());
+    const lastGameOf = (o) => Math.max(...kit.games.map((_, g) => (g % 4 === o ? g : -1)));
+    await insertAll('rep_team_opponents', SCOUTING.map((s, o) => ({ id: bookIds[o], org_id: ORG, team_id: dressed.id, display_name: OPPONENTS[o], normalized_name: normalizeOpponentName(OPPONENTS[o]),
+      summary: s.summary, updated_by: coachId, last_note_updated_at: torontoInstant(addDays(D, kit.games[lastGameOf(o)][0]), '21:00') })));
+    await insertAll('rep_team_opponent_observations', SCOUTING.flatMap((s, o) => s.notes.map(([g, tag, body]) => ({ opponent_id: bookIds[o], org_id: ORG, team_id: dressed.id,
+      event_id: g == null ? null : games[g].id, body, tag, created_by: coachId, created_by_name: kit.authorName,
+      created_at: torontoInstant(addDays(D, kit.games[g ?? lastGameOf(o)][0]), '21:00') }))));
+    await insertAll('rep_player_notes', PLAYER_NOTES.map(([p, body], k) => ({ org_id: ORG, team_id: dressed.id, player_id: pids[p], noted_on: addDays(D, k ? -9 : -16), body, created_by: coachId })));
+    // Emails already sent to the families (history only: nothing here calls the mailer).
+    await insertAll('rep_team_announcements', teamEmails(`$${raised.toLocaleString('en-CA')}`, kit.signOff).map(([o, subject, body]) => { const at = torontoInstant(addDays(D, o), '19:40'); return { ...T, subject, body,
+      recipient_count: pids.length, sent_count: pids.length, failed_count: 0, status: 'sent', sent_at: at, created_by: coachId, created_at: at }; }));
+    ok(`${upcoming.length} upcoming games (${upcoming.map(e => dayOf(e.starts_at)).join(', ')}; the next event is still the dome practice) · ${games.length} lineups marked ready`);
+    ok(`${AWARDS.length} awards of ${AWARD_TYPES.length} kinds · the opponent book: ${SCOUTING.length} opponents, ${SCOUTING.reduce((n, s) => n + s.notes.length, 0)} notes · ${PLAYER_NOTES.length} player notes · 2 emails sent to the families`);
+    ok(`emergency contacts on every player, a medical note on two${kit.primary ? ' · one invitation waiting in Members' : ''}`);
+    kit.result = { id: dressed.id, name: dressed.name, slug: dressed.slug, nextDome: nextDome ? dayOf(nextDome.starts_at) : null, cashEstimate };
+  }
 
   // ── B6 · the tournament, the site's notice and sponsors ───────────────────────────────────────────────────────────
   head('The tournament and the public site');
@@ -771,7 +840,8 @@ export async function buildRep(ctx) {
   ok('a notice on every public page until it ends');
 
   return {
-    dressed: { id: dressed.id, name: dressed.name, slug: dressed.slug, nextDome: nextDome ? dayOf(nextDome.starts_at) : null, cashEstimate, overdue: DRESSED_ROSTER[OVERDUE], part: DRESSED_ROSTER[PART] },
+    dressed: kits[0].result,
+    alsoDressed: kits.slice(1).map(k => k.result),
     dome: { permit: P.name, part1: [part1[0], part1.at(-1)], part2From: heldSundays[P.offAfter], datesOff: offDays, total: shares.totalCents / 100 },
     tournament: { slug: TN.slug, day: sat, champions },
   };

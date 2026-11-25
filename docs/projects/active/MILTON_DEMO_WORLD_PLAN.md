@@ -77,9 +77,22 @@ seat only, and `+hladmin` is a League admin (refused, by design).
 - Deletes and re-creates **only rows owned by the Milton org** (children, registrations, teams, games, money, emails sent, notices,
   team-change state, previous season, club schedule). **Never touches auth users, their passwords, memberships, or the org's
   branding.** So an open browser session survives a reset.
+- **People's access survives a reset (owner 2026-11-25).** Pending club invitations are kept. Rep team staff, house-league
+  coaches, team-staff invitations and members' rep-group / tournament limits are saved before the delete and put back after
+  the build (`scripts/lib/prospect-demo-access.mjs`; a copy waits in `.probe/` until everything is back, so a stopped run
+  loses nothing). What was there wins over the demo's own seat; a demo seat deleted outright is added again. **Exception:**
+  the `+registrar` walk seat is removed so Walk 5 repeats. **Not kept:** family connections (their children are rebuilt),
+  and access to a team that no longer exists (named in the run's output).
 - Refuses any database that is not dev; refuses to run if the org slug is not `milton-bats`.
 - `--demo-day YYYY-MM-DD` moves the dates. `--dry-run` prints what it would do.
-- A reset also clears what a live walk created (his pretend child, the rainout, the published U9 teams, the registrar invite).
+- A reset also clears what a live walk created (his pretend child, the rainout, the published U9 teams, the registrar seat).
+
+- **A second stocked team (owner 2026-11-25).** `alsoDressed` in the config gives more teams the full set of data (books,
+  practices and plans, games and lineups, skills, awards, scouting, emails), each from its own "kit" in
+  `prospect-demo-rep.mjs` (own roster, numbers, home park and dome field). **U13 Rep Purple has NO head coach**: the club
+  president is invited to the empty seat by hand, and the invitation survives rebuilds. It has no assistant and no demo
+  coach (the earlier made-up coach was removed from the team and the club). Rebuilt and counted on dev 2026-11-25: the same
+  record counts as U15 in every team table, staff aside.
 
 ## 4. Build order
 A. Org + branding + contact details + venues + members/aliases + house-league season, divisions, registrations (money via the real
