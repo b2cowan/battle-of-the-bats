@@ -4,6 +4,7 @@ import { hasModuleEntitlement } from '@/lib/module-entitlements';
 import { clubTeamsAddress } from '@/lib/public-club-access';
 import { clubTournamentParts, runningLeagueSeason } from '@/lib/club-site-home';
 import { countListedTeams } from '@/lib/org-section-availability';
+import { countPublicRepTeams } from '@/lib/public-team-schedule';
 import { listClubArchives } from '@/lib/club-archives';
 import { tournamentToday } from '@/lib/timezone';
 import type { Organization, OrgPublicSiteContent } from '@/lib/types';
@@ -33,7 +34,7 @@ export async function publicSiteEditorFacts(
   contentRead: Promise<OrgPublicSiteContent | null>,
 ): Promise<{ facts: SectionFacts; carries: SectionCarries }> {
   const carries = siteSectionCarries(org);
-  const [teams, tournaments, seasons, content] = await Promise.all([
+  const [teams, tournaments, seasons, content, repTeams] = await Promise.all([
     carries.teams ? countListedTeams(org.id) : 0,
     carries.tournaments
       ? Promise.all([getTournamentsByOrg(org.id), listClubArchives(org.id)])
@@ -42,6 +43,8 @@ export async function publicSiteEditorFacts(
       : NO_TOURNAMENTS,
     carries.league ? getLeagueSeasons(org.id).catch(() => []) : [],
     contentRead.catch(() => null),
+    // G10: how many rep teams show their games on the home — the home's own rule. A failed count draws no line.
+    carries.teams ? countPublicRepTeams(org).catch(() => undefined) : undefined,
   ]);
   const publicSeasons = seasons.filter(s => s.status !== 'draft');
   return {
@@ -52,6 +55,7 @@ export async function publicSiteEditorFacts(
       tournaments: tournaments.current,
       past: tournaments.past,
       about: !!content?.description?.trim(),
+      ...(repTeams ? { repTeams } : {}),
     },
     carries,
   };

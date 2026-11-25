@@ -28862,6 +28862,21 @@ performed over the shared working tree. The original walk result is not claimed 
 **✅ PASSED 2026-11-25, 37 of 37** (paste-back; A 7/7, B 16/16, C 7/7, D 7/7; no notes came back). No owner calls in this walk. Next: the commit at the owner's yes.
 <!-- /§566 -->
 
+## §567 · Club website · Stage 1 · Game day on the club home — **on a day with games the club's home shows them after Open now (live now, later today, latest results, not being played today; a running tournament as one row), the house league schedule, standings and season page update their scores by themselves within 30 seconds, the Tournaments card says "Games today", and the site editor says how many rep teams show their games**
+<!-- §567 -->
+**Walk published 2026-11-25.** [Interactive walk](https://claude.ai/artifact/SYSsX7HKAXMVLno4UeVZo7) (walks A–D, 29 steps; no owner calls, G1–G11 ruled 2026-11-25) · [repository HTML](CLUB_WEBSITE_STAGE1_WALK.html). Built on dev, no migration. Plan: `CLUB_WEBSITE_ENHANCEMENTS_PLAN.md` §6 Stage 1 and Progress.
+
+**Where:** `http://localhost:3000`, club **Kestrel Bay** (`/kestrel-bay`); walk D on the staging site after a push. **Sign in:** a private window for every public page (nobody signs in); house league admin `league@kestrel-bay.example.test` and club president `president@kestrel-bay.example.test`, password `UATPassword2026!`.
+
+**Data:** `node --env-file=.env.local scripts/seed-on-sale-pictures-extras.mjs` (daytime; re-run it within the hour before walking: the live games last about 85 minutes; after `seed-prospect-demo.mjs --club=kestrel` only if the club was reset). Six house league games today (final, no score yet, two live, later, postponed), the U13 Ospreys Public with a live 2–1, an away game later and a 5–3 win two days ago, the Fall Classic live.
+
+**Walks:** A the club home on a game day, computer then phone width, and a failed check that says nothing (14) · B a score reaches the public schedule, standings and home by itself, and a hidden tab catches up (10) · C the site editor's rep line and the help (3) · D the staging edge holds the games check (2).
+
+**Left out (pinned by tests):** the "N more …" row (Kestrel's bands hold four or fewer), a failed first read and its Try again, the checks stopping outside the game window, a rep team set to Families (no step changes it).
+
+Committed 2026-11-25, ahead of the walk (owner: "yes commit now").
+<!-- /§567 -->
+
 ## §568 · Club website · Track P · Session P2 · Prospect clubs, making a preview, the marking — **the owner makes a prospect’s own club from platform admin (a Growth staff member never sees the page), every refusal shows under its field, the club is made in one step with its made-up season, rep teams, an unlisted one-day tournament whose first game is live at the meeting time and three “(sample)” sponsors; every page of it carries the band, the footer line and “(preview)” in its title, Register says “Registration isn’t open on this preview”, and the owner removes it by hand from its record**
 <!-- §568 -->
 **Walk published 2026-11-25.** [Interactive walk](https://claude.ai/artifact/GE3Toi49EBuJbdUVUGXrZp) (walks A–C, 37 steps; no owner calls, T2–T6 ruled 2026-11-25) · [repository HTML](CLUB_WEBSITE_TRACK_P_P2_WALK.html). Migration 536 on dev (owner’s word, 2026-11-25). Plan: `CLUB_WEBSITE_ENHANCEMENTS_PLAN.md` §6 Track P and Progress (“Track P Session P2”).

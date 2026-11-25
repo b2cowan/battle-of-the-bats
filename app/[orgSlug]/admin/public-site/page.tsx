@@ -41,7 +41,7 @@ import { ReorderList, ReorderRow } from '@/components/admin/tournament/ReorderLi
 import { useSaveQueue } from '@/components/admin/tournament/useSaveQueue';
 import LoadingState from '@/components/shared/LoadingState';
 import { useCopyToClipboard } from '@/lib/hooks/useCopyToClipboard';
-import { editorSectionRows, normalizeHiddenSections, normalizeSectionOrder, reorderedSections, type SectionCarries, type SectionFacts, type SiteSectionKey } from '@/lib/club-site-sections';
+import { editorSectionRows, normalizeHiddenSections, repGamesLine, normalizeSectionOrder, reorderedSections, type SectionCarries, type SectionFacts, type SiteSectionKey } from '@/lib/club-site-sections';
 import { savedAsHint, looksPersonalEmail, EMAIL_MAX, LINK_MAX, ROLE_ADDRESS_NUDGE } from '@/lib/site-field-checks';
 import { pastYearHint } from '@/lib/past-year-hint';
 import { lookWords } from '@/lib/colour-words';
@@ -345,6 +345,7 @@ export default function PublicSitePage() {
   // ── Home page: a move or a switch saves at once ──
   const prefs = { order: content?.homeSectionOrder, hidden: content?.homeSectionsHidden };
   const rows = facts && carries ? editorSectionRows(prefs, facts, carries) : [];
+  const repLine = repGamesLine(facts?.repTeams);
 
   const saveSections = (order: SiteSectionKey[], hidden: SiteSectionKey[]) => {
     setContent(c => (c ? { ...c, homeSectionOrder: order, homeSectionsHidden: hidden } : c));
@@ -698,6 +699,8 @@ export default function PublicSitePage() {
                 ))}
               </ReorderList>
             </ul>
+            {/* G10 (Club Website Stage 1): how many rep teams show their games on the home, and who decides it. */}
+            {repLine && <p className={styles.lead}>{repLine}</p>}
           </BuilderRow>
 
           <BuilderRow id="about" title={W.aboutCard} summary={summary.about} mark={mark(ready.about)} open={rowOpen === 'about'} onToggle={() => toggle('about')}>

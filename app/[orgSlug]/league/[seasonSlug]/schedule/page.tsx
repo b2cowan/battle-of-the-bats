@@ -25,6 +25,10 @@ import PublicPage from '@/components/public/PublicPage';
 import PublicSectionHead from '@/components/public/PublicSectionHead';
 import { ScheduleMatchup, type GameRowState, type MatchupSide } from '@/components/public/PublicGameRow';
 import { sideResult } from '@/lib/public-game-row';
+import { leagueCheckWindow, leagueGamePhase } from '@/lib/club-game-live';
+import { GAMES_HOME_WORDS } from '@/lib/club-games-home';
+import LeagueScoresRefresher from '@/components/public/LeagueScoresRefresher';
+import scheduleStyles from '@/components/public/PublicSchedule.module.css';
 import kit from '@/components/public/ClubKit.module.css';
 import { ClubSponsoredBy } from '@/components/public/ClubSponsors';
 import { divisionSponsorsFor } from '@/lib/club-sponsorships-server';
@@ -100,7 +104,9 @@ export default async function PublicSchedulePage({
       return venue ? { venue: venue.name, facility: facilityId ? places.facilities.get(facilityId) ?? null : null, address: venue.address } : null;
     },
   });
-  const today = orgDayKey(new Date().toISOString());
+  const renderedAt = new Date();
+  const nowMs = renderedAt.getTime();
+  const today = orgDayKey(renderedAt.toISOString());
   const { earlier, ahead } = seasonWeeks(bookings, today);
   const hasGames = bookings.length + needsDate.length > 0;
   const teamName = new Map(teams.map(t => [t.id, t.name]));
@@ -110,6 +116,9 @@ export default async function PublicSchedulePage({
   // The club page column (club round C2 + C5): on the logo edge, 960 at most (it was 800), 24 between sections.
   return (
     <PublicPage frame="club">
+      {/* G6: checks every 30 seconds while a game of the season is on today; draws nothing. */}
+      <LeagueScoresRefresher orgSlug={orgSlug} seasonSlug={seasonSlug} renderedAt={renderedAt.toISOString()}
+        window={leagueCheckWindow(games, nowMs)} />
       <div>
         <Link href={href(`/league/${seasonSlug}`)} className={kit.back}>
           ← {season.name}
@@ -151,16 +160,16 @@ export default async function PublicSchedulePage({
               <details className={column.earlier}>
                 <summary>{SEASON_SCHEDULE_WORDS.earlierWeeks(earlier.length)}</summary>
                 <div className={column.weeks}>
-                  {earlier.map(w => <Week key={w.monday} week={w} today={today} nameOf={nameOf} />)}
+                  {earlier.map(w => <Week key={w.monday} week={w} today={today} nameOf={nameOf} nowMs={nowMs} />)}
                 </div>
               </details>
             )}
-            {ahead.map(w => <Week key={w.monday} week={w} today={today} nameOf={nameOf} />)}
+            {ahead.map(w => <Week key={w.monday} week={w} today={today} nameOf={nameOf} nowMs={nowMs} />)}
             {needsDate.length > 0 && (
               <section className={kit.section}>
                 <PublicSectionHead title={SEASON_SCHEDULE_WORDS.needsDate} />
                 <ul className={`${kit.list} ${parts.gameList}`}>
-                  {needsDate.map(b => <GameRow key={b.key} booking={b} nameOf={nameOf} />)}
+                  {needsDate.map(b => <GameRow key={b.key} booking={b} nameOf={nameOf} nowMs={nowMs} />)}
                 </ul>
               </section>
             )}
@@ -174,11 +183,11 @@ export default async function PublicSchedulePage({
 type NameOf = (teamId: string | null) => string;
 
 /** A week: "Jun 14 – 20, 2027 · this week" as the section's heading row (R4), its games, and the today line in this week only. */
-function Week({ week, today, nameOf }: { week: SeasonWeek<SeasonBooking>; today: string; nameOf: NameOf }) {
+function Week({ week, today, nameOf, nowMs }: { week: SeasonWeek<SeasonBooking>; today: string; nameOf: NameOf; nowMs: number }) {
   const line = todayLineAt(week, today);
   const head = weekRangeWords(week.monday) + (line === null ? '' : ` · ${SEASON_SCHEDULE_WORDS.thisWeek}`);
   const todayLine = <li key="today" className={column.todayLine}>{dayHeading(today, today)}</li>;
-  const rows = week.bookings.map(b => <GameRow key={b.key} booking={b} nameOf={nameOf} />);
+  const rows = week.bookings.map(b => <GameRow key={b.key} booking={b} nameOf={nameOf} nowMs={nowMs} />);
   if (line !== null) rows.splice(line, 0, todayLine);
   return (
     <section className={kit.section}>
@@ -196,7 +205,7 @@ function Week({ week, today, nameOf }: { week: SeasonWeek<SeasonBooking>; today:
  * carries none), Cancelled and Postponed in the one pill set, and a game re-dated and sent "Moved" with the date families
  * heard. The division is not repeated: the division tabs above already say it.
  */
-function GameRow({ booking: b, nameOf }: { booking: SeasonBooking; nameOf: NameOf }) {
+function GameRow({ booking: b, nameOf, nowMs }: { booking: SeasonBooking; nameOf: NameOf; nowMs: number }) {
   const game = b.source.kind === 'game' ? b.source.game : null;
   if (!game) return null; // a practice is never public: the page passes none
   const postponed = b.state === 'postponed';
@@ -206,8 +215,12 @@ function GameRow({ booking: b, nameOf }: { booking: SeasonBooking; nameOf: NameO
   const movedFrom = game.movedFrom && !postponed && !cancelled && !b.result ? game.movedFrom : null;
   // Final exactly when the house league has always said "Final h–a" (`resultWords`): completed, both scores in.
   const final = !!b.result && game.homeScore != null && game.awayScore != null;
+  // Live (Club Website Stage 1, G7): the one live rule — inside its window and no final yet. House league has no running
+  // score, so the line under the teams says when it comes; the green edge and the pill say "live" (R9).
+  // A re-dated game on now reads live, as the home says it (its Moved pill and "was …" line come back once it is over).
+  const live = !cancelled && !postponed && !final && leagueGamePhase(game, nowMs) === 'live';
   const state: GameRowState | undefined =
-    cancelled ? 'cancelled' : postponed ? 'postponed' : final ? 'final' : movedFrom ? 'moved' : undefined;
+    cancelled ? 'cancelled' : postponed ? 'postponed' : final ? 'final' : live ? 'live' : movedFrom ? 'moved' : undefined;
   const side = (teamId: string | null, score: number | null, other: number | null): MatchupSide => ({
     name: nameOf(teamId),
     score: final ? score : null,
@@ -215,7 +228,7 @@ function GameRow({ booking: b, nameOf }: { booking: SeasonBooking; nameOf: NameO
   });
   const dated = !!game.scheduledAt;
   return (
-    <li>
+    <li className={live ? scheduleStyles.edge : undefined}>
       <ScheduleMatchup
         time={dated ? clockOf(b.startMs) : SEASON_PUBLIC_WORDS.dateToCome}
         round={dated ? (postponed ? SEASON_PUBLIC_WORDS.was(dayWords(b.day)) : dayWords(b.day)) : null}
@@ -223,7 +236,8 @@ function GameRow({ booking: b, nameOf }: { booking: SeasonBooking; nameOf: NameO
         state={state}
         keepTime
         sides={[side(game.awayTeamId, game.awayScore, game.homeScore), side(game.homeTeamId, game.homeScore, game.awayScore)]}
-        noScore={movedFrom ? P.movedWas(dayWords(orgDayKey(movedFrom)), clockOf(Date.parse(movedFrom))) : undefined}
+        noScore={live ? GAMES_HOME_WORDS.scoreAfter
+          : movedFrom ? P.movedWas(dayWords(orgDayKey(movedFrom)), clockOf(Date.parse(movedFrom))) : undefined}
         place={place ? { text: place } : undefined}
       />
     </li>

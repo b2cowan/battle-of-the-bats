@@ -292,6 +292,11 @@ prompt → the build → `/simplify`, `/review`, `/legal` or `/accounting` where
   its games left out of Today's own rows), **E10** (the "Champs day" band on the season's schedule) and **E11**'s schedule
   row ride with whichever of this stage and Board Ready Stage 5 lands second. Stage 1 lands first, so they ride with
   Board Ready Stage 5, which builds them on the one games read and the house league rule (its split record says so).)*
+  *(Session 1B and its close, 2026-11-25: Pass 2 built (the home's games part, the rows, the house league pages'
+  30-second refresh, "Games today", the site editor's rep line, the failure line), `/simplify`, `/review`, `/marketing`,
+  `/docs` and `/design` run and applied (Progress). Walk published:
+  [CLUB_WEBSITE_STAGE1_WALK.html](CLUB_WEBSITE_STAGE1_WALK.html), https://claude.ai/artifact/SYSsX7HKAXMVLno4UeVZo7
+  (29 steps, Owner QA Ledger §567). Ticks when the walk passes.)*
 - [ ] **Stage 2 — Field status (idea 3; F3).** Second tenant. *(Corrected by Stage 0: it is today's Rainout widened to
   a place ("Close a place"), not a third tool; tournament games ride their own Rain delay, so it does NOT wait on the
   real-venues project. It needs only a count of typed-only games first, dev, counts only.)*
@@ -1016,6 +1021,36 @@ the demos follow the product and are curated with `/demos`, never as a build ste
   the page's own tag; instead the "don't index" page tag on every page, and **P2 refuses every non-page route** a preview
   could serve (share images, posters, the calendar feed, PDFs), so nothing is left for a header to cover. **Left to P2 on purpose:** share
   images, posters, the calendar feed and every form refusing a preview (no preview can exist before P2).
+- 2026-11-25 — **Stage 1 Session 1B built Pass 2 and ran the close; the walk waits for the owner.** Start conditions
+  held (Pass 1 `b2233a3c9`, Part 0 `45bb8676f`; Milton's three answers still not in; no migration). **Built:** the pure
+  view `lib/club-games-home.ts` (title, bands, G4's order and caps, the tournament row's words, the rainout fold, the
+  "N more" words, the season-schedule door); the part `components/public/ClubGamesPart.tsx` (failure line + Try again,
+  G11); the one "N more / Show fewer" row (`ClubMoreRow`) used by Open now (capped at two) and every band; the
+  30-second check `lib/hooks/useClubGamesCheck.ts` on `useVisiblePoll` (paused when hidden, checks at once on return,
+  15-second timeout, past the close it checks until it has seen an answer made after the close); the house league
+  pages' `LeagueScoresRefresher` (a server re-render only when the season's games changed, plus one on the first check
+  if it is newer than the render); the schedule's live row (edge, pill, "Score after the game"; live beats Moved while
+  on); "Games today" on the Tournaments card (G9); the site editor's rep line under Home page sections (G10;
+  `countPublicRepTeams`, the home's own Public rule); the seed's sections b and d. **Build calls** (none re-rules an
+  ask): the season-schedule door shows whenever any band on a game day is capped, so the evening frame gains it; a
+  tournament between rounds sits in Later today; Open now's "N more open now" opens in place; a rep game past its
+  window with a score and no End game is its score alone in Latest results; a house league game with no score shows
+  "No score yet" on its day only. **The close:** the walk's day re-seeded; **`/marketing`** (one pass; about 30 strings
+  matched §10) changed four: a tournament past its last window with nothing entered reads "5 games today · no results
+  yet" (not "0 of 5 games final"); between rounds with some finals it reads "14 of 22 games final"; the editor line
+  gains "Both rep teams show their games on your site." and, for a one-team club with it not Public, "Your rep team's
+  games aren't on your site yet."; the failure line for a club with no house league link reads "Games can't be shown
+  right now. Each team's page still has them." **`/docs`:** a new club-site topic "What your home page shows on a game
+  day" (`public-site-editor-game-day`), the house league "who sees standings" topic gains the 30-second update and "Live
+  now", and the coach's Public setting says it also puts the team's games on the club home. **`/design`** (phone 390,
+  computer 1280): first live game inside a phone's first screen, stacked rows in the 540 column, the green live edge
+  (`--club-ok`), bands, rows and the live place strip all as drawn; **one defect fixed:** on a computer the schedule's
+  live row printed "Score after the game" over the place (both in grid row 2) — it now sits under the place, as Moved's
+  line does. Typecheck clean; `check:spelling` green; 397 help and club-site tests pass. **Walk:**
+  [CLUB_WEBSITE_STAGE1_WALK.html](CLUB_WEBSITE_STAGE1_WALK.html), https://claude.ai/artifact/SYSsX7HKAXMVLno4UeVZo7,
+  Owner QA Ledger §567 (29 steps; walk D is the staging edge-hold check from §9). **Committed 2026-11-25 at the owner's
+  word ("yes commit now"), ahead of the walk,** through a private index: the seed's and the help guides' "E-transfer"
+  spelling edits, the ledger's other lines and Track P P2's plan and board entries are other sessions' and stayed out.
 - 2026-11-25 — **Track P Session P2 built: Prospect clubs, Make one, the sample and the marking (T2–T6; drawing tabs 2,
   3, 5).** Nothing committed at writing; the owner's word commits it through a private index. **Migration 536**
   (`organization_previews.sport` + `.province_code`, and `make_preview_club(...)`, the ONE creation step, SECURITY
@@ -1158,6 +1193,20 @@ Answered 2026-11-24 (Stage 0 Part 1); evidence in the Progress block.
 - [ ] **The games check's window ends on the platform's game length for a tournament's last game (Stage 1, 2026-11-25).**
   A tournament game's own length is the tournament's; the read counts it with the default 90 minutes plus 30, so a long
   final can stop the home's checks before it ends (the tournament's own pages keep checking). Low; Stage 6 can widen it.
+- [ ] **The home reads tournaments and seasons twice per render (Stage 1 Session 1B, 2026-11-25).** Its own loader and
+  the one games read each read them. Database load, not latency; fixing it changes the reviewed read. Low.
+- [ ] **The games check has no rate limit (Stage 1, 2026-11-25).** Pass 1's route; cost only, and the edge hold (above)
+  softens it if it holds.
+- [ ] **A tab left open past midnight keeps yesterday's "Today" until reload (Stage 1, 2026-11-25).** Likewise a
+  tournament awaiting a score confirmation, or with untimed games, can sit in Later today after its games. Low.
+- [ ] **`check:layout --changed` was not run for Stage 1 (2026-11-25).** Another session's edit to
+  `app/[orgSlug]/layout.tsx` widened it to 371 screens, and its sign-in and fixtures have lapsed; the repair signs
+  everyone out, so it needs the owner's yes. `/design` checked the Stage 1 screens by capture instead.
+- [ ] **"Rainout" and "rain-out" both reach customers (found by `/marketing`, 2026-11-25; not Stage 1's).** The house
+  league button says "Rainout" (`lib/league-rainout.ts`); coach copy says "rain-out" (the announcements page and the
+  team overview). One spelling per the binding rule; to `/marketing` to pick, then `check:spelling` to hold it.
+- [ ] **The drawing's tab 8 word list says "Rep · {team}" where plan §10 and the code say "Rep" / "Rep · away"
+  (2026-11-25).** The plan wins (the team line already names the team, G5); the drawing's list is stale on that one line.
 
 ## 10. Words for /marketing
 
@@ -1179,6 +1228,14 @@ Answered 2026-11-24 (Stage 0 Part 1); evidence in the Progress block.
   team shows its games on your site yet." The coach setting is **Schedule visibility: Staff only · Families · Public**
   ("public link" is code only). Option only (G6 · D): "Updated 10:15 a.m." = the last successful check, unchanged by a
   failed one. Run `npm run check:spelling` after the build.
+- [x] **Stage 1 (build close, 2026-11-25), settled by `/marketing` in one pass over the shipped words.** About 30 strings
+  match the list above. Added for states the drawing did not word: a tournament past its last window with nothing
+  entered **"5 games today · no results yet"**; between rounds with some finals **"14 of 22 games final"** (none final:
+  "22 games today"); the editor line's **"Both rep teams show their games on your site."**, **"Your rep team shows its
+  games on your site."** and **"Your rep team's games aren't on your site yet."**; the failure line for a club with no
+  house league link **"Games can't be shown right now. Each team's page still has them."** Kept as ruled: "Each team's
+  coach chooses this in Schedule visibility." (`/marketing` floated adding "(Public shows games on your site)"; not
+  applied, the ruled words stand). `check:spelling` green.
 
 ## 11. Architectural decisions
 

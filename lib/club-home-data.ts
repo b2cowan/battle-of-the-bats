@@ -26,6 +26,8 @@ import { formatEventDateRange, tournamentToday } from '@/lib/timezone';
 import { getRegistrationState } from '@/lib/registration-state';
 import { getClubSiteContent } from '@/lib/club-page-meta';
 import { orgHref } from '@/lib/club-base';
+import { readClubGames } from '@/lib/club-games-read';
+import { homeGamesView, tournamentsWithGamesToday } from '@/lib/club-games-home';
 import type { ClubSiteHomeProps } from '@/components/public/ClubSiteHome';
 import type { Organization, Tournament } from '@/lib/types';
 
@@ -69,6 +71,12 @@ export async function loadClubHome(org: Organization, orgSlug: string, base?: { 
   // Board Ready Stage 6 (asks 1, 11): the home strip is the club's places from the one sponsor list, showing today, at most
   // 20. A failed read costs the home its strip, never the page.
   const sponsorList = publicSponsorsFor(org.id, org.planId).catch(() => ({ home: [], about: [] }));
+  // The games part (Club Website Stage 1): the one games read, all or nothing (G11) — a failure is the part's own line
+  // ("Games can't be shown right now."), never the page's. It asks its own site and plan questions inside.
+  const gamesRead = readClubGames(org).catch(error => {
+    console.error('[club-home] games read failed', { orgSlug, error });
+    return null;
+  });
   const [allTournaments, siteContent, leagueSeasons, clubTeams, clubTryouts] = await Promise.all([
     getTournamentsByOrg(org.id),
     getClubSiteContent(org.id),
@@ -106,7 +114,15 @@ export async function loadClubHome(org: Organization, orgSlug: string, base?: { 
   // Tournaments, chosen and ordered by `clubHomeTournaments` (running and coming first; one that just finished after).
   // A club that hid the section is not asked for them at all.
   const shownTournaments = isSectionShown('tournaments', sectionPrefs, carries) ? clubHomeTournaments(allTournaments, today) : [];
-  const tournaments = await clubTournamentRows(shownTournaments, today, href);
+  const [games, tournamentRows] = await Promise.all([gamesRead, clubTournamentRows(shownTournaments, today, href)]);
+  // G9: while a tournament's games are on the home's Today, its card says "Games today", not "Live now".
+  const playingToday = games ? tournamentsWithGamesToday(games) : new Set<string>();
+  const slugById = new Map(shownTournaments.map(t => [t.id, t.slug]));
+  const tournaments = tournamentRows.map(t => ({ ...t, gamesToday: playingToday.has(`/${slugById.get(t.id)}`) }));
+  // The failure line points at the house league schedule: the one live season's, else the league page.
+  const liveSeasons = liveLeagueSeasons(publicLeagueSeasons);
+  const leagueHref = !league ? null
+    : liveSeasons.length === 1 ? href(`/league/${liveSeasons[0].slug}/schedule`) : href('/league');
 
   return {
     orgSlug,
@@ -116,6 +132,10 @@ export async function loadClubHome(org: Organization, orgSlug: string, base?: { 
     teamBands: clubTeams.bands,
     league,
     tournaments,
+    // Absent when the read found nothing to show (G1); a failed read is drawn as its line (G11).
+    games: games === null || homeGamesView(games, Date.parse(games.asOf))
+      ? { initial: games, leagueHref, ownHost: !!base?.ownHost }
+      : null,
     about: siteContent?.description?.trim() || null,
     aboutPageHref: clubAboutPageShows(siteContent) ? href('/about') : null,
     // Only the sponsors a family may see now: the filter is the loader's (`publicSponsorsFor`), never the place's own read.

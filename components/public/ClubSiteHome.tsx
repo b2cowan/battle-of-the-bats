@@ -18,6 +18,10 @@ import {
 } from '@/lib/club-site-home';
 import { clubHomeSectionsFor, type ClubHomeSection, type SectionCarries, type SectionPrefs } from '@/lib/club-site-sections';
 import PublicSectionHead from './PublicSectionHead';
+import ClubOpenNowList from './ClubOpenNowList';
+import ClubGamesPart from './ClubGamesPart';
+import { GAMES_HOME_WORDS } from '@/lib/club-games-home';
+import type { ClubGamesRead } from '@/lib/club-games-read';
 
 /**
  * A CLUB'S HOME (Club Tier Stage 4b-2a; End state 1, Ask 3A, ruled 2026-10-19) — the home of an org whose plan carries
@@ -58,6 +62,8 @@ export interface HomeTournament {
   name: string;
   dates: string | null;
   status: TournamentHomeStatus | null;
+  /** Its games are on the home's Today right now (Club Website Stage 1, G9): the card says "Games today". */
+  gamesToday?: boolean;
 }
 
 export interface ClubSiteHomeProps {
@@ -70,6 +76,9 @@ export interface ClubSiteHomeProps {
   /** House league: every live season as a row (Stage 9a, Q14); with none live, the one row to the league page. */
   league: { href: string; title: string; sub: string; seasons: PublicLeagueSeason[]; today: string } | null;
   tournaments: HomeTournament[];
+  /** The games part (Club Website Stage 1), right under Open now: the one games read as first rendered (null = it failed,
+   *  G11), or null for no part at all (nothing today and no result in two days, G1). */
+  games: { initial: ClubGamesRead | null; leagueHref: string | null; ownHost: boolean } | null;
   about: string | null;
   /** The About page, when it says more than the about text (a contact, a document or a question). */
   aboutPageHref: string | null;
@@ -87,6 +96,7 @@ export default async function ClubSiteHome(p: ClubSiteHomeProps) {
   const teamCount = p.teamBands.reduce((n, b) => n + b.teams.length, 0);
   const sections = clubHomeSectionsFor({
     openNow: p.openNow.length,
+    games: !!p.games,
     teams: teamCount,
     league: !!p.league,
     tournaments: p.tournaments.length,
@@ -96,18 +106,16 @@ export default async function ClubSiteHome(p: ClubSiteHomeProps) {
   const openNow = sections.includes('openNow') && (
     <section className={kit.section} aria-labelledby="open-now" {...siteEdit('home')}>
       <PublicSectionHead id="open-now" title="Open now" />
-      {/* The heading says "open" once, so the rows carry no chip; nearest deadline first (the page orders them). */}
-      <div className={`${kit.list} ${kit.edge}`}>
-        {p.openNow.map(r => (
-          <Link key={r.key} href={r.href} className={kit.row}>
-            <span className={kit.rowMain}>
-              <span className={kit.rowName}>{r.title}</span>
-              {r.sub && <span className={kit.rowSub}>{r.sub}</span>}
-            </span>
-          </Link>
-        ))}
-      </div>
+      {/* Two rows, then "N more open now" (Stage 0 A1); nearest deadline first (the page orders them). */}
+      <ClubOpenNowList rows={p.openNow} />
     </section>
+  );
+
+  // The games part: always right under Open now (Stage 0 A1's fixed order), never in the club's own order or editor list.
+  const games = sections.includes('games') && p.games && (
+    <div {...siteEdit('home')}>
+      <ClubGamesPart orgSlug={p.orgSlug} ownHost={p.games.ownHost} initial={p.games.initial} leagueHref={p.games.leagueHref} />
+    </div>
   );
 
   const teams = sections.includes('teams') && (
@@ -160,8 +168,11 @@ export default async function ClubSiteHome(p: ClubSiteHomeProps) {
               {t.dates && <span className={kit.rowSub}>{t.dates}</span>}
             </span>
             {/* The one green chip is a call to act or a thing happening now; a finished one is a neutral fact. */}
+            {/* "Live now" is said once, on the games part's row: while its games are there, the card says "Games today" (G9). */}
             {t.status && (
-              <span className={`${kit.chip} ${t.status === 'finished' ? kit.chipNeutral : kit.chipOk}`}>{TOURNAMENT_STATUS_WORD[t.status]}</span>
+              <span className={`${kit.chip} ${t.status === 'finished' ? kit.chipNeutral : kit.chipOk}`}>
+                {t.status === 'live' && t.gamesToday ? GAMES_HOME_WORDS.gamesToday : TOURNAMENT_STATUS_WORD[t.status]}
+              </span>
             )}
           </Link>
         ))}
@@ -190,7 +201,7 @@ export default async function ClubSiteHome(p: ClubSiteHomeProps) {
   );
 
   const drawn: Record<ClubHomeSection, ReactNode> = {
-    openNow, teams, league, tournaments, about,
+    openNow, games, teams, league, tournaments, about,
   };
   const besideAbout = sections.filter(k => k !== 'about').length;
   const twoColumns = !!about && besideAbout > 0; // About alone takes the whole width

@@ -110,8 +110,8 @@ describe('4 · it returns its own short list of fields', () => {
   const code = readCode(READ);
   it('a game row', () => {
     assert.deepEqual(fieldsOf(code, 'ClubGameRow'), [
-      'key', 'program', 'day', 'startsAt', 'endsAt', 'group', 'groupOrder', 'home', 'away', 'homeAway', 'place', 'state',
-      'score', 'movedTo', 'path', 'seasonName',
+      'key', 'program', 'day', 'startsAt', 'endsAt', 'group', 'groupOrder', 'home', 'away', 'homeAway', 'place', 'address', 'state',
+      'score', 'movedTo', 'path', 'seasonName', 'seasonSlug', 'decided',
     ]);
   });
   it('a tournament row, and the read', () => {

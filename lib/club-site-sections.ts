@@ -72,18 +72,21 @@ export function isSectionShown(key: SiteSectionKey, prefs: SectionPrefs, carries
   return carried(key, carries) && shownByClub(key, prefs.hidden);
 }
 
-export type ClubHomeSection = 'openNow' | 'teams' | 'league' | 'tournaments' | 'about';
+export type ClubHomeSection = 'openNow' | 'games' | 'teams' | 'league' | 'tournaments' | 'about';
 
 /**
- * The home's sections, in the club's order: Open now first while something is open, then each section the plan
- * carries, the club shows, and that has something to show. Past tournaments is a tab, not a home section.
+ * The home's sections, in the club's order: Open now first while something is open, then the games part while it has
+ * something to say (Club Website Stage 1; fixed under Open now by Stage 0 A1, never in the club's order or the editor's
+ * list), then each section the plan carries, the club shows, and that has something to show. Past tournaments is a tab,
+ * not a home section.
  */
 export function clubHomeSectionsFor(
-  has: { openNow: number; teams: number; league: boolean; tournaments: number; about: boolean },
+  has: { openNow: number; games?: boolean; teams: number; league: boolean; tournaments: number; about: boolean },
   prefs: SectionPrefs,
   carries: SectionCarries,
 ): ClubHomeSection[] {
   const out: ClubHomeSection[] = has.openNow > 0 ? ['openNow'] : [];
+  if (has.games) out.push('games');
   for (const k of normalizeSectionOrder(prefs.order)) {
     if (isSubOption(k) || !isSectionShown(k, prefs, carries)) continue;
     const present = k === 'teams' ? has.teams > 0 : k === 'tournaments' ? has.tournaments > 0 : has[k];
@@ -103,6 +106,28 @@ export interface SectionFacts {
   /** Past tournaments: finished ones nobody sealed yet, and the sealed records — the page's past part (Stage 4f). */
   past: number;
   about: boolean;
+  /** The club's rep teams and how many show their games on the home (Club Website Stage 1, G10); absent when the editor
+   *  could not count them. */
+  repTeams?: { showing: number; total: number };
+}
+
+/**
+ * THE EDITOR'S REP LINE (Club Website Stage 1, G10 · A, ruled 2026-11-25; words /marketing's, plan §10): how many rep
+ * teams show their games on the club's site, and who decides it — never a switch here (a team's visibility is its coach's).
+ * Null when the club has no rep team.
+ */
+const REP_GAMES_WHO_DECIDES = 'Each team\'s coach chooses this in Schedule visibility.';
+
+function repGamesCount({ showing, total }: { showing: number; total: number }): string {
+  if (total === 1) return showing ? 'Your rep team shows its games on your site.' : "Your rep team's games aren't on your site yet.";
+  if (showing === 0) return 'No rep team shows its games on your site yet.';
+  if (showing === total) return total === 2 ? 'Both rep teams show their games on your site.' : `All ${total} rep teams show their games on your site.`;
+  if (showing === 1) return `1 of ${total} rep teams shows its games on your site.`;
+  return `${showing} of ${total} rep teams show their games on your site.`;
+}
+
+export function repGamesLine(r: { showing: number; total: number } | undefined): string | null {
+  return r && r.total > 0 ? `${repGamesCount(r)} ${REP_GAMES_WHO_DECIDES}` : null;
 }
 
 export interface EditorSectionRow {

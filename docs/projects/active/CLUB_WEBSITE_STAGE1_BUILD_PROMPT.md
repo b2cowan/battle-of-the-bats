@@ -154,3 +154,90 @@ through `formatTime()`; the staff calendar never feeds a public page.
 The defect fixed and committed on its own; one house league rule, one games read, its guards green; the home, the rows,
 the three house league pages and the failure state as drawn on a phone and a computer; help updated; one walk waiting
 for the owner; nothing on production until a release.
+
+---
+
+## Session 1B — handoff (2026-11-25). Paste: *"Read and follow docs/projects/active/CLUB_WEBSITE_STAGE1_BUILD_PROMPT.md — Session 1B close"*
+
+Session 1B built Pass 2 (steps 1–5 and 7) and ran `/simplify` and `/review`, all applied. **Nothing is committed.** The
+close (below) is what is left. Start conditions held: Pass 1 `b2233a3c9` and Part 0 `45bb8676f` committed; Milton's three
+answers still not in; no migration.
+
+### What is built (working tree, this session's files only)
+
+- **New:** `lib/club-games-home.ts` (the pure view: title, bands, G4 order and caps, tournament row words, rainout fold,
+  "N more" words, doors, `repGamesLine` lives in club-site-sections), `lib/hooks/useClubGamesCheck.ts` (the 30-second check
+  on `useVisiblePoll`; past the close it checks until it has seen an answer made after the close; 15 s fetch timeout),
+  `components/public/ClubGamesPart.tsx` + `.module.css` (the part; failure line + Try again), `components/public/ClubMoreRow.tsx`
+  (the one "N more / Show fewer" row + `useShowMore`), `components/public/ClubOpenNowList.tsx` (Open now capped at two),
+  `components/public/LeagueScoresRefresher.tsx` (house league pages: `router.refresh()` only when the season's games changed;
+  one deliberate refresh on the first check if it is newer than the render), tests
+  `tests/unit/club-website-stage1-home.test.ts` and `tests/unit/club-website-stage1-pass2-guard.test.ts`.
+- **Changed:** `lib/club-games-read.ts` (row fields `address` — only on a live row —, `seasonSlug`, `decided`; `isoWindow`),
+  `lib/club-game-live.ts` (`leagueCheckWindow`, `seasonCheckWindow`, `isoWindow`, `seasonGamesFingerprint`),
+  `lib/club-home-data.ts` (the games read, all or nothing; G9 `gamesToday`; failure link), `components/public/ClubSiteHome.tsx`
+  (games part after Open now via `clubHomeSectionsFor`; card says "Games today"), `lib/club-site-sections.ts` (`'games'`
+  section slot; `repGamesLine`), `components/public/PublicSectionHead.tsx` + `PublicParts.module.css` (`note`),
+  `components/public/ClubKit.module.css` (`.rowMore`), `lib/public-team-schedule.ts` (`clubPublicTeams`,
+  `countPublicRepTeams`), `lib/public-site-editor-facts.ts` + `app/[orgSlug]/admin/public-site/page.tsx` (the G10 line under
+  Home page sections), `lib/league-game-changes-server.ts` (`publicSeasonCheckWindow`; `publicSeasonGamesBetween` skips the
+  held read on an empty window), the schedule (live state: edge, pill, "Score after the game"; live beats Moved while on),
+  standings and season pages (refresher mounted), `scripts/seed-on-sale-pictures-extras.mjs` (sections b and d),
+  `tests/unit/_source-code.ts` (`valueReachableFrom`), and the allow-lists in `public-tournament-stage2-guard` and
+  `club-website-stage1-reads-guard`.
+- ⚠ **Shared file with another session:** `scripts/seed-on-sale-pictures-extras.mjs` also carries another session's
+  "E-Transfer" → "E-transfer" money-line edits. Commit through a private index with only this session's hunks
+  (`reference_partial_commit_shared_tree.md`).
+
+### Calls made in the build (say them to the owner; none re-rules an ask)
+
+1. **G4 doors:** the season-schedule row shows whenever any band on a game day is capped (the ruling's words), so the
+   evening frame gains it too (the drawing's evening frame had none).
+2. **A tournament between rounds** (started, nothing live, not all final) sits in Later today as "N games today" — a
+   state the drawing does not show. For `/marketing`.
+3. **"0 of 5 games final"** reads oddly when a tournament's last window passed with no finals. For `/marketing`.
+4. **The G10 line** sits under the Home page sections list in the site editor (the drawing places it nowhere). Forms:
+   some / "1 of 20 … shows its games" / "All 20 …" / "No rep team … yet." plus **a club with one rep team: "Your rep team
+   shows its games on your site."** (not in §10). Each ends "Each team's coach chooses this in Schedule visibility." The
+   count is the home's own Public rule; it does not ask for a live season.
+5. **Open now's "N more open now"** opens in place (the drawing's chevron down), with "Show fewer".
+6. **A rep game past its window with a score and no End game** sits in Latest results as its score alone (no pill, no
+   bold); a rep game with nothing saved is not shown. A house league game with no score shows "No score yet" today only.
+7. **House league pages refresh** via the games-only check, then a server re-render only when the season's games changed;
+   one extra re-render per visit inside a window, so a score entered just after load is never missed.
+
+### Found, not fixed (to plan §9 at the close)
+
+- The home reads tournaments and seasons twice per render (its own loader and inside the one games read) — database load,
+  not latency; a change to the reviewed read.
+- The games check has no rate limit (Pass 1's route); cost only.
+- A tab left open past midnight keeps yesterday's "Today" until reload; a tournament awaiting a score confirmation, or with
+  untimed games, can sit in Later today after its games.
+- `check:layout --changed` widened to 371 screens (another session edited `app/[orgSlug]/layout.tsx`) and its sign-in and
+  fixtures have lapsed; the repair signs everyone out, so it needs the owner's yes. Not run.
+
+### Verification state
+
+Typecheck clean except one error in another session's `app/api/platform-admin/prospect-clubs/route.ts`. Stage 1 tests and
+guards pass (Pass 2 guard 19, home tests, reads guard, live tests, league-game-changes guard). The full suite has ~45
+failures, all other sessions' work in progress (account signup, billing words, chat pause, support console, Track P's
+layout and admin menu, the feed route…) — re-compare against this list rather than reading them as new. Probed on the dev
+server: the home renders every band from the seed, the games check returns every state, the U11 schedule shows the live row.
+
+### The close (do these, in order)
+
+1. **Re-seed the walk's day** (daytime, before about 9:00 p.m.): `node --env-file=.env.local scripts/seed-on-sale-pictures-extras.mjs`
+   (after `seed-prospect-demo.mjs --club=kestrel` only if the club was reset). It puts six house league games today
+   (final, no score yet, two live, later, postponed), the U13 Ospreys Public with a live 2–1, an away game later and a win
+   two days ago, and the Fall Classic live.
+2. **`/marketing`** — one pass over the words on tab 8 and plan §10, plus calls 2–4 above. `npm run check:spelling`.
+3. **`/docs`** — tab 8's three help changes (club site: what the home shows on a game day and that a rep team shows only
+   when Public; house league: scores update the public pages within 30 seconds, "Live now" during a game; Coaches Portal's
+   Public setting now also puts the team's games on the club home).
+4. **`/design`** on the shipped screens against the drawing (tabs 2, 3, 5, 6), phone 390 and computer 1280: the first live
+   game inside a phone's first screen on every state; stacked rows in the 540 column; the green live edge.
+5. **One walk** as a checkable Artifact (20–50 boxes, one action per step, exact logins — the club home needs none; the
+   editor line needs `president@kestrel-bay.example.test`; a score entry needs the house league admin
+   `league@kestrel-bay.example.test`), including the staging edge-hold check from plan §9 (two requests within 20 s).
+6. **Records:** plan §6 Stage 1 tick and Progress, §9 items above, PM brief if anything moved, the board line, the Owner QA
+   Ledger row for the walk. Offer the commit; commit only at the owner's word (private index; this session's hunks only).

@@ -61,12 +61,8 @@ export async function getPublicTeamGamesBetween(params: {
   /** The clock the rows' live and over facts are read at (the caller's, so every program reads one instant). */
   now?: number;
 }): Promise<{ publicTeams: number; allTeams: number; games: PublicTeamGame[] }> {
-  const { org } = params;
-  if (isOrgBillingSuspended({ subscriptionStatus: org.subscriptionStatus ?? 'active' })) return { publicTeams: 0, allTeams: 0, games: [] };
-  const teams = await getClubRepTeamsForSchedule(org.id);
-  const publicTeams = teams.filter(t => isPubliclyVisible(t.scheduleVisibility));
-  const layered = await familyLayerTeamIds({ org, teamIds: publicTeams.map(t => t.id) });
-  const shown = publicTeams.filter(t => layered.has(t.id));
+  const { teams, shown } = await clubPublicTeams(params.org);
+  if (shown.length === 0) return { publicTeams: 0, allTeams: teams.length, games: [] };
   const byId = new Map(shown.map(t => [t.id, { id: t.id, name: t.name, slug: t.slug }]));
   const entries = await getTeamGameEntriesBetween([...byId.keys()], params.fromIso, params.toIso, params.now);
   return {
@@ -77,6 +73,28 @@ export async function getPublicTeamGamesBetween(params: {
       return team ? [{ team, entry }] : [];
     }),
   };
+}
+
+/** The club's rep teams (not archived) and those whose schedule anyone may read: Public, the club not cancelled, the
+ *  family layer — the batch's definitions, in two reads. */
+async function clubPublicTeams(org: Pick<Organization, 'id' | 'accountKind' | 'planId' | 'subscriptionStatus'>) {
+  const teams = await getClubRepTeamsForSchedule(org.id);
+  if (isOrgBillingSuspended({ subscriptionStatus: org.subscriptionStatus ?? 'active' })) return { teams, shown: [] };
+  const publicTeams = teams.filter(t => isPubliclyVisible(t.scheduleVisibility));
+  const layered = publicTeams.length ? await familyLayerTeamIds({ org, teamIds: publicTeams.map(t => t.id) }) : new Set<string>();
+  return { teams, shown: publicTeams.filter(t => layered.has(t.id)) };
+}
+
+/**
+ * HOW MANY REP TEAMS SHOW THEIR GAMES ON THE CLUB'S SITE (Club Website Stage 1, G10): for the site editor's one line
+ * ("3 of 20 rep teams show their games on your site."), server-side only — the public answer never says how many teams do
+ * not show. The same definitions as the batch above, so the line cannot count a team the home leaves out.
+ */
+export async function countPublicRepTeams(
+  org: Pick<Organization, 'id' | 'accountKind' | 'planId' | 'subscriptionStatus'>,
+): Promise<{ showing: number; total: number }> {
+  const { teams, shown } = await clubPublicTeams(org);
+  return { showing: shown.length, total: teams.length };
 }
 
 /**

@@ -189,17 +189,47 @@ function localImportsOf(rel: string): string[] {
   const specs = rel.endsWith('.css')
     ? [...readSource(rel).replace(/\/\*[\s\S]*?\*\//g, '').matchAll(/(?:composes:[^;]*?from\s+|@import\s+(?:url\(\s*)?)['"]([^'"]+)['"]/g)].map(m => m[1])
     : [...readCode(rel).matchAll(/(?:from\s+|import\s*\(\s*|import\s+)['"]([^'"]+)['"]/g)].map(m => m[1]);
-  const out: string[] = [];
-  for (const spec of specs) {
-    if (!spec.startsWith('@/') && !spec.startsWith('.')) continue;
-    const base = spec.startsWith('@/') ? path.join(REPO, spec.slice(2)) : path.resolve(path.dirname(path.join(REPO, rel)), spec);
-    for (const ext of ['', '.tsx', '.ts', '/index.tsx', '/index.ts']) {
-      const abs = base + ext;
-      if (existsSync(abs) && /\.(tsx?|css)$/.test(abs)) { out.push(path.relative(REPO, abs).split(path.sep).join('/')); break; }
-    }
-  }
+  const out = specs.map(spec => resolveLocal(rel, spec)).filter((f): f is string => f !== null);
   importsCache.set(rel, out);
   return out;
+}
+
+/** A `@/` or relative specifier in `rel`, as the repo-relative file it loads (null: a package, or not found). */
+function resolveLocal(rel: string, spec: string): string | null {
+  if (!spec.startsWith('@/') && !spec.startsWith('.')) return null;
+  const base = spec.startsWith('@/') ? path.join(REPO, spec.slice(2)) : path.resolve(path.dirname(path.join(REPO, rel)), spec);
+  for (const ext of ['', '.tsx', '.ts', '/index.tsx', '/index.ts']) {
+    const abs = base + ext;
+    if (existsSync(abs) && /\.(tsx?|css)$/.test(abs)) return path.relative(REPO, abs).split(path.sep).join('/');
+  }
+  return null;
+}
+
+/**
+ * What a module really LOADS, at any depth: `reachableFrom` without the `import type` / `export type` edges, which the
+ * build erases (Club Website Stage 1: a browser part may name a server read's types and still ship none of its code).
+ * Static and side-effect imports, value re-exports and `import('…')`; stylesheets are not walked.
+ */
+export function valueReachableFrom(...entries: string[]): Set<string> {
+  const seen = new Set<string>();
+  const stack = [...entries];
+  while (stack.length) {
+    const rel = stack.pop()!;
+    if (seen.has(rel) || !/\.tsx?$/.test(rel)) continue;
+    seen.add(rel);
+    const code = readCode(rel);
+    const specs = [
+      ...code.matchAll(/^\s*import\s+(?!type\b)[^;]*?from\s+['"]([^'"]+)['"]/gm),
+      ...code.matchAll(/^\s*import\s+['"]([^'"]+)['"]/gm),
+      ...code.matchAll(/^\s*export\s+(?!type\b)[^;]*?from\s+['"]([^'"]+)['"]/gm),
+      ...code.matchAll(/import\s*\(\s*['"]([^'"]+)['"]/g),
+    ].map(m => m[1]);
+    for (const spec of specs) {
+      const hit = resolveLocal(rel, spec);
+      if (hit) stack.push(hit);
+    }
+  }
+  return seen;
 }
 
 /**

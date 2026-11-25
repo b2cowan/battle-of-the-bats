@@ -1,0 +1,42 @@
+/* The club home's games part (Club Website Stage 1; drawing tabs 2, 3, 6). The frame, band strips, game rows and link
+   rows are the shipped pieces (ClubKit `.list` / `.listBand` / `.row`, PublicSchedule's stacked row, PublicParts
+   `.gameList`); this sheet only joins them in one list. No tints, no shadows beyond the live edge, type steps 12 · 14 · 16. */
+
+/* A band's rows sit under its strip; the strip carries the hairline above it. */
+.rows {
+  border-top: 1px solid var(--club-line);
+}
+
+.bandHead {
+  margin: 0;
+}
+
+/* Under its strip (the strip has its own top hairline, `.listBand`), or first in the list ("Latest results" alone). */
+.bandHead + .rows,
+.rows:first-child {
+  border-top: 0;
+}
+
+/* A link row inside the list's `li`: the `li + li` hairline already separates it. */
+.rows > li > .flat {
+  border-top: 0;
+}
+
+/* The first read failed (G11): one line and Try again, inside the part's frame. */
+.fail {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 14px 16px;
+}
+
+.failLine {
+  margin: 0;
+  font: 400 1rem/1.5 var(--club-text-face);
+  color: var(--club-soft);
+}
+
+.failLine a {
+  color: var(--club-ink);
+}

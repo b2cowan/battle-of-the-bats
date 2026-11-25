@@ -261,6 +261,25 @@ a.row:focus-visible {
   border-width: 2px 2px 0 0;
   transform: translateY(-50%) rotate(45deg);
 }
+/* A row that opens the rest of its list IN PLACE ("2 more open now", "8 more live now"; Club Website Stage 1): a button
+   drawn as a row, its chevron pointing down; open, it reads "Show fewer" and points up (the standard's R7). */
+.rowMore {
+  width: 100%;
+  border-right: 0;
+  border-bottom: 0;
+  border-left: 0;
+  background: none;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.rowMore:hover { background: var(--club-ground); }
+.rowMore:focus-visible {
+  outline: 2px solid var(--club-ink);
+  outline-offset: -2px;
+}
+.rowMore::after { transform: translateY(-75%) rotate(135deg); }
+.rowMore[aria-expanded='true']::after { transform: translateY(-25%) rotate(-45deg); }
 .rowMain {
   flex: 1;
   min-width: 0;

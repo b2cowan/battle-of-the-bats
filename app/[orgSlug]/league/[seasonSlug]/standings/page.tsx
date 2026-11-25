@@ -3,7 +3,8 @@ import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import type { Metadata } from 'next';
 import { getDivisionsForSeason, computeStandings } from '@/lib/db';
-import { isDivisionSchedulePublic, isPublicLeagueSeason } from '@/lib/league-game-changes-server';
+import { isDivisionSchedulePublic, isPublicLeagueSeason, publicSeasonCheckWindow } from '@/lib/league-game-changes-server';
+import LeagueScoresRefresher from '@/components/public/LeagueScoresRefresher';
 import { resolvePublicLeagueContext } from '@/lib/public-league';
 import { clubPageMetadata, getClubSeason } from '@/lib/club-page-meta';
 import { orgLinks } from '@/lib/org-links';
@@ -65,15 +66,22 @@ export default async function PublicStandingsPage({
   const asked = divisions.find(d => d.id === divisionIdParam) ?? null;
   const active: LeagueDivision | null = asked ?? kept[0] ?? null;
   const published = !!active && isDivisionSchedulePublic(active);
-  const standings = active && active.showStandings && published ? await computeStandings(active.id, season.sport) : null;
-  // Board Ready Stage 6 (ask 1): the active division's sponsors, a quiet line under its tab. A failed read draws no line.
-  const sponsoredBy = active ? (await divisionSponsorsFor(org.id, [active.id]).catch((): Record<string, never[]> => ({})))[active.id] ?? [] : [];
+  const renderedAt = new Date();
+  const [standings, checkWindow, sponsors] = await Promise.all([
+    active && active.showStandings && published ? computeStandings(active.id, season.sport) : null,
+    // G6: the table updates on the 30-second check while a game of the season is on today.
+    publicSeasonCheckWindow(season, divisions, renderedAt),
+    // Board Ready Stage 6 (ask 1): the active division's sponsors, a quiet line under its tab. A failed read draws no line.
+    active ? divisionSponsorsFor(org.id, [active.id]).catch((): Record<string, never[]> => ({})) : null,
+  ]);
+  const sponsoredBy = active ? sponsors?.[active.id] ?? [] : [];
   const scheduleHref = (d: LeagueDivision | null) => href(`/league/${seasonSlug}/schedule`) + (d ? `?d=${d.id}` : '');
 
   // The light ground, bar and footer come from the club's frame (Club Tier Stage 4b-1).
   // The club page column (club round C2 + C5): on the logo edge, 960 at most (it was 800), 24 between sections.
   return (
     <PublicPage frame="club">
+      <LeagueScoresRefresher orgSlug={orgSlug} seasonSlug={seasonSlug} renderedAt={renderedAt.toISOString()} window={checkWindow} />
       <div>
         <Link href={href(`/league/${seasonSlug}`)} className={kit.back}>
           ← {season.name}

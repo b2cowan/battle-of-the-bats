@@ -32,6 +32,11 @@
   font: 600 0.75rem/1 var(--club-text-face);
   font-variant-numeric: tabular-nums;
 }
+/* A quiet fact beside the title (the club home's "Today  Sat, Nov 28", Club Website Stage 1): 14 px, soft, not bold. */
+.headNote {
+  font: 400 0.875rem/1.25 var(--club-text-face);
+  color: var(--club-soft);
+}
 .headLink {
   display: inline-flex;
   align-items: center;

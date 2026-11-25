@@ -3,7 +3,7 @@ import { publicClubRefusal, type PublicClubAccessOrg } from './public-club-acces
 import { publicLeagueGamesBetween } from './league-game-changes-server';
 import { getPublicTeamGamesBetween } from './public-team-schedule';
 import { publicTournamentGamesBetween } from './public-tournament-data';
-import { gameDayCheckWindow, leagueGamePhase } from './club-game-live';
+import { gameDayCheckWindow, isoWindow, leagueGamePhase } from './club-game-live';
 import { publicGameState } from './game-status';
 import { addCalendarDays, orgDayKey, tournamentToday, zonedWallClockToUtc } from './timezone';
 import type { Organization } from './types';
@@ -62,6 +62,10 @@ export interface ClubGameRow {
   homeAway: 'home' | 'away' | 'neutral' | null;
   /** Where, as typed or as the club's place is named; null → the place line is left out. */
   place: string | null;
+  /** The place's street address as the club or coach entered it — ONLY on a game that is live, the one row that offers
+   *  Directions (tab 3: "only Live now keeps Directions"; "Directions only when the place has an address"). Every other
+   *  row carries null, so the public answer holds no more addresses than the page draws. */
+  address: string | null;
   state: ClubGameState;
   /** Both sides' scores (home first, as `home`/`away`), or null. A live rep game's is the coach's running score. */
   score: { home: number; away: number } | null;
@@ -72,6 +76,11 @@ export interface ClubGameRow {
   path: string;
   /** House league: the season's name (for "{season} schedule · Today, by division"); rep: null. */
   seasonName: string | null;
+  /** House league: the season's address name, which a house league page's check filters on; rep: null. */
+  seasonSlug: string | null;
+  /** A result was saved: a house league final, or a rep coach's End game. A rep game past its window with a score and
+   *  no result is `final` but not decided — it reads as its score alone, never a winner nobody saved (G7, Part 0). */
+  decided: boolean;
 }
 
 /** One of the club's tournaments with public games in the window: ONE row on the home, with its counts (Stage 0 A3). */
@@ -157,12 +166,15 @@ export async function readClubGames(
         away: s.teamName.get(g.awayTeamId) ?? 'A team',
         homeAway: null,
         place: venue ? (facility ? `${venue.name} · ${facility}` : venue.name) : (g.location?.trim() || null),
+        address: phase === 'live' && !moved ? venue?.address?.trim() || null : null,
         // A game moved off this day and then called off says so (the day it left is kept on it for good).
         state: phase === 'cancelled' || phase === 'postponed' || !moved ? phase : 'moved' as const,
         score: phase === 'final' ? { home: g.homeScore!, away: g.awayScore! } : null,
         movedTo: moved ? g.scheduledAt : null,
         path: `/league/${s.season.slug}/schedule?d=${encodeURIComponent(g.divisionId)}`,
         seasonName: s.season.name,
+        seasonSlug: s.season.slug,
+        decided: phase === 'final',
       };
       rows.push({ key: rowKey(row), ...row });
     }
@@ -187,12 +199,15 @@ export async function readClubGames(
       away: entry.opponent?.trim() || entry.name || '',
       homeAway: entry.homeAway,
       place: entry.location?.trim() || null,
+      address: state === 'live' ? entry.locationAddress?.trim() || null : null,
       state,
       score: entry.hasScore && entry.teamScore !== null && entry.opponentScore !== null
         ? { home: entry.teamScore, away: entry.opponentScore } : null,
       movedTo: null,
       path: `/teams/${team.slug}`,
       seasonName: null,
+      seasonSlug: null,
+      decided: entry.result !== null,
     };
     rows.push({ key: rowKey(row), ...row });
   }
@@ -230,6 +245,6 @@ export async function readClubGames(
     days,
     rows,
     tournaments: tournamentDays,
-    checkWindow: check ? { from: new Date(check.fromMs).toISOString(), to: new Date(check.toMs).toISOString() } : null,
+    checkWindow: isoWindow(check),
   };
 }

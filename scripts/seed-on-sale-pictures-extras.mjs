@@ -35,7 +35,6 @@
  * Re-running first removes ONLY what this script made: the tournament (by slug), the rep team (by slug) with its roster and
  * staff rows, the budget lines on sort_order >= 900, and the General book's lines carrying this script's marker.
  */
-import crypto from 'node:crypto';
 import { createClient } from '@supabase/supabase-js';
 import { ensureFixtureUser } from './lib/fixture-user.mjs';
 
@@ -50,6 +49,8 @@ const COACH = { email: `rep.coach@${D}`, name: 'Nadia Kowalczyk' };
 /** Stamped on this script's lines in the General book (source_entity_id, with no source_module: invisible on every screen). */
 const LINE_MARK = '5a1e0000-0000-4000-8000-00000000e001';
 const PLAN_SORT_BASE = 900;
+/** (d)'s house league games today, by fixed id, so a re-run removes exactly them. */
+const GAME_DAY_IDS = Array.from({ length: 6 }, (_, i) => `5a1e0000-0000-4000-8000-0000000d00${String(i + 1).padStart(2, '0')}`);
 const TZ = 'America/Toronto';
 
 // ── safety 1: the dev project only ───────────────────────────────────────────────────────────────────────────────
@@ -111,6 +112,7 @@ for (const t of await one('old tournament', db.from('tournaments').select('id').
 for (const t of await one('old rep team', db.from('rep_teams').select('id').eq('org_id', ORG).eq('slug', TEAM_SLUG))) {
   const kids = (await one('old roster', db.from('rep_roster_players').select('child_id').eq('team_id', t.id).eq('org_id', ORG))).map(r => r.child_id).filter(Boolean);
   die('old roster', (await db.from('rep_roster_players').delete().eq('team_id', t.id).eq('org_id', ORG)).error);
+  die('old team games', (await db.from('rep_team_events').delete().eq('team_id', t.id).eq('org_id', ORG)).error);
   die('old coach rows', (await db.from('rep_team_coaches').delete().eq('team_id', t.id).eq('org_id', ORG)).error);
   die('old staff rows', (await db.from('rep_team_staff_memberships').delete().eq('team_id', t.id).eq('org_id', ORG)).error);
   die('old years', (await db.from('rep_program_years').delete().eq('team_id', t.id).eq('org_id', ORG)).error);
@@ -130,6 +132,10 @@ if (oldPlan.length) {
   die('old plan lines', (await db.from('org_budget_lines').delete().eq('org_id', ORG).gte('sort_order', PLAN_SORT_BASE)).error);
 }
 ok('previous plan lines and General book lines removed');
+// 4. today's house league games (d): by their fixed ids, with the change rows their insert recorded
+die('old game-day changes', (await db.from('league_game_changes').delete().eq('org_id', ORG).in('game_id', GAME_DAY_IDS)).error);
+die('old game-day games', (await db.from('league_games').delete().eq('org_id', ORG).in('id', GAME_DAY_IDS)).error);
+ok('previous game-day house league games removed');
 
 // ══ (a) THE TOURNAMENT ═══════════════════════════════════════════════════════════════════════════════════════════
 head('(a) Kestrel Bay Fall Classic');
@@ -221,12 +227,13 @@ ok('one announcement (site only; no email)');
 
 // ══ (b) THE REP TEAM ═════════════════════════════════════════════════════════════════════════════════════════════
 head('(b) Kestrel Bay U13 Ospreys');
-const coach = (await ensureFixtureUser(db, { email: COACH.email, password: crypto.randomBytes(24).toString('base64url'), userMetadata: { full_name: COACH.name }, resetPassword: false })).user;
+const coach = (await ensureFixtureUser(db, { email: COACH.email, password: 'UATPassword2026!', userMetadata: { full_name: COACH.name }, resetPassword: false })).user;
 const nowIso = NOW.toISOString();
 const seat = await one('coach seat', db.from('organization_members').select('id').eq('organization_id', ORG).eq('user_id', coach.id).maybeSingle());
 if (!seat) die('coach member', (await db.from('organization_members').insert({ organization_id: ORG, user_id: coach.id, role: 'coach', status: 'active', display_name: COACH.name, invited_at: nowIso, accepted_at: nowIso })).error);
 const team = await one('rep team', db.from('rep_teams').insert({
-  org_id: ORG, name: 'Kestrel Bay U13 Ospreys', slug: TEAM_SLUG, sport: 'softball', division: 'U13', color: '#00695C', is_archived: false, schedule_visibility: 'families',
+  // Public (Club Website Stage 1's walk): its games reach the club home's Today. Its coach's setting, as in the product.
+  org_id: ORG, name: 'Kestrel Bay U13 Ospreys', slug: TEAM_SLUG, sport: 'softball', division: 'U13', color: '#00695C', is_archived: false, schedule_visibility: 'public_link',
 }).select('id').single());
 const py = await one('program year', db.from('rep_program_years').insert({
   team_id: team.id, org_id: ORG, name: `${YEAR} Season`, year: YEAR, status: 'active', tryout_open: false, born_from_year: YEAR - 12, born_to_year: YEAR - 11,
@@ -250,6 +257,27 @@ const rosterRows = ROSTER.map(([first, last, num, pos, pos2, bats, throws, g], i
   guardian_first_name: g, guardian_last_name: last, guardian_email: `${g}.${last}@${D}`.toLowerCase(), guardian_phone: `905-555-01${pad2(10 + i * 3)}`,
 }));
 die('roster', (await db.from('rep_roster_players').insert(rosterRows)).error);
+// Three games for the club home (Club Website Stage 1's walk): one under way with the coach's running score (no result:
+// it reads "Live now 2–1", never a finished tie), one away later today with no address (no Directions), one won two
+// days ago (a Latest results row with its day).
+const repAt = (ms) => new Date(ms).toISOString();
+// 6:30 p.m. on the club's day two days back, whatever the season's offset (EST −5, EDT −4) and whatever the hour now.
+const twoDaysBack = wall(NOW.getTime() - 2 * 24 * 60 * MIN).date;
+const twoDaysAgo = [`${twoDaysBack}T18:30:00-05:00`, `${twoDaysBack}T18:30:00-04:00`].map(s => new Date(s))
+  .find(d => wall(d.getTime()).time === '18:30:00');
+if (!twoDaysAgo) die('rep games', { message: 'could not place the game two days back' });
+if (wall(NOW.getTime() + 180 * MIN).date !== TODAY) die('rep games', { message: 'the away game would fall on tomorrow: run this before about 9:00 p.m.' });
+const repGames = [
+  { starts: NOW.getTime() - 25 * MIN, opponent: 'Marlow Heights', home_away: 'home', location: 'Harbourview Park · Diamond 2', location_address: '12 Harbourview Rd', team_score: 2, opponent_score: 1, result: null },
+  { starts: NOW.getTime() + 180 * MIN, opponent: 'Whitecliff', home_away: 'away', location: 'Whitecliff Community Park · Diamond 3', location_address: null, team_score: null, opponent_score: null, result: null },
+  { starts: twoDaysAgo.getTime(), opponent: 'Whitecliff', home_away: 'home', location: 'Harbourview Park · Diamond 2', location_address: '12 Harbourview Rd', team_score: 5, opponent_score: 3, result: 'win' },
+].map(g => ({
+  org_id: ORG, team_id: team.id, program_year_id: py.id, event_type: 'league_game', name: `${g.home_away === 'away' ? 'at' : 'vs'} ${g.opponent}`,
+  starts_at: repAt(g.starts), ends_at: repAt(g.starts + 90 * MIN), location: g.location, location_address: g.location_address,
+  opponent: g.opponent, home_away: g.home_away, team_score: g.team_score, opponent_score: g.opponent_score, result: g.result, status: 'scheduled', arrival_time: null,
+}));
+die('rep games', (await db.from('rep_team_events').insert(repGames)).error);
+ok(`${repGames.length} rep games: one live (2–1, no result), one away later today, one won two days ago · schedule Public`);
 ok(`team ${team.id} · head coach ${COACH.email} · ${rosterRows.length} players (number, position, bats/throws, guardian contact; no birth date, no medical, no notes)`);
 
 // ══ (c) THE BOOKS ════════════════════════════════════════════════════════════════════════════════════════════════
@@ -403,6 +431,46 @@ const yearTotals = async (first, last) => {
 };
 const t = await yearTotals(`${YEAR}-01-01`, `${YEAR}-12-31`);
 ok(`${YEAR} so far: money in $${t.in.toFixed(2)}, money out $${t.out.toFixed(2)}, net $${(t.in - t.out).toFixed(2)} (all club books)`);
+
+// ══ (d) HOUSE LEAGUE GAMES TODAY (Club Website Stage 1's walk) ═══════════════════════════════════════════════════
+// The club's season (seed-prospect-demo.mjs) plays on Saturdays; the walk needs games on the day it runs. Six games in
+// its two published divisions, around the moment this runs: a final, a game past its window with no score yet, two live
+// ("Score after the game"), one later today and one postponed. Inserted into a PUBLISHED division, each records an
+// unsent "added" change (the house league's change recorder), which keeps it off the public pages until sent. These are
+// invented games that stand for ones published with the schedule, so the seed removes exactly those change rows (never
+// marks them sent: only the club's Send the changes sends, and it would queue family emails a seed must never make;
+// tests/unit/league-game-changes-guard.test.ts holds that no code writes the table by hand).
+head('(d) House league games today');
+const hlSeason = await one('house league season', db.from('league_seasons').select('id').eq('org_id', ORG).eq('slug', `${YEAR}-house-league`).maybeSingle());
+if (!hlSeason) die('house league season', { message: `no ${YEAR}-house-league season: run seed-prospect-demo.mjs --club=kestrel first` });
+const hlDivs = await one('divisions', db.from('league_divisions').select('id, name').eq('season_id', hlSeason.id).in('name', ['U11', 'U15']));
+const hlTeams = await one('teams', db.from('league_teams').select('id, name, division_id').eq('season_id', hlSeason.id));
+const placeOf = await one('places', db.from('org_venues').select('id, name, org_venue_facilities(id, name)').eq('org_id', ORG).in('name', ['Harbourview Park', 'Alder Fields']));
+const divId = (name) => hlDivs.find(d => d.name === name)?.id ?? die('division', { message: `no ${name}` });
+const teamId = (name) => hlTeams.find(t => t.name === name)?.id ?? die('team', { message: `no ${name}` });
+const diamond = (venue, fac) => {
+  const v = placeOf.find(p => p.name === venue) ?? die('venue', { message: `no ${venue}` });
+  return { org_venue_id: v.id, org_venue_facility_id: v.org_venue_facilities.find(f => f.name === fac)?.id ?? null, location: `${venue} · ${fac}` };
+};
+const hlGames = [
+  { div: 'U11', home: 'Foxes', away: 'Ospreys', ago: 180, status: 'completed', score: [7, 5], at: diamond('Harbourview Park', 'Diamond 1') },
+  { div: 'U11', home: 'Mariners', away: 'Lynx', ago: 150, status: 'scheduled', score: null, at: diamond('Harbourview Park', 'Diamond 3') },
+  { div: 'U11', home: 'Lynx', away: 'Foxes', ago: 30, status: 'scheduled', score: null, at: diamond('Harbourview Park', 'Diamond 1') },
+  { div: 'U15', home: 'Tides', away: 'Ravens', ago: 20, status: 'scheduled', score: null, at: diamond('Alder Fields', 'Diamond 1') },
+  { div: 'U11', home: 'Ospreys', away: 'Mariners', ago: -90, status: 'scheduled', score: null, at: diamond('Harbourview Park', 'Diamond 1') },
+  { div: 'U15', home: 'Ravens', away: 'Tides', ago: -150, status: 'postponed', score: null, at: diamond('Alder Fields', 'Diamond 1') },
+].map((g, i) => {
+  const start = NOW.getTime() - g.ago * MIN;
+  return {
+    id: GAME_DAY_IDS[i], org_id: ORG, season_id: hlSeason.id, division_id: divId(g.div), home_team_id: teamId(g.home), away_team_id: teamId(g.away),
+    scheduled_at: new Date(start).toISOString(), ends_at: new Date(start + 90 * MIN).toISOString(), ...g.at, status: g.status,
+    home_score: g.score ? g.score[0] : null, away_score: g.score ? g.score[1] : null,
+  };
+});
+if (hlGames.some(g => wall(Date.parse(g.scheduled_at)).date !== TODAY)) die('house league games', { message: 'a game would fall off today: run this between about 5:00 a.m. and 9:00 p.m.' });
+die('house league games', (await db.from('league_games').insert(hlGames)).error);
+die('added changes', (await db.from('league_game_changes').delete().eq('org_id', ORG).in('game_id', GAME_DAY_IDS).is('sent_at', null)).error);
+ok(`${hlGames.length} house league games today in U11 and U15: a final, one past its window with no score, two live, one later, one postponed (as published)`);
 
 head('Done');
 console.log(`  Tournament   /${SLUG}/${TOURNAMENT_SLUG}   ("Live now" holds until about ${wall(NOW.getTime() + (LENGTH + 30 - Math.max(...LIVE_AGO)) * MIN).time.slice(0, 5)} ${TZ}: capture before then)`);

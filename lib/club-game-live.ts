@@ -13,6 +13,7 @@
  * Pure and dependency-light (no server-only import): a client component renders what it decides.
  */
 import { DEFAULT_GAME_DURATION_MINUTES, LIVE_GRACE_MINUTES } from './game-status.ts';
+import { orgDayKey } from './timezone.ts';
 
 /** The one spelling of the live word on every club surface (the tournament row's word, `PublicGameRow` STATUS_WORD). */
 export const LIVE_NOW = 'Live now';
@@ -90,6 +91,48 @@ export function gameDayCheckWindow(games: readonly { startsAt: string | null; en
     toMs = Math.max(toMs, w.endMs);
   }
   return fromMs < toMs ? { fromMs, toMs } : null;
+}
+
+/**
+ * A house league page's check window (G6): its season's games on the club's day `now` falls on, a game postponed or
+ * cancelled keeping none. As instants, for the page's refresher; null — the page never checks today.
+ */
+export function leagueCheckWindow(
+  games: readonly { scheduledAt: string | null; endsAt: string | null; status: string }[],
+  now: number = Date.now(),
+): { from: string; to: string } | null {
+  const today = orgDayKey(new Date(now).toISOString());
+  return isoWindow(gameDayCheckWindow(games
+    .filter(g => g.scheduledAt && orgDayKey(g.scheduledAt) === today && g.status !== 'cancelled' && g.status !== 'postponed')
+    .map(g => ({ startsAt: g.scheduledAt, endsAt: g.endsAt }))));
+}
+
+/** A check window as the instants a page and a check carry. */
+export function isoWindow(w: { fromMs: number; toMs: number } | null): { from: string; to: string } | null {
+  return w ? { from: new Date(w.fromMs).toISOString(), to: new Date(w.toMs).toISOString() } : null;
+}
+
+/** The games read's row facts a house league page's check reads. */
+type SeasonRow = { seasonSlug: string | null; day: string; key: string; state: string; startsAt: string | null; endsAt: string | null;
+  score: { home: number; away: number } | null };
+
+/** The same window from a check's rows (the refresher's): the season's games today that are still played. */
+export function seasonCheckWindow(rows: readonly SeasonRow[], seasonSlug: string, today: string): { from: string; to: string } | null {
+  return isoWindow(gameDayCheckWindow(rows.filter(r => r.seasonSlug === seasonSlug && r.day === today
+    && r.state !== 'cancelled' && r.state !== 'postponed' && r.state !== 'moved')));
+}
+
+/**
+ * What a house league page shows of its season's games in the check's window, as one string: a check whose string
+ * differs from the last one means the page has something new to show (a score, a Final, a game turning live), so it
+ * asks the server for a fresh render — and only then (tab 7: a whole-page refresh repeats every one of its reads).
+ */
+export function seasonGamesFingerprint(rows: readonly SeasonRow[], seasonSlug: string): string {
+  return rows
+    .filter(r => r.seasonSlug === seasonSlug)
+    .map(r => `${r.key}=${r.state}:${r.score ? `${r.score.home}-${r.score.away}` : ''}`)
+    .sort()
+    .join('\n');
 }
 
 /** Is the check on right now? */

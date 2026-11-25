@@ -3,7 +3,8 @@ import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import type { Metadata } from 'next';
 import { computeStandings, getDivisionsForSeason, getLeagueSeasons } from '@/lib/db';
-import { isDivisionSchedulePublic, isPublicLeagueSeason } from '@/lib/league-game-changes-server';
+import { isDivisionSchedulePublic, isPublicLeagueSeason, publicSeasonCheckWindow } from '@/lib/league-game-changes-server';
+import LeagueScoresRefresher from '@/components/public/LeagueScoresRefresher';
 import { resolvePublicLeagueContext } from '@/lib/public-league';
 import { clubPageMetadata, getClubSeason } from '@/lib/club-page-meta';
 import { orgLinks } from '@/lib/org-links';
@@ -102,10 +103,13 @@ export default async function LeagueSeasonPage({
     // An age group is listed when the standings page would show its table: standings on and its schedule published (9e·4,
     // 9e·5). Their tables in parallel — the standings page's own read, one per age group — and the club's seasons for the card.
     const listed = rawDivisions.filter(d => d.showStandings && isDivisionSchedulePublic(d));
-    const [tables, seasons] = await Promise.all([
+    const renderedAt = new Date();
+    const [tables, seasons, checkWindow] = await Promise.all([
       Promise.all(listed.map(d => computeStandings(d.id, season.sport))),
       // The club's seasons only where the card can show: an old season's page.
       isOldSeason(season, today) ? getLeagueSeasons(org.id) : Promise.resolve([]),
+      // G6: the standings blocks update on the 30-second check while a game of the season is on today.
+      publicSeasonCheckWindow(season, rawDivisions, renderedAt),
     ]);
     // No table before the first score anywhere: the band is absent and Schedule is the one button.
     const anyScored = tables.some(t => t.scored);
@@ -115,6 +119,7 @@ export default async function LeagueSeasonPage({
     // The club page column (club round C2 + C5): on the logo edge, 960 at most, 24 between sections.
     return (
       <PublicPage frame="club">
+        <LeagueScoresRefresher orgSlug={orgSlug} seasonSlug={seasonSlug} renderedAt={renderedAt.toISOString()} window={checkWindow} />
         <div className={column.header}>
           {door && (
             <aside className={`${kit.door} ${column.nextDoor}`} aria-label={NEXT_SEASON_WORDS.region}>

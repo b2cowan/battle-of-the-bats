@@ -9,8 +9,10 @@ import styles from './PublicParts.module.css';
  * standard R4: every section heading on a public tournament page AND a club public page is this part (club round,
  * 2026-11-05) — the club's pages read the same `--club-*` tokens, so it draws in the club's palette there.
  */
-export default function PublicSectionHead({ title, count, link, action, id, division }: {
+export default function PublicSectionHead({ title, count, note, link, action, id, division }: {
   title: string;
+  /** A quiet fact after the title, in the heading ("Today  Sat, Nov 28" on a club's home, Club Website Stage 1). */
+  note?: string;
   /** A division's heading ("U11"): 18 px, the top of the three levels (standard R4; 18 px ruled 2026-10-30). */
   division?: boolean;
   count?: number;
@@ -25,6 +27,7 @@ export default function PublicSectionHead({ title, count, link, action, id, divi
       <h2 className={division ? `${styles.headTitle} ${styles.divisionTitle}` : styles.headTitle} id={id}>
         {title}
         {count != null && <span className={styles.count}>{count}</span>}
+        {note && <span className={styles.headNote}>{note}</span>}
       </h2>
       {link && <Link className={styles.headLink} href={link.href}>{link.label}</Link>}
       {!link && action}

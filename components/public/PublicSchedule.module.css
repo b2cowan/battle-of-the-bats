@@ -192,6 +192,9 @@ a.gameName:focus-visible { outline: 2px solid var(--club-edge); outline-offset: 
   .wideForm:has(.gamePlace):has(.gameStatus) .gameContext { grid-row: 2; }
   /* The house league's Moved game: the date families heard ("Was Sat, Nov 7 · 6:00 p.m.") centred under the field. */
   .wideForm[data-state='moved'] .gameNoScore { grid-column: 2; text-align: center; }
+  /* The house league's live game (Club Website Stage 1, G7): "Score after the game" under the field, as Moved's line is —
+     row two is the field's, and the two printed on top of each other at 1280 (/design 2026-11-25). */
+  .wideForm[data-state='live']:has(.gamePlace) .gameNoScore { grid-row: 3; }
 }
 @media (prefers-reduced-motion: reduce) { .gameBlock[data-flipped] { animation: none; } }
 

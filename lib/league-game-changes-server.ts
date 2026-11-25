@@ -4,7 +4,8 @@ import { fetchAll, fetchAllIn } from './supabase-paging';
 import { getDivisionsForSeason, getLeagueSeasons, getOrgPlaceNames, getSeasonGamesBetween, getSeasonGamesEveryStatus, getTeamsForSeason } from './db';
 import { asLastSent, heldGames, lastSentInWindow, sendClaim, type GameSnapshot, type HeldChange, type HeldGame } from './league-game-changes';
 import type { LeagueDivision, LeagueGame, LeagueSeason } from './types';
-import { orgDayKey } from './timezone';
+import { addCalendarDays, orgDayKey, tournamentToday, zonedWallClockToUtc } from './timezone';
+import { leagueCheckWindow } from './club-game-live';
 
 // The as-last-sent view moved to the pure module (Club Website Stage 1) so its window rule is unit-tested; kept reachable
 // here for the readers that import it from this module.
@@ -169,9 +170,35 @@ export async function publicSeasonGamesBetween(
 ): Promise<PublicSeasonGames> {
   const published = publishedOf(season, divisions);
   if (!published) return { games: [], published: new Set() };
-  const games = await getSeasonGamesBetween(season.id, fromIso, toIso);
+  const games = (await getSeasonGamesBetween(season.id, fromIso, toIso)).filter(g => published.has(g.divisionId));
+  // No game in the window (by start or by the day one was moved off): nothing for a held change to put back.
+  if (games.length === 0) return { games: [], published };
   const held = await heldChangesOf(season.id);
-  return { games: lastSentInWindow(games.filter(g => published.has(g.divisionId)), held, fromIso, toIso), published };
+  return { games: lastSentInWindow(games, held, fromIso, toIso), published };
+}
+
+/**
+ * When a house league page that shows no games of its own (the standings, the season page) checks for scores today (Club
+ * Website Stage 1, G6): its season's games today through this rule, then `leagueCheckWindow`. A failed read is null — the
+ * page simply does not check, it never fails for it. The schedule has the season's games already and asks
+ * `leagueCheckWindow` itself.
+ */
+export async function publicSeasonCheckWindow(
+  season: Pick<LeagueSeason, 'id' | 'status' | 'seasonStartDate' | 'seasonEndDate'>, divisions: readonly LeagueDivision[], now: Date = new Date(),
+): Promise<{ from: string; to: string } | null> {
+  const today = tournamentToday(now);
+  // A season that cannot play today is not read at all (most visits to an old season's page).
+  if (!mayPlayIn(season, today, today)) return null;
+  const fromIso = zonedWallClockToUtc(today, '00:00');
+  const toIso = zonedWallClockToUtc(addCalendarDays(today, 1), '00:00');
+  if (!fromIso || !toIso) return null;
+  try {
+    const { games } = await publicSeasonGamesBetween(season, divisions, fromIso, toIso);
+    return leagueCheckWindow(games, now.getTime());
+  } catch (error) {
+    console.error('[league] check window read failed', { seasonId: season.id, error });
+    return null;
+  }
 }
 
 /** One public season's games in a window, with what a row names: its divisions (in the season's order) and teams. */
