@@ -1796,6 +1796,22 @@ in the card-network sentence); Privacy §5 (who sent an offer is kept with its r
   - **Still owed:** the commit at the owner's yes (the live fixes first: the Full count, the offer to an address on file
     and the closed link of a lapsed offer; then the rest of Part 4a). Offer again reads migration 530, so it reaches
     production only after 530.
+- **Part 4b step 1, the legal close-out: drafted and ruled 2026-11-25** (`/legal`; owner: "all as recommended, yes to
+  the spelling change, and commit"). Drafts in `docs/agents/legal/drafts/` (Payments Terms 0.3, Privacy 0.1, Terms and
+  Data Terms 0.1); the approval page https://claude.ai/artifact/TcfDR73akZPhvEVRKGgnnv (source
+  `BOARD_READY_STAGE6_P4B_POLICY_APPROVAL.html`). Production counts that day (counts only): 0 payout accounts, 0
+  agreements, 0 sponsor records. The five calls, as ruled:
+  1. The wording of all four documents is approved. Publishing is a new frozen version of each, on the owner's word.
+  2. The sentence saying sign-up files and health answers are removed automatically goes in (Privacy §9, Data Terms §11).
+  3. The versions publish in the release that carries sponsor card payments and Offer again, one date for all four.
+     Count connected clubs that day; if one has agreed to the old Payments Terms, stop (30 days' email notice).
+  4. Offer and unsubscribe records stay deleted with the club, as built; a lawyer looks when the owner chooses.
+  5. **To build, soon, as its own small fix:** error reports keep the private link of five no-sign-in pages (sponsor,
+     team payment, family sign-up status, family invitation, tryout scoring) for 30 days.
+  Also ruled: **the e-transfer data change is approved** (dev first, production with the release). Counted 2026-11-25,
+  values saved as "E-Transfer": dev 63 ledger entries, 3 team expenses, 1 payment request; production 3 team expenses.
+  Other findings for `/plan`: a shown or withdrawn sponsor logo is kept; a club can't delete a business that had a deal
+  or its files; the sponsor page's privacy link shows only while its form is open.
 - ~~The per-deal "Charge HST" switch carries no words telling a club WHEN to turn it on.~~ **Added 2026-11-22 (owner: "add
   the hint")**, words checked against CRA RC4081 then set in brand voice (`docs/agents/accounting/BOARD_READY_STAGE6_SPONSOR_PAYMENT_FEE_REVIEW.md`
   addendum): the switch's hint reads **"13% for an Ontario address, added to the amount. A sponsorship that shows a name or

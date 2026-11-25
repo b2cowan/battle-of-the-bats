@@ -25,6 +25,10 @@ registered with ServiceOntario 2026-11-06** (renewal date still to be read off t
   (`docs/agents/strategy/BUSINESS_DECISIONS.md` ~L251–255). Québec: no customer on record — the first one
   triggers Law 25 and the French-language standard-form contract rules.
 - **Nothing has been sold yet** (`ACCOUNTING_FACTS.md` § Registrations).
+- **Online payments are switched ON in production since the 2026-11-24 promote** (release history). Counts read on production
+  2026-11-25 (counts only): 0 payout accounts, 0 Payments Terms agreements, 0 online payments, 0 sponsors, deals, offers, offer
+  stops or sponsor payments, 0 sign-up form files or answers. Sponsorships up to the invoice and recorded payments are on
+  production since 2026-11-23; a sponsor's card payment and Offer again are on dev only.
 
 ## FieldLogicHQ's two privacy roles
 1. **Its own organization** for account holders' information (owner, coaches, club admins: name, email,
@@ -92,6 +96,17 @@ registered with ServiceOntario 2026-11-06** (renewal date still to be read off t
   owner and admins; a league admin or registrar reads only house-league coach rows and never a pick that reached a rep staff
   member; a board email only by its sender, its recipients, the owner and admins. Topic: `CLUB_COMMUNICATIONS_STAGE1.md`
   (as-built review 2026-11-22); possibly stale because of it: the published Privacy Policy §5/§9/§12 (see the draft 0.5).
+- **About sponsors and other businesses, which can be a person or a family** (census 2026-11-25; on production up to
+  invoices since 2026-11-23, cards and Offer again on dev): the club's record (names, contact email and phone, invoice
+  address, website, logo), deals, form answers, files and ticks (no IP), an offer record per emailed offer (reason, date,
+  sender's name) and a stop list no club seat can clear. **No time limit on any of it**: kept while the organization
+  exists and deleted with it (row delete checked on dev 2026-11-25, rolled back; files go with the org file sweep). Only
+  never-attached form uploads are swept; a waiting logo is not. A shown logo stays publicly reachable. Error reports keep
+  the page address (on a sponsor page, its private link) and the IP for 30 days. Draft:
+  `drafts/PRIVACY_POLICY_SPONSORSHIP_ADDENDUM.md`.
+- **Sign-up form clean-up is running on production** (`club_form_files_sweep` last ran `ok` 2026-11-25): health answers
+  and file answers removed 90 days after the season is finished or 120 days after its last day (a reopened season waits);
+  never-attached uploads older than 12 hours removed. The published policy does not say it yet (drafted in the addendum).
 - No public sharing of a child's data (`BUSINESS_DECISIONS.md` ~L2871); no one-to-one adult–minor
   messaging (`docs/projects/active/COACH_PORTAL_CHUNK_D_COUNSEL_PACKET.md` ~L188).
 - **Known gaps on file:** no player-information retention or purge rule (TODO, raised 2026-07-17); the
@@ -179,13 +194,16 @@ registered with ServiceOntario 2026-11-06** (renewal date still to be read off t
   seen in test mode only (no code of ours reverses it; `lib/stripe-connect.ts:224`) — confirm on a live payment before
   switch-on.
 
-  **Sponsor card payments (Board Ready Stage 6 Part 3b, built on dev 2026-11-23; payments off in production):** a third payer
+  **Sponsor card payments (Board Ready Stage 6 Part 3b, built on dev 2026-11-23; not yet on production):** a third payer
   kind, a BUSINESS that pays a club's sponsorship deal by card from its own link (no sign-in, no FieldLogicHQ terms shown to it). Data
   held: the email typed on its sponsor form, card brand and last four, Stripe session, payment-intent and refund ids, receipt and invoice
   numbers, amounts, and the club's free-text refund reason (shown to the business, up to 300 characters) with the name of the refunding
-  member; no full card number, no IP. **A sponsor's card dispute is deliberately silent** (no row, no notice, deal stays Paid, nothing booked;
-  `lib/online-payment-landing.ts` `applyCardDispute`), so the club's deletion check cannot see it. Possibly stale because of it: the
-  published Payments Terms 2026-11-24 §2/§4/§7/§9/§10 and Privacy 2026-11-24 §5/§6 (see `BOARD_READY_STAGE6_PART3B_CARD_REVIEW.md`).
+  member; no full card number, no IP. **A sponsor's card dispute is recorded and booked** (since migrations 532 and 534, walk §564;
+  re-read 2026-11-25, `lib/online-payment-landing.ts` `applyCardDispute`): a dispute row, a notice to whoever opens Sponsorships, a loss
+  reversed in the club's books with no credit note and the deal back to owing, a win put back; there is no "Copy the facts" screen for a
+  sponsorship. Until the 2026-11-23 build it was silent. Possibly stale because of the sponsor card payment: the published Payments Terms
+  2026-11-24 §1/§2/§4/§6/§7/§9/§11 and Privacy 2026-11-24 §5/§6/§9/§12 (drafts: `drafts/PAYMENTS_TERMS_SPONSORSHIP_CARD_ADDENDUM.md`,
+  `drafts/PRIVACY_POLICY_SPONSORSHIP_ADDENDUM.md`).
 
 ## Consent and email mechanics that exist today
 - **Payments terms:** a checkbox an owner ticks in "Before you set up payouts" (and again in the card's "new payments terms"
