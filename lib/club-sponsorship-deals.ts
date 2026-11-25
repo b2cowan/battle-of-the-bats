@@ -283,6 +283,27 @@ export type EmailBar =
   | { kind: 'family_opt_out' }
   | null;
 
+type OfferStop = { source: 'unsubscribe' | 'club'; on: string };
+
+/**
+ * A stop follows the BUSINESS (/legal 2026-11-25; owner the same day): "Do not offer again" or an unsubscribe on any address a
+ * business has on record bars every address it has on record, so a changed contact email is not emailed. A stop the club
+ * pressed speaks first, then the earliest; its day is the one said.
+ */
+export function stopsFollowingBusiness(
+  stops: ReadonlyMap<string, OfferStop>, businesses: Iterable<readonly (string | null)[]>,
+): Map<string, OfferStop> {
+  const out = new Map(stops);
+  for (const addresses of businesses) {
+    const keys = addresses.map(a => a?.trim().toLowerCase()).filter((a): a is string => !!a);
+    const first = keys.map(k => stops.get(k)).filter((s): s is OfferStop => !!s)
+      .sort((a, b) => Number(b.source === 'club') - Number(a.source === 'club') || a.on.localeCompare(b.on))[0];
+    if (!first) continue;
+    for (const k of keys) if (!out.has(k)) out.set(k, first);
+  }
+  return out;
+}
+
 /** Why an address can't be emailed an offer, or null. The stop list is read first (it carries a date). */
 export function emailBarFor(
   email: string | null, stops: ReadonlyMap<string, { source: 'unsubscribe' | 'club'; on: string }>, familyOptOuts: ReadonlySet<string>,

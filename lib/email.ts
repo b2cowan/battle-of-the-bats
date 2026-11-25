@@ -66,6 +66,8 @@ export type SendEmailResult = {
   id?: string;
   logId?: string | null;
   refused?: boolean;
+  /** With `provider_error`: the mail service was too busy to take it (429), so nothing went. */
+  throttled?: boolean;
   /** With `skipped`: the club is a preview, so nothing went (Track P, T1). (Could not tell: `provider_error`, see below.) */
   preview?: boolean;
 };
@@ -196,7 +198,7 @@ export async function sendEmail(
       if (refused) await log.settleSentEmailRow(logId, { state: 'failed' });
       else await log.settleSentEmailRow(logId, { state: 'unconfirmed' });
     }
-    return { status: 'provider_error', logId, refused };
+    return { status: 'provider_error', logId, refused, ...(res.status === 429 ? { throttled: true } : {}) };
   }
   const id = await res.json().then((j: { id?: unknown }) => (typeof j?.id === 'string' ? j.id : undefined), () => undefined);
   if (log && logId && id) await log.settleSentEmailRow(logId, { resendId: id });

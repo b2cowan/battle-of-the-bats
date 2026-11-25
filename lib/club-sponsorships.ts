@@ -55,8 +55,9 @@ export interface ClubSponsor {
 
 /** Every division, team and tournament of the club, each marked `live` when a new place may be put on it. */
 export interface PlaceTargets {
-  divisions: { id: string; name: string; seasonName: string; live: boolean }[];
-  teams: { id: string; name: string; divisionName: string; seasonName: string; live: boolean }[];
+  /** `seasonId` (Part 4a): Offer again tells last year's season from this year's by it, never by a name two seasons can share. */
+  divisions: { id: string; name: string; seasonId: string; seasonName: string; live: boolean }[];
+  teams: { id: string; name: string; divisionName: string; seasonId: string; seasonName: string; live: boolean }[];
   tournaments: { id: string; name: string; live: boolean }[];
 }
 

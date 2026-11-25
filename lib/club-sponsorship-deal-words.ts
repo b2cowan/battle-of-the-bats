@@ -8,7 +8,7 @@
 import { money } from './online-payment-words';
 import { formatStoredDate } from './timezone';
 import { joinWithAnd, possessive } from './utils';
-import type { DealBand, OfferReason } from './club-sponsorship-deals';
+import type { DealBand, EmailBar, OfferReason } from './club-sponsorship-deals';
 import type { SponsorPlaceKind } from './club-sponsorships';
 
 const day = (d: string) => formatStoredDate(d, { withYear: false });
@@ -130,6 +130,7 @@ export const DEAL_WORDS = {
     errBusiness: 'Pick a business, or type a new one.',
     errNewName: 'A business name is up to 80 characters.',
     errEmail: 'Enter the business’s email, like frank@harbourdental.ca.',
+    errNoStanding: 'No payment from them counts right now (refunded or disputed). Pick another reason.', // DRAFT
     errPkg: 'Pick a package.',
     errTarget: 'Pick where it shows.',
     errAmount: 'Enter an amount, like 1,000.00.',
@@ -143,6 +144,88 @@ export const DEAL_WORDS = {
     errEmailFailed: 'The email didn’t go out, so nothing was offered. Try again.', // DRAFT
     madeLink: 'The link is made. Nothing was emailed.', // call (c) drawing
     sent: (email: string) => `Offer sent to ${email}.`, // DRAFT
+  },
+
+  // ── Offer again (Part 4a drawing, Nov 25 2026, rulings 1A–12A; round 1 tab 9). Drawn lines VERBATIM; DRAFT for /marketing. ──
+  again: {
+    calloutTitle: (n: number, lastYear: string) => n > 0
+      ? `${n} ${n === 1 ? 'business' : 'businesses'} sponsored you in ${lastYear}`
+      : `Businesses from ${lastYear} can be offered again`, // the zero case: /marketing 2026-11-25
+    calloutSub: 'Offer them this year’s packages in one go.',
+    calloutLeft: (n: number) => `${n} of last year’s deals ${n === 1 ? 'is' : 'are'} left to offer.`,
+    button: 'Offer again…',
+    emptyYear: (year: string) => `No deals in ${year} yet. Offer a deal, or offer again to last year’s sponsors.`,
+    eyebrow: (year: string) => `Deals · ${year}`,
+    title: (lastYear: string) => `Offer again to ${possessive(lastYear)} sponsors`,
+    phoneTitle: 'Offer again',
+    phoneSub: (lastYear: string) => `To ${possessive(lastYear)} sponsors`,
+    groupReady: (n: number) => `Ready · ${n}`,
+    groupWaiting: (n: number) => `Waiting · ${n}`,
+    groupBlocked: (n: number) => `Can’t be emailed · ${n}`,
+    moreReady: (n: number) => `${n} more ready`,
+    moreWaiting: (n: number) => `${n} more waiting`,
+    more: (n: number) => `${n} more`,
+    show: 'Show',
+    lastPrice: (amount: number) => `last year ${money(amount)}`,
+    lastTeam: (name: string) => `last year ${name}`,
+    paidOn: (on: string) => `Paid us on ${dayYear(on)}`,
+    showsOn: 'Shows on',
+    showsUntil: 'Shows until',
+    lastDayPassed: (on: string) => `The package’s last day, ${dayYear(on)}, has passed.`,
+    lastYearPlace: (name: string) => `Last year: ${name}`,
+    pickTeam: 'Pick a team',
+    pickDivision: (name: string) => `Pick a ${name} division`,
+    pickTournament: 'Pick a tournament',
+    pickAnyDivision: 'Pick a division', // last year's deal wasn't on a division (its package changed kind)
+    waitPlace: 'There’s no division to show it on yet. Offer it once there is one.',
+    otherTeams: 'Other teams',
+    teamGroup: (division: string, season: string) => `${division} · ${season}`,
+    divisionChoice: (name: string, season: string) => `${name} ${season}`,
+    divisionPlace: (name: string, season: string) => `${name}, ${season}`,
+    // Waiting (asks 3, 5, 6): the row can't be ticked.
+    waitTeams: (season: string | null) => `${season ? possessive(season) : 'This year’s'} teams aren’t made yet. Offer it once they are.`,
+    waitDivision: (season: string | null, name: string) => season
+      ? `${season} has no ${name} division yet. Offer it once it has one.`
+      : `No new season has a ${name} division yet. Offer it once one does.`,
+    waitTournament: 'Set up this year’s tournament first. Offer it once it’s made.',
+    waitFull: 'This package is full. Offer it once a place frees up.',
+    // Can't be emailed (asks 7, 8; ruling 14). The bars reuse the Offer window's words (offer.bar*).
+    neverPaid: (lastYear: string) => `Offered in ${lastYear}. There’s no payment on record that counts, so there’s no reason on record to email them. To give them a link in person, use Offer a deal.`,
+    lapsed: (on: string) => `Last paid us on ${dayYear(on)}, more than two years ago, so there’s no reason on record to email them. To give them a link in person, use Offer a deal.`,
+    archived: (pkg: string) => `The ${pkg} package is archived. Offer them another one.`,
+    noEmail: 'There’s no email address on file for them. To give them a link in person, use Offer a deal.',
+    noStandingPayment: 'Their payment is disputed or being refunded, so there’s no reason on record to email them. To give them a link in person, use Offer a deal.',
+    sends: (n: number) => `Sends ${n} ${n === 1 ? 'email' : 'emails'}`,
+    send: (n: number) => `Send ${n} ${n === 1 ? 'offer' : 'offers'}`,
+    sending: 'Sending…',
+    progress: (sent: number, of: number) => `Sent ${sent} of ${of} so far. Keep this page open until it finishes.`,
+    cancel: 'Cancel',
+    // After the press (ask 10): each row stands alone.
+    sentAll: (n: number) => `Sent ${n} ${n === 1 ? 'offer' : 'offers'}.`,
+    // A press with something to say beyond "sent": what wasn't offered (owner 2026-11-25) and what couldn't be confirmed.
+    sentSome: (sent: number, of: number, failed: { name: string; why: string }[], unconfirmed: string[] = []) => {
+      const said = [sent ? `Sent ${sent} of ${of} offers.` : unconfirmed.length ? 'No offers are confirmed sent.' : 'No offers were sent.'];
+      if (failed.length === 1) said.push(`${failed[0].name} wasn’t offered: ${failed[0].why}. Nothing was made for them.`);
+      else if (failed.length > 1) {
+        // One reason for all of them is said once.
+        const shared = failed.every(f => f.why === failed[0].why) ? `: ${failed[0].why}` : '';
+        said.push(`${failed.length} weren’t offered (${joinWithAnd(failed.map(f => f.name))})${shared}. Nothing was made for them.`);
+      }
+      if (unconfirmed.length === 1) said.push(`We couldn’t confirm ${possessive(unconfirmed[0])} email went. Their deal was made, so open it to send the link again.`); // DRAFT
+      else if (unconfirmed.length > 1) said.push(`We couldn’t confirm the emails to ${joinWithAnd(unconfirmed)} went. Their deals were made, so open each to send the link again.`); // DRAFT
+      return said.join(' ');
+    },
+    failEmail: 'the email didn’t go',
+    failFull: 'the package is full',
+    failChanged: 'that offer can’t be made right now', // the row changed between the window opening and the press
+    failError: 'something went wrong on our side',
+    failPastDay: 'the “Shows until” day has passed',
+    stopped: (sent: number) => `The send stopped partway. ${sent ? `${sent} ${sent === 1 ? 'offer is' : 'offers are'} confirmed sent, and more may have gone` : 'No offers are confirmed sent, but some may have gone'}. Wait a minute, then open Offer again to see who is left.`,
+    busy: 'Another send may still be running. Wait a minute, then try again.',
+    // One old deal (ask 12): the ordinary Offer window, filled in.
+    oneButton: 'Offer again…',
+    theirLastPayment: (on: string) => `Their last payment: ${dayYear(on)}.`,
+    errPaidLater: (on: string) => `The last payment on record is ${dayYear(on)}.`, // /legal 2026-11-25 must-fix 5
   },
 
   // ── One deal (round 1 tab 5; Part 2 holds what Part 3 builds: Record a payment, the invoice PDF) ──
@@ -250,6 +333,8 @@ export const DEAL_WORDS = {
     errAlreadyEmailed: 'This offer was already emailed. Use Send the link again.',
     errEmailClosed: 'This deal is past its offer, so there’s nothing to email.',
     errLapsed: 'This offer no longer holds a place. Offer a new deal instead.', // DRAFT
+    unconfirmedTitle: 'We couldn’t confirm the email went', // DRAFT
+    unconfirmed: (business: string) => `The deal and its link are made, and the email may have gone to ${business}. If they didn’t get it, use Send the link again.`, // DRAFT
     errReason: 'Give a reason.', // DRAFT
     errPaid: 'A paid deal can’t be withdrawn.', // DRAFT
     // Part 3a: an invoiced deal's amount or tax changes as a revised invoice, while no payment stands on it. DRAFT.
@@ -639,4 +724,12 @@ function lowerFirst(s: string): string {
   // A leading article ("A thank-you at the banquet") is a plain word too: the two-letter test below misses "A " because
   // the second character is a space. A name or an acronym ("HST", "UAT Rep Club") keeps its capital.
   return s && (/^[A-Z][a-z]/.test(s) || /^A\s/.test(s)) ? s[0].toLowerCase() + s.slice(1) : s;
+}
+
+/** The sentence a barred address carries (the Offer window, the deal's page and Offer again's rows). */
+export function barSentence(bar: EmailBar, club: string): string | null {
+  if (!bar) return null;
+  if (bar.kind === 'unsubscribed') return DEAL_WORDS.offer.barUnsubscribed(bar.on);
+  if (bar.kind === 'do_not_offer') return DEAL_WORDS.offer.barDoNotOffer(bar.on);
+  return DEAL_WORDS.offer.barFamily(club);
 }

@@ -5,6 +5,7 @@ import 'server-only';
  * public pages' loaders read only what a family may see (`publicSponsorsFor`, `divisionSponsorsFor`).
  */
 import { supabaseAdmin } from './supabase-admin';
+import { fetchAll, fetchAllIn } from './supabase-paging';
 import { upsertOrgPublicSiteContent } from './db';
 import { ORG_LOGO_BUCKET } from './org-image-limits';
 import { parseSponsorLogoUrl } from './sponsor-logo';
@@ -150,26 +151,27 @@ const FINISHED = new Set(['completed', 'archived']);
 
 /** Every division, team and tournament of the club, each marked `live` when a new place may be put on it. */
 export async function readPlaceTargets(orgId: string): Promise<PlaceTargets> {
-  const { data: seasons, error } = await supabaseAdmin.from('league_seasons').select('id, name, status').eq('org_id', orgId).order('created_at', { ascending: false });
-  if (error) throw error;
-  const seasonRows = (seasons ?? []) as { id: string; name: string; status: string }[];
+  // Paged: a big association's teams pass one page across its seasons, and a team that fell off couldn't be picked.
+  const seasonRows = await fetchAll<{ id: string; name: string; status: string }>((from, to) =>
+    supabaseAdmin.from('league_seasons').select('id, name, status').eq('org_id', orgId).order('created_at', { ascending: false }).order('id').range(from, to));
   const seasonIds = seasonRows.map(s => s.id);
   const seasonBy = new Map(seasonRows.map(s => [s.id, s]));
-  const [d, t, tours] = await Promise.all([
-    seasonIds.length ? supabaseAdmin.from('league_divisions').select('id, name, season_id, sort_order').in('season_id', seasonIds).order('sort_order') : Promise.resolve({ data: [], error: null }),
-    seasonIds.length ? supabaseAdmin.from('league_teams').select('id, name, season_id, division_id, sort_order').in('season_id', seasonIds).order('sort_order') : Promise.resolve({ data: [], error: null }),
-    supabaseAdmin.from('tournaments').select('id, name, status').eq('org_id', orgId).order('start_date', { ascending: false }),
+  const [divs, teams, tours] = await Promise.all([
+    fetchAllIn<{ id: string; name: string; season_id: string }>(seasonIds, (ids, from, to) =>
+      supabaseAdmin.from('league_divisions').select('id, name, season_id, sort_order').in('season_id', ids).order('sort_order').order('id').range(from, to)),
+    fetchAllIn<{ id: string; name: string; season_id: string; division_id: string }>(seasonIds, (ids, from, to) =>
+      supabaseAdmin.from('league_teams').select('id, name, season_id, division_id, sort_order').in('season_id', ids).order('sort_order').order('id').range(from, to)),
+    fetchAll<{ id: string; name: string; status: string }>((from, to) =>
+      supabaseAdmin.from('tournaments').select('id, name, status').eq('org_id', orgId).order('start_date', { ascending: false }).order('id').range(from, to)),
   ]);
-  for (const r of [d, t, tours]) if (r.error) throw r.error;
-  const divs = (d.data ?? []) as { id: string; name: string; season_id: string }[];
   const divBy = new Map(divs.map(x => [x.id, x]));
   const live = (seasonId: string) => !FINISHED.has(seasonBy.get(seasonId)?.status ?? 'completed');
   return {
-    divisions: divs.map(x => ({ id: x.id, name: x.name, seasonName: seasonBy.get(x.season_id)?.name ?? '', live: live(x.season_id) })),
-    teams: ((t.data ?? []) as { id: string; name: string; season_id: string; division_id: string }[]).map(x => ({
-      id: x.id, name: x.name, divisionName: divBy.get(x.division_id)?.name ?? '', seasonName: seasonBy.get(x.season_id)?.name ?? '', live: live(x.season_id),
+    divisions: divs.map(x => ({ id: x.id, name: x.name, seasonId: x.season_id, seasonName: seasonBy.get(x.season_id)?.name ?? '', live: live(x.season_id) })),
+    teams: teams.map(x => ({
+      id: x.id, name: x.name, divisionName: divBy.get(x.division_id)?.name ?? '', seasonId: x.season_id, seasonName: seasonBy.get(x.season_id)?.name ?? '', live: live(x.season_id),
     })),
-    tournaments: ((tours.data ?? []) as { id: string; name: string; status: string }[]).map(x => ({ id: x.id, name: x.name, live: x.status !== 'completed' && x.status !== 'archived' })),
+    tournaments: tours.map(x => ({ id: x.id, name: x.name, live: x.status !== 'completed' && x.status !== 'archived' })),
   };
 }
 

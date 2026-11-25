@@ -19,16 +19,16 @@ import { ORG_LOGO_BUCKET } from './org-image-limits';
 import { newSponsorLogoFileName, sponsorLogoObjectPath } from './sponsor-logo';
 import { CLUB_FORM_BUCKET } from './club-form-server';
 import { getFamilySuppressionList } from './family-email';
-import { fetchAll } from './supabase-paging';
+import { fetchAll, fetchAllIn } from './supabase-paging';
 import { removeLogoFile } from './club-sponsorships-server';
 import {
   dealPlaceUp, invoiceNumber, LOGO_ITEM,
-  type ClubDeal, type DealState, type OfferReason,
+  type ClubDeal, type DealState, type OfferReason, stopsFollowingBusiness,
 } from './club-sponsorship-deals';
 import type { PackageItem, SponsorPlaceKind } from './club-sponsorships';
 import { creditNoteNumber, DEAL_METHOD_LABEL, invoiceStanding, type DealPayment, type DealRefund } from './club-sponsor-invoice';
 import type { DuesPaymentMethod } from './types';
-import { blocksRefund } from './online-payment-dispute';
+import { blocksRefund, disputeOutcome } from './online-payment-dispute';
 
 // ── Reading deals ──────────────────────────────────────────────────────────────────────────────────
 
@@ -81,14 +81,13 @@ function dealOf(r: DealRow, done: ClubDeal['done'], payments: readonly DealPayme
 async function doneFor(dealIds: string[]): Promise<Map<string, ClubDeal['done']>> {
   const out = new Map<string, ClubDeal['done']>();
   if (!dealIds.length) return out;
-  for (let i = 0; i < dealIds.length; i += 200) {
-    const { data, error } = await supabaseAdmin.from('club_sponsor_deal_items').select('deal_id, item_id, done_at, done_by_name').in('deal_id', dealIds.slice(i, i + 200));
-    if (error) throw error;
-    for (const r of (data ?? []) as { deal_id: string; item_id: string; done_at: string; done_by_name: string }[]) {
-      const m = out.get(r.deal_id) ?? {};
-      m[r.item_id] = { at: r.done_at, byName: r.done_by_name };
-      out.set(r.deal_id, m);
-    }
+  const rows = await fetchAllIn<{ deal_id: string; item_id: string; done_at: string; done_by_name: string }>(dealIds, (ids, from, to) =>
+    supabaseAdmin.from('club_sponsor_deal_items').select('deal_id, item_id, done_at, done_by_name').in('deal_id', ids)
+      .order('deal_id').order('item_id').range(from, to));
+  for (const r of rows) {
+    const m = out.get(r.deal_id) ?? {};
+    m[r.item_id] = { at: r.done_at, byName: r.done_by_name };
+    out.set(r.deal_id, m);
   }
   return out;
 }
@@ -175,6 +174,54 @@ async function openDisputesOn(orgId: string, onlinePaymentIds: string[]): Promis
   return out;
 }
 
+/**
+ * OFFER AGAIN'S REASON (Part 4a ruling 8A; /legal 2026-11-25, CASL s.10(10)(a)): for each business, the day of its latest
+ * payment to THIS club that still stands, received on or before `today`. A payment stands when it isn't voided, hasn't gone
+ * back (`returned_at`: refunded in full, or a dispute lost to the bank), and its deal isn't withdrawn (a refund that ended the
+ * deal withdraws it, and its payment rows stay on record — so the deal's state is read too, not only the payment's). /legal's
+ * should-fix, built as recommended: a payment with a dispute still open, or on a deal a pending refund would end, doesn't
+ * count until that settles. A dispute lost to the bank never counts, whatever part of the payment it took (ruling 8A); one
+ * won, closed or prevented counts again. A part payment and a partly refunded payment count: the business did buy. Every row is read
+ * (paged): a payment missed here is a reason missed, and one counted wrongly is an email sent without one.
+ */
+export async function readStandingPaidOn(orgId: string, today: string): Promise<Map<string, string>> {
+  const [deals, payments, ending] = await Promise.all([
+    fetchAll<{ id: string; sponsor_id: string }>((from, to) =>
+      supabaseAdmin.from('club_sponsor_deals').select('id, sponsor_id').eq('org_id', orgId).neq('state', 'withdrawn').order('id').range(from, to)),
+    fetchAll<{ id: string; deal_id: string; received_on: string; online_payment_id: string | null }>((from, to) =>
+      supabaseAdmin.from('club_sponsor_deal_payments').select('id, deal_id, received_on, online_payment_id').eq('org_id', orgId)
+        .is('voided_at', null).is('returned_at', null).lte('received_on', today).order('id').range(from, to)),
+    fetchAll<{ deal_id: string }>((from, to) =>
+      supabaseAdmin.from('club_sponsor_deal_refunds').select('deal_id').eq('org_id', orgId).eq('status', 'pending').eq('ends_deal', true).order('id').range(from, to)),
+  ]);
+  // Unlike the refund flag, a failed dispute read fails the whole read: a reason must never be guessed.
+  const disputes = await fetchAllIn<{ online_payment_id: string; status: string }>(
+    payments.map(p => p.online_payment_id).filter((id): id is string => !!id),
+    (ids, from, to) => supabaseAdmin.from('online_payment_disputes').select('online_payment_id, status')
+      .eq('org_id', orgId).in('online_payment_id', ids).order('id').range(from, to),
+  );
+  const disputed = new Set(disputes.filter(d => disputeOutcome(d.status) !== 'won').map(d => d.online_payment_id));
+  const sponsorOf = new Map(deals.map(d => [d.id, d.sponsor_id]));
+  const endingDeals = new Set(ending.map(r => r.deal_id));
+  const out = new Map<string, string>();
+  for (const p of payments) {
+    const sponsor = sponsorOf.get(p.deal_id);
+    if (!sponsor || endingDeals.has(p.deal_id) || (p.online_payment_id && disputed.has(p.online_payment_id))) continue;
+    const was = out.get(sponsor);
+    if (!was || p.received_on > was) out.set(sponsor, p.received_on);
+  }
+  return out;
+}
+
+/** Has this business any payment on record other than voided ones, standing or not? */
+export async function sponsorHasPayment(orgId: string, sponsorId: string): Promise<boolean> {
+  const deals = await fetchAll<{ id: string }>((from, to) =>
+    supabaseAdmin.from('club_sponsor_deals').select('id').eq('org_id', orgId).eq('sponsor_id', sponsorId).order('id').range(from, to));
+  const paid = await fetchAllIn<{ id: string }>(deals.map(d => d.id), (ids, from, to) =>
+    supabaseAdmin.from('club_sponsor_deal_payments').select('id').eq('org_id', orgId).in('deal_id', ids).is('voided_at', null).order('id').range(from, to));
+  return paid.length > 0;
+}
+
 /** A deal's payments, voided ones included (they stay on record), in the order they arrived. */
 export async function readDealPayments(orgId: string, dealId: string): Promise<DealPayment[]> {
   return (await paymentsFor(orgId, [dealId])).get(dealId) ?? [];
@@ -182,9 +229,9 @@ export async function readDealPayments(orgId: string, dealId: string): Promise<D
 
 /** Every deal of the club, oldest offer first. */
 export async function readDeals(orgId: string): Promise<(ClubDeal & { linkVersion: number })[]> {
-  const { data, error } = await supabaseAdmin.from('club_sponsor_deals').select(DEAL_COLUMNS).eq('org_id', orgId).order('offered_at');
-  if (error) throw error;
-  const rows = (data ?? []) as unknown as DealRow[];
+  // Every deal, paged: Full, Offer again and "already holds it" are wrong the moment the newest ones fall off a page.
+  const rows = await fetchAll<DealRow>((from, to) =>
+    supabaseAdmin.from('club_sponsor_deals').select(DEAL_COLUMNS).eq('org_id', orgId).order('offered_at').order('id').range(from, to));
   const ids = rows.map(r => r.id);
   const [done, paid] = await Promise.all([doneFor(ids), paymentsFor(orgId, ids)]);
   return rows.map(r => dealOf(r, done.get(r.id) ?? {}, paid.get(r.id) ?? []));
@@ -249,7 +296,9 @@ export async function readDealOffers(orgId: string, dealId: string): Promise<{ e
 // ── Who may be emailed an offer ────────────────────────────────────────────────────────────────────
 
 /** The club's stops (address → source and day) and its family opt-outs (every address of an opted-out person). */
-export async function readOfferBars(orgId: string): Promise<{ stops: Map<string, { source: 'unsubscribe' | 'club'; on: string }>; family: Set<string> }> {
+export async function readOfferBars(
+  orgId: string, typed?: { sponsorId: string; email: string },
+): Promise<{ stops: Map<string, { source: 'unsubscribe' | 'club'; on: string }>; family: Set<string> }> {
   // ⚠ EVERY row, in a fixed order (/legal 2026-11-23): a select stops at 1,000 rows without an error, and a stop that is missed
   // here is an address emailed after it said no. `email` is unique within the club, so the paged order is stable.
   const [rows, family] = await Promise.all([
@@ -259,7 +308,28 @@ export async function readOfferBars(orgId: string): Promise<{ stops: Map<string,
   ]);
   const stops = new Map<string, { source: 'unsubscribe' | 'club'; on: string }>();
   for (const r of rows) stops.set(r.email, { source: r.source, on: r.stopped_at });
-  return { stops, family };
+  if (rows.length === 0) return { stops, family };
+  const book = await readBusinessAddresses(orgId);
+  if (typed) book.get(typed.sponsorId)?.push(typed.email); // an address typed for them now is theirs too
+  return { stops: stopsFollowingBusiness(stops, book.values()), family };
+}
+
+/** Every address each business has on record: its contact email, each deal's offered and form addresses, each offer sent.
+ *  Paged, like the stops: a missed address is one emailed after it said no. */
+async function readBusinessAddresses(orgId: string): Promise<Map<string, (string | null)[]>> {
+  const [sponsors, deals, offers] = await Promise.all([
+    fetchAll<{ id: string; contact_email: string | null }>((from, to) =>
+      supabaseAdmin.from('club_sponsors').select('id, contact_email').eq('org_id', orgId).order('id').range(from, to)),
+    fetchAll<{ id: string; sponsor_id: string; offered_to: string | null; contact_email: string | null }>((from, to) =>
+      supabaseAdmin.from('club_sponsor_deals').select('id, sponsor_id, offered_to, contact_email').eq('org_id', orgId).order('id').range(from, to)),
+    fetchAll<{ deal_id: string | null; email: string }>((from, to) =>
+      supabaseAdmin.from('club_sponsor_offers').select('deal_id, email').eq('org_id', orgId).order('id').range(from, to)),
+  ]);
+  const bySponsor = new Map<string, (string | null)[]>(sponsors.map(s => [s.id, [s.contact_email]]));
+  const sponsorOf = new Map(deals.map(d => [d.id, d.sponsor_id]));
+  for (const d of deals) bySponsor.get(d.sponsor_id)?.push(d.offered_to, d.contact_email);
+  for (const o of offers) bySponsor.get(sponsorOf.get(o.deal_id ?? '') ?? '')?.push(o.email);
+  return bySponsor;
 }
 
 /** "Do not offer again" (ask 13): for good, per club and address; a second press finds it written. */
@@ -328,7 +398,17 @@ export async function recordOfferEmail(orgId: string, dealId: string, o: {
 
 /** A deal whose email never went out is removed whole (nothing was offered). */
 export async function deleteUnsentDeal(orgId: string, dealId: string): Promise<void> {
-  await supabaseAdmin.from('club_sponsor_deals').delete().eq('org_id', orgId).eq('id', dealId).is('emailed_at', null).eq('state', 'offered');
+  const { error } = await supabaseAdmin.from('club_sponsor_deals').delete().eq('org_id', orgId).eq('id', dealId).is('emailed_at', null).eq('state', 'offered');
+  if (error) throw error;
+}
+
+/** How many deals this business has been offered on this package today. The batch asks just before it makes a row's deal: more
+ *  than it knows of means a second press is running elsewhere (another tab, another admin, another server). */
+export async function offeredPackageToday(orgId: string, sponsorId: string, packageId: string, today: string): Promise<number> {
+  const { count, error } = await supabaseAdmin.from('club_sponsor_deals').select('id', { count: 'exact', head: true }).eq('org_id', orgId)
+    .eq('sponsor_id', sponsorId).eq('package_id', packageId).eq('offered_on', today).neq('state', 'withdrawn');
+  if (error) throw error;
+  return count ?? 0;
 }
 
 /** "Send the link again" / "Make a new link": the old link stops working (its version is no longer the deal's). */

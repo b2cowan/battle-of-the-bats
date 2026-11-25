@@ -9,13 +9,15 @@ import { useOrg } from '@/lib/org-context';
 import { moneyFetch, refusalText } from '@/lib/money-fetch';
 import { SPONSORSHIPS_WORDS as W } from '@/lib/club-sponsorships-words';
 import { DEAL_WORDS } from '@/lib/club-sponsorship-deal-words';
-import type { ClubDeal, DealBand, DealState, EmailBar, OfferReason } from '@/lib/club-sponsorship-deals';
+import { holdersOf, type ClubDeal, type DealBand, type DealState, type EmailBar, type OfferReason } from '@/lib/club-sponsorship-deals';
 import type { PackageTaken, PlaceTargets, SponsorPlaceKind, SponsorshipPackage } from '@/lib/club-sponsorships';
 import type { FiscalYearOption } from '@/lib/club-fiscal-year';
 import type { GstHstRate } from '@/lib/gst-hst-rates';
 import type { DealPayment, DealRefund } from '@/lib/club-sponsor-invoice';
+import type { AgainRow, OfferPrefill } from '@/lib/club-sponsorship-offer-again';
 import { sponsorshipsApi } from './api';
 
+export type { OfferPrefill };
 export type ListedDeal = ClubDeal & { band: DealBand };
 export type Figure = { amount: number; count: number };
 export type DealHold = { id: string; state: DealState; placeKind: SponsorPlaceKind; targetId: string | null; businessName: string };
@@ -38,6 +40,19 @@ export interface DealsRead {
   /** A contact email for sponsors, or the club's public one: an offer email names it (/legal 2026-11-22). */
   hasContact: boolean;
   linksOn: boolean;
+  /** Offer again's callout (Part 4a, 11A): on the current year while any of last year's deals can still be offered. */
+  again: { lastYear: string; sponsored: number; left: number } | null;
+  today: string;
+}
+
+/** The Offer again window's read (Part 4a, 2A): last year's deals in their three groups. */
+export interface AgainRead {
+  thisYear: string;
+  lastYear: string;
+  rows: AgainRow[];
+  holds: DealHold[];
+  /** Why nothing can be sent at all (the club's mailing address, a contact, the link secret), or null. */
+  blocked: string | null;
   today: string;
 }
 
@@ -69,6 +84,8 @@ export interface DealRead {
   rate: GstHstRate | null;
   targets: PlaceTargets;
   holds: DealHold[];
+  /** Offer again on this old deal (12A), or null when it isn't offered: not paid, this year's, held this year, or can't be emailed. */
+  offerAgain: OfferPrefill | null;
   today: string;
 }
 
@@ -94,8 +111,23 @@ export function useDeals(year: string | null) {
   return useRead<DealsRead>(slug => `${sponsorshipsApi(slug, '/deals')}${year ? `&year=${encodeURIComponent(year)}` : ''}`);
 }
 
+/** The Offer again window's rows, read when it opens. */
+export function useAgain() {
+  return useRead<AgainRead>(slug => sponsorshipsApi(slug, '/deals/offer-again'));
+}
+
 export function useDeal(dealId: string) {
   return useRead<DealRead>(slug => sponsorshipsApi(slug, `/deals/${dealId}`));
+}
+
+const HELD_AS = { offered: 'offered', form_received: 'offered', invoiced: 'invoiced', paid: '', withdrawn: '' } as const;
+
+/** "Taken: Kowalski Plumbing, invoiced" / "Offered to …" under a place in a picker ('' when nobody holds it): the Offer
+ *  window's and Offer again's one sentence. It warns, never blocks (ask 6). */
+export function takenWords(holds: readonly DealHold[], kind: SponsorPlaceKind, targetId: string): string {
+  const h = holdersOf(holds, kind, targetId)[0];
+  if (!h) return '';
+  return h.state === 'offered' || h.state === 'form_received' ? DEAL_WORDS.offer.offeredTo(h.name) : DEAL_WORDS.offer.taken(h.name, HELD_AS[h.state]);
 }
 
 /** "U9 division", "U11 Lions", "Spring Classic 2027", "Your home page" — how a deal's place reads in the list and on its page. */

@@ -241,3 +241,38 @@ textarea.noteBox { resize: none; } /* element + class: outranks the kit's `.text
 .choiceRow > span { display: flex; flex-direction: column; }
 .choiceName { color: var(--text-primary); font-weight: 650; }
 .choiceNote { margin: -0.2rem 0 0 1.6rem; font-size: var(--type-support); color: var(--text-secondary); }
+
+/* ── Offer again (Part 4a, drawing tabs 2–3): three quiet groups of the shipped check rows; a row that asks, asks in place. ── */
+.againList { display: grid; gap: 1rem; }
+.againGroup { display: grid; border: 1px solid var(--home-line); border-radius: 8px; background: var(--home-card); overflow: hidden; }
+/* The group label: a quiet heading in the kit's own type (no capitals, no data face), not a new control. */
+.againGroupLabel { margin: 0; padding: 0.55rem 0.85rem 0.35rem; font-size: var(--type-support); font-weight: 650; color: var(--text-secondary); }
+.againRow { display: flex; align-items: flex-start; gap: 0.65rem; padding: 0.65rem 0.85rem; border-top: 1px solid var(--home-line); }
+.againRow > input { flex: none; margin: 0.2rem 0 0; width: 1.05rem; height: 1.05rem; accent-color: var(--home-olive); cursor: pointer; }
+.againMain { flex: 1; min-width: 0; display: grid; gap: 0.45rem; }
+.againLabel { display: flex; flex-direction: column; gap: 0.1rem; color: var(--text-primary); font-size: var(--type-body); cursor: pointer; }
+.againLabel strong { font-weight: 650; }
+.againLabel small { font-size: var(--type-support); color: var(--text-secondary); }
+/* Waiting and Can't be emailed: the tick box and the name at .55 (round 1 tab 9's rows that can't be ticked); the reason
+   stays at full strength, because it is what the row is there to say (owner 2026-11-25). */
+.againRowOff > input, .againRowOff .againLabel strong { opacity: 0.55; }
+.againRowOff > input, .againRowOff .againLabel { cursor: default; }
+.againPaid { flex: none; font-size: var(--type-support); color: var(--text-secondary); white-space: nowrap; padding-top: 0.1rem; }
+.againAsk { display: grid; grid-template-columns: auto minmax(0, 16rem); align-items: center; gap: 0.25rem 0.6rem; }
+.againAsk > :last-child:not(:nth-child(2)) { grid-column: 2; }
+.againAskLabel { font-size: var(--type-support); font-weight: 600; color: var(--text-secondary); }
+.againMore { margin: 0; padding: 0.55rem 0.85rem; border-top: 1px solid var(--home-line); font-size: var(--type-support); color: var(--text-tertiary); }
+@media (max-width: 640px) {
+  .againRow { min-height: var(--tap-min, 44px); flex-wrap: wrap; }
+  /* On a phone the payment line drops under the business, inside the row's text column. */
+  .againPaid { order: 3; flex-basis: 100%; padding-left: 1.7rem; white-space: normal; }
+  .againAsk { grid-template-columns: minmax(0, 1fr); }
+  .againAsk > :last-child:not(:nth-child(2)) { grid-column: 1; }
+}
+/* The callout stands clear of what follows it (the figures, or the empty year's card). */
+.againCallout { margin-bottom: 1rem; }
+/* "Show" under a group is a thumb target at touch widths, as the other text buttons here are. */
+@media (max-width: 768px) {
+  .againMore { padding-top: 0; padding-bottom: 0; }
+  .againMore .linkButton { min-height: 44px; }
+}

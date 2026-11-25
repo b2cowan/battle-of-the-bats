@@ -25,13 +25,14 @@ import OfferReasonFields, { NO_REASON, reasonBody, reasonProblem, type ReasonVal
 import SublinedChoice from '@/components/coaches/SublinedChoice';
 import shared from '@/app/[orgSlug]/coaches/coaches.module.css';
 import { useOrg } from '@/lib/org-context';
-import { DEAL_WORDS as D } from '@/lib/club-sponsorship-deal-words';
-import { holdersOf } from '@/lib/club-sponsorship-deals';
+import { barSentence, DEAL_WORDS as D } from '@/lib/club-sponsorship-deal-words';
 import { parsePrice } from '@/lib/club-sponsorships';
 import { gstHstRateOn } from '@/lib/gst-hst-rates';
 import { send, sponsorshipsApi } from './api';
-import type { DealsRead } from './deals-api';
-import BusinessPicker, { barSentence, type PickedBusiness } from './BusinessPicker';
+import { takenWords, useDeals, type DealsRead, type OfferPrefill } from './deals-api';
+import LoadingState from '@/components/shared/LoadingState';
+import { SPONSORSHIPS_WORDS } from '@/lib/club-sponsorships-words';
+import BusinessPicker, { type PickedBusiness } from './BusinessPicker';
 import css from './Sponsorships.module.css';
 
 /**
@@ -52,26 +53,51 @@ export function copyWhenReady(link: Promise<string | null>): Promise<boolean> {
   }
 }
 
-const STATE_WORD ={ offered: 'offered', form_received: 'offered', invoiced: 'invoiced', paid: '', withdrawn: '' } as const;
+/** What the deal's page should say on arriving: the link copied, made but not copied, an email we couldn't confirm, or nothing. */
+export type SentDoor = 'copied' | 'made' | 'unconfirmed' | null;
 
-export default function OfferDealWindow({ slug, read, onSent, onClose }: {
+/** 12A's reason: "They paid us in the last 2 years", dated by the server's computed payment. */
+const oldReason = (p: OfferPrefill): ReasonValue => ({ reason: 'paid_recently', reasonOn: p.paidOn, note: '' });
+
+/**
+ * One old deal's "Offer again…" (Part 4a ruling 12A): the ordinary Offer window, read for THIS year (its packages, places and
+ * holders) and filled in from the old deal. Nothing new is drawn.
+ */
+export function OfferAgainOneWindow({ slug, prefill, onSent, onClose }: {
+  slug: string; prefill: OfferPrefill; onSent: (dealId: string, door: SentDoor) => void; onClose: () => void;
+}) {
+  const { data, error } = useDeals(null);
+  if (!data) {
+    return (
+      <KitDialog kind="form" size="medium" onClose={onClose} title={D.offer.title}>
+        {error ? <p className={css.error} role="alert">{error}</p> : <LoadingState label={SPONSORSHIPS_WORDS.loading} />}
+      </KitDialog>
+    );
+  }
+  return <OfferDealWindow slug={slug} read={data} prefill={prefill} onSent={onSent} onClose={onClose} />;
+}
+
+export default function OfferDealWindow({ slug, read, prefill, onSent, onClose }: {
   slug: string;
   read: DealsRead;
+  /** Offer again on one old deal (12A): the window opens filled in, and the press names the old deal (`againOf`). */
+  prefill?: OfferPrefill;
   /** `copied`: null when the offer was emailed; true/false when Make the link only did / could not copy the link. */
-  onSent: (dealId: string, copied: boolean | null) => void;
+  onSent: (dealId: string, door: SentDoor) => void;
   onClose: () => void;
 }) {
   const club = useOrg().currentOrg?.name ?? '';
   const isPhone = useIsPhone();
   const firstPkg = read.packages.find(p => !p.full) ?? null;
-  const [business, setBusiness] = useState<PickedBusiness>(null);
+  const [business, setBusiness] = useState<PickedBusiness>(prefill ? { kind: 'existing', id: prefill.sponsorId } : null);
   const [email, setEmail] = useState('');
-  const [packageId, setPackageId] = useState(firstPkg?.id ?? '');
-  const [targetId, setTargetId] = useState('');
-  const [amount, setAmount] = useState(firstPkg ? firstPkg.price.toFixed(2) : '');
-  const [endsOn, setEndsOn] = useState(firstPkg?.showsUntil ?? '');
-  const [chargeTax, setChargeTax] = useState(false);
-  const [why, setWhy] = useState<ReasonValue>(NO_REASON);
+  const [packageId, setPackageId] = useState(prefill?.packageId ?? firstPkg?.id ?? '');
+  const [targetId, setTargetId] = useState(prefill?.targetId ?? '');
+  const [amount, setAmount] = useState(prefill ? prefill.amount.toFixed(2) : firstPkg ? firstPkg.price.toFixed(2) : '');
+  const [endsOn, setEndsOn] = useState(prefill ? prefill.endsOn ?? '' : firstPkg?.showsUntil ?? '');
+  const [chargeTax, setChargeTax] = useState(prefill?.chargeTax ?? false);
+  // 12A: "They paid us in the last 2 years", dated by the business's latest payment that still stands (the server's).
+  const [why, setWhy] = useState<ReasonValue>(prefill ? oldReason(prefill) : NO_REASON);
   const [busy, setBusy] = useState<'link' | 'send' | null>(null);
   const [error, setError] = useState<{ text: string; field: string | null } | null>(null);
 
@@ -79,6 +105,8 @@ export default function OfferDealWindow({ slug, read, onSent, onClose }: {
   const sponsor = business?.kind === 'existing' ? read.sponsors.find(s => s.id === business.id) ?? null : null;
   const needsEmail = business?.kind === 'new' || (!!sponsor && !sponsor.email);
   const bar = sponsor?.bar ?? null;
+  // The old deal's reason and "Last year" belong to ITS business: pick another and this is an ordinary offer.
+  const fromOld = !!prefill && business?.kind === 'existing' && business.id === prefill.sponsorId;
   const rate = sponsor?.province ? gstHstRateOn(sponsor.province, read.today) : null;
 
   // Where it shows: the package's kind; a team picks among teams, grouped by division (round 1 tab 3, screen B).
@@ -90,13 +118,8 @@ export default function OfferDealWindow({ slug, read, onSent, onClose }: {
     if (kind === 'tournament') return t.tournaments.filter(x => x.live).map(x => ({ id: x.id, label: x.name, group: '' }));
     return [];
   }, [read.targets, kind]);
-  const holders = (id: string | null) => holdersOf(read.holds, kind, id);
-  const takenWords = (id: string) => {
-    const h = holders(id)[0];
-    if (!h) return '';
-    return h.state === 'offered' || h.state === 'form_received' ? D.offer.offeredTo(h.name) : D.offer.taken(h.name, STATE_WORD[h.state]);
-  };
-  const takenOthers = places.filter(p => p.id !== targetId && holders(p.id).length).map(p => p.label.replace(/ division$/, ''));
+  const taken = (id: string) => takenWords(read.holds, kind, id);
+  const takenOthers = places.filter(p => p.id !== targetId && taken(p.id)).map(p => p.label.replace(/ division$/, ''));
   const groups = [...new Set(places.map(p => p.group))];
   // Group headings only where they say something: several seasons or divisions, or a team's division.
   const grouped = groups.length > 1 || (kind === 'team' && !!groups[0]);
@@ -108,10 +131,12 @@ export default function OfferDealWindow({ slug, read, onSent, onClose }: {
     if (p) { setAmount(p.price.toFixed(2)); setEndsOn(p.showsUntil ?? ''); }
   }
 
-  const canSend = read.hasMailingAddress && read.hasContact && read.linksOn && !bar;
-  // Nothing is sent, so none of the four email rules is about it; only a missing link secret stops it.
-  const canLink = read.linksOn;
-  const footReason = !read.hasMailingAddress ? D.offer.needsAddress : !read.hasContact ? D.offer.needsContact : bar ? barSentence(bar, club) : !read.linksOn ? D.offer.noSecret : null;
+  // A full package can't be picked, but an old deal's window can open on one: neither button until another is picked.
+  const full = !!pkg?.full;
+  const canSend = read.hasMailingAddress && read.hasContact && read.linksOn && !bar && !full;
+  // Nothing is sent, so none of the four email rules is about it; only a missing link secret (or a full package) stops it.
+  const canLink = read.linksOn && !full;
+  const footReason = full ? D.offer.fullReason : !read.hasMailingAddress ? D.offer.needsAddress : !read.hasContact ? D.offer.needsContact : bar ? barSentence(bar, club) : !read.linksOn ? D.offer.noSecret : null;
 
   /** Send the offer, or (`emailIt` false) make the deal and its link only: the reason is asked only to email. */
   async function offer(emailIt: boolean) {
@@ -129,7 +154,7 @@ export default function OfferDealWindow({ slug, read, onSent, onClose }: {
     // with the link still on its way: a browser only lets a click copy, and the request below outlasts that permission.
     let linkArrived: (link: string | null) => void = () => {};
     const copying = emailIt ? null : copyWhenReady(new Promise<string | null>(res => { linkArrived = res; }));
-    const r = await send<{ id: string; link?: string }>(sponsorshipsApi(slug, '/deals'), 'POST', {
+    const r = await send<{ id: string; link?: string; unconfirmed?: boolean }>(sponsorshipsApi(slug, '/deals'), 'POST', {
       sponsorId: business.kind === 'existing' ? business.id : null, newName: business.kind === 'new' ? business.name : null,
       email: needsEmail && email.trim() ? email : null, packageId, targetId: kind === 'club' ? null : targetId, amount, endsOn: endsOn || null,
       chargeTax, ...(emailIt ? reasonBody(why) : {}), send: emailIt,
@@ -142,7 +167,7 @@ export default function OfferDealWindow({ slug, read, onSent, onClose }: {
     // entry, and a `router.push` is not seen as leaving the page, so the back lands on the push while it is still loading
     // and cancels it. The push below is what takes the window away: the route change unmounts it once the deal's page is
     // ready. It stays "busy" until then, so the button keeps saying it is working and nothing is made twice.
-    onSent(r.data.id, copied);
+    onSent(r.data.id, r.data.unconfirmed ? 'unconfirmed' : copied === null ? null : copied ? 'copied' : 'made');
     // If the page never comes (offline, a failed load), hand the window back rather than leave it frozen.
     window.setTimeout(() => setBusy(null), 30000);
   }
@@ -152,7 +177,7 @@ export default function OfferDealWindow({ slug, read, onSent, onClose }: {
 
   return (
     <KitDialog kind="form" size="medium" onClose={onClose} busy={!!busy}
-      dirty={!!business || !!email.trim() || !!why.reason || !!why.reasonOn || !!why.note.trim()}
+      dirty={prefill ? !!why.note.trim() : !!business || !!email.trim() || !!why.reason || !!why.reasonOn || !!why.note.trim()}
       eyebrow={D.offer.eyebrow} title={D.offer.title}
       footerStart={footReason ? <span className={css.footLine}>{footReason}</span> : undefined}
       footer={(
@@ -172,7 +197,13 @@ export default function OfferDealWindow({ slug, read, onSent, onClose }: {
         <div className={ck.field}>
           <label className={ck.label} htmlFor="offer-business">{D.offer.business} {required}</label>
           <BusinessPicker id="offer-business" sponsors={read.sponsors} value={business} club={club} invalid={error?.field === 'business'}
-            onChange={v => { setBusiness(v); setError(null); }} />
+            onChange={v => {
+              const wasOld = fromOld;
+              const isOld = !!prefill && v?.kind === 'existing' && v.id === prefill.sponsorId;
+              if (prefill && wasOld !== isOld) setWhy(isOld ? oldReason(prefill) : NO_REASON);
+              setBusiness(v);
+              setError(null);
+            }} />
           {sponsor && (sponsor.contactName || sponsor.email) && <p className={`${ck.hint} ${css.deskOnly}`}>{D.offer.businessHint(sponsor.contactName, sponsor.email)}</p>}
           {fieldError('business')}
         </div>
@@ -203,8 +234,9 @@ export default function OfferDealWindow({ slug, read, onSent, onClose }: {
               <SublinedChoice id="offer-target" label={D.offer.showsOn} variant="toolbar"
                 triggerClassName={`${ck.select} ${shared.convChoiceToolbarField}`}
                 placeholder={D.offer.showsOn} value={targetId || null} onChange={setTargetId}
-                options={places.map(p => ({ value: p.id, name: p.label, sub: takenWords(p.id), group: grouped ? p.group : undefined }))} />
-              {targetId && takenWords(targetId) && <p className={ck.hint}>{takenWords(targetId)}. {D.offer.takenRule}</p>}
+                options={places.map(p => ({ value: p.id, name: p.label, sub: taken(p.id), group: grouped ? p.group : undefined }))} />
+              {targetId && taken(targetId) && <p className={ck.hint}>{taken(targetId)}. {D.offer.takenRule}</p>}
+              {fromOld && prefill?.lastYearPlace && <p className={ck.hint}>{D.again.lastYearPlace(prefill.lastYearPlace)}</p>}
               {!targetId && takenOthers.length > 0 && kind === 'division' && (
                 <p className={`${ck.hint} ${css.deskOnly}`}>{D.offer.takenHint(takenOthers.length > 1 ? `${takenOthers.slice(0, -1).join(', ')} and ${takenOthers.at(-1)}` : takenOthers[0])}</p>
               )}
@@ -247,7 +279,7 @@ export default function OfferDealWindow({ slug, read, onSent, onClose }: {
           <>
             <h3 className={css.sectionHeading}>{D.offer.theEmail}</h3>
             <OfferReasonFields idPrefix="offer" value={why} onChange={v => { setWhy(v); if (error?.field === 'reason' || error?.field === 'reasonOn') setError(null); }}
-              today={read.today} error={error} />
+              today={read.today} error={error} paidHint={fromOld ? D.again.theirLastPayment(prefill!.paidOn) : undefined} />
           </>
         )}
         {error && (!error.field || !['business', 'email', 'package', 'target', 'amount', 'reason', 'reasonOn', 'note'].includes(error.field)) && <p className={css.error} role="alert">{error.text}</p>}

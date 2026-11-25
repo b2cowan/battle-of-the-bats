@@ -4,11 +4,12 @@ import { isUuid } from '@/lib/utils';
 import { refused, requireSponsorships } from '@/lib/club-sponsorships-auth';
 import { readSettings } from '@/lib/club-sponsorships-server';
 import {
-  markLinkUnsent, readDeal, readDealBusiness, readDealOffers, readOfferBars, replaceDealLink,
+  markLinkUnsent, readDeal, readDealBusiness, readDealOffers, replaceDealLink,
 } from '@/lib/club-sponsorship-deals-server';
-import { actorOf, dealLinkUrl, emailDealOffer, offerContactOf, recordOfferSafely } from '@/lib/club-sponsorship-deal-actions';
-import { emailBarFor, linkTakesForm, reasonHolds } from '@/lib/club-sponsorship-deals';
+import { actorOf, dealLinkUrl } from '@/lib/club-sponsorship-deal-actions';
+import { offerSendCheck, paidReasonRefusal, sendOffer } from '@/lib/club-sponsorship-offer-send';
 import { offerLapsedNow } from '@/lib/club-sponsorship-offer-lapsed';
+import { linkTakesForm, reasonHolds } from '@/lib/club-sponsorship-deals';
 import { DEAL_WORDS } from '@/lib/club-sponsorship-deal-words';
 import { SPONSORSHIPS_WORDS } from '@/lib/club-sponsorships-words';
 import { payLinkSecret } from '@/lib/sponsor-deal-link';
@@ -25,7 +26,7 @@ import { tournamentToday } from '@/lib/timezone';
 export const dynamic = 'force-dynamic';
 
 type Params = { params: Promise<{ dealId: string }> };
-type Outcome = 'emailed' | 'link_only' | 'ran_out' | 'not_emailed';
+type Outcome = 'emailed' | 'unconfirmed' | 'link_only' | 'ran_out' | 'not_emailed';
 
 export const POST = withObservability(async (req: Request, { params }: Params) => {
   const gate = await requireSponsorships(req);
@@ -37,12 +38,16 @@ export const POST = withObservability(async (req: Request, { params }: Params) =
   if (!payLinkSecret()) return refused(DEAL_WORDS.offer.noSecret, 503, 'no_secret');
   if (await offerLapsedNow(org.id, deal)) return refused(DEAL_WORDS.deal.errLapsed, 409, 'lapsed');
 
-  const [offers, settings, bars, business] = await Promise.all([
-    readDealOffers(org.id, dealId), readSettings(org.id), readOfferBars(org.id), readDealBusiness(org.id, dealId),
+  const [offers, settings, business] = await Promise.all([
+    readDealOffers(org.id, dealId), readSettings(org.id), readDealBusiness(org.id, dealId),
   ]);
   const today = tournamentToday(new Date());
   const first = offers.find(o => o.kind === 'offer') ?? offers[0] ?? null;
   const to = deal.offeredTo ?? business?.email ?? null;
+  // Asked before the old link stops working, so a read that fails changes nothing.
+  const check = await offerSendCheck({ orgId: org.id, settings, to, sponsorId: deal.sponsorId });
+  // A first reason of "They paid us" is read against the payments as they stand today (owner 2026-11-25).
+  const paidRefusal = first?.reason === 'paid_recently' ? await paidReasonRefusal(org.id, deal.sponsorId, first.reasonOn, today) : null;
   const version = await replaceDealLink(org.id, dealId);
   if (version == null) return refused(DEAL_WORDS.deal.errLinkChanged, 409, 'link_changed');
   const link = dealLinkUrl(org.slug, dealId, version);
@@ -53,20 +58,20 @@ export const POST = withObservability(async (req: Request, { params }: Params) =
 
   if (!first) return unsent('link_only');
   if (!reasonHolds(first.reason, first.reasonOn, today)) return unsent('ran_out');
-  const contactEmail = await offerContactOf(org.id, settings);
-  const emailable = !!to && !!contactEmail && linkTakesForm(deal) && !!settings.mailingAddress && !emailBarFor(to, bars.stops, bars.family);
-  if (!emailable) return unsent('not_emailed');
+  if (!linkTakesForm(deal)) return unsent('not_emailed');
+  if (!check.ok) return unsent('not_emailed');
+  if (paidRefusal) return unsent('not_emailed', paidRefusal);
+  let delivery: 'sent' | 'unconfirmed';
 
-  const by = await actorOf(gate.ctx);
   try {
-    await emailDealOffer({
-      orgId: org.id, orgSlug: org.slug, deal: { ...deal, linkVersion: version }, to: to!, reason: first.reason, note: null, settings, contactEmail: contactEmail!,
-      province: business?.address?.province ?? null, today,
-    });
+    delivery = await sendOffer({
+      orgId: org.id, orgSlug: org.slug, deal: { ...deal, linkVersion: version }, to: check.to, reason: first.reason, reasonOn: first.reasonOn,
+      note: null, settings, contactEmail: check.contactEmail, province: business?.address?.province ?? null, today, kind: 'again',
+      by: await actorOf(gate.ctx),    });
   } catch (e) {
     console.error('[sponsorships] offer email (again) failed:', (e as Error)?.message ?? 'no message');
     return unsent('not_emailed', DEAL_WORDS.offer.errEmailFailed);
   }
-  await recordOfferSafely(org.id, dealId, { email: to!, businessName: deal.businessName, reason: first.reason, reasonOn: first.reasonOn, kind: 'again', by });
-  return NextResponse.json({ link, emailed: true, outcome: 'emailed' satisfies Outcome, to });
+  const outcome: Outcome = delivery === 'unconfirmed' ? 'unconfirmed' : 'emailed';
+  return NextResponse.json({ link, emailed: delivery === 'sent', outcome, to: check.to });
 }, { route: '/api/admin/sponsorships/deals/[dealId]/again' });

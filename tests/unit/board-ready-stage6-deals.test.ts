@@ -216,14 +216,18 @@ describe('the reason keeps its own date (owner call (e), approved 3A 2026-11-23)
     assert.doesNotMatch(email, /deleteUnsentDeal/, 'a link already handed over in person is never removed by a failed email');
     const again = read('app/api/admin/sponsorships/deals/[dealId]/again/route.ts');
     const ranOut = again.indexOf("if (!reasonHolds(first.reason, first.reasonOn, today)) return unsent('ran_out');");
-    assert.ok(ranOut > 0 && ranOut < again.indexOf('emailDealOffer({'), 'the reason is read before any email');
+    assert.ok(ranOut > 0 && ranOut < again.indexOf('sendOffer({'), 'the reason is read before any email');
     assert.match(again, /await markLinkUnsent\(org\.id, dealId\)/);
   });
   it('Email the offer keeps every Send rule: the address, a contact, no stopped or opted-out address', () => {
+    // Part 4a (drawing F6): every Send rule lives in the one shared step, which this route asks before it sends.
     const email = read('app/api/admin/sponsorships/deals/[dealId]/email/route.ts');
-    for (const code of ['no_mailing_address', 'no_contact', 'already_emailed', 'not_open', 'no_secret']) assert.match(email, new RegExp(`'${code}'`));
-    assert.match(email, /emailBarFor\(to, bars\.stops, bars\.family\)/);
-    assert.ok(email.indexOf('recordOfferSafely(') > email.indexOf('emailDealOffer({'), 'the record follows the email that went');
+    for (const code of ['already_emailed', 'not_open']) assert.match(email, new RegExp(`'${code}'`));
+    assert.ok(email.indexOf('offerSendCheck({') > 0 && email.indexOf('offerSendCheck({') < email.indexOf('sendOffer({'), 'the checks come before the send');
+    const step = read('lib/club-sponsorship-offer-send.ts');
+    for (const code of ['no_mailing_address', 'no_contact', 'no_secret']) assert.match(step, new RegExp(`'${code}'`));
+    assert.match(step, /emailBarFor\(input\.to, bars\.stops, bars\.family\)/);
+    assert.ok(step.indexOf('recordOfferSafely(') > step.indexOf('await sendOfferEmail({'), 'the record follows the email that went');
   });
 });
 
@@ -270,14 +274,14 @@ describe('the offer email (ask 13; /legal §1; round 2 ask 8)', () => {
     assert.match(src, /if \(!input\.contactEmail\?\.trim\(\)\) throw new OfferEmailRefused/);
     assert.match(src, /replyTo: input\.contactEmail,/);
     assert.equal(W.email.questions(null, 'sponsors@club.ca'), 'Questions? Reply to this email, or write to sponsors@club.ca.');
-    const route = stripComments(readSource('app/api/admin/sponsorships/deals/route.ts'));
-    assert.match(route, /if \(!contactEmail\) return refused\(W\.offer\.needsContact, 409, 'no_contact'\);/);
+    const step = stripComments(readSource('lib/club-sponsorship-offer-send.ts'));
+    assert.match(step, /if \(!contactEmail\) return \{ ok: false, block: \{ error: O\.needsContact, status: 409, code: 'no_contact' \} \};/);
   });
   it('the record of an email that went is written even when the first try fails', () => {
-    for (const f of ['app/api/admin/sponsorships/deals/route.ts', 'app/api/admin/sponsorships/deals/[dealId]/again/route.ts']) {
-      const code = stripComments(readSource(f));
-      assert.match(code, /recordOfferSafely\(/, f);
-      assert.doesNotMatch(code, /recordOfferEmail\(/, `${f} goes through the retrying writer`);
+    // Part 4a: the record is written by the one shared send step; no route writes it any other way.
+    assert.match(stripComments(readSource('lib/club-sponsorship-offer-send.ts')), /recordOfferSafely\(/);
+    for (const f of filesUnder('app/api/admin/sponsorships', '.ts')) {
+      assert.doesNotMatch(stripComments(readSource(f)), /recordOfferEmail\(/, `${f} goes through the retrying writer`);
     }
   });
   it('the foot: the reason said back, the club\'s address alone, the sponsorship-only unsubscribe, one-click headers', () => {

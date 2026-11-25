@@ -1,20 +1,17 @@
 import 'server-only';
 /**
  * WHAT THE DEAL ROUTES SHARE (Board Ready Stage 6, Part 2): who is acting (a name kept as it was — /legal round 2: every
- * offer keeps who sent it), the offer email built from the DEAL as offered (so a first send and "Send the link again" say the
- * package, the price and the tax the same way), and the Offer window's refusal words. The routes have already asked
+ * offer keeps who sent it), the place a deal picked, its link, and the Offer window's refusal words. The offer email itself
+ * goes out only through lib/club-sponsorship-offer-send.ts (Part 4a). The routes have already asked
  * `requireSponsorships`.
  */
 import { memberDisplayName } from './member-names';
-import { gstHstRateOn } from './gst-hst-rates';
 import { canonicalAppOrigin } from './app-origin';
-import { sendOfferEmail } from './sponsor-offer-email';
 import { clubPublicContact } from './club-email-context';
 import { recordOfferEmail } from './club-sponsorship-deals-server';
 import { payLinkSecret, sponsorDealUrl } from './sponsor-deal-link';
-import { checklistOf, type ClubDeal, type OfferReason } from './club-sponsorship-deals';
+import type { ClubDeal } from './club-sponsorship-deals';
 import { DEAL_WORDS } from './club-sponsorship-deal-words';
-import { SPONSORSHIPS_WORDS } from './club-sponsorships-words';
 import type { AuthContextWithRole } from './api-auth';
 import type { PlaceTargets, SponsorPlaceKind, SponsorshipSettings } from './club-sponsorships';
 
@@ -74,26 +71,4 @@ export function dealPlaceLabel(d: Pick<ClubDeal, 'placeKind' | 'targetName'>): s
   if (d.placeKind === 'club') return null;
   if (!d.targetName) return null;
   return d.placeKind === 'division' ? `${d.targetName} division` : d.targetName;
-}
-
-/**
- * Send (or send again) one deal's offer. The tax word in the price line is the business's province's, when the club is
- * registered and the deal charges it; a province not yet known says "plus GST/HST" (the business's page and its invoice say
- * the rate once its address is in), so the price is never shown without the tax it will carry.
- */
-export async function emailDealOffer(input: {
-  orgId: string; orgSlug: string; deal: ClubDeal & { linkVersion: number }; to: string; reason: OfferReason; note: string | null;
-  settings: SponsorshipSettings; contactEmail: string; province: string | null; today: string;
-}): Promise<void> {
-  const { deal, settings } = input;
-  const url = dealLinkUrl(input.orgSlug, deal.id, deal.linkVersion);
-  if (!url) throw new Error('no link secret');
-  const rate = settings.registered && deal.chargeTax ? gstHstRateOn(input.province, input.today) : null;
-  const items = checklistOf(deal).map(l => (l.logo ? SPONSORSHIPS_WORDS.pkg.logoRead[deal.placeKind] : l.text ?? '')).filter(Boolean);
-  await sendOfferEmail({
-    orgId: input.orgId, to: input.to, mailingAddress: settings.mailingAddress ?? '', note: input.note,
-    packageName: deal.packageName, placeName: deal.placeKind === 'club' ? null : deal.targetName, amount: deal.amount,
-    taxKind: rate?.kind ?? (settings.registered && deal.chargeTax ? 'GST/HST' : null), endsOn: deal.endsOn, items, url, reason: input.reason,
-    contactName: settings.contactEmail ? settings.contactName : null, contactEmail: input.contactEmail,
-  });
 }

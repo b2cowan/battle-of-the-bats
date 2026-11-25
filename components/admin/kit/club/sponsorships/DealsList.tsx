@@ -7,6 +7,9 @@
  * the state once (no state column, no chip in the row); Delivered and Withdrawn start folded. The name is the link, one
  * chevron column, no actions in cells. On a phone: the band becomes figure rows and each deal one row in one hairlined
  * frame (standard §3.8). The screen's one lime is "+ Offer a deal".
+ * Part 4a (rulings 10A, 11A): on the current year, while any of last year's deals can still be offered, a callout says how
+ * many businesses sponsored the club last year, with an outline "Offer again…" (OfferAgainWindow); after its press the
+ * result is said in the page notice and the callout says how many are left.
  */
 import { Fragment, useMemo, useState } from 'react';
 import Link from 'next/link';
@@ -27,6 +30,8 @@ import { SPONSORSHIPS_WORDS as W, sponsorshipMoney as money } from '@/lib/club-s
 import { checklistOpen, DEAL_BANDS, deliveryCount, type DealBand } from '@/lib/club-sponsorship-deals';
 import { placeLabel, useDeals, type ListedDeal } from './deals-api';
 import OfferDealWindow from './OfferDealWindow';
+import OfferAgainWindow from './OfferAgainWindow';
+import PageNotice, { useNotice } from '../PageNotice';
 import css from './Sponsorships.module.css';
 
 const FOLDED: ReadonlySet<DealBand> = new Set(['delivered', 'withdrawn']);
@@ -60,6 +65,9 @@ export default function DealsList() {
   const { slug, data, error, reload } = useDeals(picked);
   const [query, setQuery] = useState('');
   const [offering, setOffering] = useState(false);
+  const [again, setAgain] = useState(false);
+  const [pressed, setPressed] = useState(false);
+  const [notice, setNotice] = useNotice();
   const [unfolded, setUnfolded] = useState<ReadonlySet<DealBand>>(new Set());
 
   const groups = useMemo(() => {
@@ -173,15 +181,29 @@ export default function DealsList() {
           <SearchField value={query} onChange={setQuery} label={D.list.search} layout="fill" />
         </div>
       )}
+      {notice && <PageNotice notice={notice} />}
+      {data.again && (
+        <div className={`${css.callout} ${css.againCallout}`}>
+          <div className={css.calloutBody}>
+            <strong>{D.again.calloutTitle(data.again.sponsored, data.again.lastYear)}</strong>
+            <span>{pressed ? D.again.calloutLeft(data.again.left) : D.again.calloutSub}</span>
+          </div>
+          <button type="button" className="btn btn-outline" aria-haspopup="dialog" onClick={() => setAgain(true)}>{D.again.button}</button>
+        </div>
+      )}
       {data.deals.length > 0 && (isPhone ? figuresPhone : figuresDesk)}
       {data.deals.length === 0 ? (
-        <ClubSection even><p className={ck.hint}>{D.list.empty}</p></ClubSection>
+        <ClubSection even><p className={ck.hint}>{data.again ? D.again.emptyYear(data.year.name) : D.list.empty}</p></ClubSection>
       ) : groups.length === 0 ? (
         <ClubSection><p className={ck.hint}>{D.list.noMatch}</p></ClubSection>
       ) : isPhone ? phone : desk}
       {data.deals.length > 0 && !isPhone && <p className={css.note}>{D.list.foot}</p>}
       {offering && (
-        <OfferDealWindow slug={slug} read={data} onSent={(id, copied) => { void reload(); router.push(`${base}/${id}${copied === null ? '' : `?link=${copied ? 'copied' : 'made'}`}`); }} onClose={() => setOffering(false)} />
+        <OfferDealWindow slug={slug} read={data} onSent={(id, door) => { void reload(); router.push(`${base}/${id}${door ? `?link=${door}` : ''}`); }} onClose={() => setOffering(false)} />
+      )}
+      {again && (
+        <OfferAgainWindow slug={slug} onClose={() => setAgain(false)}
+          onDone={result => { setAgain(false); setPressed(true); setNotice(result); void reload(); }} />
       )}
     </>
   );

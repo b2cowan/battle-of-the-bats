@@ -14,6 +14,7 @@ import { dealLinkUrl, findTarget, offerContactOf } from '@/lib/club-sponsorship-
 import { bandOf, canRevise, dealFigures, dealHolds, emailBarFor, holdingDeals, linkTakesForm, offerLapsed } from '@/lib/club-sponsorship-deals';
 import { loadFiscalSetting } from '@/lib/club-fiscal-year-server';
 import { fiscalYearOf } from '@/lib/club-fiscal-year';
+import { offerAgainFill } from '@/lib/club-sponsorship-offer-again-server';
 import { offerLapsedNow } from '@/lib/club-sponsorship-offer-lapsed';
 import { parsePrice } from '@/lib/club-sponsorships';
 import { DEAL_WORDS } from '@/lib/club-sponsorship-deal-words';
@@ -51,6 +52,7 @@ export const GET = withObservability(async (req: Request, { params }: Params) =>
     readSettings(org.id), readPlaceTargets(org.id), readDeals(org.id), loadFiscalSetting(org.id),
   ]);
   const address = deal.offeredTo ?? business?.email ?? null;
+  const offerAgain = await offerAgainFill(org, deal, { today, fiscal, deals: all, targets, bars, registered: settings.registered });
   const { linkVersion, payments, refunds, ...shown } = deal;
   // An earlier year's open offer whose place has gone back: its link is dead, so the page offers none of the link's presses.
   const lapsed = offerLapsed(deal, today, fiscalYearOf(today, fiscal));
@@ -77,6 +79,7 @@ export const GET = withObservability(async (req: Request, { params }: Params) =>
     targets,
     // Change place's "Taken: …" counts what holds a place today (Part 4a ruling 1A), as the Offer window does.
     holds: dealHolds(holdingDeals(all, today, fiscalYearOf(today, fiscal)).filter(d => d.id !== deal.id)),
+    offerAgain,
     today,
   });
 }, { route: '/api/admin/sponsorships/deals/[dealId]' });

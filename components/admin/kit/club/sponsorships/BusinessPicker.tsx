@@ -11,20 +11,11 @@ import { useMemo, useRef, useState } from 'react';
 import { ChevronDown, X } from 'lucide-react';
 import styles from '@/components/accounting/PayeeCombobox.module.css';
 import { useDismissable, useFieldMenu } from '@/lib/overlay-hooks';
-import { DEAL_WORDS as D } from '@/lib/club-sponsorship-deal-words';
-import type { EmailBar } from '@/lib/club-sponsorship-deals';
+import { barSentence, DEAL_WORDS as D } from '@/lib/club-sponsorship-deal-words';
 import type { OfferSponsor } from './deals-api';
 import css from './Sponsorships.module.css';
 
 export type PickedBusiness = { kind: 'existing'; id: string } | { kind: 'new'; name: string } | null;
-
-/** The sentence a barred address carries (call (d), drafted for /marketing). */
-export function barSentence(bar: EmailBar, club: string): string | null {
-  if (!bar) return null;
-  if (bar.kind === 'unsubscribed') return D.offer.barUnsubscribed(bar.on);
-  if (bar.kind === 'do_not_offer') return D.offer.barDoNotOffer(bar.on);
-  return D.offer.barFamily(club);
-}
 
 export default function BusinessPicker({ id, sponsors, value, onChange, club, invalid }: {
   id: string;

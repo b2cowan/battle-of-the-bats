@@ -28845,3 +28845,19 @@ performed over the shared working tree. The original walk result is not claimed 
 
 **✅ PASSED 2026-11-24, 30 of 30** (paste-back; A 11/11, B 17/17 — the walk grew a step 7a, so the count is 30 not the published 29 — C 2/2 done, the optional payout walk; no notes came back). **Owner calls ruled 2026-11-24, every one as recommended:** **(a) none** — no email to the business when its payment is taken back · **(b) later** — the reminder email for an open sponsor dispute is added later, worded for a sponsor · **(c) order** — production takes migrations 530 to 534 and the five files first, then the daily job's refund-retry step in its own commit · **(d) plan item** — a refund made in Stripe's own dashboard counted against what can still be refunded, separate from Part 3b. Nothing owed from this walk.
 <!-- /§565 -->
+
+
+## §566 · Board Ready Stage 6 · Part 4a · Offer again — **a club offers last year's sponsors this year's packages in one go; "Full" stops counting every year, an offer to a business with an address on file sends, and an old offer's link closes when its place is gone**
+<!-- §566 -->
+**Walk published 2026-11-25.** [Interactive walk](https://claude.ai/artifact/NJ1CzUfyXfRo5cSWDcKHWp) (walks A–D, 37 steps; no owner calls, all 17 ruled 2026-11-25) · [repository HTML](BOARD_READY_STAGE6_P4A_WALK.html). Built on dev, no migration.
+
+**Where:** `http://localhost:3000` (dev server restarted on the finished code 2026-11-25). **Sign in:** club owner `owner@dev.local` / `devpass123`, club **Dev Club Org**; one step opens a business's link in a private window.
+
+**Data:** `scripts/seed-p4a-offer-again-walk.mjs` (seeded 2026-11-25; `--teams` mid-walk; run it again to reset; `--clean` removes it). 14 made-up businesses with 2025 deals, addresses `@p4awalk.local` (no email leaves the machine). The club's earlier data is untouched.
+
+**Walks:** A three fixes to what is live (7) · B Offer again at a desk (16) · C one old deal and the "paid us" date (7) · D on a phone (7).
+
+**Left out (pinned by tests):** a send the email service never answers; a send long enough to go in several turns; a business whose payments are all refunded or disputed.
+
+**✅ PASSED 2026-11-25, 37 of 37** (paste-back; A 7/7, B 16/16, C 7/7, D 7/7; no notes came back). No owner calls in this walk. Next: the commit at the owner's yes.
+<!-- /§566 -->

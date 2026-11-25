@@ -30,8 +30,10 @@ export function reasonProblem(v: ReasonValue, today: string): { text: string; fi
 /** The body an offer's reason sends: the When? only for a reason that asks one. */
 export const reasonBody = (v: ReasonValue) => ({ reason: v.reason, reasonOn: reasonHasClock(v.reason || null) ? v.reasonOn : null, note: v.note });
 
-export default function OfferReasonFields({ idPrefix, value, onChange, today, error }: {
+export default function OfferReasonFields({ idPrefix, value, onChange, today, error, paidHint }: {
   idPrefix: string;
+  /** Offer again on one old deal (Part 4a, 12A): the When? hint says the payment the server found ("Their last payment: …"). */
+  paidHint?: string;
   value: ReasonValue;
   onChange: (v: ReasonValue) => void;
   today: string;
@@ -61,7 +63,7 @@ export default function OfferReasonFields({ idPrefix, value, onChange, today, er
             onChange={v => onChange({ ...value, reasonOn: v })} />
           {old
             ? <p className={css.error} role={error?.field === 'reasonOn' ? 'alert' : undefined}>{D.offer.whenOld(clock)}</p>
-            : <p className={ck.hint}>{D.offer.whenHint(clock)}</p>}
+            : <p className={ck.hint}>{clock === 'paid_recently' && paidHint ? paidHint : D.offer.whenHint(clock)}</p>}
           {!old && fieldError('reasonOn')}
         </div>
       )}

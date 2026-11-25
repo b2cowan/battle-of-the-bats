@@ -15,7 +15,7 @@
  *     and the notice at the top of the page says why (/design's open point: the shipped PageNotice, said once).
  */
 import { useEffect, useRef, useState } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { Ban, Copy, Mail, Pencil, RefreshCw, X } from 'lucide-react';
 import KitDialog, { DialogCancel } from '../KitDialog';
 import { Callout, ClubRow, ClubRowList, ClubSection } from '../RepKit';
@@ -23,19 +23,18 @@ import { useHandNamedPlace } from '@/components/admin/AdminBarPlace';
 import { usePageTitle } from '@/lib/usePageTitle';
 import PageNotice, { useNotice } from '../PageNotice';
 import OfferReasonFields, { NO_REASON, reasonBody, reasonProblem, type ReasonValue } from './OfferReasonFields';
-import { barSentence } from './BusinessPicker';
 import { useOrg } from '@/lib/org-context';
 import ck from '../ClubKit.module.css';
 import SwitchRow from './SwitchRow';
 import MoneySummaryBand from '@/components/coaches/MoneySummaryBand';
 import DateInput from '@/components/shared/DateInput';
 import SublinedChoice from '@/components/coaches/SublinedChoice';
-import { copyWhenReady } from './OfferDealWindow';
+import { copyWhenReady, OfferAgainOneWindow } from './OfferDealWindow';
 import shared from '@/app/[orgSlug]/coaches/coaches.module.css';
 import LoadingState from '@/components/shared/LoadingState';
 import { useIsPhone } from '@/lib/hooks/useIsPhone';
 import { formatStoredDate, orgDayKey } from '@/lib/timezone';
-import { DEAL_WORDS as D } from '@/lib/club-sponsorship-deal-words';
+import { barSentence, DEAL_WORDS as D } from '@/lib/club-sponsorship-deal-words';
 import { SPONSORSHIPS_WORDS as W, sponsorshipMoney as money } from '@/lib/club-sponsorships-words';
 import { canRecordPayment, canRevise, canWithdraw, checklistOf, checklistOpen, deliveryCount, holdersOf, isOverdue, linkTakesForm, LOGO_ITEM, reasonHasClock } from '@/lib/club-sponsorship-deals';
 import { refundsEndedDeal, invoiceStanding, paymentHow, refundCounts, refundDay, refundedTotal, refundEndsDeal, type DealPayment } from '@/lib/club-sponsor-invoice';
@@ -77,6 +76,9 @@ export default function DealScreen({ dealId }: { dealId: string }) {
   const [opened, setOpened] = useState<string | null>(null);
   const [refunding, setRefunding] = useState(false);
   const [notice, setNotice] = useNotice();
+  const router = useRouter();
+  // Offer again on this old deal (Part 4a, 12A): the ordinary Offer window, filled in.
+  const [offeringAgain, setOfferingAgain] = useState(false);
   const [busy, setBusy] = useState(false);
   const [said, setSaid] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
@@ -99,7 +101,8 @@ export default function DealScreen({ dealId }: { dealId: string }) {
     const door = linkDoor.current;
     if (!dl || !door) return;
     linkDoor.current = null;
-    setLinkSaid(door === 'copied' ? { title: D.deal.linkCopiedTitle, text: D.deal.linkCopied(dl.businessName), copy: false } : { title: D.deal.linkMadeTitle, text: D.deal.linkMadeNotCopied });
+    setLinkSaid(door === 'unconfirmed' ? { title: D.deal.unconfirmedTitle, text: D.deal.unconfirmed(dl.businessName) }
+      : door === 'copied' ? { title: D.deal.linkCopiedTitle, text: D.deal.linkCopied(dl.businessName), copy: false } : { title: D.deal.linkMadeTitle, text: D.deal.linkMadeNotCopied });
     // The browser's own replaceState, not router.replace: a router navigation to the same page with a different query
     // string can remount the page, which throws the notice away the instant it is set (owner walk 2026-11-23: the page
     // opened and said nothing). replaceState only rewrites the address.
@@ -129,7 +132,7 @@ export default function DealScreen({ dealId }: { dealId: string }) {
     // copy starts NOW with the link still on its way, because a browser only lets a click copy.
     let linkArrived: (link: string | null) => void = () => {};
     const copying = path === '/again' && linkMade ? copyWhenReady(new Promise<string | null>(res => { linkArrived = res; })) : null;
-    const r = await send<{ emailed?: boolean; error?: string; link?: string; outcome?: 'emailed' | 'link_only' | 'ran_out' | 'not_emailed'; to?: string }>(api(path), 'POST', body ?? {});
+    const r = await send<{ emailed?: boolean; error?: string; link?: string; outcome?: 'emailed' | 'unconfirmed' | 'link_only' | 'ran_out' | 'not_emailed'; to?: string }>(api(path), 'POST', body ?? {});
     linkArrived(r.ok ? r.data.link ?? null : null);
     const copiedNow = copying ? await copying : null;
     setBusy(false);
@@ -142,6 +145,7 @@ export default function DealScreen({ dealId }: { dealId: string }) {
     if (o === 'emailed' && r.data.to) setNotice({ tone: 'good', text: D.deal.sentNewLink(r.data.to) });
     else if (o === 'link_only') linkWindow = copiedNow ? { title: D.deal.newLinkCopiedTitle, text: D.deal.newLinkCopied(d.businessName), copy: false } : { title: D.deal.newLinkMadeTitle, text: D.deal.newLinkMadeNotCopied };
     else if (o === 'ran_out') linkWindow = { title: D.deal.newLinkMadeTitle, text: D.deal.ranOut };
+    else if (o === 'unconfirmed') linkWindow = { title: D.deal.unconfirmedTitle, text: D.deal.unconfirmed(d.businessName) };
     else if (o) linkWindow = { title: D.deal.newLinkMadeTitle, text: D.deal.notEmailedNewLink };
     setAsking(null);
     await reload();
@@ -202,6 +206,10 @@ export default function DealScreen({ dealId }: { dealId: string }) {
   return (
     <>
       {notice && <PageNotice notice={notice} />}
+      {offeringAgain && data.offerAgain && (
+        <OfferAgainOneWindow slug={slug} prefill={data.offerAgain} onClose={() => setOfferingAgain(false)}
+          onSent={(id, door) => router.push(`/${slug}/admin/sponsorships/${id}${door ? `?link=${door}` : ''}`)} />
+      )}
 
       <div className={css.dealGrid}>
         <Callout tone={c.tone} role="status" flush
@@ -211,7 +219,9 @@ export default function DealScreen({ dealId }: { dealId: string }) {
               ? <button type="button" className="btn btn-lime" aria-haspopup="dialog" onClick={() => setAsking('record')}>{D.deal.record}</button>
               : sendsInvoice
                 ? <button type="button" className="btn btn-lime" aria-haspopup="dialog" onClick={() => setAsking('sendInvoice')}>{D.card.sendInvoice}</button>
-                : undefined}>
+                : data.offerAgain
+                  ? <button type="button" className="btn btn-outline" aria-haspopup="dialog" onClick={() => setOfferingAgain(true)}>{D.again.oneButton}</button>
+                  : undefined}>
           {c.title && <strong>{c.title} </strong>}{isPhone && d.state === 'invoiced' && d.invoice ? D.callout.invoicedPhone(d.invoice.number, d.invoice.total, d.invoice.dueOn) : c.text}
         </Callout>
         {band}
@@ -348,10 +358,11 @@ export default function DealScreen({ dealId }: { dealId: string }) {
       )}
       {asking === 'email' && (
         <EmailOfferWindow read={data} onClose={() => setAsking(null)} onSend={async body => {
-          const r = await send<{ to: string }>(api('/email'), 'POST', body);
+          const r = await send<{ to: string; unconfirmed?: boolean }>(api('/email'), 'POST', body);
           if (!r.ok) return r.error;
           setAsking(null);
-          setNotice({ tone: 'good', text: D.deal.emailSent(r.data.to) });
+          if (r.data.unconfirmed) setLinkSaid({ title: D.deal.unconfirmedTitle, text: D.deal.unconfirmed(d.businessName) });
+          else setNotice({ tone: 'good', text: D.deal.emailSent(r.data.to) });
           await reload();
           return null;
         }} />

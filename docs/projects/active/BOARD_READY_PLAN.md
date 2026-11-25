@@ -1703,6 +1703,99 @@ in the card-network sentence); Privacy §5 (who sent an offer is kept with its r
 
   Nothing is built. Next: `/legal` on ask 8, then the build as the Part 4a prompt orders it (ask 1's fix first), at the
   owner's word.
+- **Part 4a: `/legal` read ask 8 before any code, 2026-11-25** (owner: "run legal then build";
+  `docs/agents/legal/BOARD_READY_STAGE6_SPONSORSHIPS_DRAWING_REVIEW.md` § Part 4a). The basis is sound: CASL s.10(10)(a), a
+  purchase; dating it by the latest payment that still stands is the conservative reading. Five must-fix build rules, all
+  built: (1) the date is worked out on the server, at the press, for each row, never posted by the browser; (2) every bar is
+  read again at the press; (3) one message per address, its own unsubscribe and the single offer's foot; (4) one offer record
+  per email; (5) 12A is hidden when the reason has run out, and a "paid" date typed later than the latest payment on record is
+  refused. Should-fix built as recommended: a payment under an open dispute, or on a deal a pending refund would end, doesn't
+  count.
+- **Part 4a BUILT on dev 2026-11-25** (owner: "run legal then build"; commit at the owner's yes; recommended as two commits,
+  ask 1's fix first). What it does:
+  - **Ask 1 (Full):** a deal holds its place in the fiscal year it was offered in, and after that only while its last day
+    hasn't passed. Packages' Taken and Taken by, the Offer window's Full and "Taken: …", and Change place all count only those
+    deals (`holdsPlace` / `holdingDeals` in `lib/club-sponsorship-deals.ts`; the four routes).
+  - **One send step (drawing F6):** `lib/club-sponsorship-offer-send.ts` holds every bar (`offerSendCheck`), the email and its
+    record (`sendOffer`) and make → send → remove-if-failed (`offerNewDeal`). Offer a deal, Email the offer, Send the link
+    again and the batch all use it; the old per-route send is gone; a guard test holds it.
+  - **The rows (2A–9A):** `lib/club-sponsorship-offer-again.ts` (pure), read by `lib/club-sponsorship-offer-again-server.ts`;
+    the reason's date from `readStandingPaidOn` (`lib/club-sponsorship-deals-server.ts`). Place targets now carry their
+    season's id, so last year's season is told apart by id, not name.
+  - **The batch:** `app/api/admin/sponsorships/deals/offer-again` (GET the rows; POST the press, at most 100 rows, one press
+    per club at a time, each row worked out again at the press and sent on its own).
+  - **The screens:** the Deals callout and the empty year's words (`DealsList.tsx`), the window (`OfferAgainWindow.tsx`),
+    and 12A's **Offer again…** on an old paid deal's callout, opening the ordinary Offer window filled in
+    (`OfferAgainOneWindow` in `OfferDealWindow.tsx`; "Last year: …" under Shows on, "Their last payment: …" under When?).
+  - Tests: `tests/unit/board-ready-stage6-offer-again.test.ts` (new); four Part 2 guards in
+    `board-ready-stage6-deals.test.ts` moved to the shared step. Stage 6 suites 215 pass; typecheck clean.
+  - **Readings the build made where the rulings were silent (owner calls, each a small change to reverse):**
+    (a) a team row's "new teams" are teams outside last year's own season (5A says the row waits until the new teams exist);
+    (b) a package last day that passed more than a year ago rolls forward a year at a time until it is today or later (4A
+    says "a year on"); (c) a package that fills during the press fails that row with "the package is full"; (d) the open
+    dispute rule above (/legal's should-fix, recommended); (e) the words the drawing did not draw are marked DRAFT for
+    `/marketing` (the no-season waiting words, failure reasons, "no email on file", "Pick a tournament").
+  - **Owner call, not built:** apply must-fix 5's typed-date check to every single offer of a business with payments on
+    record, not only one opened from 12A (`/legal` recommends yes).
+  - **Finish chain, `/simplify` (2026-11-25):** one builder for the rules' input and two shared helpers (the place holders,
+    the "Taken: …" sentence); the bar sentence sits with the words; the batch asks the club's checks once. Fixed on the way,
+    a Part 2 defect on the production branch: emailing an offer to a business with an email already on file was refused
+    ("enter an email"), which also stopped 12A's Send. Typecheck clean, Stage 6 suites 216 pass.
+  - **Finish chain, `/review` (high-risk, five lenses, 2026-11-25), fixed with tests:** a press goes in several requests
+    inside the host's 30 seconds, sends spaced, each row on its own; a send with no answer is asked once more under the same
+    once-only key; 12A's reason leaves when another business is picked, and the server refuses it for a business with no
+    payment; a full package's row waits and a limited package ticks only its free places; a past or cleared last day is
+    honoured; a lost dispute never dates a reason; deals, ticked items, teams and divisions are read paged; "Send the link
+    again" reads everything before the old link stops. Production fixes carry their own test
+    (`board-ready-stage6-full.test.ts`). Typecheck clean, 223 Stage 6 tests pass; full suite 41 failures, the hand-off's set.
+    Open, for the owner: a freed offer's live link; two rows on one package; a refund made in Stripe's own dashboard (the
+    logged plan item); two presses on two servers at once (the per-row same-day check narrows it; closing it needs a migration).
+  - **Finish chain, `/marketing` (2026-11-25):** every DRAFT line settled and applied; the drawn words are verbatim. Also
+    fixed: more than 100 ticked rows now go in turns. Four points on drawn words go to the owner.
+  - **Finish chain, `/ux` at 390 (2026-11-25; headless, the reads answered by the probe `.probe/p4a-ux390.mjs`):** no
+    sideways scroll, pickers and date field fit, 2 · 1 · 1 before "Show", the head's ← and Send in the foot. Fixed: the date
+    field keeps its "Shows until" name on a phone; "Show" is a 44px target; the callout stands clear of the card below it; a
+    long press says how many have gone and to keep the page open. One drawn thing goes to the owner: reasons faded to .55.
+  - **Finish chain, `/legal` on the built batch (2026-11-25, the review's "Built, checked" note):** all five must-fixes and
+    both should-fixes met. Its one before-ship recommendation is built with tests: a "Do not offer again" the club pressed
+    now bars every address that business has on record, at every send. Offer again reads migration 530, so it reaches
+    production only after 530. `/accounting` not needed: Part 4a changes nothing charged, invoiced or recorded (the price and
+    tax switch follow the existing deal rules).
+  - **Finish chain, `/docs` (2026-11-25):** the `club-sponsorships` article has an **Offer again** topic (search words
+    include offer again, next year, renew), the Full change in the Packages topic, the dashboard-refund note, and "Do not
+    offer again" covering the business.
+  - **Finish chain, probe (2026-11-25, `.probe/p4a-api-probe.mjs` on UAT Rep Only, dev, data removed after):** 19 of 19.
+    A package sold out in 2025 reads free; a two-row press with a fresh unsubscribe and a one-place package sends and fails
+    as expected, nothing made for a failed row; one offer record per email, dated by the latest standing payment; 12A refuses
+    a later typed date and a business with no payment; "Do not offer again" follows a changed address; Offer a deal sends to
+    the address on file.
+  - **Part 4a owner calls RULED 2026-11-25, all 17 as recommended** (owner: "all as recommended, run the seed"), and built:
+    1. A team row's "new teams" are teams outside last year's own season. 2. A passed package last day rolls forward a year
+    at a time. 3. A full package's row waits, a limited package ticks only its free places, one that fills mid-press fails
+    as "the package is full". 4. A payment disputed or lost to a dispute doesn't count. 5. The new words approved.
+    6. An earlier year's open offer whose place has gone back takes no answers (its page says "This offer has ended."), and
+    the club can't email, re-send, invoice or edit it; ships with the Full fix. 7. Each deal held this year takes one row
+    off, so a business with two deals on a package is offered both. 8. "They paid us" on every single offer rests on the
+    payments: no later than the latest standing one; refused when payments exist and none stands; no payment at all, as
+    typed. 9. A stop (Do not offer again or unsubscribe) covers every address on the business's record. 10. A send with no
+    answer after a retry keeps the deal and its record, and says it couldn't be confirmed. 11. A refund made in Stripe's own
+    dashboard ships with the help note; the logged fix is built before a club takes a sponsor card payment on production.
+    12. Two presses at once on two servers: accepted; closing it needs a migration. 13–17. The result line says "wasn't
+    offered", "No offers were sent.", "To give them a link in person, use Offer a deal.", "There's no payment on record that
+    counts"; a row that can't go fades its box and name only, never its reason.
+  - **Part 4a re-review of those builds (2026-11-25), fixed with tests:** a renewal made before the old deal ended takes
+    its row (the build reads "renewal" as anything offered this year, or one running past the old deal and made within 90
+    days of its last day); a card payment taken and not recorded keeps the business's page open; a lapsed offer can't be
+    edited back. Open: a card page already open can still be paid after an offer lapses (the payment is recorded).
+  - **Walk data seeded on dev 2026-11-25:** `scripts/seed-p4a-offer-again-walk.mjs` (re-runnable; `--teams`, `--clean`),
+    Dev Club Org.
+  - **Walk §566 published 2026-11-25** (https://claude.ai/artifact/NJ1CzUfyXfRo5cSWDcKHWp; source
+    `BOARD_READY_STAGE6_P4A_WALK.html`; walks A–D, 37 steps). Final gate: typecheck clean; Stage 6 suites 233 pass; full
+    suite 41 failures, the hand-off's set; the API probe 0 failures; the walk's screens read on the restarted dev server.
+  - **Walk §566 PASSED 2026-11-25, 37 of 37** (owner paste-back; A 7, B 16, C 7, D 7; no notes).
+  - **Still owed:** the commit at the owner's yes (the live fixes first: the Full count, the offer to an address on file
+    and the closed link of a lapsed offer; then the rest of Part 4a). Offer again reads migration 530, so it reaches
+    production only after 530.
 - ~~The per-deal "Charge HST" switch carries no words telling a club WHEN to turn it on.~~ **Added 2026-11-22 (owner: "add
   the hint")**, words checked against CRA RC4081 then set in brand voice (`docs/agents/accounting/BOARD_READY_STAGE6_SPONSOR_PAYMENT_FEE_REVIEW.md`
   addendum): the switch's hint reads **"13% for an Ontario address, added to the amount. A sponsorship that shows a name or

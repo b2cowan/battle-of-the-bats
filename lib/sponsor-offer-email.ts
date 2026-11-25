@@ -1,4 +1,5 @@
 import 'server-only';
+import { randomUUID } from 'crypto';
 /**
  * THE SPONSORSHIP OFFER EMAIL (Board Ready Stage 6, Part 2; round 1 tab 3, ask 13, /legal review §1; round 2 ask 8).
  *
@@ -63,11 +64,16 @@ export function offerEmailHtml(e: OfferEmail): string {
 
 export class OfferEmailRefused extends Error {}
 
+/** Two tries and the pause between them stay inside the batch press's time (about 30 seconds for the whole request). */
+const SEND_TIMEOUT_MS = 5_000;
+const RETRY_AFTER_MS = 1_000;
+
 /**
  * Send one offer. The caller has already refused a stopped or family-opted-out address and checked the mailing address;
- * this refuses again where it must (no address, no unsubscribe link), so no code path can send a footless offer.
+ * this refuses again where it must (no address, no unsubscribe link), so no code path can send a footless offer. Answers
+ * 'unconfirmed' when the mail service gave no clear answer (the email may have gone); throws when it surely didn't.
  */
-export async function sendOfferEmail(input: Omit<OfferEmail, 'club' | 'unsubscribeUrl'> & { orgId: string; to: string }): Promise<void> {
+export async function sendOfferEmail(input: Omit<OfferEmail, 'club' | 'unsubscribeUrl'> & { orgId: string; to: string }): Promise<'sent' | 'unconfirmed'> {
   if (!input.mailingAddress?.trim()) throw new OfferEmailRefused('no mailing address');
   if (!input.contactEmail?.trim()) throw new OfferEmailRefused('no contact email');
   const to = input.to.trim().toLowerCase();
@@ -76,12 +82,28 @@ export async function sendOfferEmail(input: Omit<OfferEmail, 'club' | 'unsubscri
   const org = await readClubEmailOrg(input.orgId);
   const facts = await clubEmailFacts(org);
   const html = warmEmailDocument(offerEmailHtml({ ...input, club: org.name, mailingAddress: input.mailingAddress.trim(), unsubscribeUrl }), facts);
-  const result = await sendEmail(to, M.subject(org.name, input.packageName), html, {
+  // An answer that never came (the email may have gone) is asked for once more under the same once-only key: the mail
+  // service sends one email per key, however many times it is asked. Still no answer: the caller keeps the deal and its
+  // record (owner 2026-11-25) and says it couldn't be confirmed.
+  const key = `sponsor-offer:${randomUUID()}`;
+  const send = () => sendEmail(to, M.subject(org.name, input.packageName), html, {
     kind: 'club_sponsorship_offer',
     fromName: familySenderName(org.name),
     replyTo: input.contactEmail,
     orgId: input.orgId,
     headers: oneClickUnsubscribeHeaders(unsubscribeUrl),
+    idempotencyKey: key,
+    timeoutMs: SEND_TIMEOUT_MS,
   });
-  if (result.status !== 'sent' && result.status !== 'skipped') throw new Error(`the send answered ${result.status}`);
+  const unclear = (r: Awaited<ReturnType<typeof send>>) => r.status === 'no_answer' || (r.status === 'provider_error' && !r.refused && !r.throttled);
+  let result = await send();
+  let mayHaveGone = unclear(result);
+  if (mayHaveGone || result.throttled) {
+    await new Promise(resolve => setTimeout(resolve, RETRY_AFTER_MS));
+    result = await send();
+    mayHaveGone ||= unclear(result);
+  }
+  if (result.status === 'sent' || result.status === 'skipped') return 'sent';
+  if (mayHaveGone) return 'unconfirmed';
+  throw new Error(`the send answered ${result.status}`);
 }
