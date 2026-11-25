@@ -15,8 +15,8 @@
  * part — two typed rows that overlap are the save's own refusal, as today. Pure: no React, no database.
  * ══════════════════════════════════════════════════════════════════════════════════════════════
  */
-import { addCalendarDays } from './timezone';
-import { clock, weekdayOf } from './permit-time';
+import { addCalendarDays, isCalendarDate } from './timezone';
+import { blockUnits, clock, weekdayOf, type PlaceUnit, type TimeBlock, type VenueFacilities } from './permit-time';
 
 /** A row of the schedule's time as the form sends it. Facilities are listed (empty = a venue with none, the venue itself). */
 export interface PermitRowBlock {
@@ -124,6 +124,95 @@ export function settleOverlaps<B extends PermitRowBlock>(blocks: readonly B[], o
     return { ...o, days, startsOn: now && was && now > was ? now : null };
   });
   return { blocks: out, overlaps };
+}
+
+// ── Pick the fields (SCHEDULE_FIELDS_SAME_TIME_TRADES_PLAN.md Stage 1; pick-fields drawing, owner rulings 2026-11-25:
+//    Asks 1–6 all A) ───────────────────────────────────────────────────────────────────────────────────────────────────
+//
+// A permit's row on New schedule names SOME of the fields its permit holds (a schedule on Fields 1 and 2 of a six-field
+// dome). The row's permit prices it, so a row may never name a field that permit holds no time on: the form offers only
+// the permit's fields, and the save refuses anything else (`rowOffItsPermit`).
+
+/** The places each permit holds, by venue: the union of its blocks' units (a block with no facilities listed holds every
+ *  facility at its venue, or the venue itself when it has none). */
+export function permitPlaces(permits: readonly { id: string; blocks: readonly Pick<TimeBlock, 'venueId' | 'facilityIds'>[] }[], venueFacilities: VenueFacilities):
+  Map<string, Map<string, PlaceUnit[]>> {
+  const out = new Map<string, Map<string, PlaceUnit[]>>();
+  for (const p of permits) {
+    const byVenue = out.get(p.id) ?? out.set(p.id, new Map()).get(p.id)!;
+    for (const b of p.blocks) {
+      const units = byVenue.get(b.venueId) ?? byVenue.set(b.venueId, []).get(b.venueId)!;
+      for (const u of blockUnits(b, venueFacilities)) if (!units.includes(u)) units.push(u);
+    }
+  }
+  for (const byVenue of out.values()) {
+    for (const [venueId, units] of byVenue) {
+      const order = venueFacilities.get(venueId) ?? [];
+      units.sort((a, z) => (a ? order.indexOf(a) : -1) - (z ? order.indexOf(z) : -1));
+    }
+  }
+  return out;
+}
+
+/**
+ * A row that names a permit and a place that permit holds no time on — a facility it doesn't hold, or a venue it has no
+ * time at. `held` is `permitPlaces` over the permits the request's rows name; a row whose permit is not in it is left to
+ * the "permit gone" refusal. Typed rows (no permit) are never checked.
+ *
+ * `alsoHeld`: what the schedule's OWN saved rows already held on each permit (`permitPlaces` over them, by permit). A
+ * place it held is never refused, so a permit edited after the schedule was saved cannot block a save of time the admin
+ * didn't touch (/review 2026-11-25: a sent schedule's kept past rows are not on the form, so nobody could fix them).
+ */
+export function rowOffItsPermit(blocks: readonly Pick<PermitRowBlock, 'venueId' | 'facilityIds' | 'permitId'>[],
+  held: ReadonlyMap<string, ReadonlyMap<string, readonly PlaceUnit[]>>, venueFacilities: VenueFacilities,
+  alsoHeld?: ReadonlyMap<string, ReadonlyMap<string, readonly PlaceUnit[]>>): boolean {
+  return blocks.some(b => {
+    const byVenue = b.permitId ? held.get(b.permitId) : undefined;
+    if (!byVenue) return false;
+    const units = [...(byVenue.get(b.venueId) ?? []), ...((b.permitId && alsoHeld?.get(b.permitId)?.get(b.venueId)) || [])];
+    return blockUnits(b, venueFacilities).some(u => !units.includes(u));
+  });
+}
+
+/** A schedule's saved rows as `permitPlaces` reads permits: the places its rows held on each permit. */
+export function savedPermitPlaces(blocks: readonly Pick<PermitRowBlock, 'venueId' | 'facilityIds' | 'permitId'>[], venueFacilities: VenueFacilities):
+  Map<string, Map<string, PlaceUnit[]>> {
+  const byPermit = new Map<string, Pick<PermitRowBlock, 'venueId' | 'facilityIds'>[]>();
+  for (const b of blocks) if (b.permitId) (byPermit.get(b.permitId) ?? byPermit.set(b.permitId, []).get(b.permitId)!).push(b);
+  return permitPlaces([...byPermit].map(([id, list]) => ({ id, blocks: list })), venueFacilities);
+}
+
+/**
+ * The fields a permit's card leaves off (Ask 3 A): the facilities the permit holds that none of the card's rows names,
+ * per venue, in the venue's order. A venue none of the card's rows is at while the permit holds fields there counts too:
+ * every field it holds there is left off. A venue with no facilities has no field to name, so it never does. Whole
+ * fields, never hours.
+ */
+export function fieldsLeftOff(held: ReadonlyMap<string, readonly PlaceUnit[]> | undefined,
+  rows: readonly { venueId: string; facilityIds: readonly string[] }[]): { venueId: string; facilityIds: string[] }[] {
+  if (!held) return [];
+  const out: { venueId: string; facilityIds: string[] }[] = [];
+  for (const [venueId, units] of held) {
+    const used = new Set(rows.filter(r => r.venueId === venueId).flatMap(r => r.facilityIds));
+    const left = units.filter((u): u is string => !!u && !used.has(u));
+    if (left.length) out.push({ venueId, facilityIds: left });
+  }
+  return out;
+}
+
+/**
+ * A permit's row's own dates as the form sends them (Ask 6 A, "a permit's time stops at the permit's dates"). With several
+ * permits (or a part), every permit row keeps to its permit's dates, as it already did. With one, a row follows the
+ * schedule's From and To, as before, UNLESS they reach past the permit: then it stops at the permit's dates, so a To typed
+ * past the permit's last day makes no slots on time the club doesn't hold. A row's stored dates always win.
+ */
+export function permitRowDates(row: { dates?: { fromDate: string | null; untilDate: string | null } | null },
+  permit: { fromDate: string; untilDate: string } | null, several: boolean, range: { startsOn: string; endsOn: string }):
+  { fromDate: string | null; untilDate: string | null } {
+  // (A From or To not yet a whole date reaches past nothing.)
+  const past = !!permit && ((isCalendarDate(range.startsOn) && range.startsOn < permit.fromDate) || (isCalendarDate(range.endsOn) && range.endsOn > permit.untilDate));
+  const own = permit && (several || past) ? permit : null;
+  return { fromDate: row.dates?.fromDate ?? own?.fromDate ?? null, untilDate: row.dates?.untilDate ?? own?.untilDate ?? null };
 }
 
 // ── Dates off by park (Session B; plan §4c; owner rulings P5 A, P6 A, N4 A; /dba Finding #50 "Mig 2 (B)") ─────────────

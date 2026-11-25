@@ -169,6 +169,11 @@
 /* The inline label (a date off's "Applies to"): the key reads inside the button; the label above names it to a screen reader only. */
 .pickKey { flex: none; color: var(--text-tertiary); }
 .pickLabelHidden { position: absolute; width: 1px; height: 1px; padding: 0; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+/* A label line with quieter words at its end (New schedule's permit row: "Facilities  Milton Sports Dome" — pick-fields
+   drawing, Ask 2 A). A long name is cut short; the row keeps its height. */
+.pickLabelLine { display: flex; align-items: baseline; gap: 0.6rem; min-width: 0; }
+.pickLabelLine > :first-child { flex: none; }
+.pickAside { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-align: right; font-size: var(--type-support); color: var(--text-tertiary); }
 /* ⚖ Hangs over its window (§80) — `useFieldMenu` measures the field and writes the place and height; without `fixed`
    those writes mean nothing and the list sat in the window's body, under its footer (New schedule's Rules, 2026-10-13). */
 .pickMenu {

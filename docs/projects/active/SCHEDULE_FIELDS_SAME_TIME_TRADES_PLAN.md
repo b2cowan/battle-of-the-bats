@@ -2,8 +2,8 @@
 
 > **Status:** on the board (`docs/agents/strategy/OWNER_BRIEF_PROJECTS.json`, project `schedule-fields-trades`). Never restated here.
 > **Created:** 2026-11-25 · **Branch:** dev · **PM brief:** [SCHEDULE_FIELDS_SAME_TIME_TRADES_PM_BRIEF.md](SCHEDULE_FIELDS_SAME_TIME_TRADES_PM_BRIEF.md)
-> **No build go has been given.** The owner agreed the recommendations and said "go ahead with step 1" (this record). Each
-> stage is drawn and ruled before it is built.
+> **Build go given for Stage 1 only** (owner 2026-11-25, with its six rulings: "go ahead and build"). Every later stage is
+> drawn and ruled before it is built.
 
 ## 0. Why this exists
 
@@ -40,13 +40,20 @@ Three asks came out of the owner's demo with Milton Bats (2026-11-25), all about
   so it is not credited twice (`measureWithHandBacks`).
 - "Coaches trading slots with each other" is listed under "Not in the first cut (proposed)" in
   `CLUB_PERMITS_AND_SCHEDULER_PLAN.md` §8 and `CLUB_TIER_PRODUCTION_READINESS_PLAN.md`. A deferral, not a ruling against.
+- **A sharing rule that cannot pair is reported nowhere** (Stage 0, confirmed 2026-11-25). The draft card's only sharing
+  sentence comes from the `sharing` measure, which lists the rules a shared slot came from; a rule that was never used
+  drops off the card, and nothing counts the weeks a pair practised alone. A team placed alone counts and is billed a
+  whole facility for that slot.
+- **Placements dropped when the week's 12 attempts run out are reported nowhere** (`planWeek` returns `holdable(...)`
+  with no flag). The seat reads as one more open slot and the team as one more short.
+- With one permit ticked, a permit's rows are not held to the permit's dates (`settled` in `NewScheduleWindow.tsx`:
+  `several` is false, so a row sends no dates). With two or more, each permit's rows keep to its own dates. **Changed by
+  Stage 1 (S6, 2026-11-25):** one permit's rows now stop at its dates once From or To reach past them.
 - The several-permits plan owes ONE `/plan` item: the permit's Used figure, the finder's pick and the builder do not see
   other schedules' final time (`CLUB_SCHEDULE_SEVERAL_PERMITS_PLAN.md`, Session D review note).
 
 **Leads from helper searches (NOT yet opened by a building session; verify before building on each):**
 
-- No draft line reports a sharing rule that could not pair (the `sharing` measure lists only rules used at least once).
-- When the builder's 12 repair attempts run out, the bad placements are dropped without a report (`holdable`).
 - "Find the time across every permit" lets the admin tick Field 1 and Field 2 only, and the row keeps its permit and
   price (`rowsFromFound`, `lib/club-schedule-permit-rows.ts`). Read from code, not run in a browser.
 - Schedule From/To are not held inside the permit's dates on a one-permit schedule (a To typed past the permit's end
@@ -75,7 +82,7 @@ Recorded as ruled. Anything not in this table is a proposal (§3).
 | R5 | **No "adjacent fields".** The product does not know which fields are next to each other. |
 | R6 | **A group that can never line up is caught when the rule is entered**, not at the end of a run. |
 | R7 | **A hand move that breaks a group warns.** |
-| R8 | **The report is per rule, and it covers "Sharing a facility" too**, if the check in Stage 0 confirms sharing falls back silently. |
+| R8 | **The report is per rule, and it covers "Sharing a facility" too**, if the check in Stage 0 confirms sharing falls back silently. (Confirmed 2026-11-25: it does.) |
 | R9 | **The opposite, "never at the same time", is offered with it.** |
 | R10 | **Named by teams only.** No mention of siblings or the board anywhere in the product. |
 
@@ -129,10 +136,13 @@ page, through `/design` before hand-off) and its asks ruled before the build. Ea
 from a prompt this plan carries.
 
 ### Stage 0 — Checks before any drawing (no code)
-- [ ] Confirm whether a sharing rule that cannot pair is reported anywhere on a draft (R8 depends on it): read
-      `measure` / `measureLines` (`lib/club-schedule-engine.ts`, `lib/club-schedule-words.ts`) and run one fixture where
-      a pair cannot meet.
-- [ ] Confirm the `holdable` drop is unreported, and decide whether the per-rule report names it.
+- [x] Confirm whether a sharing rule that cannot pair is reported anywhere on a draft (R8 depends on it). **Done
+      2026-11-25: it is not** (§1). R8 therefore applies: the per-rule report covers "Sharing a facility". The only
+      indirect sign today is the "12 · 8 shared" count on a team's row. An existing test covers the fall-back's
+      placements (`tests/unit/club-schedule-engine.test.ts`, the 9U AA day-off case), nothing the admin reads.
+- [x] Confirm the `holdable` drop is unreported. **Done 2026-11-25: it is unreported, and untested.** Whether the
+      per-rule report names it is an ask for Stage 3's drawing. A helper lead, not yet opened: the "why" window does not
+      model back-to-back days, so a seat dropped for that rule may be offered to the team that was just dropped from it.
 - [ ] Census every reader of a venue facility (permits, the builder, the clash checks, bookings, house league, tournaments,
       the public site) for Stage 2. Hand it to `/dba` with the two storage shapes in §5.
 - [ ] Owner, in a browser: New schedule › "Find the time across every permit", tick two of a permit's fields, generate.
@@ -140,17 +150,51 @@ from a prompt this plan carries.
 
 ### Stage 1 — Pick the fields (P1)
 No migration expected.
-- [ ] Drawing: a permit's rows in New schedule gain the Facilities ticks; what a row reads when some fields are off; the
-      ask on per-row dates (§3).
-- [ ] `components/admin/kit/club/schedules/NewScheduleWindow.tsx`: the card row (`rowFields`, `rowPlaceWords`) takes the
-      tick-list field typed rows use; "Add hours" keeps its place rule.
-- [ ] `lib/club-schedule-permit-rows.ts` / `lib/club-schedule-server.ts` (`readTimeBody`, `checkTime`): a permit row may
-      name a subset of its permit's fields; refuse a field the permit does not hold.
-- [ ] Settings… on a draft and Add time use the same row; check `lib/club-schedule-keep.ts` keeps a narrowed row on a
-      regenerate.
-- [ ] The bill: nothing to change (only slots with a team are billed; the closing row already says "less than the
-      permit's"). One test that 2 of 6 fields bills those hours only.
-- [ ] Hold a one-permit schedule's To inside the permit's dates, or say why not (the lead in §1).
+- [x] Drawing, round 1 (2026-11-25): [SCHEDULE_PICK_FIELDS_DRAWINGS.html](SCHEDULE_PICK_FIELDS_DRAWINGS.html), artifact
+      https://claude.ai/artifact/CDJ5S8uoURQBf7erQSGX1V. Through `/design` (10 findings, all applied; listed on its Asks
+      tab).
+- [x] **Rulings (owner, 2026-11-25: "Ask 1 A … Ask 6 A. go ahead and build"):**
+
+  | # | Ruling |
+  |---|---|
+  | S1 | **A list with ticks on the row**: the Facilities list the permit's form already has. |
+  | S2 | **The venue's name at the end of the label line**, in quieter type, cut short when long. |
+  | S3 | **The "not on this schedule" line**: only when a field the permit holds is on none of its rows; whole fields, never hours; "not on this added time" on Add time. |
+  | S4 | **Each permit's card gets its own "Add hours"**; the door under the cards reads "Add hours with no permit" on a form with a permit ticked. |
+  | S5 | **Rows with their own dates: not now.** A later period is Add time, or the finder. |
+  | S6 | **A permit's time stops at the permit's dates**, with the line under To saying so. |
+- Build facts the drawing rests on (opened in the code 2026-11-25): the control is `PickField` with `everyLabel`
+  (`components/admin/kit/club/PermitWindows.tsx`): nothing ticked means every option, the first row clears the ticks, so
+  the field has no required marker. The permit form's own Facilities field is the precedent ("Every facility"). The box
+  naming the fields when all are in ("Fields 1–6") needs one small addition to `PickField`. The new line uses the
+  card's existing hint slot (where Add time's `usedLine` renders); on Add time the two stack, so its wording names the
+  added time. The reworded outer door applies in the cards branch only (`addHoursDoor` is shared with the no-permit form).
+  The old place cell also carried the "No permit" note and the finder's `foundNote` lines: the note goes (the card is
+  titled "Typed here"), the found notes become a hint under the field; a venue with no facilities keeps the plain text.
+- [x] **Built, reviewed (`/review`, one High fixed) and committed 2026-11-25 (dev).** `NewScheduleWindow.tsx`: a card row's place is `PickField`
+      (`rowPlaceOf`): a permit row offers its permit's fields at the row's venue (`permitPlaces`), a typed row every field
+      there; a field the row names that the permit no longer holds stays an option so it can be unticked. A venue with no
+      facilities keeps its plain name. The "No permit" note went (`rowNoPermit` deleted); the finder's notes are a line
+      under the row (`.rowNotes`). `PickField` gained `labelAside` (S2) and `everyValue` (the box says "Fields 1–6").
+- [x] S3: `fieldsLeftOff` + `leftLine`, under the card's name (`.cardLine`), stacking under Add time's `usedLine`.
+- [x] S4: `addPermitRow` — the card's own door, after its last row: the fields the card's other rows don't use (all when
+      none is left), the last row's days, hours and dates. The outer door reads "Add hours with no permit" in the cards
+      branch with a permit behind a row.
+- [x] Server: `permitGone` (so all three time saves) now also refuses a permit row naming a place its permit holds no time
+      on (`rowOffItsPermit`, refusal `permit_facility`). `Prices` carries `held` and `venueFacilities`. **/review
+      2026-11-25 (High, fixed):** only the rows the request ASKED are checked, never rows the keep rule brought back, and a
+      place the schedule's own saved rows held on that permit stays allowed (`savedPermitPlaces`; the generate and
+      `[scheduleId]` routes pass `{ asked, saved }`). So a permit edited after a schedule was saved never blocks a save of
+      time the admin didn't touch; only a newly ticked field the permit doesn't hold is refused.
+- [x] `lib/club-schedule-keep.ts` needs no change: `blockHolds` matches on the facility, so a sent schedule's narrowed row
+      brings its old row back to yesterday, as the drawing's "After the schedule exists" says.
+- [x] The bill: nothing changed. Test: 2 of 6 fields bills 30 slots × 1.5 h at the permit's hour, not its cost.
+- [x] S6: `permitRowDates` — with one permit a row follows From and To as before UNLESS they reach past the permit, then
+      it carries the permit's dates (a saved row with none in Settings… gets the same stop, looked up by its permit). Line
+      under To: `toStopsAt`; under From, typed before the permit's first day, `fromStartsAt` (/review: the rule clips both
+      ends, so both are said). ⚠ A sent one-permit schedule whose To already ran past its permit loses those slots the next
+      time its Settings… is saved (time the club doesn't hold, the ruling's reason).
+- Tests: `tests/unit/club-schedule-pick-fields.test.ts` (15). Help: a new sub-topic, "A schedule on some of a permit's fields" (`club-schedules-t-fields`, `lib/help-content/org.tsx`). Owed: the `/marketing` pass on the new phrases and a browser walk.
 
 ### Stage 2 — A field in halves, and the builder sees other schedules (P2, P3)
 Migration first. Drawn together with Stage 3.
@@ -249,7 +293,7 @@ Migration only if Stage 4's record needs it.
 
 - [ ] Does drawing start now or does the project wait on the board? (Owner; asked 2026-11-25, not yet answered.)
 - [ ] Stage 0's two confirmations (the sharing rule's silence; the dropped placements).
-- [ ] Do rows get their own dates on the form (Stage 1's drawing)?
+- [x] Do rows get their own dates on the form (Stage 1's drawing)? **No, not now (S5, 2026-11-25).**
 - [ ] What does "Sharing a facility" become beside halves (Stage 2's drawing)?
 - [ ] Does a trade tell families (Stage 4's drawing)?
 - [ ] House league: its schedules read in place and use the same builder. Whether the same-time rule and halves apply to

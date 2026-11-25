@@ -131,6 +131,11 @@
 .placeRow { grid-template-columns: minmax(0, 1.4fr) minmax(0, 1.2fr) minmax(0, 0.8fr) minmax(0, 0.8fr) auto; }
 .rowPlace { display: flex; flex-direction: column; justify-content: center; min-height: var(--admin-control-h); margin-bottom: 0.9rem; font-size: var(--type-support); font-weight: 650; color: var(--text-primary); }
 .rowPlace small { font-size: var(--type-support); font-weight: 400; color: var(--text-tertiary); }
+/* Pick the fields (pick-fields drawing, Asks 1–4 A): a permit card's quiet line under its name, what Find the time said
+   about a row (a line under the row, across it, so the row's fields stay level), and the card's own "Add hours". */
+.cardLine { margin: 0 0 0.35rem; }
+.rowNotes { grid-column: 1 / -1; margin: -0.6rem 0 0.7rem; }
+.rowDoor { margin: -0.45rem 0 0.3rem; font-size: var(--type-support); }
 .remove {
   display: inline-flex; align-items: center; justify-content: center;
   width: var(--admin-control-h); height: var(--admin-control-h); margin-bottom: 0.9rem;

@@ -120,6 +120,8 @@ export const SCHEDULE_REFUSALS = {
   teamGone: 'A team in this schedule isn’t the club’s any more. Reload the page.',
   scheduleValue: 'A figure in this schedule is out of range. Check its dates, times and settings.',
   permitGone: 'That permit isn’t in the Venue library any more.',
+  /** A permit's row naming a facility that permit holds no time on (pick-fields, Stage 1): the row's permit prices it. */
+  permitFacilityOff: 'A row names a facility its permit doesn’t hold. Take that facility off the row, or reload.',
   lineGone: 'That budget line isn’t the club’s any more. Pick the bill’s line again.',
   notACostLine: 'That budget line is money coming in. Bill from a cost line.',
   notSaved: 'We couldn’t save that just now. Try again.',
@@ -754,8 +756,21 @@ export const SCHEDULE_SCREEN_WORDS = {
   copiedCard: (name: string) => `Copied from ${name}, a year on`,
   /** The card of rows typed here, with no permit. */
   typedCard: 'Typed here',
-  /** Under a row's place, when it came from no permit. */
-  rowNoPermit: 'No permit',
+  /** A permit row's Facilities list, its first row (pick-fields drawing, tab 3 note 1): a permit can hold fewer fields
+   *  than its venue has. A row with no permit says `everyFacility`. */
+  everyFacilityOnPermit: 'Every facility on this permit',
+  /** Under a permit's name, when a field it holds is on none of its rows (Ask 3 A): whole fields, never hours. The venue
+   *  is named only when the permit holds time at more than one. */
+  notOnSchedule: (fields: string, many: boolean, venue: string | null) =>
+    `${fields}${venue ? ` at ${venue}` : ''} ${many ? 'are' : 'is'} not on this schedule.`,
+  /** Each permit's card: its own door (Ask 4 A), named for a screen reader by its permit. */
+  addHoursOn: (permit: string) => `Add hours on ${permit}`,
+  /** The door under the cards, on a form with a permit ticked (Ask 4 A): time with no permit. */
+  addHoursNoPermit: 'Add hours with no permit',
+  /** Under To, typed past the one permit's last day (Ask 6 A): its time stops there. */
+  toStopsAt: (permit: string, lastDay: string) => `${permit} ends ${lastDay}. Its time stops there.`,
+  /** Under From, typed before that permit's first day: the same rule from the other end. */
+  fromStartsAt: (permit: string, firstDay: string) => `${permit} starts ${firstDay}. Its time starts there.`,
   /** Under To, while the picker set the dates over several permits (drawing note 4). */
   datesWidened: (permits: number) => (permits === 2 ? 'Widened to cover both permits' : 'Widened to cover every permit'),
   /** Under To, after a permit came off and the dates went back to what is left. */
@@ -1551,6 +1566,10 @@ export const PART_WORDS = {
   fromAfterUse: (parent: string) => `Starts the day after ${possessive(parent)} time on this permit ends.`,
   /** Under To: the permit's own run, or how far the schedule now reaches on its page. */
   toPermit: (permit: string, dates: string) => `${permit} runs ${dates}.`,
+  /** A permit's card, under the time already used (pick-fields drawing, tab 4): the two lines stack, so this one names
+   *  the added time. */
+  notOnAddedTime: (fields: string, many: boolean, venue: string | null) =>
+    `${fields}${venue ? ` at ${venue}` : ''} ${many ? 'are' : 'is'} not on this added time.`,
   toWidens: (parent: string, until: string) => `${parent} now runs to ${until}.`,
   /** Dates off (tab 3, note 4). */
   datesOffOwn: 'Dates off here are this time’s only.',

@@ -14,7 +14,8 @@ import { readClubPlaces, readPermitTimes, type ClubPlaces } from './permit-looku
 import { facilityListWords } from './permit-words';
 import { readClubBookings } from './venue-clash-lookup';
 import { readAmount } from './club-bill-split';
-import { clock, fieldPrices, overlappingBlocks, shareOf, type DateOff } from './permit-time';
+import { clock, fieldPrices, overlappingBlocks, shareOf, type DateOff, type PlaceUnit } from './permit-time';
+import { permitPlaces, rowOffItsPermit, savedPermitPlaces } from './club-schedule-permit-rows';
 import {
   ageOf, cutSlots, heldSlots, seatCounts, shareTargets, slotKeyOf, teamResults, teamTwice,
   type EngineInput, type EngineTeam, type PoolBooking, type ScheduleBlock, type ScheduleTime, type Slot, type TeamBooking, type TeamResult,
@@ -338,13 +339,17 @@ export interface Prices {
   /** The permits that price the schedule's rows, in the rows' order: each one's hour, cost and budget line (money readers
    *  only, through `pricing`). */
   permits: readonly PricePermit[];
+  /** The places each permit read holds, by venue (`permitPlaces`) — what a permit row may name (pick-fields, Stage 1). */
+  held: ReadonlyMap<string, ReadonlyMap<string, readonly PlaceUnit[]>>;
+  /** The club's facilities by venue, as the permits were read against. */
+  venueFacilities: ReadonlyMap<string, readonly string[]>;
 }
 
 export interface PricePermit { id: string; name: string; fullHour: number | null; cost: number | null; lineId: string | null }
 
 const NO_PRICES: Prices = {
   found: false, weightOf: () => 1, fullHour: null, permitCost: null, permitName: null, lineId: null, names: new Map(),
-  priceKeyOf: () => null, hourOf: () => null, permits: [],
+  priceKeyOf: () => null, hourOf: () => null, permits: [], held: new Map(), venueFacilities: new Map(),
 };
 
 /**
@@ -380,9 +385,11 @@ export async function readPrices(orgId: string, permitId: string | null, rowPerm
     const x = times.permits.find(y => y.id === id)!;
     return { id, name: x.name, fullHour: hourOf(id), cost: x.cost, lineId: x.budgetLineId };
   });
+  const held = permitPlaces(times.permits, times.venueFacilities);
+  const venueFacilities = times.venueFacilities;
   const p = permitId ? times.permits.find(x => x.id === permitId) : undefined;
-  if (!p) return { ...NO_PRICES, weightOf, names, priceKeyOf, hourOf, permits };
-  return { found: true, weightOf, fullHour: hourOf(p.id), permitCost: p.cost, permitName: p.name, lineId: p.budgetLineId, names, priceKeyOf, hourOf, permits };
+  if (!p) return { ...NO_PRICES, weightOf, names, priceKeyOf, hourOf, permits, held, venueFacilities };
+  return { found: true, weightOf, fullHour: hourOf(p.id), permitCost: p.cost, permitName: p.name, lineId: p.budgetLineId, names, priceKeyOf, hourOf, permits, held, venueFacilities };
 }
 
 /** The permit that prices a schedule's hour (until Session C): the bill's, else the one it started from (mig 487 keeps
@@ -412,16 +419,25 @@ export function schedulePermitIds(row: Pick<ScheduleRow, 'starts_on' | 'started_
   return ids.length ? ids : row.started_from_permit_id ? [row.started_from_permit_id] : [];
 }
 
-/** A request's rows naming a permit the club doesn't have (deleted under the form, or another club's): a refusal, or null. */
-export function permitGone(prices: Pick<Prices, 'names'>, blocks: readonly ScheduleBlock[]): Response | null {
-  return blocks.some(b => b.permitId && !prices.names.has(b.permitId)) ? refusal(409, 'permit_gone', R.permitGone) : null;
+/** A request's rows naming a permit the club doesn't have (deleted under the form, or another club's): a refusal, or null.
+ *  Then a row naming a place its permit holds no time on (pick-fields, Stage 1: the form offers only the permit's fields,
+ *  so this is a stale tab or a permit edited under the form) — the row's permit prices it, so it is refused, never billed.
+ *  `check`: only the rows the request ASKED are held to it (never rows the keep rule brought back), and any place the
+ *  schedule's saved rows already held on that permit stays allowed (/review 2026-11-25). */
+export function permitGone(prices: Pick<Prices, 'names' | 'held' | 'venueFacilities'>, blocks: readonly ScheduleBlock[],
+  check?: { asked: readonly ScheduleBlock[]; saved: readonly ScheduleBlock[] }): Response | null {
+  if (blocks.some(b => b.permitId && !prices.names.has(b.permitId))) return refusal(409, 'permit_gone', R.permitGone);
+  const alsoHeld = check ? savedPermitPlaces(check.saved, prices.venueFacilities) : undefined;
+  return rowOffItsPermit(check?.asked ?? blocks, prices.held, prices.venueFacilities, alsoHeld) ? refusal(409, 'permit_facility', R.permitFacilityOff) : null;
 }
 
 /** A request's prices — the price permit and each sent row's own permit — with the refusal when a row names a permit
- *  that is gone, so a route cannot read the one and forget the other. */
-export async function readRequestPrices(orgId: string, permitId: string | null, blocks: readonly ScheduleBlock[]): Promise<{ prices: Prices; gone: Response | null }> {
+ *  that is gone, so a route cannot read the one and forget the other. `check` (a saved schedule's change): the rows the
+ *  admin asked, before the keep rule added any, and the schedule's saved rows (`permitGone`). */
+export async function readRequestPrices(orgId: string, permitId: string | null, blocks: readonly ScheduleBlock[],
+  check?: { asked: readonly ScheduleBlock[]; saved: readonly ScheduleBlock[] }): Promise<{ prices: Prices; gone: Response | null }> {
   const prices = await readPrices(orgId, permitId, blocks.map(b => b.permitId));
-  return { prices, gone: permitGone(prices, blocks) };
+  return { prices, gone: permitGone(prices, blocks, check) };
 }
 
 // ── The engine's inputs, from the database ───────────────────────────────────────────────────────

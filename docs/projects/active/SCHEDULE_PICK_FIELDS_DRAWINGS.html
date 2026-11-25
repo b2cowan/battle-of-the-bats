@@ -1,0 +1,576 @@
+<title>Schedule Fields Drawings</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500;700&family=Inter:wght@400;500;600;700&display=swap">
+<style>
+/* Layout: the house drawings page. Sticky tab row, one section at a time, the shipped New schedule window at its true width (1024 px) on a cool document ground. */
+:root {
+  --doc-bg: #E9ECEF; --doc-card: #F7F8F9; --doc-ink: #1B2127; --doc-dim: #4F5963; --doc-line: #C9D0D6;
+  --doc-accent: #1F5F8B; --doc-new: #0F6B3E; --doc-new-soft: #D6EEE0; --doc-chg: #8A4B00; --doc-chg-soft: #F6E3C8;
+  --font-ui: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, Consolas, monospace;
+  /* The product's warm portal, as it ships. Frames keep these in both themes: a specimen, not the page. */
+  --paper: #F8F4ED; --card: #FFFFFF; --ink: #241E15; --ink-soft: #4A4235; --dim: #615A54;
+  --line: rgba(70,55,30,.12); --line-strong: rgba(70,55,30,.20);
+  --olive: #57651E; --olive-soft: rgba(87,101,30,.10); --olive-edge: rgba(87,101,30,.3);
+  --lime: #D9F99D; --amber-ink: #6B4105; --scrim: #B0ABA4;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --doc-bg: #14181C; --doc-card: #1D2328; --doc-ink: #E8ECEF; --doc-dim: #9AA5AF; --doc-line: #333C44;
+    --doc-accent: #7DB8E0; --doc-new: #6FD39B; --doc-new-soft: #17301F; --doc-chg: #F0B968; --doc-chg-soft: #3A2A12;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --doc-bg: #14181C; --doc-card: #1D2328; --doc-ink: #E8ECEF; --doc-dim: #9AA5AF; --doc-line: #333C44;
+  --doc-accent: #7DB8E0; --doc-new: #6FD39B; --doc-new-soft: #17301F; --doc-chg: #F0B968; --doc-chg-soft: #3A2A12;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--doc-bg); color: var(--doc-ink); font-family: var(--font-ui); font-size: 15px; line-height: 1.5; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 0 48px; }
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 30; background: var(--doc-bg); }
+.wrap { max-width: 1120px; margin: 0 auto; }
+h1 { font-size: 1.35rem; margin: 0; letter-spacing: -.01em; text-wrap: balance; }
+h3 { font-size: .95rem; margin: 0 0 .2rem; }
+p { margin: 0 0 .6rem; max-width: 72ch; }
+.top { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 20; background: var(--doc-bg); padding: 14px 0 0; border-bottom: 1px solid var(--doc-line); }
+.top .sub { color: var(--doc-dim); font-size: .85rem; margin: .15rem 0 .6rem; max-width: 110ch; }
+.tabs { display: flex; gap: 2px; overflow-x: auto; }
+.tab { font: inherit; font-weight: 600; font-size: .88rem; padding: .55rem .9rem; background: transparent; color: var(--doc-dim); border: 0; border-bottom: 3px solid transparent; cursor: pointer; white-space: nowrap; min-height: 44px; }
+.tab[aria-selected="true"] { color: var(--doc-ink); border-bottom-color: var(--doc-accent); }
+.tab:focus-visible, .sw button:focus-visible, .mk:focus-visible, .mk2:focus-visible, .copy:focus-visible, .pick input:focus-visible { outline: 2px solid var(--doc-accent); outline-offset: 2px; }
+.viewrow { display: flex; align-items: center; gap: .7rem; margin: 16px 0 6px; flex-wrap: wrap; }
+.viewrow b { font-size: .8rem; color: var(--doc-dim); font-weight: 600; }
+/* ONE white track, the chosen option in soft olive: drawn from the shipped view switch. */
+.sw { display: inline-flex; background: #fff; border: 1px solid var(--line-strong); border-radius: 10px; padding: 3px; gap: 2px; }
+.sw button { font: inherit; font-size: .85rem; font-weight: 600; padding: .35rem .8rem; border: 0; border-radius: 7px; background: transparent; color: #4A4235; cursor: pointer; min-height: 34px; }
+.sw button[aria-pressed="true"] { background: var(--olive-soft); color: var(--olive); }
+section.pane { display: none; padding-top: 6px; }
+section.pane.on { display: block; }
+.lede { font-size: .95rem; margin-top: 14px; }
+.stage { margin: 14px 0 26px; }
+.cap { display: flex; flex-wrap: wrap; align-items: baseline; gap: .5rem .8rem; margin-bottom: 6px; }
+.cap h3 { margin: 0; }
+.cap .sw-note { font-size: .8rem; color: var(--doc-dim); }
+.tag { font-family: var(--font-mono); font-size: .66rem; font-weight: 700; letter-spacing: .07em; text-transform: uppercase; padding: .1rem .45rem; border-radius: 4px; border: 0; cursor: pointer; }
+.tag:focus-visible { outline: 2px solid var(--doc-accent); outline-offset: 2px; }
+.tag.new { background: var(--doc-new-soft); color: var(--doc-new); }
+.tag.chg { background: var(--doc-chg-soft); color: var(--doc-chg); }
+.tag.same { background: var(--doc-line); color: var(--doc-dim); }
+.scroller { overflow-x: auto; border: 1px solid var(--doc-line); border-radius: 10px; background: var(--doc-card); padding: 12px; }
+.note { font-size: .86rem; color: var(--doc-dim); margin: 8px 0 0; max-width: 84ch; }
+.note b { color: var(--doc-ink); }
+.pair2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 14px; }
+.pair2 > * { min-width: 0; }
+.card { background: var(--doc-card); border: 1px solid var(--doc-line); border-radius: 10px; padding: 12px 14px; }
+.card ul, .ask ul { margin: .3rem 0 .4rem 1.1rem; padding: 0; font-size: .88rem; }
+.card li, .ask li { margin-bottom: .25rem; }
+.asks { display: grid; gap: 12px; }
+.ask { background: var(--doc-card); border: 1px solid var(--doc-line); border-radius: 10px; padding: 12px 14px; }
+.ask .rec { font-size: .85rem; color: var(--doc-new); font-weight: 600; margin: 0 0 .5rem; }
+.pick { display: flex; flex-wrap: wrap; gap: .4rem 1.1rem; font-size: .88rem; }
+.pick label { display: inline-flex; align-items: center; gap: .4rem; min-height: 32px; cursor: pointer; }
+.own { width: 100%; border-collapse: collapse; font-size: .88rem; }
+.own th, .own td { text-align: left; padding: .45rem .6rem; border-bottom: 1px solid var(--doc-line); vertical-align: top; }
+.own th { font: 700 .68rem/1.3 var(--font-mono); letter-spacing: .07em; text-transform: uppercase; color: var(--doc-dim); }
+.paste { display: grid; gap: .5rem; }
+.paste textarea { width: 100%; min-height: 150px; font: 13px/1.5 var(--font-mono); padding: .6rem .7rem; border: 1px solid var(--doc-line); border-radius: 8px; background: var(--doc-bg); color: var(--doc-ink); resize: vertical; }
+.copy { font: 600 .88rem var(--font-ui); padding: .5rem .9rem; border-radius: 8px; border: 1px solid var(--doc-accent); background: var(--doc-accent); color: #fff; cursor: pointer; justify-self: start; min-height: 40px; }
+:root[data-theme="dark"] .copy { color: #0E1418; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .copy { color: #0E1418; } }
+.copied { font-size: .85rem; color: var(--doc-new); }
+
+/* ───────── the product window, true size (KitDialog form, xwide = 1024 px, as shipped) ───────── */
+.scrim { display: inline-block; padding: 20px; background: var(--scrim); border-radius: 10px; }
+.win { width: 1024px; background: var(--card); border: 1px solid var(--olive-edge); border-radius: 12px; color: var(--ink-soft); font: 14px/1.5 var(--font-ui); position: relative; }
+.win svg { flex: none; display: block; }
+.dh { display: flex; align-items: flex-start; gap: .6rem; padding: 1.1rem 1.5rem .4rem; }
+.dh .tt { flex: 1; }
+.dh .tl { display: block; font-size: 16px; font-weight: 700; line-height: 1.25; color: var(--ink); }
+.dh .st2 { display: block; font-size: 12px; color: var(--dim); margin-top: .2rem; }
+.dh .x { width: 32px; height: 32px; border-radius: 7px; display: grid; place-items: center; color: var(--dim); }
+.prog { display: flex; gap: 4px; padding: .35rem 1.5rem .75rem; border-bottom: 1px solid var(--line); }
+.prog span { flex: 1; height: 4px; border-radius: 2px; background: var(--line); }
+.prog span.on { background: var(--olive); }
+.db { padding: .6rem 1.5rem 1rem; display: grid; gap: .9rem; }
+.df { display: flex; align-items: center; gap: .6rem; padding: .85rem 1.5rem; border-top: 1px solid var(--line); }
+.df .fn { font-size: 12px; color: var(--dim); margin-right: auto; }
+.btn { font: 650 14px/1.25 var(--font-ui); padding: .45rem .9rem; min-height: 34px; border-radius: 6px; border: 1px solid var(--line-strong); background: var(--card); color: var(--ink-soft); white-space: nowrap; display: inline-flex; align-items: center; }
+.btn.pri { background: var(--lime); border-color: var(--lime); color: var(--ink); }
+.sect { border: 1px solid var(--line); border-radius: 8px; background: var(--card); padding: .75rem 1rem .6rem; }
+.sect > .sh { font-size: 16px; font-weight: 700; color: var(--ink); margin: 0 0 .6rem; max-width: none; }
+.sect.fold { display: flex; align-items: center; gap: .6rem; padding: .6rem 1rem; }
+.sect.fold .sh { margin: 0; }
+.sect.fold .cnt { font-size: 12px; color: var(--dim); margin-right: auto; }
+.pr2 { display: grid; grid-template-columns: minmax(0,1fr) minmax(0,1fr); gap: 0 .75rem; }
+.fld { display: flex; flex-direction: column; gap: .3rem; margin-bottom: .9rem; min-width: 0; }
+.lb { font-size: 12px; font-weight: 650; color: var(--ink-soft); }
+.lbl { display: flex; align-items: baseline; gap: .75rem; min-width: 0; }
+.lbl .ven { margin-left: auto; min-width: 0; font-size: 12px; font-weight: 400; color: var(--dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.lb i { font-style: normal; margin-left: .15rem; }
+.ctl { min-height: 36px; border: 1px solid var(--line-strong); border-radius: 6px; background: var(--paper); padding: .5rem .65rem; display: flex; align-items: center; justify-content: space-between; gap: .4rem; font-size: 14px; line-height: 1.25; color: var(--ink); white-space: nowrap; overflow: hidden; }
+.ctl.pk { min-height: 39px; }
+.ctl .v { overflow: hidden; text-overflow: ellipsis; }
+.ctl .ic { color: var(--dim); }
+.ctl.open { border-color: var(--olive); box-shadow: 0 0 0 2px var(--olive-soft); }
+.hnt { font-size: 12px; color: var(--dim); line-height: 1.4; }
+.door { display: inline-flex; align-items: center; gap: .3rem; min-height: 34px; color: var(--olive); font-weight: 650; font-size: 14px; white-space: nowrap; }
+.door.find { font-size: 12px; gap: .35rem; margin-top: .15rem; }
+.pcards { display: flex; flex-direction: column; gap: .6rem; margin: 0 0 .6rem; }
+.pcard { padding: .6rem .75rem 0; border: 1px solid var(--line); border-radius: 8px; background: var(--card); }
+.pcard .ph { display: flex; flex-wrap: wrap; align-items: baseline; gap: .2rem .5rem; margin: 0 0 .35rem; font-size: 12px; color: var(--dim); max-width: none; }
+.pcard .ph strong { font-size: 14px; color: var(--ink); }
+.pcard .left { font-size: 12px; line-height: 1.45; color: var(--dim); margin: 0; max-width: none; }
+.prow { display: grid; grid-template-columns: minmax(0,1.4fr) minmax(0,1.2fr) minmax(0,.8fr) minmax(0,.8fr) auto; gap: 0 .6rem; align-items: end; }
+.place { display: flex; flex-direction: column; justify-content: center; min-height: 34px; margin-bottom: .9rem; font-size: 12px; font-weight: 650; color: var(--ink); }
+.place small { font-size: 12px; font-weight: 400; color: var(--dim); }
+.rm { width: 34px; height: 34px; margin-bottom: .9rem; border: 1px solid var(--line); border-radius: 6px; background: var(--card); display: grid; place-items: center; color: var(--ink-soft); }
+.rm.off { opacity: .4; }
+.pcard.grow { padding-bottom: .3rem; }
+.rowdoor { margin-top: -.35rem; }
+.menu { border: 1px solid var(--line-strong); border-radius: 8px; background: var(--card); box-shadow: 0 2px 6px rgba(70,55,30,.06), 0 14px 36px rgba(70,55,30,.14); padding: .3rem 0; color: var(--ink); font: 14px/1.5 var(--font-ui); }
+.menu .mi { min-height: 36px; padding: .35rem .75rem; display: flex; gap: .55rem; align-items: center; }
+.menu .mi .tk { width: 16px; height: 16px; border: 1.5px solid var(--line-strong); border-radius: 4px; flex: none; display: grid; place-items: center; color: #fff; }
+.menu .mi .tk.on { background: var(--olive); border-color: var(--olive); }
+.menu .sep { border-top: 1px solid var(--line); margin: .3rem 0; }
+.bare { width: 968px; background: var(--card); color: var(--ink-soft); font: 14px/1.5 var(--font-ui); padding: 12px; border-radius: 8px; }
+.bare .cut { font: 700 11px/1.3 var(--font-mono); letter-spacing: .07em; text-transform: uppercase; color: var(--dim); margin: 0 0 .5rem; }
+.narrow { width: 320px; }
+
+/* markers + diff mode */
+.rel { position: relative; }
+.hl { outline: 2px dashed var(--doc-new); outline-offset: 3px; border-radius: 6px; }
+.mk { position: absolute; z-index: 5; width: 22px; height: 22px; border-radius: 50%; border: 0; background: var(--doc-accent); color: #fff; font: 700 12px var(--font-ui); cursor: pointer; display: grid; place-items: center; box-shadow: 0 0 0 3px rgba(31,95,139,.25); right: -11px; top: -11px; }
+.show-diff .same { opacity: .22; filter: grayscale(1); }
+.expl { display: none; margin-top: 10px; background: var(--doc-card); border: 1px solid var(--doc-accent); border-radius: 10px; padding: 10px 14px; font-size: .88rem; max-width: 84ch; }
+.expl.on { display: block; }
+.legend { display: grid; gap: 8px; margin-top: 10px; }
+.legend .li { display: grid; grid-template-columns: 26px 1fr; gap: 8px; font-size: .88rem; align-items: start; padding: 2px; }
+.legend .li .mk2 { width: 22px; height: 22px; border-radius: 50%; border: 0; background: var(--doc-accent); color: #fff; font: 700 12px var(--font-ui); display: grid; place-items: center; cursor: pointer; }
+.legend .li p { margin: 0; }
+.legend .li.flash { background: var(--doc-chg-soft); border-radius: 6px; }
+@media (max-width: 560px) { .tab { padding: .55rem .65rem; } }
+@media (prefers-reduced-motion: no-preference) { .pane.on { animation: fade .15s ease-out; } @keyframes fade { from { opacity: .6; } to { opacity: 1; } } }
+</style>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <symbol id="i-chev" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-x" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></symbol>
+    <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2"/><path d="M12 7v5l3 2" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></symbol>
+    <symbol id="i-cal" viewBox="0 0 24 24"><rect x="3.5" y="5" width="17" height="15" rx="2" fill="none" stroke="currentColor" stroke-width="2"/><path d="M3.5 10h17M8 3v4M16 3v4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></symbol>
+    <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7" fill="none" stroke="currentColor" stroke-width="2"/><path d="m20 20-3.5-3.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></symbol>
+    <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></symbol>
+    <symbol id="i-check" viewBox="0 0 24 24"><path d="m5 12 5 5 9-10" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  </defs>
+</svg>
+
+<div class="wrap">
+  <div class="top">
+    <h1>A schedule on some of a permit's fields</h1>
+    <div class="sub">Round 1 drawings for review. Nothing is built. The window is drawn at its true width (1024 px), from the styles that ship today. The example is a winter dome: one permit for <b>Fields 1–6, Sundays 9:00 a.m. – 1:30 p.m., Jan 3 – Mar 7, 2027</b>, cut into 90-minute slots (6 fields × 3 slots × 10 Sundays = 180). <b>The permit's name, its issuer and the dome's name are made up for the drawing.</b> New schedule is a desk screen by an earlier ruling, so no phone is drawn.</div>
+    <div class="tabs" role="tablist" id="tabs">
+      <button class="tab" role="tab" data-t="idea" aria-selected="true">1 · The idea</button>
+      <button class="tab" role="tab" data-t="window" aria-selected="false">2 · The window</button>
+      <button class="tab" role="tab" data-t="list" aria-selected="false">3 · The Facilities list</button>
+      <button class="tab" role="tab" data-t="edges" aria-selected="false">4 · Dates and edges</button>
+      <button class="tab" role="tab" data-t="asks" aria-selected="false">5 · Asks</button>
+    </div>
+  </div>
+
+  <!-- ═════════ 1 · THE IDEA ═════════ -->
+  <section class="pane on" id="p-idea">
+    <p class="lede"><b>Ticking a permit brings in every field it holds, and today you can't untick any.</b> The row names its fields as plain words. This drawing turns those words into the list with ticks the permit's own form already uses, so a schedule on two of a dome's six fields is made on the form itself.</p>
+    <div class="stage">
+      <div class="card">
+        <h3>What you can do today, and what changes</h3>
+        <table class="own">
+          <thead><tr><th>You want</th><th>Today</th><th>After this</th></tr></thead>
+          <tbody>
+            <tr><td>A schedule on Fields 1 and 2 only</td><td>Leave the form, use "Find the time across every permit", tick the two fields there and add them</td><td>Tick Field 1 and Field 2 on the permit's row</td></tr>
+            <tr><td>For January only</td><td>Type From and To</td><td>The same. Nothing changes</td></tr>
+            <tr><td>Fields 1 and 2 all morning, Fields 3–6 for the last slot</td><td>Not possible on one permit's card: a row added by hand is "Typed here" with no permit</td><td>A second row on the permit's own card (Ask 4)</td></tr>
+            <tr><td>To know what is left for another schedule</td><td>Nothing says</td><td>A line on the card: "Fields 3–6 are not on this schedule." (Ask 3)</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="note"><b>The bill needs no change.</b> Teams are already billed only for the field-hours they hold, at the permit's price, and the bill already says how much less that is than the permit's cost.</p>
+      <p class="note"><b>What this drawing does not do.</b> It does not stop a second schedule from ticking Fields 1 and 2 as well. The builder seeing other schedules is the next stage, drawn with halves of a field.</p>
+    </div>
+  </section>
+
+  <!-- ═════════ 2 · THE WINDOW ═════════ -->
+  <section class="pane" id="p-window">
+    <p class="lede"><b>The whole window, before and after.</b> Only "The time" changes. The other sections are folded so the change is on one screen; they are untouched.</p>
+    <div class="viewrow"><b>View</b>
+      <div class="sw" role="group" aria-label="View"><button type="button" data-v="all" aria-pressed="true">Everything</button><button type="button" data-v="diff" aria-pressed="false">Show only what differs</button></div>
+    </div>
+
+    <div class="stage">
+      <div class="cap"><h3>Today</h3><button type="button" class="tag same" data-say="As it ships today. Nothing in this frame is proposed.">Unchanged</button><span class="sw-note">New schedule · desktop, club admin</span></div>
+      <div class="scroller"><div class="scrim"><div class="win">
+        <div class="dh"><div class="tt"><span class="tl">New schedule</span><span class="st2">Step 1 of 2 · settings</span></div><span class="x"><svg width="16" height="16"><use href="#i-x"/></svg></span></div>
+        <div class="prog"><span class="on"></span><span></span></div>
+        <div class="db">
+          <div class="sect">
+            <p class="sh">The time</p>
+            <div class="pr2">
+              <div class="fld"><span class="lb">Name<i>*</i></span><div class="ctl"><span class="v">Winter dome, January</span></div></div>
+              <div>
+                <div class="fld"><span class="lb">Permits</span><div class="ctl pk"><span class="v">Dome, winter 2027</span><svg class="ic" width="15" height="15"><use href="#i-chev"/></svg></div></div>
+                <span class="hnt">Each permit brings its own time and dates off. Untick one to take its time off again.</span><br>
+                <span class="door find"><svg width="15" height="15"><use href="#i-search"/></svg>Find the time across every permit ›</span>
+              </div>
+            </div>
+            <div class="pcards">
+              <div class="pcard">
+                <p class="ph"><strong>Dome, winter 2027</strong><span>Milton Sports Dome Inc. · Jan 3 – Mar 7, 2027</span></p>
+                <div class="prow">
+                  <span class="place">Milton Sports Dome · Fields 1–6</span>
+                  <div class="fld"><span class="lb">Days<i>*</i></span><div class="ctl pk"><span class="v">Sun</span><svg class="ic" width="15" height="15"><use href="#i-chev"/></svg></div></div>
+                  <div class="fld"><span class="lb">From<i>*</i></span><div class="ctl"><span class="v">9:00 a.m.</span><svg class="ic" width="15" height="15"><use href="#i-clock"/></svg></div></div>
+                  <div class="fld"><span class="lb">Until<i>*</i></span><div class="ctl"><span class="v">1:30 p.m.</span><svg class="ic" width="15" height="15"><use href="#i-clock"/></svg></div></div>
+                  <span class="rm off"><svg width="15" height="15"><use href="#i-x"/></svg></span>
+                </div>
+              </div>
+            </div>
+            <span class="door"><svg width="14" height="14"><use href="#i-plus"/></svg>Add hours</span>
+            <div class="pr2" style="margin-top:.4rem">
+              <div class="fld"><span class="lb">From<i>*</i></span><div class="ctl"><span class="v">Jan 3, 2027</span><svg class="ic" width="15" height="15"><use href="#i-cal"/></svg></div></div>
+              <div class="fld"><span class="lb">To<i>*</i></span><div class="ctl"><span class="v">Mar 7, 2027</span><svg class="ic" width="15" height="15"><use href="#i-cal"/></svg></div></div>
+            </div>
+            <div class="pr2">
+              <div class="fld"><span class="lb">Slot length</span><div class="ctl pk"><span class="v">90 min</span><svg class="ic" width="15" height="15"><use href="#i-chev"/></svg></div><span class="hnt">Each team’s time on a facility</span></div>
+              <div class="fld"><span class="lb">Changeover</span><div class="ctl pk"><span class="v">None</span><svg class="ic" width="15" height="15"><use href="#i-chev"/></svg></div><span class="hnt">Between slots on one facility</span></div>
+            </div>
+          </div>
+          <div class="sect fold"><p class="sh">Who, and how much</p><span class="cnt">folded for the drawing</span></div>
+          <div class="sect fold"><p class="sh">Rules</p><span class="cnt">0 on</span><svg width="16" height="16" style="color:var(--dim)"><use href="#i-chev"/></svg></div>
+        </div>
+        <div class="df"><span class="fn">180 slots for 17 teams.</span><span class="btn">Cancel</span><span class="btn pri">Generate drafts</span></div>
+      </div></div></div>
+      <div class="expl"></div>
+      <p class="note">The row says "Milton Sports Dome · Fields 1–6" in words. There is nothing to click. The only way to use fewer fields is the "Find the time" door beside the picker.</p>
+    </div>
+
+    <div class="stage">
+      <div class="cap"><h3>Proposed</h3><button type="button" class="tag new" data-say="Four changes, numbered on the drawing: the Facilities list on the row, the line that says what is left, a second Add hours on the permit's card, and the count that follows.">New</button><span class="sw-note">Fields 1 and 2, for January. New schedule · desktop, club admin</span></div>
+      <div class="scroller"><div class="scrim"><div class="win">
+        <div class="dh same"><div class="tt"><span class="tl">New schedule</span><span class="st2">Step 1 of 2 · settings</span></div><span class="x"><svg width="16" height="16"><use href="#i-x"/></svg></span></div>
+        <div class="prog same"><span class="on"></span><span></span></div>
+        <div class="db">
+          <div class="sect">
+            <p class="sh same">The time</p>
+            <div class="pr2 same">
+              <div class="fld"><span class="lb">Name<i>*</i></span><div class="ctl"><span class="v">Winter dome, January</span></div></div>
+              <div>
+                <div class="fld"><span class="lb">Permits</span><div class="ctl pk"><span class="v">Dome, winter 2027</span><svg class="ic" width="15" height="15"><use href="#i-chev"/></svg></div></div>
+                <span class="hnt">Each permit brings its own time and dates off. Untick one to take its time off again.</span><br>
+                <span class="door find"><svg width="15" height="15"><use href="#i-search"/></svg>Find the time across every permit ›</span>
+              </div>
+            </div>
+            <div class="pcards">
+              <div class="pcard grow">
+                <p class="ph same"><strong>Dome, winter 2027</strong><span>Milton Sports Dome Inc. · Jan 3 – Mar 7, 2027</span></p>
+                <p class="left rel hl">Fields 3–6 are not on this schedule.<button class="mk" data-n="2" aria-label="Change 2">2</button></p>
+                <div class="prow">
+                  <div class="fld rel hl"><span class="lbl"><span class="lb">Facilities</span><span class="ven">Milton Sports Dome</span></span><div class="ctl pk"><span class="v">Field 1 and Field 2</span><svg class="ic" width="15" height="15"><use href="#i-chev"/></svg></div><button class="mk" data-n="1" aria-label="Change 1">1</button></div>
+                  <div class="fld same"><span class="lb">Days<i>*</i></span><div class="ctl pk"><span class="v">Sun</span><svg class="ic" width="15" height="15"><use href="#i-chev"/></svg></div></div>
+                  <div class="fld same"><span class="lb">From<i>*</i></span><div class="ctl"><span class="v">9:00 a.m.</span><svg class="ic" width="15" height="15"><use href="#i-clock"/></svg></div></div>
+                  <div class="fld same"><span class="lb">Until<i>*</i></span><div class="ctl"><span class="v">1:30 p.m.</span><svg class="ic" width="15" height="15"><use href="#i-clock"/></svg></div></div>
+                  <span class="rm off same"><svg width="15" height="15"><use href="#i-x"/></svg></span>
+                </div>
+                <span class="door rowdoor rel hl"><svg width="14" height="14"><use href="#i-plus"/></svg>Add hours<button class="mk" data-n="3" aria-label="Change 3">3</button></span>
+              </div>
+            </div>
+            <span class="door rel hl"><svg width="14" height="14"><use href="#i-plus"/></svg>Add hours with no permit<button class="mk" data-n="3" aria-label="Change 3">3</button></span>
+            <div class="pr2" style="margin-top:.4rem">
+              <div class="fld same"><span class="lb">From<i>*</i></span><div class="ctl"><span class="v">Jan 3, 2027</span><svg class="ic" width="15" height="15"><use href="#i-cal"/></svg></div></div>
+              <div class="fld same"><span class="lb">To<i>*</i></span><div class="ctl"><span class="v">Jan 31, 2027</span><svg class="ic" width="15" height="15"><use href="#i-cal"/></svg></div></div>
+            </div>
+            <div class="pr2 same">
+              <div class="fld"><span class="lb">Slot length</span><div class="ctl pk"><span class="v">90 min</span><svg class="ic" width="15" height="15"><use href="#i-chev"/></svg></div><span class="hnt">Each team’s time on a facility</span></div>
+              <div class="fld"><span class="lb">Changeover</span><div class="ctl pk"><span class="v">None</span><svg class="ic" width="15" height="15"><use href="#i-chev"/></svg></div><span class="hnt">Between slots on one facility</span></div>
+            </div>
+          </div>
+          <div class="sect fold same"><p class="sh">Who, and how much</p><span class="cnt">folded for the drawing</span></div>
+          <div class="sect fold same"><p class="sh">Rules</p><span class="cnt">0 on</span><svg width="16" height="16" style="color:var(--dim)"><use href="#i-chev"/></svg></div>
+        </div>
+        <div class="df"><span class="fn rel hl">30 slots for 17 teams.<button class="mk" data-n="4" aria-label="Change 4">4</button></span><span class="btn same">Cancel</span><span class="btn pri same">Generate drafts</span></div>
+      </div></div></div>
+      <div class="expl"></div>
+      <div class="legend">
+        <div class="li" id="w-1"><button class="mk2" data-n="1" type="button">1</button><p><b>The row's place becomes a list with ticks.</b> It is the Facilities list the permit's own form already has. The venue, which the plain words used to say, sits at the end of the label line, and the box says which fields the row uses. A permit's row offers only the fields that permit holds. Tab 3 shows it open.</p></div>
+        <div class="li" id="w-2"><button class="mk2" data-n="2" type="button">2</button><p><b>The card says what is left.</b> One quiet line under the permit's name, in the place the card already uses for "time used" on Add time. It appears only when a field the permit holds is on none of its rows. This is Ask 3.</p></div>
+        <div class="li" id="w-3"><button class="mk2" data-n="3" type="button">3</button><p><b>A second row on the permit's own card.</b> Today "Add hours" always adds a row with no permit, in a card called "Typed here". With fields now chosen per row, the natural next step is a second row from the same permit: Fields 1 and 2 all morning, Fields 3–6 for the last slot. So each permit's card gets its own "Add hours", and the door under the cards says what it always did: time with no permit. The words are working words. This is Ask 4.</p></div>
+        <div class="li" id="w-4"><button class="mk2" data-n="4" type="button">4</button><p><b>The count follows.</b> 2 fields × 3 slots × 5 Sundays = 30. The teams table below (folded here) is where you untick the teams this schedule isn't for. From and To work as they do today.</p></div>
+      </div>
+      <p class="note"><b>Height:</b> each permit's card grows by its own "Add hours" (about 34 px, Ask 4), and by one line when a field is left off (Ask 3). Nothing else moves.</p>
+    </div>
+  </section>
+
+  <!-- ═════════ 3 · THE FACILITIES LIST ═════════ -->
+  <section class="pane" id="p-list">
+    <p class="lede"><b>The list, open, and the rows it makes.</b> It is the tick list that ships on the permit's own form ("Facilities", with "Every facility" as its first row), at the width of its column in the window (about 282 px).</p>
+    <div class="stage">
+      <div class="cap"><h3>The list, open</h3><button type="button" class="tag chg" data-say="The control ships today on the permit's form. It is new on this row, and its first row and its box read differently here (marks 1 and 2).">Restyled</button><span class="sw-note">Left: as a permit's time comes in. Right: Fields 1 and 2 ticked</span></div>
+      <div class="scroller"><div style="display:flex;gap:28px;width:680px">
+        <div class="narrow">
+          <div class="fld rel"><span class="lbl"><span class="lb">Facilities</span><span class="ven">Milton Sports Dome</span></span><div class="ctl pk open"><span class="v">Fields 1–6</span><svg class="ic" width="15" height="15"><use href="#i-chev"/></svg></div><button class="mk" style="top:10px" data-n="2" aria-label="Note 2">2</button></div>
+          <div class="menu">
+            <div class="mi rel"><span class="tk on"><svg width="11" height="11"><use href="#i-check"/></svg></span><span>Every facility on this permit</span><button class="mk" style="right:6px;top:7px" data-n="1" aria-label="Note 1">1</button></div>
+            <div class="sep"></div>
+            <div class="mi"><span class="tk"></span><span>Field 1</span></div><div class="mi"><span class="tk"></span><span>Field 2</span></div><div class="mi"><span class="tk"></span><span>Field 3</span></div>
+            <div class="mi"><span class="tk"></span><span>Field 4</span></div><div class="mi"><span class="tk"></span><span>Field 5</span></div><div class="mi"><span class="tk"></span><span>Field 6</span></div>
+          </div>
+        </div>
+        <div class="narrow">
+          <div class="fld"><span class="lbl"><span class="lb">Facilities</span><span class="ven">Milton Sports Dome</span></span><div class="ctl pk open"><span class="v">Field 1 and Field 2</span><svg class="ic" width="15" height="15"><use href="#i-chev"/></svg></div></div>
+          <div class="menu">
+            <div class="mi"><span class="tk"></span><span>Every facility on this permit</span></div>
+            <div class="sep"></div>
+            <div class="mi"><span class="tk on"><svg width="11" height="11"><use href="#i-check"/></svg></span><span>Field 1</span></div><div class="mi"><span class="tk on"><svg width="11" height="11"><use href="#i-check"/></svg></span><span>Field 2</span></div><div class="mi"><span class="tk"></span><span>Field 3</span></div>
+            <div class="mi"><span class="tk"></span><span>Field 4</span></div><div class="mi"><span class="tk"></span><span>Field 5</span></div><div class="mi"><span class="tk"></span><span>Field 6</span></div>
+          </div>
+        </div>
+      </div></div>
+      <div class="expl"></div>
+      <div class="legend">
+        <div class="li" id="l-1"><button class="mk2" data-n="1" type="button">1</button><p><b>It works as the shipped list works: you tick the fields you want.</b> With nothing ticked, the row uses every field, and the first row says so. Tick Field 1 and Field 2 and the row uses those two. Ticking the first row again clears the ticks, which means every field. So the box can never be empty, the field has no star, and there is no "pick at least one" message. On the permit's form the first row reads "Every facility". Here it reads "Every facility on this permit", because a permit can hold fewer fields than its venue has.</p></div>
+        <div class="li" id="l-2"><button class="mk2" data-n="2" type="button">2</button><p><b>The box names the fields even when it is all of them.</b> "Fields 1–6", as the row says today, not "Every facility on this permit". Otherwise the commonest case would say less than it does now. This is one small addition to the shared tick list (it can already write a list this way, but only when some are unticked), so it is flagged for the build.</p></div>
+      </div>
+      <div class="card" style="margin-top:12px">
+        <h3>What else the row used to say, and where it goes</h3>
+        <ul>
+          <li><b>A row with no permit</b> lists every field at its venue, and its first row reads "Every facility". The small "No permit" under the place goes: its card is already titled "Typed here".</li>
+          <li><b>A row added by "Find the time"</b> keeps its amber note ("4 Thursdays on Diamond B are held by the draft…"), as a line under the box.</li>
+          <li><b>A venue with no fields listed</b> keeps the plain venue name, as today. There is nothing to tick.</li>
+          <li>The word is "Facilities", as on the rest of the form, so it reads right for rinks, courts and gyms.</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="stage">
+      <div class="cap"><h3>Two rows on one permit</h3><button type="button" class="tag new" data-say="New: a second row that belongs to the permit and is priced by it. Today a row added by hand is always time with no permit. Ask 4.">New</button><span class="sw-note">The permit's card only, at its width in the window. Ask 4</span></div>
+      <div class="scroller"><div class="bare">
+        <div class="pcard grow">
+          <p class="ph"><strong>Dome, winter 2027</strong><span>Milton Sports Dome Inc. · Jan 3 – Mar 7, 2027</span></p>
+          <div class="prow"><div class="fld"><span class="lbl"><span class="lb">Facilities</span><span class="ven">Milton Sports Dome</span></span><div class="ctl pk"><span class="v">Field 1 and Field 2</span><svg class="ic" width="15" height="15"><use href="#i-chev"/></svg></div></div><div class="fld"><span class="lb">Days<i>*</i></span><div class="ctl pk"><span class="v">Sun</span><svg class="ic" width="15" height="15"><use href="#i-chev"/></svg></div></div><div class="fld"><span class="lb">From<i>*</i></span><div class="ctl"><span class="v">9:00 a.m.</span><svg class="ic" width="15" height="15"><use href="#i-clock"/></svg></div></div><div class="fld"><span class="lb">Until<i>*</i></span><div class="ctl"><span class="v">1:30 p.m.</span><svg class="ic" width="15" height="15"><use href="#i-clock"/></svg></div></div><span class="rm"><svg width="15" height="15"><use href="#i-x"/></svg></span></div>
+          <div class="prow"><div class="fld"><span class="lbl"><span class="lb">Facilities</span><span class="ven">Milton Sports Dome</span></span><div class="ctl pk"><span class="v">Fields 3–6</span><svg class="ic" width="15" height="15"><use href="#i-chev"/></svg></div></div><div class="fld"><span class="lb">Days<i>*</i></span><div class="ctl pk"><span class="v">Sun</span><svg class="ic" width="15" height="15"><use href="#i-chev"/></svg></div></div><div class="fld"><span class="lb">From<i>*</i></span><div class="ctl"><span class="v">12:00 p.m.</span><svg class="ic" width="15" height="15"><use href="#i-clock"/></svg></div></div><div class="fld"><span class="lb">Until<i>*</i></span><div class="ctl"><span class="v">1:30 p.m.</span><svg class="ic" width="15" height="15"><use href="#i-clock"/></svg></div></div><span class="rm"><svg width="15" height="15"><use href="#i-x"/></svg></span></div>
+          <span class="door rowdoor rel"><svg width="14" height="14"><use href="#i-plus"/></svg>Add hours<button class="mk" style="right:-26px;top:6px" data-n="1" aria-label="Note 1">1</button></span>
+        </div>
+      </div></div>
+      <div class="expl"></div>
+      <div class="legend">
+        <div class="li" id="t-1"><button class="mk2" data-n="1" type="button">1</button><p><b>Each permit's card has its own "Add hours".</b> The new row starts with the fields the card's other rows don't use, and the last row's days and hours. To a screen reader the door names its permit ("Add hours on Dome, winter 2027"), because a form with three permits has three of them.</p></div>
+      </div>
+      <p class="note">Fields 1 and 2 all morning; Fields 3–6 for the last slot only. 2 × 3 + 4 × 1 = 10 slots a Sunday. Every field is on a row, so the "not on this schedule" line is absent: it speaks about whole fields, never about hours.</p>
+      <p class="note">If two rows on one schedule ask for the same field at the same time, the form already refuses overlapping rows. That rule is unchanged.</p>
+    </div>
+
+    <div class="stage">
+      <div class="cap"><h3>Where the venue's name goes</h3><button type="button" class="tag chg" data-say="A choice of three, drawn with a long venue name so each one shows what happens when it runs out of room. Ask 2.">A choice</button><span class="sw-note">The row at its true width, with a long venue name. Ask 2</span></div>
+      <div class="scroller"><div class="bare">
+        <p class="cut">A · at the end of the label line (drawn everywhere else)</p>
+        <div class="pcard" style="margin-bottom:12px"><div class="prow" style="padding-top:.6rem"><div class="fld"><span class="lbl"><span class="lb">Facilities</span><span class="ven">Milton Community Sports Park, North Campus</span></span><div class="ctl pk"><span class="v">Field 1 and Field 2</span><svg class="ic" width="15" height="15"><use href="#i-chev"/></svg></div></div><div class="fld"><span class="lb">Days<i>*</i></span><div class="ctl pk"><span class="v">Sun</span><svg class="ic" width="15" height="15"><use href="#i-chev"/></svg></div></div><div class="fld"><span class="lb">From<i>*</i></span><div class="ctl"><span class="v">9:00 a.m.</span><svg class="ic" width="15" height="15"><use href="#i-clock"/></svg></div></div><div class="fld"><span class="lb">Until<i>*</i></span><div class="ctl"><span class="v">1:30 p.m.</span><svg class="ic" width="15" height="15"><use href="#i-clock"/></svg></div></div><span class="rm"><svg width="15" height="15"><use href="#i-x"/></svg></span></div></div>
+        <p class="cut">B · in the label's own words</p>
+        <div class="pcard" style="margin-bottom:12px"><div class="prow" style="padding-top:.6rem"><div class="fld"><span class="lb">Facilities at Milton Community Sports Park, North Campus</span><div class="ctl pk"><span class="v">Field 1 and Field 2</span><svg class="ic" width="15" height="15"><use href="#i-chev"/></svg></div></div><div class="fld"><span class="lb">Days<i>*</i></span><div class="ctl pk"><span class="v">Sun</span><svg class="ic" width="15" height="15"><use href="#i-chev"/></svg></div></div><div class="fld"><span class="lb">From<i>*</i></span><div class="ctl"><span class="v">9:00 a.m.</span><svg class="ic" width="15" height="15"><use href="#i-clock"/></svg></div></div><div class="fld"><span class="lb">Until<i>*</i></span><div class="ctl"><span class="v">1:30 p.m.</span><svg class="ic" width="15" height="15"><use href="#i-clock"/></svg></div></div><span class="rm"><svg width="15" height="15"><use href="#i-x"/></svg></span></div></div>
+        <p class="cut">C · in the box</p>
+        <div class="pcard"><div class="prow" style="padding-top:.6rem"><div class="fld"><span class="lb">Facilities</span><div class="ctl pk"><span class="v">Milton Community Sports Park, North Campus · Field 1 and Field 2</span><svg class="ic" width="15" height="15"><use href="#i-chev"/></svg></div></div><div class="fld"><span class="lb">Days<i>*</i></span><div class="ctl pk"><span class="v">Sun</span><svg class="ic" width="15" height="15"><use href="#i-chev"/></svg></div></div><div class="fld"><span class="lb">From<i>*</i></span><div class="ctl"><span class="v">9:00 a.m.</span><svg class="ic" width="15" height="15"><use href="#i-clock"/></svg></div></div><div class="fld"><span class="lb">Until<i>*</i></span><div class="ctl"><span class="v">1:30 p.m.</span><svg class="ic" width="15" height="15"><use href="#i-clock"/></svg></div></div><span class="rm"><svg width="15" height="15"><use href="#i-x"/></svg></span></div></div>
+      </div></div>
+      <div class="expl"></div>
+      <p class="note"><b>A</b> uses the label line the typed Facilities chips already have (the label on the left, something quieter at its end). A long name is cut short with "…", and the row keeps its height. <b>B</b> wraps to a second line, as every label in the product does, so that one field's label stands taller than its neighbours'. <b>C</b> cuts off the part you came to read. A permit can cover two parks, so each row has to name its venue somewhere.</p>
+    </div>
+  </section>
+
+  <!-- ═════════ 4 · DATES AND EDGES ═════════ -->
+  <section class="pane" id="p-edges">
+    <p class="lede"><b>Three edges this change touches.</b> The first is a gap in today's form that picking fields makes more likely to bite.</p>
+    <div class="stage">
+      <div class="cap"><h3>To, typed past the permit's last day</h3><button type="button" class="tag new" data-say="New: the line under To, and the rule behind it. Today the form says nothing and makes slots past the permit's end. Ask 6.">New</button><span class="sw-note">The dates row only, at its width in the window. Ask 6</span></div>
+      <div class="scroller"><div class="bare">
+        <div class="pr2">
+          <div class="fld"><span class="lb">From<i>*</i></span><div class="ctl"><span class="v">Jan 3, 2027</span><svg class="ic" width="15" height="15"><use href="#i-cal"/></svg></div></div>
+          <div class="fld rel"><span class="lb">To<i>*</i></span><div class="ctl"><span class="v">Mar 28, 2027</span><svg class="ic" width="15" height="15"><use href="#i-cal"/></svg></div><span class="hnt">Dome, winter 2027 ends Sun, Mar 7. Its time stops there.</span><button class="mk" data-n="1" aria-label="Note 1">1</button></div>
+        </div>
+      </div></div>
+      <div class="expl"></div>
+      <div class="legend">
+        <div class="li" id="e-1"><button class="mk2" data-n="1" type="button">1</button><p><b>Today:</b> with one permit ticked, a To typed past the permit's last day makes slots for those extra Sundays, on time the club doesn't hold. With two or more permits ticked, each permit's rows already stop at that permit's own dates, and so does Add time. <b>Proposed:</b> one permit behaves the same, and this line says so. It sits where "Widened to cover both permits" sits; the two can never be needed together, because that line only shows while To has not been typed. Add time keeps its own line ("Dome, winter 2027 runs Jan 3 – Mar 7."). Time typed with no permit is not held to any permit's dates.</p></div>
+      </div>
+    </div>
+    <div class="stage">
+      <div class="cap"><h3>Add time, on some of a permit's fields</h3><button type="button" class="tag chg" data-say="Add time's card already carries one quiet line about time the schedule uses. The new line sits under it and names the added time, not the schedule.">Restyled</button><span class="sw-note">The permit's card on Add time, where a line already sits in that place</span></div>
+      <div class="scroller"><div class="bare">
+        <div class="pcard grow">
+          <p class="ph"><strong>Dome, winter 2027</strong><span>Milton Sports Dome Inc. · Jan 3 – Mar 7, 2027</span></p>
+          <p class="left">Winter dome, January already uses Sun, 9:00 a.m. – 1:30 p.m., to Jan 31. That time is left out.</p>
+          <p class="left rel" style="margin-bottom:.35rem">Fields 5–6 are not on this added time.<button class="mk" style="right:auto;left:250px;top:-3px" data-n="1" aria-label="Note 1">1</button></p>
+          <div class="prow"><div class="fld"><span class="lbl"><span class="lb">Facilities</span><span class="ven">Milton Sports Dome</span></span><div class="ctl pk"><span class="v">Fields 1–4</span><svg class="ic" width="15" height="15"><use href="#i-chev"/></svg></div></div><div class="fld"><span class="lb">Days<i>*</i></span><div class="ctl pk"><span class="v">Sun</span><svg class="ic" width="15" height="15"><use href="#i-chev"/></svg></div></div><div class="fld"><span class="lb">From<i>*</i></span><div class="ctl"><span class="v">9:00 a.m.</span><svg class="ic" width="15" height="15"><use href="#i-clock"/></svg></div></div><div class="fld"><span class="lb">Until<i>*</i></span><div class="ctl"><span class="v">1:30 p.m.</span><svg class="ic" width="15" height="15"><use href="#i-clock"/></svg></div></div><span class="rm"><svg width="15" height="15"><use href="#i-x"/></svg></span></div>
+          <span class="door rowdoor"><svg width="14" height="14"><use href="#i-plus"/></svg>Add hours</span>
+        </div>
+      </div></div>
+      <div class="expl"></div>
+      <div class="legend">
+        <div class="li" id="d-1"><button class="mk2" data-n="1" type="button">1</button><p><b>Two lines can stack here, so the second names what it is about.</b> On Add time the card already says what the schedule uses. "Not on this schedule" would be unclear beside it, so the line reads "not on this added time". One field reads "Field 3 is not on this schedule."</p></div>
+      </div>
+    </div>
+    <div class="stage">
+      <div class="pair2">
+        <div class="card">
+          <h3>After the schedule exists</h3>
+          <ul>
+            <li><b>A draft or one in review:</b> Settings… shows the same rows, so fields can be changed and the drafts made again.</li>
+            <li><b>A sent schedule:</b> a narrowed row follows the rule that already ships for any edited row. The old row ends yesterday, the new one starts today, and nothing before today moves. Practices on a field taken off come off as changes to send, credited the way removed time is today.</li>
+          </ul>
+        </div>
+        <div class="card">
+          <h3>Not in this drawing</h3>
+          <ul>
+            <li><b>Rows with their own dates</b> (Fields 1 and 2 in January, all six from February). See Ask 5.</li>
+            <li><b>A second schedule seeing this one.</b> Nothing here tells the next schedule that Fields 1 and 2 are taken on Sunday mornings. That is the next stage.</li>
+            <li><b>Half a field.</b> The next stage, drawn with the "teams at the same time" rule.</li>
+            <li><b>A schedule with no permit at all.</b> Its Venue and Facilities chips stay as they are, and its "Add hours" keeps its name.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═════════ 5 · ASKS ═════════ -->
+  <section class="pane" id="p-asks">
+    <p class="lede"><b>Six asks.</b> Pick an answer for each, then copy the summary at the bottom and paste it back in the chat. Each starts on my recommendation.</p>
+    <div class="asks">
+      <div class="card">
+        <h3>What you already said (shown so it can be corrected)</h3>
+        <ul>
+          <li>A schedule can run on some of a permit's fields, for a period. "We need the ability to do both."</li>
+          <li>Start the drawing. No go to build has been given.</li>
+        </ul>
+      </div>
+      <div class="ask">
+        <h3>Ask 1 · The control</h3>
+        <ul><li><b>A · A list with ticks on the row</b> (drawn). The Facilities list the permit's form already has; the row keeps its height.</li><li><b>B · Chips under each row</b>, like the Facilities chips on a schedule with no permit. Every field is visible without a click, but each row grows by a line, and a venue with twelve fields wraps to two.</li></ul>
+        <p class="rec">Recommend A.</p>
+        <div class="pick" role="radiogroup" aria-label="Ask 1"><label><input type="radio" name="a1" id="a1a" value="A" checked> A</label><label><input type="radio" name="a1" id="a1b" value="B"> B</label></div>
+      </div>
+      <div class="ask">
+        <h3>Ask 2 · Where the venue's name goes</h3>
+        <ul><li><b>A · At the end of the label line</b> (drawn): "Facilities" on the left, the venue in quieter type on the right. A long name is cut short.</li><li><b>B · In the label's own words</b>: "Facilities at Milton Sports Dome". A long name wraps to a second line.</li><li><b>C · In the box</b>: "Milton Sports Dome · Field 1 and Field 2". It cuts off the fields.</li></ul>
+        <p class="rec">Recommend A. Tab 3 draws all three with a long name.</p>
+        <div class="pick" role="radiogroup" aria-label="Ask 2"><label><input type="radio" name="a2" id="a2a" value="A" checked> A</label><label><input type="radio" name="a2" id="a2b" value="B"> B</label><label><input type="radio" name="a2" id="a2c" value="C"> C</label></div>
+      </div>
+      <div class="ask">
+        <h3>Ask 3 · The "not on this schedule" line</h3>
+        <ul><li><b>A · Show it</b> (drawn): "Fields 3–6 are not on this schedule." Only when a field the permit holds is on none of its rows. It names whole fields, never hours. On Add time it reads "not on this added time" (tab 4).</li><li><b>B · No line.</b> The ticks already say it.</li></ul>
+        <p class="rec">Recommend A. It is the one place the form says what is left for another schedule, and it costs one line only when it applies.</p>
+        <div class="pick" role="radiogroup" aria-label="Ask 3"><label><input type="radio" name="a3" id="a3a" value="A" checked> A</label><label><input type="radio" name="a3" id="a3b" value="B"> B</label></div>
+      </div>
+      <div class="ask">
+        <h3>Ask 4 · A second row on a permit's card</h3>
+        <ul><li><b>A · Each permit's card gets its own "Add hours"</b> (drawn). The row it adds belongs to that permit and is priced by it. The door under the cards stays for time with no permit, and says so ("Add hours with no permit", only on a form that has a permit ticked). Each card grows by about 34 px.</li><li><b>B · Leave "Add hours" as it is.</b> One row per block of the permit's time. Different fields at different hours needs the "Find the time" door.</li></ul>
+        <p class="rec">Recommend A. It goes past the smallest fix, but picking fields per row is only half useful if a permit can have one row.</p>
+        <div class="pick" role="radiogroup" aria-label="Ask 4"><label><input type="radio" name="a4" id="a4a" value="A" checked> A</label><label><input type="radio" name="a4" id="a4b" value="B"> B</label></div>
+      </div>
+      <div class="ask">
+        <h3>Ask 5 · Rows with their own dates</h3>
+        <ul><li><b>A · Not now.</b> One From and To for the schedule. "Fields 1 and 2 in January, all six from February" is made as the schedule plus Add time once it is sent, or with the "Find the time" door.</li><li><b>B · Add "only between" dates to a row.</b> One schedule covers both periods from the start. Each row grows two more fields, on a row that is already full.</li></ul>
+        <p class="rec">Recommend A. Nobody has asked for it yet, and Add time already gives a later period its own dates and bill.</p>
+        <div class="pick" role="radiogroup" aria-label="Ask 5"><label><input type="radio" name="a5" id="a5a" value="A" checked> A</label><label><input type="radio" name="a5" id="a5b" value="B"> B</label></div>
+      </div>
+      <div class="ask">
+        <h3>Ask 6 · To, typed past the permit's last day</h3>
+        <ul><li><b>A · A permit's time stops at the permit's dates</b>, with the line under To saying so (tab 4). One permit then behaves as several already do.</li><li><b>B · Leave it.</b> Slots are made past the permit's end when To is typed past it.</li></ul>
+        <p class="rec">Recommend A. Today's behaviour hands out time the club doesn't hold.</p>
+        <div class="pick" role="radiogroup" aria-label="Ask 6"><label><input type="radio" name="a6" id="a6a" value="A" checked> A</label><label><input type="radio" name="a6" id="a6b" value="B"> B</label></div>
+      </div>
+      <div class="card paste">
+        <h3>Your answers, to paste back</h3>
+        <textarea id="answers" readonly aria-label="Your answers"></textarea>
+        <button class="copy" id="copy" type="button">Copy my answers</button>
+        <span class="copied" id="copied" hidden>Copied. Paste it in the chat.</span>
+      </div>
+      <div class="card">
+        <h3>What the design check changed before you saw this</h3>
+        <ul>
+          <li>The list is drawn as the shipped Facilities list works (you tick what you want; nothing ticked means all of them), so the star and the "pick at least one" message went.</li>
+          <li>The venue moved from the label's words to the end of the label line, and the long-name case is drawn for all three options.</li>
+          <li>The dates in From and To read as the shipped date field reads ("Jan 3, 2027").</li>
+          <li>The "not on this schedule" line sits exactly where the card's existing line sits, and Add time's two-line case is drawn.</li>
+          <li>The card's own "Add hours" is drawn with the room it really takes, and the greyed ✕ is the shipped grey.</li>
+          <li>Every tag and number on the drawings now opens its explanation.</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3>After you rule</h3>
+        <p style="margin:0">The answers go into the plan as Stage 1's rulings. The build is small: the form, one addition to the shared tick list (the box naming the fields when all are in), one check on the server, and tests. No database change is expected. The words drawn here ("Every facility on this permit", "Add hours with no permit", the two lines) go through the marketing pass before the walk.</p>
+      </div>
+    </div>
+  </section>
+</div>
+
+<script>
+(function () {
+  var names = ["idea", "window", "list", "edges", "asks"];
+  var tabs = document.querySelectorAll(".tab");
+  function show(name) {
+    tabs.forEach(function (t) { t.setAttribute("aria-selected", String(t.dataset.t === name)); });
+    document.querySelectorAll("section.pane").forEach(function (p) { p.classList.toggle("on", p.id === "p-" + name); });
+    try { history.replaceState(null, "", "#" + name); } catch (e) { /* hash only */ }
+    window.scrollTo(0, 0);
+  }
+  tabs.forEach(function (t) { t.addEventListener("click", function () { show(t.dataset.t); }); });
+  /* A numbered dot (on the drawing or in the legend) or a tag opens its explanation under that drawing. */
+  function say(stage, html, li) {
+    var ex = stage ? stage.querySelector(".expl") : null;
+    if (!ex) return;
+    ex.innerHTML = html; ex.classList.add("on");
+    stage.querySelectorAll(".li").forEach(function (x) { x.classList.toggle("flash", x === li); });
+    ex.scrollIntoView({ behavior: "smooth", block: "nearest" });
+  }
+  document.querySelectorAll(".mk, .mk2").forEach(function (b) {
+    b.addEventListener("click", function () {
+      var stage = b.closest(".stage"), li = null;
+      stage.querySelectorAll(".legend .li").forEach(function (x) { if (x.id.split("-")[1] === String(b.dataset.n)) li = x; });
+      if (li) say(stage, li.querySelector("p").innerHTML, li);
+    });
+  });
+  document.querySelectorAll("button.tag").forEach(function (b) {
+    b.addEventListener("click", function () {
+      var holder = document.createElement("span"); holder.textContent = b.dataset.say || "";
+      say(b.closest(".stage"), holder.innerHTML, null);
+    });
+  });
+  document.querySelectorAll(".viewrow").forEach(function (row) {
+    var pane = row.closest("section");
+    row.querySelectorAll("button[data-v]").forEach(function (b) {
+      b.addEventListener("click", function () {
+        row.querySelectorAll("button[data-v]").forEach(function (x) { x.setAttribute("aria-pressed", String(x === b)); });
+        pane.classList.toggle("show-diff", b.dataset.v === "diff");
+      });
+    });
+  });
+  /* The asks, said back as text to paste. */
+  var askNames = ["The control", "Where the venue name goes", "The not-on-this-schedule line", "A second row on a permit card", "Rows with their own dates", "To typed past the permit"];
+  var out = document.getElementById("answers");
+  function fill() {
+    var lines = ["Schedule fields drawings, round 1: my answers"];
+    askNames.forEach(function (label, i) {
+      var picked = document.querySelector("input[name=a" + (i + 1) + "]:checked");
+      lines.push("Ask " + (i + 1) + " (" + label + "): " + (picked ? picked.value : "no answer"));
+    });
+    lines.push("Notes: ");
+    out.value = lines.join("\n");
+  }
+  document.querySelectorAll(".pick input").forEach(function (r) { r.addEventListener("change", fill); });
+  fill();
+  document.getElementById("copy").addEventListener("click", function () {
+    var done = function () { document.getElementById("copied").hidden = false; };
+    var fallback = function () { out.removeAttribute("readonly"); out.focus(); out.select(); out.setAttribute("readonly", ""); done(); };
+    if (navigator.clipboard && navigator.clipboard.writeText) { navigator.clipboard.writeText(out.value).then(done, fallback); } else { fallback(); }
+  });
+  var h = (location.hash || "").replace("#", "");
+  if (names.indexOf(h) > -1) show(h);
+  window.addEventListener("hashchange", function () { var n = (location.hash || "").replace("#", ""); if (names.indexOf(n) > -1) show(n); });
+})();
+</script>

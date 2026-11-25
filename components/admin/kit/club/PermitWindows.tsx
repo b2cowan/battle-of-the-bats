@@ -79,9 +79,15 @@ export function facilitiesOf(venues: readonly LibraryVenue[]): VenueFacilities {
 
 // ── The multi-pick field: a block's facilities, its days ────────────────────────────────────────────
 
-export function PickField({ id, label, required, options, selected, onChange, everyLabel, placeholder, disabled, inlineLabel }: {
+export function PickField({ id, label, required, options, selected, onChange, everyLabel, everyValue, labelAside, placeholder, disabled, inlineLabel }: {
   id: string;
   label: string;
+  /** Quieter words at the end of the label line, cut short with "…" when long (New schedule's permit row: its venue —
+   *  pick-fields drawing, Ask 2 A). Part of the field's name to a screen reader. */
+  labelAside?: string;
+  /** With `everyLabel`: what the box says when nothing is ticked, in place of `everyLabel` ("Fields 1–6", never "Every
+   *  facility on this permit" — the commonest case must not say less than the row used to; drawing tab 3, note 2). */
+  everyValue?: string;
   /** The label sits inside the button, before the value ("Applies to  Kinsmen Park ⌄") — for a field in a row of unlabelled
    *  fields (a date off's). The label above stays for a screen reader, hidden. */
   inlineLabel?: boolean;
@@ -103,14 +109,17 @@ export function PickField({ id, label, required, options, selected, onChange, ev
   const chosen = options.filter(o => selected.includes(o.id));
   const value = chosen.length
     ? (everyLabel ? facilityListWords(chosen.map(o => o.label)) : chosen.map(o => o.label).join(', '))
-    : everyLabel ?? '';
+    : everyLabel ? everyValue || everyLabel : '';
   const toggle = (oid: string) => onChange(selected.includes(oid) ? selected.filter(x => x !== oid) : [...selected, oid]);
+  const labelSpan = <span className={inlineLabel ? `${ck.label} ${own.pickLabelHidden}` : ck.label} id={`${id}-label`}>{label}{required && <span className={repKit.req} aria-hidden>*</span>}</span>;
   return (
     <div className={ck.field}>
-      <span className={inlineLabel ? `${ck.label} ${own.pickLabelHidden}` : ck.label} id={`${id}-label`}>{label}{required && <span className={repKit.req} aria-hidden>*</span>}</span>
+      {labelAside && !inlineLabel
+        ? <span className={own.pickLabelLine}>{labelSpan}<span className={own.pickAside} id={`${id}-aside`} title={labelAside}>{labelAside}</span></span>
+        : labelSpan}
       <div className={own.pick} ref={wrap}>
         <button type="button" id={id} className={own.pickButton} aria-haspopup="listbox" aria-expanded={open}
-          aria-labelledby={`${id}-label ${id}`} disabled={disabled} onClick={() => setOpen(o => !o)}>
+          aria-labelledby={`${id}-label${labelAside && !inlineLabel ? ` ${id}-aside` : ''} ${id}`} disabled={disabled} onClick={() => setOpen(o => !o)}>
           {inlineLabel && <span className={own.pickKey} aria-hidden>{label}</span>}
           <span className={`${own.pickValue}${value ? '' : ` ${own.pickPlaceholder}`}`}>{value || placeholder || 'Choose'}</span>
           <ChevronDown size={15} aria-hidden />

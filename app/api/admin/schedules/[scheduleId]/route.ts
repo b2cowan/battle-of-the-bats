@@ -129,7 +129,7 @@ export const PATCH = withObservability(async (req: Request, { params }: Params) 
     // The rows it sends, each priced by its own permit (a schedule on several permits).
     // (read together with the rest of the family: the two do not depend on each other)
     const [{ prices, gone }, family] = await Promise.all([
-      readRequestPrices(orgId, pricePermitOf(loaded.row), req.time.blocks),
+      readRequestPrices(orgId, pricePermitOf(loaded.row), req.time.blocks, { asked: asked.time.blocks, saved: loaded.time.blocks }),
       familyOthers(orgId, loaded.row),
     ]);
     if (gone) return gone;

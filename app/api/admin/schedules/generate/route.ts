@@ -61,7 +61,7 @@ export const POST = withObservability(async (req: Request) => {
   // The family (Phase 8): the places the schedule it was added to, or its parts, hold then are never cut, and their teams
   // then are taken — so a draft never offers what the save would refuse. A part being made: the whole family.
   const [{ prices, gone }, family] = await Promise.all([
-    readRequestPrices(orgId, permitId, time.blocks),
+    readRequestPrices(orgId, permitId, time.blocks, loaded ? { asked: askedTime.blocks, saved: loaded.time.blocks } : undefined),
     part?.ok ? part.family : loaded ? familyOthers(orgId, loaded.row) : [],
   ]);
   if (gone) return gone;

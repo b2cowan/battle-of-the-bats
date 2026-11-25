@@ -76,7 +76,9 @@ import {
 import { exportScheduleFile } from '@/lib/export/club-schedule-export';
 import type { DraftMeasure, TeamResult } from '@/lib/club-schedule-engine';
 import { HOUSE_LEAGUE, isProgramHolder } from '@/lib/club-schedule-holders';
-import { datesOffChanged, dateOffVenues, mergeDatesOff, permitsSpan, rowsFromFound, settleOverlaps, type DateOffParks } from '@/lib/club-schedule-permit-rows';
+import {
+  datesOffChanged, dateOffVenues, fieldsLeftOff, mergeDatesOff, permitPlaces, permitRowDates, permitsSpan, rowsFromFound, settleOverlaps, type DateOffParks,
+} from '@/lib/club-schedule-permit-rows';
 import { hoursNumber } from '@/lib/club-draft-bill';
 import type { DateOff, TimeBlock } from '@/lib/permit-time';
 import { Statement, Swatch } from './ScheduleParts';
@@ -611,15 +613,25 @@ export default function NewScheduleWindow({ q, orgSlug, orgName, startPermitId =
     const facilityIds = venue && venue.facilities.length ? draft.facilityIds : [];
     // A part: its rows always keep to their permit's own dates, inside the part's own From and To.
     const several = !!partOf || permitOrder.length > 1;
+    const range = { startsOn: draft.startsOn, endsOn: draft.endsOn };
+    /** A permit row's dates (Ask 6 A): its permit's, with several permits; with one, only once From or To reach past the
+     *  permit. A saved row (Settings…) carries no permit dates of its own, so only that stop applies to it. */
+    const datesOf = (r: HoursRow) => {
+      if (r.permitDates) return permitRowDates(r, r.permitDates, several, range);
+      const p = r.permitId ? permitById.get(r.permitId) : undefined;
+      return permitRowDates(r, p ? { fromDate: p.startsOn, untilDate: p.endsOn } : null, false, range);
+    };
     const blocks = draft.rows.filter(rowDone).map(r => ({
       venueId: r.place?.venueId ?? draft.venueId, facilityIds: r.place?.facilityIds ?? facilityIds,
       weekdays: r.weekdays, startTime: r.start, endTime: r.end,
-      fromDate: r.dates?.fromDate ?? (several ? r.permitDates?.fromDate ?? null : null),
-      untilDate: r.dates?.untilDate ?? (several ? r.permitDates?.untilDate ?? null : null),
+      ...datesOf(r),
       permitId: r.permitId ?? null,
     }));
-    return several ? settleOverlaps(blocks, permitOrder, { startsOn: draft.startsOn, endsOn: draft.endsOn }) : { blocks, overlaps: [] };
-  }, [draft.rows, draft.venueId, draft.facilityIds, draft.startsOn, draft.endsOn, venue, permitOrder, partOf]);
+    return several ? settleOverlaps(blocks, permitOrder, range) : { blocks, overlaps: [] };
+  }, [draft.rows, draft.venueId, draft.facilityIds, draft.startsOn, draft.endsOn, venue, permitOrder, partOf, permitById]);
+  /** The places each permit holds, by venue (pick-fields, Stage 1): what a permit row's Facilities list offers, and what
+   *  its card says is left off. */
+  const permitHeld = useMemo(() => permitPlaces(inputs?.permits ?? [], new Map(places.map(p => [p.venueId, p.facilities.map(f => f.id)]))), [inputs, places]);
   /** The parks the time uses, and each permit's — what a date off's "Applies to" offers and defaults to (P5 A). */
   // A part's dates off are its own (tab 3, note 4): its parks are its own rows'.
   const offParks = useMemo(() => parksCtx(draft.rows), [parksCtx, draft.rows]);
@@ -902,14 +914,71 @@ export default function NewScheduleWindow({ q, orgSlug, orgName, startPermitId =
   const partToHint = !partOf || !isCalendarDate(draft.endsOn) ? null
     : familyEnds && draft.endsOn > familyEnds ? PART_WORDS.toWidens(partOf.schedule.name, formatStoredDate(draft.endsOn, { withYear: false }))
       : remaining ? PART_WORDS.toPermit(remaining.name, scheduleDates(remaining.startsOn, remaining.endsOn)) : null;
+  /** Under To, typed past the one permit's last day (Ask 6 A): its time stops there. It never meets "Widened…", which
+   *  shows only while To is not typed. */
+  const onePermit = !partOf && permitOrder.length === 1 ? permitById.get(permitOrder[0]) : undefined;
+  const stopsHint = onePermit && isCalendarDate(draft.endsOn) && draft.endsOn > onePermit.endsOn
+    ? W.toStopsAt(onePermit.name, formatShortWeekdayDate(onePermit.endsOn)) : null;
+  /** Under From, typed before the one permit's first day: the same rule from the other end (/review 2026-11-25). */
+  const startsHint = onePermit && isCalendarDate(draft.startsOn) && draft.startsOn < onePermit.startsOn
+    ? W.fromStartsAt(onePermit.name, formatShortWeekdayDate(onePermit.startsOn)) : null;
   /** Under To: the dates the permits set ("Widened to cover both permits"), or where they went back to. */
-  const datesHint = draft.datesTyped.end ? null
+  const datesHint = stopsHint ?? (draft.datesTyped.end ? null
     : draft.permitIds.length > 1 ? W.datesWidened(draft.permitIds.length)
-      : cameOff && remaining ? W.datesBackTo(remaining.name) : null;
-  const rowPlaceWords = (r: HoursRow) => {
-    const v = places.find(x => x.venueId === (r.place?.venueId ?? draft.venueId));
-    const names = (v?.facilities ?? []).filter(f => (r.place?.facilityIds ?? draft.facilityIds).includes(f.id)).map(f => f.name);
-    return `${v?.venueName ?? ''}${names.length ? ` · ${facilityListWords(names)}` : ''}`;
+      : cameOff && remaining ? W.datesBackTo(remaining.name) : null);
+  /**
+   * A row's Facilities list (pick-fields drawing, Asks 1–2 A): a permit row offers the fields its permit holds at the
+   * row's venue, a typed row every field there. Nothing ticked means all of them (the shipped list's model), so the row
+   * keeps listing its facilities as before and the list shows none ticked when it holds every one. A field the row names
+   * that its permit no longer holds stays an option, so it can be unticked rather than refused unseen.
+   */
+  const rowPlaceOf = (r: HoursRow) => {
+    const venueId = r.place?.venueId ?? draft.venueId;
+    const v = places.find(x => x.venueId === venueId);
+    const ids = r.place?.facilityIds ?? draft.facilityIds;
+    // A permit read holds only its own fields here (none, at a venue it has no time at); a permit not read, every one.
+    const byVenue = r.permitId ? permitHeld.get(r.permitId) : undefined;
+    const units = byVenue ? byVenue.get(venueId) ?? [] : undefined;
+    const every = (v?.facilities ?? []).filter(f => !units || units.includes(f.id));
+    const options = (v?.facilities ?? []).filter(f => every.includes(f) || ids.includes(f.id)).map(f => ({ id: f.id, label: f.name }));
+    const all = every.length > 0 && every.length === ids.length && every.every(f => ids.includes(f.id));
+    return {
+      venueId, venueName: v?.venueName ?? '', options, selected: all ? [] : ids.filter(id => options.some(o => o.id === id)),
+      everyIds: every.map(f => f.id), everyWords: facilityListWords(every.map(f => f.name)),
+    };
+  };
+  /** Ask 3 A: the fields a permit's card leaves off, said under its name — whole fields, never hours. */
+  const leftLine = (permitId: string, rows: readonly HoursRow[]) => {
+    const held = permitHeld.get(permitId);
+    const left = fieldsLeftOff(held, rows.map(r => ({ venueId: r.place?.venueId ?? draft.venueId, facilityIds: r.place?.facilityIds ?? draft.facilityIds })));
+    if (!left.length) return null;
+    const words = partOf ? PART_WORDS.notOnAddedTime : W.notOnSchedule;
+    return left.map(l => {
+      const v = places.find(x => x.venueId === l.venueId);
+      const names = l.facilityIds.map(id => v?.facilities.find(f => f.id === id)?.name ?? '').filter(Boolean);
+      return names.length ? words(facilityListWords(names), names.length > 1, (held?.size ?? 0) > 1 ? v?.venueName ?? null : null) : '';
+    }).filter(Boolean).join(' ') || null;
+  };
+  /** Ask 4 A: a permit card's own "Add hours" — a row on that permit, priced by it, after the card's last row: the fields
+   *  the card's other rows don't use there (all of them when none is left), and the last row's days and hours. */
+  const addPermitRow = (permitId: string, rows: readonly HoursRow[]) => {
+    const last = rows[rows.length - 1];
+    if (!last) return;
+    const p = permitById.get(permitId);
+    const venueId = last.place?.venueId ?? draft.venueId;
+    const held = (permitHeld.get(permitId)?.get(venueId) ?? []).filter((u): u is string => !!u);
+    const used = new Set(rows.filter(r => (r.place?.venueId ?? draft.venueId) === venueId).flatMap(r => r.place?.facilityIds ?? draft.facilityIds));
+    const free = held.filter(f => !used.has(f));
+    const row: HoursRow = {
+      key: newKey('row'), weekdays: [...last.weekdays], start: last.start, end: last.end,
+      place: { venueId, facilityIds: free.length ? free : held.length ? held : [...(last.place?.facilityIds ?? [])] }, permitId,
+      ...(last.permitDates ? { permitDates: { ...last.permitDates } } : p ? { permitDates: { fromDate: p.startsOn, untilDate: p.endsOn } } : {}),
+      ...(last.dates ? { dates: { ...last.dates } } : {}),
+    };
+    setDraft(d => {
+      const at = d.rows.findIndex(r => r.key === last.key) + 1 || d.rows.length;
+      return { ...d, rows: [...d.rows.slice(0, at), row, ...d.rows.slice(at)] };
+    });
   };
   /** A found row's draft-held days, one line per facility (P7b A): "4 Thursdays on Diamond B are held by the draft …". */
   const foundDraftNotes = (r: HoursRow): string[] => {
@@ -923,20 +992,28 @@ export default function NewScheduleWindow({ q, orgSlug, orgName, startPermitId =
   const cardGroups = cards ? [
     ...permitOrder.map(id => {
       const x = permitById.get(id);
-      return { key: id, title: x?.name ?? W.typedCard, sub: x ? W.permitCard(x.issuer, scheduleDates(x.startsOn, x.endsOn)) : null, rows: draft.rows.filter(r => r.permitId === id) };
+      const rows = draft.rows.filter(r => r.permitId === id);
+      return { key: id, title: x?.name ?? W.typedCard, sub: x ? W.permitCard(x.issuer, scheduleDates(x.startsOn, x.endsOn)) : null, rows, left: leftLine(id, rows) };
     }),
-    { key: '__typed', title: copiedFrom ? W.copiedCard(copiedFrom) : W.typedCard, sub: null, rows: draft.rows.filter(r => !r.permitId) },
+    { key: '__typed', title: copiedFrom ? W.copiedCard(copiedFrom) : W.typedCard, sub: null, rows: draft.rows.filter(r => !r.permitId), left: null as string | null },
   ].filter(g => g.rows.length) : [];
   const rowFields = (r: HoursRow, withPlace: boolean) => {
     const i = draft.rows.indexOf(r);
+    const at = withPlace ? rowPlaceOf(r) : null;
+    const notes = withPlace ? foundDraftNotes(r) : [];
     return (
       <div key={r.key} className={`${sch.dayRow}${withPlace ? ` ${sch.placeRow}` : ''}`}>
-        {withPlace && (
-          <span className={sch.rowPlace}>
-            {rowPlaceWords(r)}{!r.permitId && <small>{W.rowNoPermit}</small>}
-            {foundDraftNotes(r).map(n => <span key={n} className={sch.foundNote}>{n}</span>)}
-          </span>
-        )}
+        {at && (at.options.length ? (
+          <PickField id={`ns-fac-${i}`} label={W.facilities} labelAside={at.venueName} options={at.options} selected={at.selected}
+            everyLabel={r.permitId ? W.everyFacilityOnPermit : W.everyFacility} everyValue={at.everyWords}
+            onChange={ids => {
+              const order = at.options.map(o => o.id);
+              setRow(r.key, { place: { venueId: at.venueId, facilityIds: ids.length ? order.filter(id => ids.includes(id)) : at.everyIds.length ? at.everyIds : order } });
+            }} />
+        ) : (
+          // A venue with no facilities listed: nothing to tick, so its name, as before.
+          <span className={sch.rowPlace}>{at.venueName}</span>
+        ))}
         <PickField id={`ns-days-${i}`} label={W.days} required options={WEEKDAY_OPTIONS} selected={r.weekdays.map(String)}
           onChange={ids => setRow(r.key, { weekdays: ids.map(Number).sort((a, b) => a - b) })} placeholder={W.chooseDays} />
         <label className={ck.field} htmlFor={`ns-rs-${i}`}>
@@ -951,6 +1028,8 @@ export default function NewScheduleWindow({ q, orgSlug, orgName, startPermitId =
           onClick={() => dropFrom('rows', r.key)}>
           <X size={15} aria-hidden />
         </button>
+        {/* Find the time's draft-held days (P7b A): a line under the row, so its fields stay level. */}
+        {notes.length > 0 && <p className={sch.rowNotes}>{notes.map(n => <span key={n} className={sch.foundNote}>{n}</span>)}</p>}
       </div>
     );
   };
@@ -959,9 +1038,10 @@ export default function NewScheduleWindow({ q, orgSlug, orgName, startPermitId =
   const addHoursDoor = (
     <button type="button" className={sch.door} onClick={() => set({ rows: [...draft.rows, {
       key: newKey('row'), weekdays: [], start: lastRow?.start ?? '', end: lastRow?.end ?? '',
-      ...(cards && lastRow ? { place: lastRow.place ?? { venueId: draft.venueId, facilityIds: [...draft.facilityIds] } } : {}),
+      ...(cards && lastRow ? { place: lastRow.place ? { venueId: lastRow.place.venueId, facilityIds: [...lastRow.place.facilityIds] } : { venueId: draft.venueId, facilityIds: [...draft.facilityIds] } } : {}),
     }] })}>
-      <Plus size={14} aria-hidden />{W.addHours}
+      {/* Ask 4 A: beside the cards' own doors, this one says it is time with no permit. */}
+      <Plus size={14} aria-hidden />{cards && permitOrder.length ? W.addHoursNoPermit : W.addHours}
     </button>
   );
   const datesPair = (
@@ -970,7 +1050,7 @@ export default function NewScheduleWindow({ q, orgSlug, orgName, startPermitId =
         <span className={ck.label}>{W.from}<span className={repKit.req} aria-hidden>*</span></span>
         <DateInput id="ns-start" className={ck.input} value={draft.startsOn} min={partOf ? tournamentToday() : undefined}
           onChange={v => set({ startsOn: v, datesTyped: { ...draft.datesTyped, start: true } })} />
-        {partFromHint && <span className={ck.hint}>{partFromHint}</span>}
+        {(partFromHint ?? startsHint) && <span className={ck.hint}>{partFromHint ?? startsHint}</span>}
       </label>
       <label className={ck.field} htmlFor="ns-end">
         <span className={ck.label}>{W.to}<span className={repKit.req} aria-hidden>*</span></span>
@@ -1034,7 +1114,13 @@ export default function NewScheduleWindow({ q, orgSlug, orgName, startPermitId =
                   )}
                 </p>
                 {g.key !== '__typed' && usedLine(g.key) && <p className={ck.hint}>{usedLine(g.key)}</p>}
+                {g.left && <p className={`${ck.hint} ${sch.cardLine}`}>{g.left}</p>}
                 {g.rows.map(r => rowFields(r, true))}
+                {g.key !== '__typed' && permitById.has(g.key) && (
+                  <button type="button" className={`${sch.door} ${sch.rowDoor}`} aria-label={W.addHoursOn(g.title)} onClick={() => addPermitRow(g.key, g.rows)}>
+                    <Plus size={14} aria-hidden />{W.addHours}
+                  </button>
+                )}
               </div>
             ))}
           </div>
