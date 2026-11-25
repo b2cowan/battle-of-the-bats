@@ -279,7 +279,8 @@ prompt → the build → `/simplify`, `/review`, `/legal` or `/accounting` where
   *(Corrected by Stage 0: Open now stays first, capped at two rows; the games part sits after it, titled "Today" or
   "Latest results"; house league pages get the 30-second refresh here.)*
   *(Drawn 2026-11-25; its 11 asks G1–G11 ruled the same day, all as recommended (§7). Build order as drawn: the public
-  rep page's running-score defect ("T 4–2") first → the one games read with its guards → the home's games part.)*
+  rep page's running-score defect ("T 4–2") first → the one games read with its guards → the home's games part.
+  Build prompt: [CLUB_WEBSITE_STAGE1_BUILD_PROMPT.md](CLUB_WEBSITE_STAGE1_BUILD_PROMPT.md), sessions 1A and 1B.)*
   *(Club events, E1/E5/E6 ruled 2026-11-25: an event with an open sign-up is an Open now row; a champs day is one Today
   row opening its page, its games left out of Today's own rows, and the champs page's games join here.)*
   *(Club events on the schedules, E10/E11 ruled 2026-11-25: a "Champs day" band over that day's games on its season's
@@ -309,7 +310,8 @@ prompt → the build → `/simplify`, `/review`, `/legal` or `/accounting` where
 - [ ] **Track P — Your club, already built (idea 1; F7).** A separate track with its own drawing session. It shows
   whatever the site is, so it depends on no stage and gets better with each one. Starts on the owner's word (§7 C3).
   *(Drawn 2026-11-25; its 16 asks T1–T16 ruled the same day, all as recommended (§7). Build order as drawn: the
-  preview marker and its build check → Prospect clubs + Make one → the marking → the room → the claim → the removal.)*
+  preview marker and its build check → Prospect clubs + Make one → the marking → the room → the claim → the removal.
+  Build prompt: [CLUB_WEBSITE_TRACK_P_BUILD_PROMPT.md](CLUB_WEBSITE_TRACK_P_BUILD_PROMPT.md), sessions P1–P4.)*
 
 **What idea 11 would do to this ladder (PROPOSED 2026-11-24; the stages above are unchanged until the owner rules):**
 it adds no stage, it widens two and moves nothing ahead of Stage 1.
@@ -935,7 +937,16 @@ the demos follow the product and are curated with `/demos`, never as a build ste
   refresh, the card's word, the failure line, the editor's rep line; then `/simplify`, `/review`, `/docs`, one walk).
   The walk needs house league games and a Public rep team on today's date in a seed (a walk task, not a demo step).
 - 2026-11-25 — **Stage 1's 11 asks ruled: all A, as recommended, no notes (§7).** G6 is A, so no "Updated" time line.
-  Nothing built, nothing committed by the ruling. Milton's three answers were still not in when he ruled.
+  Nothing built, nothing committed by the ruling. Milton's three answers were still not in when he ruled. Records
+  committed `2ce4cc003` with Track P's. Build prompt written the same day:
+  [CLUB_WEBSITE_STAGE1_BUILD_PROMPT.md](CLUB_WEBSITE_STAGE1_BUILD_PROMPT.md), two sessions (1A the defect + Pass 1,
+  1B Pass 2 + the close). It says club events do not exist in code yet, so E6/E10/E11's rows are not built in Stage 1.
+- 2026-11-25 — **Track P build prompt written** (owner: "yes write the track p build prompt"):
+  [CLUB_WEBSITE_TRACK_P_BUILD_PROMPT.md](CLUB_WEBSITE_TRACK_P_BUILD_PROMPT.md), four sessions in the drawing's order:
+  P1 the preview marker and its build check, alone; P2 Prospect clubs, Make one, the sample and the marking; P3 the
+  room and the claim; P4 the removal, the ended page and the one email (the nightly job asked for in P4 itself).
+  Runs beside Stage 1; the one shared screen is the public club frame. No real preview on production before P4's
+  removal is live there, or the owner removes each by hand.
 
 ## 8. Census questions for Stage 0 (answer from code, not from this plan)
 
