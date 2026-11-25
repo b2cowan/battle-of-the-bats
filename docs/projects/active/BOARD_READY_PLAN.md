@@ -1245,6 +1245,71 @@ sign-up form article. **Reviews owed at build:** `/legal` (the setting's helper 
 - [x] D5 reopened for club events: ruled yes 2026-11-15 (Q7).
 - [ ] Migration first; dictionary + snapshots.
 
+**Drawn 2026-11-24 (round 1, Stages 5 and 7 on one page, after /legal, /accounting, /billing, /design and /marketing) and
+ALL 19 ASKS RULED 2026-11-24, every one as recommended (A)** — 1A · 2A · 3A · 4A · 5A · 6A · 7A · 8A · 9A · 10A · 11A ·
+12A · 13A · 14A · 15A · 16A · 17A · 18A · 19A. Drawing: https://claude.ai/artifact/RdoaEjuySmXcVLyEQc6RtD, source
+`BOARD_READY_STAGE5_7_EVENTS_CAMPS_DRAWINGS.html`; prompt `BOARD_READY_STAGE5_7_DRAWING_PROMPT.md`. Reviews:
+`docs/agents/legal/BOARD_READY_STAGE5_7_EVENTS_CAMPS_REVIEW.md`, `docs/agents/accounting/BOARD_READY_STAGE7_CAMPS_REVIEW.md`.
+Where a ruling differs from the bullets above, the ruling holds (the audience is ask 3, not "public · families · members ·
+staff"; a champs day is ask 5, not "playoff or final games"). Asks 1–10 and 19 are Stage 5's; 11–18 are under Stage 7.
+The rulings, as ruled:
+1. **Where Events lives, and who opens it:** its own place in Programs, after House league, called Events, with two tabs:
+   Events, and Sign-ups once a camp or clinic exists. The owner, admins and the registrar open it, and a club can give
+   Events to anyone else, as it can Sponsorships.
+2. **What an event holds:** name, kind (Banquet, Champs day, AGM, Clinic, Camp, Other), one day or several, a time or All
+   day, a venue from the venue library (a new place is added to the library from the same list), field time from a permit
+   when the venue has one that day, who it's for, and a few lines about it. A create window that asks before it saves.
+3. **Who an event is for:** Everyone (club site and calendar) or Club staff (calendar only). "Our families" joins the
+   choice when the family app is switched on, and isn't shown before.
+4. **Field time from a permit:** an event takes only open time. Its window shows that day's slots on the venue's permit;
+   ticking an open one makes the event its holder, shown by name on the schedule as House league is. A slot a team or
+   house league holds shows who has it and can't be ticked; the club frees it on the schedule first, as today. The
+   schedule's "Give it to" list gains a Club events group.
+5. **Champs day:** a Champs day names a house-league season, and every game of that season on its day at its venue shows
+   under it: one item on the calendar that opens to the games, and a public page with the games and their scores. Nothing
+   about a game changes. House-league playoffs stay a separate project in the ideas backlog.
+6. **A free sign-up:** an event can ask people to sign up: who's coming (each person's name, adult or child), the club's
+   own questions (Stage 4's editor with a "For each person" group), optional spots and a closing day. No account. The
+   confirmation email carries only the Your sign-up link, with no pay line; there "Can't come anymore" ends a free sign-up
+   at once and the club sees it.
+7. **The club calendar:** club events are a fourth program, "Club events", with no colour, said in words as House league
+   is. A white "Add an event" on the toolbar, for those who open Events, opens the same window. Clicking an event reads
+   first and its foot says "Open the event". A champs day is one block that opens to its games. Teams' bookings stay
+   read-only.
+8. **The club site:** an Events tab after House league, shown only while an event for everyone is coming up, and a "Coming
+   up" section on Home with the next three (a row in the site builder, so it can be hidden or moved). Each event has its
+   own page; it drops off the day after it ends.
+9. **Telling families about an event:** Events sends no email by itself. A club tells families with a Communications
+   message, and the club site and, later, the family app carry the event.
+10. **The family app:** drawn now, built with the family app: its home lists the club's coming events (Everyone and Our
+    families) below the family's teams, and a champs day says when their child plays.
+19. **The words:** club side: "Events", "Add an event", "Sign-ups", "Sessions", "Spots", "Shown to" (Everyone, Club staff),
+    "Who it's for" (the birth years), "Club events", "Here", "Camps and clinics", "Approve" (as house league). A family
+    reads "Sign up", "Sessions", "17 spots left", "Full · waitlist open", "Waitlist · 2nd", "Spot held until …", "Give up
+    Maya's spot", "Can't come anymore" (a free event), "Ask to withdraw Maya" (a paid one), "Receipt for camp fees".
+
+Not ruled by these asks (left as they stand): the /legal review's call on whether opening a guardian's phone is recorded
+(its item 3); the /billing note that the Facts doc's Board Ready line is stale (a `/strategy` drift check). No build
+prompt is written until the owner says "build".
+
+**SPLIT 2026-11-24 (owner, the same day, after a cross-check against the Club Website Enhancements project found 8A
+conflicting with that project's ruled A1/A2):** this project owns everything a person *does* with an event (the club
+side, sign-ups and camps, the sign-up path a family follows, and the one rule for what is public); the **Club Website
+Enhancements** project owns everything that *shows* events to the public and decides where they fit in its end state.
+Owner: *"does it make sense for the stand alone project to deal with the admin part of events and have the website
+project figure out how to incorporate these events into its overall plan?"*; he then chose a handover note for that
+project's session. As a result:
+- **8A is withdrawn from this project** and goes to the club website project to decide (its A2 already puts coming
+  events inside News).
+- **5A splits:** a champs day as something the club sets up stays here; its public page goes to the club website project.
+- **The family-facing words in 19A that appear on the club site** go to the club website project to place.
+- Every other ruling stands.
+- **Handover:** `CLUB_WEBSITE_EVENTS_HANDOVER_PROMPT.md`.
+- **RULED 2026-11-24 (owner: "yes to the shareable link"):** every sign-up gets a shareable link, so events work before
+  the club site carries them.
+- **Still open, owner call:** who owns the photo question (12A here, against the club website's built-in question; the
+  recommendation is the club website's Stage 3, with `/legal` to settle its shape).
+
 ### Stage 6 — Sponsorships (item 7)
 
 **Drawn 2026-11-22 (round 1, after /design, /legal, /accounting) and ALL 15 ASKS RULED 2026-11-22** — 1A · 2A · 3C · 4A ·
@@ -1547,6 +1612,40 @@ in the card-network sentence); Privacy §5 (who sent an offer is kept with its r
 - [ ] Live payment waits on Club Tier Stage 12, as for sponsorships.
 - [ ] Migration first; dictionary + snapshots.
 
+**Drawn and RULED 2026-11-24 with Stage 5** (one drawing page; the header, links and asks 1–10 and 19 are under Stage 5).
+Asks 11–18, all as recommended (A), as ruled:
+11. **Sessions:** a camp has sessions. A session is a run of days (Mon to Fri) or chosen dates (four Tuesdays), with its
+    daily time, its own spots and its own price; a new session starts with the last one's. A family picks the sessions for
+    each child. One payment per sign-up, not one per session (/accounting: the fixed fee falls on every charge).
+12. **Ages, and the camp's form:** Born from and to (years), and Overnight yes or no. The sign-up checks each child's date
+    of birth: outside the years the page says who it's for and that child can't be added online; the club can still add
+    one by hand. Every camp form starts with the fixed line "I am this child's parent or legal guardian, or have their
+    authority" (never "signed waiver"), and photo permission is an optional yes or no that can't be made required.
+13. **Accepting, and the waitlist:** the club accepts on Sign-ups, as in house league, unless it turns on "Accept sign-ups
+    while there are spots". A full session takes a waitlist in order. When a spot is left, it is offered to the next child
+    and held until a date (3 days by default); one email says so with the Your sign-up link; the family pays or gives up
+    the spot, and an unclaimed spot goes to the next. No stored card, no automatic charge.
+14. **Paying:** as house league: nothing is owed until the child is accepted; Your sign-up then shows To pay now, by card or
+    bank debit once online payments are on, in full or in part. An early-bird price to a date is optional. Until then the
+    page says how to pay and the club records it. Who pays the card fee follows the club's registration choice on Payouts.
+    Withdrawing is a request; a refund is the club's call.
+15. **The instructor:** an instructor is a club person, 18 or older, given sessions. They sign in and see, on a phone, only
+    their sessions: name, age, a yes-or-no health note, a Here tick for each day, and the guardian's phone behind one tap.
+    Health answers show only where the question is marked "An instructor may see this answer" (off by default), only from
+    the day before to the day after the session; each opening is recorded and nothing opens if the record fails. No money,
+    email, address, other sessions, download or print.
+16. **Keeping a child's answers:** event forms go on the same clock: health and file answers are cleared 90 days after the
+    event's last day, and a declined or withdrawn child's 30 days after that. The policy sentence waits until the clean-up
+    runs.
+17. **Books and tax:** a new money-in heading, Camps and clinics (Camp and clinic fees, and its own Payment processing),
+    each line naming its camp and session, never a child. Each camp is Exempt (default) or Taxable, shown only to a club
+    registered for GST/HST, at the rate of the province where it's held, with /accounting's warning words for 15 and older
+    and for overnight. A taxable refund issues a credit note, as Stage 6 does.
+18. **The receipt:** once a sign-up is paid, Your sign-up offers "Receipt for camp fees": paid by, the child's full name, the
+    camp and its dates, day or overnight, the amount net of refunds (card fees apart), the club's name and address, the
+    issue date and the issuer, and the club's GST/HST number when taxable. One line leaves the claim to the family and the
+    CRA. The link lasts 30 days past the camp; "Email me my link" gives a fresh one at tax time.
+
 ## 6. Architectural decisions (proposed, for the owner)
 
 - **Three foundations, then assembly** (People, Forms, Club events). **Rationale:** items 5–8 share one shape; four
@@ -1596,9 +1695,9 @@ parallel.
 | 7 | **Stage 2** Group email to coaches | 2 | 1 (done) | yes | **Drawn 2026-11-16** (https://claude.ai/artifact/WVuNq47ywkxKgmFSYew2eF), asks 1–13 owed; nothing built. The public roadmap carries it as Committed for 2026 only if it is built before the roadmap is first shown (roadmap ask 11) |
 | 8 | **Stage 3** The club's people + documents with expiry | 3 | nothing (adds groups to 7) | yes | Not started, not drawn |
 | 9 | **Stage 4** Custom forms (house-league sign-up first) | 3 | nothing | yes | **✅ COMPLETE 2026-11-22 (owner's word): Parts 1–3 and 4.P built and walked; the production promote of Parts 1–3 is what remains.** History: **Drawn 2026-11-20** (round 2 after `/legal`, `/ux`, `/design`): https://claude.ai/artifact/THVuyR2zxwU8ezeFti5of9, source `BOARD_READY_STAGE4_FORMS_DRAWINGS.html`; **all 20 asks ruled 2026-11-20 as recommended** (§5 Stage 4); build prompt `BOARD_READY_STAGE4_FORMS_BUILD_PROMPT.md` (three parts) and the tournament fixes `BOARD_READY_TOURNAMENT_QUESTION_FIXES_PROMPT.md` written 2026-11-20; nothing built. **First in the owner's order of 2026-11-20** (prompt `BOARD_READY_STAGE4_FORMS_DRAWING_PROMPT.md`) |
-| 10 | **Stage 5** Club events | 3 | ~~Q7~~ (ruled yes 2026-11-15) | yes | Not started, not drawn |
+| 10 | **Stage 5** Club events | 3 | ~~Q7~~ (ruled yes 2026-11-15) | yes | **Drawn 2026-11-24** with Stage 7 (https://claude.ai/artifact/RdoaEjuySmXcVLyEQc6RtD); its asks 1–10 and 19 **ruled 2026-11-24, all as recommended** (§5 Stage 5). Not built; no build prompt yet |
 | 11 | **Stage 6** Sponsorships | 4 | 9 (10 no longer, owner 2026-11-20: a club event joins later); live card pay waits on Club Tier Stage 12 | yes | Drawn 2026-11-22 (round 1) and all 15 asks ruled the same day (§5 Stage 6); round 2 (the "sponsor pays the fee" case) and the build prompt next. Not built. Sponsors on the public tournament pages wait for this stage (owner 2026-11-20); their drawing can now start |
-| 12 | **Stage 7** Camps & clinics | 4 | 9, 10; live card pay waits on Club Tier Stage 12 | yes | Not started, not drawn |
+| 12 | **Stage 7** Camps & clinics | 4 | 9, 10; live card pay waits on Club Tier Stage 12 | yes | **Drawn 2026-11-24** with Stage 5; its asks 11–18 **ruled 2026-11-24, all as recommended** (§5 Stage 7). Not built; no build prompt yet |
 | — | **0d** Continuity message points + `/legal` + write-up | when the owner calls it; **not in the pack (owner 2026-11-16)** | — | no |
 | — | ~~**Q5** Penetration test~~ | ruled out of scope 2026-11-15 | — | — |
 

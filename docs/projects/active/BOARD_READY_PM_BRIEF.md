@@ -63,3 +63,14 @@ that handle a club's information (a living page with a dated change table; a new
 owners by email 30 days ahead). They go live with the Payments Terms; if the page work isn't ready that day, the Payments
 Terms go ahead and the data pages follow with the next Terms version. Success: a board member finds both from the footer,
 and the list always matches the privacy policy (the build checks it).
+
+**Club events, then camps and clinics (drawn and ruled 2026-11-24).** One drawing page covers both, and the owner ruled all
+19 asks as recommended. A club gets an Events place in Programs for banquets, champs days, AGMs, clinics and camps; an
+event can take open field time from a permit, shows on the club calendar as "Club events", and an event for everyone
+gets its own page and a "Coming up" row on the club site. A free event can take sign-ups with no account. A camp adds
+sessions with their own spots and prices, birth-year limits, a waitlist that holds a spot for a few days, payment as house
+league does it, a phone roster for an instructor that shows a health answer only when the club allows it and only around
+the session, a Camps and clinics heading in the books, and a "Receipt for camp fees" a family can use at tax time. Why it
+matters: these are the club's own days and its second paid program, and today they live in spreadsheets and separate
+sign-up tools. Success: a registrar runs a camp from sign-up to receipt without leaving the club's space, and an
+instructor sees only their own children and only what the club chose to share. Nothing is built yet.

@@ -1,0 +1,1515 @@
+<title>Club Events and Camps</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+/* Layout: sticky numbered tabs (one decision each) → a View row where a tab compares → framed true-size specimens with their explanation beside them; the last tab is the owner's asks with a paste-back. */
+:root {
+  /* document chrome: a cool neutral, so the warm product frames read as specimens */
+  --doc-bg: #EDEFF1; --doc-panel: #FFFFFF; --doc-ink: #1C2127; --doc-soft: #4C5560; --doc-line: rgba(28,33,39,0.12);
+  --doc-accent: #2F5D8A; --doc-accent-soft: rgba(47,93,138,0.10); --doc-red: #A3261B; --doc-red-bg: rgba(163,38,27,0.10);
+  --tag-new: #2E6B2F; --tag-new-bg: rgba(46,107,47,0.12); --tag-re: #8A5A0B; --tag-re-bg: rgba(138,90,11,0.12); --tag-same: #4C5560; --tag-same-bg: rgba(76,85,96,0.10);
+  --font-ui: Inter, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-head: "Space Grotesk", Inter, system-ui, sans-serif;
+  --font-data: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+  /* the product's warm palette (globals.css warm block), fixed inside every frame */
+  --home-paper: #F8F4ED; --home-card: #FFFFFF; --home-ink: #241E15; --home-ink-soft: #4A4235; --home-dim: #615A54; --home-faint: #7A726A;
+  --home-line: rgba(70,55,30,0.12); --home-line-strong: rgba(70,55,30,0.20); --home-olive: #57651E; --home-olive-soft: rgba(87,101,30,0.10);
+  --lime: #D9F99D; --lime-ink: #241E15; --warn: #8A5A0B; --warn-bg: rgba(138,90,11,0.10); --amber: #F59E0B;
+  --danger-ink: #B91C1C; --danger-bg: rgba(239,68,68,0.08); --danger-line: rgba(239,68,68,0.35); --good: #2E6B2F; --good-bg: rgba(46,107,47,0.10); --err: #B03A22;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --doc-bg: #14171B; --doc-panel: #1C2026; --doc-ink: #E8ECF0; --doc-soft: #A9B2BC; --doc-line: rgba(232,236,240,0.12);
+  --doc-accent: #8DB6DE; --doc-accent-soft: rgba(141,182,222,0.14); --doc-red: #F19A8F; --doc-red-bg: rgba(241,154,143,0.14);
+  --tag-new: #8FD18F; --tag-new-bg: rgba(143,209,143,0.14); --tag-re: #E3B465; --tag-re-bg: rgba(227,180,101,0.14); --tag-same: #A9B2BC; --tag-same-bg: rgba(169,178,188,0.12);
+  color-scheme: dark } }
+:root[data-theme="dark"] {
+  --doc-bg: #14171B; --doc-panel: #1C2026; --doc-ink: #E8ECF0; --doc-soft: #A9B2BC; --doc-line: rgba(232,236,240,0.12);
+  --doc-accent: #8DB6DE; --doc-accent-soft: rgba(141,182,222,0.14); --doc-red: #F19A8F; --doc-red-bg: rgba(241,154,143,0.14);
+  --tag-new: #8FD18F; --tag-new-bg: rgba(143,209,143,0.14); --tag-re: #E3B465; --tag-re-bg: rgba(227,180,101,0.14); --tag-same: #A9B2BC; --tag-same-bg: rgba(169,178,188,0.12);
+  color-scheme: dark }
+* { box-sizing: border-box; }
+body { background: var(--doc-bg); color: var(--doc-ink); font-family: var(--font-ui); font-size: 14px; line-height: 1.5; }
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--doc-panel); }
+.wrap { max-width: 1280px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 20px 60px; }
+header.top { display: grid; gap: 6px; margin-bottom: 14px; }
+.eyebrow { font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--doc-soft); font-weight: 600; }
+h1 { font-family: var(--font-head); font-size: 26px; line-height: 1.2; margin: 0; text-wrap: balance; }
+.lead { margin: 0; color: var(--doc-soft); max-width: 84ch; }
+nav.tabs { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; background: var(--doc-panel); border: 1px solid var(--doc-line); border-radius: 10px; display: flex; gap: 4px; padding: 5px; overflow-x: auto; }
+nav.tabs button { flex: 0 0 auto; border: 0; background: none; color: var(--doc-soft); font: inherit; font-weight: 600; padding: 8px 12px; border-radius: 7px; cursor: pointer; white-space: nowrap; }
+nav.tabs button[aria-selected="true"] { background: var(--doc-accent-soft); color: var(--doc-accent); }
+nav.tabs button:focus-visible, .btnDoc:focus-visible, .mark:focus-visible, .tag:focus-visible, .fl:focus-visible, .seg button:focus-visible { outline: 2px solid var(--doc-accent); outline-offset: 2px; }
+.viewRow { display: flex; align-items: center; gap: 10px; margin: 14px 0 4px; flex-wrap: wrap; }
+.viewRow .lbl { font-size: 12px; font-weight: 600; color: var(--doc-soft); }
+/* ONE white track, two options (the kit's ViewSwitch look) */
+.seg { display: inline-flex; background: #FFFFFF; border: 1px solid rgba(70,55,30,0.20); border-radius: 999px; padding: 3px; }
+.seg button { border: 0; background: none; font: inherit; font-size: 13px; padding: 5px 12px; border-radius: 999px; color: #4A4235; cursor: pointer; }
+.seg button[aria-pressed="true"] { background: rgba(87,101,30,0.14); color: #3E4815; font-weight: 600; }
+section.pane { display: grid; gap: 18px; margin-top: 14px; }
+.pane h2 { font-family: var(--font-head); font-size: 20px; margin: 0; text-wrap: balance; }
+.pane > p { margin: 0; max-width: 88ch; color: var(--doc-soft); }
+.pair { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 460px), 1fr)); gap: 18px; align-items: start; }
+.stack { display: grid; gap: 18px; min-width: 0; }
+.spec { min-width: 0; display: grid; gap: 8px; }
+.specHead { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.specHead b { font-size: 13px; }
+.chrome { font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--doc-soft); }
+.scroll { overflow-x: auto; padding: 14px; background: var(--doc-panel); border: 1px solid var(--doc-line); border-radius: 10px; }
+.explain { background: var(--doc-panel); border: 1px solid var(--doc-line); border-radius: 10px; padding: 14px 16px; display: grid; gap: 8px; min-width: 0; }
+.explain h3 { margin: 0; font-size: 14px; display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+.explain p, .explain li { margin: 0; color: var(--doc-soft); }
+.explain ul, .explain ol { margin: 0; padding-left: 18px; display: grid; gap: 5px; }
+.explain b { color: var(--doc-ink); }
+.tag { display: inline-flex; align-items: center; font-size: 10px; font-weight: 700; letter-spacing: 0.06em; padding: 2px 6px; border-radius: 4px; cursor: pointer; border: 0; font-family: var(--font-ui); vertical-align: middle; }
+.tag.new { color: var(--tag-new); background: var(--tag-new-bg); }
+.tag.re { color: var(--tag-re); background: var(--tag-re-bg); }
+.tag.same { color: var(--tag-same); background: var(--tag-same-bg); }
+.mark { display: inline-grid; place-items: center; min-width: 20px; height: 20px; padding: 0 5px; border-radius: 10px; background: #2F5D8A; color: #fff; font-size: 11px; font-weight: 700; border: 0; cursor: pointer; vertical-align: middle; flex: 0 0 auto; font-family: var(--font-ui); }
+.fl { display: inline-flex; align-items: center; font-size: 10px; font-weight: 700; letter-spacing: 0.04em; padding: 2px 6px; border-radius: 4px; cursor: pointer; border: 0; font-family: var(--font-ui); color: var(--doc-red); background: var(--doc-red-bg); vertical-align: middle; }
+.diffs .same-part { opacity: 0.22; }
+.docTbl { width: 100%; border-collapse: collapse; font-size: 13px; }
+.docTbl th { text-align: left; font-size: 11px; letter-spacing: 0.05em; text-transform: uppercase; color: var(--doc-soft); padding: 6px 8px; border-bottom: 1px solid var(--doc-line); }
+.docTbl td { padding: 8px; border-bottom: 1px solid var(--doc-line); vertical-align: top; color: var(--doc-ink); }
+.docTbl td.s { color: var(--doc-soft); }
+
+/* ─── product specimens (warm, fixed look) ─── */
+.frame { background: var(--home-paper); color: var(--home-ink); font-family: system-ui, -apple-system, "Segoe UI", sans-serif; border-radius: 8px; }
+/* true size: the content box is the product's reading (960) or table (1200) width */
+.adm { box-sizing: content-box; width: 960px; padding: 22px 28px 28px; display: grid; gap: 16px; }
+.adm.wide { width: 1200px; }
+.adm.w620 { width: 620px; } .adm.w560 { width: 560px; } .adm.w700 { width: 700px; } .adm.w520 { width: 520px; }
+.fam { box-sizing: content-box; width: 640px; padding: 28px 40px; }
+.phone { width: 390px; overflow: hidden; border: 1px solid var(--home-line-strong); border-radius: 22px; }
+.phead { display: grid; gap: 2px; padding-bottom: 12px; border-bottom: 1px solid var(--home-line); }
+.phead .back { font-size: 13px; color: var(--home-ink-soft); }
+.phead .ttl { font-family: var(--font-head); font-size: 20px; font-weight: 700; margin: 0; }
+.phead .sub { font-size: 13px; color: var(--home-dim); }
+.lockLine { font-size: 13px; color: var(--home-ink-soft); padding: 9px 13px; background: var(--home-card); border: 1px solid var(--home-line); border-left: 3px solid var(--home-dim); border-radius: 8px; }
+.card { background: var(--home-card); border: 1px solid var(--home-line); border-radius: 8px; padding: 16px 20px; display: grid; gap: 12px; }
+.cardTop { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.cardH { font-size: 16px; font-weight: 700; margin: 0; flex: 1; }
+.cardSum { font-size: 13px; color: var(--home-dim); }
+.lede { font-size: 14px; color: var(--home-ink-soft); margin: 0; flex: 1; }
+.lineTop { display: flex; align-items: center; gap: 12px; }
+/* band / group labels: the display face, uppercase, secondary ink (RepKit .rowBand) — mono is only for readouts */
+.capL { font-family: var(--font-head); font-size: 12px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; color: var(--home-dim); }
+.btnOut { font: inherit; font-size: 14px; background: var(--home-card); color: var(--home-ink); border: 1px solid var(--home-line-strong); border-radius: 8px; padding: 7px 14px; white-space: nowrap; display: inline-flex; gap: 6px; align-items: center; }
+.btnLime { font: inherit; font-size: 14px; font-weight: 600; background: var(--lime); color: var(--lime-ink); border: 0; border-radius: 8px; padding: 8px 14px; white-space: nowrap; }
+.btnLime.big { font-size: 16px; padding: 12px 20px; display: block; text-align: center; }
+.door { font-size: 14px; font-weight: 650; color: var(--home-olive); }
+.rlist { border: 1px solid var(--home-line); border-radius: 8px; overflow: hidden; background: var(--home-card); }
+.band { display: flex; align-items: center; gap: 8px; padding: 6px 14px; background: var(--home-paper); border-top: 1px solid var(--home-line); border-bottom: 1px solid var(--home-line); font-family: var(--font-head); font-size: 12px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; color: var(--home-dim); }
+.band:first-child { border-top: 0; }
+.band .bc { font-family: var(--font-data); font-size: 12px; font-weight: 600; letter-spacing: 0.02em; text-transform: none; }
+.qrow { display: grid; grid-template-columns: 30px minmax(0,1fr) 22px; gap: 8px; align-items: center; padding: 9px 14px 9px 6px; min-height: 52px; background: var(--home-card); }
+.qrow + .qrow { border-top: 1px solid var(--home-line); }
+.qrow.nogrip { grid-template-columns: minmax(0,1fr) 22px; padding-left: 14px; }
+.grip { color: var(--home-dim); font-size: 16px; text-align: center; }
+.qt { font-size: 14px; font-weight: 650; color: var(--home-ink); }
+.qc { font-size: 12px; color: var(--home-dim); margin-top: 1px; }
+.chev { color: var(--home-dim); font-size: 18px; text-align: right; }
+.chipH { font-size: 10px; font-weight: 700; letter-spacing: 0.05em; padding: 1px 5px; border-radius: 4px; background: rgba(70,55,30,0.08); color: var(--home-dim); margin-left: 6px; vertical-align: 1px; white-space: nowrap; }
+.chip { font-size: 11px; font-weight: 700; padding: 2px 6px; border-radius: 4px; background: var(--home-olive-soft); color: var(--home-olive); letter-spacing: 0.03em; white-space: nowrap; }
+.chip.warn { background: var(--warn-bg); color: var(--warn); }
+.chip.good { background: var(--good-bg); color: var(--good); }
+.fixedGrid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; }
+.fixedGrid ul { margin: 4px 0 0; padding-left: 16px; font-size: 14px; color: var(--home-ink); display: grid; gap: 3px; }
+.small { font-size: 12px; color: var(--home-dim); margin: 0; }
+.empty { display: grid; gap: 4px; padding: 18px; border: 1px dashed var(--home-line-strong); border-radius: 8px; text-align: center; }
+.empty b { font-size: 14px; }
+.facts { display: grid; grid-template-columns: 170px minmax(0,1fr); gap: 10px 16px; margin: 0; font-size: 14px; }
+.facts dt { color: var(--home-dim); }
+.facts dd { margin: 0; color: var(--home-ink); }
+.facts dd .s { display: block; font-size: 12px; color: var(--home-dim); }
+/* windows */
+.dimmer { background: rgba(36,30,21,0.18); padding: 28px; border-radius: 8px; }
+.win { width: 600px; background: var(--home-card); border: 1px solid rgba(87,101,30,0.30); border-radius: 12px; display: flex; flex-direction: column; box-shadow: 0 6px 28px rgba(36,30,21,0.12); }
+.win.sm { width: 460px; }
+.whead { display: flex; gap: 8px; align-items: flex-start; padding: 17px 22px 6px; }
+.wtitle { font-size: 16px; font-weight: 700; line-height: 1.25; margin: 0; }
+.wmeta { font-size: 12px; color: var(--home-dim); margin-top: 3px; }
+.ico { width: 32px; height: 32px; display: inline-grid; place-items: center; border-radius: 8px; color: var(--home-ink-soft); font-size: 15px; flex: 0 0 auto; }
+.wbody { padding: 8px 22px 16px; display: grid; gap: 14px; }
+.wfoot { display: flex; gap: 10px; justify-content: flex-end; align-items: center; padding: 13px 22px; border-top: 1px solid var(--home-line); }
+.wfoot .fs { margin-right: auto; font-size: 13px; color: var(--home-dim); }
+.sec { border-top: 1px solid var(--home-line); padding-top: 12px; display: grid; gap: 10px; }
+.secH { font-size: 11px; font-weight: 700; letter-spacing: 0.07em; text-transform: uppercase; color: var(--home-dim); margin: 0; display: flex; gap: 8px; align-items: center; }
+.notDrawn { font-size: 12px; color: var(--home-faint); font-style: italic; }
+.recAct { font-size: 14px; color: var(--home-ink-soft); display: inline-flex; gap: 6px; align-items: center; }
+/* fields */
+.fld { display: grid; gap: 5px; }
+.fld .l { font-size: 13px; font-weight: 600; color: var(--home-ink); }
+.req { color: var(--home-ink); }
+.inp { border: 1px solid var(--home-line-strong); border-radius: 8px; padding: 8px 11px; font-size: 14px; background: #fff; color: var(--home-ink); min-height: 38px; }
+.inp.ta { min-height: 76px; }
+.inp.sel { display: flex; justify-content: space-between; align-items: center; }
+.inp.err { border-color: var(--err); }
+.inp.locked { background: #F6F3EE; color: var(--home-dim); }
+.hint { font-size: 12px; color: var(--home-dim); }
+.errL { font-size: 12px; color: var(--err); font-weight: 600; }
+.two { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.swRows { display: grid; }
+.sw { display: grid; grid-template-columns: minmax(0,1fr) 44px; gap: 12px; align-items: center; padding: 10px 0; }
+.sw + .sw { border-top: 1px solid var(--home-line); }
+.sw .t { font-size: 14px; color: var(--home-ink); font-weight: 600; }
+.sw .h { font-size: 12px; color: var(--home-dim); font-weight: 400; display: block; margin-top: 1px; }
+.sw.off { opacity: 0.5; }
+.tog { width: 44px; height: 26px; border-radius: 13px; background: rgba(70,55,30,0.22); position: relative; }
+.tog::after { content: ""; position: absolute; top: 3px; left: 3px; width: 20px; height: 20px; border-radius: 50%; background: #fff; }
+.tog.on { background: var(--home-olive); }
+.tog.on::after { left: 21px; }
+.nudge { font-size: 13px; color: var(--home-ink); background: #fff; border: 1px solid var(--home-line); border-left: 3px solid var(--home-olive); border-radius: 8px; padding: 8px 12px; }
+.radioRow { display: grid; grid-template-columns: 20px minmax(0,1fr); gap: 8px; padding: 10px 12px; border: 1px solid var(--home-line-strong); border-radius: 8px; }
+.radioRow.on { border-color: var(--home-olive); background: var(--home-olive-soft); }
+.dot { width: 16px; height: 16px; border-radius: 50%; border: 2px solid var(--home-line-strong); margin-top: 2px; }
+.radioRow.on .dot { border: 5px solid var(--home-olive); }
+.radioRow .t { font-size: 14px; font-weight: 600; }
+.radioRow .h { font-size: 12px; color: var(--home-dim); }
+.box { width: 18px; height: 18px; border: 1.5px solid var(--home-line-strong); border-radius: 4px; flex: 0 0 auto; background: #fff; display: inline-grid; place-items: center; font-size: 12px; color: #fff; }
+.box.on { background: var(--home-olive); border-color: var(--home-olive); }
+.box.off { opacity: 0.5; }
+.tick { display: flex; gap: 10px; align-items: flex-start; font-size: 14px; color: var(--home-ink); }
+.tick.off { color: var(--home-dim); }
+/* family page */
+.famH { font-family: var(--font-head); font-size: 26px; font-weight: 700; margin: 4px 0 2px; }
+.famSub { font-size: 14px; color: var(--home-dim); margin: 0; }
+.fsec { display: grid; gap: 12px; padding: 20px 0; border-top: 1px solid var(--home-line); }
+.fsecH { font-size: 18px; font-weight: 700; margin: 0; display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+.fsecH .rm { font-size: 13px; font-weight: 500; color: var(--home-olive); }
+.divLine { font-size: 14px; color: var(--home-ink); background: #fff; border: 1px solid var(--home-line); border-radius: 8px; padding: 10px 12px; }
+.divLine .s { display: block; font-size: 12px; color: var(--home-dim); }
+.friends { border-left: 2px solid var(--home-line-strong); padding-left: 12px; display: grid; gap: 4px; }
+.subH { font-size: 14px; font-weight: 700; margin: 0; }
+.club { display: grid; gap: 12px; }
+.notice { font-size: 13px; color: var(--home-ink-soft); background: #fff; border: 1px solid var(--home-line); border-left: 3px solid var(--home-olive); border-radius: 8px; padding: 10px 13px; line-height: 1.5; }
+.healthL { font-size: 12px; color: var(--home-faint); }
+.choices { display: flex; gap: 18px; flex-wrap: wrap; font-size: 14px; }
+.choices span { display: inline-flex; gap: 7px; align-items: center; }
+.rad { width: 16px; height: 16px; border: 1.5px solid var(--home-line-strong); border-radius: 50%; display: inline-block; background: #fff; }
+.rad.on { border: 5px solid var(--home-olive); }
+.fileGot { display: flex; gap: 10px; align-items: center; font-size: 14px; padding: 8px 11px; border: 1px solid var(--home-line); border-radius: 8px; background: #fff; flex-wrap: wrap; }
+.fileGot.bad { border-color: rgba(176,58,34,0.35); }
+.bar { flex: 1 1 120px; height: 6px; border-radius: 3px; background: rgba(70,55,30,0.12); position: relative; overflow: hidden; }
+.bar::after { content: ""; position: absolute; inset: 0 40% 0 0; background: var(--home-olive); }
+.pdf { font-size: 10px; font-weight: 800; color: #fff; background: #A13A2A; border-radius: 3px; padding: 2px 4px; letter-spacing: 0.04em; }
+.txtDoc { font-size: 10px; font-weight: 800; color: #fff; background: #6B6255; border-radius: 3px; padding: 2px 4px; letter-spacing: 0.04em; }
+.docBlock { display: grid; gap: 10px; padding: 14px; border: 1px solid var(--home-line); border-radius: 8px; background: #fff; }
+.docName { display: flex; gap: 8px; align-items: center; font-size: 15px; font-weight: 700; }
+.waiverBox { max-height: 96px; overflow: hidden; font-size: 13px; color: var(--home-ink-soft); border: 1px solid var(--home-line); border-radius: 6px; padding: 8px 10px; background: #FBF9F5; }
+.globalErr { font-size: 14px; color: var(--home-ink); background: #fff; border: 1px solid rgba(176,58,34,0.35); border-left: 3px solid var(--err); border-radius: 8px; padding: 10px 13px; }
+.collapsedSec { font-size: 13px; color: var(--home-dim); padding: 12px 0; border-top: 1px solid var(--home-line); }
+/* phone */
+.pbar { display: flex; align-items: center; gap: 8px; padding: 10px 16px; border-bottom: 1px solid var(--home-line); background: var(--home-card); font-size: 15px; font-weight: 700; }
+.pbar .sm { display: block; font-size: 12px; font-weight: 400; color: var(--home-dim); }
+.pbody { padding: 14px 16px 20px; display: grid; gap: 12px; }
+.phone .qrow { grid-template-columns: 44px minmax(0,1fr) 22px; padding-left: 4px; min-height: 60px; }
+.phone .grip { width: 44px; height: 44px; border: 1px solid var(--home-line-strong); border-radius: 8px; display: grid; place-items: center; }
+.phone .card { padding: 14px 14px; }
+/* table */
+.toolbar { display: flex; align-items: center; gap: 8px; }
+.toolbar .sp { flex: 1; }
+.pill { font-size: 14px; border: 1px solid var(--home-line-strong); background: #fff; border-radius: 999px; padding: 6px 12px; display: inline-flex; gap: 6px; align-items: center; white-space: nowrap; }
+.pill.olive { border-color: rgba(87,101,30,0.45); color: var(--home-olive); font-weight: 600; }
+.amberN { background: #FDE9C4; color: #7A4B05; border-radius: 999px; font-size: 12px; font-weight: 700; padding: 0 7px; }
+.search { width: 16rem; border: 1px solid var(--home-line-strong); border-radius: 999px; padding: 6px 12px; font-size: 14px; color: #8F877E; background: #fff; }
+.sq { font-size: 14px; border: 1px solid var(--home-line-strong); background: #fff; border-radius: 8px; padding: 6px 12px; white-space: nowrap; }
+.sq.on { border-color: var(--home-olive); color: var(--home-olive); font-weight: 600; }
+.tbl { width: 100%; border-collapse: collapse; font-size: 14px; background: #fff; border: 1px solid var(--home-line); border-radius: 8px; overflow: hidden; }
+.tbl th { font-family: var(--font-head); text-transform: uppercase; font-size: 11px; letter-spacing: 0.06em; color: var(--home-dim); text-align: left; padding: 9px 12px; border-bottom: 1px solid var(--home-line); font-weight: 700; }
+.tbl td { padding: 10px 12px; border-bottom: 1px solid var(--home-line); vertical-align: top; }
+.tbl td .s { display: block; font-size: 12px; color: var(--home-dim); }
+.tbl .nm { font-weight: 650; }
+.tbl th.new, .tbl td.new { background: rgba(46,107,47,0.05); }
+.menuWrap { position: relative; }
+.menu { position: absolute; right: 0; top: 42px; width: 330px; background: #fff; border: 1px solid var(--home-line-strong); border-radius: 9px; box-shadow: 0 8px 26px rgba(36,30,21,0.16); padding: 6px; z-index: 2; display: grid; gap: 1px; }
+.mi { padding: 7px 10px; border-radius: 7px; display: grid; gap: 1px; font-size: 14px; }
+.mi .h { font-size: 12px; color: var(--home-dim); }
+.mi.g { font-family: var(--font-head); font-size: 11px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; color: var(--home-dim); padding-top: 10px; }
+.mi.ck { display: flex; gap: 8px; align-items: center; }
+.mdiv { height: 1px; background: var(--home-line); margin: 4px 6px; }
+.boardRow { display: grid; grid-template-columns: 44px minmax(0,1fr) 90px 40px 40px 44px; gap: 8px; align-items: center; padding: 8px 12px; font-size: 14px; background: #fff; border: 1px solid var(--home-line); border-radius: 8px; }
+.noteMk { width: 32px; height: 32px; border-radius: 8px; display: grid; place-items: center; background: var(--home-olive-soft); color: var(--home-olive); font-size: 14px; }
+.pop { width: 340px; background: #fff; border: 1px solid var(--home-line-strong); border-radius: 10px; box-shadow: 0 8px 26px rgba(36,30,21,0.16); padding: 12px 14px; display: grid; gap: 8px; margin: 6px 0 0 auto; }
+.popTitle { font-size: 14px; font-weight: 700; margin: 0; }
+.popQuote { font-size: 14px; color: var(--home-ink-soft); margin: 0; }
+.popFoot { font-size: 12px; color: var(--home-dim); margin: 0; border-top: 1px solid var(--home-line); padding-top: 8px; }
+/* asks */
+.ask { background: var(--doc-panel); border: 1px solid var(--doc-line); border-radius: 10px; padding: 14px 16px; display: grid; gap: 10px; }
+.ask h3 { margin: 0; font-size: 15px; display: flex; gap: 8px; align-items: center; text-wrap: balance; }
+.ask .why { margin: 0; color: var(--doc-soft); max-width: 90ch; }
+.opt { display: flex; gap: 10px; align-items: flex-start; padding: 8px 10px; border-radius: 8px; border: 1px solid var(--doc-line); cursor: pointer; }
+.opt:has(input:checked) { border-color: var(--doc-accent); background: var(--doc-accent-soft); }
+.opt input { margin-top: 3px; accent-color: var(--doc-accent); }
+.opt .rec { font-size: 11px; font-weight: 700; color: var(--doc-accent); margin-left: 6px; }
+textarea { width: 100%; min-height: 54px; font: inherit; padding: 8px; border-radius: 8px; border: 1px solid var(--doc-line); background: var(--doc-bg); color: var(--doc-ink); }
+.btnDoc { font: inherit; font-weight: 600; padding: 8px 14px; border-radius: 8px; border: 1px solid var(--doc-line); background: var(--doc-panel); color: var(--doc-ink); cursor: pointer; }
+.btnDoc.primary { background: var(--doc-accent); border-color: var(--doc-accent); color: #fff; }
+:root[data-theme="dark"] .btnDoc.primary { color: #0B1520; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .btnDoc.primary { color: #0B1520; } }
+pre.out { white-space: pre-wrap; background: var(--doc-bg); border: 1px solid var(--doc-line); border-radius: 8px; padding: 12px; font-size: 13px; min-height: 80px; overflow-x: auto; }
+dialog.note { max-width: min(620px, calc(100vw - 32px)); border: 1px solid var(--doc-line); border-radius: 12px; background: var(--doc-panel); color: var(--doc-ink); padding: 18px 20px; }
+dialog.note::backdrop { background: rgba(0,0,0,0.35); }
+dialog.note h3 { margin: 0 0 8px; font-size: 15px; }
+dialog.note p { margin: 0 0 10px; color: var(--doc-soft); }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+/* ─── Stage 6 additions ─── */
+/* the portal's joined money band (MoneySummaryBand): one frame, a hairline between figures */
+.mband { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0,1fr); background: var(--home-card); border: 1px solid var(--home-line); border-radius: 8px; }
+.mband > div { padding: 11px 16px; display: grid; gap: 2px; }
+.mband > div + div { border-left: 1px solid var(--home-line); }
+.mband .ml { font-size: 12px; color: var(--home-dim); }
+.mband .mv { font-size: 22px; font-weight: 700; font-variant-numeric: tabular-nums; color: var(--home-ink); }
+.mband .mc { font-size: 12px; color: var(--home-dim); }
+/* on a phone: figure ROWS, never tiles */
+.frows { background: var(--home-card); border: 1px solid var(--home-line); border-radius: 8px; }
+.frow { display: grid; grid-template-columns: minmax(0,1fr) auto 14px; gap: 10px; align-items: center; padding: 11px 14px; min-height: 52px; }
+.frow + .frow { border-top: 1px solid var(--home-line); }
+.frow .fl1 { font-size: 14px; font-weight: 600; } .frow .fc { display: block; font-size: 12px; color: var(--home-dim); font-weight: 400; }
+.frow .fv { font-size: 17px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.num { font-variant-numeric: tabular-nums; text-align: right; white-space: nowrap; }
+.tbl th.num { text-align: right; }
+.ptabs { display: flex; gap: 22px; border-bottom: 1px solid var(--home-line); font-size: 14px; }
+.ptabs span { padding: 8px 0 9px; color: var(--home-ink-soft); }
+.ptabs span.on { color: var(--home-ink); font-weight: 700; box-shadow: inset 0 -2px 0 var(--home-olive); }
+.stP { font-size: 12px; font-weight: 700; padding: 2px 8px; border-radius: 999px; background: rgba(70,55,30,0.08); color: var(--home-ink-soft); white-space: nowrap; }
+.stP.paid { background: var(--good-bg); color: var(--good); }
+.stP.inv { background: var(--warn-bg); color: var(--warn); }
+.stP.off { background: var(--home-olive-soft); color: var(--home-olive); }
+.callout { font-size: 14px; color: var(--home-ink); background: #fff; border: 1px solid var(--home-line); border-left: 3px solid var(--home-olive); border-radius: 8px; padding: 12px 14px; display: flex; gap: 14px; align-items: center; flex-wrap: wrap; }
+.callout .ct { flex: 1 1 260px; display: grid; gap: 2px; }
+.callout .ct b { font-size: 15px; }
+.callout .ct span { font-size: 13px; color: var(--home-ink-soft); }
+.ck { display: grid; grid-template-columns: 22px minmax(0,1fr) auto; gap: 10px; align-items: start; padding: 10px 0; }
+.ck + .ck { border-top: 1px solid var(--home-line); }
+.ck .t { font-size: 14px; font-weight: 600; } .ck .h { display: block; font-size: 12px; color: var(--home-dim); font-weight: 400; }
+.ck .when { font-size: 12px; color: var(--home-dim); white-space: nowrap; }
+.logoT { width: 64px; height: 32px; border: 1px solid var(--home-line); border-radius: 5px; display: grid; place-items: center; font-size: 10px; font-weight: 800; letter-spacing: 0.02em; background: #fff; color: var(--home-ink); flex: 0 0 auto; text-align: center; line-height: 1.1; padding: 0 3px; }
+.logoT.none { border-style: dashed; color: var(--home-faint); font-weight: 600; }
+.lg1 { color: #1F5E8C; } .lg2 { color: #8A3B12; } .lg3 { color: #2E6B2F; } .lg4 { color: #6B2E7A; }
+.srow { display: grid; grid-template-columns: 64px minmax(0,1fr) auto 22px; gap: 12px; align-items: center; padding: 10px 14px; min-height: 56px; background: var(--home-card); }
+.srow + .srow { border-top: 1px solid var(--home-line); }
+.srow .nm { font-size: 14px; font-weight: 650; } .srow .cap { display: block; font-size: 12px; color: var(--home-dim); }
+.srow.ended { opacity: 0.55; }
+.place { display: inline-flex; gap: 5px; align-items: center; font-size: 12px; color: var(--home-ink-soft); }
+.place::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: var(--home-olive); }
+/* the business's page */
+.pub { box-sizing: content-box; width: 640px; padding: 0 0 28px; }
+.pubBand { background: #2B3A1C; color: #F4F1E6; padding: 14px 40px; display: flex; gap: 12px; align-items: center; border-radius: 8px 8px 0 0; }
+.pubBand .crest { width: 34px; height: 34px; border-radius: 50%; background: #D9F99D; color: #2B3A1C; display: grid; place-items: center; font-weight: 800; font-size: 13px; }
+.pubBand b { font-size: 16px; }
+.pubIn { padding: 22px 40px 0; display: grid; gap: 18px; }
+.phone .pubBand { padding: 12px 16px; border-radius: 0; }
+.phone .pubIn { padding: 16px 16px 0; }
+.pkg { border: 1px solid var(--home-line); border-radius: 8px; background: #fff; padding: 16px; display: grid; gap: 10px; }
+.pkg .pr { font-size: 24px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.pkg ul { margin: 0; padding-left: 18px; display: grid; gap: 4px; font-size: 14px; }
+.sumT { width: 100%; border-collapse: collapse; font-size: 14px; }
+.sumT td { padding: 6px 0; border-top: 1px solid var(--home-line); }
+.sumT tr:first-child td { border-top: 0; }
+.sumT tr.tot td { font-weight: 700; border-top: 1px solid var(--home-line-strong); }
+.payOpt { display: grid; grid-template-columns: 20px minmax(0,1fr); gap: 8px; padding: 12px; border: 1px solid var(--home-line-strong); border-radius: 8px; background: #fff; }
+.payOpt.on { border-color: var(--home-olive); background: var(--home-olive-soft); }
+.payOpt .t { font-size: 15px; font-weight: 650; } .payOpt .h { font-size: 13px; color: var(--home-dim); }
+.receipt { border: 1px solid var(--home-line); border-radius: 8px; background: #fff; padding: 16px; display: grid; gap: 8px; }
+.receipt .rt { font-size: 18px; font-weight: 700; margin: 0; }
+/* email */
+.mail { width: 600px; background: #fff; border: 1px solid var(--home-line); border-radius: 8px; overflow: hidden; color: #241E15; }
+.mailHd { padding: 12px 18px; border-bottom: 1px solid var(--home-line); font-size: 13px; display: grid; gap: 2px; background: #FBF9F5; }
+.mailHd span { color: var(--home-dim); }
+.mailBd { padding: 22px 28px; display: grid; gap: 12px; font-size: 15px; line-height: 1.55; }
+.mailBd p { margin: 0; }
+.mailBtn { justify-self: start; background: #2B3A1C; color: #F4F1E6; font-weight: 700; padding: 11px 18px; border-radius: 8px; font-size: 15px; }
+.mailFt { padding: 14px 28px 20px; border-top: 1px solid var(--home-line); font-size: 12px; color: var(--home-dim); display: grid; gap: 4px; }
+/* invoice paper: Letter at 96 dpi is 816 px wide */
+.paper { width: 816px; background: #fff; color: #1d1d1d; font-family: Helvetica, Arial, sans-serif; border: 1px solid #d6d2ca; box-shadow: 0 2px 10px rgba(0,0,0,0.06); }
+.paper .acc { height: 8px; background: #2B3A1C; }
+.paper .pin { padding: 34px 56px 40px; display: grid; gap: 18px; font-size: 13px; }
+.paper .idb { display: flex; justify-content: space-between; gap: 20px; }
+.paper .idb b { font-size: 16px; display: block; }
+.paper h4 { font-size: 26px; margin: 0; letter-spacing: 0.01em; }
+.paper .subl { color: #555; margin-top: 2px; }
+.paper .pfig { display: grid; grid-template-columns: repeat(3, 1fr); border: 1px solid #d6d2ca; border-radius: 4px; }
+.paper .pfig > div { padding: 10px 14px; } .paper .pfig > div + div { border-left: 1px solid #d6d2ca; }
+.paper .pfig span { display: block; font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; color: #666; }
+.paper .pfig b { font-size: 18px; font-variant-numeric: tabular-nums; }
+.paper .lab { font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em; color: #666; font-weight: 700; margin-bottom: 4px; }
+.paper table { width: 100%; border-collapse: collapse; }
+.paper th { text-align: left; font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; color: #666; border-bottom: 1px solid #bbb; padding: 6px 0; }
+.paper td { padding: 8px 0; border-bottom: 1px solid #e3e0da; vertical-align: top; }
+.paper td.r, .paper th.r { text-align: right; font-variant-numeric: tabular-nums; }
+.paper .inc { margin: 4px 0 0; padding-left: 16px; color: #444; }
+.paper .tt td { border-bottom: 0; padding: 4px 0; }
+.paper .tt tr.big td { font-weight: 700; font-size: 15px; border-top: 1px solid #bbb; padding-top: 8px; }
+.paper .stamp { display: inline-block; border: 2px solid #2E6B2F; color: #2E6B2F; font-weight: 800; letter-spacing: 0.08em; padding: 4px 10px; border-radius: 4px; font-size: 13px; }
+.paper .foot { color: #777; font-size: 11px; display: flex; justify-content: space-between; border-top: 1px solid #e3e0da; padding-top: 8px; }
+.paper.mini { width: 816px; }
+/* public club site */
+.site { box-sizing: content-box; width: 960px; padding: 0 0 22px; }
+.siteBar { background: #2B3A1C; color: #F4F1E6; padding: 12px 28px; display: flex; gap: 22px; align-items: center; font-size: 14px; border-radius: 8px 8px 0 0; }
+.siteBar b { font-size: 16px; margin-right: auto; }
+.siteIn { padding: 20px 28px 0; display: grid; gap: 14px; }
+.strip { display: grid; grid-template-columns: repeat(auto-fill, 184px); gap: 12px; }
+.strip > div { min-height: 72px; border: 1px solid var(--home-line); border-radius: 8px; background: #fff; display: grid; place-items: center; font-weight: 800; font-size: 15px; text-align: center; padding: 6px; }
+.byLine { display: inline-flex; gap: 10px; align-items: center; font-size: 13px; color: var(--home-dim); border: 1px solid var(--home-line); background: #fff; border-radius: 8px; padding: 6px 10px; }
+.pcard { background: #fff; border: 1px solid var(--home-line); border-radius: 8px; padding: 12px 14px; display: grid; grid-template-columns: minmax(0,1fr) 18px; gap: 4px 8px; }
+.pcard .nm { font-size: 15px; font-weight: 650; } .pcard .s { font-size: 13px; color: var(--home-dim); grid-column: 1; }
+.pcard .chev { grid-row: 1 / span 3; grid-column: 2; align-self: start; }
+.pband { font-family: var(--font-head); font-size: 12px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; color: var(--home-dim); display: flex; gap: 8px; padding-top: 4px; }
+.lockedRow { opacity: 0.6; }
+.planTbl td.y { color: var(--tag-new); font-weight: 700; }
+.planTbl td.n { color: var(--doc-soft); }
+.chip.q { background: rgba(70,55,30,0.08); color: var(--home-dim); }
+.phone .btnLime, .phone .btnOut { min-height: 44px; display: inline-flex; align-items: center; justify-content: center; }
+.phone .ptabs span { padding: 12px 0; }
+.phone .ck { min-height: 44px; align-items: center; }
+.tap44 { min-width: 44px; min-height: 44px; padding: 0 10px; }
+.bandBtn { display: flex; gap: 8px; align-items: center; }
+/* ─── Stage 5 + 7 additions ─── */
+nav.tabs .grp { flex: 0 0 auto; align-self: center; font-size: 10px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--doc-soft); padding: 0 2px 0 10px; }
+nav.tabs .grp:first-child { padding-left: 4px; }
+.rail { width: 210px; background: var(--home-card); border-right: 1px solid var(--home-line); padding: 14px 10px; display: grid; gap: 2px; align-content: start; font-size: 14px; border-radius: 8px 0 0 8px; }
+.rail .g { font-family: var(--font-head); font-size: 11px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--home-dim); padding: 12px 10px 4px; }
+.rail .i { padding: 7px 10px; border-radius: 7px; color: var(--home-ink-soft); }
+.rail .i.on { background: var(--home-olive-soft); color: var(--home-olive); font-weight: 650; }
+.rail .i.nw { box-shadow: inset 0 0 0 1.5px var(--tag-new); color: var(--home-ink); font-weight: 650; }
+.shell { display: flex; width: 780px; min-height: 330px; }
+.shell .main { flex: 1; padding: 18px 22px; display: grid; gap: 12px; align-content: start; min-width: 0; }
+.vsw { display: inline-flex; background: #fff; border: 1px solid var(--home-line-strong); border-radius: 999px; padding: 3px; font-size: 13px; }
+.vsw span { padding: 4px 11px; border-radius: 999px; color: var(--home-ink-soft); }
+.vsw span.on { background: rgba(87,101,30,0.14); color: #3E4815; font-weight: 600; }
+.wk { display: grid; grid-template-columns: repeat(7, minmax(0,1fr)); gap: 6px; }
+.wkH { font-family: var(--font-head); font-size: 11px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; color: var(--home-dim); padding: 4px 2px; }
+.wkD { display: grid; gap: 6px; align-content: start; min-height: 210px; }
+.bk { background: #fff; border: 1px solid var(--home-line); border-left: 3px solid var(--c, rgba(70,55,30,0.30)); border-radius: 6px; padding: 5px 7px; font-size: 12px; line-height: 1.35; color: var(--home-ink); }
+.bk b { display: block; font-size: 12px; }
+.bk .w { color: var(--home-dim); }
+.bk.ev { --c: rgba(70,55,30,0.30); }
+.dash { color: var(--home-faint); font-size: 12px; padding: 4px 2px; }
+.sgT { border-collapse: collapse; font-size: 12px; background: #fff; border: 1px solid var(--home-line); }
+.sgT th { font-family: var(--font-head); font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--home-dim); text-align: left; padding: 7px 8px; border-bottom: 1px solid var(--home-line); font-weight: 700; }
+.sgT td { padding: 6px; border-bottom: 1px solid var(--home-line); border-left: 1px solid var(--home-line); vertical-align: top; width: 150px; }
+.sgT td.fac { width: 118px; border-left: 0; font-weight: 650; font-size: 13px; }
+.sgT td.fac .s { display: block; font-weight: 400; font-size: 11px; color: var(--home-dim); }
+.slot { border: 1px solid var(--home-line); border-left: 3px solid var(--c, rgba(70,55,30,0.30)); border-radius: 6px; padding: 4px 6px; background: #fff; line-height: 1.35; }
+.slot + .slot { margin-top: 4px; }
+.slot .w { display: block; color: var(--home-dim); }
+.slot.open { border-style: dashed; border-left-width: 1px; color: var(--home-dim); }
+.slot.ev { --c: rgba(70,55,30,0.30); }
+.siteBar .tabsIn { display: flex; gap: 20px; font-size: 15px; font-weight: 600; }
+.siteBar .tabsIn span { padding: 6px 0; }
+.siteBar .tabsIn span.on { box-shadow: inset 0 -3px 0 #D9F99D; }
+.siteBar .tabsIn span.nw { outline: 1.5px dashed #D9F99D; outline-offset: 3px; border-radius: 3px; }
+.siteBar .acct { font-size: 13px; opacity: 0.9; }
+.pTabRow { display: flex; gap: 18px; background: #fff; border-bottom: 1px solid var(--home-line); padding: 0 16px; font-size: 14px; font-weight: 600; overflow: hidden; white-space: nowrap; }
+.pTabRow span { padding: 12px 0; flex: 0 0 auto; }
+.pTabRow span.on { box-shadow: inset 0 -3px 0 var(--home-ink); }
+.pTabRow span.nw { outline: 1.5px dashed var(--tag-new); outline-offset: -2px; border-radius: 3px; padding-inline: 4px; }
+.att { display: grid; grid-template-columns: minmax(0,1fr) 44px 44px; gap: 6px; align-items: center; padding: 6px 10px 6px 14px; min-height: 60px; background: #fff; }
+.att + .att { border-top: 1px solid var(--home-line); }
+.att .nm { font-size: 15px; font-weight: 650; } .att .s { display: block; font-size: 12px; color: var(--home-dim); font-weight: 400; }
+.here { width: 44px; height: 44px; border-radius: 10px; border: 1.5px solid var(--home-line-strong); display: grid; place-items: center; font-size: 18px; color: #fff; background: #fff; }
+.here.on { background: var(--home-olive); border-color: var(--home-olive); }
+.hmark { width: 44px; height: 44px; display: grid; place-items: center; color: var(--home-ink-soft); font-size: 13px; font-weight: 800; border-radius: 10px; }
+.hmark.none { color: transparent; }
+.sheet { border: 1px solid var(--home-line-strong); border-radius: 16px 16px 0 0; background: #fff; padding: 16px; display: grid; gap: 10px; box-shadow: 0 -6px 24px rgba(36,30,21,0.12); }
+.sess { display: grid; grid-template-columns: minmax(0,1fr) 110px 90px 22px; gap: 14px; align-items: center; padding: 10px 14px; min-height: 56px; background: #fff; }
+.sess + .sess { border-top: 1px solid var(--home-line); }
+.sess .nm { font-size: 14px; font-weight: 650; } .sess .s { display: block; font-size: 12px; color: var(--home-dim); font-weight: 400; }
+.phone .sess { grid-template-columns: minmax(0,1fr) auto 18px; gap: 10px; }
+.famSess { display: grid; grid-template-columns: 20px minmax(0,1fr) auto; gap: 10px; align-items: center; padding: 10px 12px; border: 1px solid var(--home-line-strong); border-radius: 8px; background: #fff; }
+.famSess.on { border-color: var(--home-olive); background: var(--home-olive-soft); }
+.famSess .t { font-size: 14px; font-weight: 650; } .famSess .h { font-size: 12px; color: var(--home-dim); display: block; font-weight: 400; }
+.chips { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+.gameL { display: grid; grid-template-columns: 120px minmax(0,1fr) 110px; gap: 10px; padding: 8px 14px; font-size: 14px; background: #fff; align-items: center; }
+.gameL + .gameL { border-top: 1px solid var(--home-line); }
+.gameL .s { color: var(--home-dim); font-size: 12px; }
+.phone .gameL { grid-template-columns: 74px minmax(0,1fr) auto; padding: 10px 12px; }
+.wkPhone { display: grid; gap: 8px; }
+.dayH { font-family: var(--font-head); font-size: 12px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; color: var(--home-dim); }
+.mailMini { width: 520px; }
+.chgT td:first-child { font-weight: 600; white-space: nowrap; }
+.askCh { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 8px; }
+.askCh div { font-size: 12px; color: var(--doc-soft); background: var(--doc-bg); border-radius: 8px; padding: 6px 9px; }
+.askCh b { display: block; font-size: 10px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--doc-ink); }
+@media (max-width: 700px) { .askCh { grid-template-columns: 1fr; } }
+.ruled { font-size: 11px; font-weight: 700; color: var(--tag-new); }
+.fl.bl { color: var(--doc-accent); background: var(--doc-accent-soft); }
+.prow { display: grid; grid-template-columns: minmax(0,1fr) 18px; gap: 8px; align-items: center; padding: 10px 14px; min-height: 60px; background: #fff; }
+.prow + .prow { border-top: 1px solid var(--home-line); }
+.prow .nm { font-size: 16px; font-weight: 650; } .prow .s { display: block; font-size: 13px; color: var(--home-dim); margin-top: 2px; }
+.gRow { display: grid; gap: 3px; padding: 10px 14px; background: #fff; }
+.gRow + .gRow { border-top: 1px solid var(--home-line); }
+.gRow .hd { display: flex; justify-content: space-between; align-items: center; gap: 8px; font-size: 13px; color: var(--home-dim); }
+.gRow .tm { display: flex; justify-content: space-between; gap: 8px; font-size: 15px; color: var(--home-ink); } .gRow .tm b { font-variant-numeric: tabular-nums; }
+.gRow .tm.w { font-weight: 700; } .gRow .ns { font-size: 13px; color: var(--home-dim); }
+.linkRow { display: flex; justify-content: space-between; align-items: center; padding: 12px 14px; min-height: 48px; font-size: 15px; font-weight: 600; color: var(--home-olive); background: #fff; border-top: 1px solid var(--home-line); }
+.ico44 { width: 44px; height: 44px; display: inline-grid; place-items: center; color: var(--home-ink-soft); font-size: 17px; flex: 0 0 auto; }
+.mrow { display: grid; grid-template-columns: minmax(0,1fr) 44px; gap: 6px; align-items: center; padding: 8px 4px 8px 14px; background: #fff; }
+.mrow + .mrow { border-top: 1px solid var(--home-line); }
+.mrow .nm { font-size: 15px; font-weight: 650; display: block; } .mrow .s { display: block; font-size: 12px; color: var(--home-dim); }
+.mrow .act { display: inline-flex; align-items: center; min-height: 44px; font-size: 14px; font-weight: 650; color: var(--home-olive); }
+.card > .rlist.inset { border: 0; border-radius: 0; background: transparent; border-top: 1px solid var(--home-line); margin: 0 -20px -16px; }
+.site .srow, .pub .srow { min-height: 60px; } .site .srow .nm { font-size: 16px; } .site .srow .cap { font-size: 13px; }
+.pTabRow span { height: 44px; display: inline-flex; align-items: center; padding: 0; }
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <span class="eyebrow">Board Ready · Stages 5 and 7 · club events, then camps and clinics · drawings written Nov 24, 2026 · round 1, after /legal, /accounting, /billing, /design and /marketing</span>
+    <h1>Club events, then camps: a club puts its banquet, champs day and camps on its calendar and site, and families sign up without an account</h1>
+    <p class="lead">Drawn on Riverdale Minor Ball as of Monday, April 12, 2027: a house league of 14 divisions, six rep teams, a Lions Park permit, and its first summer camp. Stage 5 is the base (an event, where it shows, a free sign-up). Stage 7 is the layer (sessions, spots, a price, a waitlist, a roster and the books). They are drawn on one page because a camp is an event. Built on Stage 4’s form, the house-league sign-up path and its “Your sign-up” page, the club schedule’s permit slots, the club calendar, the club site and Stage 6’s pattern for a club-owned thing with a price. Card payment is drawn as it will be once online payments are switched on, and as it must be until then. Click any number, tag or red flag to read what it refers to. The last tab holds your asks; the first answer is my recommendation and is already selected.</p>
+  </header>
+
+  <nav class="tabs" role="tablist" aria-label="Sections">
+    <span class="grp">Stage 5</span>
+    <button role="tab" id="t1" aria-selected="true" data-pane="p1">1 · The shape</button>
+    <button role="tab" id="t2" aria-selected="false" data-pane="p2">2 · Events</button>
+    <button role="tab" id="t3" aria-selected="false" data-pane="p3">3 · Making an event</button>
+    <button role="tab" id="t4" aria-selected="false" data-pane="p4">4 · The calendar</button>
+    <button role="tab" id="t5" aria-selected="false" data-pane="p5">5 · Club site and app</button>
+    <button role="tab" id="t6" aria-selected="false" data-pane="p6">6 · Champs day</button>
+    <button role="tab" id="t7" aria-selected="false" data-pane="p7">7 · A free sign-up</button>
+    <span class="grp">Stage 7</span>
+    <button role="tab" id="t8" aria-selected="false" data-pane="p8">8 · A camp</button>
+    <button role="tab" id="t9" aria-selected="false" data-pane="p9">9 · Field time</button>
+    <button role="tab" id="t10" aria-selected="false" data-pane="p10">10 · Signing up</button>
+    <button role="tab" id="t11" aria-selected="false" data-pane="p11">11 · Full and the waitlist</button>
+    <button role="tab" id="t12" aria-selected="false" data-pane="p12">12 · The club’s side</button>
+    <button role="tab" id="t13" aria-selected="false" data-pane="p13">13 · The instructor</button>
+    <button role="tab" id="t14" aria-selected="false" data-pane="p14">14 · Books, tax, receipt</button>
+    <span class="grp">Both</span>
+    <button role="tab" id="t15" aria-selected="false" data-pane="p15">15 · Plans and reviews</button>
+    <button role="tab" id="t16" aria-selected="false" data-pane="p16">16 · Asks</button>
+  </nav>
+
+  <!-- 1 · THE SHAPE -->
+  <section class="pane" id="p1" role="tabpanel" aria-labelledby="t1">
+    <div class="viewRow"><span class="lbl">View</span><div class="seg" data-seg="p1"><button type="button" aria-pressed="true" data-v="all">Everything</button><button type="button" aria-pressed="false" data-v="diff">Show only what differs</button></div></div>
+    <h2>One new place, Events, and the club’s own things join the calendar and the site</h2>
+    <p>Before this, a club cannot say “banquet on June 26” anywhere in the product. After it, the event is made once and shows wherever its audience looks. A camp is the same event with sessions, spots and a price, so there is one place to look for both. Four things in the plan don’t match the code, and each one became an ask: <button class="fl" type="button" data-f="F1">F1</button> <button class="fl" type="button" data-f="F2">F2</button> <button class="fl" type="button" data-f="F3">F3</button> <button class="fl" type="button" data-f="F4">F4</button></p>
+    <div class="pair">
+      <div class="spec">
+        <div class="specHead"><b>The club sidebar, before</b><span class="chrome">club admin · desktop</span><button class="tag same" type="button" data-note="UNCHANGED. The shipped rail: four rows with no heading, then Programs, then Club. A group with no rows shows no heading.">UNCHANGED</button></div>
+        <div class="scroll"><div class="frame shell">
+          <div class="rail">
+            <span class="i">Overview</span><span class="i">Calendar</span><span class="i">Permits</span><span class="i">Schedules</span>
+            <span class="g">Programs</span><span class="i">Rep teams</span><span class="i">House league</span>
+            <span class="g">Club</span><span class="i">Accounting</span><span class="i">Families</span><span class="i">Communications</span><span class="i">Sponsorships</span><span class="i">Public site</span><span class="i">Organization</span>
+          </div>
+          <div class="main"><p class="small">There is no club-owned event anywhere: not on the calendar, not on the site, not in the family app.</p></div>
+        </div></div>
+      </div>
+      <div class="spec">
+        <div class="specHead"><b>After: Events under House league</b><span class="chrome">club admin · desktop</span><button class="mark" type="button" data-ask="1">1</button><button class="tag new" type="button" data-note="NEW PLACE. Events joins Programs after House league. Its page has two tabs: Events, and Sign-ups once a camp exists (Stage 7). Ask 1 asks whether it belongs in Programs or in Club, and who opens it.">NEW</button></div>
+        <div class="scroll"><div class="frame shell">
+          <div class="rail">
+            <span class="i same-part">Overview</span><span class="i same-part">Calendar</span><span class="i same-part">Permits</span><span class="i same-part">Schedules</span>
+            <span class="g same-part">Programs</span><span class="i same-part">Rep teams</span><span class="i same-part">House league</span><span class="i nw on">Events</span>
+            <span class="g same-part">Club</span><span class="i same-part">Accounting</span><span class="i same-part">Families</span><span class="i same-part">Communications</span><span class="i same-part">Sponsorships</span><span class="i same-part">Public site</span><span class="i same-part">Organization</span>
+          </div>
+          <div class="main">
+            <div class="phead"><p class="ttl">Events</p></div>
+            <div class="ptabs"><span class="on">Events</span><span>Sign-ups</span></div>
+            <p class="small">Drawn with a camp already made. Before the first camp or clinic, the Sign-ups tab is absent (Stage 7).</p>
+          </div>
+        </div></div>
+      </div>
+    </div>
+    <div class="explain">
+      <h3>What changes, for whom</h3>
+      <table class="docTbl chgT">
+        <thead><tr><th>Who</th><th>Stage 5 · club events</th><th>Stage 7 · camps and clinics</th></tr></thead>
+        <tbody>
+          <tr><td>A family</td><td class="s">Sees the banquet, champs day and AGM on the club site’s Events tab. Signs up for a free event without an account, and changes or cancels it on “Your sign-up”.</td><td class="s">Signs up a child for a camp week, pays on “Your sign-up”, joins a waitlist when a week is full, and gets a “Receipt for camp fees” once it’s paid.</td></tr>
+          <tr><td>A coach</td><td class="s">Nothing is taken: a team’s schedule is never written by an event (D3). A coach who opens the club calendar sees club events on it.</td><td class="s">A camp instructor, a club person given a session, signs in on a phone, sees only that session’s roster and ticks who’s here each day.</td></tr>
+          <tr><td>A club admin</td><td class="s">Makes any event in one window, from Events or the calendar. An event can take open field time from the permit. A champs day gathers that day’s house-league games.</td><td class="s">Sets sessions, spots, a price, ages and the camp’s form; accepts sign-ups; watches the waitlist; sees each session’s money under its own heading, Camps and clinics.</td></tr>
+        </tbody>
+      </table>
+      <p>Each ask on the last tab says what it changes for these three.</p>
+    </div>
+  </section>
+
+  <!-- 2 · EVENTS -->
+  <section class="pane" id="p2" role="tabpanel" aria-labelledby="t2" hidden>
+    <h2>Events lists what’s coming, month by month, and says what to do when there is nothing yet</h2>
+    <p>The shipped row list (bands, one chevron column, the name is the link). Each row says its kind, day, place and who it’s for. A camp’s row adds its spots and an amber count when sign-ups wait for the club. Past events fold into one band at the end. The lime “Add an event” is the one lime on the screen.</p>
+    <div class="pair">
+      <div class="spec">
+        <div class="specHead"><b>Events, April 12, 2027</b><span class="chrome">club admin · desktop · 960</span><button class="mark" type="button" data-ask="1">1</button><button class="mark" type="button" data-ask="3">3</button><button class="tag new" type="button" data-note="NEW SCREEN. The kit’s ClubSection, ClubRowList, ClubRow and ClubRowBand, as on the Sponsorships Deals list. The Year pill is the shipped YearPill. No buttons inside rows.">NEW</button></div>
+        <div class="scroll"><div class="frame adm">
+          <div class="phead"><p class="ttl">Events</p></div>
+          <div class="ptabs"><span class="on">Events</span><span>Sign-ups <span class="amberN">4</span></span></div>
+          <div class="toolbar"><span class="pill olive">2027 ▾</span><span class="search">Search events</span><span class="sp"></span><span class="btnLime">+ Add an event</span></div>
+          <div class="rlist">
+            <div class="band">May 2027 <span class="bc">1</span></div>
+            <div class="srow" style="grid-template-columns:minmax(0,1fr) auto 22px"><div><span class="nm">Pitching clinic</span><span class="cap">Clinic · 4 Tuesdays, May 4–25 · 6:00–7:30 p.m. · Lions Park · Everyone</span></div><div class="chips"><span class="chip warn">Full · 3 on the waitlist</span></div><span class="chev">›</span></div>
+            <div class="band">June 2027 <span class="bc">3</span></div>
+            <div class="srow" style="grid-template-columns:minmax(0,1fr) auto 22px"><div><span class="nm">Coaches’ meeting</span><span class="cap">Other · Wed, Jun 16 · 7:00–8:30 p.m. · Riverdale Community Centre · Club staff</span></div><div class="chips"></div><span class="chev">›</span></div>
+            <div class="srow" style="grid-template-columns:minmax(0,1fr) auto 22px"><div><span class="nm">Champs day</span><span class="cap">Champs day · Sat, Jun 19 · Lions Park · Everyone · 14 house-league games</span></div><div class="chips"></div><span class="chev">›</span></div>
+            <div class="srow" style="grid-template-columns:minmax(0,1fr) auto 22px"><div><span class="nm">Year-end banquet</span><span class="cap">Banquet · Sat, Jun 26 · 6:00–10:00 p.m. · Riverdale Legion Hall · Everyone</span></div><div class="chips"><span class="chip">86 coming</span></div><span class="chev">›</span></div>
+            <div class="band">July 2027 <span class="bc">1</span></div>
+            <div class="srow" style="grid-template-columns:minmax(0,1fr) auto 22px"><div><span class="nm">Summer skills camp</span><span class="cap">Camp · 2 weeks, Jul 5–16 · 9:00 a.m.–3:00 p.m. · Lions Park · Everyone</span></div><div class="chips"><span class="chip q">31 of 48 spots</span><span class="amberN">3 to review</span></div><span class="chev">›</span></div>
+            <div class="band">September 2027 <span class="bc">1</span></div>
+            <div class="srow" style="grid-template-columns:minmax(0,1fr) auto 22px"><div><span class="nm">Annual general meeting</span><span class="cap">AGM · Tue, Sep 21 · 7:00–9:00 p.m. · Riverdale Community Centre · Everyone</span></div><div class="chips"></div><span class="chev">›</span></div>
+            <div class="band">Past <span class="bc">2</span> <span style="margin-left:auto;text-transform:none;font-weight:600">Show ›</span></div>
+          </div>
+        </div></div>
+      </div>
+      <div class="stack">
+        <div class="spec">
+          <div class="specHead"><b>Phone · the same list</b><span class="chrome">390</span></div>
+          <div class="scroll"><div class="frame phone">
+            <div class="pbar"><span>Events</span></div>
+            <div class="pbody">
+              <div class="ptabs" style="font-size:14px"><span class="on">Events</span><span>Sign-ups <span class="amberN">4</span></span></div>
+              <div class="btnLime" style="text-align:center">+ Add an event</div>
+              <div class="rlist">
+                <div class="band">May 2027</div>
+                <div class="prow"><div><span class="nm">Pitching clinic</span><span class="s">Clinic · 4 Tuesdays, May 4–25</span><span class="s"><span class="chip warn">Full · 3 on the waitlist</span></span></div><span class="chev">›</span></div>
+                <div class="band">June 2027</div>
+                <div class="prow"><div><span class="nm">Champs day</span><span class="s">Sat, Jun 19 · Lions Park · 14 games</span></div><span class="chev">›</span></div>
+                <div class="prow"><div><span class="nm">Year-end banquet</span><span class="s">Sat, Jun 26 · 6:00–10:00 p.m.</span><span class="s"><span class="chip">86 coming</span></span></div><span class="chev">›</span></div>
+                <div class="band">July 2027</div>
+                <div class="prow"><div><span class="nm">Summer skills camp</span><span class="s">2 weeks, Jul 5–16 · 31 of 48 spots</span><span class="s"><span class="amberN">3 to review</span></span></div><span class="chev">›</span></div>
+              </div>
+            </div>
+          </div></div>
+        </div>
+        <div class="spec">
+          <div class="specHead"><b>Before the first event</b><span class="chrome">desktop · the empty state</span><button class="tag new" type="button" data-note="NEW. The empty state names what an event is for and where it will show, then offers the same lime button. The Sign-ups tab is absent until a camp or clinic exists (absent beats disabled).">NEW</button></div>
+          <div class="scroll"><div class="frame adm w560">
+            <div class="phead"><p class="ttl">Events</p></div>
+            <div class="empty"><b>No events yet</b><span class="small">Add your banquet, a champs day, your AGM, a camp or a clinic. Events for everyone show on your calendar and your club site.</span><span style="margin-top:8px"><span class="btnLime">+ Add an event</span></span></div>
+          </div></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 3 · MAKING AN EVENT -->
+  <section class="pane" id="p3" role="tabpanel" aria-labelledby="t3" hidden>
+    <h2>One window makes any event, and it can take open field time from the permit without touching a team’s</h2>
+    <p>A create window asks before it saves (“edit autosaves, create asks”). Drawn on Opening day, Saturday April 24, at Lions Park. Riverdale’s permit there has three diamonds that day. Diamond 2 is open, so the event can take it. Diamond 1 belongs to house league and Diamond 3 to 13U AAA, so they show who has them and can’t be ticked <button class="fl" type="button" data-f="F5">F5</button>.</p>
+    <div class="pair">
+      <div class="spec">
+        <div class="specHead"><b>Add an event</b><span class="chrome">KitDialog · form · medium</span><button class="mark" type="button" data-ask="2">2</button><button class="mark" type="button" data-ask="3">3</button><button class="mark" type="button" data-ask="4">4</button><button class="tag new" type="button" data-note="NEW WINDOW. The shared date and time fields (our calendar on a desk, native on touch), the shipped venue dropdown from the venue library, the kit’s radio rows. The field-time block shows only when the chosen venue is on a permit for that day.">NEW</button></div>
+        <div class="scroll"><div class="dimmer"><div class="win">
+          <div class="whead"><span class="ico">＋</span><div><p class="wtitle">Add an event</p><div class="wmeta">It shows on your calendar, and on your club site when it’s for everyone.</div></div></div>
+          <div class="wbody">
+            <div class="two"><div class="fld"><span class="l">Name <span class="req">*</span></span><div class="inp">Opening day</div></div><div class="fld"><span class="l">Kind <span class="req">*</span></span><div class="inp sel"><span>Other</span><span>▾</span></div></div></div>
+            <div class="two"><div class="fld"><span class="l">Day <span class="req">*</span></span><div class="inp">Sat, Apr 24, 2027</div><span class="hint">One day. <span class="door" style="font-size:12px">Several days</span></span></div><div class="fld"><span class="l">Time</span><div class="two" style="gap:8px"><div class="inp">10:00 a.m.</div><div class="inp">1:00 p.m.</div></div><span class="hint"><span class="door" style="font-size:12px">All day</span></span></div></div>
+            <div class="fld"><span class="l">Where <span class="req">*</span></span><div class="inp sel"><span>Lions Park · 42 Lions Park Rd</span><span>▾</span></div><span class="hint">From your venue library. A new place is added there from this list.</span></div>
+            <div class="sec">
+              <p class="secH">Field time from your permit</p>
+              <div class="tick off"><span class="box off">&nbsp;</span><span>Diamond 1 · 9:00 a.m.–5:00 p.m.<span class="hint" style="display:block">House league has this time</span></span></div>
+              <div class="tick"><span class="box on">✓</span><span>Diamond 2 · 10:00 a.m.–1:00 p.m.<span class="hint" style="display:block">Open on the Spring 2027 schedule</span></span></div>
+              <div class="tick off"><span class="box off">&nbsp;</span><span>Diamond 3 · 10:00 a.m.–12:00 p.m.<span class="hint" style="display:block">13U AAA has this time. Free it on the schedule to use it.</span></span></div>
+            </div>
+            <div class="sec">
+              <p class="secH">Shown to</p>
+              <div class="radioRow on"><span class="dot"></span><div><div class="t">Everyone</div><div class="h">On your club site and your calendar</div></div></div>
+              <div class="radioRow"><span class="dot"></span><div><div class="t">Club staff</div><div class="h">On your calendar only</div></div></div>
+            </div>
+            <div class="fld"><span class="l">About it</span><div class="inp ta">Opening ceremonies, the anthem at 10:30, and a barbecue by the concession stand.</div></div>
+            <p class="small">Sign-ups, sessions and a price are added on the event’s page.</p>
+          </div>
+          <div class="wfoot"><span class="fs">Takes Diamond 2, 10:00 a.m.–1:00 p.m.</span><span class="btnOut">Cancel</span><span class="btnLime">Add the event</span></div>
+        </div></div></div>
+      </div>
+      <div class="stack">
+        <div class="spec">
+          <div class="specHead"><b>Phone · the window covers the screen</b><span class="chrome">390</span></div>
+          <div class="scroll"><div class="frame phone">
+            <div class="pbar"><span style="font-size:20px;font-weight:400">×</span><span>Add an event</span></div>
+            <div class="pbody">
+              <div class="fld"><span class="l">Name <span class="req">*</span></span><div class="inp">Opening day</div></div>
+              <div class="fld"><span class="l">Kind <span class="req">*</span></span><div class="inp sel"><span>Other</span><span>▾</span></div></div>
+              <div class="fld"><span class="l">Day <span class="req">*</span></span><div class="inp">Sat, Apr 24, 2027</div></div>
+              <div class="two"><div class="inp">10:00 a.m.</div><div class="inp">1:00 p.m.</div></div>
+              <div class="fld"><span class="l">Where <span class="req">*</span></span><div class="inp sel"><span>Lions Park</span><span>▾</span></div></div>
+              <p class="secH" style="margin-top:6px">Field time from your permit</p>
+              <div class="tick" style="min-height:44px;align-items:center"><span class="box on">✓</span><span>Diamond 2 · 10:00 a.m.–1:00 p.m.</span></div>
+              <p class="small">2 more fields are taken that day.</p>
+              <div class="btnLime big">Add the event</div>
+            </div>
+          </div></div>
+        </div>
+        <div class="explain">
+          <h3>Rules in this window</h3>
+          <ul>
+            <li><b>Kinds</b> are Banquet, Champs day, AGM, Clinic, Camp, Other. Champs day adds a season picker (tab 6). Camp and Clinic open the camp page after saving (tab 8).</li>
+            <li><b>Field time is optional</b> and only open time can be taken. A team’s or house league’s slot is never taken from here: the club frees it on the schedule first, as today (D3).</li>
+            <li><b>No schedule yet</b> for that day: the permit time is marked held, and the next schedule built leaves it out.</li>
+            <li><b>Who it’s for</b> has two choices now. “Our families” joins when the family app is switched on (ask 3).</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 4 · THE CALENDAR -->
+  <section class="pane" id="p4" role="tabpanel" aria-labelledby="t4" hidden>
+    <div class="viewRow"><span class="lbl">View</span><div class="seg" data-seg="p4"><button type="button" aria-pressed="true" data-v="all">Everything</button><button type="button" aria-pressed="false" data-v="diff">Show only what differs</button></div></div>
+    <h2>The calendar gains club events and one button; teams’ bookings stay read-only</h2>
+    <p>The week of June 14, 2027, before and after. The shipped toolbar (List · Week · Month on one white track, the date nav, three quiet dropdowns, Export). After: the Program dropdown lists “Club events”, a white “Add an event” sits before Export, and two club events appear. Like House league, an event carries no colour and says what it is in words, “Club event” <button class="fl" type="button" data-f="F8">F8</button>.</p>
+    <div class="spec">
+      <div class="specHead"><b>Before</b><span class="chrome">club admin · desktop · 1200</span><button class="tag same" type="button" data-note="UNCHANGED. The shipped Week view: seven columns, a booking’s left edge in its team’s colour, three lines (time, what, where). Nothing here writes.">UNCHANGED</button></div>
+      <div class="scroll"><div class="frame adm wide">
+        <div class="phead"><p class="ttl">Calendar</p></div>
+        <div class="toolbar"><span class="vsw"><span>List</span><span class="on">Week</span><span>Month</span></span><span class="sq">‹</span><b style="font-size:14px">Jun 14–20, 2027</b><span class="sq">›</span><span class="sp"></span><span class="pill">Every venue ▾</span><span class="pill">Every program ▾</span><span class="pill">Every team ▾</span><span class="sq">Export ▾</span></div>
+        <div class="wk">
+          <div><div class="wkH">Mon, Jun 14</div><div class="wkD"><div class="bk" style="--c:#1F5E8C"><b>6:00–8:00 p.m.</b>13U AAA · Practice<div class="w">Lions Park · Diamond 3</div></div><div class="bk"><b>6:00–7:30 p.m.</b>Reds vs Blues<div class="w">House league · Diamond 1</div></div></div></div>
+          <div><div class="wkH">Tue, Jun 15</div><div class="wkD"><div class="bk" style="--c:#8A3B12"><b>5:30–7:30 p.m.</b>11U AA · Practice<div class="w">Lions Park · Diamond 2</div></div></div></div>
+          <div><div class="wkH">Wed, Jun 16</div><div class="wkD"><div class="bk"><b>6:00–7:30 p.m.</b>Hawks vs Owls<div class="w">House league · Diamond 1</div></div></div></div>
+          <div><div class="wkH">Thu, Jun 17</div><div class="wkD"><div class="bk" style="--c:#1F5E8C"><b>6:00–8:00 p.m.</b>13U AAA · Practice<div class="w">Lions Park · Diamond 3</div></div></div></div>
+          <div><div class="wkH">Fri, Jun 18</div><div class="wkD"><div class="dash">—</div></div></div>
+          <div><div class="wkH">Sat, Jun 19</div><div class="wkD"><div class="bk"><b>9:00–10:30 a.m.</b>Reds vs Blues<div class="w">House league · Diamond 1</div></div><div class="bk"><b>9:00–10:30 a.m.</b>Hawks vs Owls<div class="w">House league · Diamond 2</div></div><div class="bk"><b>11:00 a.m.–12:30 p.m.</b>Jays vs Cubs<div class="w">House league · Diamond 1</div></div><div class="small">+ 11 more</div></div></div>
+          <div><div class="wkH">Sun, Jun 20</div><div class="wkD"><div class="dash">—</div></div></div>
+        </div>
+      </div></div>
+    </div>
+    <div class="spec">
+      <div class="specHead"><b>After</b><span class="chrome">club admin · desktop · 1200</span><button class="mark" type="button" data-ask="7">7</button><button class="mark" type="button" data-ask="5">5</button><button class="tag re" type="button" data-note="RESTYLED. Same calendar. Two additions: a white Add an event button (an admin action that opens a window is the white secondary button, ruled 2026-10-01) shown only to those who open Events, and club events as a fourth program. A champs day replaces its fourteen game blocks with one block that opens to them.">RESTYLED</button></div>
+      <div class="scroll"><div class="frame adm wide">
+        <div class="phead same-part"><p class="ttl">Calendar</p></div>
+        <div class="toolbar"><span class="vsw same-part"><span>List</span><span class="on">Week</span><span>Month</span></span><span class="sq same-part">‹</span><b style="font-size:14px" class="same-part">Jun 14–20, 2027</b><span class="sq same-part">›</span><span class="sp"></span><span class="pill same-part">Every venue ▾</span><span class="pill">Every program ▾</span><span class="pill same-part">Every team ▾</span><span class="sq same-part">Export ▾</span><span class="btnOut">Add an event</span></div>
+        <div class="wk">
+          <div class="same-part"><div class="wkH">Mon, Jun 14</div><div class="wkD"><div class="bk" style="--c:#1F5E8C"><b>6:00–8:00 p.m.</b>13U AAA · Practice<div class="w">Lions Park · Diamond 3</div></div><div class="bk"><b>6:00–7:30 p.m.</b>Reds vs Blues<div class="w">House league · Diamond 1</div></div></div></div>
+          <div class="same-part"><div class="wkH">Tue, Jun 15</div><div class="wkD"><div class="bk" style="--c:#8A3B12"><b>5:30–7:30 p.m.</b>11U AA · Practice<div class="w">Lions Park · Diamond 2</div></div></div></div>
+          <div><div class="wkH">Wed, Jun 16</div><div class="wkD"><div class="bk same-part"><b>6:00–7:30 p.m.</b>Hawks vs Owls<div class="w">House league · Diamond 1</div></div><div class="bk ev"><b>7:00–8:30 p.m.</b>Coaches’ meeting<div class="w">Club event · Community Centre</div></div></div></div>
+          <div class="same-part"><div class="wkH">Thu, Jun 17</div><div class="wkD"><div class="bk" style="--c:#1F5E8C"><b>6:00–8:00 p.m.</b>13U AAA · Practice<div class="w">Lions Park · Diamond 3</div></div></div></div>
+          <div class="same-part"><div class="wkH">Fri, Jun 18</div><div class="wkD"><div class="dash">—</div></div></div>
+          <div><div class="wkH">Sat, Jun 19</div><div class="wkD"><div class="bk ev"><b>9:00 a.m.–5:00 p.m.</b>Champs day<div class="w">Club event · Lions Park · 14 games</div></div></div></div>
+          <div class="same-part"><div class="wkH">Sun, Jun 20</div><div class="wkD"><div class="dash">—</div></div></div>
+        </div>
+      </div></div>
+    </div>
+    <div class="pair">
+      <div class="spec">
+        <div class="specHead"><b>Clicking the champs day</b><span class="chrome">the shipped booking window</span><button class="tag re" type="button" data-note="RESTYLED. The shipped read-only booking window: eyebrow, title, read rows, an olive door at the foot, × closes it. An event adds “Who it’s for” and, for a champs day, its games. The foot opens the event’s page, where it is edited.">RESTYLED</button></div>
+        <div class="scroll"><div class="dimmer"><div class="win sm">
+          <div class="whead"><div style="flex:1"><div class="wmeta" style="margin:0 0 2px">Club event</div><p class="wtitle">Champs day</p></div><span class="ico">×</span></div>
+          <div class="wbody">
+            <dl class="facts" style="grid-template-columns:110px minmax(0,1fr)"><dt>When</dt><dd>Sat, Jun 19 · 9:00 a.m.–5:00 p.m.</dd><dt>Where</dt><dd>Lions Park<span class="s">42 Lions Park Rd</span></dd><dt>Shown to</dt><dd>Everyone</dd><dt>Games</dt><dd>14 from House league 2027<span class="s">Diamonds 1 and 2, every 90 minutes</span></dd></dl>
+          </div>
+          <div class="wfoot" style="justify-content:flex-start"><span class="door">Open the event</span></div>
+        </div></div></div>
+      </div>
+      <div class="spec">
+        <div class="specHead"><b>Phone · Week, one day at a time</b><span class="chrome">390</span></div>
+        <div class="scroll"><div class="frame phone">
+          <div class="pbar"><span style="flex:1">Calendar<span class="sm">Jun 14–20, 2027</span></span><span class="ico44" title="View">▦</span><span class="ico44" title="Filter">⧩</span><span class="ico44" title="Export">⤓</span><span class="ico44" title="Add an event">＋</span></div>
+          <div class="pbody wkPhone">
+            <span class="dayH">Wed, Jun 16</span>
+            <div class="bk"><b>6:00–7:30 p.m.</b>Hawks vs Owls<div class="w">House league · Diamond 1</div></div>
+            <div class="bk ev"><b>7:00–8:30 p.m.</b>Coaches’ meeting<div class="w">Club event · Community Centre</div></div>
+            <span class="dayH">Sat, Jun 19</span>
+            <div class="bk ev"><b>9:00 a.m.–5:00 p.m.</b>Champs day<div class="w">Club event · Lions Park · 14 games</div></div>
+          </div>
+        </div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 5 · CLUB SITE AND APP -->
+  <section class="pane" id="p5" role="tabpanel" aria-labelledby="t5" hidden>
+    <div class="viewRow"><span class="lbl">View</span><div class="seg" data-seg="p5"><button type="button" aria-pressed="true" data-v="all">Everything</button><button type="button" aria-pressed="false" data-v="diff">Show only what differs</button></div></div>
+    <h2>An Events tab on the club site while something is coming up, and a “Coming up” section on Home</h2>
+    <p>The tab sits after House league and shows only while an event for everyone is coming, the way Tryouts is seasonal. When nothing is coming, the tab is absent rather than empty. Each row is the shipped Tryouts row: a name, one line under it, a chip, and the whole row is the link. A Club staff event never appears on any public page, feed or sitemap (/legal). Neither does an “Our families” event, later.</p>
+    <div class="spec">
+      <div class="specHead"><b>The club site’s Events tab</b><span class="chrome">public · desktop · 960</span><button class="mark" type="button" data-ask="8">8</button><button class="tag new" type="button" data-note="NEW TAB. Built like the Tryouts page: the lit tab names the page, a framed list in month bands, a chip on the right (green Sign-up open, grey Full or Not open yet), the whole row a link to the event’s own page.">NEW</button></div>
+      <div class="scroll"><div class="frame site">
+        <div class="siteBar"><span class="crest" style="width:44px;height:44px;border-radius:50%;background:#D9F99D;color:#2B3A1C;display:grid;place-items:center;font-weight:800">RM</span><b style="margin-right:12px">Riverdale Minor Ball</b><div class="tabsIn"><span class="same-part">Home</span><span class="same-part">Teams</span><span class="same-part">House league</span><span class="on nw">Events</span><span class="same-part">Tournaments</span></div><span class="acct" style="margin-left:auto">Sign in</span></div>
+        <div class="siteIn">
+          <div class="rlist">
+            <div class="band">May</div>
+            <div class="srow" style="grid-template-columns:minmax(0,1fr) auto 22px"><div><span class="nm">Pitching clinic</span><span class="cap">Born 2012–2016 · 4 Tuesdays from May 4 · Lions Park</span></div><span class="stP">Full · waitlist open</span><span class="chev">›</span></div>
+            <div class="band">June</div>
+            <div class="srow" style="grid-template-columns:minmax(0,1fr) auto 22px"><div><span class="nm">Champs day</span><span class="cap">Sat, Jun 19 · Lions Park · every division’s last games</span></div><span></span><span class="chev">›</span></div>
+            <div class="srow" style="grid-template-columns:minmax(0,1fr) auto 22px"><div><span class="nm">Year-end banquet</span><span class="cap">Sat, Jun 26 · 6:00 p.m. · Riverdale Legion Hall</span></div><span class="stP paid">Sign-up open</span><span class="chev">›</span></div>
+            <div class="band">July</div>
+            <div class="srow" style="grid-template-columns:minmax(0,1fr) auto 22px"><div><span class="nm">Summer skills camp</span><span class="cap">Born 2015–2019 · two weeks from Jul 5 · Lions Park</span></div><span class="stP paid">Sign-up open</span><span class="chev">›</span></div>
+            <div class="band">September</div>
+            <div class="srow" style="grid-template-columns:minmax(0,1fr) auto 22px"><div><span class="nm">Annual general meeting</span><span class="cap">Tue, Sep 21 · 7:00 p.m. · Riverdale Community Centre</span></div><span></span><span class="chev">›</span></div>
+          </div>
+          <p class="small">The Coaches’ meeting (Club staff) is not here. Tryouts is out of season in April, so its tab is absent too.</p>
+        </div>
+      </div></div>
+    </div>
+    <div class="pair">
+      <div class="spec">
+        <div class="specHead"><b>Phone · the tab row under the club bar</b><span class="chrome">390</span><button class="tag re" type="button" data-note="RESTYLED. The shipped phone tab row: white, 44 px tall, scrolls sideways, the current tab ink-underlined. Events is one more tab in it.">RESTYLED</button></div>
+        <div class="scroll"><div class="frame phone">
+          <div class="pubBand"><span class="crest">RM</span><b>Riverdale Minor Ball</b></div>
+          <div class="pTabRow"><span class="same-part">Home</span><span class="same-part">Teams</span><span class="same-part">House league</span><span class="on nw">Events</span><span class="same-part">Tourn…</span></div>
+          <div class="pbody">
+            <div class="rlist">
+              <div class="band">June</div>
+              <div class="prow"><div><span class="nm">Champs day</span><span class="s">Sat, Jun 19 · Lions Park</span></div><span class="chev">›</span></div>
+              <div class="prow"><div><span class="nm">Year-end banquet</span><span class="s">Sat, Jun 26 · 6:00 p.m.</span><span class="s"><span class="stP paid">Sign-up open</span></span></div><span class="chev">›</span></div>
+              <div class="band">July</div>
+              <div class="prow"><div><span class="nm">Summer skills camp</span><span class="s">Born 2015–2019 · from Jul 5</span><span class="s"><span class="stP paid">Sign-up open</span></span></div><span class="chev">›</span></div>
+            </div>
+          </div>
+        </div></div>
+      </div>
+      <div class="stack">
+        <div class="spec">
+          <div class="specHead"><b>Home · Coming up</b><span class="chrome">public · a home section</span><button class="mark" type="button" data-ask="8">8</button><button class="tag new" type="button" data-note="NEW HOME SECTION. The next three events for everyone, then “Every event ›”. It is a row in the site builder’s Home page list, so a club can hide it or move it, like the other sections.">NEW</button></div>
+          <div class="scroll"><div class="frame fam" style="width:600px;padding:20px 24px">
+            <div class="fsecH" style="margin-bottom:10px">Coming up <span class="rm">Every event ›</span></div>
+            <div class="rlist">
+              <div class="srow" style="grid-template-columns:minmax(0,1fr) 22px"><div><span class="nm">Pitching clinic</span><span class="cap">Tuesdays from May 4 · Full · waitlist open</span></div><span class="chev">›</span></div>
+              <div class="srow" style="grid-template-columns:minmax(0,1fr) 22px"><div><span class="nm">Champs day</span><span class="cap">Sat, Jun 19 · Lions Park</span></div><span class="chev">›</span></div>
+              <div class="srow" style="grid-template-columns:minmax(0,1fr) 22px"><div><span class="nm">Year-end banquet</span><span class="cap">Sat, Jun 26 · sign-up open</span></div><span class="chev">›</span></div>
+            </div>
+          </div></div>
+        </div>
+        <div class="spec">
+          <div class="specHead"><b>The family app, when it is switched on</b><span class="chrome">signed-in family · 390 · end state</span><button class="mark" type="button" data-ask="10">10</button><button class="fl" type="button" data-f="F2">F2</button><button class="tag new" type="button" data-note="NEW, END STATE. The family app is switched off on production today, so this is drawn now and built with it. Below the family’s teams, the club’s coming events: Everyone and Our families. A team’s own schedule is unchanged.">NEW</button></div>
+          <div class="scroll"><div class="frame phone">
+            <div class="pbar"><span>Your family</span></div>
+            <div class="pbody">
+              <div class="rlist"><div class="prow"><div><span class="nm">Maya · 11U Hawks</span><span class="s">Next: Wed, Jun 16 · 6:00 p.m.</span></div><span class="chev">›</span></div></div>
+              <div class="rlist">
+                <div class="band">From Riverdale Minor Ball</div>
+                <div class="prow"><div><span class="nm">Champs day</span><span class="s">Sat, Jun 19 · Maya plays at 9:00 a.m.</span></div><span class="chev">›</span></div>
+                <div class="prow"><div><span class="nm">Year-end banquet</span><span class="s">Sat, Jun 26 · You signed up 2 people</span></div><span class="chev">›</span></div>
+              </div>
+            </div>
+          </div></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 6 · CHAMPS DAY -->
+  <section class="pane" id="p6" role="tabpanel" aria-labelledby="t6" hidden>
+    <h2>A champs day gathers that day’s house-league games under one event; it doesn’t invent playoffs</h2>
+    <p>House league has no playoff, round or final in the code. Playoffs exist only for tournaments <button class="fl" type="button" data-f="F1">F1</button>. So a Champs day names a house-league season. Every game that season on the event’s day at its venue shows under it, scheduled as today by the league admin. Nothing about a game changes, and its scores come from where they already do. A sponsor can show on the event, because “a club event” joins sponsorship’s places with this stage (ordered 2026-11-20).</p>
+    <div class="pair">
+      <div class="spec">
+        <div class="specHead"><b>The event’s public page</b><span class="chrome">public · desktop · 640</span><button class="mark" type="button" data-ask="5">5</button><button class="tag new" type="button" data-note="NEW PAGE. One event’s page: heading, when and where, the club’s few lines, then for a champs day its games in the shipped stacked game row (Public page layout standard R6): time and field left, the status pill right, each team on its own line owning its score; the rest behind one link row. A sponsor line sits under the heading only when a paid deal shows on this event.">NEW</button></div>
+        <div class="scroll"><div class="frame pub">
+          <div class="pubBand"><span class="crest">RM</span><b>Riverdale Minor Ball</b></div>
+          <div class="pubIn">
+            <div><span class="small">← Events</span><p class="famH">Champs day</p><p class="famSub">Sat, Jun 19, 2027 · 9:00 a.m.–5:00 p.m. · Lions Park, 42 Lions Park Rd</p><span class="byLine" style="margin-top:8px">Sponsored by <b style="color:var(--home-ink)">Northside Dental</b></span></div>
+            <p style="margin:0;font-size:15px">Every house-league division plays its last games of the season. Medals after each game, by the concession stand.</p>
+            <div class="rlist">
+              <div class="gRow"><div class="hd"><span>9:00 a.m. · Diamond 1 · U9</span><span class="stP">Final</span></div><div class="tm w"><span>Reds</span><b>7</b></div><div class="tm"><span>Blues</span><b>4</b></div></div>
+              <div class="gRow"><div class="hd"><span>9:00 a.m. · Diamond 2 · U11</span><span class="stP">Final</span></div><div class="tm"><span>Hawks</span><b>3</b></div><div class="tm"><span>Owls</span><b>3</b></div></div>
+              <div class="gRow"><div class="hd"><span>10:30 a.m. · Diamond 1 · U9</span></div><div class="tm"><span>Jays</span><b></b></div><div class="tm"><span>Cubs</span><b></b></div><span class="ns">No score yet</span></div>
+              <div class="gRow"><div class="hd"><span>10:30 a.m. · Diamond 2 · U13</span></div><div class="tm"><span>Lynx</span><b></b></div><div class="tm"><span>Foxes</span><b></b></div><span class="ns">No score yet</span></div>
+              <div class="linkRow"><span>10 more games, through 3:30 p.m.</span><span>›</span></div>
+            </div>
+          </div>
+        </div></div>
+      </div>
+      <div class="stack">
+        <div class="spec">
+          <div class="specHead"><b>The champs day’s own line in the window</b><span class="chrome">Add an event · Kind: Champs day</span><button class="tag new" type="button" data-note="NEW. Choosing Champs day adds one field: which house-league season. The games are found by the event’s day and venue, so a game moved off the day drops out by itself.">NEW</button></div>
+          <div class="scroll"><div class="frame adm w520">
+            <div class="fld"><span class="l">House-league season <span class="req">*</span></span><div class="inp sel"><span>House league 2027</span><span>▾</span></div><span class="hint">Its games on Sat, Jun 19 at Lions Park show under this event: 14 games today.</span></div>
+          </div></div>
+        </div>
+        <div class="spec">
+          <div class="specHead"><b>Phone · the same page</b><span class="chrome">390</span></div>
+          <div class="scroll"><div class="frame phone">
+            <div class="pubBand"><span class="crest">RM</span><b>Riverdale Minor Ball</b></div>
+            <div class="pubIn">
+              <div><p class="famH" style="font-size:22px">Champs day</p><p class="famSub">Sat, Jun 19 · Lions Park</p></div>
+              <div class="rlist">
+                <div class="gRow"><div class="hd"><span>9:00 a.m. · Diamond 1 · U9</span><span class="stP">Final</span></div><div class="tm w"><span>Reds</span><b>7</b></div><div class="tm"><span>Blues</span><b>4</b></div></div>
+                <div class="gRow"><div class="hd"><span>9:00 a.m. · Diamond 2 · U11</span><span class="stP">Final</span></div><div class="tm"><span>Hawks</span><b>3</b></div><div class="tm"><span>Owls</span><b>3</b></div></div>
+                <div class="linkRow"><span>12 more games</span><span>›</span></div>
+              </div>
+            </div>
+          </div></div>
+        </div>
+        <div class="explain">
+          <h3>What this leaves out, on purpose</h3>
+          <ul>
+            <li><b>No brackets, no “final” flag on a game.</b> Making house-league playoffs is a project of its own (ask 5, option B), sized separately and kept in the ideas backlog if not chosen.</li>
+            <li><b>No team schedule is touched.</b> A game is shown under the event; it is not moved or renamed (D3).</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 7 · A FREE SIGN-UP -->
+  <section class="pane" id="p7" role="tabpanel" aria-labelledby="t7" hidden>
+    <h2>A free sign-up: who’s coming, the club’s questions, and the same “Your sign-up” page with no pay line</h2>
+    <p>The banquet asks for names and a meal choice. The form is Stage 4’s editor with one new group, “For each person”. A form can belong only to a season or the club today, so events need it widened, as sponsorships did <button class="fl" type="button" data-f="F4">F4</button>. No account. The confirmation email carries the “Your sign-up” link, which the 2026-10-31 ruling keeps as the one door before a team (rule 3). It carries no other link.</p>
+    <div class="pair">
+      <div class="spec">
+        <div class="specHead"><b>Sign up for the banquet</b><span class="chrome">public · desktop · 640</span><button class="mark" type="button" data-ask="6">6</button><button class="tag re" type="button" data-note="RESTYLED from the house-league sign-up form: the same sections, fields, tick and lime button. “Child 1” becomes “Person 1” with Adult or Child, and there is no date of birth or division.">RESTYLED</button></div>
+        <div class="scroll"><div class="frame fam">
+          <span class="small">← Year-end banquet</span>
+          <p class="famH">Sign up for the year-end banquet</p>
+          <p class="famSub">Sat, Jun 26, 2027 · 6:00 p.m. · Riverdale Legion Hall · free · 34 spots left</p>
+          <div class="fsec">
+            <p class="fsecH">Person 1</p>
+            <div class="two"><div class="fld"><span class="l">First name <span class="req">*</span></span><div class="inp">Priya</div></div><div class="fld"><span class="l">Last name <span class="req">*</span></span><div class="inp">Shah</div></div></div>
+            <div class="choices"><span><span class="rad on"></span>Adult</span><span><span class="rad"></span>Child</span></div>
+            <div class="fld"><span class="l">Meal <span class="req">*</span></span><div class="inp sel"><span>Chicken</span><span>▾</span></div></div>
+          </div>
+          <div class="fsec">
+            <p class="fsecH">Person 2 <span class="rm">Remove</span></p>
+            <div class="two"><div class="inp">Maya</div><div class="inp">Shah</div></div>
+            <div class="choices"><span><span class="rad"></span>Adult</span><span><span class="rad on"></span>Child</span></div>
+            <div class="fld"><span class="l">Meal <span class="req">*</span></span><div class="inp sel"><span>Kids’ pasta</span><span>▾</span></div></div>
+            <div><span class="btnOut">+ Add another person</span></div>
+          </div>
+          <div class="fsec">
+            <p class="fsecH">Your contact</p>
+            <div class="two"><div class="inp">Priya Shah</div><div class="inp">priya@example.com</div></div>
+            <div class="fld"><span class="l">Anything we should know?</span><div class="inp ta">Maya has a nut allergy.</div><span class="healthL">Health · seen only by the people who run this event</span></div>
+          </div>
+          <div class="btnLime big">Sign up 2 people</div>
+        </div></div>
+      </div>
+      <div class="stack">
+        <div class="spec">
+          <div class="specHead"><b>Your sign-up, for a free event</b><span class="chrome">phone · 390</span><button class="mark" type="button" data-ask="6">6</button><button class="tag re" type="button" data-note="RESTYLED from the house-league Your sign-up page: the same heading, reference line and framed list. No pay block (“no pay link when nothing is owed”). “Can’t come anymore” ends a free sign-up at once; a paid one stays a request (tab 10).">RESTYLED</button></div>
+          <div class="scroll"><div class="frame phone">
+            <div class="pbody">
+              <span class="small">← Year-end banquet</span>
+              <p class="famH" style="font-size:22px;margin:0">Your sign-up</p>
+              <p class="famSub">Year-end banquet · Sat, Jun 26, 6:00 p.m.</p>
+              <p class="small">Reference: <b>RB-4821</b> · quote it if you contact the club</p>
+              <div class="rlist">
+                <div class="qrow nogrip"><div><div class="qt">Priya <span class="chip good">Coming</span></div><div class="qc">Adult · Chicken</div></div><span></span></div>
+                <div class="qrow nogrip"><div><div class="qt">Maya <span class="chip good">Coming</span></div><div class="qc">Child · Kids’ pasta</div></div><span></span></div>
+              </div>
+              <span class="door">Change your answers</span>
+              <span class="btnOut" style="width:100%">Can’t come anymore</span>
+              <p class="small">Anyone with this link can open this page. It stops working 30 days after the event.</p>
+            </div>
+          </div></div>
+        </div>
+        <div class="spec">
+          <div class="specHead"><b>The club’s side: Who’s coming</b><span class="chrome">the event’s page · desktop</span><button class="tag new" type="button" data-note="NEW SECTION on the event’s page: a count, the people as rows, the shipped Export (Excel first). Health answers stay out of the list and the export, as Stage 4 ruled; they open from the sign-up itself.">NEW</button></div>
+          <div class="scroll"><div class="frame adm w620">
+            <div class="card">
+              <div class="cardTop"><p class="cardH">Who’s coming</p><span class="cardSum">86 people · 34 spots left · closes Jun 19</span><span class="sq">Export</span></div>
+              <div class="rlist inset">
+                <div class="qrow nogrip"><div><div class="qt">Priya Shah · 2 people</div><div class="qc">Signed up Apr 9 · Chicken, Kids’ pasta</div></div><span class="chev">›</span></div>
+                <div class="qrow nogrip"><div><div class="qt">The Okafor family · 4 people</div><div class="qc">Signed up Apr 8 · 2 Fish, 2 Kids’ pasta</div></div><span class="chev">›</span></div>
+              </div>
+            </div>
+          </div></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 8 · A CAMP -->
+  <section class="pane" id="p8" role="tabpanel" aria-labelledby="t8" hidden>
+    <h2>A camp is an event with sessions; each session has its days, spots and price</h2>
+    <p>The Summer skills camp: two weeks, 24 spots each, $225 a week ($200 until May 31), for children born 2015 to 2019, a day camp. The page reads first and edits whole. The figures are the portal’s joined money band. Week 1 is full with three on its waitlist. Of the 31 spots taken, 27 are paid, 1 is accepted and owing, and 3 wait for the club to approve.</p>
+    <div class="pair">
+      <div class="spec">
+        <div class="specHead"><b>The camp’s page</b><span class="chrome">club admin · desktop · 960</span><button class="mark" type="button" data-ask="11">11</button><button class="mark" type="button" data-ask="12">12</button><button class="mark" type="button" data-ask="13">13</button><button class="tag new" type="button" data-note="NEW PAGE. A record page like a sponsorship deal: “← Events │ name” in the bar, the joined MoneySummaryBand, a Callout for what waits, then cards built from ClubSection and ClubRow. No buttons inside rows.">NEW</button></div>
+        <div class="scroll"><div class="frame adm">
+          <div class="phead"><span class="back">← Events</span><p class="ttl">Summer skills camp</p><span class="sub">Camp · Lions Park · Jul 5–16, 2027 · Everyone</span></div>
+          <div class="mband"><div><span class="ml">Spots</span><span class="mv">31 of 48</span><span class="mc">Week 1 full</span></div><div><span class="ml">On the waitlist</span><span class="mv">3</span><span class="mc">Week 1</span></div><div><span class="ml">Collected</span><span class="mv">$5,775.00</span><span class="mc">27 paid</span></div><div><span class="ml">Owing</span><span class="mv">$200.00</span><span class="mc">1 accepted, not paid</span></div></div>
+          <div class="callout"><div class="ct"><b>3 sign-ups wait for you</b><span>They hold their spots until you approve or decline them.</span></div><span class="door">Review ›</span></div>
+          <div class="card">
+            <div class="cardTop"><p class="cardH">Sessions</p><span class="btnOut">Add a session</span></div>
+            <div class="rlist inset">
+              <div class="sess"><div><span class="nm">Week 1</span><span class="s">Mon, Jul 5 – Fri, Jul 9 · 9:00 a.m.–3:00 p.m.</span></div><span class="chip warn">24 of 24 · 3 on the waitlist</span><span class="num">$225.00</span><span class="chev">›</span></div>
+              <div class="sess"><div><span class="nm">Week 2</span><span class="s">Mon, Jul 12 – Fri, Jul 16 · 9:00 a.m.–3:00 p.m.</span></div><span class="chip q">7 of 24</span><span class="num">$225.00</span><span class="chev">›</span></div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="cardTop"><p class="cardH">About the camp</p><span class="recAct">✎ Edit</span></div>
+            <dl class="facts"><dt>Who it’s for</dt><dd>Born 2015–2019 · day camp<span class="s">A child born outside these years can’t be signed up online</span></dd><dt>Sign-ups</dt><dd>Open Apr 1 to Jun 25 · you approve each one</dd><dt>Early bird</dt><dd>$200.00 a week until May 31</dd><dt>GST/HST</dt><dd>Not charged (exempt)</dd><dt>Field time</dt><dd>Diamond 2, both weeks, 9:00 a.m.–3:00 p.m.</dd></dl>
+          </div>
+          <div class="card">
+            <div class="rlist inset" style="margin:-16px -20px;border-top:0">
+              <div class="qrow nogrip"><div><div class="qt">Sign-up form</div><div class="qc">7 questions · 2 documents · the guardian line and photo permission come first</div></div><span class="chev">›</span></div>
+              <div class="qrow nogrip"><div><div class="qt">Instructors</div><div class="qc">Week 1: Dana Ruiz, Sam Patel · Week 2: Dana Ruiz</div></div><span class="chev">›</span></div>
+            </div>
+          </div>
+        </div></div>
+      </div>
+      <div class="stack">
+        <div class="spec">
+          <div class="specHead"><b>Add a session</b><span class="chrome">KitDialog · form · small</span><button class="mark" type="button" data-ask="11">11</button><button class="tag new" type="button" data-note="NEW WINDOW. A run of days (from and to, weekdays only by default) or chosen dates (a clinic’s four Tuesdays). The first session sets the spots and price; a new one starts with the last one’s.">NEW</button></div>
+          <div class="scroll"><div class="dimmer"><div class="win sm">
+            <div class="whead"><span class="ico">＋</span><div><p class="wtitle">Add a session</p><div class="wmeta">Summer skills camp</div></div></div>
+            <div class="wbody">
+              <div class="fld"><span class="l">Name <span class="req">*</span></span><div class="inp">Week 2</div></div>
+              <div class="choices"><span><span class="rad on"></span>A run of days</span><span><span class="rad"></span>Chosen dates</span></div>
+              <div class="two"><div class="fld"><span class="l">From</span><div class="inp">Mon, Jul 12</div></div><div class="fld"><span class="l">To</span><div class="inp">Fri, Jul 16</div></div></div>
+              <div class="two"><div class="fld"><span class="l">Each day</span><div class="inp">9:00 a.m.</div></div><div class="fld"><span class="l">&nbsp;</span><div class="inp">3:00 p.m.</div></div></div>
+              <div class="two"><div class="fld"><span class="l">Spots <span class="req">*</span></span><div class="inp">24</div></div><div class="fld"><span class="l">Price <span class="req">*</span></span><div class="inp">$225.00</div></div></div>
+            </div>
+            <div class="wfoot"><span class="btnOut">Cancel</span><span class="btnLime">Add the session</span></div>
+          </div></div></div>
+        </div>
+        <div class="spec">
+          <div class="specHead"><b>Phone · the camp’s page</b><span class="chrome">390 · figures as rows</span></div>
+          <div class="scroll"><div class="frame phone">
+            <div class="pbar"><span>← Summer skills camp<span class="sm">Camp · Jul 5–16</span></span></div>
+            <div class="pbody">
+              <div class="frows">
+                <div class="frow"><span class="fl1">Spots<span class="fc">Week 1 full</span></span><span class="fv">31 of 48</span><span></span></div>
+                <div class="frow"><span class="fl1">Collected<span class="fc">27 paid</span></span><span class="fv">$5,775.00</span><span></span></div>
+                <div class="frow"><span class="fl1">Owing<span class="fc">1 accepted, not paid</span></span><span class="fv">$200.00</span><span></span></div>
+              </div>
+              <div class="callout"><div class="ct"><b>3 sign-ups wait for you</b></div><span class="door">Review ›</span></div>
+              <div class="rlist">
+                <div class="sess"><div><span class="nm">Week 1</span><span class="s">Jul 5–9 · $225.00</span></div><span class="chip warn">Full · 3</span><span class="chev">›</span></div>
+                <div class="sess"><div><span class="nm">Week 2</span><span class="s">Jul 12–16 · $225.00</span></div><span class="chip q">7 of 24</span><span class="chev">›</span></div>
+              </div>
+            </div>
+          </div></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 9 · FIELD TIME -->
+  <section class="pane" id="p9" role="tabpanel" aria-labelledby="t9" hidden>
+    <div class="viewRow"><span class="lbl">View</span><div class="seg" data-seg="p9"><button type="button" aria-pressed="true" data-v="all">Everything</button><button type="button" aria-pressed="false" data-v="diff">Show only what differs</button></div></div>
+    <h2>On the schedule, a camp holds its slots the way House league does, by name</h2>
+    <p>The summer schedule at Lions Park, July 5 to 9, before and after the camp took Diamond 2’s open mornings. Today a slot can be held by a rep team or by House league, and nothing else <button class="fl" type="button" data-f="F5">F5</button>. After: an event is one more holder, shown by its name as House league is. The slot window’s “Give it to” list gains a “Club events” group of the events on that day.</p>
+    <div class="spec">
+      <div class="specHead"><b>Before</b><span class="chrome">club admin · schedule grid · 1200</span><button class="tag same" type="button" data-note="UNCHANGED. The shipped grid: a Facility column, day columns, a chip per slot (time, then holder). Open is dashed.">UNCHANGED</button></div>
+      <div class="scroll"><div class="frame adm wide">
+        <table class="sgT"><thead><tr><th>Facility</th><th>Mon, Jul 5</th><th>Tue, Jul 6</th><th>Wed, Jul 7</th><th>Thu, Jul 8</th><th>Fri, Jul 9</th></tr></thead><tbody>
+          <tr><td class="fac">Diamond 1<span class="s">Lions Park</span></td><td><div class="slot">6:00–8:00 p.m.<span class="w">House league</span></div></td><td><div class="slot">6:00–8:00 p.m.<span class="w">House league</span></div></td><td><div class="slot">6:00–8:00 p.m.<span class="w">House league</span></div></td><td><div class="slot">6:00–8:00 p.m.<span class="w">House league</span></div></td><td>—</td></tr>
+          <tr><td class="fac">Diamond 2<span class="s">Lions Park</span></td><td><div class="slot open">9:00 a.m.–3:00 p.m.<span class="w">Open</span></div><div class="slot" style="--c:#8A3B12">6:00–8:00 p.m.<span class="w">11U AA</span></div></td><td><div class="slot open">9:00 a.m.–3:00 p.m.<span class="w">Open</span></div></td><td><div class="slot open">9:00 a.m.–3:00 p.m.<span class="w">Open</span></div><div class="slot" style="--c:#8A3B12">6:00–8:00 p.m.<span class="w">11U AA</span></div></td><td><div class="slot open">9:00 a.m.–3:00 p.m.<span class="w">Open</span></div></td><td><div class="slot open">9:00 a.m.–3:00 p.m.<span class="w">Open</span></div></td></tr>
+          <tr><td class="fac">Diamond 3<span class="s">Lions Park</span></td><td><div class="slot" style="--c:#1F5E8C">6:00–8:00 p.m.<span class="w">13U AAA</span></div></td><td>—</td><td><div class="slot" style="--c:#1F5E8C">6:00–8:00 p.m.<span class="w">13U AAA</span></div></td><td>—</td><td><div class="slot" style="--c:#1F5E8C">6:00–8:00 p.m.<span class="w">13U AAA</span></div></td></tr>
+        </tbody></table>
+      </div></div>
+    </div>
+    <div class="spec">
+      <div class="specHead"><b>After</b><span class="chrome">club admin · schedule grid · 1200</span><button class="mark" type="button" data-ask="4">4</button><button class="tag re" type="button" data-note="RESTYLED. The same grid. A slot an event holds reads its name in the holder line, as House league’s does. Evenings are untouched: house league and the rep teams keep theirs.">RESTYLED</button></div>
+      <div class="scroll"><div class="frame adm wide">
+        <table class="sgT"><thead><tr class="same-part"><th>Facility</th><th>Mon, Jul 5</th><th>Tue, Jul 6</th><th>Wed, Jul 7</th><th>Thu, Jul 8</th><th>Fri, Jul 9</th></tr></thead><tbody>
+          <tr class="same-part"><td class="fac">Diamond 1<span class="s">Lions Park</span></td><td><div class="slot">6:00–8:00 p.m.<span class="w">House league</span></div></td><td><div class="slot">6:00–8:00 p.m.<span class="w">House league</span></div></td><td><div class="slot">6:00–8:00 p.m.<span class="w">House league</span></div></td><td><div class="slot">6:00–8:00 p.m.<span class="w">House league</span></div></td><td>—</td></tr>
+          <tr><td class="fac">Diamond 2<span class="s">Lions Park</span></td><td><div class="slot ev">9:00 a.m.–3:00 p.m.<span class="w">Summer skills camp</span></div><div class="slot same-part" style="--c:#8A3B12">6:00–8:00 p.m.<span class="w">11U AA</span></div></td><td><div class="slot ev">9:00 a.m.–3:00 p.m.<span class="w">Summer skills camp</span></div></td><td><div class="slot ev">9:00 a.m.–3:00 p.m.<span class="w">Summer skills camp</span></div><div class="slot same-part" style="--c:#8A3B12">6:00–8:00 p.m.<span class="w">11U AA</span></div></td><td><div class="slot ev">9:00 a.m.–3:00 p.m.<span class="w">Summer skills camp</span></div></td><td><div class="slot ev">9:00 a.m.–3:00 p.m.<span class="w">Summer skills camp</span></div></td></tr>
+          <tr class="same-part"><td class="fac">Diamond 3<span class="s">Lions Park</span></td><td><div class="slot" style="--c:#1F5E8C">6:00–8:00 p.m.<span class="w">13U AAA</span></div></td><td>—</td><td><div class="slot" style="--c:#1F5E8C">6:00–8:00 p.m.<span class="w">13U AAA</span></div></td><td>—</td><td><div class="slot" style="--c:#1F5E8C">6:00–8:00 p.m.<span class="w">13U AAA</span></div></td></tr>
+        </tbody></table>
+      </div></div>
+    </div>
+    <div class="pair">
+      <div class="spec">
+        <div class="specHead"><b>The slot window’s “Give it to”, open</b><span class="chrome">the shipped dropdown</span><button class="tag re" type="button" data-note="RESTYLED. The shipped list: Nobody (open), Rep teams, Programs (House league), Share with. A new group, Club events, lists the events on that day at that venue. Choosing one is the same as ticking the slot in the event’s window.">RESTYLED</button></div>
+        <div class="scroll"><div class="frame adm w520">
+          <div class="fld"><span class="l">Give it to</span><div class="inp sel"><span>Summer skills camp</span><span>▴</span></div></div>
+          <div class="menu" style="position:static;width:auto;margin-top:4px">
+            <div class="mi">Nobody (open)</div>
+            <div class="mi g">Rep teams</div><div class="mi">13U AAA</div><div class="mi">11U AA</div>
+            <div class="mi g">Programs</div><div class="mi">House league</div>
+            <div class="mi g" style="color:var(--tag-new)">Club events</div><div class="mi ck"><span class="box on">✓</span>Summer skills camp<span class="h" style="margin-left:auto">Jul 5–16</span></div>
+            <div class="mi g">Share with</div><div class="mi">Add a team…</div>
+          </div>
+        </div></div>
+      </div>
+      <div class="explain">
+        <h3>What holding time does, and doesn’t do</h3>
+        <ul>
+          <li><b>Only open time</b> is taken, from either side: the event’s window ticks open slots; the schedule’s “Give it to” offers events.</li>
+          <li><b>A team’s slot is never taken by an event.</b> The club frees it on the schedule first, as today, and the team is told the way it is today (D3).</li>
+          <li><b>The camp’s calendar entries</b> come from its sessions, not from the slots, so a camp held at a school gym with no permit still shows.</li>
+          <li><b>Removing a session</b> hands its slots back as Open, with “handed back by Summer skills camp”, the shipped wording.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- 10 · SIGNING UP -->
+  <section class="pane" id="p10" role="tabpanel" aria-labelledby="t10" hidden>
+    <h2>A family signs up a child for the weeks they want, with no account, then pays on “Your sign-up”</h2>
+    <p>The house-league path, reused. The camp’s page lists its weeks with spots left. The form is the house-league form with “Sessions” in place of a division. Each child’s date of birth is checked against the camp’s years. The camp’s form opens with a fixed line about who is ticking, and photo permission is its own optional question (/legal). Nothing is owed until the club accepts, and then “Your sign-up” shows what to pay.</p>
+    <div class="pair">
+      <div class="spec">
+        <div class="specHead"><b>The camp’s public page and its form</b><span class="chrome">public · desktop · 640</span><button class="mark" type="button" data-ask="11">11</button><button class="mark" type="button" data-ask="12">12</button><button class="tag re" type="button" data-note="RESTYLED from the house-league sign-up form: Child 1, the name and birth fields, From the club questions, Documents and agreement, the fee note and the lime button. New: the Sessions choice, the camp’s years check, the fixed guardian line and the optional photo question.">RESTYLED</button></div>
+        <div class="scroll"><div class="frame fam">
+          <p class="famH">Summer skills camp</p>
+          <p class="famSub">Born 2015–2019 · Lions Park · 9:00 a.m.–3:00 p.m. · day camp</p>
+          <div class="fsec">
+            <p class="fsecH">Child 1</p>
+            <div class="two"><div class="fld"><span class="l">First name <span class="req">*</span></span><div class="inp">Maya</div></div><div class="fld"><span class="l">Last name <span class="req">*</span></span><div class="inp">Chen</div></div></div>
+            <div class="fld"><span class="l">Date of birth <span class="req">*</span></span><div class="inp">Mar 3, 2016</div></div>
+            <p class="subH">Sessions <span class="req">*</span></p>
+            <div class="famSess on"><span class="box on">✓</span><span><span class="t">Week 1 · Jul 5–9</span><span class="h">Full. Tap it to join the waitlist.</span></span><span class="stP">Waitlist</span></div>
+            <div class="famSess on"><span class="box on">✓</span><span><span class="t">Week 2 · Jul 12–16</span><span class="h">17 spots left</span></span><span class="num"><b>$200.00</b><span class="small" style="display:block">until May 31</span></span></div>
+          </div>
+          <div class="fsec">
+            <p class="fsecH">Child 2 <span class="rm">Remove</span></p>
+            <div class="two"><div class="inp">Leo</div><div class="inp">Chen</div></div>
+            <div class="fld"><span class="l">Date of birth <span class="req">*</span></span><div class="inp err">Jun 11, 2013</div><span class="errL">This camp is for children born 2015 to 2019. Leo can’t be signed up here.</span></div>
+          </div>
+          <div class="fsec">
+            <p class="fsecH">Questions from Riverdale Minor Ball</p>
+            <div class="fld"><span class="l">Allergies or medical needs <span class="req">*</span></span><div class="inp ta">None</div><span class="healthL">Health · instructors see this answer for their own session</span></div>
+            <div class="fld"><span class="l">May the club use photos of Maya from camp on its website?</span><div class="choices"><span><span class="rad"></span>Yes</span><span><span class="rad"></span>No</span></div><span class="hint">Your choice doesn’t affect the sign-up.</span></div>
+          </div>
+          <div class="fsec">
+            <p class="fsecH">Documents and agreement</p>
+            <div class="tick"><span class="box on">✓</span><span>I am Maya’s parent or legal guardian, or have their authority to sign her up.</span></div>
+            <div class="docBlock"><div class="docName"><span class="pdf">PDF</span>Camp waiver 2027</div><div class="tick"><span class="box on">✓</span><span>I have read and agree</span></div></div>
+          </div>
+          <p style="margin:0 0 12px;font-size:14px"><b>Nothing to pay yet.</b> Once the club accepts Maya for Week 2, you’ll pay $200.00 on Your sign-up. Week 1 is full, so Maya joins its waitlist; you pay for it only if a spot opens and you take it.</p>
+          <div class="btnLime big">Sign up</div>
+        </div></div>
+      </div>
+      <div class="stack">
+        <div class="spec">
+          <div class="specHead"><b>Your sign-up, accepted, once online payments are on</b><span class="chrome">phone · 390</span><button class="mark" type="button" data-ask="14">14</button><button class="tag re" type="button" data-note="RESTYLED from the house-league Your sign-up page: a framed list with a row per child and session, the shipped chips (Accepted green, Waitlist · 2nd grey), the To pay now card with Pay by card and Pay by bank debit, and Ask to withdraw. A child signed up for two weeks has two rows.">RESTYLED</button></div>
+          <div class="scroll"><div class="frame phone">
+            <div class="pbody">
+              <span class="small">← Summer skills camp</span>
+              <p class="famH" style="font-size:22px;margin:0">Your sign-up</p>
+              <p class="small">Reference: <b>RS-1093</b> · quote it if you contact the club</p>
+              <div class="rlist">
+                <div class="qrow nogrip"><div><div class="qt">Maya · Week 2 <span class="chip good">Accepted</span></div><div class="qc">Jul 12–16 · $200.00</div></div><span></span></div>
+                <div class="qrow nogrip"><div><div class="qt">Maya · Week 1 <span class="chip q">Waitlist · 2nd</span></div><div class="qc">Jul 5–9 · nothing to pay unless a spot opens</div></div><span></span></div>
+              </div>
+              <div class="card"><p class="cardH">To pay now</p><p class="small" style="color:var(--home-ink)">Maya · Week 2 · $200.00</p><div class="btnLime big">Pay $200.00 by card</div><div class="btnOut" style="width:100%">Pay $200.00 by bank debit</div></div>
+              <span class="btnOut" style="width:100%">Ask to withdraw Maya</span>
+            </div>
+          </div></div>
+        </div>
+        <div class="spec">
+          <div class="specHead"><b>The pay card until online payments are on</b><span class="chrome">phone · the same place on the page</span><button class="tag same" type="button" data-note="UNCHANGED. The shipped simpler card: To pay, How to pay (the club’s words), Payable to the club. The club records the payment.">UNCHANGED</button></div>
+          <div class="scroll"><div class="frame phone">
+            <div class="pbody"><div class="card"><p class="cardH">To pay</p><p class="pr" style="margin:0;font-size:22px;font-weight:700">$200.00</p><p class="small" style="color:var(--home-ink)">How to pay: e-transfer to the treasurer, or a cheque at the Lions Park clubhouse.</p><p class="small">Payable to Riverdale Minor Ball.</p></div></div>
+          </div></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 11 · FULL AND THE WAITLIST -->
+  <section class="pane" id="p11" role="tabpanel" aria-labelledby="t11" hidden>
+    <h2>A full session takes a waitlist in order; a spot that opens is held for the next family until a date</h2>
+    <p>The house league moves a waitlisted child up by itself. For a paid camp, /legal found that an automatic move into a spot creates a debt the family never said yes to again. So the spot is offered and held until a date. The family pays, or says they can’t come. No stored card, no automatic charge. The email is transactional and carries only the pay link, the one link the 2026-10-31 ruling allows.</p>
+    <div class="pair">
+      <div class="spec">
+        <div class="specHead"><b>The camp’s public page when a week is full</b><span class="chrome">public · phone · 390</span><button class="mark" type="button" data-ask="13">13</button><button class="tag new" type="button" data-note="NEW. A full week says Full and how long the waitlist is, never who is on it. “17 spots left” is computed live from accepted and held spots (/legal: fine to show).">NEW</button></div>
+        <div class="scroll"><div class="frame phone">
+          <div class="pubBand"><span class="crest">RM</span><b>Riverdale Minor Ball</b></div>
+          <div class="pubIn">
+            <div><p class="famH" style="font-size:22px">Summer skills camp</p><p class="famSub">Born 2015–2019 · Lions Park · day camp</p></div>
+            <div class="rlist">
+              <div class="sess"><div><span class="nm">Week 1 · Jul 5–9</span><span class="s">$225.00 · 3 on the waitlist</span></div><span class="stP">Full</span><span></span></div>
+              <div class="sess"><div><span class="nm">Week 2 · Jul 12–16</span><span class="s">$225.00 · $200.00 until May 31</span></div><span class="stP paid">17 left</span><span></span></div>
+            </div>
+            <div class="btnLime big">Sign up</div>
+            <p class="small">Questions? Email the club at camps@riverdaleball.ca</p>
+          </div>
+        </div></div>
+      </div>
+      <div class="stack">
+        <div class="spec">
+          <div class="specHead"><b>A spot opened: the email</b><span class="chrome">sent in the club’s name</span><button class="mark" type="button" data-ask="13">13</button><button class="tag new" type="button" data-note="NEW EMAIL. Transactional: it completes a sign-up the family asked for (/legal). The pay link is the Your sign-up page. It names the hold date, the way to say no, and the club’s refund line. It never pitches another camp.">NEW</button></div>
+          <div class="scroll"><div class="mail mailMini">
+            <div class="mailHd"><b>A spot opened for Maya in Week 1</b><span>From: Riverdale Minor Ball · reply goes to the club</span></div>
+            <div class="mailBd">
+              <p>A spot opened in Summer skills camp, Week 1 (Mon, Jul 5 – Fri, Jul 9). It’s Maya’s until <b>Thu, Jun 3 at 8:00 p.m.</b></p>
+              <p>To take it, pay $225.00 on your sign-up page. If Maya can’t come, give up the spot there and it goes to the next family.</p>
+              <span class="mailBtn">Your sign-up</span>
+              <p style="font-size:13px;color:var(--home-dim)">Refunds: the club’s policy is on your sign-up page.</p>
+            </div>
+            <div class="mailFt"><span>Riverdale Minor Ball · 42 Lions Park Rd, Riverdale ON</span><span>Sent through FieldLogicHQ</span></div>
+          </div></div>
+        </div>
+        <div class="spec">
+          <div class="specHead"><b>Your sign-up while the spot is held</b><span class="chrome">phone · 390</span><button class="tag re" type="button" data-note="RESTYLED. The shipped rows and pay card; a held spot shows its date in the chip line and a second button to let it go.">RESTYLED</button></div>
+          <div class="scroll"><div class="frame phone">
+            <div class="pbody">
+              <div class="rlist"><div class="qrow nogrip"><div><div class="qt">Maya · Week 1 <span class="chip warn">Spot held until Jun 3</span></div><div class="qc">Jul 5–9 · $225.00</div></div><span></span></div></div>
+              <div class="btnLime big">Pay $225.00 by card</div>
+              <span class="btnOut" style="width:100%">Give up Maya’s spot</span>
+            </div>
+          </div></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 12 · THE CLUB'S SIDE -->
+  <section class="pane" id="p12" role="tabpanel" aria-labelledby="t12" hidden>
+    <h2>The club accepts sign-ups on one tab for every camp, and each session has its roster</h2>
+    <p>Sign-ups is the house-league Registrations screen, reused: the same toolbar order, the one View dropdown (To review · Accepted · Waitlist · Ended, an amber count on To review), the same table and the same Approve. The roster is a session’s accepted children, the way an instructor sees it, plus what the club needs.</p>
+    <div class="spec">
+      <div class="specHead"><b>Events › Sign-ups · To review</b><span class="chrome">club admin · desktop · 1200</span><button class="mark" type="button" data-ask="13">13</button><button class="tag re" type="button" data-note="RESTYLED from the house-league Registrations screen: All divisions becomes All sessions; Player becomes Child; Division becomes Session. The Approve row button and bulk approve are the shipped ones (shipped in house league, but not yet in the exception register, so the build adds its row there).">RESTYLED</button></div>
+      <div class="scroll"><div class="frame adm wide">
+        <div class="phead"><p class="ttl">Events</p></div>
+        <div class="ptabs"><span>Events</span><span class="on">Sign-ups <span class="amberN">4</span></span></div>
+        <div class="toolbar"><span class="pill">All sessions ▾</span><span class="pill olive"><span style="color:var(--home-dim);font-weight:500">View</span> To review <span class="amberN">4</span> ▾</span><span class="sp"></span><span class="search">Search children or parents</span><span class="sq">Filter</span><span class="sq">Export</span><span class="sq">⋯</span><span class="btnLime">+ Add a sign-up</span></div>
+        <table class="tbl"><thead><tr><th style="width:30px">☐</th><th>Child</th><th>Session</th><th>Guardian</th><th class="num">Fee</th><th style="width:110px"></th></tr></thead><tbody>
+          <tr><td>☐</td><td><span class="nm">Maya Chen</span><span class="s">Signed up Apr 11</span></td><td>Summer skills camp · Week 2</td><td>Wei Chen<span class="s">wei.chen@example.com</span></td><td class="num">$200.00 once accepted</td><td><span class="btnOut">Approve</span></td></tr>
+          <tr><td>☐</td><td><span class="nm">Noah Okafor</span><span class="s">Signed up Apr 11</span></td><td>Summer skills camp · Week 2</td><td>Ada Okafor<span class="s">ada@example.com</span></td><td class="num">$200.00 once accepted</td><td><span class="btnOut">Approve</span></td></tr>
+          <tr><td>☐</td><td><span class="nm">Ella Brooks</span><span class="s">Signed up Apr 10</span></td><td>Summer skills camp · Week 2</td><td>Tom Brooks<span class="s">No email address</span></td><td class="num">$200.00 once accepted</td><td><span class="btnOut">Approve</span></td></tr>
+          <tr><td>☐</td><td><span class="nm">Jack Morales</span><span class="s">Signed up Apr 9</span></td><td>Pitching clinic</td><td>Rosa Morales<span class="s">rosa@example.com</span></td><td class="num">$80.00 once accepted</td><td><span class="btnOut">Approve</span></td></tr>
+        </tbody></table>
+      </div></div>
+    </div>
+    <div class="pair">
+      <div class="spec">
+        <div class="specHead"><b>A session’s roster</b><span class="chrome">the session’s page · desktop · 960</span><button class="mark" type="button" data-ask="15">15</button><button class="tag new" type="button" data-note="NEW. The accepted children of one session, with what the club needs: the balance, a health note (yes or no only, the answers open from the child), the guardian. Attendance by day reads from what instructors ticked.">NEW</button></div>
+        <div class="scroll"><div class="frame adm">
+          <div class="phead"><span class="back">← Summer skills camp</span><p class="ttl">Week 2 · Jul 12–16</p><span class="sub">7 of 24 spots · Dana Ruiz</span></div>
+          <div class="ptabs"><span class="on">Roster</span><span>Attendance</span><span>Waitlist</span></div>
+          <table class="tbl"><thead><tr><th>Child</th><th>Age</th><th>Health note</th><th>Guardian</th><th class="num">Balance</th><th style="width:22px"></th></tr></thead><tbody>
+            <tr><td class="nm">Maya Chen</td><td>11</td><td>—</td><td>Wei Chen</td><td class="num">$0.00</td><td class="chev">›</td></tr>
+            <tr><td class="nm">Liam Brooks</td><td>9</td><td><span class="chip q">Yes</span></td><td>Tom Brooks</td><td class="num">$0.00</td><td class="chev">›</td></tr>
+            <tr><td class="nm">Zoe Patel</td><td>8</td><td>—</td><td>Anita Patel</td><td class="num"><span style="color:var(--warn);font-weight:700">$200.00</span></td><td class="chev">›</td></tr>
+          </tbody></table>
+        </div></div>
+      </div>
+      <div class="stack"><div class="spec"><div class="specHead"><b>Phone · Sign-ups</b><span class="chrome">390</span><button class="tag re" type="button" data-note="RESTYLED from the shipped phone registration row: one framed row per sign-up, its worded action under it at 44 px, the ⋯ a 44 px symbol. Filter and Add are symbols on the toolbar line.">RESTYLED</button></div><div class="scroll"><div class="frame phone"><div class="pbar"><span style="flex:1">Events<span class="sm">Sign-ups</span></span></div><div class="pbody"><div class="toolbar"><span class="pill olive"><span style="color:var(--home-dim);font-weight:500">View</span> To review <span class="amberN">4</span> ▾</span><span class="sp"></span><span class="ico44">⧩</span><span class="ico44">＋</span></div><div class="rlist"><div class="mrow"><div><span class="nm">Maya Chen</span><span class="s">Summer skills camp · Week 2 · $200.00 once accepted</span><span class="act">Approve</span></div><span class="ico44">⋯</span></div><div class="mrow"><div><span class="nm">Noah Okafor</span><span class="s">Summer skills camp · Week 2 · $200.00 once accepted</span><span class="act">Approve</span></div><span class="ico44">⋯</span></div><div class="mrow"><div><span class="nm">Jack Morales</span><span class="s">Pitching clinic · $80.00 once accepted</span><span class="act">Approve</span></div><span class="ico44">⋯</span></div></div></div></div></div></div><div class="explain">
+        <h3>Who opens what</h3>
+        <ul>
+          <li><b>Events and Sign-ups:</b> the owner, admins and the registrar, and anyone the club gives Events to (ask 1). Coaches and the treasurer don’t, unless given it.</li>
+          <li><b>A child’s answers</b> open from the child, never in a list or export, as Stage 4 ruled for health.</li>
+          <li><b>Withdrawals</b> arrive as requests, as in house league. A refund is the club’s call, and for a taxable camp it issues a credit note, as Stage 6 does (/accounting).</li>
+        </ul>
+      </div></div>
+    </div>
+  </section>
+
+  <!-- 13 · THE INSTRUCTOR -->
+  <section class="pane" id="p13" role="tabpanel" aria-labelledby="t13" hidden>
+    <h2>An instructor signs in on a phone and sees only their session: who’s here, and what the club let them see</h2>
+    <p>An instructor is a club person (Stage 3, not yet drawn) given one or more sessions <button class="fl" type="button" data-f="F6">F6</button>. /legal set the edges. The roster shows a name, an age and a yes-or-no health note, with the guardian’s phone one tap away. Health answers show only where the club marked “an instructor may see this” on the question. They show only for this session, from the day before it starts to the day after it ends. Each opening is recorded, and if the record can’t be saved, the answer doesn’t open. No money, no email, no address, no other sessions, no download or print. An instructor must be 18 or older, as every account holder is.</p>
+    <div class="pair">
+      <div class="spec">
+        <div class="specHead"><b>Today’s roster</b><span class="chrome">instructor · phone · 390</span><button class="mark" type="button" data-ask="15">15</button><button class="tag new" type="button" data-note="NEW SCREEN. A 44 px Here tick per child (tap to tick, tap again to undo; autosaves, the word Saved fades). The grey H is the health note marker (a health mark is neutral grey, 2026-11-20); it is a 44 px tap that opens the sheet. A child with no note has no marker.">NEW</button></div>
+        <div class="scroll"><div class="frame phone">
+          <div class="pbar"><span>Summer skills camp<span class="sm">Week 2 · Today, Mon, Jul 12</span></span></div>
+          <div class="pbody" style="gap:10px">
+            <div class="frows"><div class="frow"><span class="fl1">Here today<span class="fc">Tap a name when they arrive</span></span><span class="fv">5 of 7</span><span></span></div></div>
+            <div class="rlist">
+              <div class="att"><span class="nm">Maya Chen<span class="s">11</span></span><span class="hmark none">H</span><span class="here on">✓</span></div>
+              <div class="att"><span class="nm">Liam Brooks<span class="s">9 · health note</span></span><span class="hmark" style="background:rgba(70,55,30,0.08)">H</span><span class="here on">✓</span></div>
+              <div class="att"><span class="nm">Zoe Patel<span class="s">8</span></span><span class="hmark none">H</span><span class="here">&nbsp;</span></div>
+              <div class="att"><span class="nm">Noah Okafor<span class="s">10</span></span><span class="hmark none">H</span><span class="here on">✓</span></div>
+            </div>
+            <p class="small">3 more below. Day 1 of 5.</p>
+          </div>
+        </div></div>
+      </div>
+      <div class="stack">
+        <div class="spec">
+          <div class="specHead"><b>Tapping Liam’s health note</b><span class="chrome">a sheet over the roster</span><button class="mark" type="button" data-ask="15">15</button><button class="mark" type="button" data-ask="16">16</button><button class="tag new" type="button" data-note="NEW. Only the answers the club marked for instructors. The foot line says the opening is recorded. The guardian’s phone sits here behind the same tap; whether its opening is recorded too is an owner call (ask 15 note).">NEW</button></div>
+          <div class="scroll"><div class="frame phone">
+            <div class="sheet">
+              <p class="cardH" style="margin:0">Liam Brooks</p>
+              <dl class="facts" style="grid-template-columns:120px minmax(0,1fr)"><dt>Allergies or medical needs</dt><dd>Peanut allergy. EpiPen in his backpack, front pocket.</dd><dt>Guardian</dt><dd>Tom · <span class="door">Call 905-555-0142</span></dd></dl>
+              <p class="small">Opening this is recorded for the club. You can see it until Jul 17.</p>
+              <span class="btnOut" style="width:100%">Close</span>
+            </div>
+          </div></div>
+        </div>
+        <div class="explain">
+          <h3>The question’s new switch</h3>
+          <p>Stage 4’s question window gets one more switch under Health: <b>“An instructor may see this answer”</b>, off by default and offered only on a camp or clinic form. The published promise that answers are read only by people who open registrations is rewritten in the same policy version (/legal) <button class="fl" type="button" data-f="F12">F12</button>.</p>
+          <div class="swRows"><div class="sw"><span class="t">Health<span class="h">Kept out of lists, emails and exports</span></span><span class="tog on"></span></div><div class="sw"><span class="t">An instructor may see this answer<span class="h">For their own session, from the day before it starts to the day after it ends · off by default, turned on for this question</span></span><span class="tog on"></span></div></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 14 · BOOKS, TAX, RECEIPT -->
+  <section class="pane" id="p14" role="tabpanel" aria-labelledby="t14" hidden>
+    <h2>Camp money lands under its own heading; a registered club sets each camp exempt or taxable; a paid sign-up has a receipt</h2>
+    <p>A new money-in heading, <b>Camps and clinics</b>, with <b>Camp and clinic fees</b> and its own Payment processing line, as Sponsorship has. The GST/HST choice appears only for a club that said it is registered (Stage 6’s Invoice details), and Exempt is the ruled default (Q8). The rate is the province where the camp is held <button class="fl" type="button" data-f="F11">F11</button>. The hint words are /accounting’s, checked against CRA GI-037. They warn and never block.</p>
+    <div class="pair">
+      <div class="spec">
+        <div class="specHead"><b>Edit the camp · GST/HST</b><span class="chrome">the camp’s About card, editing · 620</span><button class="mark" type="button" data-ask="17">17</button><button class="tag new" type="button" data-note="NEW. Two radio rows. The warning callout appears only when a birth year means 15 or older on the camp’s first day, or when Overnight is on. Its words are /accounting’s (review 2026-11-24).">NEW</button></div>
+        <div class="scroll"><div class="frame adm w620">
+          <div class="card">
+            <p class="secH">GST/HST</p>
+            <div class="radioRow on"><span class="dot"></span><div><div class="t">Exempt</div><div class="h">Day camps and clinics for children 14 and under are usually not charged tax. Choose Taxable only if your accountant says this one is.</div></div></div>
+            <div class="radioRow"><span class="dot"></span><div><div class="t">Taxable · HST 13%</div><div class="h">Ontario’s rate, because the camp is at Lions Park</div></div></div>
+            <div class="nudge" style="border-left-color:var(--warn)">Some of these birth years are 15 or older. A camp is tax-free only when most of its children are 14 or under. If most will be 15 and older, choose Taxable.</div>
+            <div class="sw" style="border-top:1px solid var(--home-line)"><span class="t">Overnight<span class="h">Camps with sleepovers are usually taxable, at any age. If the children sleep over for much of the camp, choose Taxable. One overnight trip inside a day camp may not be; ask your accountant.</span></span><span class="tog"></span></div>
+          </div>
+          <p class="small">Drawn with the camp’s years widened to 2011–2019 to show the warning. With 2015–2019 there is no warning.</p>
+        </div></div>
+      </div>
+      <div class="spec">
+        <div class="specHead"><b>The General ledger, filtered to Camps and clinics</b><span class="chrome">Accounting · desktop · 960</span><button class="mark" type="button" data-ask="17">17</button><button class="tag re" type="button" data-note="RESTYLED. The shipped ledger rows with a new heading. Each line names its camp and session, never a child. A card fee posts beside it as Payment processing.">RESTYLED</button></div>
+        <div class="scroll"><div class="frame adm">
+          <table class="tbl"><thead><tr><th>Date</th><th>What</th><th>Heading</th><th class="num">In</th><th class="num">Out</th></tr></thead><tbody>
+            <tr><td>Apr 12</td><td>Summer skills camp · Week 2 · card</td><td>Camps and clinics › Camp and clinic fees</td><td class="num">$200.00</td><td class="num"></td></tr>
+            <tr><td>Apr 12</td><td>Card fee · Summer skills camp</td><td>Camps and clinics › Payment processing</td><td class="num"></td><td class="num">$7.35</td></tr>
+            <tr><td>Apr 10</td><td>Pitching clinic · cheque</td><td>Camps and clinics › Camp and clinic fees</td><td class="num">$80.00</td><td class="num"></td></tr>
+          </tbody></table>
+        </div></div>
+      </div>
+    </div>
+    <div class="spec">
+      <div class="specHead"><b>Receipt for camp fees</b><span class="chrome">PDF · Letter · 816</span><button class="mark" type="button" data-ask="18">18</button><button class="fl" type="button" data-f="F10">F10</button><button class="tag new" type="button" data-note="NEW DOCUMENT, offered on Your sign-up once a sign-up is paid. Laid out like the club invoice. Fields from /accounting’s line 21400 list. It names the child in full (an owner call against “first names only”). It makes no claim that the camp counts as child care.">NEW</button></div>
+      <div class="scroll"><div class="paper">
+        <div class="acc"></div>
+        <div class="pin">
+          <div class="idb"><div><b>Riverdale Minor Ball</b><span class="subl">42 Lions Park Rd, Riverdale ON</span></div><div style="text-align:right"><h4>Receipt for camp fees</h4><div class="subl">RS-1093 · issued Jul 16, 2027</div></div></div>
+          <div class="idb"><div><div class="lab">Paid by</div>Wei Chen</div><div><div class="lab">Child</div>Maya Chen</div><div><div class="lab">Camp</div>Summer skills camp · day camp<br>Mon, Jul 12 – Fri, Jul 16, 2027</div></div>
+          <table><thead><tr><th>Payment</th><th>Date</th><th class="r">Amount</th></tr></thead><tbody><tr><td>Week 2 · card</td><td>Apr 12, 2027</td><td class="r">$200.00</td></tr></tbody></table>
+          <table class="tt"><tbody><tr class="big"><td>Total received</td><td class="r">$200.00</td></tr></tbody></table>
+          <p style="margin:0;color:#555">No GST/HST was charged. Card or bank fees, if any, are not part of camp fees. Whether a camp counts for a tax claim is for you and the CRA to decide.</p>
+          <div class="foot"><span>Issued by Riverdale Minor Ball, treasurer: J. Alvarez</span><span>Page 1 of 1</span></div>
+        </div>
+      </div></div>
+    </div>
+  </section>
+
+  <!-- 15 · PLANS AND REVIEWS -->
+  <section class="pane" id="p15" role="tabpanel" aria-labelledby="t15" hidden>
+    <h2>Plans, the reviews this drawing went through, and the findings behind the asks</h2>
+    <div class="pair">
+      <div class="explain">
+        <h3>Plans (/billing, 2026-11-24)</h3>
+        <table class="docTbl planTbl"><thead><tr><th>Plan</th><th>Events</th><th>Camps</th><th>Form questions</th></tr></thead><tbody>
+          <tr><td>Tournament · Tournament Plus</td><td class="n">absent</td><td class="n">absent</td><td class="s">their own tournament questions</td></tr>
+          <tr><td>League Plus</td><td class="y">yes</td><td class="y">yes</td><td class="y">yes</td></tr>
+          <tr><td>Club · Club · Association</td><td class="y">yes</td><td class="y">yes</td><td class="y">yes</td></tr>
+        </tbody></table>
+        <ul>
+          <li>The same plans as the calendar and the club site, so the Events tab and the calendar entry always exist together (ruled Q6, 2026-11-10).</li>
+          <li>Built as a module the way Sponsorships was, so a club can give Events to one person, and so the public tab has a gate of its own. Not by reusing the venue library’s check.</li>
+          <li>No copy may present events or camps as a reason to move between League Plus and Club. A Tournament organizer sees no tab, no row and no upsell.</li>
+          <li>Camp card payment needs online payments switched on and the club’s Payouts set up with a refund policy <button class="fl" type="button" data-f="F9">F9</button>. If either is missing, the card button is absent.</li>
+        </ul>
+      </div>
+      <div class="explain">
+        <h3>Reviews run before this hand-off</h3>
+        <ul>
+          <li><b>/legal</b> (review written 2026-11-24): the retention clock, the instructor’s edges, the waitlist hold, the guardian line, photo permission, CASL per email, nothing personal on public pages. Policy text owed: Privacy §3, §5, §6, §9; Data Terms §12; Payments Terms names camps and events with the sponsorship version.</li>
+          <li><b>/accounting</b> (review written 2026-11-24): nothing new for our own books. Camp payments go through the same per-fee record. No Stripe Tax on the session. Our name stays off club documents. The tax hint words and the receipt fields are on tab 14. A professional should look at whether the club is a public sector body, one-off clinics, mixed ages and how much overnight counts.</li>
+          <li><b>/billing</b> (2026-11-24): the table at left; no drift in prices; the Facts doc’s Board Ready line is stale.</li>
+          <li><b>/design</b> (2026-11-24): seven must-fixes applied. Phone lists are one framed list, not cards. Champs-day games use the shipped stacked game row. The calendar’s Add is last on the desk and a 44 px symbol on a phone. Field-time ticks are 44 px rows. Rows inside a card are inset, never two frames. Taken slots are drawn dim. Also applied: events carry no colour (a team’s colour means a team), the roster’s Balance column, grey health marks, the View pill’s face, the camp’s figures reconciled, and a phone Sign-ups.</li>
+          <li><b>/marketing</b> (2026-11-24): “spots”, as the shipped sign-up says it, never “places”; “fields”, not “diamonds”, in product text; one waitlist wording; “Shown to” for the audience and “Who it’s for” only for the birth years; “Give up Maya’s spot” for a held spot. Left open in ask 19: “Sign-ups” here against house league’s “Registrations”.</li>
+        </ul>
+      </div>
+    </div>
+    <div class="explain">
+      <h3>Findings</h3>
+      <div class="chips"><button class="fl" type="button" data-f="F1">F1 Champs day</button><button class="fl" type="button" data-f="F2">F2 Family app off</button><button class="fl" type="button" data-f="F3">F3 Audience words</button><button class="fl" type="button" data-f="F4">F4 A form’s owner</button><button class="fl" type="button" data-f="F5">F5 Who holds a slot</button><button class="fl" type="button" data-f="F6">F6 Instructors need Stage 3</button><button class="fl" type="button" data-f="F7">F7 The retention clock</button><button class="fl" type="button" data-f="F8">F8 Calendar programs</button><button class="fl" type="button" data-f="F9">F9 Refund policy</button><button class="fl" type="button" data-f="F10">F10 The receipt’s claim</button><button class="fl" type="button" data-f="F11">F11 Whose province</button><button class="fl" type="button" data-f="F12">F12 A published promise</button></div>
+    </div>
+  </section>
+
+  <!-- 16 · ASKS -->
+  <section class="pane" id="p16" role="tabpanel" aria-labelledby="t16" hidden>
+    <h2>Your asks</h2>
+    <p>Stage 5 first (1–10), then Stage 7 (11–19). Each says what it changes for a family, a coach and a club admin. The first answer is my recommendation and is selected. Change any you disagree with, add a note, then press Build the summary and paste it into the chat. Your picks are kept in this browser only.</p>
+    <div id="asks" style="display:grid;gap:14px"></div>
+    <div class="ask">
+      <h3>Paste-back</h3>
+      <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btnDoc primary" id="build" type="button">Build the summary</button><button class="btnDoc" id="copy" type="button">Copy</button></div>
+      <pre class="out" id="out">Press Build the summary.</pre>
+    </div>
+  </section>
+</div>
+
+<dialog class="note" id="note"><h3 id="noteT"></h3><div id="noteB"></div><div style="display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap"><button class="btnDoc" id="noteGo" type="button" hidden>Go to the ask</button><button class="btnDoc primary" id="noteX" type="button">Close</button></div></dialog>
+
+<script>
+(function(){
+var LAST = "p16";
+var ASKS = [
+  {n:1, t:"Where Events lives, and who opens it", why:"A banquet isn’t a program, but a camp is: families sign up for it like house league. One place holds both, because a camp is an event. /billing: build it as a module, as Sponsorships was.", o:[
+    "Its own place in Programs, after House league, called Events, with two tabs: Events, and Sign-ups once a camp or clinic exists. The owner, admins and the registrar open it, and a club can give Events to anyone else, as it can Sponsorships",
+    "The same place, in the Club group beside Sponsorships",
+    "No place of its own: events are made and kept on the Calendar"],
+    ch:["Nothing.","Nothing, unless the club gives a coach Events.","A new sidebar row, Events, under House league."]},
+  {n:2, t:"What an event holds", why:"The plan lists name, kind, date and time, venue, permit time and audience. A banquet hall usually isn’t in the venue library yet.", o:[
+    "Name, kind (Banquet, Champs day, AGM, Clinic, Camp, Other), one day or several, a time or All day, a venue from the venue library (a new place is added to the library from the same list), field time from a permit when the venue has one that day, who it’s for, and a few lines about it. A create window that asks before it saves",
+    "The same, but a place can also be typed in without joining the venue library"],
+    ch:["An event page with the day, time, place and what it is.","Nothing.","One window for any event."]},
+  {n:3, t:"Who an event is for", why:"F3: nothing in the product knows association “members”, and “families” can only be reached through the family app, which is off. /legal: don’t make “Our families” an unlisted public page in the meantime.", o:[
+    "Everyone (club site and calendar) or Club staff (calendar only). “Our families” joins the choice when the family app is switched on, and isn’t shown before",
+    "The plan’s four: public, families, members, staff",
+    "Every event is for everyone"],
+    ch:["A public event shows on the club site; a staff event never does.","A coach who opens the calendar sees staff events too.","Two choices now, three later."]},
+  {n:4, t:"Field time from a permit", why:"F5: today a slot is held by a rep team or by House league and nothing else. D3: the club never writes a team’s schedule.", o:[
+    "An event takes only open time. Its window shows that day’s slots on the venue’s permit; ticking an open one makes the event its holder, shown by name on the schedule as House league is. A slot a team or house league holds shows who has it and can’t be ticked; the club frees it on the schedule first, as today. The schedule’s “Give it to” list gains a Club events group",
+    "An event can take any slot, and whoever held it is told",
+    "No holding: the event books the venue on the calendar and the clash marks warn"],
+    ch:["Nothing.","A team’s slot is never taken by an event.","A camp or opening day holds its diamond on the schedule."]},
+  {n:5, t:"Champs day", why:"F1: the plan says a champs day gathers the house-league playoff or final games. House league has no playoffs or finals; only tournaments do.", o:[
+    "A Champs day names a house-league season, and every game of that season on its day at its venue shows under it: one item on the calendar that opens to the games, and a public page with the games and their scores. Nothing about a game changes. House-league playoffs stay a separate project in the ideas backlog",
+    "Build house-league playoffs (a final for each division) in this stage, and the champs day gathers them",
+    "A champs day is an ordinary event with no games under it"],
+    ch:["One page for the day: every game, field and score.","A house-league coach’s games are unchanged.","The league admin schedules the day as today; the event gathers it."]},
+  {n:6, t:"A free sign-up", why:"A banquet wants names and meal choices. The 2026-10-31 ruling keeps “Your sign-up” as the one door before a team and sends no other link. F4: a form can belong only to a season or the club today.", o:[
+    "An event can ask people to sign up: who’s coming (each person’s name, adult or child), the club’s own questions (Stage 4’s editor with a “For each person” group), optional spots and a closing day. No account. The confirmation email carries only the Your sign-up link, with no pay line; there “Can’t come anymore” ends a free sign-up at once and the club sees it",
+    "No sign-ups in Stage 5; they arrive with camps in Stage 7",
+    "A headcount only (how many adults, how many children), no names"],
+    ch:["Signs up for the banquet from the club site; changes or cancels on Your sign-up.","Nothing.","A Who’s coming list with answers and an export."]},
+  {n:7, t:"The club calendar", why:"D5 was reopened for club events (Q7, ruled 2026-11-15). F8: the calendar shows only programs the reader can open, so events must become one.", o:[
+    "Club events are a fourth program, “Club events”, with no colour, said in words as House league is. A white “Add an event” on the toolbar, for those who open Events, opens the same window. Clicking an event reads first and its foot says “Open the event”. A champs day is one block that opens to its games. Teams’ bookings stay read-only",
+    "Club events show, but there is no Add: events are made only in Events"],
+    ch:["Nothing.","A coach who opens the calendar sees club events.","The calendar can add a club event; nothing else on it changes."]},
+  {n:8, t:"The club site", why:"Tryouts is already a seasonal tab. A permanent tab that is empty most of the year reads as a dead club.", o:[
+    "An Events tab after House league, shown only while an event for everyone is coming up, and a “Coming up” section on Home with the next three (a row in the site builder, so it can be hidden or moved). Each event has its own page; it drops off the day after it ends",
+    "A Home section only, no tab",
+    "An Events tab always, with an empty state when nothing is coming"],
+    ch:["Finds the banquet, champs day and camps on the club site.","Nothing.","One new Home row in the site builder."]},
+  {n:9, t:"Telling families about an event", why:"/legal: a “camp is open” email to last year’s families is commercial (CASL) and belongs in the Communications send, with its sender, address and unsubscribe. A link to an event page would also break the 2026-10-31 rule.", o:[
+    "Events sends no email by itself. A club tells families with a Communications message, and the club site and, later, the family app carry the event",
+    "An “Email families about this” button on each event"],
+    ch:["No event emails except about their own sign-up.","Nothing.","Uses Communications to announce."]},
+  {n:10, t:"The family app", why:"F2: the family app is off on production, and a camp family never gets an account (an account comes with a team placement, 2026-10-31).", o:[
+    "Drawn now, built with the family app: its home lists the club’s coming events (Everyone and Our families) below the family’s teams, and a champs day says when their child plays",
+    "Club events go into each team’s schedule inside the app"],
+    ch:["Once signed in, sees club events beside their teams.","A team’s schedule is unchanged.","Nothing more to do."]},
+  {n:11, t:"Sessions", why:"Camps run by the week and clinics by a set of evenings. A family often wants one week, not both.", o:[
+    "A camp has sessions. A session is a run of days (Mon to Fri) or chosen dates (four Tuesdays), with its daily time, its own spots and its own price; a new session starts with the last one’s. A family picks the sessions for each child. One payment per sign-up, not one per session (/accounting: the fixed fee falls on every charge)",
+    "One set of dates, spots and price per camp; a second week is a second camp"],
+    ch:["Picks Week 2 only, or both.","Nothing.","Adds Week 2 in one small window."]},
+  {n:12, t:"Ages, and the camp’s form", why:"House league uses a child’s birth date to find a division. /legal: a fixed guardian line and photo permission as its own optional question.", o:[
+    "Born from and to (years), and Overnight yes or no. The sign-up checks each child’s date of birth: outside the years the page says who it’s for and that child can’t be added online; the club can still add one by hand. Every camp form starts with the fixed line “I am this child’s parent or legal guardian, or have their authority” (never “signed waiver”), and photo permission is an optional yes or no that can’t be made required",
+    "Ages are a warning only; the club decides when it reviews"],
+    ch:["Can’t sign up a child outside the years online.","Nothing.","Can still add an exception by hand."]},
+  {n:13, t:"Accepting, and the waitlist", why:"/legal: moving a waitlisted child into a paid spot by itself creates a debt with no fresh yes. House league moves up by itself because nothing is owed until acceptance.", o:[
+    "The club accepts on Sign-ups, as in house league, unless it turns on “Accept sign-ups while there are spots”. A full session takes a waitlist in order. When a spot is left, it is offered to the next child and held until a date (3 days by default); one email says so with the Your sign-up link; the family pays or gives up the spot, and an unclaimed spot goes to the next. No stored card, no automatic charge",
+    "As house league: the next child moves up by itself and owes from then",
+    "The club offers each spot by hand"],
+    ch:["A held spot, a date and two choices.","Nothing.","The waitlist runs itself; the club sees who holds what."]},
+  {n:14, t:"Paying", why:"The house-league path: nothing owed until accepted, pay in full or part, card or bank debit. Online payments are built and switched off on production.", o:[
+    "As house league: nothing is owed until the child is accepted; Your sign-up then shows To pay now, by card or bank debit once online payments are on, in full or in part. An early-bird price to a date is optional. Until then the page says how to pay and the club records it. Who pays the card fee follows the club’s registration choice on Payouts. Withdrawing is a request; a refund is the club’s call",
+    "Pay at sign-up: the card is taken before the spot is held"],
+    ch:["Pays after acceptance, from Your sign-up.","Nothing.","Records cheques until online payments are on."]},
+  {n:15, t:"The instructor", why:"F6: instructors are club people (Stage 3, not drawn yet). Stage 4’s published promise says answers are read only by people who open registrations (F12).", o:[
+    "An instructor is a club person, 18 or older, given sessions. They sign in and see, on a phone, only their sessions: name, age, a yes-or-no health note, a Here tick for each day, and the guardian’s phone behind one tap. Health answers show only where the question is marked “An instructor may see this answer” (off by default), only from the day before to the day after the session; each opening is recorded and nothing opens if the record fails. No money, email, address, other sessions, download or print",
+    "No instructor sign-in: the club exports the roster and keeps attendance itself",
+    "Instructors sign in, but never see health answers; the club tells them what they need"],
+    ch:["A child’s health answers reach an instructor only where the club marked them.","A camp instructor gets a phone roster and a Here tick.","Marks which questions instructors may see; gives each session its instructors."]},
+  {n:16, t:"Keeping a child’s answers", why:"F7: Stage 4’s clean-up clears health and file answers only on a house-league season’s form. A camp or banquet form has no season, so its answers would be kept as long as the club exists.", o:[
+    "Event forms go on the same clock: health and file answers are cleared 90 days after the event’s last day, and a declined or withdrawn child’s 30 days after that. The policy sentence waits until the clean-up runs",
+    "The same clock, with no earlier clearing for a declined or withdrawn child"],
+    ch:["Their child’s health answers don’t outlive the camp by long.","Nothing.","Nothing to do; it runs by itself."]},
+  {n:17, t:"Books and tax", why:"The readiness plan leaves camps out “unless explicitly added”. Q8 ruled the per-program Exempt/Taxable shape. F11: the rate is where the camp is held.", o:[
+    "A new money-in heading, Camps and clinics (Camp and clinic fees, and its own Payment processing), each line naming its camp and session, never a child. Each camp is Exempt (default) or Taxable, shown only to a club registered for GST/HST, at the rate of the province where it’s held, with /accounting’s warning words for 15 and older and for overnight. A taxable refund issues a credit note, as Stage 6 does",
+    "Camp fees go under the house-league registration heading"],
+    ch:["Tax shows on their sign-up only if the club charges it.","Nothing.","Camp money is its own line in Budget vs. Actual."]},
+  {n:18, t:"The receipt", why:"Families ask a camp for a receipt at tax time. F10: /accounting says the product mustn’t call it a child care receipt, because CRA counts a day camp only when its main purpose is care. And Your sign-up shows first names only.", o:[
+    "Once a sign-up is paid, Your sign-up offers “Receipt for camp fees”: paid by, the child’s full name, the camp and its dates, day or overnight, the amount net of refunds (card fees apart), the club’s name and address, the issue date and the issuer, and the club’s GST/HST number when taxable. One line leaves the claim to the family and the CRA. The link lasts 30 days past the camp; “Email me my link” gives a fresh one at tax time",
+    "No receipt in this stage"],
+    ch:["A receipt to keep for their taxes.","Nothing.","Names an issuer once in Setup."]},
+  {n:19, t:"The words", why:"Draft words, after one /marketing pass (2026-11-24): “spots” as the shipped sign-up says it, never “places”; “fields”, not a sport’s word, in product text; one waitlist wording. Left open: club admins say “Registrations” in house league and would say “Sign-ups” here.", o:[
+    "Club side: “Events”, “Add an event”, “Sign-ups”, “Sessions”, “Spots”, “Shown to” (Everyone, Club staff), “Who it’s for” (the birth years), “Club events”, “Here”, “Camps and clinics”, “Approve” (as house league). A family reads “Sign up”, “Sessions”, “17 spots left”, “Full · waitlist open”, “Waitlist · 2nd”, “Spot held until …”, “Give up Maya’s spot”, “Can’t come anymore” (a free event), “Ask to withdraw Maya” (a paid one), “Receipt for camp fees”",
+    "The same, but the club’s tab is “Registrations”, as in house league, instead of “Sign-ups”",
+    "“Programs” instead of “Events” for the place"],
+    ch:["The words above.","“Here” on the roster.","The words above."]}
+];
+var NOTES = {
+  1:"Ask 1 · Where it lives. Recommended: Programs, after House league. A camp is signed up for like house league, and a registrar looks there. The banquet comes along because a camp is an event.",
+  2:"Ask 2 · The window. Recommended: venues come from the library, which grows from the same list, so a hall is typed once and reused next year.",
+  3:"Ask 3 · Audience. Recommended: Everyone or Club staff now; Our families arrives with the family app.",
+  4:"Ask 4 · Field time. Recommended: open time only, from either side; a team’s slot is freed on the schedule first.",
+  5:"Ask 5 · Champs day. Recommended: gather the day’s games by season, day and venue; playoffs are their own project.",
+  6:"Ask 6 · Free sign-up. Recommended: who’s coming plus the club’s questions, on the same Your sign-up page with no pay line.",
+  7:"Ask 7 · Calendar. Recommended: a fourth program and a white Add an event; teams stay read-only.",
+  8:"Ask 8 · Club site. Recommended: a seasonal Events tab and a Coming up home section.",
+  9:"Ask 9 · Telling families. Recommended: Events sends nothing; Communications announces.",
+  10:"Ask 10 · Family app. Recommended: club events under the family’s teams, built with the app.",
+  11:"Ask 11 · Sessions. Recommended: sessions with their own spots and price; a family picks per child.",
+  12:"Ask 12 · Ages and form. Recommended: the years are checked; the guardian line and photo question are fixed.",
+  13:"Ask 13 · Waitlist. Recommended: an opened spot is held for the next family until a date; never charged by itself.",
+  14:"Ask 14 · Paying. Recommended: the house-league way, after acceptance, on Your sign-up.",
+  15:"Ask 15 · Instructor. Recommended: a signed-in phone roster with the edges /legal set. Owner calls in the note: is the guardian phone opening recorded too, and should a failed record block the opening (recommended yes)?",
+  16:"Ask 16 · Retention. Recommended: 90 days after the last day; 30 days after that for a declined or withdrawn child.",
+  17:"Ask 17 · Books and tax. Recommended: its own heading; Exempt by default; the rate where the camp is held.",
+  18:"Ask 18 · Receipt. Recommended: “Receipt for camp fees” with the child’s full name, on a paid sign-up only.",
+  19:"Ask 19 · Words. Recommended: “Events” for the place."
+};
+var FINDINGS = {
+  F1:["F1 · House league has no playoffs or finals", "What the plan says: a champs day gathers the house-league playoff or final games. What the code does: a house-league game has no round, playoff or final field; “final” means only a finished score or final standings. Playoffs exist only for tournaments.", "What this drawing does: a champs day gathers the season’s games by day and venue (ask 5). Building house-league playoffs is option B, a project of its own."],
+  F2:["F2 · The family app is off, and camp families never get an account", "What the code does: every family-app page answers “not found” unless the guardian tier is switched on, and it is off. The 2026-10-31 ruling gives a family an account when a child is placed on a team; a camp has no team.", "What this drawing does: the family app is drawn as the end state (ask 10). For a camp family, the club site and Your sign-up are the doors, today and later."],
+  F3:["F3 · Two of the plan’s four audience words have nothing behind them", "What the code does: nothing marks a person as an association member. “Families” means households with a live registration and can only be shown something in the family app. Rep teams have staff, families and public-link visibility on their own schedule, nothing at club level.", "What this drawing does: Everyone and Club staff now; Our families with the family app (ask 3)."],
+  F4:["F4 · A form can belong only to a season or the club", "What the code does: Stage 4’s forms are owned by a house-league season (about a child) or by the club itself (the one sponsorship form, about a business). Answers can only point at a house-league sign-up or a sponsorship deal.", "What the build must do: widen it once more, as Stage 6 did, so an event owns its form, with a “For each person” group for a free sign-up and a child group for a camp."],
+  F5:["F5 · Only rep teams and House league can hold a slot", "What the code does: a schedule slot is held by rep teams or by the one program, House league, never both; a slot with no holder is open. Nothing else can hold permit time.", "What this drawing does: an event becomes a holder, named on the grid as House league is, and takes only open time (ask 4)."],
+  F6:["F6 · Instructors need Stage 3, and every account holder is 18 or older", "What the order says: Stage 3 (the club’s people) comes before Stage 7, and it isn’t drawn yet. What /legal found: the Terms and Privacy §8 say every account holder is 18 or older.", "What this drawing does: an instructor is a Stage 3 person given sessions, 18 or older. A junior leader can’t be invited in this version; changing that is a Terms change."],
+  F7:["F7 · The clean-up skips event forms", "What /legal found: the clean-up that clears health and file answers covers only forms owned by a house-league season. A camp’s form has no season, so its health answers would be kept as long as the club exists, against Privacy §5 and Data Terms §12.", "What this drawing does: event forms join the clock (ask 16)."],
+  F8:["F8 · The calendar reads only programs the reader opens", "What the code does: each program on the calendar shows only to someone who can open its module. Rep, house league and tournaments are the three today.", "What the build must do: make Club events a fourth program, opened through the Events access, or a plain event has no calendar row (ask 7)."],
+  F9:["F9 · A camp’s card payment needs a refund policy", "What /billing found: the pay button needs online payments on, a Payouts account that takes card payments, and a refund policy set on Payouts.", "What this drawing does: the camp email and Your sign-up point to the club’s refund policy; the club’s Payouts policy words need a line that fits a camp."],
+  F10:["F10 · Don’t promise a child care claim", "What /accounting found: CRA counts a day camp as child care only when its main purpose is care; a skills clinic is instruction. Québec’s RL-24 is issued by the provider, and the product must not suggest it issues or replaces one.", "What this drawing does: the document is “Receipt for camp fees”, with one line leaving the claim to the family and the CRA (ask 18). Québec is not sold yet."],
+  F11:["F11 · Whose province sets a camp’s rate", "What /accounting found: a camp is a service performed in the child’s presence, so the rate is the province where the camp is held, not the family’s address and not the club’s billing province. That is the opposite of a sponsorship (the business’s invoice address) and of our own fee (the club’s billing province).", "What this drawing does: the Taxable row names the rate and why (“because the camp is at Lions Park”). A camp across provinces goes to an accountant."],
+  F12:["F12 · A published promise changes with the instructor", "What /legal found: the published policy says a sign-up’s answers are read only by the people who can open registrations. An instructor seeing a health answer breaks it.", "What is owed: the sentence is rewritten in the same policy version that ships the instructor view (/legal writes it)."]
+};
+var KEY = "br-stage5-7-events-camps-v1";
+var S = { pick:{}, note:{}, tab:"p1", seg:{} };
+try { var raw = localStorage.getItem(KEY); if (raw) { var got = JSON.parse(raw); if (got && typeof got === "object") S = Object.assign(S, got); } } catch (e) {}
+function save(){ try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} }
+
+var host = document.getElementById("asks");
+function pickOf(a){ return S.pick[a.n] != null ? S.pick[a.n] : 0; }
+function esc(s){ return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;"); }
+ASKS.forEach(function(a){
+  var box = document.createElement("div"); box.className = "ask"; box.id = "ask" + a.n;
+  var h = "<h3><span class=\"mark\" aria-hidden=\"true\" style=\"cursor:default\">" + a.n + "</span>" + esc(a.t) + "</h3><p class=\"why\">" + esc(a.why) + "</p>";
+  h += "<div class=\"askCh\"><div><b>A family</b>" + esc(a.ch[0]) + "</div><div><b>A coach</b>" + esc(a.ch[1]) + "</div><div><b>A club admin</b>" + esc(a.ch[2]) + "</div></div>";
+  a.o.forEach(function(o, i){
+    var id = "a" + a.n + "o" + i;
+    h += "<label class=\"opt\" for=\"" + id + "\"><input type=\"radio\" name=\"a" + a.n + "\" id=\"" + id + "\" value=\"" + i + "\"><span><b>" + String.fromCharCode(65 + i) + ".</b> " + esc(o) + (i === 0 ? "<span class=\"rec\">RECOMMENDED</span>" : "") + "</span></label>";
+  });
+  h += "<label for=\"n" + a.n + "\" style=\"font-size:12px;color:var(--doc-soft)\">Note</label><textarea id=\"n" + a.n + "\"></textarea>";
+  box.innerHTML = h; host.appendChild(box);
+  var r = document.getElementById("a" + a.n + "o" + pickOf(a)); if (r) r.checked = true;
+  var ta = document.getElementById("n" + a.n); ta.value = S.note[a.n] || "";
+  box.addEventListener("change", function(ev){ if (ev.target.name === "a" + a.n) { S.pick[a.n] = Number(ev.target.value); save(); } });
+  ta.addEventListener("input", function(){ S.note[a.n] = ta.value; save(); });
+});
+
+function build(){
+  var L = ["Board Ready Stages 5 and 7, club events and camps (drawings Nov 24, 2026, round 1)", ""];
+  ASKS.forEach(function(a){
+    var p = pickOf(a);
+    L.push(a.n + String.fromCharCode(65 + p) + " · " + a.t + ": " + a.o[p] + (p === 0 ? " (recommended)" : ""));
+    var n = (S.note[a.n] || "").trim(); if (n) L.push("   note: " + n);
+  });
+  L.push(""); L.push("Short form: " + ASKS.map(function(a){ return a.n + String.fromCharCode(65 + pickOf(a)); }).join(" · "));
+  document.getElementById("out").textContent = L.join("\n");
+}
+document.getElementById("build").addEventListener("click", build);
+document.getElementById("copy").addEventListener("click", function(){
+  build(); var txt = document.getElementById("out").textContent; var btn = this;
+  function sel(){ var r = document.createRange(); r.selectNodeContents(document.getElementById("out")); var s = window.getSelection(); s.removeAllRanges(); s.addRange(r); btn.textContent = "Selected, press Ctrl+C"; }
+  try { navigator.clipboard.writeText(txt).then(function(){ btn.textContent = "Copied"; }, sel); } catch (e) { sel(); }
+});
+
+var tabs = Array.prototype.slice.call(document.querySelectorAll("nav.tabs button"));
+function show(id){
+  tabs.forEach(function(b){ var on = b.getAttribute("data-pane") === id; b.setAttribute("aria-selected", on ? "true" : "false"); document.getElementById(b.getAttribute("data-pane")).hidden = !on; });
+  S.tab = id; save();
+}
+tabs.forEach(function(b){ b.addEventListener("click", function(){ show(b.getAttribute("data-pane")); }); });
+show(S.tab && document.getElementById(S.tab) ? S.tab : "p1");
+
+Array.prototype.forEach.call(document.querySelectorAll(".seg"), function(seg){
+  var pane = document.getElementById(seg.getAttribute("data-seg"));
+  function set(v){ Array.prototype.forEach.call(seg.querySelectorAll("button"), function(b){ b.setAttribute("aria-pressed", b.getAttribute("data-v") === v ? "true" : "false"); }); pane.classList.toggle("diffs", v === "diff"); S.seg[seg.getAttribute("data-seg")] = v; save(); }
+  seg.addEventListener("click", function(ev){ var b = ev.target.closest("button"); if (b) set(b.getAttribute("data-v")); });
+  set(S.seg[seg.getAttribute("data-seg")] || "all");
+});
+
+var dlg = document.getElementById("note"), goBtn = document.getElementById("noteGo"), goTo = null;
+function open(title, paras, ask){
+  document.getElementById("noteT").textContent = title;
+  var b = document.getElementById("noteB"); b.innerHTML = "";
+  paras.forEach(function(t){ var p = document.createElement("p"); p.textContent = t; b.appendChild(p); });
+  goTo = ask || null; goBtn.hidden = !ask;
+  if (dlg.showModal) dlg.showModal(); else dlg.setAttribute("open", "");
+}
+document.getElementById("noteX").addEventListener("click", function(){ dlg.close ? dlg.close() : dlg.removeAttribute("open"); });
+goBtn.addEventListener("click", function(){ dlg.close ? dlg.close() : dlg.removeAttribute("open"); show(LAST); var el = document.getElementById("ask" + goTo); if (el) el.scrollIntoView({ block: "start" }); });
+document.addEventListener("click", function(ev){
+  var m = ev.target.closest(".mark[data-ask]");
+  if (m) { var n = Number(m.getAttribute("data-ask")); var a = ASKS.filter(function(x){ return x.n === n; })[0]; open("Ask " + n + " · " + a.t, [NOTES[n] || a.why], n); return; }
+  var f = ev.target.closest(".fl[data-f]");
+  if (f) { var F = FINDINGS[f.getAttribute("data-f")]; if (F) open(F[0], [F[1], F[2]], null); return; }
+  var t = ev.target.closest(".tag[data-note]");
+  if (t) { ev.preventDefault(); open(t.textContent.trim(), [t.getAttribute("data-note")], null); }
+});
+})();
+</script>
