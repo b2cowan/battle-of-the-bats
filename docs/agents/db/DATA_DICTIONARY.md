@@ -5330,7 +5330,7 @@ it in the template windows; a coach never edits templates. With no template, the
 **`received_date`** (date, NOT NULL) — the day the money ARRIVED (org-timezone date, coach-typed, UI defaults to today). The ledger entry takes this date (gotcha 1).
 
 <!-- dict:col:rep_dues_payments.method -->
-**`method`** (text, NOT NULL, default `other`; CHECK `etransfer|cash|cheque|card|other` — `card` since mig 260, the one-method-list ruling: E-Transfer · Cash · Cheque · Card · Other product-wide; `DUES_PAYMENT_METHODS`/`DUES_PAYMENT_METHOD_LABEL` in `lib/types.ts` are the app-side pair).
+**`method`** (text, NOT NULL, default `other`; CHECK `etransfer|cash|cheque|card|other` — `card` since mig 260, the one-method-list ruling: E-transfer · Cash · Cheque · Card · Other product-wide; `DUES_PAYMENT_METHODS`/`DUES_PAYMENT_METHOD_LABEL` in `lib/types.ts` are the app-side pair).
 
 <!-- dict:col:rep_dues_payments.note -->
 **`note`** (text, nullable) — free text ("from Dana's account").
@@ -8215,7 +8215,7 @@ The **intra-org recreational house-league** module (`league_*`) — sign-ups, di
 **`early_bird_until`** (date, nullable; mig 361, Club Tier 9b-1, owner 9b·2) — the season's ONE early-bird day, the club's day. A child who signs up **on or before** it pays their division's `early_price` (when the division has one). Compared as a plain YYYY-MM-DD against `tournamentToday()` at sign-up — never re-zoned. Read only through [lib/league-price.ts](../../../lib/league-price.ts).
 
 <!-- dict:col:league_seasons.how_to_pay -->
-**`how_to_pay`** (text, nullable, ≤1000 chars CHECK; mig 361, owner 9b·9) — the club's own words on how to pay (e.g. "e-Transfer to treasurer@… within 14 days"). **Required before Open registration whenever any price in the season is above $0**; a free season needs none. Shown to a family once a child is accepted (confirmation, status page, acceptance and promotion emails) — as THE way to pay while the club isn't taking card payments, and as "the other way to pay" beside Pay now once it is (Stage 12b).
+**`how_to_pay`** (text, nullable, ≤1000 chars CHECK; mig 361, owner 9b·9) — the club's own words on how to pay (e.g. "E-transfer to treasurer@… within 14 days"). **Required before Open registration whenever any price in the season is above $0**; a free season needs none. Shown to a family once a child is accepted (confirmation, status page, acceptance and promotion emails) — as THE way to pay while the club isn't taking card payments, and as "the other way to pay" beside Pay now once it is (Stage 12b).
 
 <!-- dict:col:league_seasons.ask_email_consent -->
 **`ask_email_consent`** (bool, NOT NULL, default true; mig 361) — the public form shows the unticked "may email me about future seasons and club news" line beside the waiver. A tick writes a `family_consents` row (basis `league_registration`, scope `marketing`).
@@ -10040,7 +10040,7 @@ one test-mode invoice was voided in Stripe before the drop. Historical tax recor
 **`created_by`** (FK → `auth.users.id`, nullable; cross-schema gap, ON DELETE NO ACTION) — who created the entry (or `p_created_by` from the RPC).
 
 <!-- dict:col:accounting_entries.payment_method -->
-**`payment_method`** (text, nullable) — free-text method (cheque/e-transfer), ≤100 chars (added mig 033). **`'online_card'`** (migration 358) marks a line that came through the club's connected Stripe account — the receipt line stamped by `online_payment_land` and every `source_module = 'online_payment'` line; show it as the house word "Online, card", not the database value.
+**`payment_method`** (text, nullable) — free-text method (cheque/e-transfer), ≤100 chars (added mig 033). The method list's name is saved as `E-transfer`; mig 537 (data only) re-cased the earlier `E-Transfer` at the start of a value here, in `rep_team_expenses.payment_method`, `rep_team_payment_requests.payment_method` and `rep_payable_payments.method`, leaving club lines in a closed fiscal year as typed. **`'online_card'`** (migration 358) marks a line that came through the club's connected Stripe account — the receipt line stamped by `online_payment_land` and every `source_module = 'online_payment'` line; show it as the house word "Online, card", not the database value.
 
 <!-- dict:col:accounting_entries.payee_id -->
 <!-- dict:col:accounting_entries.payee_payer -->
