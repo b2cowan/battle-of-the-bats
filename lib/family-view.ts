@@ -2,6 +2,7 @@ import 'server-only';
 import { supabaseAdmin } from './supabase-admin';
 import { countsTowardRecord } from './season-wrapped';
 import { COACH_GAME_EVENT_TYPES } from './coach-tournament-games';
+import { repEntryState } from './club-game-live';
 import {
   isPubliclyVisible,
   isVisibleToFamilies,
@@ -40,7 +41,7 @@ export interface FamilyScheduleEntry {
   arrivalTime: string | null;
   opponent: string | null;
   homeAway: 'home' | 'away' | 'neutral' | null;
-  /** Scores appear on COMPLETED games only — an upcoming row carrying 0–0 would read
+  /** Scores appear on a COMPLETED or LIVE game only — an upcoming row carrying 0–0 would read
    *  as a result that has not happened. */
   teamScore: number | null;
   opponentScore: number | null;
@@ -55,6 +56,10 @@ export interface FamilyScheduleEntry {
    * nullable) read as finished on one surface and upcoming on the other.
    */
   completed: boolean;
+  /** Is this game LIVE now (`lib/club-game-live.ts`)? Inside its window and not ended: its score, if any, is the coach's
+   *  running score, shown without a result letter. Never true for a practice, a tournament entry, a game copied from a
+   *  tournament (its tournament's rule is its truth) or a house-league row. */
+  live: boolean;
   /**
    * Are BOTH scores present, i.e. is there a score to render? Deliberately separate from
    * `completed`: a forfeit is over but has no scoreboard, and rendering one from two nulls
@@ -89,7 +94,7 @@ export const PUBLIC_EVENT_TYPES = [...COACH_GAME_EVENT_TYPES, 'external_tourname
 
 const EVENT_COLUMNS =
   'id, event_type, is_scrimmage, name, starts_at, ends_at, location, location_address, field_number, ' +
-  'arrival_time, opponent, home_away, team_score, opponent_score, result, status';
+  'arrival_time, opponent, home_away, team_score, opponent_score, result, status, source_tournament_game_id';
 
 interface EventRow {
   id: string;
@@ -108,14 +113,21 @@ interface EventRow {
   opponent_score: number | null;
   result: 'win' | 'loss' | 'tie' | null;
   status: 'scheduled' | 'cancelled';
+  /** Read to tell a game copied from a tournament from one the coach keeps (`repEntryState`); never leaves the server. */
+  source_tournament_game_id: string | null;
 }
 
-/** A game is "completed" for display purposes when a result OR a score was recorded. We do
- *  NOT infer completion from the clock: a game that started an hour ago but has no score yet
- *  is still an upcoming row as far as a family is concerned, and inventing 0–0 for it
- *  would be worse than saying nothing. */
-function isCompleted(row: EventRow): boolean {
-  return row.result !== null || row.team_score !== null || row.opponent_score !== null;
+/** Is the row over, and is it live? ONE rule (`lib/club-game-live.ts`, Club Website Stage 1 G7): a game is over when the
+ *  coach pressed End game (a result), or when its live window has passed with a score saved. Inside the window a score with
+ *  no result is the coach's RUNNING score from Game-Day Mode, so the game is live — before G7 any score read as over, and
+ *  the row showed a finished tie ("T 4–2") until End game. A game past its window with nothing saved is still not over:
+ *  inventing a 0–0 for it would be worse than saying nothing. */
+function entryState(row: EventRow, now: number): { completed: boolean; live: boolean } {
+  return repEntryState({
+    ownGame: COACH_GAME_EVENT_TYPES.includes(row.event_type) && row.source_tournament_game_id === null,
+    startsAt: row.starts_at, endsAt: row.ends_at,
+    status: row.status, result: row.result, teamScore: row.team_score, opponentScore: row.opponent_score,
+  }, now);
 }
 
 /** Both scores present — the only condition under which a scoreboard may be drawn. The three
@@ -125,11 +137,14 @@ function hasScore(row: EventRow): boolean {
   return row.team_score !== null && row.opponent_score !== null;
 }
 
-function toEntry(row: EventRow, nextUpId: string | null): FamilyScheduleEntry {
-  const completed = isCompleted(row);
-  const scored = hasScore(row);
+function toEntry(row: EventRow, nextUpId: string | null, now: number): FamilyScheduleEntry {
+  const { completed, live } = entryState(row, now);
+  // A score is drawn only on a game that is over or live: a score saved before the start (Game-Day Mode opens early) is
+  // not a result, and an upcoming row carrying one would read as a game already played.
+  const scored = hasScore(row) && (completed || live);
   return {
     completed,
+    live,
     hasScore: scored,
     id: row.id,
     eventType: row.event_type,
@@ -163,10 +178,9 @@ function toEntry(row: EventRow, nextUpId: string | null): FamilyScheduleEntry {
  * Every zone-sensitive decision on these surfaces is a DISPLAY decision, and display goes
  * through `formatInOrgZone` at the page.
  */
-function findNextUpId(rows: EventRow[]): string | null {
-  const now = Date.now();
+function findNextUpId(rows: EventRow[], now: number): string | null {
   const upcoming = rows
-    .filter(r => r.status !== 'cancelled' && !isCompleted(r) && new Date(r.starts_at).getTime() >= now)
+    .filter(r => r.status !== 'cancelled' && !entryState(r, now).completed && new Date(r.starts_at).getTime() >= now)
     .sort((a, b) => new Date(a.starts_at).getTime() - new Date(b.starts_at).getTime());
   return upcoming[0]?.id ?? null;
 }
@@ -258,7 +272,8 @@ export async function getFamilyTeamView(params: {
   if (eventError) throw eventError;
 
   const rows = (eventRows ?? []) as unknown as EventRow[];
-  const nextUpId = findNextUpId(rows);
+  const now = Date.now();
+  const nextUpId = findNextUpId(rows, now);
 
   return {
     repTeamId: team.id,
@@ -271,7 +286,7 @@ export async function getFamilyTeamView(params: {
     seasonName: year.name,
     seasonYear: year.year,
     scheduleVisibility: visibility,
-    entries: rows.map(row => toEntry(row, nextUpId)),
+    entries: rows.map(row => toEntry(row, nextUpId, now)),
     record: computeRecord(rows),
   };
 }

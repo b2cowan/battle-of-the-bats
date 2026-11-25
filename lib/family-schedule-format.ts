@@ -44,11 +44,15 @@ export function scheduleRowTitle(entry: FamilyScheduleEntry, fallbackName?: stri
 }
 
 /** "W 4–2", or null when there is no score to show. Reads the SERVER's `hasScore` rather than
- *  re-deriving it, so this can never disagree with what the DTO decided. */
+ *  re-deriving it, so this can never disagree with what the DTO decided. The letter is the RESULT the coach saved (End
+ *  game), never a guess: a live game's running score, and a score whose game was never ended, read "4–2" alone (Club
+ *  Website Stage 1 G7 — a missing result used to fall through to "T", the "T 4–2" defect). */
 export function scheduleScoreText(entry: FamilyScheduleEntry): string | null {
   if (!entry.hasScore || entry.teamScore === null || entry.opponentScore === null) return null;
-  const letter = entry.result === 'win' ? 'W' : entry.result === 'loss' ? 'L' : 'T';
-  return `${letter} ${entry.teamScore}–${entry.opponentScore}`;
+  const score = `${entry.teamScore}–${entry.opponentScore}`;
+  const letter = entry.live ? null
+    : entry.result === 'win' ? 'W' : entry.result === 'loss' ? 'L' : entry.result === 'tie' ? 'T' : null;
+  return letter ? `${letter} ${score}` : score;
 }
 
 /** Which tone a result reads in. Returned as a NAME, not a class — each surface maps it to

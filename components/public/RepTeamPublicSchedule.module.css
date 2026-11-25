@@ -98,6 +98,11 @@
 .scoreWin  { color: var(--club-ok); }
 .scoreLoss { color: var(--danger); }
 
+/* A live game (Club Website Stage 1 G7): the live word over the running score, in the club's status green — the
+   tournament row's live colour (PublicSchedule.module.css .gameStatus[data-state='live']), never the club colour. */
+.live { display: flex; flex-direction: column; align-items: flex-end; gap: 2px; white-space: nowrap; }
+.liveWord { font: 700 0.75rem/1 var(--club-text-face); color: var(--club-ok); }
+
 /* The two folds: "Earlier this season (3)" above, "Show the rest of the season (16 more)" below — each a 48 px line. */
 .fold > summary {
   display: flex;

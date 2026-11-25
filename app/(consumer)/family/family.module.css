@@ -363,6 +363,10 @@
 .scoreWin  { color: var(--home-win); }
 .scoreLoss { color: var(--home-live); }
 
+/* A live game (Club Website Stage 1 G7): the live word over the coach's running score, in the warm set's live accent. */
+.live { display: flex; flex-direction: column; align-items: flex-end; gap: 2px; white-space: nowrap; }
+.liveWord { font-size: 0.75rem; font-weight: 700; color: var(--home-live); }
+
 .divider {
   height: 1px;
   background: var(--home-line);

@@ -18,6 +18,7 @@ import { possessive } from '@/lib/utils';
 import type { FamilyAnswersView } from '@/lib/family-availability';
 import { useFamilyAnswers } from './FamilyAnswers';
 import answerStyles from './FamilyAnswers.module.css';
+import { LIVE_NOW } from '@/lib/club-game-live';
 
 /**
  * The family team page (S3; Signed-in family accounts Stage 4a, Part 6, drawing tab 3) — one scrolling schedule, opened at
@@ -48,6 +49,13 @@ const TONE_CLASS: Record<'win' | 'loss' | 'neutral', string> = {
 
 function ScoreCell({ entry }: { entry: FamilyScheduleEntry }) {
   const score = scheduleScoreText(entry);
+  // Live (Club Website Stage 1 G7): the coach's running score, under the live word, never a result letter.
+  if (entry.live) return (
+    <span className={styles.live}>
+      <span className={styles.liveWord}>{LIVE_NOW}</span>
+      {score && <b className={styles.score}>{score}</b>}
+    </span>
+  );
   if (!score) return null;
   return <b className={`${styles.score} ${TONE_CLASS[scheduleResultTone(entry)]}`}>{score}</b>;
 }

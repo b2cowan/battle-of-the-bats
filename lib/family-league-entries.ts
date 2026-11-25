@@ -29,6 +29,8 @@ export function leagueEntries(events: readonly FeedTeamEvent[], now: number): Fa
     result: null,
     status: e.status === 'cancelled' ? 'cancelled' : e.status === 'postponed' ? 'postponed' : 'scheduled',
     completed: e.eventType !== 'practice' && e.status !== 'postponed' && isPast(e),
+    // House league's live state is the public site's (Club Website Stage 1 G7); the family schedule carries no score.
+    live: false,
     hasScore: false,
     isNextUp: e.id === next,
   }));

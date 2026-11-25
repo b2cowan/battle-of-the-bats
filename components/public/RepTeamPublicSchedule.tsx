@@ -14,6 +14,7 @@ import type { FamilyScheduleEntry, FamilyTeamView } from '@/lib/family-view';
 import TeamSubscribeButton from './TeamSubscribeButton';
 import { splitPublicSchedule, teamScheduleShows } from '@/lib/club-team-page';
 import PublicSectionHead from './PublicSectionHead';
+import { LIVE_NOW } from '@/lib/club-game-live';
 
 /**
  * The standing public team schedule (Chunk D 1.9).
@@ -62,6 +63,13 @@ function Row({ entry, link }: { entry: FamilyScheduleEntry; link?: string }) {
         {entry.location && <div className={styles.where}>{entry.location}</div>}
       </div>
       {cancelled ? <span className={styles.cancelChip}>Cancelled</span>
+        : entry.live ? (
+          // Live (Stage 1 G7): the club's status green, never the club colour; the coach's running score, no letter.
+          <span className={styles.live}>
+            <span className={styles.liveWord}>{LIVE_NOW}</span>
+            {score && <b className={styles.score}>{score}</b>}
+          </span>
+        )
         : score ? <b className={`${styles.score} ${TONE_CLASS[scheduleResultTone(entry)]}`}>{score}</b>
         : directions ? (
           <a className={`${kit.btn} ${kit.btnSecondary} ${kit.btnSm} ${styles.directions}`} href={directions}
