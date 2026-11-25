@@ -18,6 +18,7 @@ import { hasPlanFeature, type PlanFeature } from './plan-features';
 import { PUSH_DEFAULT_ON_EVENTS, NOTIFICATION_CATEGORY } from './notification-labels';
 import { PAUSE_EXEMPT_EVENTS, filterUnpausedUsers } from './notification-pause';
 import { isDemoOrgId } from './demo-org-server';
+import { isPreviewOrgId } from './preview-org-server';
 import type { NotificationEventType } from './types';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -128,7 +129,8 @@ export async function notify(opts: NotifyOptions): Promise<void> {
   // the cost of a wrong "no" is a missed notification on a real org during an outage; the cost
   // of a wrong "yes" is the sandbox mailing a stranger.
   try {
-    if (await isDemoOrgId(opts.orgId)) return;
+    // A preview club (Track P, T1) is as silent as a demo: no bell, push or email, by the same fail-closed read.
+    if (await isDemoOrgId(opts.orgId) || await isPreviewOrgId(opts.orgId)) return;
   } catch {
     return;
   }
@@ -366,7 +368,7 @@ export async function notify(opts: NotifyOptions): Promise<void> {
       if (prefs.email) {
         try {
           const html = notificationEmailHtml(opts.title, opts.body, opts.link, appUrl);
-          await sendEmail(recipient.email, opts.title, html, { kind: 'notification' });
+          await sendEmail(recipient.email, opts.title, html, { kind: 'notification', orgId: opts.orgId });
         } catch (emailErr) {
           console.error('[notify] Email send failed for', recipient.email, emailErr);
         }

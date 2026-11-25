@@ -19,6 +19,8 @@ async function readEveryOrganization(): Promise<{ data: Array<Record<string, unk
     const data = await fetchAll<Record<string, unknown>>((from, to) => supabaseAdmin
       .from('organizations')
       .select('id, name, slug, plan_id, subscription_status, current_period_end, created_at, enabled_addons, internal_notes, account_kind')
+      // A preview club (Track P, T1) is not a customer: it lives on Prospect clubs, and moves here when it is claimed.
+      .eq('is_preview', false)
       .order('created_at', { ascending: false })
       .order('id')
       .range(from, to));

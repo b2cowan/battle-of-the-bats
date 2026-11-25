@@ -145,6 +145,7 @@ export const POST = withObservability(async (req: Request,
   });
 
   await sendClubCoachInviteEmail({
+    orgId: ctx.org.id,
     email,
     clubName: ctx.org.name,
     teamName: team.name,

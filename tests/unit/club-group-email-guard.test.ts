@@ -200,7 +200,7 @@ describe('T8 · envelope shape: one To, no Cc or Bcc, Reply-To the chosen target
   });
   it('every colleague message goes to one address with the reply target', () => {
     const code = readCode('lib/club-group-email.ts');
-    assert.match(code, /sendEmail\(to, mail\.subject, mail\.html, \{ kind, replyTo, fromName: mail\.fromName \}\)/);
+    assert.match(code, /sendEmail\(to, mail\.subject, mail\.html, \{ kind, orgId, replyTo, fromName: mail\.fromName \}\)/);
     assert.doesNotMatch(code, /\bbcc\b|\bcc:/i);
   });
 });
@@ -606,7 +606,7 @@ describe('Finishing a stopped email · the three finish rules (owner 2026-11-24,
     const claim = finish.indexOf("update({ club_copy: 'failed' })");
     assert.ok(claim > takeAt, 'claimed after the take, which admits one finisher');
     assert.match(finish.slice(claim, claim + 260), /\.eq\('org_id', ctx\.org\.id\)\.eq\('club_copy', 'asked'\)\.select\('id'\)/, 'one atomic asked → failed update: a second finisher or a retry finds nothing to claim');
-    assert.ok(finish.indexOf("deliverOne(sendId, clubContact as string") > claim, 'the copy is sent only after it was claimed');
+    assert.ok(finish.indexOf("deliverOne(ctx.org.id, sendId, clubContact as string") > claim, 'the copy is sent only after it was claimed');
     assert.match(finish, /if \(claimed\) \{/, 'only the one who claimed it sends it');
     assert.match(finish, /!contact \|\| reached === 0 \|\| !target \? 'failed'/, 'no contact, nobody reached, or no reply address: nothing goes, and the sender is told');
     assert.match(finish, /if \(claimErr\) throw claimErr;/, 'a failed claim leaves the send stopped, never closed at "asked"');

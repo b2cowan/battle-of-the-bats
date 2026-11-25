@@ -681,7 +681,7 @@ export const POST = withObservability(async (req: NextRequest) => {
           orgSlug: organization.slug, tournamentId,
           registeredBy: headCoachElsewhere ? { name: registrantName, email } : null,
         }),
-        { kind: 'registration_admin_alert' },
+        { kind: 'registration_admin_alert', orgId: tournament.org_id ?? null },
       // Handled at once: it is in flight across the account step's awaits below, and a send that fails in that window
       // must not be an unhandled rejection (/review 2026-11-01). allSettled below swallowed it the same way.
       ).catch(() => undefined),

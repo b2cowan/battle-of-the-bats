@@ -1,4 +1,5 @@
 import { supabaseAdmin } from './supabase-admin';
+import { isPreviewOrgId } from './preview-org-server';
 import { reportUnwritten } from './observability/report-unwritten';
 import { classifyGrowthMove, isRecoveryTransition, type PlanMoveInput } from './plan-growth';
 
@@ -88,6 +89,18 @@ export type PlatformEventInput = {
 // that rolls back the org on error, so a rejection here must never escape.
 export async function writePlatformEvent(input: PlatformEventInput): Promise<void> {
   try {
+    // A preview club (Track P, T1) is not a customer: nothing it does is a platform event (activity, billing, growth).
+    // Fail closed, like the senders: unable to tell, the event is not written, and that is reported like any unwritten one.
+    if (input.orgId) {
+      let preview: boolean;
+      try {
+        preview = await isPreviewOrgId(input.orgId);
+      } catch (err) {
+        await reportUnwritten('platform_events', input.eventType, input.orgId, err);
+        return;
+      }
+      if (preview) return;
+    }
     if (input.sourceEventId) {
       const { data: existing, error: lookupError } = await supabaseAdmin
         .from('platform_events')

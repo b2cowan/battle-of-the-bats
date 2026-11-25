@@ -34,6 +34,8 @@ async function getOrgs(): Promise<BulkOrgRow[]> {
   const { data, error } = await supabaseAdmin
     .from('organizations')
     .select('id, name, slug, plan_id, subscription_status, tournament_limit, enabled_addons, created_at')
+    // A preview club (Track P, T1) is never a bulk change's target (the route refuses one too).
+    .eq('is_preview', false)
     .order('name', { ascending: true });
 
   if (error || !data) return [];

@@ -89,6 +89,8 @@ type AuthOrgRow = {
   account_kind: Organization['accountKind'] | null;
   team_workspace_status: Organization['teamWorkspaceStatus'] | null;
   is_discoverable: boolean | null;
+  /** The preview marker (mig 535; Track P). Optional so an unapplied migration reads false. */
+  is_preview?: boolean | null;
   /** Club Shared Book (mig 227). Optional on the row type so an unapplied migration reads as
    *  undefined → false rather than throwing; the gate must fail CLOSED, never open. */
   club_book_sharing_enabled?: boolean | null;
@@ -285,7 +287,9 @@ export async function getAuthContext(options: AuthContextOptions = {}): Promise<
     contactEmail: orgRow.contact_email ?? null,
     accountKind: orgRow.account_kind ?? 'organization',
     teamWorkspaceStatus: orgRow.team_workspace_status ?? null,
-    isDiscoverable: orgRow.is_discoverable ?? true,
+    // A preview club (Track P) is never listed, whatever is stored.
+    isDiscoverable: (orgRow.is_discoverable ?? true) && orgRow.is_preview !== true,
+    isPreview: orgRow.is_preview === true,
     clubBookSharingEnabled: orgRow.club_book_sharing_enabled === true,
     // When birthdays count from (mig 349) — read through cutoffFor(); absent = January 1.
     birthdayCutoffs: storedCutoffs(orgRow.birthday_cutoffs),

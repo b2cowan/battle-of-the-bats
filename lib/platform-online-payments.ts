@@ -220,11 +220,13 @@ export async function readOnlinePaymentsHealth(now: Date = new Date()): Promise<
   const orgIds = [...new Set(rows.map(r => r.orgId))];
   const name = new Map<string, string>();
   for (let i = 0; i < orgIds.length; i += 100) {
-    const { data: orgs, error } = await supabaseAdmin.from('organizations').select('id, name').in('id', orgIds.slice(i, i + 100));
+    const { data: orgs, error } = await supabaseAdmin.from('organizations').select('id, name, is_preview').in('id', orgIds.slice(i, i + 100));
     if (error) throw error;
-    for (const o of orgs ?? []) name.set(o.id as string, o.name as string);
+    for (const o of orgs ?? []) if (o.is_preview !== true) name.set(o.id as string, o.name as string);
   }
+  // A preview club (Track P, T1) is not a customer, and a club the read did not return is not listed either.
   return rows
+    .filter(r => name.has(r.orgId))
     .map(r => ({ ...r, club: name.get(r.orgId) ?? '' }))
     .sort((a, b) => KIND_ORDER[a.kind] - KIND_ORDER[b.kind] || (a.sortAt < b.sortAt ? -1 : a.sortAt > b.sortAt ? 1 : 0));
 }

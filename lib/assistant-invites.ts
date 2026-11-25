@@ -26,6 +26,8 @@ export async function sendAssistantInviteEmail(p: {
   teamName: string;
   invitedByName: string | null;
   rawToken: string;
+  /** The club the team belongs to, or null for a coach's own team workspace (lib/email.ts: a preview's mail is refused). */
+  orgId: string | null;
   staffKind: StaffKind | null;
   /** A standalone Premium workspace — the manager's promise includes the team's tournaments there. */
   isTeamWorkspace: boolean;
@@ -36,7 +38,7 @@ export async function sendAssistantInviteEmail(p: {
     p.email,
     STAFF_KIND_COPY[kind].emailSubject(p.teamName),
     assistantCoachInviteHtml({ teamName: p.teamName, invitedByName: p.invitedByName, inviteUrl, staffKind: kind, isTeamWorkspace: p.isTeamWorkspace }),
-    { kind: 'staff_invite' },
+    { kind: 'staff_invite', orgId: p.orgId },
   );
 }
 
@@ -53,6 +55,8 @@ export async function sendClubCoachInviteEmail(p: {
   invitedByName: string | null;
   invitedByRoleWords: string | null;
   rawToken: string;
+  /** The club (lib/email.ts: a preview's mail is refused). */
+  orgId: string;
 }): Promise<void> {
   const inviteUrl = `${APP_URL}/auth/accept-assistant-invite?token=${p.rawToken}`;
   await sendEmail(
@@ -62,7 +66,7 @@ export async function sendClubCoachInviteEmail(p: {
       clubName: p.clubName, teamName: p.teamName, coachRole: p.coachRole,
       invitedByName: p.invitedByName, invitedByRoleWords: p.invitedByRoleWords, inviteUrl,
     }),
-    { kind: 'club_coach_invite' },
+    { kind: 'club_coach_invite', orgId: p.orgId },
   );
 }
 

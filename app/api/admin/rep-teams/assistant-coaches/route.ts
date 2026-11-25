@@ -112,6 +112,7 @@ export const POST = withObservability(async (req: Request): Promise<Response> =>
     if (!approved) return NextResponse.json({ error: 'This invite is no longer awaiting approval.' }, { status: 409 });
     // The same email the head coach's own send uses — subject and promise from the invite's kind.
     await sendAssistantInviteEmail({
+      orgId: ctx!.org.id,
       email: invite.invitedEmail,
       teamName: approved.invite.team_name ?? 'the team',
       invitedByName: approved.invite.invited_by_name,

@@ -34,6 +34,8 @@ type OrganizationRow = {
   account_kind: Organization['accountKind'] | null;
   team_workspace_status: Organization['teamWorkspaceStatus'] | null;
   is_discoverable: boolean | null;
+  /** The preview marker (mig 535; Track P). Optional so an unapplied migration reads false. */
+  is_preview?: boolean | null;
   /** Club Shared Book (mig 227). Optional so an unapplied migration reads false, not throws. */
   club_book_sharing_enabled?: boolean | null;
   /** When birthdays count from (mig 349); the select is `*`. */
@@ -70,7 +72,9 @@ function mapOrganization(row: OrganizationRow): Organization {
     contactEmail: row.contact_email ?? null,
     accountKind: row.account_kind ?? 'organization',
     teamWorkspaceStatus: row.team_workspace_status ?? null,
-    isDiscoverable: row.is_discoverable ?? true,
+    // A preview club (Track P) is never listed, whatever is stored.
+    isDiscoverable: (row.is_discoverable ?? true) && row.is_preview !== true,
+    isPreview: row.is_preview === true,
     clubBookSharingEnabled: row.club_book_sharing_enabled === true,
     // When birthdays count from (mig 349) — read through cutoffFor(); absent = January 1.
     birthdayCutoffs: storedCutoffs(row.birthday_cutoffs),

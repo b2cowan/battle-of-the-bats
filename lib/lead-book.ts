@@ -8,6 +8,7 @@
  */
 import { supabaseAdmin } from './supabase-admin';
 import { isDemoOrgId } from './demo-org-server';
+import { openPreviewOrgIds } from './preview-org-server';
 import { getBootstrapAdminEmails } from './platform-auth';
 import { effectiveOrgFactsById } from './entitlement-grants';
 import { freeTimePortalOrgIds } from './portal-free-time-server';
@@ -101,9 +102,11 @@ export async function readLeadBook(): Promise<Read<BookLead[]>> {
   const lastFollowUp = new Map<string, string>();
   for (const e of edits) if (e.field && movedFollowUp(e.old_value, e.new_value)) newer(lastFollowUp, e.field, e.created_at);
 
-  // A demo club is never a sign-up; the check throws when it cannot tell, and then nothing is counted.
+  // A demo club or a preview club (Track P, T1) is never a sign-up; the checks throw when they cannot tell, and then
+  // nothing is counted.
   const demo = new Set<string>();
   try {
+    for (const id of await openPreviewOrgIds()) demo.add(id);
     for (const id of new Set(rows.map(r => r.converted_org_id).filter((x): x is string => !!x))) {
       if (await isDemoOrgId(id)) demo.add(id);
     }
@@ -214,7 +217,8 @@ export async function readPaying(orgIds: string[], opts: { started?: boolean } =
 /** Every club and portal ever created, demo clubs and portals staff gave free time left out (New accounts; Stage 4b, T35). */
 export async function readAccounts(): Promise<AccountsRead> {
   const rows = await readAll<{ id: string; created_at: string }>((from, to) => supabaseAdmin.from('organizations')
-    .select('id, created_at').order('created_at').order('id').range(from, to));
+    // A preview club (Track P, T1) is not an account anybody created.
+    .select('id, created_at').eq('is_preview', false).order('created_at').order('id').range(from, to));
   if (!rows) return { kind: 'not_read' };
   try {
     const freeTimePortals = await freeTimePortalOrgIds();
@@ -325,7 +329,8 @@ export async function readOffers(leads: { id: string; email: string; step: Early
     if (dismissError) return { kind: 'not_read' };
     const dismissedKey = new Set(((dismissed ?? []) as { lead_id: string; org_id: string }[]).map(d => `${d.lead_id}:${d.org_id}`));
 
-    const demo = new Set<string>();
+    // A demo club or a preview club (Track P, T1) is never offered as a club they signed up.
+    const demo = new Set<string>(await openPreviewOrgIds());
     for (const id of orgIds) if (await isDemoOrgId(id)) demo.add(id);
 
     // A Coaches Portal staff gave free time is the lead's own portal, stored cancelled: never offered as a club they signed up.

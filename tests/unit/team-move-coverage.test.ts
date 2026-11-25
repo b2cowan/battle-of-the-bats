@@ -49,6 +49,7 @@ const STAYS: Record<string, string> = {
   org_internal_notes: 'FieldLogicHQ operator notes about the account',
   org_overrides: 'the account’s billing/comp overrides (old comp_period rows, a waiver)',
   organization_billing_facts: 'the account’s billing record',
+  organization_previews: 'a preview club’s record (Track P, mig 535): a preview has no teams or people to move, and a claimed club keeps its record',
   billing_locations: 'the account’s own billing address (GST/HST Stage 1, mig 433): who pays, never the team’s data — and a coach buys Premium as a person, so a coach portal’s address is a user row, not an org row',
   billing_retained_records: 'the account’s data-retention lifecycle',
   billing_retention_intents: 'the account’s data-retention lifecycle',

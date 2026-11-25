@@ -36,6 +36,8 @@ import { findPending } from './plan-ending-store';
 
 
 export type OperatorPlanCurrent = {
+  /** The preview marker (mig 535, Track P): a preview's plan is never set by hand. */
+  is_preview?: boolean | null;
   plan_id: string;
   tournament_limit: number;
   team_limit: number | null;
@@ -96,6 +98,9 @@ export class PlanRefusedError extends Error {
   }
 }
 
+/** Why a plan move on a preview club is refused (Track P, T1). */
+export const PREVIEW_CLUB_PLAN_REFUSAL = 'This is a preview club. Its plan is set when the club claims it, not here.';
+
 /** Why a plan move on a Coaches Portal staff gave free time is refused (Stage 4b review): its plan is the portal's own. */
 export const PORTAL_FREE_TIME_PLAN_REFUSAL =
   'This Coaches Portal is on free time that staff gave. Its plan is changed from the Coaches Portal tab on the coach’s person record, not here.';
@@ -112,9 +117,12 @@ export async function applyOperatorPlanChange(input: OperatorPlanChangeInput): P
 
   const { data: current } = await supabaseAdmin
     .from('organizations')
-    .select('plan_id, tournament_limit, team_limit, subscription_status, stripe_customer_id, stripe_subscription_id, subscription_period, current_period_end')
+    .select('is_preview, plan_id, tournament_limit, team_limit, subscription_status, stripe_customer_id, stripe_subscription_id, subscription_period, current_period_end')
     .eq('id', orgId)
     .single<OperatorPlanCurrent>();
+  // A preview club (Track P, T1) is not a customer: its plan stays the free start until the claim, and then Start a club's
+  // own checkout sets it. A plan given here would make it a paying club with nobody in it.
+  if (current?.is_preview === true) throw new PlanRefusedError(PREVIEW_CLUB_PLAN_REFUSAL);
   const currentEffectiveLimit = current
     ? getEffectiveTournamentLimit(current.plan_id as OrgPlan, current.tournament_limit)
     : null;

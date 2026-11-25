@@ -7220,6 +7220,36 @@
     "update_rule": "NO ACTION"
   },
   {
+    "table_name": "organization_previews",
+    "constraint_name": "organization_previews_claimed_by_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "claimed_by",
+    "foreign_table": null,
+    "foreign_column": null,
+    "delete_rule": "SET NULL",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "organization_previews",
+    "constraint_name": "organization_previews_made_by_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "made_by",
+    "foreign_table": null,
+    "foreign_column": null,
+    "delete_rule": "SET NULL",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "organization_previews",
+    "constraint_name": "organization_previews_pkey",
+    "constraint_type": "PRIMARY KEY",
+    "column_name": "org_id",
+    "foreign_table": null,
+    "foreign_column": null,
+    "delete_rule": null,
+    "update_rule": null
+  },
+  {
     "table_name": "organizations",
     "constraint_name": "organizations_pkey",
     "constraint_type": "PRIMARY KEY",

@@ -110,7 +110,7 @@ async function sendLeagueReceipt(op: OnlineForEmail): Promise<void> {
     test ? warmEmailSmall(escapeHtml(E.testNote)) : '',
   ];
   const subject = `${test ? E.testPrefix : ''}${E.receiptSubject(receiptNo, facts.org.name)}`;
-  const result = await sendEmail(op.payer_email!, subject, warmEmailDocument(lines.filter(Boolean).join('\n'), face?.club ?? null), { ...face?.sendOpts, kind: 'league_payment_receipt' });
+  const result = await sendEmail(op.payer_email!, subject, warmEmailDocument(lines.filter(Boolean).join('\n'), face?.club ?? null), { ...face?.sendOpts, kind: 'league_payment_receipt', orgId: facts.org.id });
   if (result.status === 'provider_error') throw new Error('send failed');
 }
 
@@ -392,7 +392,7 @@ export async function sendLeaguePayLink(
     // Transactional family mail (money owed): it names the club and says why it arrives after an unsubscribe.
     transactionalFamilyFooterHtml({ orgName: facts.org.name, teamName: facts.season.name, noticeKind: 'Payment notices', about: 'a registration fee', replyLine: face?.contact ? `Questions: ${face.contact}.` : null }),
   ].filter(Boolean).join('\n'), face?.club ?? null);
-  const result = await sendEmail(facts.guardianEmail, L.subject(names, facts.season.name), html, { ...face?.sendOpts, kind: 'league_pay_link' });
+  const result = await sendEmail(facts.guardianEmail, L.subject(names, facts.season.name), html, { ...face?.sendOpts, kind: 'league_pay_link', orgId: facts.org.id });
   if (result.status === 'provider_error') return { error: 'Couldn’t send the pay link. Try again.' };
   const sentAt = new Date().toISOString();
   await supabaseAdmin.from('league_registrations').update({ pay_link_sent_at: sentAt }).in('id', facts.shares.map(s => s.registrationId));
@@ -402,7 +402,7 @@ export async function sendLeaguePayLink(
   if (!refunded && went(result)) {
     const seconds = await readSecondParents([registrationId, ...facts.shares.map(s => s.registrationId)]).catch(() => new Map<string, string>());
     for (const to of secondParentsOf(facts.guardianEmail, [...seconds.values()].map(e => ({ guardianEmail2: e })))) {
-      await sendEmail(to, L.subject(names, facts.season.name), withSecondParentStop(html, facts.org.id, to), { ...face?.sendOpts, kind: 'league_pay_link' })
+      await sendEmail(to, L.subject(names, facts.season.name), withSecondParentStop(html, facts.org.id, to), { ...face?.sendOpts, kind: 'league_pay_link', orgId: facts.org.id })
         .catch(e => console.error('[pay-link] second parent copy failed:', e instanceof Error ? e.message : String(e)));
     }
   }

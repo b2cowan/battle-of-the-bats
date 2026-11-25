@@ -283,9 +283,9 @@ export async function colleaguePreview(ctx: AuthContextWithRole, seat: Seat, bod
 // ── The send (POST action 'send') ────────────────────────────────────────────────────────────────────────────────────────
 
 /** One person's email, sent; a throw is that person's failure, logged with the send's id only (never an address, §2d.6). */
-async function deliverOne(sendId: string, to: string, mail: { subject: string; html: string; fromName: string }, kind: 'club_coach_email' | 'club_board_email' | 'club_inbox_copy', replyTo: string): Promise<'sent' | 'failed'> {
+async function deliverOne(orgId: string, sendId: string, to: string, mail: { subject: string; html: string; fromName: string }, kind: 'club_coach_email' | 'club_board_email' | 'club_inbox_copy', replyTo: string): Promise<'sent' | 'failed'> {
   try {
-    const r = await sendEmail(to, mail.subject, mail.html, { kind, replyTo, fromName: mail.fromName });
+    const r = await sendEmail(to, mail.subject, mail.html, { kind, orgId, replyTo, fromName: mail.fromName });
     return r.status === 'sent' || r.status === 'skipped' ? 'sent' : 'failed';
   } catch {
     console.error('[club-group-email] a message was refused by the transport (send', sendId, ')');
@@ -357,7 +357,7 @@ export async function sendColleagueEmail(ctx: AuthContextWithRole, seat: Seat, b
       club: ctx.org.name, mode, sender, subject: words.subject, body: words.message,
       recipient: { firstName: firstName(p.name), basis: p.basis, boardRole: p.boardRole },
     });
-    const s = await deliverOne(sendId, p.email, mail, mailKind, target.replyTo);
+    const s = await deliverOne(ctx.org.id, sendId, p.email, mail, mailKind, target.replyTo);
     await markRecipient(ids[i], s);
     return s;
   });
@@ -377,7 +377,7 @@ export async function sendColleagueEmail(ctx: AuthContextWithRole, seat: Seat, b
   if (wantCopy && clubContact) {
     const contact = clubContact.trim().toLowerCase();
     copy = people.some(p => p.email.trim().toLowerCase() === contact) ? 'already_listed'
-      : await deliverOne(sendId, clubContact, {
+      : await deliverOne(ctx.org.id, sendId, clubContact, {
         ...renderInboxCopy({ club: ctx.org.name, mode, senderName, groupLabel: groupLabelOf(a), reached, subject: words.subject, body: words.message }),
         fromName: MAIL.from(ctx.org.name),
       }, 'club_inbox_copy', target.replyTo);
@@ -491,7 +491,7 @@ export async function finishColleagueEmail(ctx: AuthContextWithRole, seat: Seat,
       subject: words.subject as string, body: words.body as string,
       recipient: { firstName: firstName(r.name as string | null), basis: r.basis as ColleagueBasis, boardRole: r.board_role as string | null },
     });
-    const s = await deliverOne(sendId, to, mail, mailKindOf(send.kind), replyTo);
+    const s = await deliverOne(ctx.org.id, sendId, to, mail, mailKindOf(send.kind), replyTo);
     await markRecipient(r.id as string, s);
     return s;
   });
@@ -520,7 +520,7 @@ export async function finishColleagueEmail(ctx: AuthContextWithRole, seat: Seat,
       // Nobody reached: a copy saying so is no use to the club, and the sender is told it didn't go.
       copy = !contact || reached === 0 || !target ? 'failed'
         : listed ? 'already_listed'
-          : await deliverOne(sendId, clubContact as string, {
+          : await deliverOne(ctx.org.id, sendId, clubContact as string, {
             ...renderInboxCopy({ club: ctx.org.name, mode: send.replyTo, senderName: send.senderName ?? '', groupLabel: send.label, reached, subject: words.subject as string, body: words.body as string }),
             fromName: MAIL.from(ctx.org.name),
           }, 'club_inbox_copy', target.replyTo);

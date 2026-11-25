@@ -18794,6 +18794,105 @@
         "column_default": null
       },
       {
+        "table_name": "organization_previews",
+        "pos": 1,
+        "column_name": "org_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "organization_previews",
+        "pos": 2,
+        "column_name": "org_slug",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "organization_previews",
+        "pos": 3,
+        "column_name": "org_name",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "organization_previews",
+        "pos": 4,
+        "column_name": "meeting_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "organization_previews",
+        "pos": 5,
+        "column_name": "made_by",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "organization_previews",
+        "pos": 6,
+        "column_name": "logo_source_url",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "organization_previews",
+        "pos": 7,
+        "column_name": "claimed_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "organization_previews",
+        "pos": 8,
+        "column_name": "claimed_by",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "organization_previews",
+        "pos": 9,
+        "column_name": "removed_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "organization_previews",
+        "pos": 10,
+        "column_name": "created_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
+        "table_name": "organization_previews",
+        "pos": 11,
+        "column_name": "updated_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
         "table_name": "organizations",
         "pos": 1,
         "column_name": "id",
@@ -19233,6 +19332,15 @@
         "udt_name": "text",
         "is_nullable": "YES",
         "column_default": null
+      },
+      {
+        "table_name": "organizations",
+        "pos": 57,
+        "column_name": "is_preview",
+        "data_type": "boolean",
+        "udt_name": "bool",
+        "is_nullable": "NO",
+        "column_default": "false"
       },
       {
         "table_name": "payments_terms_agreements",
@@ -38189,6 +38297,20 @@
         "constraint_name": "organization_members_user_id_fkey"
       },
       {
+        "table_name": "organization_previews",
+        "column_name": "claimed_by",
+        "foreign_table": null,
+        "foreign_column": null,
+        "constraint_name": "organization_previews_claimed_by_fkey"
+      },
+      {
+        "table_name": "organization_previews",
+        "column_name": "made_by",
+        "foreign_table": null,
+        "foreign_column": null,
+        "constraint_name": "organization_previews_made_by_fkey"
+      },
+      {
         "table_name": "platform_account_email_events",
         "column_name": "email_id",
         "foreign_table": "platform_account_emails",
@@ -45077,6 +45199,16 @@
         "tablename": "organization_members",
         "indexname": "organization_members_pkey",
         "indexdef": "CREATE UNIQUE INDEX organization_members_pkey ON public.organization_members USING btree (id)"
+      },
+      {
+        "tablename": "organization_previews",
+        "indexname": "organization_previews_org_slug_idx",
+        "indexdef": "CREATE INDEX organization_previews_org_slug_idx ON public.organization_previews USING btree (lower(org_slug))"
+      },
+      {
+        "tablename": "organization_previews",
+        "indexname": "organization_previews_pkey",
+        "indexdef": "CREATE UNIQUE INDEX organization_previews_pkey ON public.organization_previews USING btree (org_id)"
       },
       {
         "tablename": "organizations",
@@ -52470,6 +52602,30 @@
       },
       {
         "kind": "CHECK",
+        "table_name": "organization_previews",
+        "detail": "organization_previews_claimer_needs_claim",
+        "check_clause": "((claimed_by IS NULL) OR (claimed_at IS NOT NULL))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "organization_previews",
+        "detail": "organization_previews_logo_source_is_web",
+        "check_clause": "((logo_source_url ~* '^https?://'::text) AND (length(logo_source_url) <= 2000))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "organization_previews",
+        "detail": "organization_previews_removed_or_claimed",
+        "check_clause": "((removed_at IS NULL) OR (claimed_at IS NULL))"
+      },
+      {
+        "kind": "RLS",
+        "table_name": "organization_previews",
+        "detail": "ENABLED",
+        "check_clause": null
+      },
+      {
+        "kind": "CHECK",
         "table_name": "organizations",
         "detail": "organizations_account_kind_check",
         "check_clause": "(account_kind = ANY (ARRAY['organization'::text, 'team_workspace'::text]))"
@@ -52491,6 +52647,12 @@
         "table_name": "organizations",
         "detail": "organizations_fiscal_first_month_check",
         "check_clause": "((fiscal_first_month >= 1) AND (fiscal_first_month <= 12))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "organizations",
+        "detail": "organizations_preview_has_no_stripe",
+        "check_clause": "((NOT is_preview) OR ((stripe_customer_id IS NULL) AND (stripe_subscription_id IS NULL)))"
       },
       {
         "kind": "CHECK",

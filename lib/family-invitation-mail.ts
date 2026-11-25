@@ -174,6 +174,7 @@ async function emailRepInvitation(p: {
   );
   const result = await sendEmail(to, W.repMail.subject(e.player_first_name, teamName), html, {
     kind: 'family_invitation',
+    orgId: p.orgId,
     fromName: coachInvitationSenderName(p.coach.name, p.sender.teamWorkspace ? null : p.sender.clubName),
     replyTo: p.sender.contact,
   });

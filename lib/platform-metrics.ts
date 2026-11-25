@@ -1,5 +1,6 @@
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { listDemoOrgIdsQuietly } from '@/lib/demo-org-server';
+import { openPreviewOrgIds } from '@/lib/preview-org-server';
 import { PLAN_CONFIG } from '@/lib/plan-config';
 import type { OrgPlan } from '@/lib/types';
 import { tournamentToday } from './timezone';
@@ -35,6 +36,7 @@ type OverrideRow = {
 type PlatformEventRow = {
   event_type: string;
   occurred_at: string;
+  org_id?: string | null;
 };
 
 type CountResult = { count: number | null; error?: unknown };
@@ -82,8 +84,20 @@ export function statusLabel(status: string) {
  * an org). Fails quiet: if either lookup breaks, the metrics are momentarily off by one sandbox,
  * which is the right failure for a reporting page.
  */
-async function resolveSandboxExclusions(): Promise<{ orgIds: string[]; tournamentIds: string[] }> {
-  const orgIds = await listDemoOrgIdsQuietly();
+async function resolveSandboxExclusions(strictPreviews = false): Promise<{ orgIds: string[]; tournamentIds: string[] }> {
+  // The preview clubs (Track P, T1) too, read fresh. The SNAPSHOT fails closed (`strictPreviews`): a snapshot written with a
+  // prospect's preview in it would keep counting a club that is not a customer. A page (Today, the menu counts, Business
+  // numbers) says so in the log and goes on: the club list itself still drops previews by its own column below, and a
+  // failed read of the marker is the database failing, when the page has bigger news.
+  const [demoIds, previewIds] = await Promise.all([
+    listDemoOrgIdsQuietly(),
+    openPreviewOrgIds().catch((error: unknown) => {
+      if (strictPreviews) throw error;
+      console.warn('[platform-admin] preview exclusion failed', error);
+      return [] as string[];
+    }),
+  ]);
+  const orgIds = [...demoIds, ...previewIds];
   if (orgIds.length === 0) return { orgIds, tournamentIds: [] };
   const { data, error } = await supabaseAdmin
     .from('tournaments')
@@ -97,14 +111,17 @@ async function resolveSandboxExclusions(): Promise<{ orgIds: string[]; tournamen
 }
 
 /**
- * The orgs every customer count leaves out, as one set: the sandbox demos, and the Coaches Portals staff gave free time
+ * The orgs every customer count leaves out, as one set: the sandbox demos, the preview clubs (Track P, T1; read fail-closed
+ * when not handed in), and the Coaches Portals staff gave free time
  * (Support console Stage 4b, T35: stored cancelled for their whole life, so they would read as churn). Business numbers
  * and Renewals (Plans & pricing Stage 2 Part 4) read this one rule. A free-time read failure leaves the portals counted,
  * as before.
  */
 export async function notCustomerOrgIds(sandboxOrgIds?: readonly string[]): Promise<Set<string>> {
   const [sandbox, freeTimePortals] = await Promise.all([
-    sandboxOrgIds ? Promise.resolve([...sandboxOrgIds]) : listDemoOrgIdsQuietly(),
+    sandboxOrgIds
+      ? Promise.resolve([...sandboxOrgIds])
+      : Promise.all([listDemoOrgIdsQuietly(), openPreviewOrgIds()]).then(([demo, preview]) => [...demo, ...preview]),
     freeTimePortalOrgIds().catch(() => new Set<string>()),
   ]);
   return new Set([...sandbox, ...freeTimePortals]);
@@ -115,8 +132,8 @@ function notInList(ids: string[]): string | null {
   return ids.length > 0 ? `(${ids.join(',')})` : null;
 }
 
-export async function getCommandCenterStats(options: { since?: string | null } = {}) {
-  const { orgIds: sandboxOrgIds, tournamentIds: sandboxTournamentIds } = await resolveSandboxExclusions();
+export async function getCommandCenterStats(options: { since?: string | null; strictPreviews?: boolean } = {}) {
+  const { orgIds: sandboxOrgIds, tournamentIds: sandboxTournamentIds } = await resolveSandboxExclusions(options.strictPreviews);
   const notSandboxOrg = notInList(sandboxOrgIds);
   const notSandboxTournament = notInList(sandboxTournamentIds);
   /** Apply an org exclusion to a count query, or leave it exactly as it was. */
@@ -167,6 +184,8 @@ export async function getCommandCenterStats(options: { since?: string | null } =
       // No `slug`: the sandbox filter below keys on row id, so fetching the slug would be a column
       // pulled on every platform-admin dashboard load and read by nobody.
       .select('id, name, plan_id, subscription_status, current_period_end, created_at, stripe_subscription_id')
+      // A preview club (Track P, T1) is never a customer, whether or not the id read above answered.
+      .eq('is_preview', false)
       .order('created_at', { ascending: false })
       .limit(5000),
     ownersRead,
@@ -185,17 +204,20 @@ export async function getCommandCenterStats(options: { since?: string | null } =
     })()),
     safeCount('league seasons total', exOrg(supabaseAdmin.from('league_seasons').select('*', { count: 'exact', head: true }))),
     safeCount('league seasons active', exOrg(supabaseAdmin.from('league_seasons').select('*', { count: 'exact', head: true }).in('status', ['registration_open', 'registration_closed', 'active']))),
-    safeCount('league active registrations', supabaseAdmin.from('league_registrations').select('*', { count: 'exact', head: true }).eq('status', 'active')),
+    safeCount('league active registrations', exOrg(supabaseAdmin.from('league_registrations').select('*', { count: 'exact', head: true }).eq('status', 'active'))),
     safeCount('rep teams total', exOrg(supabaseAdmin.from('rep_teams').select('*', { count: 'exact', head: true }).eq('is_archived', false))),
     safeCount('rep program years active', exOrg(supabaseAdmin.from('rep_program_years').select('*', { count: 'exact', head: true }).eq('status', 'active'))),
-    safeCount('accounting entries total', supabaseAdmin.from('accounting_entries').select('*', { count: 'exact', head: true })),
+    // Entries hang off a ledger, and the ledger names the club (the same sandbox and preview exclusion, one join away).
+    safeCount('accounting entries total', notSandboxOrg
+      ? exOrg(supabaseAdmin.from('accounting_entries').select('id, accounting_ledgers!inner(org_id)', { count: 'exact', head: true }), 'accounting_ledgers.org_id')
+      : supabaseAdmin.from('accounting_entries').select('*', { count: 'exact', head: true })),
     safeCount(
       'retention alert records',
-      supabaseAdmin
+      exOrg(supabaseAdmin
         .from('billing_retained_records')
         .select('*', { count: 'exact', head: true })
         .in('retained_state', ['retained_inactive', 'pending_purge'])
-        .lte('retention_until', retentionWindowEnd)
+        .lte('retention_until', retentionWindowEnd))
     ),
     supabaseAdmin
       .from('org_overrides')
@@ -205,7 +227,7 @@ export async function getCommandCenterStats(options: { since?: string | null } =
       .limit(5000),
     supabaseAdmin
       .from('platform_events')
-      .select('event_type, occurred_at, metadata')
+      .select('event_type, occurred_at, metadata, org_id')
       .in('event_type', [
         'subscription_canceled', 'plan_downgraded', 'subscription_past_due', 'subscription_recovered',
         'subscription_started', 'plan_upgraded',
@@ -229,7 +251,9 @@ export async function getCommandCenterStats(options: { since?: string | null } =
   if (eventsRes.error) console.warn('[platform-admin] platform events metric failed', eventsRes.error);
   // A club closed AGAIN when free time that reopened it ran out (owner ruling 2026-11-18) churned once, at its first end.
   const events = eventsRes.error ? [] : ((eventsRes.data ?? []) as Array<PlatformEventRow & { metadata?: { freeTimeEnded?: boolean } | null }>)
-    .filter(e => !(e.event_type === 'subscription_canceled' && e.metadata?.freeTimeEnded === true));
+    .filter(e => !(e.event_type === 'subscription_canceled' && e.metadata?.freeTimeEnded === true))
+    // A sandbox's events are not a customer's: the demos and the previews (the same set the counts above leave out).
+    .filter(e => !e.org_id || !sandboxOrgIdSet.has(e.org_id));
   const ownerOrgIds = new Set(
     members
       .filter(member => (member.status ?? 'active') !== 'suspended')
@@ -404,7 +428,8 @@ export async function getLatestPlatformMetricSnapshot() {
 }
 
 export async function writeTodayPlatformMetricSnapshot(actorEmail: string, source = 'manual') {
-  const metrics = await getCommandCenterStats();
+  // Strict: a snapshot is kept, so it is not written at all if the preview clubs cannot be left out (Track P, T1).
+  const metrics = await getCommandCenterStats({ strictPreviews: true });
   const snapshotDate = tournamentToday();
   const { data, error } = await supabaseAdmin
     .from('platform_metric_snapshots')

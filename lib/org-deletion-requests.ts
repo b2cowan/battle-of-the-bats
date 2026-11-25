@@ -94,7 +94,7 @@ export async function sendDeletionRequest(input: {
         orgName: org.name, orgSlug: org.slug, orgId: org.id, ownerEmail: input.email,
         planLabel: PLAN_CONFIG[plan]?.label ?? plan, reason: input.reason, requestedAt: request.sentAt,
       }),
-      { kind: 'org_deletion_request', idempotencyKey: `org-deletion-request:${request.id}` },
+      { kind: 'org_deletion_request', orgId: null, idempotencyKey: `org-deletion-request:${request.id}` },
     );
     delivered = sent.status;
   } catch {

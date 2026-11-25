@@ -110,7 +110,7 @@ async function send(c: DebitContext, kind: 'league_bank_debit_started' | 'league
     test ? warmEmailSmall(escapeHtml(E.testNote)) : '',
     transactionalFamilyFooterHtml({ orgName: c.org.name, teamName: c.season, noticeKind: 'Payment notices', about: 'a payment', replyLine: null }),
   ].filter(Boolean).join('\n'), face?.club ?? null);
-  const result = await sendEmail(c.op.payer_email!, `${test ? E.testPrefix : ''}${subject}`, html, { ...face?.sendOpts, kind });
+  const result = await sendEmail(c.op.payer_email!, `${test ? E.testPrefix : ''}${subject}`, html, { ...face?.sendOpts, kind, orgId: c.org.id });
   if (result.status === 'provider_error') throw new Error('send failed');
   return result.status;
 }

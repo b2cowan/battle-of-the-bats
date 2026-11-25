@@ -21,12 +21,16 @@ export const GET = withObservability(async (req: NextRequest) => {
     const staff = await readStaffAddresses();
     const kept = rows.filter(r => !(r.ownerEmail && staff.has(normalAddress(r.ownerEmail))));
     const { data: dates, error } = kept.length
-      ? await supabaseAdmin.from('organizations').select('id, created_at').in('id', kept.map(r => r.id))
+      ? await supabaseAdmin.from('organizations').select('id, created_at, is_preview').in('id', kept.map(r => r.id))
       : { data: [], error: null };
     if (error) throw error;
-    const createdAt = new Map(((dates ?? []) as { id: string; created_at: string }[]).map(d => [d.id, d.created_at]));
+    const read = (dates ?? []) as { id: string; created_at: string; is_preview: boolean | null }[];
+    const createdAt = new Map(read.map(d => [d.id, d.created_at]));
+    // A lead is never linked to a preview club (Track P, T1): Find shows previews, this picker does not. A club the read
+    // did not return is left out too, so a preview cannot slip through a partial answer.
+    const real = new Set(read.filter(d => d.is_preview !== true).map(d => d.id));
     return NextResponse.json({
-      clubs: kept.map(r => ({ id: r.id, name: r.name, planId: r.planId, status: r.subscriptionStatus ?? null, joined: createdAt.has(r.id) ? consoleDay(createdAt.get(r.id)) : null })),
+      clubs: kept.filter(r => real.has(r.id)).map(r => ({ id: r.id, name: r.name, planId: r.planId, status: r.subscriptionStatus ?? null, joined: createdAt.has(r.id) ? consoleDay(createdAt.get(r.id)) : null })),
     });
   } catch {
     return NextResponse.json({ error: 'The clubs could not be searched just now.' }, { status: 503 });

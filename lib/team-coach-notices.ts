@@ -1,6 +1,7 @@
 import 'server-only';
 import { supabaseAdmin } from './supabase-admin';
 import { isDemoOrgId } from './demo-org-server';
+import { isPreviewOrgId } from './preview-org-server';
 import { filterUnpausedUsers } from './notification-pause';
 import { findAuthUserIdByEmail } from './auth-account-lookup';
 import { chunked, fetchAllIn } from './supabase-paging';
@@ -108,7 +109,8 @@ async function notifyChunk(
     const demoOrgIds = new Set<string>();
     for (const orgId of orgIds) {
       try {
-        if (await isDemoOrgId(orgId)) demoOrgIds.add(orgId);
+        // A preview club (Track P, T1) notifies nobody either.
+        if (await isDemoOrgId(orgId) || await isPreviewOrgId(orgId)) demoOrgIds.add(orgId);
       } catch {
         return 0;
       }
@@ -151,7 +153,7 @@ export async function notifyInvitedFreeCoach(opts: {
   inviteId?: string | null;
 }): Promise<void> {
   try {
-    if (await isDemoOrgId(opts.orgId)) return;
+    if (await isDemoOrgId(opts.orgId) || await isPreviewOrgId(opts.orgId)) return;
     const userId = await findAuthUserIdByEmail(opts.email);
     if (!userId) return;
 

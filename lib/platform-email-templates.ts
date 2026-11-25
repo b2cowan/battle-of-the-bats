@@ -224,8 +224,9 @@ export async function sendTransactionalEmail(opts: {
   defaultHtml: string;
   /** A FAMILY email (a registration email, the tryout receipt): the club it wears, why it was sent and where a reply goes. It also names the sender in the inbox. */
   family?: FamilyTemplateFace;
-  /** The sent-email log's club and the person whose action sent it (logged kinds only; lib/email.ts). */
-  orgId?: string | null;
+  /** The club this email is for, or null for our own mail (required, as on sendEmail: a preview's mail is refused). Also the log's club. */
+  orgId: string | null;
+  /** The person whose action sent it (logged kinds only; lib/email.ts). */
   askedBy?: string | null;
   /** The mail service's once-only key (24 hours): a retried send under the same key goes once (Plans end at renewal, G7). */
   idempotencyKey?: string;

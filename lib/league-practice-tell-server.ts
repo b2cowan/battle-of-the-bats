@@ -524,6 +524,7 @@ async function sendClaimed(p: { org: TellMailOrg; season: LeagueSeason; noticeId
   if (!messages.length) return;
   const answered = new Set<string>();
   const results = await sendFamilyServiceBatch({
+    orgId: p.org.id,
     kind: 'house_league_practice_times', messages, fromName: face?.sendOpts.fromName ?? null, replyTo: face?.sendOpts.replyTo ?? null,
     onBatch: async (indexes, result) => {
       const batch = indexes.map(i => messageRows[i]);

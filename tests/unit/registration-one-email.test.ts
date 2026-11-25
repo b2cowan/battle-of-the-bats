@@ -116,7 +116,7 @@ describe('the route: entry, organizer, account, then the coach', () => {
   it('files the entry and sends the organizer’s alert BEFORE the account step (the organizer never waits)', () => {
     const account = at(route, 'await openRegistrationAccount({');
     assert.ok(at(route, ".from('teams')\n      .insert({") < account, 'the entry first');
-    assert.ok(at(route, "{ kind: 'registration_admin_alert' },") < account, 'the alert is on its way first');
+    assert.ok(at(route, "{ kind: 'registration_admin_alert', orgId: tournament.org_id ?? null },") < account, 'the alert is on its way first');
     assert.ok(account < at(route, 'planCoachRegistrationEmails({'), 'then the coach’s emails');
   });
   it('runs the account step only for a signed-out coach who sent a password, on the live site', () => {

@@ -194,6 +194,9 @@ The **tenant backbone**: an **organization** is the root every other domain FKs 
 <!-- dict:col:organizations.renewal_reminded_for -->
 **`renewal_reminded_for`** (timestamptz, nullable; **mig 478**, GST/HST 6.4) — the charge date the **yearly renewal reminder** (`yearly_renewal_reminder`, the daily job's `renewal_reminders` step, Part B) last told this club's owners of: a renewal's `current_period_end`, or a yearly trial's first charge. Claimed with a conditional update (`is null or != the date`), so one reminder per period; given back (to what it held before) only when the email definitely did not go. Written by `lib/renewal-reminder-server.ts`. **A coach's own Premium is stamped HERE too**, on its workspace's organization row: that row carries the same `subscription_period` / `current_period_end` / `stripe_subscription_id` (`syncTeamWorkspaceSubscription`, `lib/team-checkout.ts`), so Part B reads and stamps one table for both (`team_workspaces.renewal_reminded_for` is unused).
 
+<!-- dict:col:organizations.is_preview -->
+**`is_preview`** (bool, NOT NULL, default false; **mig 535**, Club Website Track P, owner ruling T1 2026-11-25) — **THE preview marker**: this club is a prospect's own site we built for a sales meeting (their name, address, logo and colours over a fixed made-up sample, no people), **not a customer**. **Never written by app code:** the `organization_previews_keep_marker` trigger keeps it equal to "this club has an unclaimed `organization_previews` row" (true on the row's insert, false when `claimed_at` is set, true again if a claim is undone). Read by every count, list, search and send that reads organizations, through [lib/preview-org.ts](../../../lib/preview-org.ts) (the rule) and [lib/preview-org-server.ts](../../../lib/preview-org-server.ts) (`isPreviewOrgId`, `openPreviewOrgIds`, both fail closed); held by `tests/unit/preview-org-guard.test.ts`. ⚠ It is **not** the demo list (`lib/demo-org.ts`: a read-only sandbox with a no-login door and silenced error alerts) and **not** `is_test_organization` (a two-step exemption). Folded in at the entitlement door as the public-site sections (`PREVIEW_SECTIONS`); `plan_id` stays at the free start. The org mappers expose it as `Organization.isPreview` and read `isDiscoverable` false for a preview whatever is stored.
+
 <!-- dict:col:organizations.is_test_organization -->
 **`is_test_organization`** (bool, NOT NULL, default false; **mig 463**) — the **test organization exemption**: no two-step requirement ever applies in it, so the demos, seeds and probes keep signing in. Set by mig 463 on both public demos, the Milton prospect demo, every UAT org (`[UAT_PROTECTED]`/`[PROSPECT_DEMO]` notes) and the fixture clubs, and by every seed that creates one (`seed-demo-*`, `seed-club-fixture`, `seed-prospect-demo`, `seed-families-fixture`, `tests/uat/create-uat-accounts.sql`). Platform admin sets it otherwise. It exempts the **club's** requirement only: platform staff still need two-step everywhere, and a person who has turned it on is still asked at every sign-in.
 
@@ -456,6 +459,43 @@ Stripe events — setup-mode `checkout.session.completed` (the portal's "save a 
 write time on `card_on_file_last4` so a swap cannot clear the new card). _Read by:_ nothing
 (gotcha 4).
 
+## `organization_previews`
+<!-- dict:table:organization_previews -->
+
+**Purpose:** the **record of a preview club** (mig 535, Club Website Track P, owner ruling T1 2026-11-25): one row per preview ever made, carrying what `organizations.is_preview` stands for (the meeting, who made it, the logo's source, the claim). **Kept after a claim** (Prospect clubs keeps one row; "Came from a preview") **and after a removal** (the list's Removed count and the 90-day "This preview has ended" page, T12). Nothing writes it until Session P2 (the one creation step) and P3 (the claim).
+
+**Gotchas (read first):**
+1. ⚠⚠ **`org_id` HAS NO FOREIGN KEY, ON PURPOSE.** The record outlives the club (the mig 451 pattern), so the club's slug and name are copied in. A removed club stamps `removed_at` on its unclaimed row by the `organization_previews_mark_removed` trigger (AFTER DELETE on `organizations`), so the nightly removal and platform admin's Delete both leave it.
+2. ⚠ **It drives `organizations.is_preview` by trigger** (`organization_previews_keep_marker`, BEFORE INSERT OR UPDATE OF `claimed_at`). Deleting a row by hand does NOT clear the marker: the unsafe direction is a preview that stops being one. **T3 is held by the database:** the trigger refuses the marker becoming true (a row made, or a claim undone) for a club with any `organization_members` (`PV001 preview_org_has_people`; `organizations_preview_has_no_people` holds the same on `organizations.is_preview` itself, however it is written), a row naming a club that does not exist (`PV002 preview_org_missing`), and a row moved to another club (`PV004 preview_org_is_fixed`); it locks the club’s row first, so nobody can join between the check and the write; `organization_members_not_in_a_preview` (BEFORE INSERT OR UPDATE OF `organization_id` on `organization_members`) refuses anyone joining an open preview (`PV003 preview_org_takes_no_people`), so the claim (P3) must clear the marker BEFORE it seats the owner, and an undo (T15) must take the claimant out first; and `organizations_preview_has_no_stripe` (CHECK on `organizations`) keeps a preview with no Stripe customer or subscription.
+3. **The removal date is not stored:** it is the meeting's day + 30 days (T11), so moving the meeting moves it. The plan a claimer came for is read live from the club, never copied here. The claim code is Session P3's.
+4. **RLS enabled, no policies: service role only.**
+
+**Fields** (`created_at` omitted; `updated_at` is set by the trigger on insert and on any write of `claimed_at`, and by the removal stamp):
+
+<!-- dict:col:organization_previews.org_id -->
+**`org_id`** (uuid, PK, **no FK**) — the preview club (gotcha 1).
+
+<!-- dict:col:organization_previews.org_slug -->
+<!-- dict:col:organization_previews.org_name -->
+**`org_slug` / `org_name`** (text, NOT NULL) — the club's web address and name, copied at creation, so the ended page and the Removed rows can still name it. Index on `lower(org_slug)` for the ended page (not unique: an address can be used again after a removal, so the ended page reads the newest record).
+
+<!-- dict:col:organization_previews.meeting_at -->
+**`meeting_at`** (timestamptz, NOT NULL) — the meeting; the sample tournament's live game is set to it (T5), and the removal is its day + 30 (T11).
+
+<!-- dict:col:organization_previews.made_by -->
+**`made_by`** (uuid, nullable, FK → `auth.users`, ON DELETE SET NULL) — the staff member who made it (only the owner makes one, T2).
+
+<!-- dict:col:organization_previews.logo_source_url -->
+**`logo_source_url`** (text, NOT NULL; CHECK web address, ≤ 2,000) — where the club publishes the logo we used (/legal: a logo with no source is refused).
+
+<!-- dict:col:organization_previews.claimed_at -->
+<!-- dict:col:organization_previews.claimed_by -->
+**`claimed_at` / `claimed_by`** (timestamptz / uuid FK → `auth.users` ON DELETE SET NULL, nullable; CHECK a claimer needs a claim) — the claim (T8, T14). Setting `claimed_at` clears `is_preview`; clearing it (the undo, T15) sets it again. The club is a customer from `claimed_at` (T10).
+
+<!-- dict:col:organization_previews.removed_at -->
+**`removed_at`** (timestamptz, nullable; CHECK never with a claim) — when the club was removed (trigger, gotcha 1).
+
+---
 ## `billing_locations`
 <!-- dict:table:billing_locations -->
 

@@ -88,7 +88,14 @@ export type OrgLinkRow = {
   account_kind: string | null;
   plan_id: string | null;
   is_discoverable: boolean | null;
+  /** The preview marker (mig 535, Track P): a preview reads as not discoverable whatever is stored (listedRow). */
+  is_preview?: boolean | null;
 };
+
+/** A preview club (Track P, T1) is never found to link to, whatever its stored switch says. */
+function listedRow<T extends OrgLinkRow>(row: T): T {
+  return row.is_preview === true ? { ...row, is_discoverable: false } : row;
+}
 
 type OrgPublicSiteContactRow = {
   org_id: string;
@@ -194,11 +201,11 @@ async function fetchOrgMap(orgIds: string[]): Promise<Map<string, OrgLinkRow>> {
   if (!orgIds.length) return new Map();
   const { data, error } = await supabaseAdmin
     .from('organizations')
-    .select('id, name, slug, account_kind, plan_id, is_discoverable')
+    .select('id, name, slug, account_kind, plan_id, is_discoverable, is_preview')
     .in('id', orgIds);
   if (error) throw error;
 
-  const rows = (data ?? []) as OrgLinkRow[];
+  const rows = ((data ?? []) as OrgLinkRow[]).map(listedRow);
   const { data: contactRows, error: contactError } = await supabaseAdmin
     .from('org_public_site_content')
     .select('org_id, contact_email')
@@ -366,7 +373,7 @@ export async function findLinkableOrg(targetInput: string): Promise<OrgLinkRow |
   const lookup = normalizeLinkTarget(targetInput);
   if (!lookup) return null;
 
-  const orgSelect = 'id, name, slug, account_kind, plan_id, is_discoverable';
+  const orgSelect = 'id, name, slug, account_kind, plan_id, is_discoverable, is_preview';
 
   if (lookup.kind === 'email') {
     const { data: contactRow, error: contactError } = await supabaseAdmin
@@ -386,7 +393,7 @@ export async function findLinkableOrg(targetInput: string): Promise<OrgLinkRow |
       .maybeSingle();
 
     if (error) throw error;
-    return data ? { ...(data as OrgLinkRow), contact_email: contactRow.contact_email ?? null } : null;
+    return data ? listedRow({ ...(data as OrgLinkRow), contact_email: contactRow.contact_email ?? null }) : null;
   }
 
   const { data, error } = await supabaseAdmin
@@ -396,7 +403,7 @@ export async function findLinkableOrg(targetInput: string): Promise<OrgLinkRow |
     .maybeSingle();
 
   if (error) throw error;
-  return (data as OrgLinkRow | null) ?? null;
+  return data ? listedRow(data as OrgLinkRow) : null;
 }
 
 export function isTeamWorkspaceOrgRow(org: Pick<OrgLinkRow, 'account_kind' | 'plan_id'>): boolean {

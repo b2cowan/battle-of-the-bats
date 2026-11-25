@@ -26,6 +26,7 @@ import { filterUsersWithCategoryOn } from './fan-alert-prefs';
 import { filterUnpausedUsers } from './notification-pause';
 import { captureError } from './observability';
 import { isDemoOrgId } from './demo-org-server';
+import { isPreviewOrgId } from './preview-org-server';
 import { PLAYOFFS_SET_WORDS } from './schedule-words';
 import type { GameStatus } from './types';
 
@@ -248,7 +249,8 @@ async function fanPushContext(tournamentId: string): Promise<{
   // plan gate below) would push a score alert to every real device following anything.
   // FAIL-CLOSED — an unresolvable allow-list means no push.
   try {
-    if (await isDemoOrgId(tournament.org_id as string)) return null;
+    // A preview club (Track P, T1) pushes nothing either: its live game is in front of a prospect, not a fan.
+    if (await isDemoOrgId(tournament.org_id as string) || await isPreviewOrgId(tournament.org_id as string)) return null;
   } catch {
     return null;
   }

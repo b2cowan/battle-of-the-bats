@@ -113,16 +113,23 @@ export function computeTimeframe(status: string, startDate: string | null, endDa
   return 'completed';
 }
 
-/** Ids of orgs whose public pages are blocked (canceled) — never link to them. Cancelled as the door reads it: a
- *  billing-status grant keeps a stored-cancelled club open while it runs (lib/entitlement-grants.ts). */
-async function getCanceledOrgIds(): Promise<string[]> {
-  const { data, error } = await supabaseAdmin
-    .from('organizations')
-    .select('id, subscription_status')
-    .eq('subscription_status', 'canceled');
+/** Ids of orgs never listed: the canceled (their public pages are blocked, never link to them) and the preview clubs
+ *  (Track P, T1: a preview is never in /discover, the scores page, search or a sitemap, whatever its tournament's
+ *  listing switch says). Cancelled as the door reads it: a billing-status grant keeps a stored-cancelled club open while
+ *  it runs (lib/entitlement-grants.ts). Throws on a failed read, so a list never runs without the previews left out. */
+async function getUnlistedOrgIds(): Promise<string[]> {
+  const [{ data, error }, { data: previews, error: previewError }] = await Promise.all([
+    supabaseAdmin
+      .from('organizations')
+      .select('id, subscription_status')
+      .eq('subscription_status', 'canceled'),
+    supabaseAdmin.from('organizations').select('id').eq('is_preview', true),
+  ]);
   if (error) throw error;
+  if (previewError) throw previewError;
   const statusById = await effectiveStatuses(data ?? []);
-  return (data ?? []).filter(o => statusById.get(o.id) === 'canceled').map(o => o.id);
+  const canceled = (data ?? []).filter(o => statusById.get(o.id) === 'canceled').map(o => o.id);
+  return [...canceled, ...((previews ?? []) as { id: string }[]).map(o => o.id)];
 }
 
 // Minimal fluent shape used to apply the shared filter — kept separate from the (deeply generic)
@@ -165,7 +172,7 @@ export async function getDirectoryListings(
   // America/Toronto date (not UTC) so timeframe bucketing doesn't roll over mid-evening Eastern.
   const today = tournamentToday();
 
-  const canceledIds = await getCanceledOrgIds();
+  const canceledIds = await getUnlistedOrgIds();
 
   // ── Facets (stable dropdown options): every opted-in + public tournament's sport/province,
   //    independent of the current sport/province/text/timeframe selection. Skipped for search. ──
@@ -310,7 +317,7 @@ export async function getDirectoryListings(
  * Lean (no filters/pagination/counts): just enough to enumerate crawlable pages.
  */
 export async function getDirectorySitemapEntries(): Promise<{ href: string; lastModified?: string }[]> {
-  const canceledIds = await getCanceledOrgIds();
+  const canceledIds = await getUnlistedOrgIds();
 
   const query = scopeListedTournaments(
     supabaseAdmin.from('tournaments').select('slug, org_id, created_at'),
@@ -394,7 +401,9 @@ function scopeFollowableOrgs<T>(query: T): T {
     .eq('is_public', true)
     .neq('account_kind', 'team_workspace')
     .neq('plan_id', 'team')
-    .neq('subscription_status', 'canceled');
+    .neq('subscription_status', 'canceled')
+    // A preview club (Track P, T1) is never followable, searchable or in a sitemap, whatever is stored.
+    .eq('is_preview', false);
   return q as unknown as T;
 }
 
@@ -657,7 +666,7 @@ export async function searchTeamsForDirectory(
   if (needle.length < SEARCH_MIN_CHARS) return { items: [], total: 0 };
 
   // 1) The directory-listed tournaments that scope the team search (same gate as Browse).
-  const canceledIds = await getCanceledOrgIds();
+  const canceledIds = await getUnlistedOrgIds();
   const tq = scopeListedTournaments(
     supabaseAdmin.from('tournaments').select('id, name, slug, org_id, logo_url'),
     canceledIds,

@@ -151,7 +151,7 @@ export const POST = withObservability(async (req: NextRequest) => {
         orgSlug: auth?.org.slug ?? null,
         userEmail: user?.email ?? null,
       }),
-      { kind: 'feedback_received' },
+      { kind: 'feedback_received', orgId: null },
     );
   } catch {
     /* email failure must never fail the submission */

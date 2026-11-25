@@ -148,7 +148,7 @@ export async function sendTwoStepEmail(
   try {
     const res = await sendEmail(to, mail.subject, mail.html, {
       kind,
-      orgId: opts.orgId ?? undefined,
+      orgId: opts.orgId ?? null,
       askedBy: opts.askedBy ?? undefined,
       ...(opts.replyTo ? { replyTo: opts.replyTo } : {}),
       ...(opts.idempotencyKey ? { idempotencyKey: opts.idempotencyKey } : {}),

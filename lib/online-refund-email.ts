@@ -218,7 +218,7 @@ export async function sendLeagueRefundEmail(refundIds: string[], variant: League
       transactionalFamilyFooterHtml({ orgName: org.name, teamName: seasonName, noticeKind: 'Payment notices', about: 'a refund of a registration fee', replyLine: null }),
     ];
     const subject = `${test ? E.testPrefix : ''}${R.subject(org.name)}`;
-    const result = await sendEmail(to, subject, warmEmailDocument(lines.filter(Boolean).join('\n'), face?.club ?? null), { ...face?.sendOpts, kind: 'league_payment_refund' });
+    const result = await sendEmail(to, subject, warmEmailDocument(lines.filter(Boolean).join('\n'), face?.club ?? null), { ...face?.sendOpts, kind: 'league_payment_refund', orgId: mail.orgId });
     await stampRefundEmailed(mail.refundIds, result.status !== 'provider_error');
   } catch (err) {
     console.error('[online-refund-email] the refund email was not sent:', err instanceof Error ? err.message : String(err));

@@ -1,6 +1,7 @@
 import 'server-only';
 import { supabaseAdmin } from './supabase-admin';
 import { listDemoOrgIdsQuietly } from './demo-org-server';
+import { openPreviewOrgIds } from './preview-org-server';
 import { daysLeft, isEndingSoon, isGrantRunning, lastDayOfInstant } from './free-time';
 import { planLabel, sectionLabel, subscriptionStatusLabel } from './platform-labels';
 import { freeTimePortalOrgIds } from './portal-free-time-server';
@@ -44,7 +45,7 @@ function freeOnWords(r: Row, portal: boolean): string {
 }
 
 export async function getStaffFreeTime(now: Date = new Date()): Promise<StaffFreeTimeClub[]> {
-  const [{ data, error }, demoIds, portalIds] = await Promise.all([
+  const [{ data, error }, demoIds, portalIds, previewIds] = await Promise.all([
     supabaseAdmin
       .from('org_overrides')
       .select('org_id, type, value, target, starts_at, expires_at, revoked_at, reason, created_by')
@@ -53,9 +54,11 @@ export async function getStaffFreeTime(now: Date = new Date()): Promise<StaffFre
       .limit(5000),
     listDemoOrgIdsQuietly(),
     freeTimePortalOrgIds(),
+    // A preview club (Track P, T1) is never on the list: free time is a customer grant (fails closed: throws).
+    openPreviewOrgIds(),
   ]);
   if (error) throw error;
-  const demo = new Set(demoIds);
+  const demo = new Set([...demoIds, ...previewIds]);
   const byOrg = new Map<string, Row[]>();
   for (const r of (data ?? []) as Row[]) {
     if (demo.has(r.org_id) || !isGrantRunning(r, now)) continue;

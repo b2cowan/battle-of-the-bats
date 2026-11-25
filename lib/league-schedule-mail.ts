@@ -314,6 +314,7 @@ async function sendClaimed(p: { org: ScheduleMailOrg; season: ScheduleMailSeason
   if (messages.length) {
     const kind = notice.kind === 'schedule_published' ? 'house_league_schedule_published' : 'house_league_games_changed';
     const results = await sendFamilyServiceBatch({
+      orgId: p.org.id,
       kind,
       messages, fromName: face?.sendOpts.fromName ?? null, replyTo: face?.sendOpts.replyTo ?? null,
       onBatch: async (indexes, result) => {
@@ -362,7 +363,7 @@ async function copyCoaches(org: ScheduleMailOrg, season: ScheduleMailSeason, act
       if (!team || !lines.length) continue;
       const coaches = await leagueCoachesToCopy(org.id, season.id, [teamId], actorId, reachedEmails.get(teamId) ?? new Set());
       if (!coaches.length) continue;
-      await sendCoachCopies(coaches, c => coachCopyWords({
+      await sendCoachCopies(org.id, coaches, c => coachCopyWords({
         orgName: org.name, audience: team, families: reachedByTeam.get(teamId) ?? 0,
         subject: SCHEDULE_EMAIL_WORDS.changedSubject([team]), body: [...facts.note, ...lines.map(l => l.replace(/\n/g, ' · '))].join('\n\n'),
         sender, coachName: c.name, league: true,

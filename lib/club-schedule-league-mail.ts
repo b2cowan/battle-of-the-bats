@@ -111,6 +111,7 @@ export async function sendPracticeChangeNotices(p: {
         };
       });
       const results = await sendFamilyServiceBatch({
+        orgId: p.org.id,
         kind: 'house_league_practice_change', messages,
         fromName: face?.sendOpts.fromName ?? null, replyTo: face?.sendOpts.replyTo ?? null,
       });

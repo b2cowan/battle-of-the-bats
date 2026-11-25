@@ -64,7 +64,10 @@ export async function generateMetadata({
   // for a genuine event — or be mistaken for a real association. `robots.txt` asks crawlers not to
   // fetch these paths at all; this stops one that fetched anyway from listing the page. Applies to
   // the whole subtree, because this layout wraps every page the org owns.
-  const demoRobots = getDemoOrgBySlug(orgSlug)
+  // A preview club (Track P, T1) is kept out the same way, by this tag, and NEVER by a robots.txt line: that file is
+  // public, and a line per preview would list our prospects. (No response header: the request gate never sees a public
+  // club page; the non-page routes a preview could serve are refused for it instead, Track P Session P2.)
+  const demoRobots = getDemoOrgBySlug(orgSlug) || org.isPreview
     ? { robots: { index: false, follow: false, nocache: true } }
     : {};
   // On a club's own web address (Club Tier Stage 4e) every relative address in the metadata (a preview card, say) resolves

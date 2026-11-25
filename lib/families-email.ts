@@ -435,7 +435,7 @@ export async function deliverFamilyEmail(d: {
     try {
       // In club mode the copy names the club and replies to it, as the families' email does (legal addendum 3).
       const [copied, name] = await Promise.all([d.copy.coaches(familyAddresses(audience)), d.reply.mode === 'club' ? ctx.org.name : senderName(ctx)]);
-      coaches = await sendCoachCopies(copied, coach => coachCopyWords({
+      coaches = await sendCoachCopies(ctx.org.id, copied, coach => coachCopyWords({
         orgName: ctx.org.name, audience: d.label, families: reached, subject: d.subject, body: d.message, sender: name,
         coachName: coach.name, league: d.copy!.league,
       }), replyTo);
@@ -450,7 +450,7 @@ export async function deliverFamilyEmail(d: {
   // The club-inbox copy (R4): colleague-built, never the family envelope, not a family, recorded without the address.
   if (d.reply.copy && d.reply.contact) {
     const outcome = familyAddresses(audience).has(d.reply.contact.trim().toLowerCase()) ? 'already_listed'
-      : await sendClubInboxCopy(d.reply.contact, {
+      : await sendClubInboxCopy(ctx.org.id, d.reply.contact, {
         orgName: ctx.org.name, audience: d.label, families: reached, subject: d.subject, body: d.message,
         replyName: d.reply.mode === 'club' ? ctx.org.name : (sender ?? ctx.org.name),
       }, replyTo);

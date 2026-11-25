@@ -270,7 +270,13 @@ export interface Organization {
   contactEmail?: string | null;
   accountKind: OrgAccountKind;
   teamWorkspaceStatus?: TeamWorkspaceStatus | null;
+  /** The mappers read it false for a preview club, whatever is stored (Track P: a preview is never listed). */
   isDiscoverable: boolean;
+  /**
+   * A preview club made for a sales meeting (Track P, mig 535, `organizations.is_preview`): not a customer, silent,
+   * unindexed, unlisted. The one rule is `lib/preview-org.ts`. Absent reads false.
+   */
+  isPreview?: boolean;
   /** Optional external privacy-policy URL. The consent gate links to it when set (see
    *  lib/privacy-policy.ts getOrgPrivacyPolicyHref). NULL/undefined = no policy → no link. */
   privacyPolicyUrl?: string | null;

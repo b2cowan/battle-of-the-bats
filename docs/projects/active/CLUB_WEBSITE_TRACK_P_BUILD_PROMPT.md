@@ -105,7 +105,12 @@ Start condition: P1 committed.
    game at the meeting time (T5) and the tournament's listing switch off.
 3. **The marking** (tab 5): the band above the club's own bar on every page of a preview (in the frame every club page
    shares, so a deep link carries it), not pinned, repeated in the footer with the removal route; "(preview)" in the
-   page title and link preview; "Registration isn't open on this preview" for every form, closed on the server.
+   page title and link preview; "Registration isn't open on this preview" for every form, closed on the server (every
+   public sign-up, tryout and registration POST refuses a preview: P1's sections open those pages).
+   **Refused for a preview (owner 2026-11-25, in place of an `X-Robots-Tag` header, which P1 did not build):** every
+   non-page route it could serve — share images, posters, the calendar feed, PDFs. Make the club with `is_preview` set
+   in the one creation step (mig 535 refuses people, Stripe ids and a moved record); seed no dues. P1's other hand-offs
+   are in the plan's Progress block, "Track P Session P1".
 4. Words: one `/marketing` pass (tab 5's and tab 3's strings; the 16 already passed are in the Progress block).
    `/design` on the shipped screens, `/review`, `/docs` (a platform-admin-only page needs no customer help; say so).
 5. One walk (checkable Artifact, exact logins), on dev. Commit at the owner's word.

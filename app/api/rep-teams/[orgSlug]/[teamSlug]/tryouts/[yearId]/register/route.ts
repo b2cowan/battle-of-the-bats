@@ -141,6 +141,7 @@ export const POST = withObservability(async (req: Request,
       });
       await sendTransactionalEmail({
         key: 'tryout_application_received',
+        orgId: org.id,
         to: guardianEmail!,
         vars: {
           guardianFirstName: guardianFirst!,

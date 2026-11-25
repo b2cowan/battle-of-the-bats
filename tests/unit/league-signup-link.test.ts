@@ -118,7 +118,7 @@ describe('the reference opens nothing; "Email me my link" sends to the inbox', (
     assert.doesNotMatch(MAIL, /owingCents|clearingCents/);
     // To the address typed, through the account-notice frame (the transactional door, never the unsubscribe list).
     assert.match(MAIL, /await sendLinkNotice\(org, \{\s*key: 'league_signup_link', to: email,/);
-    assert.match(MAIL, /return sendTransactionalEmail\(\{\s*key: n\.key,\s*to: n\.to,/);
+    assert.match(MAIL, /return sendTransactionalEmail\(\{\s*key: n\.key,\s*orgId: org\.id,\s*to: n\.to,/);
   });
 });
 

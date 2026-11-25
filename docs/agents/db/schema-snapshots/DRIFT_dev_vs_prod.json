@@ -1,12 +1,12 @@
 {
-  "generated": "2026-11-24",
-  "total": 72,
+  "generated": "2026-11-25",
+  "total": 94,
   "counts": {
-    "tables": 1,
-    "columns": 40,
-    "indexes": 7,
-    "constraints": 12,
-    "rls": 12
+    "tables": 2,
+    "columns": 52,
+    "indexes": 9,
+    "constraints": 15,
+    "rls": 16
   },
   "items": [
     {
@@ -55,6 +55,22 @@
     },
     {
       "key": "check:only-dev:club_sponsor_deals.club_sponsor_deals_card_fee",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:organization_previews.organization_previews_claimer_needs_claim",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:organization_previews.organization_previews_logo_source_is_web",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:organization_previews.organization_previews_removed_or_claimed",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:organizations.organizations_preview_has_no_stripe",
       "sig": ""
     },
     {
@@ -218,6 +234,54 @@
       "sig": ""
     },
     {
+      "key": "column:only-dev:organization_previews.claimed_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:organization_previews.claimed_by",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:organization_previews.created_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:organization_previews.logo_source_url",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:organization_previews.made_by",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:organization_previews.meeting_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:organization_previews.org_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:organization_previews.org_name",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:organization_previews.org_slug",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:organization_previews.removed_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:organization_previews.updated_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:organizations.is_preview",
+      "sig": ""
+    },
+    {
       "key": "constraint:only-dev:club_sponsor_deal_payments.club_sponsor_deal_payments_fee_cost_entry_id_fkey",
       "sig": ""
     },
@@ -266,6 +330,18 @@
       "sig": ""
     },
     {
+      "key": "constraint:only-dev:organization_previews.organization_previews_claimed_by_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:organization_previews.organization_previews_made_by_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:organization_previews.organization_previews_pkey",
+      "sig": ""
+    },
+    {
       "key": "index:only-dev:club_sponsor_deal_payments_online_uniq",
       "sig": ""
     },
@@ -294,7 +370,19 @@
       "sig": ""
     },
     {
+      "key": "index:only-dev:organization_previews_org_slug_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:organization_previews_pkey",
+      "sig": ""
+    },
+    {
       "key": "table:only-dev:club_sponsor_deal_refunds",
+      "sig": ""
+    },
+    {
+      "key": "table:only-dev:organization_previews",
       "sig": ""
     }
   ]

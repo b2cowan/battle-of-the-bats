@@ -133,6 +133,7 @@ export const POST = withObservability(async (req: Request,
     return NextResponse.json({ ok: true, pendingApproval: true, invite: shape(minted.invite) });
   }
   await sendAssistantInviteEmail({
+    orgId: resolved.ctx.org.id,
     email: minted.invite.invitedEmail,
     teamName,
     invitedByName: minted.invitedByName,

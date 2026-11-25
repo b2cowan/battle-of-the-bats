@@ -208,7 +208,7 @@ export async function sendFamilyEmail(params: {
   if (suppressed.has(to)) return { status: 'suppressed' };
 
   return sendEmail(to, params.subject, familyEmailHtml(params.content, params.orgId, to), {
-    kind: params.kind, replyTo: params.replyTo ?? null, fromName: familyFromName(params.content),
+    kind: params.kind, orgId: params.orgId, replyTo: params.replyTo ?? null, fromName: familyFromName(params.content),
     headers: oneClickUnsubscribeHeaders(buildGuardianUnsubscribeUrl(params.orgId, to)),
   });
 }
@@ -249,7 +249,7 @@ export async function sendFamilyEmailBatch(params: {
       result = await sendEmailBatch(chunk.map(to => ({
         kind: params.kind, to, subject: params.subject, html: familyEmailHtml(params.content, params.orgId, to), replyTo: params.replyTo ?? null,
         fromName, headers: oneClickUnsubscribeHeaders(buildGuardianUnsubscribeUrl(params.orgId, to)),
-      })));
+      })), params.orgId);
     } catch (err) {
       console.error('[family-email] a batch threw:', err instanceof Error ? err.message : String(err));
       result = { status: 'provider_error' };
@@ -277,6 +277,8 @@ export interface FamilyServiceMessage { to: string; subject: string; html: strin
  */
 export async function sendFamilyServiceBatch(params: {
   kind: UnloggedEmailKind;
+  /** The club (lib/email.ts: a preview's mail is refused). */
+  orgId: string;
   messages: readonly FamilyServiceMessage[];
   fromName: string | null;
   replyTo?: string | null;
@@ -295,7 +297,7 @@ export async function sendFamilyServiceBatch(params: {
     try {
       result = await sendEmailBatch(chunk.map(m => ({
         kind: params.kind, to: m.to, subject: m.subject, html: m.html, replyTo: params.replyTo ?? null, fromName: params.fromName,
-      })));
+      })), params.orgId);
     } catch (err) {
       console.error('[family-email] a service batch threw:', err instanceof Error ? err.message : String(err));
       result = { status: 'provider_error' };

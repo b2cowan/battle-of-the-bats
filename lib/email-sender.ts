@@ -21,6 +21,7 @@ import { supabaseAdmin } from '@/lib/supabase-admin';
 import { FIELDLOGICHQ_CONTACT_EMAIL } from '@/lib/fieldlogichq-contact';
 import { buildUnsubscribeUrl, buildUserUnsubscribeUrl, oneClickUnsubscribeHeaders } from '@/lib/unsubscribe-token';
 import { isDemoOrgId } from '@/lib/demo-org-server';
+import { isPreviewOrgId } from '@/lib/preview-org-server';
 import { insertAtWarmCardEnd, warmUnsubscribeFooterHtml } from '@/lib/email-envelope-warm';
 
 const RESEND_API = 'https://api.resend.com/emails';
@@ -110,7 +111,8 @@ export async function sendMarketingEmail(opts: SendEmailOptions): Promise<SendRe
   // be resolved we suppress, because the cost of wrongly staying silent is a missed email and the
   // cost of wrongly sending is the sandbox mailing a stranger.
   try {
-    if (await isDemoOrgId(orgId)) return 'suppressed';
+    // A preview club (Track P, T1) is as silent as a demo, by the same fail-closed read.
+    if (await isDemoOrgId(orgId) || await isPreviewOrgId(orgId)) return 'suppressed';
   } catch {
     return 'suppressed';
   }

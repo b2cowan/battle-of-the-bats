@@ -182,6 +182,7 @@ async function sendLinkNotice(org: ClubEmailOrg, n: {
   const html = n.secondParent ? withSecondParentStop(built, org.id, n.to) : built;
   return sendTransactionalEmail({
     key: n.key,
+    orgId: org.id,
     to: n.to,
     vars: { seasonName: n.seasonName },
     defaultSubject: n.subject,

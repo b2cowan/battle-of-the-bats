@@ -66,7 +66,28 @@ export type SendEmailResult = {
   id?: string;
   logId?: string | null;
   refused?: boolean;
+  /** With `skipped`: the club is a preview, so nothing went (Track P, T1). (Could not tell: `provider_error`, see below.) */
+  preview?: boolean;
 };
+
+/**
+ * The answer a preview club's mail gets (Track P, T1), or null to send. FAIL CLOSED, but honestly: a PREVIEW is `skipped`
+ * (nothing went, on purpose; callers read it as they read a demo's), and a club the sender could not check is a
+ * `provider_error` (nothing went, and every caller already treats that as failed and retryable), never `skipped`, which
+ * several callers count as delivered (/review 2026-11-25: a passing read failure would have dropped a real family's mail
+ * and recorded it as reached). Refused before any log row. `null` is FieldLogicHQ's own mail and is never refused here, so
+ * the error alerts to us keep going out (a preview is watched like any club).
+ */
+async function refusedForPreview(orgId: string | null): Promise<SendEmailResult | null> {
+  if (!orgId) return null;
+  try {
+    const { isPreviewOrgId } = await import('./preview-org-server');
+    return (await isPreviewOrgId(orgId)) ? { status: 'skipped', preview: true } : null;
+  } catch (err) {
+    console.error('[email] preview check failed, refusing the send:', err instanceof Error ? err.message : err);
+    return { status: 'provider_error' };
+  }
+}
 
 /**
  * Demo households (the Milton prospect demo seeds `first.last@miltonfamilies.local`, the other coaches
@@ -96,8 +117,13 @@ export type SendEmailOptions = {
    */
   replyTo?: string | null;
   fromName?: string | null;
-  /** The log row's club, the person whose action sent it, and the feedback item it belongs to (logged kinds only). */
-  orgId?: string | null;
+  /**
+   * The club this email is for, or `null` for FieldLogicHQ's own mail (an alert to us, an account email that belongs to
+   * no club). REQUIRED on every send (Track P, T1): the sender refuses a preview club's mail, and refuses when it cannot
+   * tell, so a send that did not say which club it is for would be the one way round that. Also the log row's club.
+   */
+  orgId: string | null;
+  /** The person whose action sent it, and the feedback item it belongs to (logged kinds only). */
   askedBy?: string | null;
   feedbackId?: string | null;
   /** The mail service's once-only key (it remembers one for 24 hours): the same key sends at most once. */
@@ -121,6 +147,9 @@ export async function sendEmail(
   html: string,
   opts: SendEmailOptions,
 ): Promise<SendEmailResult> {
+  // A preview club sends nothing, and nothing is logged for it (Track P, T1). Before the log row, so no body is kept.
+  const previewRefusal = await refusedForPreview(opts.orgId);
+  if (previewRefusal) return previewRefusal;
   const log = isLoggedKind(opts.kind) ? await import('./email-log') : null;
   const logId = log
     ? opts.logId ?? await log.openSentEmailRow({ kind: opts.kind as LoggedEmailKind, to, orgId: opts.orgId, askedBy: opts.askedBy, feedbackId: opts.feedbackId })
@@ -186,9 +215,13 @@ export const EMAIL_BATCH_SIZE = 100;
  */
 export async function sendEmailBatch(
   emails: readonly { kind: UnloggedEmailKind; to: string; subject: string; html: string; replyTo?: string | null; fromName?: string | null; headers?: Record<string, string> }[],
+  /** The one club the whole batch is for (required, as on `sendEmail`): a preview's batch is refused. */
+  orgId: string | null,
 ): Promise<SendEmailResult> {
   if (emails.length === 0) return { status: 'sent' };
   if (emails.length > EMAIL_BATCH_SIZE) throw new Error(`sendEmailBatch: ${emails.length} emails exceeds the batch limit of ${EMAIL_BATCH_SIZE}`);
+  const previewRefusal = await refusedForPreview(orgId);
+  if (previewRefusal) return previewRefusal;
   // Demo addresses never reach the mail service (see isUndeliverableDemoAddress); an all-demo batch is "sent" without a request.
   const going = emails.filter(e => !isUndeliverableDemoAddress(e.to));
   if (going.length === 0) return { status: 'sent' };

@@ -3535,6 +3535,16 @@
     "indexdef": "CREATE UNIQUE INDEX organization_members_pkey ON public.organization_members USING btree (id)"
   },
   {
+    "tablename": "organization_previews",
+    "indexname": "organization_previews_org_slug_idx",
+    "indexdef": "CREATE INDEX organization_previews_org_slug_idx ON public.organization_previews USING btree (lower(org_slug))"
+  },
+  {
+    "tablename": "organization_previews",
+    "indexname": "organization_previews_pkey",
+    "indexdef": "CREATE UNIQUE INDEX organization_previews_pkey ON public.organization_previews USING btree (org_id)"
+  },
+  {
     "tablename": "organizations",
     "indexname": "idx_organizations_email_opt_out",
     "indexdef": "CREATE INDEX idx_organizations_email_opt_out ON public.organizations USING btree (email_marketing_opt_out) WHERE (email_marketing_opt_out = true)"

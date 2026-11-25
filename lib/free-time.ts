@@ -10,6 +10,7 @@ import {
   zonedWallClockToUtc,
 } from './timezone';
 import { possessive } from './utils';
+import { PREVIEW_SECTIONS } from './preview-org';
 import type { Organization, OrgPlan, SubscriptionStatus } from './types';
 
 /**
@@ -210,6 +211,8 @@ export type OwnFacts = {
   enabledAddons: string[];
   storedTournamentLimit: number | null;
   storedTeamLimit: number | null;
+  /** A preview club (Track P, T1): its public-site sections are folded in below, nothing is billed. */
+  isPreview?: boolean;
 };
 
 /** What the club is right now, for access. */
@@ -248,14 +251,16 @@ export function foldGrants(own: OwnFacts, rows: GrantRow[], now: Date = new Date
     tournamentLimit: ownTournamentLimit,
     teamLimit: ownTeamLimit,
     subscriptionStatus: own.subscriptionStatus,
-    enabledAddons: own.enabledAddons,
+    // A preview shows its public site (Track P, `/billing` 2026-11-25): the sections it shows, folded in here at the door,
+    // whatever the free-time switch says. Never a plan and never free time: `planId` stays the club's own free start.
+    enabledAddons: own.isPreview ? [...new Set([...own.enabledAddons, ...PREVIEW_SECTIONS])] : own.enabledAddons,
     freeTime: null,
   };
   if (!enabled) return base;
   const running = rows.filter(r => isGrantRunning(r, now));
   if (running.length === 0) return base;
 
-  const addons = new Set(own.enabledAddons);
+  const addons = new Set(base.enabledAddons);
   for (const r of running) {
     if (r.type === 'module_addon' && Array.isArray(r.target?.addons)) for (const a of r.target.addons) addons.add(a);
   }
@@ -290,7 +295,7 @@ export function foldGrants(own: OwnFacts, rows: GrantRow[], now: Date = new Date
 }
 
 /** The raw columns a reader selects to ask the door. */
-export const DOOR_COLUMNS = 'id, plan_id, subscription_status, enabled_addons, tournament_limit, team_limit';
+export const DOOR_COLUMNS = 'id, plan_id, subscription_status, enabled_addons, tournament_limit, team_limit, is_preview';
 
 export type DoorRow = {
   id: string;
@@ -299,6 +304,7 @@ export type DoorRow = {
   enabled_addons: string[] | null;
   tournament_limit?: number | null;
   team_limit?: number | null;
+  is_preview?: boolean | null;
 };
 
 export function ownFactsOf(row: DoorRow): OwnFacts {
@@ -308,6 +314,7 @@ export function ownFactsOf(row: DoorRow): OwnFacts {
     enabledAddons: row.enabled_addons ?? [],
     storedTournamentLimit: row.tournament_limit ?? null,
     storedTeamLimit: row.team_limit ?? null,
+    isPreview: row.is_preview === true,
   };
 }
 
@@ -422,12 +429,12 @@ export type ClubFacts = {
 };
 
 /** What the server read about the giver and the server. */
-export type GiveContext = { switchOn: boolean; staffIsMember: boolean; isDemo: boolean };
+export type GiveContext = { switchOn: boolean; staffIsMember: boolean; isDemo: boolean; isPreview?: boolean };
 
 export type Refusal = { ok: false; status: number; error: string };
 
 /** Known before the click: the record shows it as one line where the door would be (D-3). */
-export type GiveBlock = { tone: 'red' | 'amber'; kind: 'switch' | 'own_club' | 'portal' | 'demo'; lead: string; rest: string };
+export type GiveBlock = { tone: 'red' | 'amber'; kind: 'switch' | 'own_club' | 'portal' | 'preview' | 'demo'; lead: string; rest: string };
 
 export function freeTimeBlockOf(club: Pick<ClubFacts, 'name' | 'planId' | 'accountKind'>, ctx: GiveContext): GiveBlock | null {
   if (!ctx.switchOn) {
@@ -439,6 +446,10 @@ export function freeTimeBlockOf(club: Pick<ClubFacts, 'name' | 'planId' | 'accou
   if (isTeamWorkspaceOrg(club)) {
     // Stage 4b retired "can't be given free time yet": a portal's free time is its own kind, given from the coach.
     return { tone: 'amber', kind: 'portal', lead: "A Coaches Portal's free time is given from its coach's record.", rest: ' Open the owner on People, then the Coaches Portal tab.' };
+  }
+  if (ctx.isPreview) {
+    // Track P, T1: free time is a customer grant, and a whole-plan grant would refuse the claim's checkout.
+    return { tone: 'amber', kind: 'preview', lead: `${club.name} is a preview club`, rest: ", so it can't be given free time. It becomes a customer when it is claimed." };
   }
   if (ctx.isDemo) {
     return { tone: 'amber', kind: 'demo', lead: `${club.name} is a public demo club`, rest: ", so it can't be given free time: everyone who opens the demo would see it." };

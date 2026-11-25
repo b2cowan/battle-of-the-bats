@@ -1191,7 +1191,7 @@ export async function sendSchedule(sctx: SchedulerCtx, loaded: LoadedSchedule, k
     const w = emailForPerson(kind, preview.replyBy, t, p);
     return { teamId: t.teamId, email: p.email, subject: w.subject, html: emailHtml(w) };
   }));
-  const results = await inParallel(sends, 5, s => sendEmail(s.email, s.subject, s.html, { kind: 'club_schedule_coach', replyTo: sctx.ctx.user.email ?? null }));
+  const results = await inParallel(sends, 5, s => sendEmail(s.email, s.subject, s.html, { kind: 'club_schedule_coach', orgId: sctx.ctx.org.id, replyTo: sctx.ctx.user.email ?? null }));
   const sent = results.filter(r => r.status === 'sent').length;
   const reached = [...new Set(sends.filter((s, i) => results[i].status === 'sent').map(s => s.teamId))];
 
@@ -1370,7 +1370,7 @@ async function stepFor(sctx: SchedulerCtx, loaded: LoadedSchedule, kind: SendKin
 async function tellHouseLeague(sctx: SchedulerCtx, scheduleName: string, half: LeagueHalf, teams: readonly PreviewLeagueTeam[], sendId: string): Promise<{ people: number; failed: number; teams: number }> {
   const org = sctx.ctx.org;
   const coachSends = teams.flatMap(t => t.coaches.map(p => ({ teamId: t.teamId, email: p.email, subject: t.sample.subject, html: emailHtml(t.sample) })));
-  const results = await inParallel(coachSends, 5, s => sendEmail(s.email, s.subject, s.html, { kind: 'club_schedule_league_coach', replyTo: sctx.ctx.user.email ?? null }));
+  const results = await inParallel(coachSends, 5, s => sendEmail(s.email, s.subject, s.html, { kind: 'club_schedule_league_coach', orgId: sctx.ctx.org.id, replyTo: sctx.ctx.user.email ?? null }));
   const coachesSent = results.filter(r => r.status === 'sent').length;
   const told = new Set(coachSends.filter((s, i) => results[i].status === 'sent').map(s => s.teamId));
 

@@ -79,6 +79,7 @@ function emailPromoted(
       const [face, link] = await Promise.all([systemMailFace(org), leagueMailLink(next.id)]);
       await sendTransactionalToBothParents(next, {
         key: 'league_waitlist_promoted',
+        orgId: org.id,
         to: next.guardianEmail,
         vars: {
           guardianFirstName: next.guardianFirstName,
@@ -646,6 +647,7 @@ export const PATCH = withObservability(async (req: Request,
           const [face, link] = await Promise.all([faceOnce(), leagueMailLink(regId)]);
           await sendTransactionalToBothParents(reg, {
             key: 'league_registration_approved',
+            orgId: ctx!.org.id,
             to: reg.guardianEmail,
             vars: {
               guardianFirstName: reg.guardianFirstName,
@@ -674,6 +676,7 @@ export const PATCH = withObservability(async (req: Request,
           const face = await faceOnce();
           await sendTransactionalToBothParents(reg, {
             key: 'league_registration_waitlisted',
+            orgId: ctx!.org.id,
             to: reg.guardianEmail,
             vars: {
               guardianFirstName: reg.guardianFirstName,
@@ -817,6 +820,7 @@ export const PATCH = withObservability(async (req: Request,
               };
           const ending = {
             key: mail.key,
+            orgId: ctx!.org.id,
             to: reg.guardianEmail,
             vars: {
               guardianFirstName: reg.guardianFirstName,

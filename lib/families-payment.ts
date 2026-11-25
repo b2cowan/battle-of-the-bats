@@ -326,7 +326,7 @@ async function deliverHandoff(
         alsoLink: { label: CW.notReceived, path: notReceivedLink },
         outro: CW.emailOutro(sender),
       });
-      await sendEmail(c.email!, CW.emailSubject(h.line.teamName, h.line.childName), html, { kind: 'club_payment_handoff_coach', replyTo: ctx.user.email ?? null });
+      await sendEmail(c.email!, CW.emailSubject(h.line.teamName, h.line.childName), html, { kind: 'club_payment_handoff_coach', orgId: ctx.org.id, replyTo: ctx.user.email ?? null });
     } catch (e) {
       console.error('[families-payment] a hand-off email failed (the bell stands):', e);
     }

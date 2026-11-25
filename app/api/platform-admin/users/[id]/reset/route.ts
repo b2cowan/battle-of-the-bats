@@ -56,6 +56,7 @@ export const POST = withObservability(async (req: NextRequest,
   try {
     await sendTransactionalEmail({
       key: 'password_reset',
+      orgId: null,
       to: email,
       vars: { resetLink: confirmUrl },
       defaultSubject: 'Reset your FieldLogicHQ password',

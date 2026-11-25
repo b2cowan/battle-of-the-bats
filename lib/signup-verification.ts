@@ -82,6 +82,7 @@ export async function sendSignupVerificationEmail(p: {
   const continueName = p.continueName?.trim() ? p.continueName.trim().slice(0, 120) : null;
   await sendTransactionalEmail({
     key: 'signup_verification',
+    orgId: null,
     to: p.to,
     // A customised template escapes its variables itself (lib/email-markup.ts), so it gets the raw name.
     vars: { verifyUrl, orgName: continueName ?? 'your account' },

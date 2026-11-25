@@ -115,6 +115,7 @@ export const POST = withObservability(async (req: Request,
   }
 
   await sendAssistantInviteEmail({
+    orgId: ctx.org.id,
     email, teamName: team.name, invitedByName, rawToken: rawToken!, staffKind: kind,
     isTeamWorkspace: isTeamWorkspaceOrg(ctx.org),
   });

@@ -21,6 +21,8 @@ async function getInitialData() {
       .from('organizations')
       .select('id, name, email_opt_out_at')
       .eq('email_marketing_opt_out', true)
+      // A preview club (Track P, T1) is not a customer and is never mailed.
+      .eq('is_preview', false)
       .order('email_opt_out_at', { ascending: false }),
   ]);
 

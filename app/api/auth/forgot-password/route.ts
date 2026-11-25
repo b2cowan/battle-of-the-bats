@@ -72,6 +72,7 @@ async function sendReset(req: NextRequest, email: string, next: unknown): Promis
     // live reset flow.)
     await sendTransactionalEmail({
       key: 'password_reset',
+      orgId: null,
       to: email,
       vars: { resetLink: confirmUrl },
       defaultSubject: 'Reset your FieldLogicHQ password',

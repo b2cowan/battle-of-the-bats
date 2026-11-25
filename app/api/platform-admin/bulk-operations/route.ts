@@ -164,7 +164,7 @@ export const POST = withObservability(async (req: Request) => {
 
   const { data: orgs, error: orgError } = await supabaseAdmin
     .from('organizations')
-    .select('id, name, slug, plan_id, tournament_limit, subscription_status, stripe_subscription_id, subscription_period, current_period_end, enabled_addons, account_kind')
+    .select('id, name, slug, is_preview, plan_id, tournament_limit, subscription_status, stripe_subscription_id, subscription_period, current_period_end, enabled_addons, account_kind')
     .in('id', orgIds);
 
   if (orgError) {
@@ -172,6 +172,10 @@ export const POST = withObservability(async (req: Request) => {
   }
   if (!orgs || orgs.length !== orgIds.length) {
     return NextResponse.json({ error: 'One or more selected organizations could not be found' }, { status: 400 });
+  }
+  // A preview club (Track P, T1) is not a customer: no operator tool changes its plan, status or sections.
+  if (orgs.some(o => (o as { is_preview?: boolean | null }).is_preview === true)) {
+    return NextResponse.json({ error: 'A preview club cannot be changed here.' }, { status: 400 });
   }
 
   // Stage 0 Part 10: many accounts in one press asks for the password again (every run, Ask 2), LAST of the checks so

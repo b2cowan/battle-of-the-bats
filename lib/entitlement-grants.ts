@@ -92,10 +92,10 @@ export async function applyEntitlementGrants(
   stored: { tournamentLimit: number | null; teamLimit: number | null },
 ): Promise<Organization> {
   const withOwn: Organization = { ...org, ownPlanId: org.planId };
-  if (!grantsEnabled()) return withOwn;
-
-  const rows = (await runningGrantsFor([org.id])).get(org.id) ?? [];
-  if (rows.length === 0) return withOwn;
+  const enabled = grantsEnabled();
+  // A preview club (Track P) is folded even with no grant and the switch off: its public-site sections come from the door.
+  const rows = enabled ? (await runningGrantsFor([org.id])).get(org.id) ?? [] : [];
+  if (rows.length === 0 && !org.isPreview) return withOwn;
 
   const effective = foldGrants(
     {
@@ -104,8 +104,11 @@ export async function applyEntitlementGrants(
       enabledAddons: org.enabledAddons,
       storedTournamentLimit: stored.tournamentLimit,
       storedTeamLimit: stored.teamLimit,
+      isPreview: org.isPreview === true,
     },
     rows,
+    new Date(),
+    enabled,
   );
   return {
     ...withOwn,

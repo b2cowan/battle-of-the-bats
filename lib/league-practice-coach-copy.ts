@@ -64,7 +64,7 @@ export async function copyCoachesOnFirstTell(p: { org: ClubEmailOrg & { slug?: s
       });
       return { to: c.email.trim(), subject: w.subject, html: emailHtml(w) };
     });
-    await inParallel(sends, 5, s => sendEmail(s.to, s.subject, s.html, {
+    await inParallel(sends, 5, s => sendEmail(s.to, s.subject, s.html, { orgId: p.org.id,
       kind: 'house_league_practice_coach_copy', replyTo: face?.sendOpts.replyTo ?? null, fromName: face?.sendOpts.fromName ?? null,
     }).catch(err => console.error('[league-practice-coach-copy] a coach\'s copy failed:', err instanceof Error ? err.message : String(err))));
   } catch (err) {

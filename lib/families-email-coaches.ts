@@ -65,7 +65,7 @@ export async function leagueCoachesToCopy(orgId: string, seasonId: string, teamI
  * club's own public contact, built like the head coaches' copy — colleague mail, NEVER the family envelope (no unsubscribe,
  * no family names, no addresses, no link). Not a family, not counted; the caller records only the outcome.
  */
-export async function sendClubInboxCopy(to: string, o: { orgName: string; audience: string; families: number; subject: string; body: string; replyName: string }, replyTo: string | null): Promise<'sent' | 'failed'> {
+export async function sendClubInboxCopy(orgId: string, to: string, o: { orgName: string; audience: string; families: number; subject: string; body: string; replyName: string }, replyTo: string | null): Promise<'sent' | 'failed'> {
   const words: EmailWords = {
     subject: W.coachSubject(o.subject),
     greeting: 'Hi,',
@@ -75,7 +75,7 @@ export async function sendClubInboxCopy(to: string, o: { orgName: string; audien
     outro: W.coachOutro(o.replyName),
   };
   try {
-    const r = await sendEmail(to, words.subject, emailHtml(words), { kind: 'club_inbox_copy', replyTo });
+    const r = await sendEmail(to, words.subject, emailHtml(words), { kind: 'club_inbox_copy', orgId, replyTo });
     return r.status === 'sent' || r.status === 'skipped' ? 'sent' : 'failed';
   } catch {
     console.error('[families-email-coaches] the club-inbox copy was refused by the transport');
@@ -97,10 +97,10 @@ export function coachCopyWords(o: { orgName: string; audience: string; families:
 
 /** Send the copies. Returns how many went. A transport that throws is one copy that didn't go, never an escaped error:
  *  the family send has already gone, and its log row must still be completed. */
-export async function sendCoachCopies(coaches: readonly CopiedCoach[], words: (coach: CopiedCoach) => EmailWords, replyTo: string | null): Promise<number> {
+export async function sendCoachCopies(orgId: string, coaches: readonly CopiedCoach[], words: (coach: CopiedCoach) => EmailWords, replyTo: string | null): Promise<number> {
   const results = await inParallel(coaches, 5, async c => {
     const w = words(c);
-    try { return await sendEmail(c.email, w.subject, emailHtml(w), { kind: 'family_email_coach_copy', replyTo }); }
+    try { return await sendEmail(c.email, w.subject, emailHtml(w), { kind: 'family_email_coach_copy', orgId, replyTo }); }
     catch (e) { console.error('[families-email] a head coach copy threw:', e); return { status: 'provider_error' as const }; }
   });
   return results.filter(r => r.status === 'sent' || r.status === 'skipped').length;

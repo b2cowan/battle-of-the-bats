@@ -284,7 +284,7 @@ export async function sendBasicCoachTeamAnnouncement(params: {
   let failedCount = 0;
   for (const email of lookup.emails) {
     try {
-      const result = await sendEmail(email, subject, html, { kind: 'basic_coach_announcement' });
+      const result = await sendEmail(email, subject, html, { kind: 'basic_coach_announcement', orgId: null });
       if (result.status === 'sent') sentCount++;
       else failedCount++;
     } catch (error) {

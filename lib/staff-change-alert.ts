@@ -14,7 +14,7 @@ export async function alertOwnerOfStaffChange(alert: StaffChangeAlert): Promise<
   let answer: string;
   try {
     const { subject, html } = staffChangeAlertEmail(alert);
-    const sent = await sendEmail(ADMIN_EMAIL, subject, html, { kind: 'staff_change_alert', timeoutMs: 10_000 });
+    const sent = await sendEmail(ADMIN_EMAIL, subject, html, { kind: 'staff_change_alert', orgId: null, timeoutMs: 10_000 });
     if (sent.status === 'sent') return true;
     answer = sent.status;
   } catch (err) {

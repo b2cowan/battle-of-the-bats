@@ -307,7 +307,7 @@ export async function recordTaxOrReport(doc: { kind: 'invoice' | 'credit_note'; 
       `<p>The tax record for ${what} could not be written. The billing work itself went on; the daily online-payments job tries the record again.</p>`
         + `<ul><li>Stripe: ${escapeHtml(doc.id)}</li><li>What went wrong: ${escapeHtml(message)}</li></ul>`
         + `<p><a href="${link}">Open it in Stripe</a> &middot; <a href="${SITE_URL}/platform-admin">Platform admin</a></p>`,
-      { kind: 'tax_record_alert', idempotencyKey: `tax-record-alert:${doc.id}`, timeoutMs: 8_000 },
+      { kind: 'tax_record_alert', orgId: null, idempotencyKey: `tax-record-alert:${doc.id}`, timeoutMs: 8_000 },
     ).catch(mailError => console.error('[charge-tax-record] the alert could not be sent:', mailError));
   }
 }

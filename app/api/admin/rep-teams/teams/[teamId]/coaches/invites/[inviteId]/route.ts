@@ -59,6 +59,7 @@ export const POST = withObservability(async (req: Request,
           .maybeSingle<{ role: string }>()
       : { data: null };
     await sendClubCoachInviteEmail({
+      orgId: ctx.org.id,
       email: minted.invite.invitedEmail,
       clubName: ctx.org.name,
       teamName: minted.teamName ?? team.name,
@@ -69,6 +70,7 @@ export const POST = withObservability(async (req: Request,
     });
   } else {
     await sendAssistantInviteEmail({
+      orgId: ctx.org.id,
       email: minted.invite.invitedEmail,
       teamName: minted.teamName ?? team.name,
       invitedByName: minted.invitedByName,

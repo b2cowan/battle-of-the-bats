@@ -11,6 +11,7 @@
 import { supabaseAdmin } from './supabase-admin';
 import { writePlatformAuditLog, writePlatformAuditLogStrict } from './platform-audit';
 import { isDemoOrgId } from './demo-org-server';
+import { isPreviewOrgId } from './preview-org-server';
 import { readLeadBook, readOffers, readStaffAddresses, type BookLead, type OfferedClub, type Read } from './lead-book';
 import { normalAddress } from './lead-numbers';
 import { filterToken, leadsInList, type PipelineFilters } from './lead-views';
@@ -29,9 +30,9 @@ async function leadNow(leadId: string): Promise<LeadNow | null | 'error'> {
   return (data as LeadNow | null) ?? null;
 }
 
-/** A club a staff address owns, or a demo club: never linked, never offered. Throws when it cannot tell. */
+/** A club a staff address owns, a demo club or a preview club (Track P): never linked, never offered. Throws when it cannot tell. */
 async function refusedClub(orgId: string): Promise<boolean> {
-  if (await isDemoOrgId(orgId)) return true;
+  if (await isDemoOrgId(orgId) || await isPreviewOrgId(orgId)) return true;
   const { data: owners, error } = await supabaseAdmin.from('organization_members').select('user_id').eq('organization_id', orgId).eq('role', 'owner');
   if (error) throw error;
   const ids = ((owners ?? []) as { user_id: string }[]).map(o => o.user_id);

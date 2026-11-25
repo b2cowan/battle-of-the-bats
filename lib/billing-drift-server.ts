@@ -59,7 +59,8 @@ type OrgRow = {
 async function loadRecords(): Promise<DriftRecord[]> {
   const rows = await allRows<OrgRow>((from, to) => supabaseAdmin.from('organizations')
     .select('id, name, stripe_subscription_id, subscription_status, plan_id, subscription_period, current_period_end')
-    .not('stripe_subscription_id', 'is', null).order('id').range(from, to), 'the clubs and portals');
+    // A preview club (Track P, T1) holds no subscription; left out by name so Stripe watch never lists one.
+    .not('stripe_subscription_id', 'is', null).eq('is_preview', false).order('id').range(from, to), 'the clubs and portals');
   return rows.filter(r => r.stripe_subscription_id && !r.stripe_subscription_id.startsWith('mock_')).map(r => ({
     orgId: r.id,
     name: r.name,
@@ -94,7 +95,7 @@ async function saveCheck(check: DriftCheck): Promise<void> {
 async function sendAlert(subject: string, html: string, idempotencyKey: string): Promise<boolean> {
   let status: string | undefined;
   try {
-    status = (await sendEmail(ADMIN_EMAIL, subject, html, { kind: 'billing_drift_alert', idempotencyKey })).status;
+    status = (await sendEmail(ADMIN_EMAIL, subject, html, { kind: 'billing_drift_alert', orgId: null, idempotencyKey })).status;
   } catch (error) {
     console.error('[billing drift] the owner email could not be sent:', error);
     return false;

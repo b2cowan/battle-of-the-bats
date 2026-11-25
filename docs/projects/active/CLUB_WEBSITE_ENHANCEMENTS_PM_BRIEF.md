@@ -24,7 +24,9 @@ public site only with a made-up season and no people, is marked on every page, a
 left in the room, through Start a club's own plan, trial and checkout. Its real cost is not the screens: every
 production count, list, search and email must learn one "preview" marker, the claim is a new door, and the 30-day
 removal is a new job that runs by itself. The one email to the person met cannot send until FieldLogicHQ has a mailing
-address.
+address. **Built first (P1, 2026-11-25), invisible:** that one marker, read by every count, list, search and email, and a
+build check that fails when a new one does not; no email of any kind can now leave the platform without saying which club
+it is for, so a preview's mail is refused even where nobody thought to check. Nothing makes a preview until P2.
 
 **Stage 1, as drawn and ruled (2026-11-25, all 11 asks ruled as recommended):** on a game day the club home shows "Today" under Open now: the
 club's live games, the rest of the day and the latest results, a running tournament as one row, by time and never by

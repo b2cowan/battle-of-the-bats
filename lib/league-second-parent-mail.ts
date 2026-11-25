@@ -132,6 +132,7 @@ export async function sendSecondParentServiceCopies(params: {
       : built;
     if (copies.length === 0) return [];
     const results = await sendFamilyServiceBatch({
+      orgId: params.orgId,
       kind: params.kind, messages: copies.map(c => c.message), fromName: params.fromName, replyTo: params.replyTo ?? null,
     });
     const failed = results.filter(r => !went(r)).length;

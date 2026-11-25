@@ -163,7 +163,8 @@ export default async function PlansPricingPage() {
     featureMatrixDrift,
   ] = await Promise.all([
     supabaseAdmin.from('plan_gating').select('*').order('plan_key'),
-    supabaseAdmin.from('organizations').select('plan_id, subscription_status'),
+    // Who a price change touches: customers only, never a preview club (Track P, T1).
+    supabaseAdmin.from('organizations').select('plan_id, subscription_status').eq('is_preview', false),
     getAllPlanConfigOverrideRows(),
     getAllStripePrices(),
     supabaseAdmin

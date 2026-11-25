@@ -356,6 +356,7 @@ export const POST = withObservability(async (req: Request,
     try {
       const result = await sendTransactionalEmail({
         key: 'league_signup',
+        orgId: org.id,
         to: copy.to,
         vars: { guardianFirstName: guardianFirst!, seasonName: season.name, reference },
         defaultSubject: signupSubject(children, season.name),

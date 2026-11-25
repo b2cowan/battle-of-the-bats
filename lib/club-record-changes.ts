@@ -94,10 +94,12 @@ export async function applyClubSections(opts: {
 }): Promise<ChangeResult> {
   const { data: current, error: readError } = await supabaseAdmin
     .from('organizations')
-    .select('enabled_addons')
+    .select('enabled_addons, is_preview')
     .eq('id', opts.orgId)
-    .single<{ enabled_addons: string[] | null }>();
+    .single<{ enabled_addons: string[] | null; is_preview: boolean | null }>();
   if (readError || !current) return { ok: false, status: 404, error: 'This club was not found.' };
+  // A preview club (Track P, T1) shows its sections from the door; nothing is stored on it by hand.
+  if (current.is_preview === true) return { ok: false, status: 400, error: 'This is a preview club. Its sections are not changed here.' };
   const before = current.enabled_addons ?? [];
   const stale = { ok: false as const, status: 409, error: 'Someone else changed this club’s sections just now. Reload to see them, then try again.' };
   if (opts.expected && !sameSections(opts.expected, before.filter(k => SECTION_KEYS.has(k)))) return stale;

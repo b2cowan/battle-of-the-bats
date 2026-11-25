@@ -144,7 +144,7 @@ function subscriptionChargeDeps(): SubscriptionChargeDeps {
  * email the alarm. The once-only key keeps a retried event from sending twice.
  */
 async function alertOwner(kind: 'subscription_charge_alert' | 'unrecognised_price_alert' | 'buyer_name_alert', subject: string, html: string, idempotencyKey: string) {
-  const result = await sendEmail(ADMIN_EMAIL, subject, html, { kind, idempotencyKey })
+  const result = await sendEmail(ADMIN_EMAIL, subject, html, { kind, orgId: null, idempotencyKey })
     .catch(error => { console.error('[billing webhook] the owner alert could not be sent:', error); return null; });
   if (result && result.status === 'provider_error') console.error('[billing webhook] the owner alert was refused:', subject);
 }
@@ -176,7 +176,7 @@ function straySubscriptionDeps(): StraySubscriptionDeps {
       return { number: inv.number ?? null, amountPaidCents: inv.amount_paid ?? 0, totalCents: inv.total ?? 0, currency: inv.currency, status: inv.status ?? null };
     },
     async send({ subject, html, key }) {
-      const result = await sendEmail(ADMIN_EMAIL, subject, html, { kind: 'second_subscription_alert', idempotencyKey: key });
+      const result = await sendEmail(ADMIN_EMAIL, subject, html, { kind: 'second_subscription_alert', orgId: null, idempotencyKey: key });
       return result.status === 'provider_error' || result.status === 'no_answer' ? 'failed' : result.status === 'skipped' ? 'skipped' : 'sent';
     },
     record: writePlatformEvent,

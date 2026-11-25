@@ -65,6 +65,14 @@ const readers: FindReaders = {
     } catch {
       portalUnread = true;
     }
+    // Find still finds a preview club by name (Track P, T1), so the owner can open it, and says it is one.
+    let previews = new Set<string>();
+    let previewUnread = false;
+    if (found.rows.length > 0) {
+      const { data, error } = await supabaseAdmin.from('organizations').select('id').eq('is_preview', true).in('id', found.rows.map(c => c.id));
+      if (error) previewUnread = true;
+      else previews = new Set(((data ?? []) as { id: string }[]).map(r => r.id));
+    }
     return {
       total: found.total,
       rows: found.rows.map(c => ({
@@ -72,7 +80,9 @@ const readers: FindReaders = {
         name: c.name,
         slug: c.slug,
         planLabel: planLabel(c.planId ?? 'tournament'),
-        statusLabel: portalLabels.get(c.id)
+        statusLabel: previews.has(c.id) ? 'Preview club'
+          : previewUnread ? 'Status unread'
+          : portalLabels.get(c.id)
           ?? (portalUnread && c.subscriptionStatus === 'canceled' ? 'Status unread' : subscriptionStatusLabel(c.subscriptionStatus ?? 'active')),
         ownerEmail: c.ownerEmail,
       })),
