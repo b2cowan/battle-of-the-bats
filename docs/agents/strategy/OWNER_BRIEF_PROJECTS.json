@@ -351,7 +351,7 @@
       "next": "Stage 1 (game day on the club home) gets its own drawing session.",
       "remains": "Your rulings, then ten ideas one at a time in dependency order: game day on the club home, field status, photos, news, sponsors with a report, faster scores, the Big Board, a trophy case, a share kit, and a separate track that makes a prospect's own club site before a meeting.",
       "waitsOn": [], "finishesAfter": ["team-structure"],
-      "youOwe": ["Paste Milton Bats' answers to the three website questions into the kick-off prompt's feedback slot (what they would miss, what families ask for, who updates the site)", "Say whether /legal reads the photo question (E9) now or when Stage 3 is drawn", "Say whether club events on the house-league and rep schedules are drawn now (a new question, 25 Nov)"] },
+      "youOwe": ["Paste Milton Bats' answers to the three website questions into the kick-off prompt's feedback slot (what they would miss, what families ask for, who updates the site)", "Rule the eight new asks on the events drawing's asks tab: E10–E12 (club events on the house league and rep schedules) and P1–P5 (/legal's calls on the photo question)"] },
     { "id": "team-structure", "name": "Team structure (levels, age groups, who runs each)", "track": "product", "state": "open", "checked": true,
       "files": ["TEAM_STRUCTURE_PLAN.md","TEAM_STRUCTURE_PM_BRIEF.md"], "ledger": ["Team structure"],
       "goals": ["after"], "lane": "later", "order": 54, "phase": "Planning",

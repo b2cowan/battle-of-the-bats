@@ -285,11 +285,28 @@ dialog .go{margin-top:12px}
 .sm2{font-size:12px;color:var(--doc-soft);margin-bottom:4px}
 .plain{max-width:880px;padding-left:20px}.plain li{margin:8px 0}
 p.note{max-width:880px;color:var(--doc-soft)}
+.askm.ruled{background:#EEF1F4;color:#55606C;border-color:#D8DDE3;cursor:default;white-space:nowrap}
+code{overflow-wrap:anywhere}
+.fr .hle > .mk,.fr .hle > .askm,.fr .hld > .mk,.fr .hld > .askm{top:4px}
+.fr .bk{font:600 14px var(--f-text);color:#1E5F6A;margin-bottom:8px}
+.fr .hlw{font:700 16px var(--f-text);margin:4px 0 10px}
+.fr .hlc{background:#fff;border:1px solid var(--line);border-radius:8px;overflow:hidden;position:relative}
+.fr .hlt{padding:8px 12px;font:600 12px var(--f-text);color:#1E5F6A;background:#F4F7F8}
+.fr .hlg,.fr .hle{display:grid;grid-template-columns:1fr auto;gap:2px 8px;padding:10px 12px;border-top:1px solid var(--line);position:relative}
+.fr .hlc > :first-child{border-top:0}
+.fr .hd,.fr .hp{grid-column:1/-1;font-size:12px;color:var(--dim)}
+.fr .hm{font:500 16px/1.3 var(--f-text)}
+.fr .ht{font:600 14px var(--f-text);align-self:center;padding-right:8px}
+.fr .hle{padding-right:32px}.fr .hle .hd{color:#1E5F6A;font-weight:600}
+.fr .hld{padding:10px 32px 10px 15px;border-top:1px solid var(--line);box-shadow:inset 3px 0 0 #1E5F6A;position:relative}
+.fr .hld .hk{font:700 12px var(--f-text);text-transform:uppercase;letter-spacing:.06em;color:#1E5F6A}
+.fr .hld .hn{font:600 16px var(--f-text)}.fr .hld .hs{font-size:12px;color:var(--dim)}
+.fr .hld::after,.fr .hle::after{content:"\203A";position:absolute;right:12px;top:50%;transform:translateY(-50%);color:var(--dim);font-size:20px}
 </style>
 
 <header class="top"><div class="wrap">
   <h1>Club Website Enhancements · club events in the end state</h1>
-  <p>Board Ready builds what a person <i>does</i> with a club event (making it, signing up, paying). This project decides where events <i>show</i> on the club's public site. The owner split the work on 2026-11-24 and handed this project nine questions. This page draws the answers into the Stage 0 end state and asks nine things (E1–E9). Drawn on Kestrel Bay, the Stage 0 club, on a June weekday, its champs day and the day after. Every frame is true size and every frame is the end state: events do not exist on the site today, so there is no "before" capture. Click a tag to read it; purple tags jump to their ask. Nothing here is built or ruled. Reviewed by /design before you saw it. Written 2026-11-25.</p>
+  <p>Board Ready builds what a person <i>does</i> with a club event (making it, signing up, paying). This project decides where events <i>show</i> on the club's public site. The owner split the work on 2026-11-24 and handed this project nine questions. This page draws the answers into the Stage 0 end state (tab 10 adds the Thursday before champs day and a September weekend for the rep teams). <b>Its nine asks E1–E9 were ruled on 2026-11-25, all as recommended.</b> The same day you asked whether events reach the house league and rep schedules: tab 10 draws that, with three new asks (E10–E12). The asks tab also carries <code>/legal</code>'s five calls on the photo question (P1–P5). Drawn on Kestrel Bay, the Stage 0 club, on a June weekday, its champs day and the day after. Every frame is true size and every frame is the end state: events do not exist on the site today, so there is no "before" capture. Click a tag to read it; purple tags jump to their ask. Nothing here is built. Reviewed by /design before you saw it. Written 2026-11-25; tab 10 added the same day.</p>
 </div></header>
 <nav class="tabs" aria-label="Sections"><div class="wrap" role="tablist">
   <button role="tab" data-tab="changed">1 · The nine questions</button>
@@ -301,7 +318,8 @@ p.note{max-width:880px;color:var(--doc-soft)}
   <button role="tab" data-tab="photo">7 · The photo question</button>
   <button role="tab" data-tab="order">8 · Before News exists</button>
   <button role="tab" data-tab="records">9 · Written down, no ask</button>
-  <button role="tab" data-tab="asks">10 · Asks</button>
+  <button role="tab" data-tab="sched">10 · On the schedules</button>
+  <button role="tab" data-tab="asks">11 · Asks</button>
 </div></nav>
 
 <main><div class="wrap">
@@ -314,18 +332,19 @@ p.note{max-width:880px;color:var(--doc-soft)}
 <!-- ============ 1 THE NINE QUESTIONS ============ -->
 <section class="tab" id="changed">
 <h2 class="t">The nine questions, and the answer drawn for each</h2>
+<p class="note"><b>Ruled 2026-11-25:</b> all nine as recommended (option A). Tab 10 and the asks tab hold what came after.</p>
 <p class="lead">Stage 0 already put events in two places (ruled A1 and A2): coming events ride inside <b>News</b>, and the game-day frame put a clinic in <b>Open now</b>. Board Ready's ask 8A, as first ruled, drew a third place: an Events tab and a "Coming up" section on Home. The owner withdrew 8A to this project. The pattern below keeps Stage 0's two places and gives each event exactly one row on the home at a time.</p>
 <div class="scrollx"><table class="doc">
 <thead><tr><th>#</th><th>The question</th><th>What is drawn</th><th>Ask</th></tr></thead>
 <tbody>
-<tr><td>1</td><td>Events on the home; whether <code>/news</code> lists them; an Events tab</td><td>While its sign-up is open, an event is an <b>Open now</b> row. Otherwise it is a "Coming up" row in <b>News</b>. It never appears in both. The News page lists every coming event above the posts. There is no Events tab: the phone tab row already scrolls past its fifth tab.</td><td><button class="askm" data-ask="E1">E1</button> <button class="askm" data-ask="E2">E2</button> <button class="askm" data-ask="E3">E3</button></td></tr>
-<tr><td>1</td><td>Each event's public page</td><td>One page per event. It lights the News tab, and Board Ready's sign-up starts at its button. The shareable sign-up link (ruled yes) is this page's address. After the event, an old link says the event has ended.</td><td><button class="askm" data-ask="E4">E4</button></td></tr>
-<tr><td>2</td><td>Before News exists</td><td>Board Ready Stage 5 builds the event page and the Open now row exactly as drawn here. An event with no sign-up travels by its link until Stage 4.</td><td><button class="askm" data-ask="E5">E5</button></td></tr>
-<tr><td>3</td><td>A champs day on the home</td><td>One row in Today that opens the champs page, the way a running tournament is one row (A3). The day after, one row in Latest results opens the season's schedule for that day.</td><td><button class="askm" data-ask="E6">E6</button></td></tr>
+<tr><td>1</td><td>Events on the home; whether <code>/news</code> lists them; an Events tab</td><td>While its sign-up is open, an event is an <b>Open now</b> row. Otherwise it is a "Coming up" row in <b>News</b>. It never appears in both. The News page lists every coming event above the posts. There is no Events tab: the phone tab row already scrolls past its fifth tab.</td><td><span class="askm ruled" title="E1 ruled 2026-11-25: A">E1 ✓</span> <span class="askm ruled" title="E2 ruled 2026-11-25: A">E2 ✓</span> <span class="askm ruled" title="E3 ruled 2026-11-25: A">E3 ✓</span></td></tr>
+<tr><td>1</td><td>Each event's public page</td><td>One page per event. It lights the News tab, and Board Ready's sign-up starts at its button. The shareable sign-up link (ruled yes) is this page's address. After the event, an old link says the event has ended.</td><td><span class="askm ruled" title="E4 ruled 2026-11-25: A">E4 ✓</span></td></tr>
+<tr><td>2</td><td>Before News exists</td><td>Board Ready Stage 5 builds the event page and the Open now row exactly as drawn here. An event with no sign-up travels by its link until Stage 4.</td><td><span class="askm ruled" title="E5 ruled 2026-11-25: A">E5 ✓</span></td></tr>
+<tr><td>3</td><td>A champs day on the home</td><td>One row in Today that opens the champs page, the way a running tournament is one row (A3). The day after, one row in Latest results opens the season's schedule for that day.</td><td><span class="askm ruled" title="E6 ruled 2026-11-25: A">E6 ✓</span></td></tr>
 <tr><td>4</td><td>The public-games rule and the refresh</td><td>No choice to make: the champs page uses the one house-league rule and the 30-second refresh, and Stage 6's motion counts it (tab 9).</td><td>none</td></tr>
-<tr><td>5</td><td>Closing a place</td><td>The Close a place window lists the club's events at that place. Nothing moves by itself: each event row opens Events, where the club changes it.</td><td><button class="askm" data-ask="E7">E7</button></td></tr>
-<tr><td>6</td><td>Sponsors</td><td>An event is a sponsor place: a "Sponsored by" line on its page, counted in the season report like every other place.</td><td><button class="askm" data-ask="E8">E8</button></td></tr>
-<tr><td>7</td><td>The photo question: one owner</td><td>This project's Stage 3 owns the one question. Camps and clinics join the places it is asked, and a camp is a place a photo can be filed. <code>/legal</code> settles whether the answer is required. Routing it to <code>/legal</code> is your call.</td><td><button class="askm" data-ask="E9">E9</button></td></tr>
+<tr><td>5</td><td>Closing a place</td><td>The Close a place window lists the club's events at that place. Nothing moves by itself: each event row opens Events, where the club changes it.</td><td><span class="askm ruled" title="E7 ruled 2026-11-25: A">E7 ✓</span></td></tr>
+<tr><td>6</td><td>Sponsors</td><td>An event is a sponsor place: a "Sponsored by" line on its page, counted in the season report like every other place.</td><td><span class="askm ruled" title="E8 ruled 2026-11-25: A">E8 ✓</span></td></tr>
+<tr><td>7</td><td>The photo question: one owner</td><td>This project's Stage 3 owns the one question. Camps and clinics join the places it is asked, and a camp is a place a photo can be filed. <code>/legal</code> settles whether the answer is required. Routing it to <code>/legal</code> is your call.</td><td><span class="askm ruled" title="E9 ruled 2026-11-25: A">E9 ✓</span></td></tr>
 <tr><td>8</td><td>The §3 wording</td><td>Reworded on tab 9. The 2026-10-31 ruling had already narrowed the 10-29 rule; the plan quoted the old one.</td><td>none</td></tr>
 <tr><td>9</td><td>The staff-calendar guard</td><td>Kept, and widened to the event and champs pages (tab 9).</td><td>none</td></tr>
 </tbody></table></div>
@@ -341,7 +360,7 @@ p.note{max-width:880px;color:var(--doc-soft)}
 <!-- ============ 2 HOME ============ -->
 <section class="tab" id="home">
 <h2 class="t">The home: one row per event, in the place that matches what you can do</h2>
-<p class="lead">Open now means "you can sign up for this now". News means "this is coming, or this happened". An event takes the row that matches what a family can do with it today, and it moves on when that changes <button class="askm" data-ask="E1">E1</button>. A champs day's games are house league games, so on its day the club's games part carries it as one row <button class="askm" data-ask="E6">E6</button>.</p>
+<p class="lead">Open now means "you can sign up for this now". News means "this is coming, or this happened". An event takes the row that matches what a family can do with it today, and it moves on when that changes <span class="askm ruled" title="E1 ruled 2026-11-25: A">E1 ✓</span>. A champs day's games are house league games, so on its day the club's games part carries it as one row <span class="askm ruled" title="E6 ruled 2026-11-25: A">E6 ✓</span>.</p>
 <div class="sub" role="group" aria-label="Home state">
   <button data-state="h-week" aria-pressed="true">A weekday with events coming</button>
   <button data-state="h-champs" aria-pressed="false">Champs day</button>
@@ -357,14 +376,14 @@ p.note{max-width:880px;color:var(--doc-soft)}
     <div class="bar dim"><div class="logo">KB</div><div><div class="cn">Kestrel Bay Softball Association</div><div class="tg">House league softball for Kestrel Bay</div></div><div class="si">Sign in</div></div>
     <div class="tabrow dim"><span class="on">Home</span><span>Teams</span><span>House league</span><span>Tournaments</span><span>News</span></div>
     <div class="pg">
-      <div class="sec"><button class="mk res tr" data-note="Open now as ruled in Stage 0 (A1): at most two rows, nearest deadline first, then one row that says how many more. New here: an event whose sign-up is open is one of its rows. Its second line follows house league's 'Sign up by Dec 25': the sign-up's closing day, or 'Full · waitlist open' when every spot is taken and the waitlist is open (Board Ready ask 19's words). A full sign-up still sorts by its own closing day, like any other. No price and no spot count on the home: those are on the event's page. The row leaves Open now the moment the sign-up closes. Built with Board Ready Stage 5 (ask E5).">Restyled · BR5</button><button class="askm tr2" data-ask="E1">E1</button>
+      <div class="sec"><button class="mk res tr" data-note="Open now as ruled in Stage 0 (A1): at most two rows, nearest deadline first, then one row that says how many more. New here: an event whose sign-up is open is one of its rows. Its second line follows house league's 'Sign up by Dec 25': the sign-up's closing day, or 'Full · waitlist open' when every spot is taken and the waitlist is open (Board Ready ask 19's words). A full sign-up still sorts by its own closing day, like any other. No price and no spot count on the home: those are on the event's page. The row leaves Open now the moment the sign-up closes. Built with Board Ready Stage 5 (ask E5).">Restyled · BR5</button><span class="askm tr2 ruled" title="E1 ruled 2026-11-25: A">E1 ✓</span>
         <h5>Open now</h5>
         <div class="list door">
           <div class="row chev"><div class="rt">Year-end banquet</div><div class="rs">Sign up by Jun 19</div></div>
           <div class="row chev"><div class="rt">Summer skills camp</div><div class="rs">Sign up by Jun 30</div></div>
           <div class="row chev"><div class="rt">1 more open now</div><div class="rs">Pitching clinic</div></div>
         </div></div>
-      <div class="sec"><button class="mk res tr" data-note="The News part as ruled in Stage 0 (A2): on the home each row is two lines, the headline and its date. New here, the rule for events in it: coming events first (soonest first, at most two), then the newest posts, three rows in all. An event with an open sign-up is in Open now instead, never in both. An event's second line starts 'Coming up' (Stage 0's own words on this frame). An event on its own day leaves News: a champs day goes to Today, and anything else simply drops off when it ends. Stage 4, or Board Ready Stage 5 for the event rows if it ships first (ask E5).">Restyled · S4</button><button class="askm tr2" data-ask="E1">E1</button>
+      <div class="sec"><button class="mk res tr" data-note="The News part as ruled in Stage 0 (A2): on the home each row is two lines, the headline and its date. New here, the rule for events in it: coming events first (soonest first, at most two), then the newest posts, three rows in all. An event with an open sign-up is in Open now instead, never in both. An event's second line starts 'Coming up' (Stage 0's own words on this frame). An event on its own day leaves News: a champs day goes to Today, and anything else simply drops off when it ends. Stage 4, or Board Ready Stage 5 for the event rows if it ships first (ask E5).">Restyled · S4</button><span class="askm tr2 ruled" title="E1 ruled 2026-11-25: A">E1 ✓</span>
         <h5>News<span class="lk">All news</span></h5>
         <div class="list">
           <div class="row chev"><div class="rt">2027 Champs day</div><div class="rs">Coming up · Sat, Jun 19 · Lions Park</div></div>
@@ -399,7 +418,7 @@ p.note{max-width:880px;color:var(--doc-soft)}
       <div class="sec"><h5>Today <span class="dt">Sat, Jun 19</span></h5>
         <div class="list">
           <div class="lb">Live now</div>
-          <div class="row chev door" style="position:relative"><button class="mk new" style="top:6px;right:34px" data-note="A champs day is ONE row on the club home, never its games: every division's last games on one day would bury everything else, the problem A3 solved for a running tournament. It sits in Live now while any of its games is on (Later today before the first starts), carries two counts in the tournament row's words, and opens the champs page (tab 5). Its games are left out of Today's own rows, so none shows twice. Built with the champs page (ask E5).">New · S1</button><button class="askm" style="top:6px;right:110px" data-ask="E6">E6</button><div class="rt">2027 Champs day</div><div class="rs">4 games on now · 22 games today · Lions Park</div></div>
+          <div class="row chev door" style="position:relative"><button class="mk new" style="top:6px;right:34px" data-note="A champs day is ONE row on the club home, never its games: every division's last games on one day would bury everything else, the problem A3 solved for a running tournament. It sits in Live now while any of its games is on (Later today before the first starts), carries two counts in the tournament row's words, and opens the champs page (tab 5). Its games are left out of Today's own rows, so none shows twice. Built with the champs page (ask E5).">New · S1</button><span class="askm ruled" style="top:6px;right:110px" title="E6 ruled 2026-11-25: A">E6 ✓</span><div class="rt">2027 Champs day</div><div class="rs">4 games on now · 22 games today · Lions Park</div></div>
           <div class="gw live"><div class="g"><div class="gh"><div><div class="tm">9:30 a.m.</div><div class="cx">U13 Ospreys · rep</div></div></div><div class="tms"><div class="sd"><span>Kestrel Bay U13 Ospreys</span><b>2</b></div><div class="sd"><span>Marlow Heights</span><b>1</b></div></div></div><div class="ps"><span>Harbourview Park · Diamond 2</span><span class="ico" aria-label="Directions">➤</span></div></div>
           <div class="lb">Latest results</div>
           <div class="gw"><div class="g"><div class="gh"><div><div class="tm">Thu, Jun 17</div><div class="cx">U13 Ospreys · rep</div></div><span class="pill">Final</span></div><div class="tms"><div class="sd w"><span>Kestrel Bay U13 Ospreys</span><b>5</b></div><div class="sd l"><span>Whitecliff</span><b>3</b></div></div></div></div>
@@ -428,7 +447,7 @@ p.note{max-width:880px;color:var(--doc-soft)}
       <div class="sec dim"><h5>Open now</h5><div class="list door"><div class="row chev"><div class="rt">Summer skills camp</div><div class="rs">Sign up by Jun 30</div></div><div class="row chev"><div class="rt">Pitching clinic</div><div class="rs">Full · waitlist open</div></div></div></div>
       <div class="sec"><h5>Latest results</h5>
         <div class="list">
-          <div class="row chev door" style="position:relative"><button class="mk new" style="top:6px;right:34px" data-note="The day after, the champs page is gone (Board Ready's one rule: gone the day after it ends), but its scores are not: they are house league games and stay on the season's schedule. So the row in Latest results opens the 2027 House League schedule at Jun 19. 'Latest results' keeps two days, so the row stays until Tuesday. Nothing about the one rule is copied or bent here.">New · S1</button><button class="askm" style="top:6px;right:110px" data-ask="E6">E6</button><div class="rt">2027 Champs day</div><div class="rs">22 finals · Sat, Jun 19 · Lions Park</div></div>
+          <div class="row chev door" style="position:relative"><button class="mk new" style="top:6px;right:34px" data-note="The day after, the champs page is gone (Board Ready's one rule: gone the day after it ends), but its scores are not: they are house league games and stay on the season's schedule. So the row in Latest results opens the 2027 House League schedule at Jun 19. 'Latest results' keeps two days, so the row stays until Tuesday. Nothing about the one rule is copied or bent here.">New · S1</button><span class="askm ruled" style="top:6px;right:110px" title="E6 ruled 2026-11-25: A">E6 ✓</span><div class="rt">2027 Champs day</div><div class="rs">22 finals · Sat, Jun 19 · Lions Park</div></div>
           <div class="gw"><div class="g"><div class="gh"><div><div class="tm">Sat, Jun 19</div><div class="cx">U13 Ospreys · rep</div></div><span class="pill">Final</span></div><div class="tms"><div class="sd w"><span>Kestrel Bay U13 Ospreys</span><b>4</b></div><div class="sd l"><span>Marlow Heights</span><b>2</b></div></div></div></div>
         </div></div>
       <div class="sec dim"><h5>News<span class="lk">All news</span></h5><div class="list"><div class="row chev"><div class="rt">Annual general meeting</div><div class="rs">Coming up · Tue, Sep 21 · 7:00 p.m.</div></div><div class="row chev"><div class="rt">Kestrel Bay U13 Ospreys won the Spring Open U13 division</div><div class="rs">Mon, Jun 7</div></div></div></div>
@@ -448,7 +467,7 @@ p.note{max-width:880px;color:var(--doc-soft)}
     <div><div class="sm2">The end state, as recommended: six tabs; News is reached by scrolling the row sideways</div><div class="tabstrip"><span class="on">Home</span><span>Teams</span><span>Tryouts</span><span>House league</span><span>Tournaments</span><span>News</span></div></div>
     <div><div class="sm2">With 8A's Events tab: seven, and two of them are out of sight</div><div class="tabstrip"><span class="on">Home</span><span>Teams</span><span>Tryouts</span><span>House league</span><span>Events</span><span>Tournaments</span><span>News</span></div></div>
   </div></div>
-  <div class="why"><h4>Why there is no Events tab <button class="askm" data-ask="E3">E3</button></h4><ul>
+  <div class="why"><h4>Why there is no Events tab <span class="askm ruled" title="E3 ruled 2026-11-25: A">E3 ✓</span></h4><ul>
     <li>The shipped row scrolls sideways on a phone and keeps the current tab in view. With Tryouts open, the fifth tab is already cut at 390 px.</li>
     <li>A15 refused a Photos page partly over "a sixth tab on a phone". An Events tab is a seventh.</li>
     <li>Everything an Events tab would list is already in two places: Open now on the home, and "Coming up" at the top of the News page (tab 3).</li>
@@ -460,14 +479,14 @@ p.note{max-width:880px;color:var(--doc-soft)}
 <!-- ============ 3 NEWS PAGE ============ -->
 <section class="tab" id="news">
 <h2 class="t">The News page lists every coming event, then the posts</h2>
-<p class="lead">On the home an event takes one row, in Open now or in News. The News page is the full list. Every coming event for Everyone is at the top, under "Coming up", including the ones whose sign-up is open, then the posts. The News tab now appears when the club has a post <i>or</i> a coming event <button class="askm" data-ask="E2">E2</button>.</p>
+<p class="lead">On the home an event takes one row, in Open now or in News. The News page is the full list. Every coming event for Everyone is at the top, under "Coming up", including the ones whose sign-up is open, then the posts. The News tab now appears when the club has a post <i>or</i> a coming event <span class="askm ruled" title="E2 ruled 2026-11-25: A">E2 ✓</span>.</p>
 <div class="pair">
   <div class="spec"><span class="cap">End state · <code>/kestrel-bay/news</code> · Thu, Jun 10 (no tournament running)</span>
   <div class="fr">
     <div class="bar dim"><div class="logo">KB</div><div><div class="cn">Kestrel Bay Softball Association</div><div class="tg">House league softball for Kestrel Bay</div></div><div class="si">Sign in</div></div>
     <div class="tabrow"><span>Teams</span><span>House league</span><span>Tournaments</span><span class="on">News</span></div>
     <div class="pg">
-      <div class="sec"><button class="mk new tr" data-note="One list in two bands (bands are rows inside one list: Stage 0's /design rule). 'Coming up' holds every public event that has not ended, soonest first, with no cap: a club rarely has more than a handful. Each row is two lines: the name, then when, and the sign-up's state where it has one; the place is on the event's page. No chip, because the second line says it. A tap opens the event's page (tab 4). Absent when nothing is coming.">New · S4</button><button class="askm tr2" data-ask="E2">E2</button>
+      <div class="sec"><button class="mk new tr" data-note="One list in two bands (bands are rows inside one list: Stage 0's /design rule). 'Coming up' holds every public event that has not ended, soonest first, with no cap: a club rarely has more than a handful. Each row is two lines: the name, then when, and the sign-up's state where it has one; the place is on the event's page. No chip, because the second line says it. A tap opens the event's page (tab 4). Absent when nothing is coming.">New · S4</button><span class="askm tr2 ruled" title="E2 ruled 2026-11-25: A">E2 ✓</span>
         <div class="list">
           <div class="lb">Coming up</div>
           <div class="row chev"><div class="rt">Pitching clinic</div><div class="rs">Tuesdays from Jun 15 · Full · waitlist open</div></div>
@@ -497,7 +516,7 @@ p.note{max-width:880px;color:var(--doc-soft)}
 <!-- ============ 4 EVENT PAGE ============ -->
 <section class="tab" id="event">
 <h2 class="t">An event's own page: what it is, when, where, and the door to sign up</h2>
-<p class="lead">One page per public event at <code>/{club}/events/{event}</code> <button class="askm" data-ask="E4">E4</button>. Its address is the shareable sign-up link that the owner ruled yes on, so a link sent in a Communications message opens it. The page is this project's. Everything after "Sign up" is Board Ready's form, drawn and ruled there. Board Ready's drawing had a page only for the camp and the champs day; this draws the plain event too.</p>
+<p class="lead">One page per public event at <code>/{club}/events/{event}</code> <span class="askm ruled" title="E4 ruled 2026-11-25: A">E4 ✓</span>. Its address is the shareable sign-up link that the owner ruled yes on, so a link sent in a Communications message opens it. The page is this project's. Everything after "Sign up" is Board Ready's form, drawn and ruled there. Board Ready's drawing had a page only for the camp and the champs day; this draws the plain event too.</p>
 <div class="sub" role="group" aria-label="Event page state">
   <button data-state="e-camp" aria-pressed="true">A camp with a sign-up</button>
   <button data-state="e-plain" aria-pressed="false">An AGM, nothing to sign up for</button>
@@ -509,11 +528,11 @@ p.note{max-width:880px;color:var(--doc-soft)}
   <div class="fr">
     <div class="bar dim"><div class="logo">KB</div><div><div class="cn">Kestrel Bay Softball Association</div><div class="tg">House league softball for Kestrel Bay</div></div><div class="si">Sign in</div></div>
     <div class="tabrow dim"><span>Teams</span><span>House league</span><span>Tournaments</span><span class="on">News</span></div>
-    <div class="pg"><div class="sec"><button class="mk new tr" data-note="The heading block in a post page's order: when, then the name, then who it is for (the birth years, Board Ready's 'Who it's for'). The 'Sponsored by' line sits under it only while a sponsor has this event as a place (ask E8), drawn as Stage 0 draws the line under a house league division.">New · BR5</button><button class="askm tr2" data-ask="E4">E4</button>
+    <div class="pg"><div class="sec"><button class="mk new tr" data-note="The heading block in a post page's order: when, then the name, then who it is for (the birth years, Board Ready's 'Who it's for'). The 'Sponsored by' line sits under it only while a sponsor has this event as a place (ask E8), drawn as Stage 0 draws the line under a house league division.">New · BR5</button><span class="askm tr2 ruled" title="E4 ruled 2026-11-25: A">E4 ✓</span>
       <div class="meta">Mon, Jul 5 – Fri, Jul 16 · 9:00 a.m.–3:00 p.m.</div>
       <div class="h1">Summer skills camp</div>
       <div class="meta">Born 2015–2019 · day camp</div>
-      <div class="sby"><button class="mk new" style="position:static" data-note="An event is a sponsor place (Board Ready Stage 6 ruled 'later a club event' as a kind of place). Counted for the season report like every place (ask E8). Club website Stage 5.">New · S5</button><button class="askm" style="position:static" data-ask="E8">E8</button> Sponsored by <span class="lg">Harbour Credit Union</span></div>
+      <div class="sby"><button class="mk new" style="position:static" data-note="An event is a sponsor place (Board Ready Stage 6 ruled 'later a club event' as a kind of place). Counted for the season report like every place (ask E8). Club website Stage 5.">New · S5</button><span class="askm ruled" style="position:static" title="E8 ruled 2026-11-25: A">E8 ✓</span> Sponsored by <span class="lg">Harbour Credit Union</span></div>
       <p style="margin:0;font-size:16px;line-height:1.55">Two weeks of hitting, fielding and base running with our coaches. Bring a glove, a water bottle and a lunch.</p>
       <div class="list"><div class="ps"><span>Lions Park · 42 Lions Park Rd</span><span class="ico" aria-label="Directions">➤</span></div></div>
       <div style="position:relative"><button class="mk new" style="top:-8px;right:0" data-note="Board Ready ask 19's family words, placed here: '17 spots left' and 'Full · waitlist open'. (Board Ready's camp frame drew '17 left' and 'Full'; this page uses ask 19's words, and the difference goes back to that project.) One row per session; the price as the sign-up holds it. The closing day is said once, above the button. Spots and the waitlist come from Board Ready's sign-up, read, never counted again here.">New · BR5</button>
@@ -561,7 +580,7 @@ p.note{max-width:880px;color:var(--doc-soft)}
   <div class="fr">
     <div class="bar dim"><div class="logo">KB</div><div><div class="cn">Kestrel Bay Softball Association</div><div class="tg">House league softball for Kestrel Bay</div></div><div class="si">Sign in</div></div>
     <div class="tabrow dim"><span>Home</span><span>Teams</span><span>House league</span><span>Tournaments</span><span>News</span></div>
-    <div class="pg"><div class="sec"><button class="mk new tr" data-note="The day after an event ends, Board Ready's one rule says it is no longer public, so its page shows nothing of it: not its name, not its date. A link that was sent or printed still lands on the club's own page, in the club's frame, with one door on. 'Not found' would read as a broken club site. The words go through /marketing with Stage 4.">New · BR5</button><button class="askm tr2" data-ask="E4">E4</button>
+    <div class="pg"><div class="sec"><button class="mk new tr" data-note="The day after an event ends, Board Ready's one rule says it is no longer public, so its page shows nothing of it: not its name, not its date. A link that was sent or printed still lands on the club's own page, in the club's frame, with one door on. 'Not found' would read as a broken club site. The words go through /marketing with Stage 4.">New · BR5</button><span class="askm tr2 ruled" title="E4 ruled 2026-11-25: A">E4 ✓</span>
       <div class="h1">This event has ended</div>
       <p style="margin:0;font-size:16px;line-height:1.55">See what is coming up at Kestrel Bay Softball Association.</p>
       <div class="list door"><div class="row chev"><div class="rt">News and coming events</div></div></div>
@@ -592,7 +611,7 @@ p.note{max-width:880px;color:var(--doc-soft)}
       <p style="margin:0;font-size:16px;line-height:1.55">Every house league division plays its last games of the season. Medals after each game, by the concession stand.</p>
       <div class="list"><div class="ps"><span>Lions Park · 42 Lions Park Rd</span><span class="ico" aria-label="Directions">➤</span></div></div>
     </div>
-    <div class="sec"><button class="mk new tr" data-note="Today's shipped recipe from Stage 0: bands inside one list (Live now, Later today, Latest results), up to four rows per band then 'N more' opening in place, and the division buttons because there are more than eight games. Scores refresh every 30 seconds while a game is on, as house league pages will from Stage 1; Stage 6's faster scores and its motion apply here too. No standings: a champs day is one day's games, and a division that hides its standings keeps them hidden. Scores show because they already show on the public schedule; no setting hides a game's score today.">New · S1</button><button class="askm tr2" data-ask="E6">E6</button>
+    <div class="sec"><button class="mk new tr" data-note="Today's shipped recipe from Stage 0: bands inside one list (Live now, Later today, Latest results), up to four rows per band then 'N more' opening in place, and the division buttons because there are more than eight games. Scores refresh every 30 seconds while a game is on, as house league pages will from Stage 1; Stage 6's faster scores and its motion apply here too. No standings: a champs day is one day's games, and a division that hides its standings keeps them hidden. Scores show because they already show on the public schedule; no setting hides a game's score today.">New · S1</button><span class="askm tr2 ruled" title="E6 ruled 2026-11-25: A">E6 ✓</span>
       <div class="seg"><span class="on">All</span><span>U9</span><span>U11</span><span>U13</span></div>
       <div class="list">
         <div class="lb">Live now</div>
@@ -621,7 +640,7 @@ p.note{max-width:880px;color:var(--doc-soft)}
 <!-- ============ 6 CLOSE A PLACE + SPONSORS ============ -->
 <section class="tab" id="close">
 <h2 class="t">A closed place lists its events; an event is a sponsor place</h2>
-<p class="lead">Stage 0's Close a place window lists games only (A4, ruled). A camp session or a banquet at a closed park has no row, so a volunteer closing Lions Park at 7:00 a.m. would not see that a camp starts there at 9:00 a.m. Board Ready will show what is booked where; this window reads it <button class="askm" data-ask="E7">E7</button>.</p>
+<p class="lead">Stage 0's Close a place window lists games only (A4, ruled). A camp session or a banquet at a closed park has no row, so a volunteer closing Lions Park at 7:00 a.m. would not see that a camp starts there at 9:00 a.m. Board Ready will show what is booked where; this window reads it <span class="askm ruled" title="E7 ruled 2026-11-25: A">E7 ✓</span>.</p>
 <div class="pair">
   <div class="spec"><span class="cap">Close a place · phone · Mon, Jul 5, the camp's first day</span>
   <div class="win w39"><div class="wh">Close a place <span class="x">×</span></div><div class="wb">
@@ -646,7 +665,7 @@ p.note{max-width:880px;color:var(--doc-soft)}
   </ul></div>
 </div>
 
-<h3 class="t">Sponsors: an event is one more place <button class="askm" data-ask="E8">E8</button></h3>
+<h3 class="t">Sponsors: an event is one more place <span class="askm ruled" title="E8 ruled 2026-11-25: A">E8 ✓</span></h3>
 <p class="lead">Board Ready Stage 6 already lists "a club event" as a kind of sponsor place, to come later. Stage 0's place table and season report did not have it yet. The rows below are added to them. Same-size, one line, no tiers (C1, ruled).</p>
 <div class="scrollx"><table class="doc">
 <thead><tr><th>Place</th><th>What shows</th><th>State</th><th>Counted for the report</th></tr></thead>
@@ -661,7 +680,7 @@ p.note{max-width:880px;color:var(--doc-soft)}
 <!-- ============ 7 PHOTO QUESTION ============ -->
 <section class="tab" id="photo">
 <h2 class="t">One photo question, with one owner</h2>
-<p class="lead">Two drawings ask the same family the same thing in two different ways. This project's Stage 3 (A8, C8, A13, A14, ruled) has one built-in question, the same words for every club. The family must answer it, a No costs nothing, and it decides whether photos filed under a team may show. Board Ready's camp form (its ask 12, ruled) has an optional yes or no that can't be made required. A camp is not a team, so under this project's rule a camp "yes" unlocks nothing, and a family could answer the same question twice in two shapes <button class="askm" data-ask="E9">E9</button>.</p>
+<p class="lead">Two drawings ask the same family the same thing in two different ways. This project's Stage 3 (A8, C8, A13, A14, ruled) has one built-in question, the same words for every club. The family must answer it, a No costs nothing, and it decides whether photos filed under a team may show. Board Ready's camp form (its ask 12, ruled) has an optional yes or no that can't be made required. A camp is not a team, so under this project's rule a camp "yes" unlocks nothing, and a family could answer the same question twice in two shapes <span class="askm ruled" title="E9 ruled 2026-11-25: A">E9 ✓</span>.</p>
 <div class="pair">
   <div class="spec" style="flex:1 1 520px;min-width:0"><span class="cap">Where the one question is asked (Stage 3's table, with camps added)</span>
   <div class="scrollx"><table class="doc">
@@ -687,7 +706,7 @@ p.note{max-width:880px;color:var(--doc-soft)}
 <!-- ============ 8 BEFORE NEWS ============ -->
 <section class="tab" id="order">
 <h2 class="t">If Board Ready's events ship before this project's News</h2>
-<p class="lead">Board Ready Stage 5 and this project's Stage 4 (News) can arrive in either order. The recommendation <button class="askm" data-ask="E5">E5</button> keeps every piece in its end-state shape from the first day, so nothing that ships early is redrawn when News arrives.</p>
+<p class="lead">Board Ready Stage 5 and this project's Stage 4 (News) can arrive in either order. The recommendation <span class="askm ruled" title="E5 ruled 2026-11-25: A">E5 ✓</span> keeps every piece in its end-state shape from the first day, so nothing that ships early is redrawn when News arrives.</p>
 <div class="scrollx"><table class="doc">
 <thead><tr><th>What a family sees</th><th>Board Ready Stage 5 has shipped, News has not</th><th>Once Club website Stage 1 ships</th><th>Once Club website Stage 4 (News) ships</th></tr></thead>
 <tbody>
@@ -718,10 +737,131 @@ p.note{max-width:880px;color:var(--doc-soft)}
 </ol>
 </section>
 
-<!-- ============ 10 ASKS ============ -->
+<!-- ============ 10 ON THE SCHEDULES ============ -->
+<section class="tab" id="sched">
+<h2 class="t">On the schedules people already read</h2>
+<p class="lead">Your question, 2026-11-25: <i>"will we be able to link club events with certain calendars like house league and rep schedules? there might be an internal banquet for all rep teams, or champs day is a part of house league so users will want to see that all in the same schedule."</i> Part of it is already ruled in Board Ready (below). Three gaps were open: a champs day isn't named on its season's schedule <button class="askm" data-ask="E10">E10</button>, an event can't be aimed at part of the club <button class="askm" data-ask="E11">E11</button>, and nothing the club holds can sit on a rep team's own schedule <button class="askm" data-ask="E12">E12</button>. Drawn from today's code: the house league schedule groups by week, with a Today line; a rep coach's schedule already shows the club's practices with a line such as "From Fall training · the club’s schedule"; the signed-in family pages read the team's schedule.</p>
+<div class="sub" role="group" aria-label="Schedule">
+  <button data-state="s-hl" aria-pressed="true">House league schedule</button>
+  <button data-state="s-win" aria-pressed="false">The club's window</button>
+  <button data-state="s-rep" aria-pressed="false">A rep coach's schedule</button>
+</div>
+
+<!-- HOUSE LEAGUE SCHEDULE -->
+<div class="state on" id="s-hl"><div class="pair">
+  <div class="spec"><span class="cap">End state · the 2027 House League schedule, U11 · <b>Thu, Jun 17</b>, two days before champs day</span>
+  <div class="fr">
+    <div class="fold"><span>first screen ends</span></div>
+    <div class="bar dim"><div class="logo">KB</div><div><div class="cn">Kestrel Bay Softball Association</div><div class="tg">House league softball for Kestrel Bay</div></div><div class="si">Sign in</div></div>
+    <div class="tabrow dim"><span>Home</span><span>Teams</span><span class="on">House league</span><span>Tournaments</span><span>News</span></div>
+    <div class="pg">
+      <div class="sec dim"><div class="bk">← 2027 House League</div><div class="h1">Schedule</div>
+        <div class="seg"><span>U9</span><span class="on">U11</span><span>U13</span></div>
+        <div class="sm2" style="margin-top:12px">Times in Eastern time.</div></div>
+      <div class="sec dim"><div class="bk" style="margin-bottom:0">Show 8 earlier weeks</div></div>
+      <div class="sec"><div class="hlw">Jun 14 – 20, 2027 · this week</div>
+        <div class="hlc">
+          <div class="hlt dim">Today · Thu, Jun 17</div>
+          <div class="hld"><button class="mk new tr" data-note="New: a day band over a champs day's games, on the schedule of the season the champs day names, in every division tab that has a game that day. It reads 'Champs day', the event's name, the place, and opens the champs page (tab 5). It is the schedule's own row style, one line taller than the Today marker, with no colour of its own. The games under it are the same rows as today: nothing about a game changes (Board Ready ruling 5). Club website Stage 1, with the champs page's games.">New · S1</button><button class="askm tr2" data-ask="E10">E10</button>
+            <div class="hk">Champs day</div><div class="hn">2027 Champs day · Lions Park</div><div class="hs">Every division's last games · scores all day</div></div>
+          <div class="hlg dim"><div class="hd">Sat, Jun 19</div><div class="hm"><div>Foxes</div><div>Otters</div></div><div class="ht">10:00 a.m.</div><div class="hp">Lions Park · Diamond 1</div></div>
+          <div class="hlg dim"><div class="hd">Sat, Jun 19</div><div class="hm"><div>Lynx</div><div>Mariners</div></div><div class="ht">11:30 a.m.</div><div class="hp">Lions Park · Diamond 2</div></div>
+        </div></div>
+      <div class="sec"><div class="hlw">Jun 21 – 27, 2027</div>
+        <div class="hlc">
+          <div class="hle"><button class="mk new tr" data-note="New, and only if E11 is ruled A: a club event whose 'Who it's for' names this season (here 'House league · all divisions') is one row in its week, in every division tab, between the games by its time. It is a row like a game's, with the event's name where the teams go, the words 'Club event' as its first line, and it opens the event's page (tab 4). It shows here only if the event is shown to Everyone: this is a public page, so Board Ready's one public rule still decides, and a Club staff event never reaches it. New behaviour to note for the build: today the schedule only draws a week that holds games, so a week whose only entry is an event (as here, after the season's last games) gains a heading of its own.">New · S1</button><button class="askm tr2" data-ask="E11">E11</button>
+            <div class="hd">Club event · Sat, Jun 26</div><div class="hm"><div>Year-end banquet</div></div><div class="ht">6:00 p.m.</div><div class="hp">Kestrel Bay Legion</div></div>
+        </div></div>
+    </div>
+    <div class="foot dim"><div class="cn">Kestrel Bay Softball Association</div><small>Questions? Email the club</small><small>Built on FieldLogicHQ</small></div>
+  </div></div>
+  <div class="why"><h4>Why it is shaped this way</h4><ul>
+    <li><b>The games are already here.</b> A champs day's games are house league games, so they have always been on this schedule. What a family could not tell was that Saturday is champs day, or where the day's page is. One band says it, once per day.</li>
+    <li><b>It is a band, not a header per game.</b> The schedule groups by week and shows a date on every game. Writing "Champs day" on each game would repeat it on every row of a busy Saturday.</li>
+    <li><b>Every division tab gets it</b> if that division plays that day, because a U11 family only ever looks at U11.</li>
+    <li><b>The day after,</b> the band stays, reading "Champs day · 2027 Champs day · Lions Park" with no door: the champs page has gone (Board Ready's rule: gone the day after it ends), and the games under it now carry their finals. That is where the home's Latest results row lands (E6).</li>
+    <li><b>No week is drawn without something in it.</b> The shipped page draws only weeks that hold games; the banquet's week appears because the banquet is in it.</li>
+    <li><b>The banquet row is E11's.</b> A season's schedule lists an event only when the event names that season. A club-wide banquet with no group stays in News, as ruled in E1, and does not appear on every schedule on the site.</li>
+    <li>The page as it ships today: <i>week headings, a Today marker inside the week, one card per game with date, teams, time and place.</i> Drawn from Stage 1's capture of Kestrel Bay's U11 schedule.</li>
+  </ul></div>
+</div></div>
+
+<!-- THE CLUB'S WINDOW -->
+<div class="state" id="s-win"><div class="pair">
+  <div class="spec"><span class="cap">Board Ready's "Add an event" window · phone · the rep banquet, for the club's rep teams only</span>
+  <div class="win w39"><div class="wh">Add an event <span class="x">×</span></div><div class="wb">
+    <div><div class="wl">Name *</div><div class="in">Rep year-end banquet</div></div>
+    <div><div class="wl">Kind *</div><div class="in dd">Banquet</div></div>
+    <div><div class="wl">Day *</div><div class="in">Sat, Sep 18, 2027</div></div>
+    <div><div class="wl">Time</div><div style="display:flex;gap:8px"><div class="in" style="flex:1">6:00 p.m.</div><div class="in" style="flex:1">10:00 p.m.</div></div></div>
+    <div><div class="wl">Where *</div><div class="in dd">Kestrel Bay Legion</div></div>
+    <div><div class="wl">Shown to</div><div class="opt"><span class="rb"></span><div>Everyone<div class="sm">On your club site and your calendar</div></div></div><div class="opt"><span class="rb on"></span><div>Club staff<div class="sm">On your calendar only</div></div></div></div>
+    <div style="position:relative"><div class="wl">Also on these schedules</div>
+      <div class="opt"><span class="cb"></span><div>House league<div class="sm">2027 House League · All divisions ▾</div></div></div>
+      <div class="opt"><span class="cb on"></span><div>Rep teams<div class="sm">All 6 rep teams ▾</div></div></div>
+      <button class="mk new" style="top:-6px;right:0" data-note="New in Board Ready's window (its Stage 5), between 'Shown to' and 'About it'. It names the schedules an event also sits on: a house league season (all its divisions, or some), rep teams (all, or some), or both. Nothing ticked is the default: the event is on the club calendar and, if shown to Everyone, the club site, as Board Ready ruled. It never changes WHO may see the event: 'Shown to' still does that, under Board Ready's one public rule. So: Everyone + House league = on the public site (News, E1) AND on that season's public schedule (E10/E11 frame). Club staff + Rep teams = on the club calendar and, if E12 is A, on those teams' own schedules in the coaches portal, which only their staff open. A Champs day fills this in by itself from its season and can't be changed. The words go through /marketing: 'Who it's for' is kept for camps' birth years (Board Ready ask 19).">New · BR5</button><button class="askm" style="position:absolute;top:-6px;right:84px" data-ask="E11">E11</button></div>
+    <div><div class="wl">About it</div><div class="in ta">Dinner, the season's awards and the coaches' thank-yous.</div></div>
+  </div><div class="wf"><span class="s">On your calendar, and on the schedules of all 6 rep teams.</span><span class="b">Cancel</span><span class="b lime">Add the event</span></div></div>
+  </div>
+  <div class="why"><h4>Why it is shaped this way</h4><ul>
+    <li><b>Two separate questions.</b> "Shown to" answers <i>who may see it</i>; that is Board Ready's one public rule and it does not move. "Also on these schedules" answers <i>where it is listed</i>. Your rep banquet is the case that needs both apart: private (Club staff), but listed for the rep teams.</li>
+    <li><b>An internal event stays internal.</b> Club staff + Rep teams never reaches a public page: not News, not a team's public page, not the house league schedule. It reaches the rep coaches (E12). Once the family app is on, the club can show it to "Our families" instead of Club staff, and the rep families see it there.</li>
+    <li><b>Before the family app, families hear by email.</b> The club sends a Communications message, as Board Ready ruled (its ask 9). No link to a private event page is invented for families: the no-new-sent-links rule (§3) holds.</li>
+    <li><b>Tick boxes, not a choice of one.</b> A banquet for the whole club can sit on the house league season and the rep teams at once.</li>
+    <li><b>The footer says the result</b> in plain words ("on the schedules of all 6 rep teams"), the way Board Ready's window says "Takes Diamond 2".</li>
+    <li><i>Considered and not recommended:</i> a new "Shown to" choice such as "Rep families". It re-opens Board Ready's ruled audience (ruling 3) and has nowhere to show families until the family app exists.</li>
+  </ul></div>
+</div></div>
+
+<!-- REP COACH'S SCHEDULE -->
+<div class="state" id="s-rep"><div class="pair">
+  <div class="spec"><span class="cap">The coaches portal · Kestrel Bay U13 Ospreys · Schedule, list · <b>rows only</b>, in this page's row style (the build uses the shipped list row)</span>
+  <div class="fr">
+    <div class="pg">
+      <div class="sec"><h5>September 2027</h5>
+        <div class="list">
+          <div class="tsch dim"><div><div class="d1">Tue, Sep 14</div><div class="d2">6:30 p.m.</div></div><div><div class="ti">Practice</div><div class="pl2">Lions Park · Diamond 2</div><div class="pl2">From Fall training · the club’s schedule</div></div><div class="r"></div></div>
+          <div class="tsch dim"><div><div class="d1">Thu, Sep 16</div><div class="d2">7:00 p.m.</div></div><div><div class="ti">vs Harbour Hawks</div><div class="pl2">Bell Park · Diamond 1</div></div><div class="r"></div></div>
+          <div class="tsch" style="position:relative"><button class="mk new tr" data-note="New, if E12 is ruled A: a club event whose 'Also on these schedules' names this team (or all rep teams) is a row on the team's schedule in the coaches portal, in the list, the week and the month views, by its time. It reads like the club's practices already do (Club Tier 11a): its own name, the place, and a source line in the same pattern, 'From the club · Club event'. It can't be edited, moved or deleted here: opening it reads the event (when, where, the club's lines) with one door, 'Ask the club'. Not on the team's public page, which stays games only (owner ruling 2026-10-20). Whether the team's FAMILIES see it follows 'Shown to': Everyone, or Our families once the family app is on; a Club staff event reaches this team's staff only.">New · BR5</button><button class="askm tr2" data-ask="E12">E12</button>
+            <div><div class="d1">Sat, Sep 18</div><div class="d2">6:00 p.m.</div></div><div><div class="ti">Rep year-end banquet</div><div class="pl2">Kestrel Bay Legion</div><div class="pl2">From the club · Club event</div></div><div class="r"></div></div>
+          <div class="tsch dim"><div><div class="d1">Sun, Sep 19</div><div class="d2">11:00 a.m.</div></div><div><div class="ti">at Westport Sharks</div><div class="pl2">Westport Fields · Diamond 3</div></div><div class="r"></div></div>
+        </div></div>
+    </div>
+  </div></div>
+  <div class="why"><h4>Why it is shaped this way</h4><ul>
+    <li><b>The club already puts things on a coach's schedule.</b> A practice handed out from the club's field time shows on the team's schedule today, with "From Fall training · the club’s schedule" under it, and the coach gets a restricted edit form for it. Your rule that the club never writes a team's schedule (D3) already has this one shipped exception, and a club event would sit right beside it, read-only.</li>
+    <li><b>Read-only, not "written".</b> The coach can't change it, and nothing on the team's own records moves: no attendance, no lineup, no money. It is the club telling the team "this is on", where the coach already plans the week.</li>
+    <li><b>Only for a team that belongs to the club.</b> A standalone coach's team has no club, so it never sees one.</li>
+    <li><b>Families follow "Shown to", not the coach.</b> The signed-in family pages read the team's schedule. A Club staff event therefore needs a rule that keeps it to the team's staff, and E12's A writes that rule down: staff only unless the event is shown to Everyone or, with the family app, to Our families.</li>
+    <li><b>The public team page stays games only.</b> That is a standing ruling, and a banquet is not a game. A public rep banquet is in News (E1) instead.</li>
+    <li><i>Considered and not recommended (E12 · B):</i> the coach learns by email only. It is the gap you asked about: the coach plans the September weekend in the portal and the banquet is not on it.</li>
+  </ul></div>
+</div></div>
+
+<h3 class="t">Where each kind of event lands, if E10–E12 are ruled as recommended</h3>
+<div class="scrollx"><table class="doc">
+<thead><tr><th>The event</th><th>Shown to</th><th>Also on these schedules</th><th>Club site (Open now, News, its page)</th><th>House league schedule</th><th>Rep teams' schedules (coaches portal)</th><th>Family app, once switched on</th><th>Club calendar</th></tr></thead>
+<tbody>
+<tr><td>2027 Champs day</td><td>Everyone</td><td>Its season, set by itself</td><td>Yes (E1, E6)</td><td>The day band (E10)</td><td>No</td><td>Yes: "when your child plays" (Board Ready ruling 10)</td><td>One block that opens to its games</td></tr>
+<tr><td>Year-end banquet, all house league</td><td>Everyone</td><td>2027 House League</td><td>Yes</td><td>A row in its week (E11)</td><td>No</td><td>Yes</td><td>Yes</td></tr>
+<tr><td>Rep year-end banquet, internal</td><td>Club staff</td><td>Rep teams</td><td>No</td><td>No</td><td>Yes, to each team's staff (E12)</td><td>No. It needs "Our families", which comes with the family app</td><td>Yes</td></tr>
+<tr><td>Annual general meeting</td><td>Everyone</td><td>None</td><td>Yes (News)</td><td>No</td><td>No</td><td>Yes</td><td>Yes</td></tr>
+<tr><td>Coaches' meeting</td><td>Club staff</td><td>None</td><td>No</td><td>No</td><td>No</td><td>No</td><td>Yes</td></tr>
+</tbody></table></div>
+<h3 class="t">Already ruled, not asked again</h3>
+<ul class="plain">
+  <li><b>The club calendar</b> carries club events as their own program, and a champs day is one block that opens to its games (Board Ready ruling 7). Today's calendar has three programs (rep teams, house league, tournaments); "Club events" is the fourth.</li>
+  <li><b>A champs day names its house league season</b>, and its games gather under it; nothing about a game changes (Board Ready ruling 5).</li>
+  <li><b>The family app</b> lists the club's coming events below a family's teams, and on champs day says when their child plays (Board Ready ruling 10). It is the one place that knows whose child is on which team, so it is where "all in the same schedule" is fully true. It is built and switched off; nothing here waits for it.</li>
+  <li><b>The public rep team page stays games only</b> (owner ruling 2026-10-20). A public event for rep families is in News, not on a team page.</li>
+</ul>
+</section>
+
+
+<!-- ============ 11 ASKS ============ -->
 <section class="tab" id="asks">
 <h2 class="t">The asks</h2>
-<p class="lead">Nine asks, the photo question last. The recommendation is always option A, in green. Nothing is ticked for you: an ask you skip pastes back as "not ruled". Tick, add a note if you like, and paste the block at the bottom back into the chat. E9 also needs your word on whether <code>/legal</code> reads it now.</p>
+<p class="lead"><b>E1–E9 are ruled</b> (2026-11-25, all A) and recorded in the plan, so they are not here. These eight are new: E10–E12 from your schedules question (tab 10), and P1–P5, the five calls <code>/legal</code> handed back on the photo question after you ruled E9 (its review is <code>docs/agents/legal/CLUB_WEBSITE_E9_PHOTO_QUESTION_REVIEW.md</code>). The recommendation is always option A, in green. Nothing is ticked for you: an ask you skip pastes back as "not ruled". Tick, add a note if you like, and paste the block at the bottom back into the chat.</p>
 <div id="asklist"></div>
 <h3 class="t">Paste-back</h3>
 <textarea id="paste" readonly aria-label="Paste-back summary"></textarea>
@@ -735,105 +875,92 @@ p.note{max-width:880px;color:var(--doc-soft)}
 (function(){
 var ASKS=[
  {
-  "g": "Where events show",
-  "id": "E1",
-  "t": "An event on the home",
-  "q": "Stage 0 put coming events in News (A2) and drew a clinic in Open now. Board Ready's first drawing (8A) added a third place, a 'Coming up' section. Tab 2.",
+  "g": "On the schedules (tab 10)",
+  "id": "E10",
+  "t": "A champs day on its season's schedule",
+  "q": "Its games are on the house league schedule already, with nothing saying the day is champs day. This project's to rule. Tab 10, first frame.",
   "o": [
-   "A · One row per event, in the place that matches what a family can do: an Open now row while its sign-up is open (inside the two-row cap, 'Sign up by {day}' or 'Full · waitlist open'), otherwise a 'Coming up' row in the home's News part (soonest first, at most two, then posts). Never in both",
-   "B · Events only in News, even while a sign-up is open",
-   "C · Both: an Open now row and a News row while its sign-up is open"
+   "A · A band over that day's games in every division tab that plays that day: 'Champs day', its name and place, opening the champs page. The day after it stays, with no door",
+   "B · Nothing: the games alone, as today"
   ],
-  "r": "The home on every day a club has an event; what Board Ready Stage 5 builds into Open now."
+  "r": "Stage 1's house league schedule."
  },
  {
-  "g": "Where events show",
-  "id": "E2",
-  "t": "The News page and the News tab",
-  "q": "Tab 3. On the home an event takes one row; the page is where a family finds it again.",
+  "g": "On the schedules (tab 10)",
+  "id": "E11",
+  "t": "An event listed on the schedules it is for (Board Ready records your answer)",
+  "q": "Board Ready's window has 'Shown to' (Everyone, Club staff) only, so an event can't be aimed at the rep teams or one house league season. Who an event is for is Board Ready's, so its session records this. Tab 10, second frame.",
   "o": [
-   "A · The News page opens with 'Coming up' (every public event not yet ended, soonest first, sign-ups included), then the posts. The News tab shows when there is a post or a coming event",
-   "B · The News page holds posts only; events are on the home and at their own links"
+   "A · 'Also on these schedules' in Board Ready's window: tick a house league season (all divisions or some), rep teams (all or some), or both; nothing ticked by default. It decides where the event is listed, never who may see it: 'Shown to' still decides that. An Everyone event for a season is a row in its week on that season's public schedule",
+   "B · No groups: an event says who it is for in its name and the club's lines, and the club tells families with a Communications message"
   ],
-  "r": "Stage 4; whether a club with events but no posts has a News tab."
+  "r": "Board Ready Stage 5's window; event rows on the house league schedule; what E12 lists."
  },
  {
-  "g": "Where events show",
-  "id": "E3",
-  "t": "An Events tab",
-  "q": "The phone tab row already scrolls past its fifth tab; News makes six. A15 refused a Photos page partly over a sixth tab. Tab 2, 'Why there is no Events tab'.",
+  "g": "On the schedules (tab 10)",
+  "id": "E12",
+  "t": "A club event on a rep team's schedule in the coaches portal",
+  "q": "Your rule that the club never writes a team's schedule (D3) already has one shipped exception: the practices the club hands out from its field time show on the team's schedule. Your call. Tab 10, third frame.",
   "o": [
-   "A · No Events tab. Events live in Open now, News and their own pages",
-   "B · An Events tab after House league, shown only while an event for everyone is coming up (Board Ready 8A as first ruled); events leave News"
+   "A · A read-only row on the schedule of each club team the event names, 'From the club · Club event', opening the event with 'Ask the club'. Never on the public team page. The team's families see it only if it is shown to Everyone, or to Our families once the family app is on; a Club staff event stays with the team's staff. Built by Board Ready Stage 5, beside the calendar",
+   "B · Not on the team's schedule; the coach hears by email"
   ],
-  "r": "The club's tab row on every page; 8A stays withdrawn under A."
+  "r": "Every club rep team's schedule; the family app's team pages later."
  },
  {
-  "g": "Where events show",
-  "id": "E4",
-  "t": "An event's own page",
-  "q": "Tab 4. The owner ruled that every sign-up gets a shareable link; this decides what that link opens.",
+  "g": "The photo question: /legal's calls (after E9)",
+  "id": "P1",
+  "t": "Required or optional",
+  "q": "Stage 0 drew the question with a required mark ('Choose either one'). /legal: both pass the law, but a forced pick reads as pressure and can block a paid camp sign-up. Board Ready's 12A already ruled optional.",
   "o": [
-   "A · One page per public event: when, name, who it is for, a sponsor line, the club's lines, where with directions, sessions with '17 spots left' or 'Full · waitlist open', and 'Sign up' opening Board Ready's form. It lights News (no back link). Its address is the shareable link. After the event an old link says 'This event has ended' with a door to News",
-   "B · No page of its own: rows and the shared link go straight to Board Ready's sign-up form, and an event with no sign-up has no page"
+   "A · Optional: two choices, neither picked, a blank answer counts as No",
+   "B · Required: the family must pick one, as Stage 0 drew it"
   ],
-  "r": "What every sent link opens; what Board Ready Stage 5 builds."
+  "r": "Every sign-up that asks it; the Stage 0 drawing is corrected under A."
  },
  {
-  "g": "Order and the champs day",
-  "id": "E5",
-  "t": "If Board Ready Stage 5 ships before News",
-  "q": "Tab 8. Board Ready recommended the shareable link so events work from day one.",
+  "g": "The photo question: /legal's calls (after E9)",
+  "id": "P2",
+  "t": "What one Yes covers",
+  "q": "The club's own feed (idea 11) posts to its Instagram or Facebook. A Yes that names only the website would not cover those posts.",
   "o": [
-   "A · Board Ready Stage 5 builds the event page and the Open now row to this drawing. Events with nothing to sign up for travel by link until this project's Stage 4. A champs day's games join its page with Stage 1",
-   "B · Move Stage 4's events half earlier: a News page and News part that hold only events",
-   "C · Nothing on the club site until Stage 4; the link only"
+   "A · One Yes covers the club's public website AND its own social media pages, both named in the question. Never posters, share images, sponsor places or downloads",
+   "B · Website only"
   ],
-  "r": "Which project builds the event page; whether a camp sign-up is on the club home from its first day."
+  "r": "The question's words; whether the club's Instagram posts can carry a child."
  },
  {
-  "g": "Order and the champs day",
-  "id": "E6",
-  "t": "A champs day on the home",
-  "q": "Its games are house league games, so Today would list every division's last games. A3 solved this for a running tournament with one row. Tabs 2 and 5.",
+  "g": "The photo question: /legal's calls (after E9)",
+  "id": "P3",
+  "t": "A camp Yes and a team Yes",
+  "q": "Same words, only the program named. A camp sign-up has no account.",
   "o": [
-   "A · One row in Today ('4 games on now · 22 games today · Lions Park') that opens the champs page; its games are left out of Today's own rows. The day after, one Latest results row ('22 finals') opens the season's schedule for that day, since the champs page is gone",
-   "B · Every champs game as its own row in Today"
+   "A · Separate answers: each is read only for its own program, and only for accepted sign-ups",
+   "B · One answer for the whole club, which needs the family app"
   ],
-  "r": "The home on a champs day; the champs page as a Today tenant (Stage 1)."
+  "r": "Camps (Board Ready Stage 7) and every team."
  },
  {
-  "g": "Places, sponsors, photos",
-  "id": "E7",
-  "t": "Closing a place with an event on it",
-  "q": "Close a place lists games only (A4). A camp at a closed park has no row. Tab 6.",
+  "g": "The photo question: /legal's calls (after E9)",
+  "id": "P4",
+  "t": "Changing the answer later",
+  "q": "Board Ready's 'answers closed' lock stops changes once teams are made.",
   "o": [
-   "A · The window lists the club's events at that place that day, in their own group, each opening in Events; nothing about an event moves by itself, and the club changes or cancels it there",
-   "B · Games only, as A4 drew it"
+   "A · The photo answer stays changeable after the lock for as long as Your sign-up works; the website hides the photo at once and the club takes down its own posts. A club may record a written change, marked 'recorded by the club'",
+   "B · It locks with the other answers"
   ],
-  "r": "Stage 2; needs Board Ready to show each event's place and time."
+  "r": "Your sign-up; the club's answers list; a club duty in the Data Terms."
  },
  {
-  "g": "Places, sponsors, photos",
-  "id": "E8",
-  "t": "Sponsors on an event",
-  "q": "Board Ready Stage 6 lists 'a club event' as a sponsor place to come. Tab 6.",
+  "g": "The photo question: /legal's calls (after E9)",
+  "id": "P5",
+  "t": "Who writes the words",
+  "q": "Every club asks the same question.",
   "o": [
-   "A · An event is a sponsor place: a 'Sponsored by' line under its name on its page (a champs day too), counted in the season report like every place. Nothing in its Open now or News row",
-   "B · The line shows, but event places are not counted in the report"
+   "A · Fixed words, versioned with each answer; a club can't edit them",
+   "B · A club may reword it"
   ],
-  "r": "Stage 5's place table and season report."
- },
- {
-  "g": "Places, sponsors, photos",
-  "id": "E9",
-  "t": "Who owns the photo question",
-  "q": "This project's Stage 3 has one required question for every club; Board Ready's camp form (ask 12) has an optional one. A camp is not a team, so a camp yes unlocks nothing today. Tab 7. Also tell me: /legal now, or when Stage 3 is drawn?",
-  "o": [
-   "A · This project's Stage 3 owns the one question. Camp and clinic sign-ups ask it in the same words, in place of Board Ready's; a photo filed under a camp follows the team rule with the camp's list. /legal settles required versus optional",
-   "B · Board Ready's camp form keeps its own optional question for camps; the built-in question stays for teams"
-  ],
-  "r": "Board Ready Stage 7's camp form; Stage 3's answers list; every camp photo."
+  "r": "The question in every club; what an answer proves later."
  }
 ];
 var host=document.getElementById("asklist"),lastG="";
@@ -846,7 +973,7 @@ ASKS.forEach(function(a){
   d.innerHTML=h;host.appendChild(d);
 });
 function paste(){
-  var L=["Club website · club events rulings:"];
+  var L=["Club website · events on schedules + photo question rulings:"];
   ASKS.forEach(function(a){var c=document.querySelector("input[name=\"r-"+a.id+"\"]:checked");var n=document.getElementById("n-"+a.id).value.trim();L.push(a.id+": "+(c?c.value:"not ruled")+(n?" — "+n:""));});
   document.getElementById("paste").value=L.join("\n");
 }
@@ -856,7 +983,7 @@ document.getElementById("copybtn").addEventListener("click",function(){
   try{navigator.clipboard.writeText(t.value).then(done,function(){t.select();});}catch(e){t.select();}
 });
 var tabs=[].slice.call(document.querySelectorAll("nav.tabs button"));
-var DIFFTABS={home:1,news:1,event:1,champs:1};
+var DIFFTABS={home:1,news:1,event:1,champs:1,sched:1};
 function pickState(id){var s=document.getElementById(id);if(!s||!s.classList.contains("state"))return false;var g=document.querySelector(".sub button[data-state=\""+id+"\"]");if(g){[].forEach.call(g.parentNode.querySelectorAll("button"),function(x){x.setAttribute("aria-pressed",x===g?"true":"false");var t=document.getElementById(x.dataset.state);if(t)t.classList.toggle("on",x===g);});}return s.closest("section.tab").id;}
 function show(id,ask){
   var tabId=id;var st=id&&document.getElementById(id);if(st&&st.classList.contains("state")){tabId=pickState(id);}

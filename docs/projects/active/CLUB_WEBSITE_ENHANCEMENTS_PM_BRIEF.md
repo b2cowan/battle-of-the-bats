@@ -49,7 +49,7 @@ Sign up button on it opens Board Ready's form. A champs day is one line on the h
 day's games and scores. Closing a field also lists any camp or event booked there. An event can carry a sponsor who
 is counted in the season report. One photo question serves every sign-up, camps included. Success looks like: a camp
 sign-up is on the club home the day it opens, a champs day never floods the home, and a family never answers the
-photo question twice in two different ways. Still open: whether club events also show on the house-league and rep schedules families and coaches read (a champs day labelled on its season's schedule; an event for all rep teams or one division).
+photo question twice in two different ways. Drawn the same day and waiting on the owner: club events on the schedules people already read. A champs day is named over its games on the house league schedule; a club can list an event on a house league season's or its rep teams' schedules without making it public; and a club event can sit, read-only, on a rep coach's schedule beside the club's practices. The photo question's legal review came back the same day: the question is optional, a blank answer means No, and five calls on it wait for the owner.
 
 **Added from Milton Bats' meeting (2026-11-24, proposed, not drawn or ruled): the club's own feed.** The club wants to
 promote wins and tournament trips on its site and already posts to Instagram. Proposed: a coach sends photos from a

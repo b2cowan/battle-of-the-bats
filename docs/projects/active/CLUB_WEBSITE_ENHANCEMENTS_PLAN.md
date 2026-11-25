@@ -437,10 +437,14 @@ the demos follow the product and are curated with `/demos`, never as a build ste
   - **E7** Close a place lists the club's events at that place, each opening in Events; nothing moves by itself.
   - **E8** an event is a sponsor place: a line on its page, counted in the season report.
   - **E9** this project's Stage 3 owns the one photo question; camps and clinics ask it in place of Board Ready's
-    12A; a photo filed under a camp follows the team rule; `/legal` settles required versus optional. **Still open,
-    owner call (not answered in the paste): `/legal` now, or when Stage 3 is drawn.**
+    12A; a photo filed under a camp follows the team rule; `/legal` settles required versus optional. **Owner
+    2026-11-25: "legal now".** `/legal` answered the same day
+    ([CLUB_WEBSITE_E9_PHOTO_QUESTION_REVIEW.md](../../agents/legal/CLUB_WEBSITE_E9_PHOTO_QUESTION_REVIEW.md)):
+    optional, neither picked, blank = No (reverses the Stage 0 drawing's required mark); its five owner calls are
+    P1–P5 on the events drawing's asks tab, **NOT RULED**.
 
-- [ ] **Club events on the schedules people read (owner question 2026-11-25; not drawn, not ruled).** Owner: *"will we
+- [ ] **Club events on the schedules people read (owner question 2026-11-25; drawn the same day as tab 10 of the
+  events drawing, asks E10–E12, NOT RULED).** Owner: *"will we
   be able to link club events with certain calendars like house league and rep schedules? there might be an internal
   banquet for all rep teams, or champs day is a part of house league so users will want to see that all in the same
   schedule. has that been ironed out?"* **Settled already** (Board Ready §5 Stage 5 rulings 3, 5, 7 and 10): the club
@@ -455,8 +459,21 @@ the demos follow the product and are curated with `/demos`, never as a build ste
     rep banquet today is Club staff plus a Communications message. Board Ready's (it owns who an event is for).
   - (c) *A club event on a club rep team's schedule* (the public team page is games only, §3; the coach's own schedule
     is the coach's, D3 and the coach books ruling). Neither project has it; an owner call.
-  Session's recommendation, not ruled: draw (a)–(c) together as one more tab of the events drawing, each ask marked
-  with the project that rules it; (a) to be drawn into Stage 1's page.
+  Owner 2026-11-25: "yes draw the tab now". Recommended A each time:
+  - **E10** (a), this project's: a band over a champs day's games on its season's schedule, in every division tab that
+    plays that day ("Champs day", its name and place), opening the champs page; it stays the day after with no door.
+    Into Stage 1's page.
+  - **E11** (b), Board Ready's to record: "Also on these schedules" in its event window (None · a house league season,
+    all divisions or some · rep teams, all or some). It decides where the event is listed, never who may see it
+    ("Shown to" still does). An Everyone event for a season is a row in its week on that season's public schedule.
+  - **E12** (c), owner call: a read-only row on each named club team's schedule in the coaches portal, "From the club ·
+    Club event" (the pattern of the club's practices, Club Tier 11a, the shipped exception to D3), opening the event
+    with "Ask the club"; never on the public team page; the team's families see it only if shown to Everyone or, with
+    the family app, Our families. Built by Board Ready Stage 5 beside the calendar.
+  Code facts the drawing rests on: the public house league schedule groups by week with a Today line and has no
+  whole-day label (rainouts never show there); the coach's schedule shows club practices "From {schedule} · the club’s
+  schedule"; the signed-in family pages read the team's schedule (so E12 needs its staff-only rule); the club calendar
+  has three programs today and no club-level kind.
 
 ## Progress
 
@@ -616,6 +633,13 @@ the demos follow the product and are curated with `/demos`, never as a build ste
   Written down with no ask (tab 9): the champs page reads through the one house league public-games rule
   (whichever of Stage 1 and the champs page builds first pulls it into one place, with a guard test); the 30-second
   refresh and Stage 6's motion count the champs page; the staff-calendar guard names the event and champs pages.
+- 2026-11-25 — **Schedules tab drawn and `/legal` read the photo question (owner: "yes draw the tab now, legal now,
+  commit").** The E1–E9 records were committed first (f53441db4). Tab 10 of the events drawing draws the three
+  schedule gaps (E10–E12, §7); the asks tab now holds E10–E12 and `/legal`'s P1–P5, and the ruled E1–E9 tags are grey
+  marks. `/legal`'s review is `docs/agents/legal/CLUB_WEBSITE_E9_PHOTO_QUESTION_REVIEW.md`: optional (blank = No), one
+  Yes names the website and the club's own social pages, camp and team answers separate, changeable after the lock,
+  fixed words; the camp form puts the guardian line first and ships with no photo question if Board Ready Stage 7
+  builds before this project's Stage 3. `/design` ran on tab 10 before publish. Nothing built.
 - 2026-11-25 — **Club events E1–E9 ruled, all A** (owner pasted "E1: A … E9: A"). §7 ticked; §3's no-login line
   reworded to tab 9's text; each stage line in §6 now names its events piece (Stage 1 E1/E5/E6, Stage 2 E7, Stage 3
   E9, Stage 4 E1–E3, Stage 5 E8, Stage 6 the champs page); one line added to Board Ready's Stage 5 split record. Still
