@@ -86,6 +86,7 @@ Buttons: Allow photos · Not now
 7. **Safe fallback if Stage 7 builds before Stage 3:** ship the camp form with no photo question. A missing answer is no, so no camp photo can show until the question exists; adding it later puts a "Photos" row on each Your sign-up that families can answer then. Nothing needs to wait, and nothing can leak.
 
 ## Recommendation (what the owner decides)
+**Ruled 2026-11-25: all five as recommended, no notes** (asked as P1–P5 on the club website's events drawing; O1 = P1 … O5 = P5; record in `CLUB_WEBSITE_ENHANCEMENTS_PLAN.md` §7, ask E9). The ruling settles the five calls below; the exact words in "The words" were not on the asks and are not part of it.
 - **O1.** Optional, neither chosen, blank = no (recommended). Alternative: required pick, which the OPC finding allows but two reviews felt as pressure.
 - **O2.** One yes covers the website and the club's own social media pages, both named (recommended). Alternative: website only, which makes the A16 attestation about Instagram posts unsupported by what the family was told.
 - **O3.** Camp and team yes are separate answers (recommended). Alternative: one club-wide answer, which belongs with the family app.
