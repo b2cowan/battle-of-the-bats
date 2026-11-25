@@ -278,15 +278,21 @@ prompt → the build → `/simplify`, `/review`, `/legal` or `/accounting` where
   Stage 6 can change how fast it arrives without touching a page.
   *(Corrected by Stage 0: Open now stays first, capped at two rows; the games part sits after it, titled "Today" or
   "Latest results"; house league pages get the 30-second refresh here.)*
+  *(Drawn 2026-11-25; its 11 asks G1–G11 ruled the same day, all as recommended (§7). Build order as drawn: the public
+  rep page's running-score defect ("T 4–2") first → the one games read with its guards → the home's games part.)*
   *(Club events, E1/E5/E6 ruled 2026-11-25: an event with an open sign-up is an Open now row; a champs day is one Today
   row opening its page, its games left out of Today's own rows, and the champs page's games join here.)*
+  *(Club events on the schedules, E10/E11 ruled 2026-11-25: a "Champs day" band over that day's games on its season's
+  schedule, in every division tab that plays that day, opening the champs page, kept the day after with no door; an
+  Everyone event that names a season is a row in its week on that season's public schedule.)*
 - [ ] **Stage 2 — Field status (idea 3; F3).** Second tenant. *(Corrected by Stage 0: it is today's Rainout widened to
   a place ("Close a place"), not a third tool; tournament games ride their own Rain delay, so it does NOT wait on the
   real-venues project. It needs only a count of typed-only games first, dev, counts only.)*
   *(Club events, E7: the window also lists the club's events at that place, each opening in Events.)*
 - [ ] **Stage 3 — The site's face (idea 7; F4).** `/legal` and the consent question first. Before news, so a news post
   is built with its photo from the start. *(Club events, E9: the one photo question is this stage's; camps ask it in
-  the same words.)*
+  the same words. P1–P5 ruled 2026-11-25: optional, blank = No; one Yes names the website and the club's own social
+  pages; camp and team answers separate; changeable after the lock while Your sign-up works; fixed, versioned words.)*
 - [ ] **Stage 4 — News (idea 4).** Third tenant: the automatic posts and the admin's own. *(Club events, E1–E3: the
   home's "Coming up" rows, the News page opening with "Coming up", the News tab shown for a coming event alone; no
   Events tab.)*
@@ -302,6 +308,8 @@ prompt → the build → `/simplify`, `/review`, `/legal` or `/accounting` where
 - [ ] **Stage 9 — Share kit (idea 10).** Last, so the poster and the social images carry the finished pages.
 - [ ] **Track P — Your club, already built (idea 1; F7).** A separate track with its own drawing session. It shows
   whatever the site is, so it depends on no stage and gets better with each one. Starts on the owner's word (§7 C3).
+  *(Drawn 2026-11-25; its 16 asks T1–T16 ruled the same day, all as recommended (§7). Build order as drawn: the
+  preview marker and its build check → Prospect clubs + Make one → the marking → the room → the claim → the removal.)*
 
 **What idea 11 would do to this ladder (PROPOSED 2026-11-24; the stages above are unchanged until the owner rules):**
 it adds no stage, it widens two and moves nothing ahead of Stage 1.
@@ -441,10 +449,22 @@ the demos follow the product and are curated with `/demos`, never as a build ste
     2026-11-25: "legal now".** `/legal` answered the same day
     ([CLUB_WEBSITE_E9_PHOTO_QUESTION_REVIEW.md](../../agents/legal/CLUB_WEBSITE_E9_PHOTO_QUESTION_REVIEW.md)):
     optional, neither picked, blank = No (reverses the Stage 0 drawing's required mark); its five owner calls are
-    P1–P5 on the events drawing's asks tab, **NOT RULED**.
+    P1–P5 on the events drawing's asks tab, **RULED 2026-11-25: all five A, as recommended, no notes** (owner
+    paste-back: P1 A · P2 A · P3 A · P4 A · P5 A). In the asks' own words:
+    - **P1** optional: two choices, neither picked, a blank answer counts as No (the Stage 0 drawing's required
+      mark is corrected under it).
+    - **P2** one Yes covers the club's public website AND its own social media pages, both named in the question;
+      never posters, share images, sponsor places or downloads.
+    - **P3** a camp Yes and a team Yes are separate answers, each read only for its own program, and only for
+      accepted sign-ups.
+    - **P4** the photo answer stays changeable after the answers-closed lock for as long as Your sign-up works; the
+      website hides the photo at once and the club takes down its own posts; a club may record a written change,
+      marked "recorded by the club".
+    - **P5** fixed words, versioned with each answer; a club can't edit them.
 
-- [ ] **Club events on the schedules people read (owner question 2026-11-25; drawn the same day as tab 10 of the
-  events drawing, asks E10–E12, NOT RULED).** Owner: *"will we
+- [x] **Club events on the schedules people read (owner question 2026-11-25; drawn the same day as tab 10 of the
+  events drawing; asks E10–E12 RULED 2026-11-25: all three A, as recommended, no notes** (owner paste-back: E10 A ·
+  E11 A · E12 A)**).** Owner: *"will we
   be able to link club events with certain calendars like house league and rep schedules? there might be an internal
   banquet for all rep teams, or champs day is a part of house league so users will want to see that all in the same
   schedule. has that been ironed out?"* **Settled already** (Board Ready §5 Stage 5 rulings 3, 5, 7 and 10): the club
@@ -459,7 +479,7 @@ the demos follow the product and are curated with `/demos`, never as a build ste
     rep banquet today is Club staff plus a Communications message. Board Ready's (it owns who an event is for).
   - (c) *A club event on a club rep team's schedule* (the public team page is games only, §3; the coach's own schedule
     is the coach's, D3 and the coach books ruling). Neither project has it; an owner call.
-  Owner 2026-11-25: "yes draw the tab now". Recommended A each time:
+  Owner 2026-11-25: "yes draw the tab now". Recommended A each time, and ruled A each time the same day:
   - **E10** (a), this project's: a band over a champs day's games on its season's schedule, in every division tab that
     plays that day ("Champs day", its name and place), opening the champs page; it stays the day after with no door.
     Into Stage 1's page.
@@ -474,6 +494,43 @@ the demos follow the product and are curated with `/demos`, never as a build ste
   whole-day label (rainouts never show there); the coach's schedule shows club practices "From {schedule} · the club’s
   schedule"; the signed-in family pages read the team's schedule (so E12 needs its staff-only rule); the club calendar
   has three programs today and no club-level kind.
+
+- [x] **Track P — 16 asks T1–T16, RULED 2026-11-25: all sixteen A, as recommended, no notes** (owner paste-back:
+  T1 A · T2 A · T3 A · T4 A · T5 A · T6 A · T7 A · T8 A · T14 A · T9 A · T10 A · T15 A · T16 A · T11 A · T12 A ·
+  T13 A). Two things the A answers do not settle, said on the asks themselves: **T11** rules the behaviour (removed by
+  itself nightly); the production job is shared automation and is built only on the owner's word in the session that
+  builds it. **T13** is ruled, but its one email cannot send until the mailing address below exists.
+  Drawn 2026-11-25. Page: [CLUB_WEBSITE_TRACK_P_DRAWINGS.html](CLUB_WEBSITE_TRACK_P_DRAWINGS.html),
+  published https://claude.ai/artifact/Tx3So1rUqL6shn7CzM93Zr, tab 9 with a paste-back. (Named T, not P, because the
+  events drawing's photo calls are P1–P5.) Ruled A on each: T1 one preview marker read by every count, list,
+  search and email, held by a build check · T2 the owner only makes one · T3 the public site only, no people · T4 one
+  fixed sample, every name made up · T5 one tournament game live at the meeting time, the owner types its score · T6 5
+  open at once · T7 the claim code on the room card, never emailed · T8 keeps name, address, logo, colours, sport and
+  line; clears all sample in one all-or-nothing step · T14 cleared at the press · T15 masked claimant + undo until a
+  plan starts · T16 the Terms §3 paragraph and Privacy sentence ride the next Terms version · T9 exactly Start a club's
+  plans, trial and checkout · T10 a customer from the claim day · T11 removed by itself nightly (a new production job,
+  the owner's word in that session) · T12 "This preview has ended" for 90 days, then not-found · T13 one email, to the
+  person met only. Recommended build order: T1's marker → Prospect clubs + Make one → the marking → the room → the
+  claim → the removal. **Owed from the owner, not an ask:** a mailing address (`FIELDLOGICHQ_SELLER_MAILING_ADDRESS`
+  is `''` by his 2026-11-17 ruling); T13's email cannot send without one.
+- [x] **Stage 1 (game day on the club home) — 11 asks G1–G11, RULED 2026-11-25: all eleven A, as recommended, no
+  notes** (owner paste-back: G1 A · G2 A · G3 A · G4 A · G5 A · G6 A · G7 A · G8 A · G9 A · G10 A · G11 A). G6 is A,
+  not D: no "Updated" time line. Drawn 2026-11-25. Page:
+  [CLUB_WEBSITE_STAGE1_DRAWINGS.html](CLUB_WEBSITE_STAGE1_DRAWINGS.html), published
+  https://claude.ai/artifact/Y8yvdP4H5dzAhDiEtG6TdL (tab 9, paste-back). Ruled A on each, in its wording:
+  **G1** no look-ahead on a day with no games (the part is absent) · **G2** Latest results holds today and two days ·
+  **G3** no filter chips in Stage 1 · **G4** four rows a band in a stated order (tournament or champs day first, then
+  time, then house league by division from the youngest, then rep, then place), the rest open in place, a link to the
+  season's own schedule when a band is capped · **G5** a rep team's away games show · **G6** schedule, standings and
+  season page check every 30 seconds from half an hour before the day's first game to the end of the last window, the
+  home's games part the same (D = A plus an "Updated 10:15 a.m." line) · **G7** one live rule for all three programs
+  (house league "Score after the game", then "No score yet" in Latest results; rep the coach's running score), the rep
+  "T 4–2" defect fixed first · **G8** stacked rows in the 540 column on a computer (the prompt asked for one-line; the
+  layout standard's R6 says stacked under 600 px) · **G9** the Tournaments card says "Games today", not "Live now" ·
+  **G10** no change to who makes a rep team public; the site editor says how many show · **G11** a failed first read
+  shows "Games can't be shown right now…" with a link and Try again, all or nothing; a failed check says nothing.
+  Milton's three answers were still not in when he ruled (the asks tab said so). E10 (a champs day band on the season's schedule) is
+  drawn on tab 5 at its recommended A and is ruled on the events drawing, not here (ruled A there, 2026-11-25).
 
 ## Progress
 
@@ -611,6 +668,15 @@ the demos follow the product and are curated with `/demos`, never as a build ste
   A13 and A16 unchanged; the logic is in the review. Nothing built, nothing committed.
 - 2026-11-24 — **The owner ruled both `/legal` calls: "yes soften it, take the middle path, commit".** C8 softened and
   A12 changed from B to the middle path; both recorded in §7.
+- 2026-11-25 — **Two drawing prompts written (owner: "yes write both prompts"), to run side by side:**
+  [CLUB_WEBSITE_TRACK_P_DRAWING_PROMPT.md](CLUB_WEBSITE_TRACK_P_DRAWING_PROMPT.md) (half census, half drawing: making a
+  preview on production, every production surface that counts, lists or emails an organization, the claim, the 30-day
+  removal) and [CLUB_WEBSITE_STAGE1_DRAWING_PROMPT.md](CLUB_WEBSITE_STAGE1_DRAWING_PROMPT.md) (finishes tab 2's frame;
+  traces the one games read to each program's own publish rule; draws to E1–E9's recommendations, marked, if they are
+  still unruled). Order recommended to the owner: Track P first because Club is on sale and it is the only item aimed at
+  a club signing up; Stage 1 first instead if no prospect meeting is near. **Track P's sequencing note:** Club went on
+  sale on 2026-11-23, so C3a reverses nothing; it orders Track P beside the stages (BUSINESS_DECISIONS 2026-11-24, as
+  corrected the same day). Prompts for Stages 2–9 are written one at a time, just before each session.
 - 2026-11-25 — **Club events drawn into the end state (handover from the Board Ready Stages 5 + 7 session). Nine asks
   E1–E9 wait; nothing built, nothing ruled.** Drawn on a page of its own
   ([CLUB_WEBSITE_EVENTS_DRAWINGS.html](CLUB_WEBSITE_EVENTS_DRAWINGS.html)) so the ruled Stage 0 page is not reopened.
@@ -640,11 +706,236 @@ the demos follow the product and are curated with `/demos`, never as a build ste
   Yes names the website and the club's own social pages, camp and team answers separate, changeable after the lock,
   fixed words; the camp form puts the guardian line first and ships with no photo question if Board Ready Stage 7
   builds before this project's Stage 3. `/design` ran on tab 10 before publish. Nothing built.
+- 2026-11-25 — **E10–E12 and P1–P5 ruled, all A, no notes** (owner pasted "E10: A … P5: A"). §7 ticked and each ask
+  recorded in its own words; Stage 1 names E10/E11, Stage 3 names P1–P5. E11 and E12 recorded on Board Ready's side
+  (its Stage 5 builds both); the drawing's asks tab shows them as ruled; `/legal`'s review and index note the five
+  calls ruled. Nothing built.
 - 2026-11-25 — **Club events E1–E9 ruled, all A** (owner pasted "E1: A … E9: A"). §7 ticked; §3's no-login line
   reworded to tab 9's text; each stage line in §6 now names its events piece (Stage 1 E1/E5/E6, Stage 2 E7, Stage 3
   E9, Stage 4 E1–E3, Stage 5 E8, Stage 6 the champs page); one line added to Board Ready's Stage 5 split record. Still
   open: whether `/legal` reads E9 now or when Stage 3 is drawn. In the same message the owner asked whether club
   events reach the house league and rep schedules; logged in §7 as a new open item (a)–(c), not drawn.
+- 2026-11-25 — **Stage 1 Part 1 done (the walk and the census). Nothing drawn yet; Part 2 next.** Prompt:
+  [CLUB_WEBSITE_STAGE1_DRAWING_PROMPT.md](CLUB_WEBSITE_STAGE1_DRAWING_PROMPT.md). Milton's three answers are still not in
+  (Stage 0 prompt's slot); the meeting note "glad of scores and schedules for ALL rep teams" is tested in item 2. E1–E9
+  still unruled: Part 2 draws to their A, marked.
+  **Captures.** Stage 0's `today/`, `gameday/` and `milton-staging/` are reused: no commit has touched the club home, its
+  CSS, the house league public pages or the game row since they were taken (11-24). New, true size (390 and 1280, DPR 1),
+  in `docs/projects/active/club-website-stage1/today/`: the Kestrel home on a Wednesday with nothing on (the quiet
+  day), the 2026 House League season page, and its schedule and standings on U11, a published division with two
+  Saturdays of games behind it and the rest to come (`.probe/club-website-stage1/capture.mjs`, read-only). The schedule's
+  bare address opens on U7, an unpublished division ("U7's schedule is coming"), so `?d=` picks U11. **What the house
+  league schedule already does that the games part should match:** a "Today · Wed, Nov 25" marker in the week list,
+  "Times in Eastern time.", past weeks folded behind "Show 6 earlier weeks". A mid-game house league page looks the same
+  as any other: there is no live state (item 3).
+  **What the census found, in the order it changes the work:**
+  1. *The house league rule is split, so it must become one before the home may read it.* `publicSeasonGames`
+     (`lib/league-game-changes-server.ts:143-151`) applies "published division" and "as families last heard it"
+     (`asLastSent`, :56-65, a pure function over any set of games), but **not "season not draft"**: every caller checks
+     that inline (schedule `page.tsx:75`, season `page.tsx:30,76`, standings `:29,60`, register, status, the league
+     index :41, the home `app/[orgSlug]/page.tsx:125`, `lib/club-home-data.ts:84,148`, `lib/club-public-teams.ts:85`).
+     Standings and the season page repeat "published division" inline (season :103, :220-221; standings :66, :96) and
+     read `computeStandings` raw. Publication is per DIVISION; draft is per SEASON. Stage 1's first build task: one
+     house league public-games rule holding all three, called by the schedule, the season page, standings, the champs
+     page (E5/E6) and the home's read. This is the "whichever builds first pulls it into one place" line above.
+  2. *Rep: one rule, one team at a time, and few teams pass it.* `getPublicTeamSchedule` (`lib/public-team-schedule.ts:29-38`)
+     passes `public_link` only (`lib/family-access.ts:243-245`), the club not cancelled, the family layer on, and a live
+     season (active OR draft, the 2026-09-28 ruling). "Families only" never reaches a public page: the rule returns null
+     at :34 and the team page draws no schedule (`lib/club-team-page.ts:31-32`). A passing team costs about four reads in
+     sequence and reads its whole season (no date window); non-public teams cost nothing (filtered from one
+     `getRepTeams` read). Away games are included (`homeAway` home/away/neutral; no place id on the public view, so "at
+     our field" is only `homeAway`). A rep team's mirrored tournament game (`source_tournament_game_id`,
+     `lib/rep-tournament-game-mirror.ts:36-38`) duplicates the club's own tournament game; the staff calendar removes it
+     (`lib/club-calendar.ts:336`) and the new read must too. **Dev: 71 rep teams, 2 `public_link`; Kestrel and Milton
+     have 0** (Milton's 20 are all `families`). So Milton's "scores for all rep teams" is NOT what Stage 1 gives them
+     unless each coach sets the team to a public link. That is a fact for the asks, not a reason to widen the rule.
+  3. *Live and final are three different things.* Tournament: live is derived, never stored (`lib/game-status.ts:52-67`,
+     start to start + length + 30 minutes; final = completed/forfeit; `submitted` reads Final or "Unofficial"). House
+     league: **no live state anywhere public** (status scheduled/completed/cancelled/postponed; completed = both scores
+     in); a coach's score is the score. Rep: no status but scheduled/cancelled, `result` win/loss/tie is the final;
+     the coach's Game-Day console saves a running score "quietly" with `result` left empty
+     (`app/api/coaches/[orgSlug]/teams/[teamId]/events/[eventId]/route.ts:105-112,228-237`). So a rep "live" exists in
+     fact (a score, no result, inside the game window) and is drawable. **Defect found on the way (§9):** today's
+     public rep page and the family schedule read any score as a finished game (`lib/family-view.ts:117-119`) and print
+     "T 4–2" for a running score (`lib/family-schedule-format.ts:48-51`). Postponed exists for house league only.
+  4. *Tournaments: no single public-games helper.* The full gate is status active/completed (`isPublicTournamentStatus`,
+     `lib/public-pages.ts:43-45`; the literal repeated in 14 more files), published division (`readPublicGames` /
+     `onlyPublishedGames`, `lib/public-games.ts:19-47`), the organizer's Schedule page switch (round-robin games drop when
+     it is off, `lib/public-tournament-data.ts:221-222`), the club not cancelled, and a crossover opponent from a held-back
+     division blanked (:191-195). **Counts for a tournament's row exist only in pieces:** live = `gameDayLists(...).live`
+     (`lib/public-overview.ts:22-38`), played = `playedCounts` (`lib/event-recap.ts:127-142`); "N on now · N today" is
+     computed inline in the share image only (`opengraph-image.tsx:81-95`). The home's chip today says "Live now" all day
+     from the dates alone (`lib/club-site-home.ts:51-66`), between games too.
+  5. *There is no club time zone.* No column on organizations, tournaments, seasons or places; every helper defaults to
+     `ORG_TIME_ZONE = 'America/Toronto'` (`lib/timezone.ts:23`, its own note says "promote to a per-org column"), and
+     tournament setup writes Toronto (`app/api/admin/setup-tournament/route.ts:119`). So "a game in a different zone"
+     cannot happen today, and **every club outside Eastern time reads Eastern times and an Eastern "today"** (§9; not
+     this project's to fix, but Stage 1's "today" and "the day after" use the shared helpers so they follow when it is).
+  6. *Nothing guards the staff calendar from a public page.* No test stops a public file importing `readClubCalendar`
+     (the 13c guard only covers `lib/club-band-read.ts`). Guard the build adds: (a) the new read's imports `deepEqual` a
+     fixed list (the three program rules, `public-club-access`, `timezone`, types); (b) no `.from('games'|'league_games'|
+     'rep_team_events')` in it; (c) each rule is called and no `'public_link'`, `=== 'published'` or
+     `schedulePublishedAt` literal appears; (d) no file under `components/public`, `app/[orgSlug]` (not admin) or
+     `app/api/public` imports `lib/club-calendar'` (anchor on the quote: the league schedule imports the pure
+     `club-calendar-view`); (e) the home calls it once, behind the `teams` and `league` site switches
+     (`lib/public-club-access.ts:32-33`) and the home's section toggles. Copies `club-stage6d-feeds-guard` and
+     `public-games-guard`.
+  7. *A busy Saturday on dev is tournament-shaped.* Busiest mixed day: Milton 2026-11-21, 21 games (3 house league in 2
+     divisions, 0 rep, 18 in one tournament, which A3 makes ONE row). No dev club has more than 6 house league games in
+     a day or more than 2 rep games; the busiest single day anywhere is 100 tournament games across 7 tournaments (a
+     test fixture, 7 rows under A3). So "N more" on a real club is driven by house league divisions (a Milton-sized
+     club runs ~10), drawn from that, not from dev. Kestrel's extras seed puts only its Fall Classic on "today" (14
+     games, 2 live for ~85 minutes after the run); house league dates are fixed Saturdays.
+  8. *Refresh and cost.* Nothing caches across requests: every club page and the `[orgSlug]` layout are
+     `force-dynamic`, no `unstable_cache`, no `revalidateTag` anywhere, no score save invalidates anything, no
+     `Cache-Control` on public pages. The tournament hook polls a narrow JSON route every 30 seconds, paused when hidden
+     (`lib/hooks/usePublicTournamentLive.ts:36,53`), about 9–13 queries a tick. House league pages never refresh; a
+     whole-page refresh would be ~15–18 queries a tick per open tab (layout ~9 + page), a narrow games endpoint ~3–4.
+     The home renders in ~17–21 queries today and reads no games. **So:** the games part and the house league refresh
+     each poll a narrow endpoint, never a page refresh; the games part refreshes only while a game is in its window; a
+     cache is a short time limit (15–30 seconds, a final shows at most that late) unless a tag cache is built with
+     invalidation at the ~5 score-save points, which needs a check that Amplify shares the data cache across
+     instances. **Found on the way (§9):** the tournament schedule page runs up to three identical polls per tick (the
+     page, the My Team dock and the ticker do not share), ~27–39 queries every 30 seconds per tab.
+- 2026-11-25 — **Track P Part 1 done (the census). Nothing drawn, nothing built; Part 2 waits on the owner.** Four
+  helper reads; every line below re-opened by the session. Prompt: `CLUB_WEBSITE_TRACK_P_DRAWING_PROMPT.md`.
+  1. *The seed is not a preview and must not become one.* It makes the club as `plan_id 'club'` +
+     `subscription_status 'active'` with no Stripe row (`scripts/seed-prospect-demo.mjs:215-220`), which every gate and
+     count reads as a paying Club (`lib/plan-config.ts:308` isFreePlan is tournament-only; gates read plan + status +
+     add-ons). It makes fictional CHILDREN with birthdates, guardians, emergency contacts and two medical notes
+     (`scripts/lib/prospect-demo-rep.mjs:328-335`, families `scripts/lib/prospect-demo-world.mjs:104-138`); none of
+     that reaches a public page. Eight of its sign-ins are the owner's own Gmail `+` aliases, so deliverable
+     (`scripts/prospect-demo.milton.config.mjs:32,43-50,197-198`); the rest are `.local`. Its logo is a stock mark, not
+     the club's published one (`seed-prospect-demo.mjs:225-243`). No live game: past = completed, the tournament
+     finished the Saturday before (`prospect-demo-rep.mjs:725,778`). Stage 0's guard lines corrected: `:54-60`,
+     `:84-88`, `:136-139`, dry run `:174-193`. Its uncommitted change (team tiles carry the club logo,
+     `prospect-demo-rep.mjs:285-307`) belongs to another session.
+  2. *Nothing can make a club with no owner, and staff cannot own one.* The only creation route needs a signed-in,
+     Terms-accepted, non-staff user with no other real club and no live invite (`app/api/org/create/route.ts:51-90`);
+     platform admin has no create route. There is no preview state: no `trial_ends_at` (the trial is Stripe's,
+     `app/api/billing/create-checkout/route.ts:411`), and free time is the wrong tool: it is a customer grant with an
+     end date (Free time list, reminders, re-close), and a WHOLE-PLAN grant refuses checkout for that plan or lower
+     (`create-checkout/route.ts:175-181`, `below_free_plan`; a section grant does not; corrected by `/billing` the same day).
+  3. *THERE IS NO ONE MARKER.* Demos are left out by a code list (`lib/demo-org.ts:102-118`) read through five
+     predicates wired in by hand; public lists by two database flags (`lib/directory.ts:142-147,390-399`);
+     `is_test_organization` is read only by two-step; email skips only `.local` (`lib/email.ts:78-80,129`).
+     **Reads nothing today, so a preview would be counted, listed or reached:** platform admin Orgs list
+     (`app/platform-admin/orgs/page.tsx:17-24`), bulk operations, the email opt-out page, Plans & pricing org impact,
+     online payments health, plan-ending / sent-log / watching-Stripe, and inside Business numbers the people,
+     registrations, accounting and subscription-event figures (`lib/platform-metrics.ts:176-217`) and
+     `platform_events`. **Search:** noindex, robots and sitemap exclude the demo list only (`app/[orgSlug]/layout.tsx:67-69`,
+     `lib/robots-rules.ts:38`, `app/sitemap.ts:41-52`); a preview is indexed. **Public lists:** the seed sets
+     `is_discoverable false` and the tournament's `list_in_directory false` (`prospect-demo-rep.mjs:731`), but both are
+     switches anyone signed into the club can turn on. **Email:** `sendEmail` (~75 callers) has no organization check;
+     only `sendMarketingEmail` (two callers) and `notify`/`fan-notify` check the demo list. What actually silences the
+     demos is the write block (`proxy.ts:62-73`). **Clean already:** Owner Bookkeeping (real Stripe invoices only), the
+     Morning Brief and board (no org reads), `npm run health`, `check:demos`, the installable app (no org list).
+     **The real finding:** the demo list means two things at once, "not a customer, silent, unindexed" (a preview needs
+     all of it) and "read-only shared sandbox with a banner and a no-login door" (a preview must have none of it).
+     Adding a preview to it is wrong; one preview marker read by every surface above, held by a guard test, is the shape.
+  4. *The claim.* Terms are per person, accepted at sign-up and re-checked at checkout (`legal_acceptances`,
+     `app/api/auth/signup/route.ts:209`, `create-checkout/route.ts:108`). Checkout is owner-only and makes the Stripe
+     customer then, from the owner's email (`create-checkout/route.ts:104,385`), so a preview that never checked out
+     has nothing to re-tie. The only owner hand-over is platform admin's transfer, and it needs the person to be a
+     member already (`transfer-ownership/route.ts:48-53`); a club invite cannot give owner. A claimer who already
+     belongs to another real club is refused (`lib/org-membership-policy.ts:46`). So "Claim it" is a new door, not a
+     reuse. The seed's reset (`seed-prospect-demo.mjs:289-323`) is the nearest thing to "clear the sample", and it keeps
+     the org row, site content, venues and sponsors and leaves sponsorship offers it cannot delete (`prospect-demo-rep.mjs:208-211`).
+  5. *The removal.* Nothing scheduled deletes or expires an organization (pg_cron jobs listed; none touch orgs). The
+     owner's deletion request deletes nothing (`app/api/admin/org/request-deletion/route.ts:37`). Platform admin delete
+     removes the org, its files and optionally the Stripe customer (`orgs/[id]/delete/route.ts:131-332`). A deleted
+     club's address shows the generic "We can't find that page" (`app/[orgSlug]/layout.tsx:102`, `app/not-found.tsx:15`);
+     "This club's site isn't available" needs the row kept (`components/public/ClubNotFound.tsx:44`). A removal "done
+     by itself" is a new production job: shared automation, the owner's word in that session (AGENCY_RULES).
+  6. *A live score.* "Live now" is the clock, not a button: a game is live from its start to its length + 30 minutes
+     unless completed or cancelled (`lib/game-status.ts:52-67`). The demos are deliberately never live (snapshot,
+     `lib/demo-tournament.ts:33-51`, nightly re-anchor). On the club HOME, "Live now" is only a chip on the tournament
+     card, judged by its dates (`app/[orgSlug]/page.tsx:199-203`); tab 12's home score is Stage 1's, not today's. A
+     score needs a signed-in scorer with a role in the club (`app/api/scorekeeper/[orgSlug]/score/route.ts:23-34`).
+     Since the meeting time is known when the preview is made, one game set at that hour is honestly live in the room
+     with no shifting; who types the score is the open part (staff cannot hold a seat as owner; a scorer seat is untested).
+- 2026-11-25 — **Track P Parts 2 and 3 done: the drawings are published, 16 asks wait (§7, T1–T16). Nothing built,
+  nothing ruled, nothing committed.** [CLUB_WEBSITE_TRACK_P_DRAWINGS.html](CLUB_WEBSITE_TRACK_P_DRAWINGS.html),
+  https://claude.ai/artifact/Tx3So1rUqL6shn7CzM93Zr (9 tabs: the census with every surface and how a preview stays
+  out; Prospect clubs (computer, phone, empty); Make one (filled, refused, making); into the room (the owner's phone
+  window with QR, code, live score, Email the link; the printed card); the marking (home, the live tournament,
+  computer, a closed Register); the claim (code, account + Terms, the claim, plan, landing, kept and gone, six failure
+  frames); after 30 days; a forwarded link and the one email; asks + order). Captures of today beside it in
+  `club-website-trackp/` (Start a club account step and the setup landing, from `.probe/club-on-sale/s2/shots/`).
+  Read on the way: **the live game must be a tournament game** (only tournament pages show a live card and refresh;
+  house league pages never refresh); today's Start a club is Account · Club · Plan with the Terms tick at step 1 and
+  the plan step's trial line from `lib/plan-trial-line.ts:27`; a new club lands on "Set up your club".
+  What the reviews changed:
+  1. *`/ux` (12):* the claim says the claimer becomes the owner and the site stays off until a plan; the code page has
+     a way back and "For the club's board"; "Lost the card"; lockout and ended-mid-claim frames; making + its failure;
+     the room window gains Copy link, New code, Mark final, a save failure, Email the link; the closed Register says
+     to ask the club; counts split open/claimed/removed. Its "when is the sample cleared" became T14. A "keep 30 more
+     days" button was NOT added: it would change the ruled 30-day rule.
+  2. *`/billing`:* a preview runs on a marker folded in at the entitlement door that grants only the site parts it
+     shows, `plan_id` left at the free start, cleared in the claim's own write; never `club`+`active`, never free
+     time (a whole-plan grant refuses checkout; any grant is a customer grant). The claim writes `start_plan` and
+     re-checks the door and the one-club rule. A claimed club is a customer from `claimed_at`, not `created_at`
+     (`platform-metrics.ts:279-284`). Words and prices match the Facts doc; the Club · Association card was redrawn
+     to the shipped one. `/accounting` is not needed unless T9 C.
+  3. *`/design`:* the room window's lone Remove now ends the body (rare-door ruling); × gets a 44 px area; the band
+     drops to 13 px and gains a hairline; the computer frame uses the 960 column; 44 px Register links, Sign in and
+     Menu; the list toolbar is count left, Search and the action right; the door bar drawn from the shipped header;
+     the QR gets a print quiet zone; the code avoids 0, O, 1 and I.
+  4. *`/legal`* ([CLUB_WEBSITE_TRACK_P_REVIEW.md](../../agents/legal/CLUB_WEBSITE_TRACK_P_REVIEW.md)): its claim
+     paragraph and tick wording; "already claimed" asserts nothing; "Sample" in the event names; a footer removal
+     route; no ages in the club's line; **no robots.txt line per preview** (public, it would list our prospects; noindex
+     + header instead); share images, posters and the calendar feed refused; closed forms hold server-side; the make
+     window refuses Québec and needs a web address as the logo source; the email's CASL wording and a consent record
+     (date, role, send; no name), the unsubscribe keyed to the address; the ended page for 90 days. Its calls became
+     T15 and T16; the mailing address is owed.
+  5. *`/marketing` (one pass, 16 strings):* "Registration isn't open on this preview"; "we" not "FieldLogicHQ" on our
+     own pages; "Your club's site, already built"; "Removal date" and "Comes down"; "Sample House League 2027". Kept
+     against it: the preview home still shows registration open, as their own site would.
+- 2026-11-25 — **Track P's 16 asks ruled: all A, as recommended, no notes (§7).** Nothing built, nothing committed by
+  the ruling. Still open: the owner's mailing address (T13's email waits on it) and, at build time, the owner's word on
+  the nightly removal job (T11).
+- 2026-11-25 — **Stage 1 Parts 2 and 3 done: the drawings are published, 11 asks wait (§7, G1–G11). Nothing built,
+  nothing committed.** Page [CLUB_WEBSITE_STAGE1_DRAWINGS.html](CLUB_WEBSITE_STAGE1_DRAWINGS.html) (published
+  https://claude.ai/artifact/Y8yvdP4H5dzAhDiEtG6TdL), generated by `.probe/club-website-stage1/build.cjs` (the house
+  stylesheet copied from the events drawing; edit the generator, not the HTML). Tabs: the walk · the home in eleven
+  states (quiet day, house league only, + a public rep team, + a running tournament, early morning, evening, rained
+  out, no public rep teams, the day after, a Milton-sized busy Saturday shut and opened, the computer at 1280 in A and
+  B) · twelve row kinds · the filter chips · the house league schedule and standings refreshing, and E10's champs band
+  · empty and failure · the one games read with file and line · the build's shape · the asks. Every phone frame's
+  first game row starts between 377 and 505 px (measured; the fold is 843). E1 and E6 are drawn as ruled.
+  **Reviews before hand-off, all applied:**
+  1. *`/ux` (15 findings):* the home showed games from Kestrel's unpublished U9 and U13 divisions (the drawing broke
+     its own rule; now only U11 and U15, which are published); a stated sort order; a house league game whose window
+     ended with no score (it stays in Latest results, never vanishes); house league live wording that promises no
+     running score; the check starts half an hour before the first game; a failure line with a link, Try again, and an
+     all-or-nothing read; a season-schedule link on a busy day; postponed, cancelled and moved games in their own band,
+     a rainout collapsed to one row; early-morning and evening states. Not taken, with the reason on the page: a
+     chevron on game rows (R5's registered exception: the whole game row is the link); "sign in to see your team's"
+     for rep families (the signed-in family app is switched off); an "Updated" time line (offered as G6 · D).
+  2. *`/db` (verdict: the three rules alone do not stop an unpublished game):* a rep team's copied tournament game can
+     be stale and cannot be told apart, so the home drops every copy; the rep rule has no site or plan check, so the
+     read asks it per program; tournament games pass the shipped public-game and held-back-opponent steps and the read
+     returns its own short list of fields; the house league "today" window is applied after the unsent-changes view;
+     a tournament with its Schedule page off has NO row (the shipped scores feed's rule; tab 7 had said playoff games
+     stay, which is the bracket page only). Costs corrected: rep is 5 reads per team (100 for 20 Public teams), so a
+     batch version inside the rep rule's module; a "today" version inside the house league rule's module; the check
+     is held at the edge 15–30 seconds with no serve-stale, never a tag cache (nothing shows the host shares it).
+     Two pre-existing findings to §9: the open games read (yes, it exposes unpublished divisions to anyone with the
+     public key) and the stale copied game on a rep team's own page.
+  3. *`/marketing` (one pass plus a follow-up for the words `/ux` added):* §10.
+  4. *`/design` (13 findings):* a live tournament row wears the green live edge, not the club colour, and a finished
+     one none; tags and the first-screen line moved off text; Directions is the shipped Navigation icon on a phone and
+     the labelled small button on a computer; the "score lands" row keeps its time and place with the pill top-right;
+     option B's one-line row redrawn on the shipped grid (field centred under the teams); unchanged parts redrawn to
+     match the captures (diamond logo, card chevrons, the early-bird line, all eight standings columns with dots);
+     one line under a tournament row; rejected chips drawn at 44 px; the Families team drawn as a visible absence.
+  `/legal` not owed: no person is shown. **Build shape (tab 8):** the rep "T 4–2" fix first on its own; then Pass 1 (no
+  visible change: the one house league rule with its draft check moved in, the batch and "today" versions, the one
+  read, the live rule, the check request, the guards) and Pass 2 (Open now's cap, the games part, the house league
+  refresh, the card's word, the failure line, the editor's rep line; then `/simplify`, `/review`, `/docs`, one walk).
+  The walk needs house league games and a Public rep team on today's date in a seed (a walk task, not a demo step).
+- 2026-11-25 — **Stage 1's 11 asks ruled: all A, as recommended, no notes (§7).** G6 is A, so no "Updated" time line.
+  Nothing built, nothing committed by the ruling. Milton's three answers were still not in when he ruled.
 
 ## 8. Census questions for Stage 0 (answer from code, not from this plan)
 
@@ -702,11 +993,52 @@ Answered 2026-11-24 (Stage 0 Part 1); evidence in the Progress block.
   required "photo release" document, the pattern the regulator found against.
 - [ ] DATA_DICTIONARY.md:1195 names the deleted `LogicSyncBracket` as a reader of the open games read; `/db` to correct,
   and to say whether `USING true` lets anyone read games in an unpublished division (Progress item 4).
+- [ ] **A rep team's running score reads as a finished tie (found 2026-11-25, Stage 1 Part 1 item 3; a live defect
+  today, not this project's).** The coach's Game-Day console saves the running score with no result; the public team
+  page (public-link teams) and the family schedule treat any score as a finished game and print "T 4–2" until End
+  game. `lib/family-view.ts:117-119`, `lib/family-schedule-format.ts:48-51`. To `/plan`: read "score, no result, inside
+  the game window" as live (or say nothing) on both. Stage 1's rep rows use the same rule, so the fix comes first or
+  with it.
+- [ ] **No club time zone (Stage 1 Part 1 item 5).** Every club reads Eastern times and an Eastern "today"
+  (`lib/timezone.ts:23`). A launch-wide fact for a club west of Ontario; to `/plan` (and `/strategy` if a western club
+  is in the launch). Not Stage 1's work; Stage 1 uses the shared helpers so it follows.
+- [ ] **The tournament schedule polls up to three times per tick (Stage 1 Part 1 item 8).** The page, the My Team dock
+  and the ticker each fetch the same section every 30 seconds. To `/db` or `/plan` with Stage 6, which touches the same
+  hooks.
+- [ ] Stale dictionary lines met on the way, for `/db`: DATA_DICTIONARY.md:3369 (rep scores "prod-pending", they are on
+  prod) and :8098 (house league "postponed" called dead; rainouts and Postpone write it).
+- [ ] **The open games read, answered (`/db`, Stage 1 review, 2026-11-25; pre-existing, not Stage 1's).** Yes: anyone
+  holding the public key can read every tournament game straight from the database, unpublished divisions included
+  (`games` is the only game table with anonymous SELECT, 27 of 30 columns; `league_games`, `rep_team_events` and the
+  house league tables have none). The app's pages never do; Stage 1 adds no such path and its guard forbids a browser
+  database client or live channel on the home. To `/plan`. (The item above about line 1195 stays for the dictionary fix.)
+- [ ] **A rep team's copied tournament game goes stale on its public page (`/db`, 2026-11-25; pre-existing).** The copy
+  is made from published divisions only, but re-synced only when a coach or admin opens the team's events
+  (`lib/rep-tournament-game-mirror.ts:288`, callers `app/api/coaches/[orgSlug]/teams/[teamId]/events/route.ts:86` and the
+  admin events route); an organizer's later unpublish, time change or score stays on a Public team's page until then,
+  and the public view has no field telling a copy from a typed game. Stage 1 drops every copied game from the home. To
+  `/plan` for the team page itself.
 
 ## 10. Words for /marketing
 
 > Customer-visible wording written during a build, settled in ONE `/marketing` pass per stage, before the walk.
-- [ ] (none yet; the first words arrive with Stage 1)
+- [x] **Stage 1 (drawing, 2026-11-25), settled by `/marketing` in one pass plus a follow-up for the words the `/ux`
+  review added.** Already settled by Stage 0: "Today", "Latest results", "Live now", "N more open now". Kept: "Later
+  today" (not "Up next": the band holds the whole rest of the day), "N more live now" / "N more later today" / "N more
+  results" with singulars "1 more live now" / "1 more later today" / "1 more result", "Show fewer" (no second line),
+  "No score yet" (tournament live rows, and a house league game whose window ended with no score), "Score after the
+  game" (a live house league row: there is no running score), "22 games today · first at 8:00 a.m.", context lines
+  "House league · U11", "Rep", "Rep · away", "N house league games postponed" (cancelled; "not being played" for a mix;
+  singular "1 house league game postponed"), "Moved to Sat, Dec 5" (the Moved pill alone when no date is set), "{season}
+  schedule" / "Today, by division", failure title "Games" + "Games can't be shown right now. The house league schedule
+  and each team's page still have them." + "Try again". Changed: "N games on now" → **"N live now"**; "22 finals today"
+  → **"22 games today · all final"** ("20 of 22 games final" when some were called off; "finals" means championship
+  games on tournament pages); "38 finals" → **"38 results"**; the Tournaments card's "Today" → **"Games today"**;
+  "Called off" → **"Not being played today"**; the site editor line → **"3 of 20 rep teams show their games on your
+  site. Each team's coach chooses this in Schedule visibility."** with "1 of 20 … shows its games", "All 20 …", "No rep
+  team shows its games on your site yet." The coach setting is **Schedule visibility: Staff only · Families · Public**
+  ("public link" is code only). Option only (G6 · D): "Updated 10:15 a.m." = the last successful check, unchanged by a
+  failed one. Run `npm run check:spelling` after the build.
 
 ## 11. Architectural decisions
 

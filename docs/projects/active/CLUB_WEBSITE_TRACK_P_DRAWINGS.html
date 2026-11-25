@@ -1,0 +1,1085 @@
+<title>Track P · A Prospect's Own Club</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Inter:wght@400;500;600;700&display=swap">
+<style>
+/* Layout: sticky numbered tabs, one decision per tab; each tab = before capture | after frame (true size) | why. */
+:root{
+  --doc-bg:#E9ECEF; --doc-panel:#FFFFFF; --doc-fg:#1B2027; --doc-soft:#4A5562; --doc-line:#CDD3DA; --doc-accent:#2D5B8A;
+  --new:#1F7A3A; --new-bg:#DDF2E3; --res:#7A4E00; --res-bg:#F7E9CC; --same:#5A6470; --same-bg:#E4E8EC; --askc:#5B2D8A; --ask-bg:#ECE2F7;
+  --f-display:"Barlow Condensed","Arial Narrow",Arial,sans-serif; --f-text:Inter,"Segoe UI",system-ui,sans-serif;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--doc-bg:#14181D;--doc-panel:#1D232A;--doc-fg:#E6EAEE;--doc-soft:#A8B2BD;--doc-line:#343D47;--doc-accent:#8DB7E2;--new:#7FD69A;--new-bg:#1B3A25;--res:#F0C36B;--res-bg:#3B2E12;--same:#B4BDC7;--same-bg:#2A3139;--askc:#CBA8F0;--ask-bg:#33244A;color-scheme:dark}}
+:root[data-theme="dark"]{--doc-bg:#14181D;--doc-panel:#1D232A;--doc-fg:#E6EAEE;--doc-soft:#A8B2BD;--doc-line:#343D47;--doc-accent:#8DB7E2;--new:#7FD69A;--new-bg:#1B3A25;--res:#F0C36B;--res-bg:#3B2E12;--same:#B4BDC7;--same-bg:#2A3139;--askc:#CBA8F0;--ask-bg:#33244A;color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--doc-bg);color:var(--doc-fg);font:14px/1.5 var(--f-text);margin:0}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--doc-panel)}
+.wrap{padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+header.top{background:var(--doc-panel);border-bottom:1px solid var(--doc-line)}
+header.top .wrap{padding-block:16px 10px}
+header.top h1{font:700 26px/1.1 var(--f-display);letter-spacing:.01em;margin:0;text-wrap:balance}
+header.top p{margin:4px 0 0;color:var(--doc-soft);max-width:900px}
+nav.tabs{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--doc-panel);border-bottom:1px solid var(--doc-line)}
+nav.tabs .wrap{display:flex;gap:2px;overflow-x:auto;scrollbar-width:thin}
+nav.tabs button{flex:0 0 auto;border:0;background:none;color:var(--doc-soft);font:600 13px var(--f-text);padding:12px 10px;border-bottom:3px solid transparent;cursor:pointer;white-space:nowrap}
+nav.tabs button[aria-selected="true"]{color:var(--doc-fg);border-bottom-color:var(--doc-accent)}
+button:focus-visible{outline:2px solid var(--doc-accent);outline-offset:2px}
+.viewrow{display:flex;align-items:center;gap:10px;padding-block:10px;flex-wrap:wrap}
+.viewrow .lbl{font-weight:600;color:var(--doc-soft)}
+.track{display:inline-flex;background:#fff;border:1px solid var(--doc-line);border-radius:9px;padding:3px}
+.track button{border:0;background:none;padding:6px 12px;border-radius:6px;font:600 13px var(--f-text);color:#4A5562;cursor:pointer}
+.track button[aria-pressed="true"]{background:#E3EAD2;color:#2F3A12}
+main .wrap{padding-block:8px 60px}
+section.tab{display:none}
+section.tab.on{display:block}
+h2.t{font:700 22px/1.15 var(--f-display);margin:12px 0 4px}
+h3.t{font:700 17px/1.2 var(--f-text);margin:22px 0 6px}
+p.lead{max-width:880px;margin:4px 0 12px;color:var(--doc-soft)}
+.note{max-width:880px}
+.note li{margin:4px 0}
+.callout{background:var(--doc-panel);border:1px solid var(--doc-line);border-left:4px solid var(--doc-accent);border-radius:0 8px 8px 0;padding:10px 14px;max-width:900px;margin:10px 0}
+.callout.warn{border-left-color:var(--res)}
+.sub{display:flex;gap:6px;flex-wrap:wrap;margin:10px 0 14px}
+.sub button{border:1px solid var(--doc-line);background:var(--doc-panel);color:var(--doc-fg);border-radius:20px;padding:6px 14px;font:600 13px var(--f-text);cursor:pointer}
+.sub button[aria-pressed="true"]{background:var(--doc-fg);color:var(--doc-panel)}
+.state{display:none}.state.on{display:block}
+.pair{display:flex;gap:28px;flex-wrap:wrap;align-items:flex-start}
+.spec{display:flex;flex-direction:column;gap:6px;min-width:0}
+.cap{font:700 11px/1.3 var(--f-text);letter-spacing:.07em;text-transform:uppercase;color:var(--doc-soft);max-width:392px}
+.cap b{color:var(--doc-fg)}
+.why{flex:1 1 280px;min-width:260px;max-width:430px}
+.why h4{margin:0 0 6px;font:700 15px var(--f-text)}
+.why ul{padding-left:18px;margin:6px 0}
+.why li{margin:5px 0}
+.shot{width:392px;max-width:100%;max-height:1300px;overflow:auto;border:1px solid var(--doc-line);border-radius:14px;background:#fff}
+.shot img{display:block;width:390px;max-width:none}
+.shot.wide{width:100%;max-width:1282px}
+.shot.wide img{width:1280px}
+.scrollx{overflow-x:auto;max-width:100%;border:1px solid var(--doc-line);border-radius:10px}
+.mk{display:inline-flex;align-items:center;border:0;border-radius:4px;font:700 10px/1 var(--f-text);letter-spacing:.05em;text-transform:uppercase;padding:4px 6px;cursor:pointer;vertical-align:middle;white-space:nowrap}
+.mk.new{background:var(--new-bg);color:var(--new)}
+.mk.res{background:var(--res-bg);color:var(--res)}
+.mk.same{background:var(--same-bg);color:var(--same)}
+.askm{display:inline-flex;border:0;border-radius:4px;background:var(--ask-bg);color:var(--askc);font:700 10px/1 var(--f-text);padding:4px 6px;cursor:pointer;vertical-align:middle;letter-spacing:.03em}
+.fr .mk,.fr .askm,.win .mk,.tv .mk{position:absolute;z-index:3}
+.fr .mk.new,.win .mk.new,.tv .mk.new{background:#DDF2E3;color:#1F7A3A}.fr .mk.res{background:#F7E9CC;color:#7A4E00}.fr .mk.same{background:#E4E8EC;color:#5A6470}.fr .askm{background:#ECE2F7;color:#5B2D8A}
+.tr{top:-12px;right:0}.tr2{top:-12px;right:84px}
+.diffmode .fr .dim > *:not(.mk):not(.askm){opacity:.16}
+.diffmode .fr .dim.solo{opacity:.16}
+/* ===== club site specimen (a picture of a light page: fixed light colours on purpose) ===== */
+.fr{--ground:#F6F5F2;--card:#fff;--text:#1F1B16;--soft:#4E473D;--dim:#6F675B;--line:#E4E0D8;--line2:#D6D0C4;--ok:#2C6A2A;--okbg:#E6F0E2;--warn:#8A5300;--bad:#A3261C;
+  --fill:#1E5F6A;--onfill:#fff;--ink:#1E5F6A;--edge:#1E5F6A;--accent:#D9A521;
+  background:var(--ground);color:var(--text);font:16px/1.4 var(--f-text);border:1px solid #9AA4AE;border-radius:14px;overflow:hidden;width:392px;max-width:100%;position:relative;flex:0 0 auto}
+.fr.milton{--fill:#4A176C;--ink:#4A176C;--edge:#4A176C;--accent:#9C9C9C}
+.fr.pc{width:1282px;max-width:none;border-radius:8px}
+.fr *{box-sizing:border-box}
+.fr .fold{position:absolute;left:0;right:0;top:843px;border-top:2px dashed #C2410C;z-index:4;pointer-events:none}
+.fr .fold span{position:absolute;right:6px;top:-20px;background:#C2410C;color:#fff;font:700 10px var(--f-text);padding:2px 6px;border-radius:3px}
+.fr .bar{background:var(--fill);color:var(--onfill);min-height:72px;display:flex;align-items:center;gap:12px;padding:0 16px;border-bottom:3px solid var(--accent);position:relative}
+.fr .logo{width:44px;height:44px;border-radius:10px;border:2px solid rgba(255,255,255,.55);display:grid;place-items:center;font:700 14px var(--f-display);flex:0 0 auto}
+.fr .cn{font:700 20px/1.05 var(--f-display);letter-spacing:.01em}
+.fr .tg{font:600 12px/1.3 var(--f-text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:220px}
+.fr .si{margin-left:auto;font:600 14px var(--f-text)}
+.fr .tabrow{background:#fff;display:flex;gap:4px;padding:0 8px;border-bottom:1px solid var(--line);overflow:hidden;white-space:nowrap;position:relative}
+.fr .tabrow span{font:600 14px var(--f-text);padding:14px 8px 11px;color:var(--soft);border-bottom:3px solid transparent}
+.fr .tabrow span.on{color:var(--text);border-bottom-color:var(--fill)}
+.fr .pg{padding:16px;display:flex;flex-direction:column;gap:24px}
+.fr .sec{display:flex;flex-direction:column;gap:10px;position:relative}
+.fr h5{font:700 16px/1.2 var(--f-text);margin:0;display:flex;align-items:baseline;gap:8px}
+.fr h5 .lk{margin-left:auto;font:600 14px var(--f-text);color:var(--ink)}
+.fr h5 .dt{font:400 14px var(--f-text);color:var(--soft)}
+.fr .h1{font:700 24px/1.1 var(--f-display);margin:0}
+.fr .meta{font-size:14px;color:var(--soft)}
+.fr .list{background:var(--card);border:1px solid var(--line);border-radius:8px;overflow:hidden;position:relative}
+.fr .row{min-height:60px;padding:12px 40px 12px 16px;border-top:1px solid var(--line);position:relative;display:flex;flex-direction:column;justify-content:center;gap:2px}
+.fr .list > :first-child{border-top:0}
+.fr .row.chev::after{content:"";position:absolute;right:16px;top:50%;width:9px;height:9px;border-right:2px solid var(--dim);border-top:2px solid var(--dim);transform:translateY(-50%) rotate(45deg)}
+.fr .rt{font:600 16px/1.25 var(--f-text)}
+.fr .rs{font-size:12px;color:var(--dim)}
+.fr .door{border-left:3px solid var(--edge);border-radius:0 8px 8px 0}
+.fr .lb{padding:8px 16px;border-top:1px solid var(--line);background:var(--ground);font:700 12px/1.2 var(--f-text);text-transform:uppercase;letter-spacing:.06em;color:var(--soft)}
+.fr .chip{display:inline-block;font:600 12px/1 var(--f-text);border-radius:20px;padding:5px 9px;white-space:nowrap;vertical-align:middle}
+.fr .chip.ok{background:var(--okbg);color:var(--ok)}
+.fr .chip.n{background:var(--ground);color:var(--soft);border:1px solid var(--line)}
+.fr .pill{padding:4px 8px;border:1px solid var(--line);border-radius:20px;background:var(--ground);color:var(--soft);white-space:nowrap;font:600 12px/1.2 var(--f-text);align-self:start}
+.fr .pill.live{color:var(--ok);background:var(--okbg);border-color:var(--okbg)}
+.fr .pill.warn{color:var(--warn)}
+.fr .gw{border-top:1px solid var(--line);background:var(--card)}
+.fr .gw.live{box-shadow:inset 3px 0 0 var(--ok)}
+.fr .g{padding:12px 16px}
+.fr .gh{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px}
+.fr .tm{font:600 14px/1.25 var(--f-text);font-variant-numeric:tabular-nums}
+.fr .cx{font:400 14px/1.25 var(--f-text);color:var(--dim)}
+.fr .tms{display:flex;flex-direction:column;gap:4px;margin-top:6px}
+.fr .sd{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;align-items:baseline;font:500 16px/1.3 var(--f-text)}
+.fr .sd b{font:700 20px/1 var(--f-display);font-variant-numeric:tabular-nums}
+.fr .sd.w span{font-weight:700}
+.fr .sd.l,.fr .sd.l b{color:var(--soft)}
+.fr .sd.own span{font-weight:700}
+.fr .gpl{margin-top:6px;font-size:14px;color:var(--dim)}
+.fr .why2{margin-top:4px;font:600 14px var(--f-text);color:var(--warn)}
+.fr .ps{display:flex;justify-content:space-between;align-items:center;gap:12px;min-height:56px;padding:6px 6px 6px 16px;border-top:1px solid var(--line);color:var(--dim);font-size:14px}
+.fr .ico{width:44px;height:44px;display:grid;place-items:center;color:var(--ink);font-size:18px;flex:0 0 auto}
+.fr .btn{height:44px;border-radius:8px;font:600 16px var(--f-text);display:inline-flex;align-items:center;justify-content:center;padding:0 16px;border:1px solid var(--line2);background:#fff;color:var(--text)}
+.fr .btn.p{background:var(--fill);color:var(--onfill);border-color:var(--fill)}
+.fr .btn.o{border-color:var(--ink);color:var(--ink)}
+.fr .ul{color:var(--text);text-decoration:underline;font:600 14px var(--f-text)}
+.fr .card{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:14px 16px}
+.fr .notice{background:#fff;border:1px solid var(--line);border-left:3px solid var(--warn);border-radius:0 8px 8px 0;padding:12px 14px;margin:12px 16px 4px;position:relative;display:flex;flex-direction:column;gap:4px}
+.fr .notice b{font:700 16px/1.25 var(--f-text)}
+.fr .notice .d{font-size:14px;color:var(--soft)}
+.fr .notice .s{font-size:12px;color:var(--dim)}
+.fr .tiles{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.fr .tile{min-height:52px;padding:16px 12px;border:1px solid var(--line);border-radius:8px;background:#fff;font:600 16px/1.25 var(--f-text)}
+.fr .sp{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.fr .spt{height:64px;border:1px solid var(--line);border-radius:8px;background:#fff;display:grid;place-items:center;text-align:center;font:700 14px/1.25 var(--f-text);color:var(--soft);padding:4px 8px}
+.fr .sby{font-size:12px;color:var(--dim);display:flex;align-items:center;gap:8px;position:relative}
+.fr .sby .lg{border:1px solid var(--line);border-radius:8px;padding:4px 8px;font:600 12px var(--f-text);color:var(--soft);background:#fff}
+.fr .foot{background:var(--fill);color:var(--onfill);border-top:3px solid var(--accent);padding:20px 16px;display:flex;flex-direction:column;gap:8px}
+.fr .foot small{font-size:12px}
+.fr .ph{background:repeating-linear-gradient(135deg,#E7E2D8 0 10px,#EFEBE3 10px 20px);border:1px dashed var(--line2);border-radius:8px;display:grid;place-items:center;text-align:center;color:var(--soft);font:600 14px/1.35 var(--f-text);padding:16px}
+.fr .photo{border-radius:8px;overflow:hidden;position:relative;background:linear-gradient(160deg,#6E8B5A,#A9B98A 55%,#D8C9A0);aspect-ratio:3/2}
+.fr .pin{position:absolute;inset:0;display:grid;place-items:center;font:600 12px var(--f-text);color:#fff;text-shadow:0 1px 2px rgba(0,0,0,.5)}
+.fr .post{display:grid;grid-template-columns:1fr 84px;gap:2px 12px;padding:12px 16px;border-top:1px solid var(--line)}
+.fr .post .th{grid-row:1/4;grid-column:2;border-radius:8px;background:linear-gradient(160deg,#5D7F8C,#9FB9B4);aspect-ratio:1}
+.fr .post .dt{font-size:12px;color:var(--dim)}
+.fr .post .hd{font:600 16px/1.3 var(--f-text)}
+.fr .post .bd{font-size:14px;color:var(--soft)}
+.fr .post.nopic{grid-template-columns:1fr}
+.fr .tsch{display:grid;grid-template-columns:96px 1fr auto;gap:2px 10px;padding:12px 6px 12px 16px;border-top:1px solid var(--line);align-items:center}
+.fr .tsch .d1{font:600 14px var(--f-text)}.fr .tsch .d2{font-size:12px;color:var(--dim)}
+.fr .tsch .ti{font:600 16px var(--f-text)}.fr .tsch .pl2{font-size:14px;color:var(--dim)}
+.fr .tsch .r{font:700 14px var(--f-text);font-variant-numeric:tabular-nums;padding-right:10px}
+.fr .tsch .r.win{color:var(--ok)}
+.fr .tsch.next{box-shadow:inset 3px 0 0 var(--edge)}
+.fr .st{width:100%;border-collapse:collapse;font-size:14px;background:#fff}
+.fr .st th{font:700 12px var(--f-text);text-transform:uppercase;letter-spacing:.05em;color:var(--soft);text-align:left;padding:10px 8px;border-bottom:1px solid var(--line)}
+.fr .st td{padding:15px 8px;border-top:1px solid var(--line);font-variant-numeric:tabular-nums}
+.fr .seg{display:flex;gap:8px;flex-wrap:wrap}
+.fr .seg span{height:44px;min-width:56px;padding:0 14px;border:1px solid var(--line2);border-radius:8px;background:#fff;display:grid;place-items:center;font:600 14px var(--f-text)}
+.fr .seg span.on{background:var(--fill);color:var(--onfill);border-color:var(--fill)}
+.fr .two{display:grid;grid-template-columns:540px 392px;gap:28px;align-items:start}
+.fr .g1{display:grid;grid-template-columns:104px minmax(0,1fr) 104px;gap:12px;padding:12px 16px;align-items:center}
+.fr .g1 .mid{display:grid;grid-template-columns:1fr auto 14px auto 1fr;gap:8px;align-items:baseline;font:500 16px var(--f-text)}
+.fr .g1 .mid b{font:700 20px var(--f-display)}
+.fr .g1 .rgt{display:flex;flex-direction:column;align-items:flex-end;gap:2px}
+/* admin windows (light specimens) */
+.win{background:#fff;color:#1F1B16;border:1px solid #C9CFBE;border-radius:8px;width:520px;max-width:100%;font:14px/1.45 var(--f-text);position:relative;flex:0 0 auto}
+.win.w8{width:800px}
+.win.w39{width:390px}
+.win .wh{display:flex;align-items:center;padding:18px 24px 6px;font:700 18px var(--f-text)}
+.win .wh .x{margin-left:auto;font:400 22px var(--f-text);color:#6F675B}
+.win .wb{padding:6px 24px 18px;display:flex;flex-direction:column;gap:12px}
+.win .wl{font:600 14px var(--f-text);color:#4E473D;margin-bottom:4px}
+.win .in{border:1px solid #CFC8BA;border-radius:8px;min-height:44px;padding:0 12px;display:flex;align-items:center;color:#1F1B16;background:#fff}
+.win .in.ta{min-height:76px;align-items:flex-start;padding-top:10px}
+.win .in.dd::after{content:"▾";margin-left:auto;padding-left:8px;color:#6F675B}
+.win .opt{display:flex;gap:10px;align-items:flex-start;padding:4px 0}
+.win .rb{width:18px;height:18px;border-radius:50%;border:2px solid #8C8475;flex:0 0 auto;margin-top:2px}
+.win .rb.on{border:6px solid #3F5512}
+.win .cb{width:18px;height:18px;border-radius:4px;border:2px solid #8C8475;flex:0 0 auto;margin-top:2px}
+.win .cb.on{background:#3F5512;border-color:#3F5512;box-shadow:inset 0 0 0 3px #fff}
+.win .grp{border:1px solid #E4E0D8;border-radius:8px}
+.win .gr{padding:10px 12px;border-top:1px solid #E4E0D8;display:flex;gap:10px;align-items:flex-start}
+.win .gr:first-child{border-top:0}
+.win .gr .n{margin-left:auto;color:#6F675B;white-space:nowrap}
+.win .gh{background:#F6F5F2;font:700 12px var(--f-text);letter-spacing:.05em;text-transform:uppercase;color:#4E473D}
+.win .sm{font-size:12px;color:#6F675B}
+.win .wf{display:flex;align-items:center;gap:10px;border-top:1px solid #E4E0D8;padding:14px 24px;flex-wrap:wrap}
+.win .wf .s{font-size:12px;color:#4E473D;flex:1 1 140px}
+.win .b{height:44px;border-radius:8px;border:1px solid #CFC8BA;background:#fff;padding:0 14px;font:600 14px var(--f-text);display:inline-flex;align-items:center}
+.win .b.lime{background:#C7E36B;border-color:#A9C64A;color:#1F2A05}
+.win table{width:100%;border-collapse:collapse;font-size:14px}
+.win th{text-align:left;font:700 12px var(--f-text);text-transform:uppercase;letter-spacing:.05em;color:#4E473D;padding:8px;border-bottom:1px solid #E4E0D8}
+.win td{padding:10px 8px;border-top:1px solid #E4E0D8;font-variant-numeric:tabular-nums}
+.win .pl{display:inline-block;font:600 12px var(--f-text);border-radius:20px;padding:3px 8px}
+.win .pl.ok{background:#E6F0E2;color:#2C6A2A}.win .pl.w{background:#F6EBD7;color:#8A5300}.win .pl.b{background:#F8E3E0;color:#A3261C}
+.toast{background:#1F1B16;color:#fff;border-radius:8px;padding:12px 14px;font:14px/1.45 var(--f-text);width:390px;max-width:100%}
+/* big board: the club's fill as ground, white cards, everything at TV scale (x2) */
+.tv{width:1280px;height:720px;background:#1E5F6A;color:#fff;border-radius:10px;overflow:hidden;display:grid;grid-template-rows:96px 1fr 120px;font-family:var(--f-text);position:relative}
+.tv .tb{display:flex;align-items:center;gap:20px;padding:0 40px;border-bottom:6px solid #D9A521}
+.tv .tb .cn{font:700 40px var(--f-display)}
+.tv .tb .clk{margin-left:auto;font:700 44px var(--f-display);font-variant-numeric:tabular-nums}
+.tv .body{display:grid;grid-template-columns:1.35fr 1fr;gap:28px;padding:26px 40px}
+.tv h6{font:700 20px var(--f-text);letter-spacing:.08em;text-transform:uppercase;margin:0 0 12px}
+.tv .lg{background:#fff;color:#1F1B16;border-radius:16px;padding:14px 20px;margin-bottom:12px;box-shadow:inset 6px 0 0 #2C6A2A}
+.tv .lg .m{font:500 18px var(--f-text);color:#6F675B}
+.tv .lg .t{display:flex;justify-content:space-between;font:600 30px/1.25 var(--f-text)}
+.tv .lg .t b{font:700 36px var(--f-display);font-variant-numeric:tabular-nums}
+.tv .nxl{background:#fff;color:#1F1B16;border-radius:16px;padding:4px 20px}
+.tv .nx{display:grid;grid-template-columns:130px 1fr;gap:2px 16px;font:500 24px/1.3 var(--f-text);padding:12px 0;border-top:2px solid #E4E0D8}
+.tv .nx:first-child{border-top:0}
+.tv .nx .w{font-weight:700}
+.tv .nx .p{grid-column:2;font-size:18px;color:#6F675B}
+.tv .ft{display:flex;align-items:center;gap:24px;padding:0 40px;border-top:2px solid rgba(255,255,255,.35)}
+.tv .fs{background:#fff;color:#8A5300;border-radius:16px;padding:12px 18px;font:700 22px var(--f-text);box-shadow:inset 6px 0 0 #8A5300}
+.tv .spn{margin-left:auto;display:flex;align-items:center;gap:14px;font:600 20px var(--f-text)}
+.tv .spn .t{width:220px;height:84px;background:#fff;color:#4E473D;border-radius:16px;display:grid;place-items:center;font:700 20px/1.2 var(--f-text);text-align:center}
+table.doc{border-collapse:collapse;width:100%;max-width:1100px;background:var(--doc-panel);border:1px solid var(--doc-line);font-size:13px}
+table.doc th{text-align:left;padding:9px 10px;background:var(--same-bg);color:var(--doc-fg);font:700 12px var(--f-text);text-transform:uppercase;letter-spacing:.04em}
+table.doc td{padding:9px 10px;border-top:1px solid var(--doc-line);vertical-align:top}
+.ask{background:var(--doc-panel);border:1px solid var(--doc-line);border-radius:10px;padding:14px 16px;margin:12px 0;max-width:980px}
+.ask.hl{outline:3px solid var(--askc)}
+.ask h4{margin:0 0 4px;font:700 16px var(--f-text)}
+.ask .grp-h{font:700 12px var(--f-text);text-transform:uppercase;letter-spacing:.06em;color:var(--doc-soft)}
+.ask .q{color:var(--doc-soft);margin:0 0 8px}
+.ask label{display:flex;gap:8px;align-items:flex-start;padding:5px 0;cursor:pointer}
+.ask label input{margin-top:3px}
+.ask .rec{font-weight:700;color:var(--new)}
+.ask .notrec{color:var(--doc-soft)}
+.ask textarea{width:100%;min-height:44px;margin-top:6px;border:1px solid var(--doc-line);border-radius:6px;background:var(--doc-bg);color:var(--doc-fg);font:13px var(--f-text);padding:6px 8px}
+.ask .rides{font-size:13px;color:var(--doc-soft);margin-top:6px}
+h3.ag{font:700 13px var(--f-text);letter-spacing:.07em;text-transform:uppercase;color:var(--doc-soft);margin:24px 0 4px}
+#paste{width:100%;min-height:200px;font:12px/1.45 ui-monospace,Consolas,monospace;border:1px solid var(--doc-line);border-radius:8px;background:var(--doc-panel);color:var(--doc-fg);padding:10px}
+.copy{border:1px solid var(--doc-line);background:var(--doc-panel);color:var(--doc-fg);border-radius:8px;padding:8px 14px;font:600 13px var(--f-text);cursor:pointer}
+.mil{background:var(--res-bg);color:var(--res);border-radius:8px;padding:10px 14px;font-weight:600;max-width:980px}
+dialog{border:1px solid var(--doc-line);border-radius:12px;background:var(--doc-panel);color:var(--doc-fg);max-width:520px;width:calc(100% - 32px);padding:18px 20px}
+dialog::backdrop{background:rgba(0,0,0,.45)}
+dialog h4{margin:0 0 8px;font:700 16px var(--f-text)}
+dialog .k{font:700 11px var(--f-text);letter-spacing:.06em;text-transform:uppercase;color:var(--doc-soft);margin-top:10px}
+dialog button.close{float:right;border:0;background:none;color:var(--doc-soft);font-size:22px;cursor:pointer;line-height:1}
+dialog .go{margin-top:12px}
+/* idea 11: the club's feed */
+.thumbs{display:grid;grid-template-columns:repeat(5,1fr);gap:6px}
+.th2{aspect-ratio:1;border-radius:6px;background:linear-gradient(160deg,#6E8B5A,#A9B98A 55%,#D8C9A0);position:relative}
+.th2.v2{background:linear-gradient(160deg,#5D7F8C,#9FB9B4)}
+.th2.v3{background:linear-gradient(160deg,#7A5C8C,#B9A4C4)}
+.win .askm{position:absolute;z-index:3}
+.win.w39 .wf .s{flex:1 1 100%}
+.win.w39 .wf .s + .b{margin-left:auto}
+.win td.nw{white-space:nowrap}
+.th2.add{background:#fff;border:1px dashed #CFC8BA;display:grid;place-items:center;color:#6F675B;font:600 24px/1 var(--f-text)}
+.th2.on{outline:2px solid #3F5512;outline-offset:1px}
+.th2.on::after{content:"✓";position:absolute;right:4px;top:4px;width:20px;height:20px;border-radius:4px;background:#3F5512;color:#fff;display:grid;place-items:center;font:700 12px/1 var(--f-text)}
+.th2.off::after{content:"";position:absolute;right:4px;top:4px;width:20px;height:20px;border-radius:4px;border:2px solid #fff;background:rgba(255,255,255,.4)}
+.win .lnk{min-height:44px;display:flex;align-items:center;font:600 14px/1.3 var(--f-text)}
+.win.w39 .track button{min-height:44px;padding:0 16px}
+.fr .l44{font-size:14px;line-height:1.4;color:var(--soft)}
+.fr .l44 .ul{display:inline-flex;align-items:center;min-height:44px}
+.win .pl.n{background:#F6F5F2;color:#4E473D}
+.win .pl{white-space:nowrap}
+.fr .dots{display:flex;gap:6px;justify-content:center}
+.fr .dots i{width:6px;height:6px;border-radius:50%;background:var(--line2)}
+.fr .dots i.on{background:var(--text)}
+.fr .igh{border:1px solid var(--line);border-radius:8px;background:#fff;padding:16px;display:flex;flex-direction:column;gap:10px;align-items:flex-start}
+.fr .rad{display:flex;align-items:center;gap:10px;min-height:44px;font:500 16px/1.3 var(--f-text)}
+.fr .rad i{width:20px;height:20px;border-radius:50%;border:2px solid #8C8475;flex:0 0 auto}
+.fr .ig{border:1px dashed #9AA4AE;border-radius:4px;background:#fff;color:#262626;font:14px/1.3 var(--f-text);overflow:hidden}
+.fr .igt{display:flex;align-items:center;gap:10px;padding:10px 12px}
+.fr .igt i{width:32px;height:32px;border-radius:50%;background:#C9CFD6;flex:0 0 auto}
+.fr .igt span{margin-left:auto;background:#0095F6;color:#fff;border-radius:6px;padding:6px 10px;font:600 12px/1 var(--f-text)}
+.fr .igp{aspect-ratio:1;background:linear-gradient(160deg,#8A7A5A,#C9B98A 55%,#E4D8B8);position:relative}
+.fr .igb{padding:10px 12px;display:flex;flex-direction:column;gap:8px}
+.fr .igb .vm{color:#0095F6;font-weight:600;border-bottom:1px solid #EFEFEF;padding-bottom:8px}
+.fr .igb .ic{display:flex;gap:12px}
+.fr .igb .ic i{width:22px;height:22px;border:2px solid #262626;border-radius:50%}
+.fr .igb .lk{font-weight:600}
+.fr .igb .cm{color:#8E8E8E;border-top:1px solid #EFEFEF;padding-top:8px}
+.legend{display:flex;gap:8px;flex-wrap:wrap;align-items:center;font-size:12px;color:var(--doc-soft)}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+/* Added for the events page */
+.fr .askm.tr2{right:122px}
+.tabstrip{background:#fff;display:flex;gap:4px;padding:0 8px;border-bottom:1px solid #D8DDE3;overflow:hidden;white-space:nowrap;width:390px;max-width:100%;box-sizing:border-box}
+.tabstrip span{font:600 14px var(--f-text);padding:14px 8px 11px;color:#55606C;border-bottom:3px solid transparent}
+.tabstrip span.on{color:#1B2027;border-bottom-color:#1E5F6A}
+.sm2{font-size:12px;color:var(--doc-soft);margin-bottom:4px}
+.plain{max-width:880px;padding-left:20px}.plain li{margin:8px 0}
+p.note{max-width:880px;color:var(--doc-soft)}
+/* ===== Track P additions ===== */
+.fr.oak{--fill:#2B4C7E;--ink:#2B4C7E;--edge:#2B4C7E;--accent:#C8A24A}
+.prep{background:#1F1B16;color:#fff;display:flex;align-items:center;gap:10px;padding:6px 8px 6px 16px;font:600 14px/1.35 var(--f-text);position:relative}
+.prep .cl{margin-left:auto;background:#C7E36B;color:#1F2A05;border-radius:8px;min-height:44px;padding:0 14px;display:inline-flex;align-items:center;white-space:nowrap;font:700 14px var(--f-text);flex:0 0 auto}
+.fr.pc .prep{padding:6px 24px}
+.fr .spt small{display:block;font:600 11px var(--f-text);color:var(--dim);text-transform:uppercase;letter-spacing:.05em;margin-top:2px}
+.fr .tband{background:var(--fill);color:#fff;border-bottom:3px solid var(--accent);min-height:72px;display:flex;align-items:center;gap:12px;padding:0 16px}
+.fr .tband .tic{width:40px;height:40px;border:2px solid rgba(255,255,255,.6);border-radius:50%;display:grid;place-items:center;font:700 13px var(--f-display);flex:0 0 auto}
+.fr .tband .tn{font:700 20px/1.05 var(--f-display)}
+.fr .tband .td{font:600 12px var(--f-text)}
+.fr .hosted{display:flex;gap:12px;align-items:center}
+.fr .hosted .tic2{width:44px;height:44px;border-radius:50%;background:var(--fill);color:#fff;display:grid;place-items:center;font:700 13px var(--f-display);flex:0 0 auto}
+.fr .shut{display:flex;flex-direction:column;gap:12px;padding:28px 16px}
+/* FieldLogicHQ's own door pages (warm paper) */
+.dr{background:#F7F2EA;color:#1F1B16;width:392px;max-width:100%;border:1px solid #9AA4AE;border-radius:14px;overflow:hidden;font:16px/1.45 var(--f-text);position:relative;flex:0 0 auto}
+.dr .top{background:#fff;border-bottom:1px solid #E4E0D8;height:56px;display:flex;align-items:center;padding:0 16px;gap:8px;font:700 16px var(--f-text)}
+.dr .top .lgm{width:20px;height:20px;border-radius:4px;background:#4B5E14;flex:0 0 auto}
+.dr .top .sn{margin-left:auto;border:1px solid #CFC8BA;border-radius:20px;padding:6px 12px;font:600 14px var(--f-text)}
+.dr .col{padding:24px 16px 28px;display:flex;flex-direction:column;gap:14px}
+.dr h6{font:700 28px/1.1 var(--f-display);margin:0;text-align:center;text-wrap:balance}
+.dr .sb{color:#4E473D;text-align:center;font-size:15px}
+.dr .steps{display:flex;justify-content:center;gap:6px;align-items:center;font:700 11px var(--f-text);letter-spacing:.06em;text-transform:uppercase;color:#4E473D;border-bottom:1px solid #E4E0D8;padding-bottom:14px;flex-wrap:wrap}
+.dr .steps i{width:22px;height:22px;border-radius:50%;background:#E4E0D8;color:#4E473D;display:inline-grid;place-items:center;font:700 11px var(--f-text);font-style:normal;margin-right:4px}
+.dr .steps i.on{background:#1F1B16;color:#fff}.dr .steps i.ok{background:#4B5E14;color:#fff}
+.dr .fl{font:600 14px var(--f-text);color:#3B342B;margin-bottom:6px}
+.dr .ip{background:#fff;border:1px solid #CFC8BA;border-radius:8px;min-height:48px;display:flex;align-items:center;padding:0 14px;color:#1F1B16}
+.dr .ip.ph{color:#8C8475}
+.dr .ip.code{font:700 20px ui-monospace,Consolas,monospace;letter-spacing:.14em}
+.dr .ip.err{border-color:#A3261C;box-shadow:0 0 0 1px #A3261C}
+.dr .em{color:#A3261C;font:600 14px/1.4 var(--f-text);margin-top:6px}
+.dr .hint{font-size:14px;color:#6F675B}
+.dr .two2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.dr .tick{display:flex;gap:10px;font-size:15px;line-height:1.45}
+.dr .tick i{width:20px;height:20px;border:2px solid #8C8475;border-radius:4px;flex:0 0 auto;margin-top:2px}
+.dr .tick i.on{background:#4B5E14;border-color:#4B5E14;box-shadow:inset 0 0 0 3px #fff}
+.dr .go{background:#D9F99D;color:#1F2A05;border-radius:8px;min-height:48px;display:flex;align-items:center;justify-content:center;font:700 16px var(--f-text);text-align:center;padding:0 12px}
+.dr .go.w{background:#fff;border:1px solid #CFC8BA}
+.dr .fine{font-size:13px;color:#6F675B;text-align:center}
+.dr .u{text-decoration:underline;font-weight:600}
+.dr .cardc{background:#fff;border:1px solid #E4E0D8;border-radius:10px;padding:14px 16px;display:flex;flex-direction:column;gap:8px;position:relative}
+.dr .cardc.lead{border:2px solid #4B5E14}
+.dr .ph2{display:flex;justify-content:space-between;font:700 16px var(--f-text)}
+.dr .sm{font-size:14px;color:#4E473D}
+.dr ul.b{margin:0;padding-left:18px;font-size:14px;color:#3B342B}
+.dr ul.b li{margin:2px 0}
+.dr .seg2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.dr .seg2 span{border:1px solid #CFC8BA;border-radius:8px;min-height:44px;display:grid;place-items:center;font:600 14px var(--f-text);background:#fff}
+.dr .seg2 span.on{border:2px solid #4B5E14}
+.dr .clubid{display:flex;gap:12px;align-items:center}
+.dr .clubid .lg{width:48px;height:48px;border-radius:10px;background:#2B4C7E;color:#fff;border:2px solid #C8A24A;display:grid;place-items:center;font:700 15px var(--f-display);flex:0 0 auto}
+.dr .kc{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.dr .kh{font:700 12px var(--f-text);letter-spacing:.06em;text-transform:uppercase;color:#4E473D;margin-bottom:4px}
+.dr .kc ul{margin:0;padding-left:16px;font-size:14px;line-height:1.4}
+.dr .kc .gone li{color:#6F675B}
+.dr .alert{background:#FBEDEA;border:1px solid #E7B9B2;border-radius:8px;padding:12px 14px;font-size:15px;color:#5E1A12}
+.dr .ok{background:#EAF1DA;border:1px solid #C9D9A6;border-radius:8px;padding:12px 14px;font-size:15px;color:#2F3A12}
+.dr .chk{background:#fff;border:1px solid #E4E0D8;border-radius:10px;overflow:hidden}
+.dr .chk .r{display:grid;grid-template-columns:26px 1fr;gap:10px;padding:12px 14px;border-top:1px solid #EFEBE3}
+.dr .chk .r:first-child{border-top:0}
+.dr .chk .n{width:24px;height:24px;border-radius:50%;border:1px solid #CFC8BA;display:grid;place-items:center;font:700 11px var(--f-text)}
+.dr .chk .n.ok{background:#4B5E14;border-color:#4B5E14;color:#fff}
+.dr .chk b{display:block;font:700 15px var(--f-text)}
+.dr .chk .s{font-size:13px;color:#4E473D}
+.dr .chk .btn2{margin-top:8px;display:inline-flex;align-items:center;min-height:44px;padding:0 14px;border-radius:8px;background:#D9F99D;font:700 14px var(--f-text);color:#1F2A05}
+.dr .chk .done{margin-top:6px;font:600 13px var(--f-text);color:#4B5E14}
+.dr .eyebrow{font:700 11px ui-monospace,Consolas,monospace;letter-spacing:.12em;text-transform:uppercase;color:#4E473D}
+.dr .sys{padding:40px 20px 36px;display:flex;flex-direction:column;gap:12px;align-items:center;text-align:center}
+.dr .sys .ic{width:48px;height:48px;border-radius:50%;background:#fff;border:1px solid #E4E0D8;display:grid;place-items:center;font-size:20px;color:#6F675B}
+.dr .sys h6{font:700 26px/1.15 var(--f-display)}
+.dr .sys p{margin:0;color:#3B342B;font-size:15px;max-width:330px}
+/* platform admin (light specimen) */
+.pa{background:#F7F2EA;color:#1F1B16;border:1px solid #9AA4AE;border-radius:8px;width:1282px;max-width:none;font:14px/1.45 var(--f-text);overflow:hidden;position:relative;flex:0 0 auto}
+.pa .ps1{height:52px;background:#fff;border-bottom:1px solid #E4E0D8;display:flex;align-items:center;gap:16px;padding:0 20px}
+.pa .ps1 b{font:700 16px var(--f-text)}.pa .ps1 .sc{color:#6F675B}
+.pa .ps1 .fd{margin:0 auto;width:380px;border:1px solid #CFC8BA;border-radius:8px;height:34px;display:flex;align-items:center;padding:0 10px;color:#8C8475}
+.pa .grid{display:grid;grid-template-columns:220px 1fr;min-height:520px}
+.pa .rail{background:#fff;border-right:1px solid #E4E0D8;padding:12px 10px;display:flex;flex-direction:column;gap:1px}
+.pa .rail .gh{font:700 11px var(--f-text);letter-spacing:.07em;text-transform:uppercase;color:#6F675B;padding:10px 10px 4px}
+.pa .rail .it{padding:6px 10px;border-radius:6px;color:#3B342B}
+.pa .rail .it.on{background:#EEF3DC;color:#1F2A05;font-weight:700}
+.pa .main{padding:22px 28px;display:flex;flex-direction:column;gap:14px;position:relative}
+.pa h6{font:700 24px var(--f-text);margin:0}
+.pa .lede{color:#4E473D;margin-top:-8px}
+.pa .tb{display:flex;gap:10px;align-items:center;padding:12px 14px;border-bottom:1px solid #E4E0D8}
+.pa .tb .cnt{font-weight:700;margin-right:6px}
+.pa .srch{border:1px solid #CFC8BA;border-radius:8px;height:40px;width:300px;display:flex;align-items:center;padding:0 12px;color:#8C8475;background:#fff}
+.pa .bt{height:40px;border-radius:8px;border:1px solid #CFC8BA;background:#fff;padding:0 14px;font:600 14px var(--f-text);display:inline-flex;align-items:center;white-space:nowrap}
+.pa .bt.lime{background:#C7E36B;border-color:#A9C64A;color:#1F2A05;margin-left:auto}
+.pa .card{background:#fff;border:1px solid #E4E0D8;border-radius:10px;overflow:hidden}
+.pa table{width:100%;border-collapse:collapse}
+.pa th{text-align:left;font:700 12px var(--f-text);text-transform:uppercase;letter-spacing:.05em;color:#4E473D;padding:10px 14px;border-bottom:1px solid #E4E0D8;background:#FBFAF7}
+.pa td{padding:12px 14px;border-top:1px solid #EFEBE3;font-variant-numeric:tabular-nums;vertical-align:top}
+.pa tr:first-child td{border-top:0}
+.pa td .s{font-size:12px;color:#6F675B}
+.pa td.q{color:#6F675B}
+.pa .pl{display:inline-block;font:600 12px var(--f-text);border-radius:20px;padding:3px 8px;white-space:nowrap}
+.pa .pl.i{background:#E2ECF6;color:#24507A}.pa .pl.ok{background:#E6F0E2;color:#2C6A2A}.pa .pl.n{background:#EFEBE3;color:#4E473D}.pa .pl.w{background:#F6EBD7;color:#8A5300}
+.pa .emp{padding:44px 24px;text-align:center;display:flex;flex-direction:column;gap:10px;align-items:center}
+.pa .emp b{font:700 18px var(--f-text)}
+.pa .emp p{margin:0;max-width:520px;color:#4E473D}
+.pa .lnk{color:#3F5512;font-weight:600;text-decoration:underline}
+/* phone list cards for platform admin at 390 */
+.pm{background:#F7F2EA;color:#1F1B16;border:1px solid #9AA4AE;border-radius:14px;width:392px;max-width:100%;overflow:hidden;font:15px/1.45 var(--f-text);flex:0 0 auto;position:relative}
+.pm .ps1{height:52px;background:#fff;border-bottom:1px solid #E4E0D8;display:flex;align-items:center;gap:10px;padding:0 16px;font-weight:700}
+.pm .ps1 .mn{margin-left:auto;font-weight:600;border:1px solid #CFC8BA;border-radius:8px;padding:6px 10px}
+.pm .bd{padding:16px;display:flex;flex-direction:column;gap:10px}
+.pm h6{font:700 22px var(--f-text);margin:0}
+.pm .c{background:#fff;border:1px solid #E4E0D8;border-radius:10px;padding:12px 14px;display:flex;flex-direction:column;gap:2px;min-height:60px}
+.pm .c .t{display:flex;justify-content:space-between;gap:8px;font-weight:700}
+.pm .c .s{font-size:13px;color:#4E473D}
+.pm .pl{display:inline-block;font:600 12px var(--f-text);border-radius:20px;padding:3px 8px;white-space:nowrap}
+.pm .pl.i{background:#E2ECF6;color:#24507A}.pm .pl.ok{background:#E6F0E2;color:#2C6A2A}.pm .pl.n{background:#EFEBE3;color:#4E473D}
+.pm .bt.lime{background:#C7E36B;border:1px solid #A9C64A;color:#1F2A05;border-radius:8px;min-height:44px;display:flex;align-items:center;justify-content:center;font:700 15px var(--f-text)}
+/* the room card and the QR */
+.rc{width:392px;max-width:100%;background:#fff;color:#1F1B16;border:1px solid #9AA4AE;border-radius:12px;overflow:hidden;font:14px/1.45 var(--f-text);flex:0 0 auto;position:relative}
+.rc .hd{background:#2B4C7E;color:#fff;border-bottom:3px solid #C8A24A;padding:14px 16px;display:flex;gap:12px;align-items:center}
+.rc .hd .lg{width:44px;height:44px;border-radius:10px;border:2px solid rgba(255,255,255,.6);display:grid;place-items:center;font:700 14px var(--f-display);flex:0 0 auto}
+.rc .hd .n{font:700 20px/1.05 var(--f-display)}
+.rc .bd{padding:16px;display:grid;grid-template-columns:150px minmax(0,1fr);gap:14px;align-items:center}
+.rc .big{font:700 22px/1.1 var(--f-display)}
+.rc .code{font:700 22px/1 ui-monospace,Consolas,monospace;letter-spacing:.12em;margin-top:4px}
+.rc .k{font:700 11px var(--f-text);letter-spacing:.06em;text-transform:uppercase;color:#4E473D;margin-top:8px}
+.rc .ft{border-top:1px solid #E4E0D8;padding:10px 16px;font-size:12px;color:#4E473D}
+.qr{width:150px;height:150px;display:grid;grid-template-columns:repeat(25,1fr);grid-template-rows:repeat(25,1fr);background:#fff;padding:6px;border:1px solid #E4E0D8;flex:0 0 auto;box-sizing:border-box}
+.qr.s{width:110px;height:110px;padding:4px}
+.qr i{background:#111}.qr i.o{background:transparent}
+.win .qrrow{display:flex;gap:12px;align-items:center}
+.win .code{font:700 20px ui-monospace,Consolas,monospace;letter-spacing:.12em}
+.win .score{display:grid;grid-template-columns:1fr 64px;gap:8px;align-items:center}
+.win .score .in{justify-content:center;font:700 18px var(--f-text)}
+.win .b.red{background:#fff;border-color:#A3261C;color:#A3261C}
+.win .callw{background:#FBEDEA;border:1px solid #E7B9B2;border-radius:8px;padding:10px 12px;color:#5E1A12}
+.win .in.err{border-color:#A3261C;box-shadow:0 0 0 1px #A3261C}
+.win .er{color:#A3261C;font:600 13px/1.4 var(--f-text);margin-top:4px}
+.win .sw{display:flex;gap:8px;align-items:center}
+.win .sw i{width:28px;height:28px;border-radius:6px;border:1px solid #CFC8BA;display:inline-block}
+.win .dt2{display:grid;grid-template-columns:1fr 130px;gap:8px}
+/* an email specimen */
+.mail{width:520px;max-width:100%;background:#fff;color:#1F1B16;border:1px solid #9AA4AE;border-radius:10px;font:15px/1.5 var(--f-text);overflow:hidden;flex:0 0 auto;position:relative}
+.mail .mh{padding:12px 16px;border-bottom:1px solid #E4E0D8;font-size:13px;color:#4E473D;display:flex;flex-direction:column;gap:2px}
+.mail .mh b{color:#1F1B16}
+.mail .mb{padding:16px;display:flex;flex-direction:column;gap:10px}
+.mail .mb p{margin:0}
+.mail .mf{padding:12px 16px;border-top:1px solid #E4E0D8;font-size:12px;color:#6F675B}
+.blank{color:#8A5300;background:#F7E9CC;border-radius:3px;padding:0 3px}
+table.doc td.how{min-width:300px}
+table.doc td.where{font-size:12px;color:var(--doc-soft);min-width:180px}
+table.doc tr.grp td{background:var(--doc-bg);font:700 12px var(--f-text);letter-spacing:.06em;text-transform:uppercase;color:var(--doc-soft)}
+.findings{counter-reset:f;list-style:none;padding:0;max-width:900px}
+.findings li{background:var(--doc-panel);border:1px solid var(--doc-line);border-radius:8px;padding:10px 14px;margin:8px 0}
+.findings li b:first-child{display:block;margin-bottom:2px}
+/* /design fixes 2026-11-25 */
+.win .wh .x{width:44px;height:44px;display:grid;place-items:center;margin:-10px -12px -10px auto}
+.prep{border-bottom:1px solid rgba(255,255,255,.18);font:600 13px/1.3 var(--f-text);padding:4px 4px 4px 16px}
+.prep .cl{padding:0 12px}
+.fr.pc .prep{font-size:14px}
+.fr .ul{display:inline-flex;align-items:center;min-height:44px}
+.dr .top .sn,.pm .ps1 .mn{min-height:44px;display:inline-flex;align-items:center;padding:0 14px}
+.dr .top .hq{color:#4B5E14}
+.dr .eye{margin-left:auto;color:#6F675B;font-size:14px}
+.dr.grid{background-color:#F7F2EA;background-image:linear-gradient(#ECE5D8 1px,transparent 1px),linear-gradient(90deg,#ECE5D8 1px,transparent 1px);background-size:24px 24px}
+.win .lnk{display:flex;gap:6px;align-items:center;min-height:44px}
+.fr .spt small{font:600 12px var(--f-text);text-transform:none;letter-spacing:0}
+.qr{padding:22px}.qr.s{padding:12px}
+.pa .tb .grow{margin-left:auto;display:flex;gap:10px}
+.pa .bt.lime{margin-left:0}
+</style>
+
+<header class="top"><div class="wrap">
+  <h1>Track P · a prospect's own club website</h1>
+  <p>Before a first meeting, we build the prospect club's own site on the live product, in their name, logo and colours, with a made-up season in it. In the room they scan a code, their club opens on their phone, and "Claim it" hands it to them. Ruled 2026-11-24: made on production, unlisted, marked as ours, and removed 30 days after the meeting unless the club claims it in place. This page holds the census from the code (tab 1), every screen from making a preview to removing one (tabs 2–8), and 16 asks (tab 9). The club is made up: <b>Oakridge Minor Softball</b>, meeting <b>Tue, Dec 8, 2026 at 7:00 p.m.</b> Every frame is true size, and phones are 390 px. Click a tag to read it; purple tags jump to their ask. Nothing here is built or ruled. Reviewed by /ux, /design, /legal and /billing, then one /marketing pass on the words, before you saw it. Written 2026-11-25.</p>
+</div></header>
+<nav class="tabs" aria-label="Sections"><div class="wrap" role="tablist">
+  <button role="tab" data-tab="census">1 · What the code says</button>
+  <button role="tab" data-tab="list">2 · Prospect clubs</button>
+  <button role="tab" data-tab="make">3 · Make one</button>
+  <button role="tab" data-tab="room">4 · Into the room</button>
+  <button role="tab" data-tab="mark">5 · The marking</button>
+  <button role="tab" data-tab="claim">6 · The claim</button>
+  <button role="tab" data-tab="after">7 · After 30 days</button>
+  <button role="tab" data-tab="forward">8 · A forwarded link</button>
+  <button role="tab" data-tab="asks">9 · Asks and order</button>
+</div></nav>
+
+<main><div class="wrap">
+<div class="viewrow" id="viewrow">
+  <span class="lbl">View</span>
+  <span class="track" role="group" aria-label="View"><button id="v-all" aria-pressed="true">Everything</button><button id="v-diff" aria-pressed="false">Show only what differs</button></span>
+  <span class="legend"><span class="mk new">New</span><span class="mk res">Restyled</span><span class="mk same">Unchanged</span><span class="askm">T1</span> an ask</span>
+</div>
+
+<!-- ============ 1 CENSUS ============ -->
+<section class="tab" id="census">
+<h2 class="t">What the code says today</h2>
+<p class="lead">Six questions, answered from the code. The file and line for each are in the plan's Progress block (2026-11-25). The finding that matters most is the first callout: <b>nothing today marks an organization as "not a customer" in one place.</b></p>
+<ol class="findings">
+  <li><b>1 · Today's prospect seed is not a preview, and it should not become one.</b> It makes the club an active Club subscriber with nothing in Stripe behind it, which every count reads as a paying Club. It makes made-up children with birthdates, guardians, emergency contacts and two medical notes. Eight of its sign-ins are real Gmail inboxes. Its logo is a stock mark, not the club's own. It refuses production by design, and it stays that way: Milton's world on staging is untouched by this track.</li>
+  <li><b>2 · Nothing can make a club with no owner, and staff cannot own one.</b> The only door that makes a club needs a signed-in person who is not staff, has accepted the Terms, and belongs to no other real club. There is no "preview" state: the trial lives in Stripe. Free time is the wrong tool: it is a customer grant with an end date that shows on the Free time list and sends reminders, and a whole-plan grant refuses checkout for that plan, so the club could not buy. <code>/billing</code>'s shape: a preview marker that carries only the site's parts the preview shows, on the free starting plan, and is cleared in the same step as the claim <button class="askm" data-ask="T1">T1</button>.</li>
+  <li><b>3 · Nothing marks "not a customer" in one place</b> (the table below). The two shared demos are kept out by a list in the code, checked by hand surface by surface. About ten surfaces check nothing at all.</li>
+  <li><b>4 · The claim is a new door.</b> The Terms are per person, ticked at sign-up and checked again at checkout. Checkout makes the Stripe customer, so an unclaimed preview has nothing in Stripe to undo. The only way to hand a club over today needs the person to be a member already, and a club invite cannot give the owner seat. Someone who already runs another club is refused.</li>
+  <li><b>5 · Nothing removes a club by itself.</b> The owner's deletion request deletes nothing; platform admin's Delete removes the club, its files and optionally its Stripe customer. A deleted club's address shows the generic "We can't find that page". A removal that runs by itself is a new job on production, which needs your word in the session that builds it.</li>
+  <li><b>6 · "Live now" is the clock.</b> A game is live from its start time for its length plus 30 minutes, unless it is final. Only <b>tournament</b> pages show a live card and refresh every 30 seconds; house league pages never refresh. On the club home today, "Live now" is a chip on the tournament's card, judged by its dates. So the live game in the room has to be a tournament game, and the score on the home that tab 12 drew arrives with Stage 1. A score needs someone signed in with a role in the club, and staff cannot hold the owner seat.</li>
+</ol>
+<div class="callout warn"><b>Why the demo list is the wrong tool.</b> The demo list means two things at once. One is "not a customer, never emails, not in search", and a preview needs all of that. The other is "read-only, shared by everyone, with the sandbox banner, the tour and a no-login door", and a preview must have none of it: the club has to claim it, and you have to type a score into it. <b>So the shape is a separate preview marker that every surface below reads, with a build check that fails when a new count, list or send forgets it</b> (the same idea as the coaches portal's look-back list) <button class="askm" data-ask="T1">T1</button>.</div>
+
+<h3 class="t">Every place on production that counts, lists or reaches an organization</h3>
+<div class="scrollx"><table class="doc">
+<thead><tr><th>Surface</th><th>What it does today</th><th>How a preview stays out</th><th>Where (code)</th></tr></thead>
+<tbody>
+<tr class="grp"><td colspan="4">Our own figures and lists (platform admin)</td></tr>
+<tr><td>Business numbers: customers, monthly revenue, the snapshot</td><td>Leaves out the demos and free-time portals</td><td class="how">Reads the preview marker in its one "not a customer" rule</td><td class="where">lib/platform-metrics.ts:85-118, 224</td></tr>
+<tr><td>Business numbers: people, registrations, accounting entries, subscription events</td><td><b>Leaves out nothing</b></td><td class="how">The same rule. Under T3 A a preview holds no people, so its only rows are sample games, teams and sponsors</td><td class="where">platform-metrics.ts:176-217</td></tr>
+<tr><td>Clubs &amp; portals, Bulk changes, Plans &amp; pricing (who a price change touches)</td><td><b>List every organization</b></td><td class="how">Leave previews out; they live on Prospect clubs only (tab 2)</td><td class="where">platform-admin/orgs/page.tsx:17-24; bulk-operations; plans-pricing:166</td></tr>
+<tr><td>Find, People, Leads, Renewals, Free time</td><td>Leave out the demos</td><td class="how">Read the marker. Find still finds a preview by name and opens it on Prospect clubs</td><td class="where">find/route.ts:106; lead-book.ts:108; renewals-read.ts:26; free-time-list.ts:54</td></tr>
+<tr><td>Sent emails, Online payments, Stripe watch, plan ending, retention</td><td>Read Stripe-billed clubs; leave out nothing</td><td class="how">A preview has no Stripe, so none appears. The marker is checked anyway as a guard</td><td class="where">platform-online-payments.ts:176; plan-ending-server.ts:44</td></tr>
+<tr><td>Sign-up and activity events</td><td>Every club's events are written; one reader leaves out demos</td><td class="how">Not written for a preview at all</td><td class="where">lib/platform-events.ts; platform-metrics.ts:207</td></tr>
+<tr><td>Your Bookkeeping</td><td>Real paid Stripe invoices only</td><td class="how">Nothing to do: a preview is never invoiced</td><td class="where">lib/sales-by-month-read.ts</td></tr>
+<tr><td>The Morning Brief and the board</td><td>No organization reads</td><td class="how">Nothing to do</td><td class="where">scripts/owner-brief.mjs:6-13</td></tr>
+<tr><td><code>npm run health</code>, the demo checks</td><td>No organization lists</td><td class="how">Nothing to do</td><td class="where">stack-health.mjs; check-demos.mjs</td></tr>
+<tr class="grp"><td colspan="4">Public lists and search</td></tr>
+<tr><td>Tournament lists: Discover, Scores, public search</td><td>A tournament shows when its "list in the directory" switch is on</td><td class="how">Off for every preview tournament, and the switch is not shown in a preview. <b>A preview's tournament in progress never appears in a public list or search.</b></td><td class="where">lib/directory.ts:142-147</td></tr>
+<tr><td>Club search and following</td><td>A club shows when its "discoverable" switch is on</td><td class="how">Off, and not shown in a preview</td><td class="where">lib/directory.ts:390-399</td></tr>
+<tr><td>Sitemap, robots, "don't index this page"</td><td>Only the two demos are left out; <b>a preview would be indexed</b></td><td class="how">No sitemap entry and "don't index" on every page and header. <b>Not</b> a robots.txt line: that file is public and would publish the prospect list</td><td class="where">app/sitemap.ts:41-52; robots-rules.ts:38; [orgSlug]/layout.tsx:67</td></tr>
+<tr><td>The installable app</td><td>Lists no clubs; following uses the discoverable switch</td><td class="how">Covered by the switch above</td><td class="where">app/manifest.json; public/sw.js</td></tr>
+<tr class="grp"><td colspan="4">Every email and message</td></tr>
+<tr><td>The main sender (about 75 callers)</td><td><b>Skips only made-up <code>.local</code> addresses; no club check</b></td><td class="how">Refuses any email for a preview club, failing closed. Under T3 A there is nobody to email anyway</td><td class="where">lib/email.ts:78-80, 118-135</td></tr>
+<tr><td>The marketing sender, the bell and push, fan alerts</td><td>Leave out the demos</td><td class="how">Read the marker</td><td class="where">email-sender.ts:113; notify.ts:131; fan-notify.ts:251</td></tr>
+<tr><td>Scheduled emails: dues reminders, digests, schedule changes, two-step, free time</td><td>Each has its own check, or none</td><td class="how">All go through the sender above, so the one refusal covers them</td><td class="where">dues-reminders.ts:186; insights-digest.ts:275</td></tr>
+<tr><td>Error alerts</td><td>Quiet for the demos</td><td class="how">Stay <b>on</b> for a preview: a preview that breaks before a meeting is something you want to hear about</td><td class="where">lib/observability/capture.ts:165</td></tr>
+</tbody></table></div>
+</section>
+
+<!-- ============ 2 PROSPECT CLUBS ============ -->
+<section class="tab" id="list">
+<h2 class="t">Platform admin › Prospect clubs</h2>
+<p class="lead">A new page under Growth, beside Leads and Pitch decks. It is the only place a preview shows in platform admin; Clubs &amp; portals leaves previews out. A claimed preview moves to Clubs &amp; portals like any club, and keeps one row here so you can see how many claim <button class="askm" data-ask="T10">T10</button>.</p>
+<div class="sub" role="group" aria-label="List state">
+  <button data-state="l-list" aria-pressed="true">The list</button>
+  <button data-state="l-phone" aria-pressed="false">On your phone</button>
+  <button data-state="l-empty" aria-pressed="false">Empty</button>
+</div>
+<div class="state on" id="l-list">
+<div class="spec"><span class="cap">End state · computer, 1280 · Wed, Nov 25</span>
+<div class="scrollx" style="border:0"><div class="pa">
+  <div class="ps1"><b>FieldLogicHQ</b><span class="sc">Support console</span><span class="fd">Find a club, a person or an email…</span><span>Account ▾</span></div>
+  <div class="grid">
+    <div class="rail"><div class="it">Today</div><div class="gh">Customers</div><div class="it">Clubs &amp; portals</div><div class="it">People</div><div class="it">Free time</div><div class="it">Renewals</div><div class="gh">Health</div><div class="it">Status</div><div class="it">Errors</div><div class="gh">Growth</div><div class="it">Leads</div><div class="it on">Prospect clubs</div><div class="it">Campaigns</div><div class="it">Pitch decks</div><div class="it">Business numbers</div><div class="gh">Product</div><div class="it">Plans &amp; pricing</div></div>
+    <div class="main">
+      <button class="mk new tr" style="top:10px;right:28px" data-note="A new page. It lists every prospect club, soonest meeting first, with the claimed and removed ones below. The sentence under the title carries the limit (ask T6) and the rule. Its toolbar follows the one-toolbar rule: count, search, and the one action. A row opens the club's window (tab 4).">New</button>
+      <h6>Prospect clubs</h6>
+      <div class="lede">Up to 5 open at a time <button class="askm" data-ask="T6">T6</button>. Each is removed 30 days after its meeting unless the club claims it.</div>
+      <div class="card">
+        <div class="tb"><span class="cnt">3 open · 1 claimed · 1 removed</span><span class="grow"><span class="srch">Search a club</span><span class="bt lime">Make a club for a meeting</span></span></div>
+        <table><thead><tr><th>Club</th><th>Meeting</th><th>Removal date</th><th>Made by</th><th>State</th><th></th></tr></thead><tbody>
+          <tr><td><b>Harbourview Fastpitch</b><div class="s">fieldlogichq.ca/harbourview-fastpitch</div></td><td>Mon, Nov 30 · 6:30 p.m.<div class="s">In 5 days</div></td><td>Wed, Dec 30<div class="s">35 days left</div></td><td>You</td><td><span class="pl i">Preview</span></td><td>›</td></tr>
+          <tr><td><b>Oakridge Minor Softball</b><div class="s">fieldlogichq.ca/oakridge-minor-softball</div></td><td>Tue, Dec 8 · 7:00 p.m.<div class="s">In 13 days</div></td><td>Thu, Jan 7<div class="s">43 days left</div></td><td>You</td><td><span class="pl i">Preview</span></td><td>›</td></tr>
+          <tr><td><b>Lakeshore Minor Ball</b><div class="s">fieldlogichq.ca/lakeshore-minor-ball</div></td><td>Thu, Nov 12<div class="s">13 days ago</div></td><td>Sat, Dec 12<div class="s">17 days left</div></td><td>You</td><td><span class="pl i">Preview</span></td><td>›</td></tr>
+          <tr><td><b>Westvale Softball</b><div class="s"><span class="lnk">Open in Clubs &amp; portals</span></div></td><td class="q">Wed, Oct 28</td><td class="q">None</td><td>You</td><td><span class="pl ok">Claimed</span><div class="s">Nov 2 · Club, on trial</div><div class="s">by s•••@w•••.ca</div></td><td>›</td></tr>
+          <tr><td class="q"><b>Pine Hollow Minor Softball</b></td><td class="q">Mon, Oct 5</td><td class="q">Wed, Nov 4</td><td class="q">You</td><td><span class="pl n">Removed</span></td><td>›</td></tr>
+        </tbody></table>
+      </div>
+    </div>
+  </div>
+</div></div></div>
+<div class="why" style="max-width:none;margin-top:16px"><h4>Why it is shaped this way</h4><ul>
+  <li><b>Previews leave Clubs &amp; portals.</b> That list is where you read your customers. A made-up club in it is the defect the census found. Find still finds a preview by name, and opens it here.</li>
+  <li><b>"Removal date" counts to the day.</b> It is the meeting plus 30 days. Moving a meeting moves it (tab 4). A claimed row has no removal date, and a removed row keeps its date as a record.</li>
+  <li><b>"Made by"</b> is always "You" while only you can make one <button class="askm" data-ask="T2">T2</button>. The column stays so that a second maker shows up the day T2 changes.</li>
+  <li><b>Who claimed it</b> shows as a masked email, and until a plan starts you can undo a claim made by the wrong person <button class="askm" data-ask="T15">T15</button>.</li>
+  <li><b>The claimed row's second line</b> is where "Came from a preview" lives: it is never a figure in Business numbers <button class="askm" data-ask="T10">T10</button>.</li>
+</ul></div>
+</div>
+<div class="state" id="l-phone"><div class="pair">
+  <div class="spec"><span class="cap">End state · phone · the list turns into cards, as Clubs &amp; portals does below 640 px</span>
+  <div class="pm">
+    <div class="ps1">FieldLogicHQ<span class="mn">Menu</span></div>
+    <div class="bd"><h6>Prospect clubs</h6><div style="font-size:14px;color:#4E473D">3 open, up to 5 at a time. Each is removed 30 days after its meeting unless the club claims it.</div>
+      <div class="bt lime">Make a club for a meeting</div>
+      <div class="c"><div class="t">Harbourview Fastpitch <span class="pl i">Preview</span></div><div class="s">Meeting Mon, Nov 30 · 6:30 p.m. · in 5 days</div><div class="s">Comes down Wed, Dec 30</div></div>
+      <div class="c"><div class="t">Oakridge Minor Softball <span class="pl i">Preview</span></div><div class="s">Meeting Tue, Dec 8 · 7:00 p.m. · in 13 days</div><div class="s">Comes down Thu, Jan 7</div></div>
+      <div class="c"><div class="t">Lakeshore Minor Ball <span class="pl i">Preview</span></div><div class="s">Meeting Thu, Nov 12 · 13 days ago</div><div class="s">Comes down Sat, Dec 12</div></div>
+      <div class="c"><div class="t">Westvale Softball <span class="pl ok">Claimed</span></div><div class="s">Claimed Nov 2 · Club, on trial</div></div>
+      <div class="c"><div class="t" style="color:#6F675B">Pine Hollow Minor Softball <span class="pl n">Removed</span></div><div class="s">Removed Wed, Nov 4</div></div>
+    </div>
+  </div></div>
+  <div class="why"><h4>Why the phone matters here</h4><ul><li>In the room, your phone is the tool: you open the club, show the code and type the score (tab 4). The list has to work at 390.</li><li>Each card is one tap target, at least 60 px tall. The state pill sits on the name line so the eye finds it without a column.</li></ul></div>
+</div></div>
+<div class="state" id="l-empty">
+<div class="spec"><span class="cap">End state · the empty list</span>
+<div class="pa" style="width:900px"><div class="ps1"><b>FieldLogicHQ</b><span class="sc">Support console</span></div><div class="main" style="padding:22px 28px">
+  <h6>Prospect clubs</h6>
+  <div class="card"><div class="emp"><b>No prospect clubs yet</b><p>Before a first meeting, make the club's own site: their name, logo and colours on a made-up season. You get a link, a QR code and a claim code for the room. It is removed 30 days after the meeting unless the club claims it.</p><span class="bt lime" style="margin:6px 0 0">Make a club for a meeting</span></div></div>
+</div></div></div>
+</div>
+</section>
+
+<!-- ============ 3 MAKE ONE ============ -->
+<section class="tab" id="make">
+<h2 class="t">Make a club for a meeting</h2>
+<p class="lead">Refined from Stage 0's tab 12. What changed: the logo needs a source, the sample is fixed (no "fill it with" choice), the meeting has a time because the live game starts then, and the window says what it will never hold. It asks for nothing about a person, because a preview holds no people <button class="askm" data-ask="T3">T3</button>.</p>
+<div class="sub" role="group" aria-label="Window state">
+  <button data-state="m-fill" aria-pressed="true">Filled in</button>
+  <button data-state="m-refuse" aria-pressed="false">What it refuses</button>
+  <button data-state="m-making" aria-pressed="false">Making it</button>
+</div>
+<div class="state on" id="m-fill"><div class="pair">
+  <div class="spec"><span class="cap">End state · the window, 520 wide (on a phone it fills the screen, like every window)</span>
+  <div class="win"><button class="mk res tr" data-note="Stage 0 tab 12's window, refined. New fields: where the club published its logo (required), the web address, the sport, the meeting's time. Removed: the 'Fill it with' dropdown, because every preview holds the same sample (ask T4). The sample and the rules are read-only text, not choices. The foot follows the house rule: sentence left, buttons right.">Restyled</button>
+    <div class="wh">Make a club for a meeting <span class="x">×</span></div><div class="wb">
+    <div><div class="wl">Club name *</div><div class="in">Oakridge Minor Softball</div></div>
+    <div class="sm">Web address: fieldlogichq.ca/oakridge-minor-softball · <u>Change</u>. Theirs if they claim it.</div>
+    <div class="two2" style="display:grid;grid-template-columns:1fr 1fr;gap:10px"><div><div class="wl">Sport *</div><div class="in dd">Softball</div></div><div><div class="wl">Province *</div><div class="in dd">Ontario</div></div></div>
+    <div><div class="wl">Logo *</div><div class="in">oakridge-logo.png</div></div>
+    <div><div class="wl">Where the club published this logo *</div><div class="in">https://oakridgeminorsoftball.ca</div><div class="sm">The address of the club's own website or social page. Use only a logo the club published itself. The colours come from that logo.</div></div>
+    <div class="sw"><i style="background:#2B4C7E"></i><i style="background:#C8A24A"></i><span class="sm">Colours from the logo · <u>Change</u></span></div>
+    <div><div class="wl">One line about the club</div><div class="in">Softball for Oakridge kids</div><div class="sm">Write it yourself; don't copy the club's own words. No names of people.</div></div>
+    <div><div class="wl">Meeting *</div><div class="dt2"><div class="in">Tue, Dec 8, 2026</div><div class="in">7:00 p.m.</div></div><div class="sm">The sample tournament's first game starts at this time <button class="askm" data-ask="T5">T5</button>.</div></div>
+    <div class="grp"><div class="gr gh">What every preview holds</div><div class="gr"><div class="sm">A house league season (3 divisions, 12 teams), 4 rep teams, a one-day tournament on the meeting day, and 3 sample sponsors. Every name is made up. No players, families or coaches <button class="askm" data-ask="T4">T4</button>.</div></div><div class="gr"><div class="sm">Made on the live site: unlisted, never in search, and it sends no emails of its own. Every page says it is a preview by FieldLogicHQ. Removed on Thu, Jan 7, 2027, 30 days after the meeting, unless the club claims it.</div></div></div>
+  </div><div class="wf"><span class="s">You get a link, a QR code and a claim code for the room.</span><span class="b">Cancel</span><span class="b lime">Make the club</span></div></div></div>
+  <div class="why"><h4>Why it is shaped this way</h4><ul>
+    <li><b>The logo's source is required</b> because <code>/legal</code>'s rule is "only the club's own published logo". The source is kept with the preview, so the record says where it came from.</li>
+    <li><b>No field can hold a person.</b> The window cannot tell a name from a word, so it refuses names by having nowhere to type one. The one free line says so.</li>
+    <li><b>One fixed sample</b> means one sample to build and check, not a menu. "Shows whatever the site is" (§6) holds: each stage that ships improves every preview made after it.</li>
+    <li><b>Making it signs nobody in.</b> The club has no owner until it is claimed; you reach it from this page, not as a member <button class="askm" data-ask="T3">T3</button>.</li>
+  </ul></div>
+</div></div>
+<div class="state" id="m-refuse"><div class="pair">
+  <div class="spec"><span class="cap">End state · what Make the club refuses, shown where it happens</span>
+  <div class="win">
+    <div class="wh">Make a club for a meeting <span class="x">×</span></div><div class="wb">
+    <div><div class="wl">Club name *</div><div class="in err">Westvale Softball</div><div class="er">Westvale Softball already runs its own club on FieldLogicHQ, so it can't have a preview.</div></div>
+    <div><div class="wl">Web address</div><div class="in err">fieldlogichq.ca/westvale</div><div class="er">That address is taken. Try another.</div></div>
+    <div><div class="wl">Logo *</div><div class="in err">westvale.heic</div><div class="er">This file can’t be read. Use a PNG, JPG or SVG.</div></div>
+    <div><div class="wl">Where the club published this logo *</div><div class="in err"></div><div class="er">Say where the club published this logo.</div></div>
+    <div><div class="wl">Meeting *</div><div class="dt2"><div class="in err">Mon, Mar 1, 2027</div><div class="in">7:00 p.m.</div></div><div class="er">Pick a meeting in the next 60 days.</div></div>
+  </div><div class="wf"><span class="s">You get a link, a QR code and a claim code for the room.</span><span class="b">Cancel</span><span class="b lime">Make the club</span></div></div>
+  <div class="win" style="margin-top:16px"><div class="wh">Make a club for a meeting <span class="x">×</span></div><div class="wb"><div class="callw">5 previews are open, the most allowed at once. Remove one, or wait for one to end, then make this one.</div></div><div class="wf"><span class="s"></span><span class="b">Close</span></div></div>
+  </div>
+  <div class="why"><h4>What it refuses, and why</h4><ul>
+    <li><b>A club already on FieldLogicHQ.</b> A club that runs its own site never gets a second one made by us. Matched on name and web address.</li>
+    <li><b>A logo with no source.</b> This is the published-logo rule, held by the window.</li>
+    <li><b>A meeting more than 60 days out, or in the past.</b> A preview lives at most 90 days, so the live site never holds a stale one.</li>
+    <li><b>A club in Québec.</b> Club isn't on sale there yet, so a preview would offer what can't be bought.</li>
+    <li><b>A sixth open preview</b> <button class="askm" data-ask="T6">T6</button>. The limit caps the effort spent per prospect and what production carries.</li>
+    <li><b>A person's name</b> has no field at all (Filled in, last point).</li>
+  </ul></div>
+</div></div>
+<div class="state" id="m-making"><div class="pair">
+  <div class="spec"><span class="cap">End state · while the sample is built (a few seconds)</span>
+  <div class="win"><div class="wh">Make a club for a meeting <span class="x">×</span></div><div class="wb"><div class="sm">Making Oakridge Minor Softball: its site, the sample season and the tournament.</div></div><div class="wf"><span class="s"></span><span class="b">Cancel</span><span class="b lime" style="opacity:.5">Making the club…</span></div></div>
+  <div class="win" style="margin-top:16px"><div class="wh">Make a club for a meeting <span class="x">×</span></div><div class="wb"><div class="callw">Nothing was made. Try again. If it fails again, look in Errors.</div></div><div class="wf"><span class="s"></span><span class="b">Cancel</span><span class="b lime">Make the club</span></div></div></div>
+  <div class="why"><h4>Making it</h4><ul><li><b>All or nothing,</b> like the claim: a half-made preview never exists.</li><li><b>When it is ready</b>, the window closes and the club’s room window (tab 4) opens, with the link, the QR and the code.</li></ul></div>
+</div></div>
+</section>
+
+<!-- ============ 4 INTO THE ROOM ============ -->
+<section class="tab" id="room">
+<h2 class="t">What we take into the room</h2>
+<p class="lead">Two things: your phone, open on the club's window, and a printed card. The card carries the QR code and the claim code; the code is never put in an email, so a forwarded link cannot be claimed by whoever it reaches <button class="askm" data-ask="T7">T7</button>. The live game is a real game in the sample tournament, and you type its score <button class="askm" data-ask="T5">T5</button>.</p>
+<div class="pair">
+  <div class="spec"><span class="cap">End state · your phone · Prospect clubs › Oakridge Minor Softball</span>
+  <div class="win w39"><button class="mk new tr" data-note="A new window, opened from the row. Three parts in the order the room needs them: the code to scan, the live game's score, then the meeting and the removal. 'Show it full screen' turns the phone into the QR for the table. 'Save score' writes the one sample game; it is the only thing staff can write in a preview, and only while the game is on.">New</button>
+    <div class="wh">Oakridge Minor Softball <span class="x">×</span></div><div class="wb">
+    <div class="qrrow"><div class="qr s" data-seed="7"></div><div><div class="wl" style="margin:0">Claim code</div><div class="code">7K4 PQ2</div><div class="sm">fieldlogichq.ca/oakridge-minor-softball</div></div></div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap"><span class="b">Copy link</span><span class="b">Show the QR code full screen</span><span class="b">Room card (PDF)</span><span class="b">New code</span></div>
+    <div class="grp"><div class="gr gh">The live game · Sample Indoor Classic</div><div class="gr" style="flex-direction:column;align-items:stretch">
+      <div class="sm">U11 · 7:00 p.m. · Live now</div>
+      <div class="score"><span>Fenwick Bay Foxes</span><span class="in">2</span><span>Marlow Heights Mavericks</span><span class="in">1</span></div>
+      <div style="display:flex;justify-content:flex-end;gap:8px"><span class="b">Mark final</span><span class="b lime">Save score</span></div>
+      <div class="sm">Phones in the room show it within 30 seconds. If a save fails you’ll see "Not saved. Check your signal and save again", and your numbers stay.</div></div></div>
+    <div><div class="wl">Email the link</div><div class="in">president@oakridge-example.ca</div><div style="display:flex;gap:8px;align-items:flex-start;margin-top:6px"><span class="cb on"></span><span class="sm">They gave me this address at the meeting and asked for the link. Their role: <u>President</u></span></div><div class="sm">One email, to the person you met. It never carries the code. The date, role and send are kept as the consent record; their name is not.</div><div style="display:flex;justify-content:flex-end;margin-top:6px"><span class="b">Send</span></div></div>
+    <div><div class="wl">Meeting</div><div class="lnk">Tue, Dec 8 at 7:00 p.m. · <u>Change</u></div></div>
+    <div class="sm">Removed on Thu, Jan 7, 2027, 30 days after the meeting, unless the club claims it.</div>
+    <div><span class="b red">Remove now</span></div>
+  </div></div></div>
+  <div class="spec"><span class="cap">End state · the room card, a PDF printed at half a letter page (5.5 × 8.5 in), drawn here at 392 px</span>
+  <div class="rc"><button class="mk new tr" style="top:-12px" data-note="The card left on the table. It is the only place the claim code is written down outside your own window, so the person you met holds the key. The foot carries the same marking as every preview page, and the removal date.">New</button>
+    <div class="hd"><div class="lg">OM</div><div><div class="n">Oakridge Minor Softball</div><div style="font:600 12px var(--f-text)">Softball for Oakridge kids</div></div></div>
+    <div class="bd"><div class="qr" data-seed="7"></div><div><div class="big">Your club’s site, already built</div><div class="sm" style="font-size:13px;color:#4E473D;margin-top:4px">Scan to open it on your phone.</div><div class="k">To claim it, tap Claim it and enter</div><div class="code">7K4 PQ2</div><div style="font-size:12px;color:#4E473D;margin-top:4px">fieldlogichq.ca/oakridge-minor-softball</div></div></div>
+    <div class="ft">Prepared by FieldLogicHQ for Oakridge Minor Softball. Not their site yet. Removed on Thu, Jan 7, 2027 unless the club claims it.</div>
+  </div></div>
+  <div class="why"><h4>Why it is shaped this way</h4><ul>
+    <li><b>The score is real, entered by you.</b> The game starts at the meeting time, so "Live now" is true because it is on, not because times were shifted. That keeps the 2026-09-02 ruling's reason intact: no scoreboard is faked.</li>
+    <li><b>Staff write one thing in a preview: this score.</b> Nobody can sign in to a preview (T3 A), so the window, not a club seat, enters it.</li>
+    <li><b>"Change" on the meeting</b> moves the live game and the removal date together. A meeting that slips does not cost the preview.</li>
+    <li><b>Remove now</b> is red and asks for the club's name typed back, as platform admin's Delete does today.</li>
+    <li><b>New code</b> replaces a lost card's code; the old one stops working. Support reads a code to nobody: a lost card gets a new code, sent by you.</li>
+    <li><b>The code</b> leaves out 0, O, 1 and I, so it reads aloud without mistakes. The real QR carries a wide quiet border and medium error correction; the one drawn here is a pattern.</li>
+    <li><b>Mark final</b> ends the game when it ends, so the page shows a final rather than a game that drifts out of "Live now" on the clock.</li>
+  </ul></div>
+</div>
+</section>
+
+<!-- ============ 5 THE MARKING ============ -->
+<section class="tab" id="mark">
+<h2 class="t">The marking on every page</h2>
+<p class="lead">One dark band above the club's own bar on every page of the preview: the home, its teams, the house league and the tournament's pages. Its words are <code>/legal</code>'s from Stage 0, word for word. It carries "Claim it". It is not pinned: it scrolls away with the club's bar, and the footer repeats it. The before frames are today's club pages (Kestrel Bay on dev): today a prospect's world exists only on staging.</p>
+<div class="sub" role="group" aria-label="Marking state">
+  <button data-state="k-home" aria-pressed="true">Home · phone</button>
+  <button data-state="k-tour" aria-pressed="false">The tournament, live · phone</button>
+  <button data-state="k-pc" aria-pressed="false">Computer</button>
+  <button data-state="k-form" aria-pressed="false">A sign-up in a preview</button>
+</div>
+<div class="state on" id="k-home"><div class="pair">
+  <div class="spec"><span class="cap">Today · a club home on a phone (Kestrel Bay, dev)</span><div class="shot"><img src="club-website-stage0/today/home.phone.png" alt="A club home today on a phone" loading="lazy"></div></div>
+  <div class="spec"><span class="cap">End state · the preview's home, Tue, Dec 8 at 7:05 p.m.</span>
+  <div class="fr oak">
+    <div class="fold"><span>first screen ends</span></div>
+    <div class="prep"><button class="mk new tr" style="top:4px;right:110px" data-note="The marking: /legal's Stage 0 words, unchanged, with 'Claim it'. It sits above the club's own bar so it is the first thing on every page, and it is part of the page rather than a floating layer, so nothing in the club's own frame moves. Dark ground, so it never reads as the club's colours.">New</button><span>Prepared by FieldLogicHQ for Oakridge Minor Softball. Not their site yet.</span><span class="cl">Claim it</span></div>
+    <div class="bar"><div class="logo">OM</div><div><div class="cn">Oakridge Minor Softball</div><div class="tg">Softball for Oakridge kids</div></div><button class="mk res" style="position:absolute;right:8px;top:24px" data-note="'Sign in' is gone from a preview's bar: nobody has an account in it. It comes back the moment the club is claimed.">Restyled</button></div>
+    <div class="tabrow dim"><span class="on">Home</span><span>Teams</span><span>House league</span><span>Tournaments</span></div>
+    <div class="pg">
+      <div class="sec dim"><h5>Open now</h5><div class="list door"><div class="row chev"><div class="rt">Sample House League 2027</div><div class="rs">Sign up by Mar 31</div></div></div></div>
+      <div class="sec dim"><h5>Teams</h5><div class="card" style="display:flex;flex-direction:column;gap:8px"><div class="lb" style="border:0;background:none;padding:0">Rep</div><div class="tile">Oakridge U11 Comets</div><div class="tile">Oakridge U13 Hawks</div><div class="tile">Oakridge U15 Falcons</div><div class="tile">Oakridge U17 Storm</div></div></div>
+      <div class="sec dim"><h5>House league</h5><div class="card"><b>Sample House League 2027</b><div style="margin-top:6px"><span class="chip n">Registration open</span></div><div style="margin-top:4px;display:flex;gap:16px"><span class="ul">Register</span><span class="ul">Season page</span></div></div></div>
+      <div class="sec"><button class="mk same tr" data-note="Unchanged from today: the tournament card's 'Live now' is judged by its dates. Tapping it opens the tournament, where the live game is (the next state). The home's own game-day part, with the score on the home, is Stage 1's and arrives with it.">Unchanged</button><h5>Tournaments</h5><div class="list"><div class="row chev"><div class="rt">Sample Indoor Classic</div><div class="rs">Tue, Dec 8</div><div><span class="pill live">Live now</span></div></div></div></div>
+      <div class="sec dim"><h5>About us</h5><div class="card" style="font-size:15px">Softball for Oakridge kids.</div></div>
+      <div class="sec"><button class="mk res tr" data-note="Sponsors in a preview are made up, and each tile says 'Sample' under its name, so a made-up business can never be taken for a real one in the club's town.">Restyled</button><h5>Sponsors</h5><div class="sp"><div class="spt">Northgate Hardware<small>Sample</small></div><div class="spt">Cedar Lane Physio<small>Sample</small></div><div class="spt">Two Rivers Pizza<small>Sample</small></div></div></div>
+    </div>
+    <div class="foot"><div class="cn">Oakridge Minor Softball</div><small>Prepared by FieldLogicHQ for Oakridge Minor Softball. Not their site yet. To have it removed, write to support@fieldlogichq.ca.</small><small>Built on FieldLogicHQ</small></div>
+  </div></div>
+  <div class="why"><h4>What the marking does and doesn't do</h4><ul>
+    <li><b>It is on every page, not only the home.</b> It lives in the frame every club page shares, so a deep link to a team page carries it too. The club's own notice slot is not used: that slot is the club's, and it does not reach tournament pages.</li>
+    <li><b>Nothing of ours is advertised.</b> The band and the footer credit are the only FieldLogicHQ words on the page. "Claim it" names the club's act, not our product.</li>
+    <li><b>Not indexed:</b> "don't index" on every page and in its header, and no sitemap entry (tab 1). Never a robots.txt line: that file is public and would list our prospects.</li>
+    <li><b>A pasted link says "preview" too.</b> The page title and the link preview carry "(preview)" and the band's words. Share images, posters and the calendar feed are refused for a preview, so sample games never land on a family's phone.</li>
+    <li><b>"Sample" is in the event names</b> (the tournament, the season), because the band scrolls away and a family could take them for the club's real events. Team rows carry no tag: their names are made up, and tagging every row would make the room look fake.</li>
+    <li><b>The words go to <code>/marketing</code> in one pass before hand-off,</b> and stay <code>/legal</code>'s meaning.</li>
+  </ul></div>
+</div></div>
+<div class="state" id="k-tour"><div class="pair">
+  <div class="spec"><span class="cap">Today · a tournament with a game live (Kestrel Bay Fall Classic, dev)</span><div class="shot"><img src="club-website-stage0/gameday/kestrel-bay-fall-classic.phone.png" alt="A live tournament today on a phone" loading="lazy"></div></div>
+  <div class="spec"><span class="cap">End state · the preview's tournament at 7:05 p.m., the score you typed</span>
+  <div class="fr oak">
+    <div class="prep"><span>Prepared by FieldLogicHQ for Oakridge Minor Softball. Not their site yet.</span><span class="cl">Claim it</span></div>
+    <div class="tband"><div class="tic">OIC</div><div><div class="tn">Sample Indoor Classic</div><div class="td">Dec 8 · ● Live now</div></div></div>
+    <div class="tabrow dim"><span class="on">Overview</span><span>Schedule</span><span>Standings</span><span>Teams</span></div>
+    <div class="pg">
+      <div class="sec"><button class="mk same tr" data-note="Today's live card, unchanged. The game is real and its score is the one you typed in tab 4's window. The page already refreshes every 30 seconds, so the score lands on their phone in the room. The place has no address, so there is no directions arrow.">Unchanged</button><h5>Live now <span class="chip n">1</span></h5><div class="list"><div class="gw live"><div class="g"><div class="tm">7:00 p.m.</div><div class="cx">U11</div><div class="tms"><div class="sd w"><span>Fenwick Bay Foxes</span><b>2</b></div><div class="sd l"><span>Marlow Heights Mavericks</span><b>1</b></div></div></div><div class="ps"><span>Sample Dome · Field 1</span></div></div></div></div>
+      <div class="sec dim"><h5>Up next<span class="lk">Full schedule</span></h5><div class="list"><div class="g" style="border-top:0"><div class="tm">8:45 p.m.</div><div class="cx">U13</div><div class="tms"><div class="sd"><span>Oakridge U13 Hawks</span></div><div class="sd"><span>Ashgrove Aces</span></div></div></div></div></div>
+      <div class="sec dim"><div class="card"><div class="hosted"><div class="tic2">OM</div><div><div class="rs">Hosted by</div><b>Oakridge Minor Softball</b></div></div></div></div>
+    </div>
+  </div></div>
+  <div class="why"><h4>Why the live game is a tournament game</h4><ul>
+    <li>Only tournament pages show a live card and refresh by themselves. House league pages never refresh, so a house league score typed in the room would not appear until someone reloads.</li>
+    <li>The tournament's switch for being listed is off and hidden: <b>this tournament never appears in Discover, Scores or a public search</b>, even while it is live.</li>
+    <li>The teams it plays are made up, from made-up towns. The club's own sample team plays later in the evening.</li>
+  </ul></div>
+</div></div>
+<div class="state" id="k-pc"><div class="pair">
+  <div class="spec"><span class="cap">Today · a club home on a computer, 1280 (Kestrel Bay, dev; scroll inside)</span><div class="shot wide" style="max-height:420px"><img src="club-website-stage0/today/home.computer.png" alt="A club home today on a computer" loading="lazy"></div></div>
+  <div class="spec"><span class="cap">End state · the preview on a computer, 1280: the first screen</span>
+  <div class="scrollx" style="border:0"><div class="fr oak pc" style="height:560px">
+    <div class="prep"><span>Prepared by FieldLogicHQ for Oakridge Minor Softball. Not their site yet.</span><span class="cl">Claim it</span></div>
+    <div class="bar" style="padding:0 24px"><div class="logo">OM</div><div><div class="cn">Oakridge Minor Softball</div><div class="tg" style="max-width:none">Softball for Oakridge kids</div></div></div>
+    <div class="tabrow" style="padding:0 16px"><span class="on">Home</span><span>Teams</span><span>House league</span><span>Tournaments</span></div>
+    <div class="pg dim" style="max-width:960px;margin:0 auto"><div class="sec"><h5>Open now</h5><div class="list door"><div class="row chev"><div class="rt">Sample House League 2027</div><div class="rs">Sign up by Mar 31</div></div></div></div><div class="sec"><h5>Teams</h5><div class="tiles"><div class="tile">Oakridge U11 Comets</div><div class="tile">Oakridge U13 Hawks</div><div class="tile">Oakridge U15 Falcons</div><div class="tile">Oakridge U17 Storm</div></div></div></div>
+  </div></div></div>
+</div>
+<div class="why" style="max-width:none;margin-top:14px"><h4>On a computer</h4><ul><li>The same band, full width, one line, with "Claim it" at its right end. It takes 56 px, and the club's bar keeps its own height under it.</li></ul></div>
+</div>
+<div class="state" id="k-form"><div class="pair">
+  <div class="spec"><span class="cap">End state · "Register" tapped in a preview</span>
+  <div class="fr oak">
+    <div class="prep"><span>Prepared by FieldLogicHQ for Oakridge Minor Softball. Not their site yet.</span><span class="cl">Claim it</span></div>
+    <div class="bar"><div class="logo">OM</div><div><div class="cn">Oakridge Minor Softball</div><div class="tg">Sample House League 2027</div></div></div>
+    <div class="shut"><button class="mk new tr" style="top:8px;right:8px" data-note="Every sign-up, registration, tryout form and 'Email me' in a preview opens this instead of its form. A visitor can never type a real child's details into a preview, and nothing typed is kept. Pages with nothing in them are hidden, as on any club site, so this is the one 'not ready' page.">New</button>
+      <div class="h1">Registration isn’t open on this preview</div>
+      <div style="font-size:16px;color:var(--soft)">FieldLogicHQ made this preview for Oakridge Minor Softball. Nothing can be registered for here, and nothing you type is kept.</div>
+      <div style="font-size:16px;color:var(--soft)">To register now, ask the club how it is taking registrations.</div>
+      <span class="btn o" style="align-self:flex-start">Oakridge Minor Softball home</span>
+    </div>
+  </div></div>
+  <div class="why"><h4>The one page that is "not ready to show"</h4><ul>
+    <li><b>Every form is closed in a preview, on the server too</b>: a crafted request writes nothing and logs no body. house league registration, tryouts, an event sign-up, a contact form. A board member's parent who scans the code cannot register a real child into a club that will be cleared.</li>
+    <li>Empty sections and tabs are hidden, as on every club site, so there is no "coming soon" page to draw. News appears when Stage 4 ships; until then a preview has no News tab, like any club.</li>
+    <li>The preview home still shows the season as open for registration, as their own site would; Register explains. Hiding it would show the club a site that is not theirs.</li>
+    <li>Written down with no ask: this is a safety rule, not a choice.</li>
+  </ul></div>
+</div></div>
+</section>
+
+<!-- ============ 6 THE CLAIM ============ -->
+<section class="tab" id="claim">
+<h2 class="t">The claim, every step</h2>
+<p class="lead">"Claim it" walks the same three steps as <b>Start a club</b> (Account · Club · Plan), with the club step swapped for the claim. The Terms are ticked where they are today, at the account step. The plan step, the trial and the checkout are today's, word for word <button class="askm" data-ask="T9">T9</button>. The code is asked first, before anyone makes an account <button class="askm" data-ask="T7">T7</button>.</p>
+<div class="sub" role="group" aria-label="Claim step">
+  <button data-state="c-code" aria-pressed="true">1 · Claim it</button>
+  <button data-state="c-acct" aria-pressed="false">2 · Account and Terms</button>
+  <button data-state="c-club" aria-pressed="false">3 · The club</button>
+  <button data-state="c-plan" aria-pressed="false">4 · Plan and trial</button>
+  <button data-state="c-land" aria-pressed="false">5 · Landing</button>
+  <button data-state="c-site" aria-pressed="false">6 · Kept and gone</button>
+  <button data-state="c-fail" aria-pressed="false">When it fails</button>
+</div>
+<div class="state on" id="c-code"><div class="pair">
+  <div class="spec"><span class="cap">End state · "Claim it" tapped, on the person's phone</span>
+  <div class="dr"><button class="mk new tr" data-note="A new door page in Start a club's own look (warm paper, the FieldLogicHQ bar). It is ours, not the club's, because from here on the person is signing up with us. It asks for the code before anything else, so nobody makes an account only to be refused.">New</button>
+    <div class="top"><span class="lgm"></span>FieldLogic<span class="hq">HQ</span><span class="sn">Menu</span></div>
+    <div class="col">
+      <div class="clubid"><div class="lg">OM</div><div><b>Oakridge Minor Softball</b><div class="hint">fieldlogichq.ca/oakridge-minor-softball</div></div></div>
+      <h6>Claim your club</h6>
+      <div class="sb">For the club’s board. Enter the code from the card we left with your club. Then make your account and choose a plan.</div>
+      <div><div class="fl">Claim code</div><div class="ip code">7K4 PQ2</div></div>
+      <div class="go">Continue</div>
+      <div class="hint">Lost the card from the meeting? Ask whoever met with us, or write to support@fieldlogichq.ca.</div>
+      <div class="hint" style="min-height:44px;display:flex;align-items:center"><span class="u">← Back to Oakridge Minor Softball</span></div>
+    </div>
+  </div></div>
+  <div class="why"><h4>Why the code comes first</h4><ul>
+    <li><b>The link travels; the code doesn't.</b> A board member who is forwarded the link sees the club but cannot claim it in someone else's name (tab 8).</li>
+    <li><b>Anyone with the code may claim,</b> so the person you met decides who in the club does. The code works until the claim or the removal, whichever comes first.</li>
+    <li>Someone already signed in skips step 2. The email’s confirm link carries the claim on any phone or computer, the way today’s link carries the club-name step.</li>
+    <li><b>Not on the board?</b> "For the club’s board" and the way back say it in one glance: a parent has nothing to do here.</li>
+  </ul></div>
+</div></div>
+<div class="state" id="c-acct"><div class="pair">
+  <div class="spec"><span class="cap">Today · Start a club, step 1 (computer capture, Nov 2026)</span><div class="shot wide" style="max-width:640px;max-height:520px"><img src="club-website-trackp/today-start-club-account.computer.png" alt="Start a club, account step, today" loading="lazy" style="width:1280px"></div></div>
+  <div class="spec"><span class="cap">End state · the claim's step 1 on a phone</span>
+  <div class="dr"><button class="mk res tr" data-note="Start a club's account step, unchanged except its title, sub line and the first step's name. The Terms tick is today's sentence, word for word, at today's place. The fine print stays, because the claim has the same reach (Canada, outside Québec).">Restyled</button>
+    <div class="top"><span class="lgm"></span>FieldLogic<span class="hq">HQ</span><span class="sn">Menu</span></div>
+    <div class="col">
+      <h6>Claim Oakridge Minor Softball</h6>
+      <div class="sb">Make your account, claim the club, then choose Club or Club · Association.</div>
+      <div class="steps"><span><i class="on">1</i>Account</span>—<span><i>2</i>Club</span>—<span><i>3</i>Plan</span></div>
+      <div class="two2"><div><div class="fl">First name</div><div class="ip ph">Jordan</div></div><div><div class="fl">Last name</div><div class="ip ph">Lee</div></div></div>
+      <div><div class="fl">Email</div><div class="ip ph">you@example.com</div></div>
+      <div><div class="fl">Password</div><div class="ip"><span class="eye">Show</span></div><div class="hint" style="margin-top:4px">At least 8 characters.</div></div>
+      <div class="tick"><i class="on"></i><span>I’m 18 or older (or the age of majority where I live). I agree to the <span class="u">Terms of Service</span> and have read the <span class="u">Privacy Policy</span>.</span></div>
+      <div class="go">Create account</div>
+      <div class="fine">Available to organizations in Canada, outside Québec for now. Prices are in Canadian dollars.</div>
+    </div>
+  </div></div>
+  <div class="why"><h4>The Terms are where they are today</h4><ul>
+    <li>Ticked here, by the person, and checked again at checkout, as for every club. Nothing about the Terms is special to a claim; what <i>is</i> special (a club someone else built) is said on step 3, before the club becomes theirs.</li>
+    <li>After "Create account", today's check-your-email card; its link brings them to step 3.</li>
+    <li>Today's "Club, billed monthly, from the pricing page" callout is left out: a claim does not come from the pricing page.</li>
+  </ul></div>
+</div></div>
+<div class="state" id="c-club"><div class="pair">
+  <div class="spec"><span class="cap">End state · step 2, the claim itself</span>
+  <div class="dr"><button class="mk new tr" data-note="Replaces Start a club's 'name your club' step. It shows exactly what stays and what is cleared, then one button. The sentence above the button is the claim's own line; /legal reads it. Pressing it hands the club over and clears the sample in one step that either finishes or changes nothing.">New</button>
+    <div class="top"><span class="lgm"></span>FieldLogic<span class="hq">HQ</span><span class="sn">Menu</span></div>
+    <div class="col">
+      <h6>Claim Oakridge Minor Softball</h6>
+      <div class="steps"><span><i class="ok">✓</i>Account</span>—<span><i class="on">2</i>Club</span>—<span><i>3</i>Plan</span></div>
+      <div class="sb">Your email is confirmed.</div>
+      <div class="cardc"><div class="clubid"><div class="lg">OM</div><div><b>Oakridge Minor Softball</b><div class="hint">fieldlogichq.ca/oakridge-minor-softball</div></div></div>
+        <div class="kc"><div><div class="kh">Stays</div><ul><li>The name and web address</li><li>The logo and colours</li><li>The sport</li><li>The line about the club</li></ul></div><div class="gone"><div class="kh">Cleared</div><ul class="gone"><li>Sample teams and seasons</li><li>Sample games and the tournament</li><li>Sample sponsors and places</li><li>The preview marking</li></ul></div></div></div>
+      <div class="sm">You’ll be the club’s owner. Only you can start its plan and invite your board. Its site stays off until you start a plan.</div>
+      <div class="sm">FieldLogicHQ made and published this preview, using the club’s name, logo and colours from its own site. The club did not make it and is not responsible for it. From here the club is yours, and so is what you put on it. The name, logo and colours stay until you change them.</div>
+      <div class="tick"><i class="on"></i><span>I’m allowed to claim this club for Oakridge Minor Softball and to agree to the Terms on its behalf.</span></div>
+      <div class="go">Claim the club and clear the sample</div>
+      <div class="fine" style="min-height:44px;display:flex;align-items:center;justify-content:center">Not now. The link in your email brings you back here.</div>
+    </div>
+  </div></div>
+  <div class="why"><h4>Why it is shaped this way</h4><ul>
+    <li><b>Two short lists</b> answer "what do I get?" before they press <button class="askm" data-ask="T8">T8</button>. "Cleared" is drawn in grey because it is about to be gone.</li>
+    <li><b>Who answers for what</b> (<code>/legal</code>'s words): before the claim FieldLogicHQ is the publisher and answers for the preview; from the claim the club answers for what it shows. No release of claims is asked for <button class="askm" data-ask="T16">T16</button>. The claim refuses anyone without the current Terms, and keeps the tick as a dated record.</li>
+    <li><b>The tick is the claim's own authority line</b>, like the plan step's "you're allowed to agree to the Terms on its behalf". It is a claim to the club, not a second set of Terms.</li>
+    <li>After the press, the club is theirs on Start a club's ordinary starting state, with no plan yet, exactly like a club that has just been named. Clearing at the press rather than when the trial starts is its own ask <button class="askm" data-ask="T14">T14</button>.</li>
+    <li><b>The owner seat goes to whoever claims.</b> Handing it to the president later is today's ownership change; nothing new.</li>
+  </ul></div>
+</div></div>
+<div class="state" id="c-plan"><div class="pair">
+  <div class="spec"><span class="cap">End state · step 3, today's plan step, unchanged</span>
+  <div class="dr dim solo"><button class="mk same tr" data-note="Today's plan step, word for word (the capture is older than its title). Club and Club · Association, the 90-day trial line, the card at checkout, the authority line and the plan terms. Ask T9 B would add League Plus as a third card.">Unchanged</button>
+    <div class="top"><span class="lgm"></span>FieldLogic<span class="hq">HQ</span><span class="sn">Menu</span></div>
+    <div class="col">
+      <h6>How many teams will have a Premium Coaches Portal?</h6>
+      <div class="sb">Rep, select, all-star: whatever your club calls them. House league teams are unlimited.</div>
+      <div class="steps"><span><i class="ok">✓</i>Account</span>—<span><i class="ok">✓</i>Club</span>—<span><i class="on">3</i>Plan</span></div>
+      <div class="cardc lead"><div class="ph2"><span>Club</span><span>$219/month</span></div><div class="hint">CAD, plus applicable taxes</div><div class="sm">90-day trial — you add a payment method at checkout, and you’re first charged, plus applicable taxes, when the trial ends.</div><ul class="b"><li>Tournaments, house league, rep teams and accounting</li><li>Premium Coaches Portal for every coach on up to 15 teams, no per-team fee</li><li>Unlimited house league teams</li></ul><div class="seg2"><span class="on">$219/month</span><span>$2,190/year</span></div><div class="hint">You’re starting this plan for Oakridge Minor Softball, and you confirm you’re allowed to agree to the Terms on its behalf.</div><div class="go">Start your Club trial</div></div>
+      <div class="cardc"><div class="ph2"><span>Club · Association</span><span>$379/month</span></div><div class="hint">CAD, plus applicable taxes</div><div class="sm">90-day trial — you add a payment method at checkout, and you’re first charged, plus applicable taxes, when the trial ends.</div><ul class="b"><li>Everything in Club</li><li>Premium Coaches Portal for every coach on 16 to 30 teams</li><li>Move up from Club at any time</li></ul><div class="go w">Start your Club · Association trial</div></div>
+    </div>
+  </div></div>
+  <div class="why"><h4>Nothing special is started by a claim</h4><ul>
+    <li><b>The same plans, the same 90-day trial, the same card at checkout</b> as any club starting today <button class="askm" data-ask="T9">T9</button>. No gate moves and no price is new (checked against the pricing facts).</li>
+    <li>If they leave at Stripe, the club stays theirs with no plan, exactly as a club named today and left unpaid. Their public site is off until a plan carries it.</li>
+    <li><b>The claim records the plan they came for</b>, as Start a club does when a club is named, so this step and the wait after Stripe work unchanged. It also checks again that Club is on sale and that the person runs no other club. <code>/billing</code> confirmed the words and prices against the pricing facts.</li>
+    <li>Then today's Billing address step, Stripe's page and "Setting up your club".</li>
+  </ul></div>
+</div></div>
+<div class="state" id="c-land"><div class="pair">
+  <div class="spec"><span class="cap">Today · where a new club lands (computer capture)</span><div class="shot wide" style="max-width:640px;max-height:460px"><img src="club-website-trackp/today-setup-landing.computer.png" alt="Set up your club checklist today" loading="lazy" style="width:1280px"></div></div>
+  <div class="spec"><span class="cap">End state · a claimed club lands on the same checklist</span>
+  <div class="dr grid"><button class="mk res tr" data-note="Today's 'Set up your club' checklist with two differences: one line at the top says what was kept and that the sample is gone, and step 4 ('Put your club online') is already ticked, because the tagline came with the claim. Everything else is today's.">Restyled</button>
+    <div class="top"><span class="lgm"></span>Oakridge Minor Softball</div>
+    <div class="col" style="gap:12px">
+      <div class="eyebrow">Set up your club</div>
+      <div style="font:700 20px/1.25 var(--f-text)">Get Oakridge Minor Softball ready for the season</div>
+      <div class="ok">Oakridge Minor Softball is yours. Its name, logo and colours stayed; the sample teams, games and sponsors are gone, so your site shows only what you add.</div>
+      <div class="chk">
+        <div class="r"><span class="n">1</span><div><b>Staff your board</b><span class="s">Invite an admin and a treasurer so the work isn't all yours.</span><div><span class="btn2">Members</span></div></div></div>
+        <div class="r"><span class="n">2</span><div><b>Add your teams</b><span class="s">Each team and the season it is playing.</span><div><span class="btn2">Rep teams</span></div></div></div>
+        <div class="r"><span class="n">3</span><div><b>Name a head coach for every team</b><span class="s">Add a team first.</span></div></div>
+        <div class="r"><span class="n ok">✓</span><div><b>Put your club online</b><span class="s">Your tagline came with the club. Add a contact email.</span><div class="done">Started</div></div></div>
+        <div class="r"><span class="n">5</span><div><b>Plan the club's budget</b><span class="s">What the season costs, and what each team contributes.</span></div></div>
+      </div>
+    </div>
+  </div></div>
+</div></div>
+<div class="state" id="c-site"><div class="pair">
+  <div class="spec"><span class="cap">Before the claim · the preview (from tab 5)</span>
+  <div class="fr oak" style="height:620px">
+    <div class="prep"><span>Prepared by FieldLogicHQ for Oakridge Minor Softball. Not their site yet.</span><span class="cl">Claim it</span></div>
+    <div class="bar"><div class="logo">OM</div><div><div class="cn">Oakridge Minor Softball</div><div class="tg">Softball for Oakridge kids</div></div></div>
+    <div class="tabrow"><span class="on">Home</span><span>Teams</span><span>House league</span><span>Tournaments</span></div>
+    <div class="pg"><div class="sec"><h5>Open now</h5><div class="list door"><div class="row chev"><div class="rt">Sample House League 2027</div><div class="rs">Sign up by Mar 31</div></div></div></div><div class="sec"><h5>Teams</h5><div class="tiles"><div class="tile">Oakridge U11 Comets</div><div class="tile">Oakridge U13 Hawks</div></div></div><div class="sec"><h5>Tournaments</h5><div class="list"><div class="row chev"><div class="rt">Sample Indoor Classic</div><div class="rs">Tue, Dec 8</div></div></div></div></div>
+  </div></div>
+  <div class="spec"><span class="cap">After the claim and checkout · the same address, theirs</span>
+  <div class="fr oak">
+    <div class="bar"><div class="logo">OM</div><div><div class="cn">Oakridge Minor Softball</div><div class="tg">Softball for Oakridge kids</div></div><div class="si">Sign in</div></div>
+    <div class="tabrow"><span class="on">Home</span></div>
+    <div class="pg"><div class="sec"><h5>About us</h5><div class="card" style="font-size:15px">Softball for Oakridge kids.</div></div></div>
+    <div class="foot"><div class="cn">Oakridge Minor Softball</div><small>Built on FieldLogicHQ</small></div>
+  </div></div>
+  <div class="why"><h4>Kept and gone, in rows</h4><ul>
+    <li><b>Kept:</b> the club's name, web address, logo (with its source), colours, sport and the line about the club <button class="askm" data-ask="T8">T8</button>.</li>
+    <li><b>Gone:</b> the sample season, divisions, teams, games and scores; the rep teams; the tournament and its teams; the sample places; the sample sponsors; the claim code; the marking.</li>
+    <li><b>The site is bare on purpose.</b> A club's site shows only what is in it. The empty home is honest; the checklist (step 5) is what fills it.</li>
+    <li><b>One step, all or nothing.</b> Clearing and handing over happen together, or neither does. There is no half-cleared club to draw, because it cannot exist.</li>
+  </ul></div>
+</div></div>
+<div class="state" id="c-fail"><div class="pair">
+  <div class="spec"><span class="cap">End state · a wrong code (step 1)</span>
+  <div class="dr"><div class="top"><span class="lgm"></span>FieldLogic<span class="hq">HQ</span><span class="sn">Menu</span></div><div class="col"><h6>Claim your club</h6><div><div class="fl">Claim code</div><div class="ip code err">7K4 PQ7</div><div class="em">That code doesn't match Oakridge Minor Softball. Check the card, or write to support@fieldlogichq.ca.</div></div><div class="go">Continue</div></div></div></div>
+  <div class="spec"><span class="cap">End state · the account already runs a club (step 2)</span>
+  <div class="dr"><div class="top"><span class="lgm"></span>FieldLogic<span class="hq">HQ</span><span class="sn">Menu</span></div><div class="col"><h6>Claim Oakridge Minor Softball</h6><div class="alert">Your account already runs Kestrel Bay Softball Association, and one account runs one club. Claim Oakridge Minor Softball with a different email, or write to support@fieldlogichq.ca.</div><div class="go w">Use a different email</div></div></div></div>
+  <div class="spec"><span class="cap">End state · the claim did not finish (step 2)</span>
+  <div class="dr"><div class="top"><span class="lgm"></span>FieldLogic<span class="hq">HQ</span><span class="sn">Menu</span></div><div class="col"><h6>Claim Oakridge Minor Softball</h6><div class="alert">The claim didn't finish, and nothing changed: the preview is as it was. Try again. If it happens twice, write to support@fieldlogichq.ca.</div><div class="go">Try again</div></div></div></div>
+  <div class="spec"><span class="cap">End state · too many wrong codes</span>
+  <div class="dr"><div class="top"><span class="lgm"></span>FieldLogic<span class="hq">HQ</span><span class="sn">Menu</span></div><div class="col"><h6>Claim your club</h6><div class="alert">Too many tries. Try again in an hour, or write to support@fieldlogichq.ca.</div></div></div></div>
+  <div class="spec"><span class="cap">End state · the preview ended mid-claim</span>
+  <div class="dr"><div class="top"><span class="lgm"></span>FieldLogic<span class="hq">HQ</span><span class="sn">Menu</span></div><div class="col"><h6>This preview has ended</h6><div class="sb">It was removed on Thu, Jan 7, 2027. Write to support@fieldlogichq.ca and we can make a new one.</div></div></div></div>
+  <div class="spec"><span class="cap">End state · already claimed</span>
+  <div class="dr"><div class="top"><span class="lgm"></span>FieldLogic<span class="hq">HQ</span><span class="sn">Menu</span></div><div class="col"><h6>Oakridge Minor Softball is claimed</h6><div class="sb">This club has already been claimed. If you’re with the club and didn’t claim it, write to support@fieldlogichq.ca.</div><div class="go w">Open the club's site</div></div></div></div>
+</div>
+<div class="why" style="max-width:none;margin-top:14px"><h4>Every failure leaves one of two states, never a third</h4><ul><li>Either the preview, exactly as it was, or the club, theirs and cleared. Our error alerts fire on "didn't finish", so we hear about it before they write.</li><li>After five wrong codes in an hour the door rests for an hour, so a code cannot be guessed.</li></ul></div>
+</div>
+</section>
+
+<!-- ============ 7 AFTER 30 DAYS ============ -->
+<section class="tab" id="after">
+<h2 class="t">After 30 days</h2>
+<p class="lead">Thirty days after the meeting, an unclaimed preview is removed by itself in the night: every row and every file, as platform admin's Delete does today <button class="askm" data-ask="T11">T11</button>. One line stays as the record. Whoever opens the old link sees a quiet page that says what happened <button class="askm" data-ask="T12">T12</button>.</p>
+<div class="pair">
+  <div class="spec"><span class="cap">Today · a deleted club's address (system screen)</span>
+  <div class="dr dim solo"><div class="top"><span class="lgm"></span>FieldLogic<span class="hq">HQ</span><span class="sn">Menu</span></div><div class="sys"><div class="ic">⌁</div><div class="eyebrow">404 · Page not found</div><h6>We can't find that page</h6><p>The link may be old, or the address may have a typo. Start from Home and look for it there.</p><div class="go" style="width:100%">Go to Home</div></div></div></div>
+  <div class="spec"><span class="cap">End state · the old link, Fri, Jan 8, 2027</span>
+  <div class="dr"><button class="mk new tr" data-note="Shown only while no club holds the address. If Oakridge Minor Softball later starts its own club with this address, its site shows instead. No button sells anything: the page says what happened, who to write to, and offers Home.">New</button><div class="top"><span class="lgm"></span>FieldLogic<span class="hq">HQ</span><span class="sn">Menu</span></div><div class="sys"><div class="ic">⌁</div><h6>This preview has ended</h6><p>FieldLogicHQ prepared a preview site for Oakridge Minor Softball. It was removed on Thu, Jan 7, 2027, and its pages, images and sample information were deleted.</p><p>If you're with the club, write to support@fieldlogichq.ca and we can make a new one.</p><div class="go w" style="width:100%">Go to Home</div></div></div></div>
+  <div class="why"><h4>What is kept, and why</h4><ul>
+    <li><b>The removal record</b> (in the audit log): the club's name and address, who made it, the meeting date, the logo's source, and when it was made and removed. No sample rows and no files.</li>
+    <li><b>The "ended" page reads that record</b>, for 90 days after the removal; then the address shows the ordinary "We can't find that page", so a guessed address does not reveal who we met. It never shows the meeting, who made it or the logo.</li>
+    <li><b>Nothing emails the club.</b> Your Today page shows "Removed tomorrow (1)" the day before, so a meeting that went well is never lost by surprise.</li>
+  </ul></div>
+</div>
+<h3 class="t">What your list shows</h3>
+<div class="spec"><span class="cap">End state · Prospect clubs on Fri, Jan 8, 2027 (the part that changed)</span>
+<div class="scrollx" style="border:0"><div class="pa" style="width:980px"><div class="main" style="padding:16px 20px"><div class="card"><table><thead><tr><th>Club</th><th>Meeting</th><th>Removal date</th><th>Made by</th><th>State</th><th></th></tr></thead><tbody>
+  <tr><td class="q"><b>Oakridge Minor Softball</b><div class="s">Not claimed</div></td><td class="q">Tue, Dec 8</td><td class="q">Thu, Jan 7</td><td class="q">You</td><td><span class="pl n">Removed</span></td><td>›</td></tr>
+  <tr><td><b>Westvale Softball</b><div class="s"><span class="lnk">Open in Clubs &amp; portals</span></div></td><td class="q">Wed, Oct 28</td><td class="q">None</td><td>You</td><td><span class="pl ok">Claimed</span><div class="s">Nov 2 · Club</div></td><td>›</td></tr>
+</tbody></table></div></div></div></div></div>
+</section>
+
+<!-- ============ 8 A FORWARDED LINK ============ -->
+<section class="tab" id="forward">
+<h2 class="t">A board member who is forwarded the link</h2>
+<p class="lead">The person you met forwards the link to the club's board. A board member opens it at home. They see exactly what was shown in the room, with the marking. "Claim it" asks for the code they don't have, and tells them where it is. We send the link to one person only, and never the code <button class="askm" data-ask="T13">T13</button>.</p>
+<div class="pair">
+  <div class="spec"><span class="cap">End state · the board member taps "Claim it"</span>
+  <div class="dr"><div class="top"><span class="lgm"></span>FieldLogic<span class="hq">HQ</span><span class="sn">Menu</span></div><div class="col">
+    <div class="clubid"><div class="lg">OM</div><div><b>Oakridge Minor Softball</b><div class="hint">fieldlogichq.ca/oakridge-minor-softball</div></div></div>
+    <h6>Claim your club</h6>
+    <div class="sb">Enter the code from the card we left with your club. Then make your account and choose a plan.</div>
+    <div><div class="fl">Claim code</div><div class="ip ph code"></div></div>
+    <div class="go">Continue</div>
+    <div class="hint">Lost the card from the meeting? Ask whoever met with us, or write to support@fieldlogichq.ca.</div>
+      <div class="hint" style="min-height:44px;display:flex;align-items:center"><span class="u">← Back to Oakridge Minor Softball</span></div>
+  </div></div></div>
+  <div class="spec"><span class="cap">End state · the one email we send, to the person we met</span>
+  <div class="mail"><button class="mk new tr" data-note="The only email Track P sends: one, to the person we met, who gave us the address in the meeting. It carries the link, the removal date, our identity and an unsubscribe, because it is a commercial message. It never carries the claim code. The mailing address is a blank for /legal and you to fill.">New</button>
+    <div class="mh"><span><b>From</b> FieldLogicHQ &lt;support@fieldlogichq.ca&gt;</span><span><b>Subject</b> Oakridge Minor Softball: the site from our meeting</span></div>
+    <div class="mb"><p>Thank you for meeting with us on Tue, Dec 8. Here is the preview we made for Oakridge Minor Softball, to share with your board:</p><p><b>fieldlogichq.ca/oakridge-minor-softball</b></p><p>Everything on it is a sample except the club’s name, logo and colours, which we took from your own site. It stays up until Thu, Jan 7, 2027. If you would rather it came down sooner, reply to this email and we will remove it.</p><p>To make it your club, use the claim code on the card from the meeting.</p></div>
+    <div class="mf">FieldLogicHQ, <span class="blank">[our mailing address: owed]</span>, support@fieldlogichq.ca. You’re receiving this one email because you gave us this address when we met about Oakridge Minor Softball on Tue, Dec 8. <u>Unsubscribe</u></div>
+  </div></div>
+  <div class="why"><h4>Why it is shaped this way</h4><ul>
+    <li><b>Forwarding is theirs.</b> A board member who reads the link got it from someone in their own club. We wrote to one person, who asked for it.</li>
+    <li><b>It cannot be sent yet:</b> every commercial email needs our mailing address, and ours is still blank (owed from you, tab 9). A PO box is enough.</li>
+    <li><b>The unsubscribe follows the address, not the club,</b> so it keeps working after the preview is removed.</li>
+    <li><b>The code never travels by email,</b> so a forwarded email cannot be used to claim the club in the wrong name.</li>
+    <li><b>What a board member sees</b> is the preview from tab 5: the marking, the sample, the tournament. If the club has claimed it, they see the club's own site. If it was removed, they see "This preview has ended" (tab 7).</li>
+  </ul></div>
+</div>
+</section>
+
+<!-- ============ 9 ASKS ============ -->
+<section class="tab" id="asks">
+<h2 class="t">The asks, and a recommended order</h2>
+<p class="lead">Sixteen asks. Option A, in green, is the recommendation each time. Nothing is ticked for you: an ask you skip pastes back as "not ruled". Tick, add a note if you like, and paste the block at the bottom into the chat.</p>
+<div class="callout"><b>Recommended build order, by what rests on what.</b> (1) <b>The preview marker and its build check</b> (T1): nothing else is safe on production without it. (2) <b>Prospect clubs and Make one</b> with the fixed sample (T2–T6). (3) <b>The marking</b>, closed forms and "don't index" (tab 5). (4) <b>The room</b>: the window, the card, the live score (T5, T7). (5) <b>The claim</b> (T7–T10). (6) <b>The removal and the ended page</b> (T11, T12), before the first preview reaches its 30th day. The one email (T13) is words and <code>/legal</code>, and can go at any point.</div>
+<div class="callout warn"><b>Owed from you, not an ask:</b> a mailing address for FieldLogicHQ (a PO box or a mail service is enough). Every commercial email must carry one, and ours is blank by your 2026-11-17 ruling ("fill it before any promotional email"). Until it exists, T13's one email cannot send; the rest of Track P can.</div>
+<div id="asklist"></div>
+<h3 class="t">Paste-back</h3>
+<textarea id="paste" readonly aria-label="Paste-back summary"></textarea>
+<p><button class="copy" id="copybtn">Copy</button> <span id="copied" style="color:var(--doc-soft)"></span></p>
+</section>
+</div></main>
+
+<dialog id="dlg" aria-labelledby="dlg-t"><button class="close" id="dlg-x" aria-label="Close">×</button><h4 id="dlg-t"></h4><div id="dlg-b"></div><div class="go" id="dlg-go"></div></dialog>
+
+<script>
+(function(){
+var ASKS=[
+ {"g":"Keeping a preview out","id":"T1","t":"How a preview is kept out of everything","q":"Tab 1. Nothing marks 'not a customer' in one place; about ten surfaces check nothing.","o":["A · One preview marker that every count, list, search, sitemap and email reads, with a build check that fails when a new one forgets it. It carries the site parts a preview shows on the free starting plan, and the claim clears it in the same step","B · Add previews to the demo list (read-only, the sandbox banner, the no-login door)"],"r":"Every production report and every email; whether a preview can be claimed or scored at all (B makes it read-only)."},
+ {"g":"Making one","id":"T2","t":"Who may make a preview","q":"Tabs 2 and 3.","o":["A · You only, from Platform admin › Prospect clubs","B · Any staff member you give a new Prospect clubs power","C · A script we run against production"],"r":"Who can put a real club's name and logo on the live site."},
+ {"g":"Making one","id":"T3","t":"What a preview shows","q":"Tab 5. The seed's signed-in world holds made-up children, guardians, medical notes and real inboxes.","o":["A · The public site only. Nobody signs in to a preview, so it holds no people; the admin side is still shown from the staging prospect world, as with Milton","B · The public site and a signed-in admin side, with made-up players, families and coaches"],"r":"What has to be removed, what /legal reads, and whether staff need a seat in a club."},
+ {"g":"Making one","id":"T4","t":"The sample, and the club's real names","q":"Tab 3. Real team names next to made-up scores can mislead a board member who is forwarded the link.","o":["A · One fixed sample for every preview, with every team name made up (age groups like U11 are fine)","B · Their real team and division names typed in from their own site, with made-up games and scores against them"],"r":"How much work each preview costs, and what a forwarded board member could take as real."},
+ {"g":"Making one","id":"T5","t":"A live score in the room","q":"Tabs 4 and 5. Only tournament pages show a live game and refresh by themselves.","o":["A · One tournament game starts at the meeting time and is live for real; you type its score from your phone; it reaches their phone within 30 seconds","B · Times shifted so a game is always on whenever the link is opened","C · No live game: the tournament shows its next games and latest results"],"r":"The moment in the room, and the 2026-09-02 reason (no faked scoreboard)."},
+ {"g":"Making one","id":"T6","t":"How many at once","q":"Tab 2.","o":["A · 5 open previews at a time","B · 10","C · No limit"],"r":"How much effort goes out per prospect, and what production carries."},
+ {"g":"The claim","id":"T7","t":"Who may claim","q":"Tabs 4, 6 and 8.","o":["A · Whoever has the claim code from the room card; the code is never emailed","B · Anyone with the link"],"r":"Whether a forwarded link can be claimed in the wrong name."},
+ {"g":"The claim","id":"T8","t":"What the claim keeps and clears","q":"Tab 6, steps 3 and 6.","o":["A · Keeps the name, web address, logo, colours, sport and the line about the club; clears every sample team, game, tournament, place and sponsor, in one step that finishes or changes nothing","B · Also keeps the sample house league season's divisions (no teams or games) to edit"],"r":"What a new owner starts from, and what a half-done claim can leave."},
+ {"g":"The claim","id":"T14","t":"When the sample is cleared","q":"Tab 6, step 2. Clearing at the press means someone who leaves at Stripe owns a bare club with its site off. Clearing when the trial starts keeps the preview showing, but needs a half-claimed state.","o":["A · At the press: the club is theirs at once on the ordinary starting state, as a newly named club is","B · When the trial starts: until checkout succeeds the preview stays as it was, held for that person"],"r":"What someone who stops at Stripe is left with; one more state to build and draw under B."},
+ {"g":"The claim","id":"T9","t":"What a claim starts","q":"Tab 6, step 4. Checked against the pricing facts: no gate moves.","o":["A · Exactly what Start a club starts: Club or Club · Association, the 90-day trial with a card at checkout, today's checkout","B · Also offer League Plus as a third card on a claim's plan step","C · A longer or card-free trial for a claim (a pricing change, through /strategy)"],"r":"Billing; the plan step; whether /accounting reads it (only under C)."},
+ {"g":"The claim","id":"T10","t":"Does a claimed preview count as a sale","q":"Tab 2.","o":["A · From the claim it is an ordinary club: a customer since the claim day (not the day we made it), counted like any other; 'Came from a preview' shows only on Prospect clubs, never in Stripe","B · Count claimed previews as their own figure in Business numbers"],"r":"Business numbers; how you read whether Track P works."},
+ {"g":"The claim","id":"T15","t":"A claim by the wrong person","q":"Tab 2 and tab 6. The code is on a card left on a table; a stranger who reads it could claim the club and carry its logo.","o":["A · Prospect clubs shows the claimant's masked email, and you can undo a claim until a plan starts (the preview comes back as it was)","B · Accept the risk: a claim is final"],"r":"What happens when the card goes astray; one more staff action."},
+ {"g":"The claim","id":"T16","t":"The Terms and Privacy words","q":"/legal: one Terms §3 paragraph (a preview we built is ours until claimed; then the name, logo and colours are the club's; we remove it when asked) and one Privacy sentence (the prospect's email). It favours the customer.","o":["A · In the next Terms version, whenever it comes; the claim's own lines carry the meaning until then","B · A Terms version of its own, before the first claim"],"r":"Terms versioning and re-acceptance; the legal pages."},
+ {"g":"Ending and the link","id":"T11","t":"The removal","q":"Tab 7. A job that runs by itself on production is shared automation; it is built only on your word in that session.","o":["A · By itself, every night, for previews 30 days past their meeting; a removal record is kept; moving the meeting moves it","B · By hand: Prospect clubs lists those past 30 days and you remove each"],"r":"Whether the 30-day rule holds without you; a new production job."},
+ {"g":"Ending and the link","id":"T12","t":"The ended link","q":"Tab 7.","o":["A · A quiet 'This preview has ended' page for 90 days after the removal, while no club holds the address; then the ordinary not-found page","B · Today's 'We can't find that page'"],"r":"What a board member sees on a link opened late; keeping the club's name in the removal record."},
+ {"g":"Ending and the link","id":"T13","t":"Sending the link","q":"Tab 8. An email we send to a club is a commercial message.","o":["A · One email, only to the person we met, with our identity and an unsubscribe; they forward it inside their club; the code is never in it","B · We also email the club's board at addresses the club published (identity, unsubscribe, a reason that matches their role)"],"r":"CASL; whether we contact anyone who did not ask."}
+];
+var host=document.getElementById("asklist"),lastG="";
+ASKS.forEach(function(a){
+  if(a.g!==lastG){var h3=document.createElement("h3");h3.className="ag";h3.textContent=a.g;host.appendChild(h3);lastG=a.g;}
+  var d=document.createElement("div");d.className="ask";d.id="ask-"+a.id;
+  var h="<h4>"+a.id+" · "+a.t+"</h4><p class=\"q\">"+a.q+"</p>";
+  a.o.forEach(function(o,i){h+="<label><input type=\"radio\" name=\"r-"+a.id+"\" id=\"r-"+a.id+"-"+i+"\" value=\""+o.charAt(0)+"\"><span class=\""+(i===0?"rec":"notrec")+"\">"+o+(i===0?" (recommended)":"")+"</span></label>";});
+  h+="<div class=\"rides\">What rides on it: "+a.r+"</div><textarea id=\"n-"+a.id+"\" placeholder=\"Notes\"></textarea>";
+  d.innerHTML=h;host.appendChild(d);
+});
+function paste(){
+  var L=["Club website · Track P rulings:"];
+  ASKS.forEach(function(a){var c=document.querySelector("input[name=\"r-"+a.id+"\"]:checked");var n=document.getElementById("n-"+a.id).value.trim();L.push(a.id+": "+(c?c.value:"not ruled")+(n?" — "+n:""));});
+  document.getElementById("paste").value=L.join("\n");
+}
+host.addEventListener("input",paste);host.addEventListener("change",paste);paste();
+document.getElementById("copybtn").addEventListener("click",function(){
+  var t=document.getElementById("paste");var done=function(){document.getElementById("copied").textContent="Copied";};
+  try{navigator.clipboard.writeText(t.value).then(done,function(){t.select();});}catch(e){t.select();}
+});
+/* a drawn QR: finder squares plus a fixed pattern (a picture, not a working code) */
+[].forEach.call(document.querySelectorAll(".qr"),function(q){
+  var s=+(q.dataset.seed||1),h="";
+  function fin(r,c){var R=[[0,0],[0,18],[18,0]];for(var k=0;k<3;k++){var dr=r-R[k][0],dc=c-R[k][1];if(dr>=0&&dr<7&&dc>=0&&dc<7){return (dr===0||dr===6||dc===0||dc===6||(dr>=2&&dr<=4&&dc>=2&&dc<=4))?1:0;}if(dr>=-1&&dr<8&&dc>=-1&&dc<8)return 0;}return -1;}
+  for(var r=0;r<25;r++)for(var c=0;c<25;c++){var f=fin(r,c);var on=f>=0?f:(((r*31+c*17+s*7)^(r*c+s))%3===0)?1:0;h+="<i"+(on?"":" class=\"o\"")+"></i>";}
+  q.innerHTML=h;q.setAttribute("role","img");q.setAttribute("aria-label","QR code (drawing)");
+});
+var tabs=[].slice.call(document.querySelectorAll("nav.tabs button"));
+var DIFFTABS={mark:1,claim:1,after:1};
+function pickState(id){var s=document.getElementById(id);if(!s||!s.classList.contains("state"))return false;var g=document.querySelector(".sub button[data-state=\""+id+"\"]");if(g){[].forEach.call(g.parentNode.querySelectorAll("button"),function(x){x.setAttribute("aria-pressed",x===g?"true":"false");var t=document.getElementById(x.dataset.state);if(t)t.classList.toggle("on",x===g);});}return s.closest("section.tab").id;}
+function show(id,ask){
+  var tabId=id;var st=id&&document.getElementById(id);if(st&&st.classList.contains("state")){tabId=pickState(id);}
+  if(!tabId||!document.getElementById(tabId)||!document.getElementById(tabId).classList.contains("tab"))tabId="census";
+  tabs.forEach(function(b){b.setAttribute("aria-selected",b.dataset.tab===tabId?"true":"false");});
+  [].forEach.call(document.querySelectorAll("section.tab"),function(s){s.classList.toggle("on",s.id===tabId);});
+  document.getElementById("viewrow").hidden=!DIFFTABS[tabId];
+  if(ask){var el=document.getElementById("ask-"+ask);if(el){[].forEach.call(document.querySelectorAll(".ask.hl"),function(x){x.classList.remove("hl");});el.classList.add("hl");el.scrollIntoView({block:"center"});return;}}
+  window.scrollTo(0,0);
+}
+tabs.forEach(function(b){b.addEventListener("click",function(){location.hash=b.dataset.tab;});});
+window.addEventListener("hashchange",function(){show(location.hash.slice(1));});
+show(location.hash.slice(1)||"census");
+[].forEach.call(document.querySelectorAll(".sub"),function(g){
+  g.addEventListener("click",function(e){var b=e.target.closest("button");if(!b)return;history.replaceState(null,"","#"+b.dataset.state);pickState(b.dataset.state);});
+});
+var va=document.getElementById("v-all"),vd=document.getElementById("v-diff");
+function mode(diff){document.body.classList.toggle("diffmode",diff);va.setAttribute("aria-pressed",diff?"false":"true");vd.setAttribute("aria-pressed",diff?"true":"false");}
+va.addEventListener("click",function(){mode(false);});vd.addEventListener("click",function(){mode(true);});
+var dlg=document.getElementById("dlg");
+document.getElementById("dlg-x").addEventListener("click",function(){dlg.close();});
+dlg.addEventListener("click",function(e){if(e.target===dlg)dlg.close();});
+var KIND={new:"New in the end state",res:"Kept, but changed",same:"Unchanged from today"};
+document.addEventListener("click",function(e){
+  var m=e.target.closest(".mk[data-note]");
+  if(m){e.preventDefault();e.stopPropagation();var k=m.classList.contains("new")?"new":m.classList.contains("res")?"res":"same";
+    document.getElementById("dlg-t").textContent=m.textContent.trim()+" · "+KIND[k];
+    document.getElementById("dlg-b").textContent=m.dataset.note;document.getElementById("dlg-go").innerHTML="";
+    dlg.showModal();return;}
+  var a=e.target.closest(".askm[data-ask]");
+  if(a){e.preventDefault();var A=ASKS.filter(function(x){return x.id===a.dataset.ask;})[0];
+    if(!A)return;document.getElementById("dlg-t").textContent=A.id+" · "+A.t;
+    var b=document.getElementById("dlg-b");b.innerHTML="";var p=document.createElement("p");p.style.margin="0 0 6px";p.textContent=A.q;b.appendChild(p);
+    var k=document.createElement("div");k.className="k";k.textContent="Recommended";b.appendChild(k);var r=document.createElement("p");r.style.margin="4px 0";r.textContent=A.o[0];b.appendChild(r);
+    var g=document.createElement("button");g.className="copy";g.textContent="Go to this ask";g.addEventListener("click",function(){dlg.close();location.hash="asks";setTimeout(function(){show("asks",A.id);},0);});
+    var go=document.getElementById("dlg-go");go.innerHTML="";go.appendChild(g);dlg.showModal();}
+});
+})();
+</script>

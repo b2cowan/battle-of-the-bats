@@ -19,6 +19,21 @@ for a single idea is a `/strategy` call at that idea's stage.
 **Expected impact:** A family opens the club site on game day and gets an answer in one look. A club keeps its
 sponsors with evidence. A prospect sees their own club, in their own colours, on their own phone.
 
+**Track P, as drawn and ruled (2026-11-25, all 16 asks ruled as recommended):** a prospect's preview is made from a platform admin page, shows the
+public site only with a made-up season and no people, is marked on every page, and is claimed with a code from a card
+left in the room, through Start a club's own plan, trial and checkout. Its real cost is not the screens: every
+production count, list, search and email must learn one "preview" marker, the claim is a new door, and the 30-day
+removal is a new job that runs by itself. The one email to the person met cannot send until FieldLogicHQ has a mailing
+address.
+
+**Stage 1, as drawn and ruled (2026-11-25, all 11 asks ruled as recommended):** on a game day the club home shows "Today" under Open now: the
+club's live games, the rest of the day and the latest results, a running tournament as one row, by time and never by
+program. House league pages refresh every 30 seconds while games are on. Three things the drawing found that the plan
+had not: a rep team's games reach the home only when its coach sets it to Public (Milton has none set, so its rep scores
+would not show); house league has no live score at all, only a final; and today's public rep page shows a running
+score as a finished tie, which is fixed first. The work under it is bigger than the screen: house league's publish rule
+has to become one rule before the home may read it, and the read gets its own guards so a later edit cannot widen it.
+
 **Priority:** Medium, after the Canadian launch. The launch does not need it; the first sales conversations do. The
 owner sets where it sits among the after-launch projects.
 
@@ -49,7 +64,7 @@ Sign up button on it opens Board Ready's form. A champs day is one line on the h
 day's games and scores. Closing a field also lists any camp or event booked there. An event can carry a sponsor who
 is counted in the season report. One photo question serves every sign-up, camps included. Success looks like: a camp
 sign-up is on the club home the day it opens, a champs day never floods the home, and a family never answers the
-photo question twice in two different ways. Drawn the same day and waiting on the owner: club events on the schedules people already read. A champs day is named over its games on the house league schedule; a club can list an event on a house league season's or its rep teams' schedules without making it public; and a club event can sit, read-only, on a rep coach's schedule beside the club's practices. The photo question's legal review came back the same day: the question is optional, a blank answer means No, and five calls on it wait for the owner.
+photo question twice in two different ways. Drawn and ruled the same day, all as recommended: club events on the schedules people already read. A champs day is named over its games on the house league schedule; a club can list an event on a house league season's or its rep teams' schedules without making it public; and a club event sits, read-only, on a rep coach's schedule beside the club's practices. The photo question's legal review came back the same day and its five calls were ruled as recommended: the question is optional and a blank answer means No; one Yes covers the club's website and its own social media pages, never posters or sponsors; a camp answer and a team answer are separate; a family can change its answer later, even after teams are made; and every club asks it in the same fixed words.
 
 **Added from Milton Bats' meeting (2026-11-24, proposed, not drawn or ruled): the club's own feed.** The club wants to
 promote wins and tournament trips on its site and already posts to Instagram. Proposed: a coach sends photos from a
