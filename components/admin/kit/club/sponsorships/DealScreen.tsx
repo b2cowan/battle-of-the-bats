@@ -478,7 +478,7 @@ function WithdrawQuestion({ name, busy, error, onClose, onWithdraw }: {
   const [reason, setReason] = useState('');
   const [missing, setMissing] = useState(false);
   return (
-    <KitDialog kind="question" busy={busy} onClose={onClose} title={D.deal.withdrawAsk(name)}
+    <KitDialog kind="question" followKeyboard busy={busy} onClose={onClose} title={D.deal.withdrawAsk(name)}
       footer={<><DialogCancel /><button type="button" className="btn btn-danger" disabled={busy}
         onClick={() => { if (!reason.trim()) { setMissing(true); return; } onWithdraw(reason.trim()); }}>{D.deal.withdrawButton}</button></>}>
       <p className={ck.hint}>{D.deal.withdrawBody}</p>

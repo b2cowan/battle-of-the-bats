@@ -27,7 +27,7 @@ const MIG = 'supabase/migrations/530_a_sponsor_pays_by_card.sql';
 const LANDING = 'lib/online-payment-landing.ts';
 
 const card = (over: Partial<NonNullable<DealPayment['card']>> = {}): NonNullable<DealPayment['card']> => ({
-  brand: 'visa', last4: '4242', paidAt: '2027-03-03T14:14:00Z', reference: 'pi_3QbX7rTz', feePaidBy: 'club', fee: 41.05, feeCharged: 0, feeTax: 0, ...over,
+  brand: 'visa', last4: '4242', paidAt: '2027-03-03T14:14:00Z', reference: 'pi_3QbX7rTz', feePaidBy: 'club', fee: 41.05, feeCharged: 0, feeTax: 0, disputed: false, ...over,
 });
 const pay = (over: Partial<DealPayment> = {}): DealPayment => ({
   id: 'p1', amount: 1130, taxPart: 130, receivedOn: '2027-03-03', method: 'card', reference: null, note: null,
@@ -620,13 +620,13 @@ describe('Part 3b — the phone check at 390', () => {
 
   it('"Part of it" for exactly what is left says it ends the deal, as "All of it" does', () => {
     assert.match(windows, /const partEnds = endsDeal && choice === 'part' && partOk && Math\.round\(typed! \* 100\) === Math\.round\(left \* 100\);/);
-    assert.match(windows, /partEnds \? C\.buttonEnd : C\.buttonAll\(partOk \? typed! : left\)/);
+    assert.match(windows, /partEnds \? C\.buttonEnd : partOk \? C\.buttonAll\(typed!\) : RW_ROOT\.button/);
     assert.match(windows, /\{partEnds && <p className=\{css\.choiceNote\}>/);
   });
 
   it('a payment the bank took back says so in its own window, and a typed refund is not lost to a stray tap', () => {
     assert.match(windows, /\[C\.chipTakenBack, C\.lineTakenBack\] as const : null,/);
-    assert.match(windows, /<KitDialog kind="question" raised busy=\{busy\} dirty=\{!!reason\.trim\(\) \|\| !!amount\.trim\(\)\}/);
+    assert.match(windows, /<KitDialog kind="question" raised followKeyboard busy=\{busy\} dirty=\{!!reason\.trim\(\) \|\| !!amount\.trim\(\)\}/);
   });
 
   it('the business\u2019s page: the card button stays disabled while the browser leaves; an owing-again invoice shows its refunds and credit notes', () => {
@@ -640,5 +640,67 @@ describe('Part 3b — the phone check at 390', () => {
   it('the deal page\u2019s text buttons are thumb targets, and a long chip drops under the row instead of squeezing it', () => {
     assert.match(css, /@media \(max-width: 768px\) \{\s+\.recordActions \.linkButton \{ min-height: 44px; \}/);
     assert.match(css, /\.paymentRow \{ flex-wrap: wrap; row-gap: 0\.25rem; \}\s+\.paymentMain \{ flex: 1 1 7rem; \}\s+\.paymentEnd \{ margin-left: auto; \}/);
+  });
+});
+
+/** The six decisions the /ux check at 390 left for the owner (all six built as recommended, owner 2026-11-24). */
+describe('Part 3b — the six /ux decisions', () => {
+  const windows = readCode('components/admin/kit/club/sponsorships/DealPaymentWindows.tsx');
+  const screen = readCode('components/admin/kit/club/sponsorships/DealScreen.tsx');
+  const page = readCode('components/public/SponsorDealContent.tsx');
+  const server = readCode('lib/club-sponsorship-deals-server.ts');
+  const view = readCode('lib/sponsor-deal-view.ts');
+  const P = DEAL_WORDS.page;
+
+  it('1 · an open dispute is said where the Refund button would be, read by the refund’s own rule (an inquiry does not stop it)', async () => {
+    const { blocksRefund } = await import('../../lib/online-payment-dispute.ts');
+    assert.equal(blocksRefund('needs_response'), true);
+    assert.equal(blocksRefund('under_review'), true);
+    assert.equal(blocksRefund('warning_needs_response'), false);
+    assert.equal(blocksRefund('won'), false);
+    assert.equal(blocksRefund('lost'), false);
+    assert.match(server, /from\('online_payment_disputes'\)\.select\('online_payment_id, status'\)[\s\S]*?if \(blocksRefund\(d\.status\)\) out\.add\(d\.online_payment_id\)/);
+    // An advisory flag under every deal read (the business's page too): a failed read is no flag, never a thrown read.
+    const fn = server.slice(server.indexOf('async function openDisputesOn'));
+    assert.match(fn.slice(0, 900), /if \(error\) \{ console\.warn\([\s\S]*?return out; \}/);
+    assert.doesNotMatch(fn.slice(0, 900), /throw error/);
+    assert.match(server, /disputed: disputed\.has\(r\.online_payment_id\),/);
+    assert.match(windows, /refundsOn && left > 0 && !p\.returned && !card\.disputed \? <button/);
+    assert.match(windows, /: !refundsOn \? C\.errRefundOff : card\.disputed \? C\.errDisputed : null;/);
+  });
+
+  it('2 · "Part of it" names no money until a valid amount is typed', () => {
+    assert.match(windows, /partOk \? C\.buttonAll\(typed!\) : RW_ROOT\.button\}/);
+  });
+
+  it('3 · a deal refunded away says so on the business’s page: never "Thank you" nor "Paid, thank you"', () => {
+    assert.match(view, /refundedAway: ended && refundedAway\(deal\),/);
+    assert.match(page, /view\.refundedAway \? P\.refundedTitle : P\.thanksTitle\(/);
+    assert.match(page, /view\.refundedAway \? P\.refundedSub\(club\.name\) :/);
+    assert.match(page, /view\.refundedAway \? P\.refundedReceiptTitle : P\.paidTitle/);
+    for (const w of [P.refundedTitle, P.refundedSub('Riverdale Minor Ball'), P.refundedReceiptTitle]) {
+      // Never the processor, never "voided", never thanks; never "in full" (/legal: a fee the sponsor paid is never refunded).
+      assert.doesNotMatch(w, /stripe|void|thank|in full/i, w);
+    }
+    assert.match(page, /view\.refundedAway && !!inv\.cardFee && <p className=\{css\.invoiceMeta\}>\{ONLINE_EMAIL_WORDS\.refundFeeKept\(money\(Math\.round\(\(inv\.cardFee \+ \(inv\.cardFeeTax \?\? 0\)\) \* 100\) \/ 100\)\)\}/);
+  });
+
+  it('4 · red only for a field the club got wrong; the card company’s refusal and a dispute wear the amber callout', () => {
+    assert.match(windows, /setError\(\{ text: C\.errAmount\(left\), field: true \}\)/);
+    assert.match(windows, /setError\(\{ text: C\.errReason, field: true \}\)/);
+    assert.match(windows, /setError\(\{ text: r\.error, field: r\.code === 'reason' \|\| r\.code === 'amount' \}\)/);
+    assert.match(windows, /setError\(\{ text: C\.failedBody, field: false \}\)/);
+    assert.match(windows, /: <Callout tone="warn" role="alert" flush/);
+  });
+
+  it('5 · the refund, void and withdraw questions ride above a phone keyboard', () => {
+    assert.match(windows, /<KitDialog kind="question" raised followKeyboard busy=\{busy\}/);
+    assert.match(windows, /<ReasonQuestion\s+followKeyboard\s+title=\{D\.deal\.voidAsk/);
+    assert.match(screen, /<KitDialog kind="question" followKeyboard busy=\{busy\} onClose=\{onClose\} title=\{D\.deal\.withdrawAsk\(name\)\}/);
+  });
+
+  it('6 · "Confirming your payment" opens with "Don’t pay again", sponsor page only (the shared poll is unchanged)', () => {
+    assert.match(page, /slow \? PAY_WORDS\.confirmingSlow\(view\.business\.email \|\| null\) : PAY_WORDS\.confirmingBody/);
+    assert.equal('confirmingBody' in DEAL_WORDS.card, false);
   });
 });

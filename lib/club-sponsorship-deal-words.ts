@@ -421,6 +421,12 @@ export const DEAL_WORDS = {
     thanksTitle: (name: string) => `Thank you, ${name}`,
     thanksSub: (club: string) => `${club} has your details and logo.`,
     thanksSubNoLogo: (club: string) => `${club} has your details.`, // DRAFT
+    // A deal refunded in full and ended (/ux 390, decision 3): the page's head and receipt title, in the refund email's own words
+    // (`card.emailLeadWhole`). Never "voided", never the processor's name. /marketing + /legal 2026-11-24: never "in full" — a refund
+    // never returns a fee the sponsor paid, and the receipt's own fee row would contradict it; that fee is said under the title instead.
+    refundedTitle: 'Your sponsorship has ended',
+    refundedSub: (club: string) => `${club} refunded your sponsorship payment, and the sponsorship has ended.`,
+    refundedReceiptTitle: 'Sponsorship refunded',
     invoiceLine: (number: string, total: number) => `Invoice ${number} · ${money(total)}`,
     // The invoice card's facts, one per line: a label, then the day or address (owner, 2026-11-23; it was one long "Issued · due · also sent to" line).
     issuedLabel: 'Issued',
@@ -479,7 +485,7 @@ export const DEAL_WORDS = {
     payInvoiceNote: 'Or pay by cheque or e-transfer, as below.',
     opening: 'Opening the secure payment page…',
     confirmingTitle: 'Confirming your payment…',
-    confirmingBody: 'This takes a few seconds. Please keep this page open.',
+    // Its body is the pay block's (PAY_WORDS.confirmingBody, "…Don’t pay again."): /ux 390 decision 6, owner 2026-11-24.
     notFinishedTitle: 'Payment not finished',
     notFinishedBody: 'Nothing was charged. Pay again below, or choose a cheque or e-transfer.',
     // A card payment that was taken but could not be recorded on the deal (owner walk 2026-11-24: the page went back to the plain

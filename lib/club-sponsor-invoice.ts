@@ -55,6 +55,9 @@ export interface DealCardFacts {
   /** What the sponsor was charged for the fee (0 when the club paid it), and the GST/HST on that: inside amount, never refunded. */
   feeCharged: number;
   feeTax: number;
+  /** The sponsor has a dispute open on it with their card company (not an inquiry): a refund is refused until it is decided, so the
+   *  payment's window says so where the Refund button would be (Part 3b /ux at 390, decision 1, owner 2026-11-24). */
+  disputed: boolean;
 }
 
 /** A refund to the card (Part 3b, mig 530): all of what was left or part of it, never the processing fee. */

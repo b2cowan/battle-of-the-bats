@@ -9,9 +9,9 @@
  * Refund at its foot (never Void), a cheque or e-transfer Void; the refund window is the shipped one, whole or part, never the fee.
  */
 import { useState, type ReactNode } from 'react';
-import { ChevronRight } from 'lucide-react';
+import { AlertTriangle, ChevronRight } from 'lucide-react';
 import KitDialog, { DialogCancel } from '../KitDialog';
-import { ClubSection, RepChip, repKit } from '../RepKit';
+import { Callout, ClubSection, RepChip, repKit } from '../RepKit';
 import { DayField, Facts, MethodField, ReasonQuestion, TextField } from '../money/MoneyKit';
 import ck from '../ClubKit.module.css';
 import { DEAL_WORDS as D } from '@/lib/club-sponsorship-deal-words';
@@ -90,6 +90,7 @@ export function VoidPaymentQuestion({ url, payment, onClose, onVoided }: {
 }) {
   return (
     <ReasonQuestion
+      followKeyboard
       title={D.deal.voidAsk(payment.amount)}
       lead={D.deal.voidBody}
       label={D.deal.voidReason}
@@ -211,10 +212,12 @@ export function PaymentWindow({ payment, refunds, deal, business, businessEmail,
     p.voided ? [C.voided, D.deal.paymentVoided(p.voided.at, p.voided.byName, p.voided.reason)] as const : null,
   ];
   const start = card
-    ? (refundsOn && left > 0 && !p.returned ? <button type="button" className="btn btn-outline" aria-haspopup="dialog" onClick={onRefund}>{C.refund}</button> : undefined)
+    ? (refundsOn && left > 0 && !p.returned && !card.disputed ? <button type="button" className="btn btn-outline" aria-haspopup="dialog" onClick={onRefund}>{C.refund}</button> : undefined)
     : (canVoid && !p.voided ? <button type="button" className="btn btn-outline" aria-haspopup="dialog" onClick={onVoid}>{D.deal.voidPayment}</button> : undefined);
   // Card refunds are switched off (the server refuses them too): say so, rather than a payment with no way back and no reason.
-  const startOrWhy = start ?? (card && !refundsOn && left > 0 && !p.returned ? <span className={css.footLine}>{C.errRefundOff}</span> : undefined);
+  // A dispute the sponsor opened stops a refund until it is decided (the server refuses it): said before the club types a reason (/ux 390, decision 1).
+  const why = !card || left <= 0 || p.returned ? null : !refundsOn ? C.errRefundOff : card.disputed ? C.errDisputed : null;
+  const startOrWhy = start ?? (why ? <span className={css.footLine}>{why}</span> : undefined);
   return (
     <KitDialog kind="form" onClose={onClose} eyebrow={C.windowEyebrow(deal.number)} title={C.windowTitle(business)}
       footerStart={startOrWhy}
@@ -268,7 +271,9 @@ export function RefundWindow({ url, payment, refunds, endsDeal, number, taxKind,
   const [amount, setAmount] = useState('');
   const [reason, setReason] = useState('');
   const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  // Red only for a field the club got wrong (the reason, the amount); trouble it cannot fix by typing (the card company refused,
+  // the sponsor disputed it, a failed send) wears the amber callout every other refund-trouble line wears (/ux 390, decision 4).
+  const [error, setError] = useState<{ text: string; field: boolean } | null>(null);
   const typed = parsePrice(amount);
   const partOk = typed != null && typed > 0 && Math.round(typed * 100) <= Math.round(left * 100);
   const tax = partOk ? refundTaxPart(p, refunds, typed!) : 0;
@@ -282,29 +287,30 @@ export function RefundWindow({ url, payment, refunds, endsDeal, number, taxKind,
 
   async function go() {
     setError(null);
-    if (choice === 'part' && !partOk) { setError(C.errAmount(left)); return; }
-    if (!reason.trim()) { setError(C.errReason); return; }
+    if (choice === 'part' && !partOk) { setError({ text: C.errAmount(left), field: true }); return; }
+    if (!reason.trim()) { setError({ text: C.errReason, field: true }); return; }
     setBusy(true);
     const r = await send<{ state: 'succeeded' | 'pending' | 'failed'; amount: number; endsDeal: boolean; emailedTo: string | null; message?: string }>(
       url, 'POST', choice === 'all' ? { all: true, reason: reason.trim() } : { amount: typed, reason: reason.trim() });
     setBusy(false);
     if (!r.ok) {
       if (r.code === 'nothing_left') { await onStale(r.error); return; }
-      setError(r.error);
+      setError({ text: r.error, field: r.code === 'reason' || r.code === 'amount' });
       return;
     }
-    if (r.data.state === 'failed') { setError(C.failedBody); return; }
+    if (r.data.state === 'failed') { setError({ text: C.failedBody, field: false }); return; }
     await onDone(r.data);
   }
 
   return (
-    <KitDialog kind="question" raised busy={busy} dirty={!!reason.trim() || !!amount.trim()} onClose={onClose} title={C.refundAsk(business)}
+    <KitDialog kind="question" raised followKeyboard busy={busy} dirty={!!reason.trim() || !!amount.trim()} onClose={onClose} title={C.refundAsk(business)}
       footerStart={choice && businessEmail ? undefined : <span className={css.footLine}>{choice ? C.footNoEmail : RW_ROOT.footChoose}</span>}
       footer={<>
         <DialogCancel />
         {choice && (
           <button type="button" className="btn btn-lime" disabled={busy} onClick={() => void go()}>
-            {busy ? RW_ROOT.working : choice === 'all' ? (endsDeal ? C.buttonEnd : C.buttonAll(left)) : partEnds ? C.buttonEnd : C.buttonAll(partOk ? typed! : left)}
+            {/* "Part of it" names money only once a valid amount is typed: before that the neutral word, never the whole remainder (/ux 390, decision 2). */}
+            {busy ? RW_ROOT.working : choice === 'all' ? (endsDeal ? C.buttonEnd : C.buttonAll(left)) : partEnds ? C.buttonEnd : partOk ? C.buttonAll(typed!) : RW_ROOT.button}
           </button>
         )}
       </>}>
@@ -336,7 +342,9 @@ export function RefundWindow({ url, payment, refunds, endsDeal, number, taxKind,
       {choice && (
         <TextField id="deal-refund-reason" label={C.reason} required value={reason} onChange={setReason} maxLength={300} hint={C.reasonHint(business)} />
       )}
-      {error && <p className={css.error} role="alert">{error}</p>}
+      {error && (error.field
+        ? <p className={css.error} role="alert">{error.text}</p>
+        : <Callout tone="warn" role="alert" flush icon={<AlertTriangle size={16} aria-hidden />}>{error.text}</Callout>)}
     </KitDialog>
   );
 }

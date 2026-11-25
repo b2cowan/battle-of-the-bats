@@ -84,8 +84,10 @@ export async function moneyMove(url: string, init: RequestInit, p: {
  */
 export function ReasonQuestion({
   eyebrow, title, lead, extra, label, placeholder, hint, missing, keepLabel = 'Keep it', confirmLabel, busyLabel, failText,
-  ready = true, submit, onClose, onDone,
+  ready = true, followKeyboard = false, submit, onClose, onDone,
 }: {
+  /** Rides above a phone's keyboard (KitDialog's own prop), for a reason box a soft keyboard would cover. */
+  followKeyboard?: boolean;
   eyebrow?: ReactNode;
   title: ReactNode;
   lead?: ReactNode;
@@ -128,6 +130,7 @@ export function ReasonQuestion({
   return (
     <KitDialog
       kind="question"
+      followKeyboard={followKeyboard}
       eyebrow={eyebrow}
       title={title}
       onClose={onClose}

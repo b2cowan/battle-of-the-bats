@@ -28,6 +28,7 @@ import {
 import type { PackageItem, SponsorPlaceKind } from './club-sponsorships';
 import { creditNoteNumber, DEAL_METHOD_LABEL, invoiceStanding, type DealPayment, type DealRefund } from './club-sponsor-invoice';
 import type { DuesPaymentMethod } from './types';
+import { blocksRefund } from './online-payment-dispute';
 
 // ── Reading deals ──────────────────────────────────────────────────────────────────────────────────
 
@@ -104,7 +105,7 @@ type PaymentRow = {
 };
 const PAYMENT_COLUMNS = 'id, deal_id, amount, tax_part, received_on, method, reference, note, recorded_by_name, recorded_at, voided_at, voided_by_name, void_reason, returned_at, '
   + 'online_payment_id, card_brand, card_last4, fee_paid_by, fee_amount, fee_charged, fee_tax, online_payments(paid_at, stripe_payment_intent_id)';
-const paymentOf = (r: PaymentRow): DealPayment => {
+const paymentOf = (r: PaymentRow, disputed: ReadonlySet<string> = new Set()): DealPayment => {
   const op = Array.isArray(r.online_payments) ? r.online_payments[0] : r.online_payments;
   return {
     id: r.id, amount: num(r.amount), taxPart: num(r.tax_part), receivedOn: r.received_on, method: r.method, reference: r.reference, note: r.note,
@@ -114,6 +115,7 @@ const paymentOf = (r: PaymentRow): DealPayment => {
     card: r.online_payment_id ? {
       brand: r.card_brand, last4: r.card_last4, paidAt: op?.paid_at ?? null, reference: op?.stripe_payment_intent_id ?? null,
       feePaidBy: r.fee_paid_by ?? 'club', fee: num(r.fee_amount), feeCharged: num(r.fee_charged), feeTax: num(r.fee_tax),
+      disputed: disputed.has(r.online_payment_id),
     } : null,
   };
 };
@@ -151,7 +153,24 @@ async function paymentsFor(orgId: string, dealIds: string[]): Promise<Map<string
     const { data, error } = await supabaseAdmin.from('club_sponsor_deal_payments').select(PAYMENT_COLUMNS)
       .eq('org_id', orgId).in('deal_id', dealIds.slice(i, i + 200)).order('received_on').order('recorded_at');
     if (error) throw error;
-    for (const r of (data ?? []) as unknown as PaymentRow[]) out.set(r.deal_id, [...(out.get(r.deal_id) ?? []), paymentOf(r)]);
+    const rows = (data ?? []) as unknown as PaymentRow[];
+    const disputed = await openDisputesOn(orgId, rows.map(r => r.online_payment_id).filter((id): id is string => !!id));
+    for (const r of rows) out.set(r.deal_id, [...(out.get(r.deal_id) ?? []), paymentOf(r, disputed)]);
+  }
+  return out;
+}
+
+/** The card payments a dispute that stops a refund is open on (the refund's own check, `refundBlockedByDispute`, read from our
+ *  rows rather than asked of Stripe: the window's early word, never the gate — the refund route still asks Stripe). It sits
+ *  under EVERY deal read (the business's page and its pay step included), so a failed read is no flag, never a failed page
+ *  (/review 2026-11-24). Chunked: a deal can hold several payments. */
+async function openDisputesOn(orgId: string, onlinePaymentIds: string[]): Promise<Set<string>> {
+  const out = new Set<string>();
+  for (let i = 0; i < onlinePaymentIds.length; i += 100) {
+    const { data, error } = await supabaseAdmin.from('online_payment_disputes').select('online_payment_id, status')
+      .eq('org_id', orgId).in('online_payment_id', onlinePaymentIds.slice(i, i + 100));
+    if (error) { console.warn('[sponsorships] the dispute flag could not be read; the refund route still checks:', error.message); return out; }
+    for (const d of (data ?? []) as Array<{ online_payment_id: string; status: string }>) if (blocksRefund(d.status)) out.add(d.online_payment_id);
   }
   return out;
 }

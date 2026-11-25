@@ -28,7 +28,7 @@ import { dealFigures, type BusinessField } from '@/lib/club-sponsorship-deals';
 import { addressLines } from '@/lib/coach-sponsor-invoice';
 import { CANADIAN_PROVINCES } from '@/lib/canadian-provinces';
 import { ORG_IMAGE_TYPES, ORG_LOGO_MAX_BYTES } from '@/lib/org-image-limits';
-import { money, PAY_WORDS } from '@/lib/online-payment-words';
+import { money, ONLINE_EMAIL_WORDS, PAY_WORDS } from '@/lib/online-payment-words';
 import { openCheckout, usePaymentConfirming } from '@/components/public/PayBlock';
 import type { SponsorPageView, SponsorBusinessPrefill } from '@/lib/sponsor-deal-view';
 import css from './SponsorDeal.module.css';
@@ -88,15 +88,16 @@ function OpenDeal({ view, onView }: { view: Open; onView: (v: SponsorPageView) =
     <div>
       <div className={css.head}>
         <p className={pay.eyebrow}>{P.eyebrow}</p>
-        <h1 className={`${pay.title} ${pay.titleFocused}`}>{view.state === 'done' ? P.thanksTitle(view.business.name || deal.offeredTo) : title}</h1>
-        <p className={css.sub}>{view.state === 'done' ? (view.logoUrl ? P.thanksSub(club.name) : P.thanksSubNoLogo(club.name)) : P.offeredTo(deal.offeredTo)}</p>
+        <h1 className={`${pay.title} ${pay.titleFocused}`}>{view.state === 'done' ? (view.refundedAway ? P.refundedTitle : P.thanksTitle(view.business.name || deal.offeredTo)) : title}</h1>
+        <p className={css.sub}>{view.state === 'done' ? (view.refundedAway ? P.refundedSub(club.name) : view.logoUrl ? P.thanksSub(club.name) : P.thanksSubNoLogo(club.name)) : P.offeredTo(deal.offeredTo)}</p>
       </div>
 
       {confirming ? (
         <div className={css.invoice} role="status" aria-live="polite">
           <p className={css.invoiceTitle}>{C.confirmingTitle}</p>
-          {/* After 20 seconds the shipped slow line (the pay block's), so the page never waits in silence: nothing to redo, the receipt comes. */}
-          <p className={css.invoiceMeta}>{slow ? PAY_WORDS.confirmingSlow(view.business.email || null) : C.confirmingBody}</p>
+          {/* The pay block's own words from the first second ("…Don’t pay again.", /ux 390 decision 6), then after 20 seconds its slow
+              line: nothing to redo, the receipt comes. No Reload control: a reload lands in the same wait, and the poll already retries. */}
+          <p className={css.invoiceMeta}>{slow ? PAY_WORDS.confirmingSlow(view.business.email || null) : PAY_WORDS.confirmingBody}</p>
         </div>
       ) : left && !view.received && (
         <div className={css.invoice} role="status">
@@ -422,7 +423,10 @@ function Thanks({ view }: { view: Open }) {
       {inv && view.paid && (
         // Paid in full (round 2 tab 1's receipt card: plain lines, one rule above Paid, then the receipt download).
         <div className={css.invoice}>
-          <p className={css.invoiceTitle}>{P.paidTitle}</p>
+          <p className={css.invoiceTitle}>{view.refundedAway ? P.refundedReceiptTitle : P.paidTitle}</p>
+          {/* A fee the sponsor paid never comes back (Payments Terms §4): said here, as the refund email says it (/legal 2026-11-24). */}
+          {/* The fee with its tax, the figure the refund email gave (sponsor-invoice-email: feeCharged + feeTax). */}
+          {view.refundedAway && !!inv.cardFee && <p className={css.invoiceMeta}>{ONLINE_EMAIL_WORDS.refundFeeKept(money(Math.round((inv.cardFee + (inv.cardFeeTax ?? 0)) * 100) / 100))}</p>}
           <p className={css.invoiceTo}>{P.paidLine(inv.total, view.club.name)}</p>
           {view.paidCard?.at
             ? <p className={css.invoiceMeta}>{C.paidWith(view.paidCard.label, `${formatStoredDate(orgDayKey(view.paidCard.at))}, ${clockOf(view.paidCard.at)}`, inv.number)}</p>

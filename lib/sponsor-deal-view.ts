@@ -117,6 +117,9 @@ export type SponsorPageView =
     /** The page offers the logo box (`linkTakesLogo`): on the receipt page only to a business that never sent one. */
     takesLogo: boolean;
     paid: boolean;
+    /** The deal was refunded in full and ended (`refundedAway`): the page keeps its receipt, refund and credit note, but says the
+     *  sponsorship ended instead of "Thank you" and "Paid, thank you" (/ux 390, decision 3, owner 2026-11-24). */
+    refundedAway: boolean;
     /** A card payment was taken for this deal and could not be recorded on it: the page says so and takes no second payment. */
     received: boolean;
     /** What is still owing on the invoice (Part 3a); less than the total means a payment has arrived. */
@@ -226,6 +229,7 @@ export async function buildSponsorPageView(orgSlug: string, token: string, opts:
     takesLogo: linkTakesLogo(deal, !!b.logo_sent_at, tournamentToday()),
     received,
     paid: deal.state === 'paid' || (ended && refundedAway(deal)),
+    refundedAway: ended && refundedAway(deal),
     owing: ended ? 0 : standing?.owing ?? 0,
     paidOn: deal.paidOn ?? standing?.paidOn ?? null,
     card: facts && !received ? { sponsorPays: open && facts.feePayer === 'sponsor', refundPolicy: facts.refundPolicy } : null,
