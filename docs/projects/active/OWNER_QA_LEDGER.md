@@ -28842,4 +28842,6 @@ performed over the shared working tree. The original walk result is not claimed 
 **Owner calls (outside the count):** (a) no email to the business when its payment is taken back · (b) the reminder email for an open sponsor dispute, later · (c) the order for production: migrations 530 to 534 first, the refund-retry step of the daily job in its own commit · (d) a refund made in Stripe's own dashboard counted against what can still be refunded: a plan item.
 
 **Paste-back:** the walk's "Copy the summary" button gives the whole result as plain text; paste it into the chat. Ticks are kept in the browser, per device.
+
+**✅ PASSED 2026-11-24, 30 of 30** (paste-back; A 11/11, B 17/17 — the walk grew a step 7a, so the count is 30 not the published 29 — C 2/2 done, the optional payout walk; no notes came back). **Owner calls ruled 2026-11-24, every one as recommended:** **(a) none** — no email to the business when its payment is taken back · **(b) later** — the reminder email for an open sponsor dispute is added later, worded for a sponsor · **(c) order** — production takes migrations 530 to 534 and the five files first, then the daily job's refund-retry step in its own commit · **(d) plan item** — a refund made in Stripe's own dashboard counted against what can still be refunded, separate from Part 3b. Nothing owed from this walk.
 <!-- /§565 -->

@@ -1494,8 +1494,10 @@ in the card-network sentence); Privacy §5 (who sent an offer is kept with its r
   534, applied to dev, pending on production after 530), the code, words and tests `6d866f1b9` (the Payouts tab and bank check know a sponsorship,
   a lost dispute is booked, a bounced refund's credit note is kept and cancelled, the arrival wording and the Stripe code on refund emails
   settled, with the walk-time tweaks), and the daily job's refund-retry step on its own `7f2015740`. `/simplify`, `/review` (five lenses),
-  `/marketing` and `/legal` run; `/accounting` answered the dispute books. Owed: the owner's walk §565 (`BOARD_READY_STAGE6_P3B_AFTER_WALK_WALK.html`),
-  migrations 530 to 534 on production before the promote, and the dashboard-refund plan item. The commit plan: `BOARD_READY_STAGE6_P3B_COMMIT_PLAN.md`.
+  `/marketing` and `/legal` run; `/accounting` answered the dispute books. **Walk §565 PASSED 30 of 30, 2026-11-24** (`BOARD_READY_STAGE6_P3B_AFTER_WALK_WALK.html`); owner calls ruled as recommended: no email to the business when its payment
+  is taken back; the dispute reminder email later, worded for a sponsor; production order = migrations 530 to 534 and the five files first, the refund-retry step
+  of the daily job in its own commit; a refund made in Stripe's own dashboard is a plan item, separate from Part 3b. Owed: migrations 530 to 534 on production before
+  the promote, and that plan item. The commit plan: `BOARD_READY_STAGE6_P3B_COMMIT_PLAN.md`.
 - ~~The per-deal "Charge HST" switch carries no words telling a club WHEN to turn it on.~~ **Added 2026-11-22 (owner: "add
   the hint")**, words checked against CRA RC4081 then set in brand voice (`docs/agents/accounting/BOARD_READY_STAGE6_SPONSOR_PAYMENT_FEE_REVIEW.md`
   addendum): the switch's hint reads **"13% for an Ontario address, added to the amount. A sponsorship that shows a name or
