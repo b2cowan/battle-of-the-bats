@@ -28875,6 +28875,15 @@ performed over the shared working tree. The original walk result is not claimed 
 **Left out (pinned by tests):** the "N more …" row (Kestrel's bands hold four or fewer), a failed first read and its Try again, the checks stopping outside the game window, a rep team set to Families (no step changes it).
 
 Committed 2026-11-25, ahead of the walk (owner: "yes commit now").
+
+**Paste-back 2026-11-25, 29 of 29 ticked, no notes; read back the same afternoon. NOT closed.**
+- **A (14/14) and C (3/3): passed** as ticked.
+- **B (10/10 ticked): steps 1–6 hold; 7–10 open.** Dev shows three score saves (4:10, 4:12, 4:13 p.m. Toronto). Foxes 6, Lynx 4 is as written. Lynx v Mariners ends **Lynx 9, Mariners 1**; the walk's last score (Mariners 9, Lynx 3, steps 9–10) is not saved. What the 4:12 save held is not recorded. The edit window lists the home score box first; the game's name lists the away team first.
+- **D (2/2 ticked): not walked.** `origin/dev` is at `322ff810e` (11-24), without this stage, and the staging address answered 404 twice at 4:15 p.m. Owed after a push (no `age` / `x-cache` notes came back).
+
+**✅ B PASSED 2026-11-25** (owner, asked whether the standings changed without a reload at steps 8 and 9: "yes both times"). Note: dev's last score for Lynx v Mariners is not the one steps 9–10 name; the automatic update is what B tests. **A, B and C passed; only D is owed**, after a push to staging.
+
+**Closed for now 2026-11-25** (owner: "walk b was done, we can hold d until our push to staging, close this walk for now"). Stage 1 is ticked; walk D (the staging edge check, plan §9) runs after the push and is §567's only owed item.
 <!-- /§567 -->
 
 ## §568 · Club website · Track P · Session P2 · Prospect clubs, making a preview, the marking — **the owner makes a prospect’s own club from platform admin (a Growth staff member never sees the page), every refusal shows under its field, the club is made in one step with its made-up season, rep teams, an unlisted one-day tournament whose first game is live at the meeting time and three “(sample)” sponsors; every page of it carries the band, the footer line and “(preview)” in its title, Register says “Registration isn’t open on this preview”, and the owner removes it by hand from its record**

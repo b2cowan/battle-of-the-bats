@@ -273,7 +273,7 @@ prompt → the build → `/simplify`, `/review`, `/legal` or `/accounting` where
   ten ideas are in** (phone first, frames, not finished drawings); this ladder; the owner calls in §7. Nothing built.
   The point: ideas 2, 3 and 4 all want the top of the home page, and 5, 6 and 10 all want the sponsors. Deciding the
   shared page once is what stops the add-on-later problem.
-- [ ] **Stage 1 — The home's moving part, with Game day as its first tenant (idea 2; F1, F2).** First because it needs
+- [x] **Stage 1 — The home's moving part, with Game day as its first tenant (idea 2; F1, F2).** First because it needs
   no new typing from a volunteer, so it proves the frame on real data. The one read of the club's games is built so
   Stage 6 can change how fast it arrives without touching a page.
   *(Corrected by Stage 0: Open now stays first, capped at two rows; the games part sits after it, titled "Today" or
@@ -296,7 +296,9 @@ prompt → the build → `/simplify`, `/review`, `/legal` or `/accounting` where
   30-second refresh, "Games today", the site editor's rep line, the failure line), `/simplify`, `/review`, `/marketing`,
   `/docs` and `/design` run and applied (Progress). Walk published:
   [CLUB_WEBSITE_STAGE1_WALK.html](CLUB_WEBSITE_STAGE1_WALK.html), https://claude.ai/artifact/SYSsX7HKAXMVLno4UeVZo7
-  (29 steps, Owner QA Ledger §567). Ticks when the walk passes.)*
+  (29 steps, Owner QA Ledger §567), committed `d574a5f9b`. **Walk closed 2026-11-25** (owner: "walk b was done, we
+  can hold d until our push to staging, close this walk for now"): A, B and C passed (B with a score note); D, the
+  staging edge check (§9), is held until the push to staging. Detail in §567.)*
 - [ ] **Stage 2 — Field status (idea 3; F3).** Second tenant. *(Corrected by Stage 0: it is today's Rainout widened to
   a place ("Close a place"), not a third tool; tournament games ride their own Rain delay, so it does NOT wait on the
   real-venues project. It needs only a count of typed-only games first, dev, counts only.)*
@@ -1051,6 +1053,10 @@ the demos follow the product and are curated with `/demos`, never as a build ste
   Owner QA Ledger §567 (29 steps; walk D is the staging edge-hold check from §9). **Committed 2026-11-25 at the owner's
   word ("yes commit now"), ahead of the walk,** through a private index: the seed's and the help guides' "E-transfer"
   spelling edits, the ledger's other lines and Track P P2's plan and board entries are other sessions' and stayed out.
+- 2026-11-25 — **Stage 1 closed: the walk passed A, B and C (§567); Stage 1 ticked.** Walk D (does the staging edge
+  hold the games check, §9) is held until the push to staging (owner: "close this walk for now"). Next on this ladder:
+  Stage 2 (field status), which starts with its count of typed-only games (dev, counts only) and its drawing session;
+  Track P continues with Session P3 beside it.
 - 2026-11-25 — **Track P Session P2 built: Prospect clubs, Make one, the sample and the marking (T2–T6; drawing tabs 2,
   3, 5).** Nothing committed at writing; the owner's word commits it through a private index. **Migration 536**
   (`organization_previews.sport` + `.province_code`, and `make_preview_club(...)`, the ONE creation step, SECURITY
