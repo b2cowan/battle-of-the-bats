@@ -12,6 +12,7 @@ import { systemMailFace } from '@/lib/club-email-context';
 import { withObservability } from '@/lib/observability';
 import { clientIpFrom } from '@/lib/rate-limit';
 import { throttlePublicForm, throttlePublicFormRecipient } from '@/lib/public-form-throttle';
+import { previewWriteRefusal } from '@/lib/preview-write-refusal';
 
 export const dynamic = 'force-dynamic';
 
@@ -38,6 +39,7 @@ export const POST = withObservability(async (req: Request,
   // The form no longer opens for such a club; these words show only if the site goes off while it is open.
   const org = await resolvePublicClub(orgSlug, 'teams');
   if (!org) return NextResponse.json({ error: 'This club’s site isn’t available.' }, { status: 404 });
+  const previewClosed = previewWriteRefusal(org); if (previewClosed) return previewClosed;
 
   const team = await getRepTeamBySlug(org.id, teamSlug);
   if (!team) return NextResponse.json({ error: 'Team not found' }, { status: 404 });

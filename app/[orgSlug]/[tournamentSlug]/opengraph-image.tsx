@@ -5,6 +5,7 @@ import { isGameLive, DEFAULT_GAME_DURATION_MINUTES } from '@/lib/game-status';
 import { tournamentToday } from '@/lib/timezone';
 import { deriveChampions, isTournamentPlayoffsComplete, type ChampionInfo } from '@/lib/champions';
 import { isPublicPageEnabled } from '@/lib/public-pages';
+import { getClubBySlug } from '@/lib/club-page-meta';
 
 export const alt = 'Tournament';
 export const size = { width: 1200, height: 630 };
@@ -56,6 +57,8 @@ async function loadCard(params: Promise<{ orgSlug: string; tournamentSlug: strin
     // Published-only: the counts and the live line never include a division the organizer is holding back.
     const data = await getPublicTournamentPageData(orgSlug, tournamentSlug, 'teams-preview', { look: true, keepGames: true });
     if (!data?.tournament) return null;
+    // A preview club (Track P) shares no card (the plain one instead): a pasted link must not show the club's name and logo as theirs.
+    if ((await getClubBySlug(orgSlug))?.isPreview) return null;
     const t = data.tournament;
     const theme = await shareImageTheme(orgSlug, t);
 

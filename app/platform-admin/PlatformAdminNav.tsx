@@ -26,7 +26,7 @@ import { usePathname } from 'next/navigation';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   Inbox, Building2, Users, Gift, ArchiveRestore, AlertTriangle, MessageSquare, Target, Send, Presentation, Tag, Activity, Mail,
-  ClipboardCheck, Layers, FileText, Download, ShieldCheck, ScrollText, Terminal, HelpCircle, Wallet, Eye, ChevronRight, BarChart3, CreditCard, Radio, CalendarSync,
+  ClipboardCheck, Layers, FileText, Download, ShieldCheck, ScrollText, Terminal, HelpCircle, Wallet, Eye, ChevronRight, BarChart3, CreditCard, Radio, CalendarSync, Handshake,
 } from 'lucide-react';
 import { CollapseSidebarRow, SidebarStripTip } from '@/components/shared/SidebarStrip';
 import strip from '@/components/shared/SidebarStrip.module.css';
@@ -34,7 +34,7 @@ import frame from '@/components/admin/kit/AdminKitFrame.module.css';
 import { isPlatformAreaReadOnly, type PlatformArea } from '@/lib/platform-areas';
 import type { PlatformRole } from '@/lib/platform-auth';
 import {
-  TODAY_ITEM, BOOKKEEPING_ITEM, visibleMenuGroups, entryCount, foldedGroupCount, type MenuIcon, type MenuItem,
+  TODAY_ITEM, BOOKKEEPING_ITEM, PROSPECT_CLUBS_ITEM, visibleMenuGroups, entryCount, foldedGroupCount, type MenuIcon, type MenuItem,
 } from './console-menu';
 import styles from './platform-admin.module.css';
 
@@ -45,7 +45,7 @@ const ICONS: Record<MenuIcon, typeof Inbox> = {
   today: Inbox, clubs: Building2, people: Users, free_time: Gift, retention: ArchiveRestore, status: Activity, errors: AlertTriangle, sent: Mail,
   feedback: MessageSquare, leads: Target, campaigns: Send, decks: Presentation, plans: Tag, approval: ClipboardCheck,
   bulk: Layers, templates: FileText, export: Download, staff: ShieldCheck, audit: ScrollText, terminal: Terminal, wallet: Wallet,
-  numbers: BarChart3, payments: CreditCard, stripe: Radio, renewals: CalendarSync,
+  numbers: BarChart3, payments: CreditCard, stripe: Radio, renewals: CalendarSync, prospects: Handshake,
 };
 
 const DEV_TOOLS_ON = process.env.NEXT_PUBLIC_ENABLE_DEV_TOOLS === 'true';
@@ -115,7 +115,7 @@ export function PlatformNavBody({ role, canBookkeep, counts, variant, onNavigate
     const Icon = ICONS[item.icon];
     const active = isActive(pathname, href);
     // Bookkeeping has no role area, so it is never marked view-only and carries no count.
-    const viewOnly = href !== BOOKKEEPING_ITEM.href && isPlatformAreaReadOnly(role, area);
+    const viewOnly = href !== BOOKKEEPING_ITEM.href && href !== PROSPECT_CLUBS_ITEM.href && isPlatformAreaReadOnly(role, area);
     const count = entryCount(item, counts);
     return (
       <Link

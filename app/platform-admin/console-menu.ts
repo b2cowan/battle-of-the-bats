@@ -17,7 +17,7 @@ import type { PlatformRole } from '../../lib/platform-auth';
 export type MenuIcon =
   | 'today' | 'clubs' | 'people' | 'free_time' | 'retention' | 'status' | 'errors' | 'feedback' | 'sent' | 'leads' | 'campaigns' | 'decks'
   | 'plans' | 'approval' | 'bulk' | 'templates' | 'export' | 'staff' | 'audit' | 'terminal' | 'wallet' | 'numbers' | 'payments' | 'stripe'
-  | 'renewals';
+  | 'renewals' | 'prospects';
 
 export type MenuItem = { href: string; label: string; icon: MenuIcon; area: PlatformArea };
 export type MenuGroup = { label: string; items: MenuItem[] };
@@ -26,6 +26,9 @@ export const TODAY_ITEM: MenuItem = { href: '/platform-admin', label: 'Today', i
 const DEV_TOOLS_ITEM: MenuItem = { href: '/platform-admin/dev-tools', label: 'Dev tools', icon: 'terminal', area: 'dev_tools' };
 // Bookkeeping is the owner's, by email allowlist (`canAccessBookkeeping`), never a role: its area is a placeholder.
 export const BOOKKEEPING_ITEM: MenuItem = { href: '/platform-admin/bookkeeping', label: 'Bookkeeping', icon: 'wallet', area: 'overview' };
+// Prospect clubs is the owner's too (Club Website Track P, owner ruling T2 2026-11-25: "only the owner makes one"), by the
+// same allowlist, never a role; it sits in Growth after Leads (drawing Tx3So1rUqL6shn7CzM93Zr, tab 2). Area placeholder.
+export const PROSPECT_CLUBS_ITEM: MenuItem = { href: '/platform-admin/prospect-clubs', label: 'Prospect clubs', icon: 'prospects', area: 'overview' };
 
 export function baseMenuGroups(devTools: boolean): MenuGroup[] {
   return [
@@ -95,13 +98,20 @@ export function baseMenuGroups(devTools: boolean): MenuGroup[] {
 export function visibleMenuGroups(role: PlatformRole, canBookkeep: boolean, devTools: boolean): MenuGroup[] {
   const groups = baseMenuGroups(devTools)
     .map(group => ({ ...group, items: group.items.filter(item => canViewPlatformArea(role, item.area)) }))
+    .map(group => canBookkeep && group.label === 'Growth' ? { ...group, items: withProspectClubs(group.items) } : group)
     .filter(group => group.items.length > 0);
   return canBookkeep ? [...groups, { label: 'Private finance', items: [BOOKKEEPING_ITEM] }] : groups;
 }
 
-/** An entry's waiting count (Bookkeeping never carries one). */
+/** Prospect clubs after Leads (first when the role sees no Leads): the owner sees it whatever the role's Growth entries. */
+function withProspectClubs(items: MenuItem[]): MenuItem[] {
+  const at = items.findIndex(item => item.href === '/platform-admin/early-access');
+  return [...items.slice(0, at + 1), PROSPECT_CLUBS_ITEM, ...items.slice(at + 1)];
+}
+
+/** An entry's waiting count (Bookkeeping and Prospect clubs never carry one: their area is a placeholder). */
 export function entryCount(item: MenuItem, counts: Partial<Record<PlatformArea, number>>): number {
-  return item.href === BOOKKEEPING_ITEM.href ? 0 : counts[item.area] ?? 0;
+  return item.href === BOOKKEEPING_ITEM.href || item.href === PROSPECT_CLUBS_ITEM.href ? 0 : counts[item.area] ?? 0;
 }
 
 /** A folded group's one pill: the sum of its rows' counts (A11). */

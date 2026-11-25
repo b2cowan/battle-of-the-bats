@@ -9,6 +9,7 @@ import { registrationReference } from './utils';
 import { ensureSeasonForm } from './club-form-server';
 import { familyFormState, liveRow, type FamilyFormState, type FamilyRow } from './club-form-family';
 import type { LeagueSeason, Organization } from './types';
+import { previewWriteRefusal } from './preview-write-refusal';
 
 /**
  * The door every Your-sign-up form request comes through (Board Ready Stage 4 Part 2: a re-tick, a Change). The possession
@@ -33,6 +34,7 @@ const familyFail = (status: number, error = GENERIC, code?: string) => ({ fail: 
 export async function openFamilyForm(orgSlug: string, seasonSlug: string, token: unknown): Promise<FamilyFormDoor | { fail: NextResponse }> {
   const org = await resolvePublicLeagueContext(orgSlug);
   if (!org) return familyFail(404, 'Not found');
+  { const previewClosed = previewWriteRefusal(org); if (previewClosed) return { fail: previewClosed }; }
   const season = await getLeagueSeasonBySlug(org.id, seasonSlug);
   if (!season) return familyFail(404, 'Not found');
   if (typeof token !== 'string' || !token.trim()) return familyFail(400);

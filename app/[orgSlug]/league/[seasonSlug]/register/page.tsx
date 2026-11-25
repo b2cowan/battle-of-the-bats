@@ -19,6 +19,7 @@ import { ensureSeasonForm, signupFormView } from '@/lib/club-form-server';
 import { getOrgPrivacyPolicyHref } from '@/lib/privacy-policy';
 import PublicPage from '@/components/public/PublicPage';
 import kit from '@/components/public/ClubKit.module.css';
+import PreviewClosedForm from '@/components/public/PreviewClosedForm';
 
 export const dynamic = 'force-dynamic';
 
@@ -46,6 +47,8 @@ export default async function RegisterPage({
   const season = await getClubSeason(org.id, seasonSlug);
   // Only show non-draft seasons publicly (sweep 3, small items): a draft season's name is not public yet.
   if (!isPublicLeagueSeason(season)) notFound();
+  // A preview club (Track P): no form, ever. The server refuses the sign-up too (lib/preview-write-refusal.ts).
+  if (org.isPreview) return <PreviewClosedForm clubName={org.name} homeHref={href()} context={season.name} />;
 
   // The dates and the status together (9b-1 Part 4): the form shows only while it takes a sign-up, and a closed form
   // says why (copy §12).

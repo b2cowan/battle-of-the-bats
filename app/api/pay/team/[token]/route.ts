@@ -13,6 +13,7 @@ import { canOpen, toDollars } from '@/lib/online-payment-fee';
 import { BANK_DEBIT_WORDS as B, PAY_WORDS as W, SCOPE_LINE } from '@/lib/online-payment-words';
 import type { PayScope } from '@/lib/team-pay-options';
 import { isMaskedEmail } from '@/lib/utils';
+import { previewWriteRefusal } from '@/lib/preview-write-refusal';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -78,6 +79,7 @@ export const POST = withObservability(async (req: Request, { params }: { params:
 
   const facts = await loadTeamPayFacts(teamId);
   if (!facts) return NextResponse.json({ error: W.error.linkInvalid }, { status: 404 });
+  const previewClosed = previewWriteRefusal(facts.org); if (previewClosed) return previewClosed;
   const refusal = refusalMessage(facts);
   if (refusal) return NextResponse.json({ error: refusal }, { status: 409 });
   const choice = facts.options?.choices.find(c => c.scope === scope);

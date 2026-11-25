@@ -43,6 +43,7 @@ import {
 import { getSignedInUser } from '@/lib/two-step-session';
 import { checkDocumentUpload } from '@/lib/document-upload';
 import { REGISTRATION_FILE_KINDS, REGISTRATION_FILE_WORDS, REGISTRATION_FILES_MAX_BYTES } from '@/lib/registration-answers';
+import { previewWriteRefusalById } from '@/lib/preview-write-refusal';
 
 const REGISTRATION_FILES_BUCKET = 'tournament-registration-files';
 /** F3: all of one form's files together (the proxy's per-request limit; lib/registration-answers.ts). */
@@ -470,6 +471,7 @@ export const POST = withObservability(async (req: NextRequest) => {
     // actually known. Without it, a visitor could register a real team into the demo tournament.
     const sandboxBlocked = assertNotDemoOrg(organization.slug);
     if (sandboxBlocked) return sandboxBlocked;
+    const previewClosed = await previewWriteRefusalById(organization.id); if (previewClosed) return previewClosed;
 
     const registrationFields = organization && hasPlanFeature(organization.planId, 'custom_registration_fields')
       ? await getTournamentRegistrationFields(tournamentId)

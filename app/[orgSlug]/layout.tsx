@@ -9,6 +9,7 @@ import { getClubBySlug, getClubSiteContent } from '@/lib/club-page-meta';
 import { loadClubFrame } from '@/lib/club-frame-data';
 import { hasModuleEntitlement } from '@/lib/module-entitlements';
 import ClubFrame from '@/components/public/ClubFrame';
+import PreviewBand from '@/components/public/PreviewBand';
 import { getDemoOrgBySlug } from '@/lib/demo-org';
 import { getAuthUserCached } from '@/lib/supabase-server';
 import { SandboxProvider } from '@/components/sandbox/SandboxProvider';
@@ -18,6 +19,7 @@ import { isPublicClubSiteOpen } from '@/lib/public-club-access';
 import { getCoachStartHref } from '@/lib/start-menu';
 import { bareHost, isOwnHost } from '@/lib/own-hosts';
 import { requestHost } from '@/lib/request-host';
+import { previewBandText, previewTitle } from '@/lib/preview-org';
 
 // Pre-load all font options at module level (next/font requirement).
 // Each uses a unique CSS variable so they don't conflict with the root layout fonts.
@@ -81,11 +83,12 @@ export async function generateMetadata({
     ...clubBase,
     // The club's own pages set an ABSOLUTE "page · club" title (lib/club-page-meta.ts); this template is what
     // tournament pages, which title themselves with a bare name, still read — unchanged by the club's frame.
+    // A preview club (Track P): "(preview)" in every title this template makes, and the band's words as the description.
     title: {
-      default: org.name,
-      template: `%s | ${org.name}`,
+      default: org.isPreview ? previewTitle(org.name) : org.name,
+      template: org.isPreview ? `%s | ${previewTitle(org.name)}` : `%s | ${org.name}`,
     },
-    description: clubDescription(siteContent, org.name),
+    description: org.isPreview ? previewBandText(org.name) : clubDescription(siteContent, org.name),
     // No preview image here (Club Tier Stage 4b-2b): the club's generated card (app/[orgSlug]/opengraph-image.tsx) carries
     // its logo in its colours, and every page under the club inherits it unless it names its own. An image set HERE would
     // silently replace that card — Next skips a segment's generated image when the same segment's metadata names one.
@@ -205,6 +208,10 @@ export default async function OrgLayout({
         className={fontClasses}
         data-card-style={org.themeCardStyle ?? 'default'}
       >
+        {/* A preview club (Club Website Track P, Session P2): the band above the club's own bar on EVERY page under the
+            club, tournament pages included, because this layout wraps them all. Session P2 owns this line; Stage 1
+            owns the home. */}
+        {org.isPreview && <PreviewBand clubName={org.name} />}
         {/* Club Tier Stage 4a — the club's "not found" (app/[orgSlug]/not-found.tsx) receives no params, so this
             layout hands it the club: its name, and whether its public site is open (the switch on, not cancelled).
             ⚠ This layout still refuses ONLY a club that does not exist: tournament pages stay up when the site is off

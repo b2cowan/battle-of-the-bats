@@ -598,3 +598,28 @@
   display: inline-flex;
   align-items: center;
 }
+
+/* A preview club's footer line (Club Website Track P, drawing tab 5): the band's words and the removal route, in the
+   footer's own small type. On a page that wears no club frame (a tournament page) it stands alone at the foot. */
+.previewFoot {
+  margin: 0;
+  font: 500 13px/1.45 var(--club-text-face);
+}
+
+.previewFootAlone {
+  margin: 0;
+  padding: 16px 16px calc(16px + env(safe-area-inset-bottom, 0px));
+  background: #16181d; /* token-exempt: the preview band is FieldLogicHQ's own fixed dark, never the club's colours or the warm theme's re-maps */
+  color: #f4f5f7; /* token-exempt: the preview band is FieldLogicHQ's own fixed dark, never the club's colours or the warm theme's re-maps */
+  font: 500 13px/1.45 var(--font-sans, system-ui, sans-serif);
+  text-align: center;
+}
+
+.previewFootLink {
+  color: inherit;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;           /* the tap floor, though the words are 13 px */
+}

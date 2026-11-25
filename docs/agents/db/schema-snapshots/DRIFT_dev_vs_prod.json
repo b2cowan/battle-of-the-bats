@@ -1,12 +1,12 @@
 {
   "generated": "2026-11-25",
-  "total": 94,
+  "total": 97,
   "counts": {
     "tables": 2,
-    "columns": 52,
+    "columns": 54,
     "indexes": 9,
     "constraints": 15,
-    "rls": 16
+    "rls": 17
   },
   "items": [
     {
@@ -63,6 +63,10 @@
     },
     {
       "key": "check:only-dev:organization_previews.organization_previews_logo_source_is_web",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:organization_previews.organization_previews_province_code_shape",
       "sig": ""
     },
     {
@@ -270,7 +274,15 @@
       "sig": ""
     },
     {
+      "key": "column:only-dev:organization_previews.province_code",
+      "sig": ""
+    },
+    {
       "key": "column:only-dev:organization_previews.removed_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:organization_previews.sport",
       "sig": ""
     },
     {

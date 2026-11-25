@@ -495,6 +495,14 @@ write time on `card_on_file_last4` so a swap cannot clear the new card). _Read b
 <!-- dict:col:organization_previews.removed_at -->
 **`removed_at`** (timestamptz, nullable; CHECK never with a claim) — when the club was removed (trigger, gotcha 1).
 
+<!-- dict:col:organization_previews.sport -->
+**`sport`** (text, nullable; **mig 536**, Track P Session P2) — the sport typed in the make window (a `lib/sports.ts` id). A club has no sport column of its own, and a claim keeps the sport (T8), so the record is where it outlives the sample (the sample's season, rep teams and tournament carry it too until the claim clears them). Not about a person.
+
+<!-- dict:col:organization_previews.province_code -->
+**`province_code`** (text, nullable; CHECK two capital letters; **mig 536**) — the province typed in the make window. `QC` is refused at making (Club is not on sale in Québec, /legal); the tournament's `directory_province` is set from it.
+
+**The one creation step — `public.make_preview_club(...)`** (SECURITY DEFINER, service role only; **mig 536**, owner rulings T2–T6). The ONLY way a preview is made, called by the owner-only Prospect clubs route (`app/api/platform-admin/prospect-clubs/route.ts` → `lib/prospect-clubs-server.ts`) after the logo is in `org-logos/{orgId}/logo.{ext}`. In ONE transaction: the `organizations` row **with `is_preview = true` in the same insert** (never a customer first; `plan_id 'tournament'`, `is_discoverable false`), this record, `org_public_site_content` (the window's one line as tagline and About us), and the fixed sample (T4): a `league_seasons` row "Sample House League {year}" open for sign-up until Mar 31 with 3 `league_divisions` × 4 `league_teams`; a "Rep" `rep_team_groups` with 4 `rep_teams`; the `tournaments` row "Sample Indoor Classic" on the meeting day with `list_in_directory false`, 2 `diamonds`, 2 published `divisions`, 8 `teams` (no coach, no email) and up to 4 `games`, the first at the meeting time (T5: live by the clock); 3 `club_sponsors` named "(sample)" with a club place each. **No people:** no member, no team contact, no registration, no dues. Its refusals are re-checked under one advisory lock: `PV010` five open (T6), `PV011` a club of that name runs its own site, `PV015` a preview of that name is already open, `PV012` the address is taken, `PV013` Québec, `PV014` the meeting is past or more than 60 days out. A failure rolls everything back and the route removes the logo file.
+
 ---
 ## `billing_locations`
 <!-- dict:table:billing_locations -->

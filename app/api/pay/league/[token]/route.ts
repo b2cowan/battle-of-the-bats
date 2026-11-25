@@ -14,6 +14,7 @@ import { canOpen, toDollars } from '@/lib/online-payment-fee';
 import { BANK_DEBIT_WORDS as B, PAY_WORDS as W } from '@/lib/online-payment-words';
 import { LEAGUE_PAY_WORDS as LW, childList } from '@/lib/league-pay-words';
 import { isMaskedEmail } from '@/lib/utils';
+import { previewWriteRefusal } from '@/lib/preview-write-refusal';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -84,6 +85,7 @@ export const POST = withObservability(async (req: Request, { params }: { params:
 
   const facts = await loadLeaguePayFacts(regId);
   if (!facts) return NextResponse.json({ error: LW.error.linkInvalid(null) }, { status: 404 });
+  const previewClosed = previewWriteRefusal(facts.org); if (previewClosed) return previewClosed;
   if (facts.refusal) {
     const contact = (await getClubSiteContent(facts.org.id).catch(() => null))?.contactEmail ?? null;
     return NextResponse.json({ error: leagueRefusalMessage(facts, contact) }, { status: 409 });

@@ -18,7 +18,8 @@ export const dynamic = 'force-dynamic';
 export default async function Image({ params }: { params: Promise<{ orgSlug: string }> }) {
   const { orgSlug } = await params;
   const org = await resolvePublicClub(orgSlug, 'home').catch(() => null);
-  if (!org) return neutralShareCard();
+  // A preview club (Track P) shares no card of its own: a pasted link must not show the club's name and logo as theirs.
+  if (!org || org.isPreview) return neutralShareCard();
   // A club on a plan without the public site shows its name only (the org layout's rule for its description).
   const site = hasModuleEntitlement(org, 'module_public_site') ? await getClubSiteContent(org.id) : null;
   return clubShareCard(org, homeCard({ clubName: org.name, tagline: site?.tagline ?? null }));

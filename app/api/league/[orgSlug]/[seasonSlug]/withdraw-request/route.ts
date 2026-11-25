@@ -9,6 +9,7 @@ import { notify } from '@/lib/notify';
 import { houseLeagueDeskUserIds } from '@/lib/notify-recipients';
 import { ASK_WORDS } from '@/lib/house-league-money-words';
 import { openSignupLink } from '@/lib/league-signup-link';
+import { previewWriteRefusal } from '@/lib/preview-write-refusal';
 
 export const dynamic = 'force-dynamic';
 
@@ -30,6 +31,7 @@ export const POST = withObservability(async (req: Request,
 
   const org = await resolvePublicLeagueContext(orgSlug);
   if (!org) return NextResponse.json({ error: 'Not found' }, { status: 404 });
+  const previewClosed = previewWriteRefusal(org); if (previewClosed) return previewClosed;
   const season = await getLeagueSeasonBySlug(org.id, seasonSlug);
   if (!season) return NextResponse.json({ error: 'Not found' }, { status: 404 });
 

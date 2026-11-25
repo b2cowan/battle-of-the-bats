@@ -5,6 +5,8 @@ import { getPlatformAdminContext, type PlatformAuthContext } from './platform-au
 export function canAccessBookkeeping(auth: PlatformAuthContext): boolean {
   const email = auth.user.email?.trim().toLowerCase();
   if (!email) return false;
+  // ⚠ This is THE owner allowlist, not only Bookkeeping's: Prospect clubs (making a preview club on the live site, Track P
+  // T2) reads it too, through lib/platform-owner.ts. Adding an accountant here also lets them make preview clubs.
   const explicit = (process.env.BOOKKEEPING_OWNER_EMAILS ?? 'fieldlogichq@gmail.com')
     .split(',').map(value => value.trim().toLowerCase()).filter(Boolean);
   return explicit.includes(email);

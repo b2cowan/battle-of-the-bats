@@ -27,7 +27,8 @@ export const GET = withObservability(async (req: Request,
 
   const org = await getOrganizationBySlug(orgSlug);
   const team = org ? await getRepTeamBySlug(org.id, teamSlug) : null;
-  if (!org || !team) return refusedFeedResponse(req);
+  // A preview club (Track P) serves no feed: a subscription would put its sample games on a real family's phone.
+  if (!org || !team || org.isPreview) return refusedFeedResponse(req);
 
   const calendarName = teamCalendarName(team.name, org.name);
   // The one rule first (Club Tier Stage 4a): a refused club answers like any stopped feed — an empty calendar, so

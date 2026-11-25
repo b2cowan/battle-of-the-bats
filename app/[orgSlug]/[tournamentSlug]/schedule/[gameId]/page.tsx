@@ -5,6 +5,8 @@ import { getPublicTournamentPageData } from '@/lib/public-tournament-data';
 import { orgLinks } from '@/lib/org-links';
 import { publicGameDetailView } from '@/lib/public-game-detail';
 import PublicGameDetails, { PublicGameUnavailable } from '@/components/public/PublicGameDetails';
+import { getClubBySlug } from '@/lib/club-page-meta';
+import { previewBandText, previewTitle } from '@/lib/preview-org';
 
 type GameDetailParams = Promise<{
   orgSlug: string;
@@ -23,6 +25,13 @@ export async function generateMetadata({ params }: { params: GameDetailParams })
     const [away, home] = view.sides;
     const title = view.hasScore ? `${away.name} ${away.score} – ${home.score} ${home.name} · ${view.stateLabel}` : `${away.name} vs ${home.name}`;
     const description = [data.tournament.name, view.round, view.date, view.field].join(' · ');
+    // A preview club (Track P): the share title and description say so; the tab already does, by the org layout's template.
+    const club = await getClubBySlug(orgSlug);
+    if (club?.isPreview) {
+      const shareTitle = previewTitle(title);
+      const shareText = previewBandText(club.name);
+      return { title, description: shareText, openGraph: { title: shareTitle, description: shareText }, twitter: { card: 'summary_large_image', title: shareTitle, description: shareText } };
+    }
     return { title, description, openGraph: { title, description }, twitter: { card: 'summary_large_image', title, description } };
   } catch {
     return {};

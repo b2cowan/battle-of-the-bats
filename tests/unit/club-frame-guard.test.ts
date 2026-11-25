@@ -157,7 +157,8 @@ describe('3 · no typewriter face, none of the old voice (DC-03, /marketing 2026
 
 describe('4 · every club page names itself: "page · club" (End state 8)', () => {
   it('the layout describes the club in its own words (S4-02: never the platform\'s sales line)', () => {
-    assert.match(readCode(`${ORG}/layout.tsx`), /description: clubDescription\(/);
+    // A preview club (Track P Session P2) describes itself with the band's words instead; every real club, in its own.
+    assert.match(readCode(`${ORG}/layout.tsx`), /description: (org\.isPreview \? previewBandText\(org\.name\) : )?clubDescription\(/);
   });
   it('the pattern has one home', () => {
     assert.match(readCode('lib/club-site.ts'), /`\$\{named\} · \$\{clubName\}`/);

@@ -101,9 +101,10 @@ describe('the support console wears the house look (Stage 1)', () => {
     assert.equal(typeof canAccessBookkeeping, 'function');
     // Stage 2's menu by job: the same 19 routes, regrouped (Help is at the foot, so it is not among them). Dev tools and
     // Bookkeeping are declared as constants beside the groups, so they are checked as a pair apart from the seventeen.
-    const extras = ['/platform-admin/dev-tools', '/platform-admin/bookkeeping'];
+    // Track P Session P2 (owner T2, 2026-11-25) added Prospect clubs, the owner's by the same allowlist as Bookkeeping.
+    const extras = ['/platform-admin/dev-tools', '/platform-admin/bookkeeping', '/platform-admin/prospect-clubs'];
     const all = [...menu.matchAll(/href: '(\/platform-admin[^']*)'/g)].map(m => m[1]);
-    assert.deepEqual(all.filter(h => extras.includes(h)).sort(), [...extras].sort(), 'Dev tools and Bookkeeping are still the two flagged entries');
+    assert.deepEqual(all.filter(h => extras.includes(h)).sort(), [...extras].sort(), 'Dev tools, Bookkeeping and Prospect clubs are still the flagged entries');
     const hrefs = all.filter(h => !extras.includes(h));
     assert.deepEqual(hrefs, [
       '/platform-admin', '/platform-admin/orgs', '/platform-admin/customer-users', '/platform-admin/free-time',

@@ -33,6 +33,7 @@ import { ensureSeasonForm, signupFormView } from '@/lib/club-form-server';
 import { answersIn, checkAnswers, onceQuestions, perChildQuestions, signupConsentText, type AnswerIn, type AnswerOut, type SignupQuestion } from '@/lib/club-form-signup';
 import { checkFileUses, formGoneError, handoversFrom } from '@/lib/club-form-family';
 import { FAMILY_FORM_WORDS as FW_FORM } from '@/lib/club-form-family-words';
+import { previewWriteRefusal } from '@/lib/preview-write-refusal';
 
 export const dynamic = 'force-dynamic';
 
@@ -101,6 +102,7 @@ export const POST = withObservability(async (req: Request,
   // a private, canceled, or non-entitled org must not accept public registrations.
   const org = await resolvePublicLeagueContext(orgSlug);
   if (!org) return NextResponse.json({ error: 'This club’s site isn’t available.' }, { status: 404 });
+  const previewClosed = previewWriteRefusal(org); if (previewClosed) return previewClosed;
 
   const season = await getLeagueSeasonBySlug(org.id, seasonSlug);
   if (!season) return NextResponse.json({ error: 'Season not found' }, { status: 404 });

@@ -32,7 +32,8 @@ export const GET = withObservability(async (req: Request,
     status, headers: { 'Content-Type': 'text/plain; charset=utf-8', 'Cache-Control': 'no-store', 'X-Content-Type-Options': 'nosniff' },
   });
   const org = await resolvePublicLeagueContext(orgSlug);
-  if (!org) return gone(404, 'Not found');
+  // A preview club (Track P) serves no files: only its pages, each marked.
+  if (!org || org.isPreview) return gone(404, 'Not found');
   const season = await getLeagueSeasonBySlug(org.id, seasonSlug);
   if (!isPublicLeagueSeason(season)) return gone(404, 'Not found');
 

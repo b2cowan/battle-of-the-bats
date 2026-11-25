@@ -18891,6 +18891,24 @@
     "ordinal_position": 11
   },
   {
+    "table_name": "organization_previews",
+    "column_name": "sport",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 12
+  },
+  {
+    "table_name": "organization_previews",
+    "column_name": "province_code",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 13
+  },
+  {
     "table_name": "organizations",
     "column_name": "id",
     "data_type": "uuid",

@@ -29,6 +29,7 @@
  *
  * Client-safe: no server imports. The id lookups are in `lib/preview-org-server.ts`.
  */
+import { FIELDLOGICHQ_CONTACT_EMAIL } from './fieldlogichq-contact';
 
 /**
  * The sections a preview's public site shows, folded in at the entitlement door (`/billing`, 2026-11-25): the club site,
@@ -43,3 +44,29 @@ export const PREVIEW_SECTIONS: readonly string[] = ['module_public_site', 'modul
 export function isPreviewRow(row: { is_preview?: boolean | null } | null | undefined): boolean {
   return row?.is_preview === true;
 }
+
+// ── The marking (Track P Session P2, drawing tab 5; /legal's words, CLUB_WEBSITE_TRACK_P_REVIEW.md rec. 4) ─────────────
+// Every page of a preview says so: the band above the club's bar, the footer, the page title and a pasted link's preview.
+// One home for the words, so the band, the footer, the titles and the closed forms cannot drift apart.
+
+/** The band's words, and a pasted link's description. */
+export function previewBandText(clubName: string): string {
+  return `Prepared by FieldLogicHQ for ${clubName}. Not their site yet.`;
+}
+
+/** The footer's words: the band's, and the removal route (/legal: the cheapest answer to a real club's "take it down"). */
+export function previewFootText(clubName: string): string {
+  return `${previewBandText(clubName)} To have it removed, write to ${FIELDLOGICHQ_CONTACT_EMAIL}.`;
+}
+
+/** A page title or share title on a preview: "(preview)" after it, once. */
+export function previewTitle(title: string): string {
+  return / \(preview\)$/.test(title) ? title : `${title} (preview)`;
+}
+
+/** What a closed form says on a preview (every public sign-up, tryout and registration form, page and server). */
+export const PREVIEW_CLOSED_TITLE = 'Registration isn’t open on this preview';
+export function previewClosedBody(clubName: string): string {
+  return `FieldLogicHQ made this preview for ${clubName}. Nothing can be registered here, and nothing you type is kept.`;
+}
+export const PREVIEW_CLOSED_NEXT = 'To register now, ask the club how it is taking registrations.';

@@ -1016,6 +1016,53 @@ the demos follow the product and are curated with `/demos`, never as a build ste
   the page's own tag; instead the "don't index" page tag on every page, and **P2 refuses every non-page route** a preview
   could serve (share images, posters, the calendar feed, PDFs), so nothing is left for a header to cover. **Left to P2 on purpose:** share
   images, posters, the calendar feed and every form refusing a preview (no preview can exist before P2).
+- 2026-11-25 — **Track P Session P2 built: Prospect clubs, Make one, the sample and the marking (T2–T6; drawing tabs 2,
+  3, 5).** Nothing committed at writing; the owner's word commits it through a private index. **Migration 536**
+  (`organization_previews.sport` + `.province_code`, and `make_preview_club(...)`, the ONE creation step, SECURITY
+  DEFINER, service role only) **applied to dev 2026-11-25 at the owner's word** ("Apply it to dev now"), re-applied
+  after review; production on the steps list, ORDER after 535. In one transaction it makes the club with `is_preview` in
+  its own insert (never a customer first; free start, `is_discoverable false`), its record, its site words, and the fixed
+  sample (T4): "Sample House League {year}" open until Mar 31 (3 divisions × 4 teams), 4 rep teams in a "Rep" group
+  ("{first word} U11 Comets"…; "St. Mary's" keeps its "St."), "Sample Indoor Classic" on the meeting day with its
+  listing switch OFF and its first game at the meeting time (T5, live by the clock), opponents from invented towns
+  (/marketing found Fenwick and Pelham are real), 3 sponsors named "(sample)"; no member, no team contact, no
+  registration, no dues (T3). Refusals re-checked under one advisory lock: PV010 five open (T6), PV011 a club of that
+  name, PV015 a preview of that name, PV012 the address, PV013 Québec, PV014 the meeting outside the next 60 days.
+  Probed on dev: a rolled-back make (every row as above), PV011/PV013/PV014 live, then one real make ("Probe Valley
+  Softball") whose pages were fetched and then deleted (the sample went with it; the record stayed, stamped Removed, and
+  the walk shows it). **Who owns which part of the shared frame:** P2 owns the band line in `app/[orgSlug]/layout.tsx`,
+  the title template and description there, and the footer line in `ClubFrame`/`ClubFooter`; Stage 1 owns the home
+  (`ClubSiteHome.tsx`, untouched here).
+  **What was built:** Prospect clubs (`app/platform-admin/prospect-clubs/`; owner only by the ONE owner allowlist,
+  re-exported as `lib/platform-owner.ts`, menu entry after Leads; table → cards at 640, count line, Search, empty state;
+  claimed rows open Clubs & portals, open rows open the club's site in a new tab until P3's room window); the make window
+  (`MakeClubWindow.tsx`; every refusal in place; colours read from the logo in the browser; "Nothing was made. Try
+  again." reported to Errors); the route (`app/api/platform-admin/prospect-clubs/route.ts` → `lib/prospect-clubs-server.ts`:
+  owner gate, the logo's bytes sniffed, upload to `org-logos/{id}/logo.{ext}`, the one step, the logo taken back out on a
+  refusal and kept when a lost answer turns out to have made the club). **The marking:** `PreviewBand` above the club's
+  bar on every page under the org layout (tournament pages too), not pinned; the footer line with a mail link to the
+  removal route (`previewFoot`, also at the foot of pages without the club frame); "(preview)" in every title and share
+  title and the band's words as the description (club pages, the org template, the tournament layout, a game page); the
+  "Built on FieldLogicHQ" credit shown on a preview though it is on the free start. **Closed on the server:**
+  `lib/preview-write-refusal.ts` in every public write (the house league sign-up and its five sibling routes, the family
+  form door, the tryout sign-up, tournament registration, both pay links, the sponsor link door, tournament and team
+  follows), before the body is read where the route knows the club first; the house league and tryout Register pages
+  show "Registration isn't open on this preview" (`PreviewClosedForm`); the tournament Register page already forwards a
+  free-plan club to the event. **Refused files:** club, team and tryout share images fall back to the plain card;
+  tournament, game and team share images draw none; the team calendar feed, the rules PDF and the form's documents.
+  **Build check:** `tests/unit/preview-club-p2-guard.test.ts` (every public write route in the visitor-facing folders
+  refuses, goes through a door that does, or says why it cannot be reached; the files; the marking; the creation step;
+  the list and window rules as behaviour). **Reviews, all applied:** `/marketing` (14 strings; kept as drawn: the
+  "Preview" pill and the plain "Rep" heading, T4's "team rows carry no tag"); `/design` (no must-fix; phone cards, 44 px
+  Change buttons, the meeting field's error, the close-only cap window, quieter removed rows, the band's 16 px inset,
+  the handshake icon, the mail link); `/review` (no high; the lost-answer logo, the `*` wildcard in a name pre-check
+  removed in favour of PV011/PV015, the owner-allowlist coupling noted in `lib/bookkeeping-access.ts`). `/docs`: none
+  needed, a platform-admin-only page has no customer help. **Deliberate departures from the drawing, said to the
+  owner:** no "Claim it" on the band until P3 builds its page; logos PNG/JPG/WebP, not SVG (a public bucket); after
+  Make the window closes with a link instead of opening the room window (P3). **⚠ Before the first real preview on
+  production, P4's removal must be live there, or the owner removes each one by hand (Find → the club → Delete).** Walk:
+  [CLUB_WEBSITE_TRACK_P_P2_WALK.html](CLUB_WEBSITE_TRACK_P_P2_WALK.html), https://claude.ai/artifact/GE3Toi49EBuJbdUVUGXrZp
+  (3 walks, 37 steps). Pre-existing, seen on the way: `app/api/public/stats` reads a tournament by id without its club.
 
 ## 8. Census questions for Stage 0 (answer from code, not from this plan)
 

@@ -19,6 +19,7 @@ import { hasModuleEntitlement } from '@/lib/module-entitlements';
 import { isPublicClubSiteOpen } from '@/lib/public-club-access';
 import type { ClubFrameClub } from '@/components/public/ClubFrame';
 import type { Organization } from '@/lib/types';
+import { previewFootText } from './preview-org';
 
 /** `base` (Stage 4e): `{ ownHost: true }` on a club's own web address, so the About link reads `/about`. Left out = our host. */
 export async function loadClubFrame(org: Organization, orgSlug: string, base?: { ownHost: boolean }): Promise<ClubFrameClub> {
@@ -41,7 +42,10 @@ export async function loadClubFrame(org: Organization, orgSlug: string, base?: {
     sections,
     contactEmail: siteContent?.contactEmail?.trim() || null,
     socials: clubSocials(siteContent),
-    showCredit: !isFreePlan(org.planId),
+    // A preview club (Track P) carries the credit though it is on the free start: the band and this credit are the only
+    // FieldLogicHQ words on its pages (drawing tab 5), and the footer repeats the band with the removal route.
+    showCredit: !isFreePlan(org.planId) || org.isPreview === true,
+    previewFoot: org.isPreview ? previewFootText(org.name) : null,
     face: clubFace(org.themeFont),
     notice: liveNotice ? {
       notice: liveNotice.notice,

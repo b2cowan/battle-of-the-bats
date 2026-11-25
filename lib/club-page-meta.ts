@@ -13,6 +13,7 @@ import { usesOwnAddress } from './club-domain';
 import { isOwnHost } from './own-hosts';
 import { requestHost } from './request-host';
 import type { Organization } from './types';
+import { previewBandText, previewTitle } from './preview-org';
 
 /**
  * lib/club-page-meta.ts — the server reads behind a club page's title and frame (Club Tier Stage 4b-1).
@@ -73,8 +74,10 @@ export async function clubPageMetadata(
   if (!isPublicClubSiteOpen(club)) return { title: { absolute: clubPageTitle(null, club.name) } };
   const page = await pageName(club);
   const meta: ClubPageMeta = typeof page === 'object' && page ? page : { name: page ?? null };
-  const title = clubPageTitle(meta.name, club.name);
-  const description = meta.description?.trim() || undefined;
+  // A preview club (Track P, drawing tab 5): the tab, the share title and the share description say so, because a pasted
+  // link carries no band (/legal, CLUB_WEBSITE_TRACK_P_REVIEW.md rec. 4).
+  const title = club.isPreview ? previewTitle(clubPageTitle(meta.name, club.name)) : clubPageTitle(meta.name, club.name);
+  const description = club.isPreview ? previewBandText(club.name) : meta.description?.trim() || undefined;
   // A page that names no card of its own shares the club's (Stage 4b-2b): the same image it would inherit, said aloud.
   const card = meta.card ?? {
     path: shareCardPath.home(orgSlug),

@@ -27,6 +27,7 @@ import ClubFooter from './ClubFooter';
 import ClubNoticeBanner, { type ClubFrameNotice } from './ClubNoticeBanner';
 import { usePublicClub } from './PublicClubContext';
 import styles from './ClubFrame.module.css';
+import PreviewFootLine from './PreviewFootLine';
 
 /** What the frame needs of the club — server data, no identity (safe in the anonymous page a service worker caches). */
 export interface ClubFrameClub {
@@ -45,6 +46,9 @@ export interface ClubFrameClub {
   notice: ClubFrameNotice | null;
   /** The About page, when it has contacts, documents or questions: the footer's "Contacts and documents" door. */
   aboutHref: string | null;
+  /** A preview club's footer line (Track P): the band's words and the removal route. Null on every real club. A page that
+   *  wears no club frame (a tournament page) still carries it, at its foot. */
+  previewFoot?: string | null;
 }
 
 /**
@@ -57,7 +61,7 @@ export default function ClubFrame({ club, preview = false, children }: { club: C
   const wears = wearsClubFrame(pathname, usePublicClub());
   // The preview is deliberately OUTSIDE `wearsClubFrame`: it is the one place the frame is drawn at an admin address, and
   // for a club whose site is closed (the editor shows its owner and admins the site they are making).
-  if (!preview && !wears) return <>{children}</>;
+  if (!preview && !wears) return <>{children}{club.previewFoot && <PreviewFootLine text={club.previewFoot} className={styles.previewFootAlone} linkClassName={styles.previewFootLink} />}</>;
 
   return (
     <div className={styles.site} data-club-site="" data-club-face={club.face}>

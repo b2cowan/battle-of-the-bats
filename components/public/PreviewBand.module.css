@@ -1,0 +1,33 @@
+/* The preview band (Club Website Track P, drawing tab 5; /design: 13 px, a hairline, 56 px on a computer).
+   Dark whatever the club's colours, so it never reads as the club's own notice. In the page's flow, never pinned. */
+.band {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  min-height: 48px;
+  padding: 10px 16px;
+  background: #16181d; /* token-exempt: the preview band is FieldLogicHQ's own fixed dark, never the club's colours or the warm theme's re-maps */
+  color: #f4f5f7; /* token-exempt: the preview band is FieldLogicHQ's own fixed dark, never the club's colours or the warm theme's re-maps */
+  border-bottom: 1px solid rgba(255, 255, 255, 0.14);
+}
+
+.words {
+  margin: 0;
+  font: 500 13px/1.45 var(--font-sans, system-ui, sans-serif);
+}
+
+@media (min-width: 900px) {
+  .band {
+    min-height: 56px;
+    padding: 0 16px;           /* the club bar's own left edge at every width (ClubFrame.module.css) */
+  }
+}
+
+@media print {
+  .band {
+    background: none;
+    color: #000; /* token-exempt: the preview band is FieldLogicHQ's own fixed dark, never the club's colours or the warm theme's re-maps */
+    border-bottom: 1px solid #000; /* token-exempt: the preview band is FieldLogicHQ's own fixed dark, never the club's colours or the warm theme's re-maps */
+  }
+}

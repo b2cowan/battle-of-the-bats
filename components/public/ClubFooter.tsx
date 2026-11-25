@@ -17,6 +17,7 @@ import type { ClubSocialKind } from '@/lib/club-site';
 import { siteEdit } from '@/lib/site-edit-marks';
 import type { ClubFrameClub } from './ClubFrame';
 import styles from './ClubFrame.module.css';
+import PreviewFootLine from './PreviewFootLine';
 
 /** What a tile shows (the icon set carries no brand marks) and what it is called aloud. */
 const SOCIAL: Record<ClubSocialKind, { mark: string | null; name: (club: string) => string }> = {
@@ -76,6 +77,8 @@ export default function ClubFooter({ club }: { club: ClubFrameClub }) {
 
         {/* The one door to the About page (Stage 4c-1, Ask 10), only when it has contacts, documents or questions. */}
         {club.aboutHref && <Link href={club.aboutHref} className={styles.footDoor} {...siteEdit('lists')}>Contacts and documents</Link>}
+
+        {club.previewFoot && <PreviewFootLine text={club.previewFoot} className={styles.previewFoot} linkClassName={styles.previewFootLink} />}
 
         {club.showCredit && <BuiltOnCredit className={styles.credit} />}
       </div>

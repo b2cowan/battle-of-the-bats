@@ -77,7 +77,8 @@ export const GET = withObservability(async (req: Request,
   }
 
   const org = await getOrganizationBySlug(orgSlug);
-  if (!org || org.subscriptionStatus === 'canceled') return notFound();
+  // A preview club (Track P) serves no files: only its pages, each marked.
+  if (!org || org.subscriptionStatus === 'canceled' || org.isPreview) return notFound();
   const tournament = await getPublicTournamentBySlug(org.id, tournamentSlug);
   if (!tournament || !isPublicPageEnabled(tournament, 'rules')) return notFound();
 

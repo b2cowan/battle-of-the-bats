@@ -4,6 +4,7 @@ import { resolvePublicLeagueContext } from '@/lib/public-league';
 import { withObservability } from '@/lib/observability';
 import { throttleSignupFiles } from '@/lib/public-form-throttle';
 import { removeWaitingFile } from '@/lib/club-form-family';
+import { previewWriteRefusal } from '@/lib/preview-write-refusal';
 
 export const dynamic = 'force-dynamic';
 
@@ -20,6 +21,7 @@ export const DELETE = withObservability(async (req: Request,
   if (throttled) return throttled;
   const org = await resolvePublicLeagueContext(orgSlug);
   if (!org) return NextResponse.json({ error: 'Not found' }, { status: 404 });
+  const previewClosed = previewWriteRefusal(org); if (previewClosed) return previewClosed;
   const season = await getLeagueSeasonBySlug(org.id, seasonSlug);
   if (!season) return NextResponse.json({ error: 'Not found' }, { status: 404 });
   try {

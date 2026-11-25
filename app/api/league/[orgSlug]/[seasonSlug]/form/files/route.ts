@@ -12,6 +12,7 @@ import { isUuid } from '@/lib/utils';
 import { FAMILY_FILE_KINDS, storeFamilyFile, sweepWaitingFiles } from '@/lib/club-form-family';
 import { FAMILY_FORM_WORDS as W } from '@/lib/club-form-family-words';
 import { isPhoto, sizeLine } from '@/lib/club-form-signup';
+import { previewWriteRefusal } from '@/lib/preview-write-refusal';
 
 export const dynamic = 'force-dynamic';
 
@@ -36,6 +37,7 @@ export const POST = withObservability(async (req: Request,
 
   const org = await resolvePublicLeagueContext(orgSlug);
   if (!org) return NextResponse.json({ error: 'Not found' }, { status: 404 });
+  const previewClosed = previewWriteRefusal(org); if (previewClosed) return previewClosed;
   const season = await getLeagueSeasonBySlug(org.id, seasonSlug);
   if (!isPublicLeagueSeason(season)) return NextResponse.json({ error: 'Not found' }, { status: 404 });
   if (isFinishedLeagueSeason(season)) return NextResponse.json({ error: W.fileFailed, code: 'finished' }, { status: 409 });

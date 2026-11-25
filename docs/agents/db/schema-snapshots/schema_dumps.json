@@ -18893,6 +18893,24 @@
         "column_default": "now()"
       },
       {
+        "table_name": "organization_previews",
+        "pos": 12,
+        "column_name": "sport",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "organization_previews",
+        "pos": 13,
+        "column_name": "province_code",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
         "table_name": "organizations",
         "pos": 1,
         "column_name": "id",
@@ -52611,6 +52629,12 @@
         "table_name": "organization_previews",
         "detail": "organization_previews_logo_source_is_web",
         "check_clause": "((logo_source_url ~* '^https?://'::text) AND (length(logo_source_url) <= 2000))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "organization_previews",
+        "detail": "organization_previews_province_code_shape",
+        "check_clause": "((province_code IS NULL) OR (province_code ~ '^[A-Z]{2}$'::text))"
       },
       {
         "kind": "CHECK",

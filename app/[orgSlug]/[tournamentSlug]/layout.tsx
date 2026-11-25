@@ -37,6 +37,7 @@ import clubFrameStyles from '@/components/public/ClubFrame.module.css';
 import frameStyles from '@/components/public/TournamentFrame.module.css';
 import { publicTournamentContactEmail } from '@/lib/public-frame-server';
 import { publicFrameAttr, publicFrameBand, publicFrameHost, publicFrameRoleCss } from '@/lib/public-frame';
+import { previewBandText, previewTitle } from '@/lib/preview-org';
 
 export const dynamic = 'force-dynamic';
 
@@ -50,6 +51,7 @@ export async function generateMetadata({
   // Resolve social-share title/description; fall back gracefully.
   let ogTitle = 'Tournament';
   let ogDescription = 'Live scores, schedule and standings on FieldLogicHQ.';
+  let shareTitle: string | null = null;
   try {
     const org = await getOrganizationBySlug(orgSlug);
     if (org && org.subscriptionStatus !== 'canceled') {
@@ -57,6 +59,11 @@ export async function generateMetadata({
       if (tournament) {
         ogTitle = tournament.name;
         ogDescription = `Live scores, schedule and standings · Hosted by ${org.name} on FieldLogicHQ.`;
+        // A preview club (Track P): the share title and description say so (the tab gets it from the org layout's template).
+        if (org.isPreview) {
+          ogDescription = previewBandText(org.name);
+          shareTitle = previewTitle(tournament.name);
+        }
       }
     }
   } catch {
@@ -68,8 +75,8 @@ export async function generateMetadata({
     description: ogDescription,
     // The branded OG image is auto-wired from `opengraph-image.tsx` in this
     // segment (event card), overridden by nested routes (game score card, team card).
-    openGraph: { title: ogTitle, description: ogDescription, type: 'website' },
-    twitter: { card: 'summary_large_image', title: ogTitle, description: ogDescription },
+    openGraph: { title: shareTitle ?? ogTitle, description: ogDescription, type: 'website' },
+    twitter: { card: 'summary_large_image', title: shareTitle ?? ogTitle, description: ogDescription },
     // Unified-app identity (Phase 0): one FieldLogicHQ install, scope '/', so an
     // installed app captures this tournament's links. Per-event install icons are
     // retired (G1) — the home-screen label is the platform name for everyone.

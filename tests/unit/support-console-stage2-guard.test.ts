@@ -227,7 +227,7 @@ describe('5 · input: 2–120 characters, wildcards literal, Stripe whole only, 
 
 // ── 6 · One rulebook ─────────────────────────────────────────────────────────────────────────────────────────────────
 // `personActionContext` is the person actions' front door: it checks `person_support` first (guarded below).
-const GATES = /requirePlatformPower\(|requireAnyPlatformPower\(|requirePlatformAreaApi\(|requireBookkeepingApi\(|requireDevToolPlatformAdmin\(|personActionContext(<[^>]*>)?\(/;
+const GATES = /requirePlatformPower\(|requireAnyPlatformPower\(|requirePlatformAreaApi\(|requireBookkeepingApi\(|requirePlatformOwnerApi\(|requireDevToolPlatformAdmin\(|personActionContext(<[^>]*>)?\(/;
 
 describe('6 · every console API resolves its role through the one powers list', () => {
   const routes = filesUnder('app/api/platform-admin', '.ts').filter(f => f.endsWith('route.ts'));
@@ -347,6 +347,7 @@ describe('9 · the menu by job', () => {
       ['app/platform-admin/early-access/page.tsx', /AdminPageHeader title="Leads"/],
       ['app/platform-admin/email/EmailDashboardClient.tsx', /AdminPageHeader title="Campaigns"/],
       ['app/platform-admin/pitch-deck-studio/page.tsx', /AdminPageHeader title="Pitch decks"/],
+      ['app/platform-admin/prospect-clubs/ProspectClubsScreen.tsx', /AdminPageHeader title="Prospect clubs"/],
       ['app/platform-admin/bulk-operations/BulkOperationsClient.tsx', /AdminPageHeader title="Bulk changes"/],
       ['app/platform-admin/users/CompanyUsersClient.tsx', /title="Staff"/],
     ];
@@ -361,6 +362,18 @@ describe('9 · the menu by job', () => {
       assert.ok(!visibleMenuGroups(role, false, true).some(g => g.label === 'Private finance'), `${role}: no Bookkeeping without the allowlist`);
     }
     assert.match(readCode('app/platform-admin/layout.tsx'), /canBookkeep=\{canAccessBookkeeping\(auth\)\}/);
+  });
+
+  it('Prospect clubs is the owner’s (Track P, T2), by the same allowlist, after Leads in Growth; never a role’s', () => {
+    for (const role of ROLES) {
+      const growth = (owner: boolean) => visibleMenuGroups(role, owner, true).find(g => g.label === 'Growth')?.items.map(i => i.label) ?? [];
+      assert.ok(!growth(false).includes('Prospect clubs'), `${role}: no Prospect clubs without the allowlist`);
+      const owned = growth(true);
+      assert.ok(owned.includes('Prospect clubs'), `${role}: the owner sees it whatever the role`);
+      const leads = owned.indexOf('Leads');
+      assert.equal(owned.indexOf('Prospect clubs'), leads + 1, role);
+    }
+    assert.match(readCode('lib/platform-owner.ts'), /canAccessBookkeeping as isPlatformOwner/);
   });
 
   it('the eye tells the truth (the drawings\' menus, A1 applied)', () => {

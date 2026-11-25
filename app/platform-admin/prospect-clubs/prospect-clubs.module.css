@@ -1,0 +1,82 @@
+/* Prospect clubs (Club Website Track P, Session P2; drawing tab 2). The table and its cards are the console's own
+   (`console.module.css` + the global `table-cards`); this file holds only what the list and its window add. */
+
+.empty {
+  display: grid;
+  gap: 0.6rem;
+  justify-items: start;
+  padding: 1.5rem;
+  border: 1px dashed var(--home-line);
+  border-radius: 10px;
+  color: var(--text-secondary);
+  max-width: 60ch;
+}
+
+.empty strong { color: var(--text-primary); font-size: var(--type-body); }
+
+.list td { vertical-align: top; }
+
+.nameLine { display: inline-flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
+.plainName { font-weight: 650; color: var(--text-primary); }
+
+/* A removed row is a record, quieted (drawing tab 2). */
+.removed td, .removed .plainName { color: var(--text-tertiary); }
+
+/* The state pill sits on the name line on a phone (the State column is gone there). */
+.phonePill { display: none; }
+.phoneOnly { display: none; }
+
+.pillOpen {
+  background: color-mix(in srgb, var(--home-olive) 12%, transparent);
+  color: var(--home-olive);
+}
+
+@media (max-width: 640px) {
+  .row { min-height: 60px; }
+  .row td:first-child { flex-direction: column; align-items: flex-start; gap: 0.2rem; }
+  .phonePill { display: inline-flex; }
+  .phoneOnly { display: block; }
+  .stateCell, .deskOnly { display: none !important; }
+  .row td[data-label='Made by'] { display: none !important; }
+  /* The card is the tap target; it carries no chevron (drawing tab 2). */
+  .row td:last-child { display: none !important; }
+}
+
+/* ── The make window ───────────────────────────────────────────────────────────────────────────────────────────── */
+.form { display: grid; gap: 1rem; }
+.form[hidden] { display: none; }
+
+.pair { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
+
+@media (max-width: 420px) {
+  .pair { grid-template-columns: 1fr; }
+}
+
+.address { display: flex; align-items: center; gap: 0.25rem; }
+.addressHost { color: var(--text-tertiary); font-size: var(--type-body); white-space: nowrap; }
+
+.file { font: inherit; min-height: 44px; }
+
+.colourLine { display: flex; align-items: center; gap: 0.4rem; margin: 0; flex-wrap: wrap; font-size: var(--type-support); color: var(--text-secondary); }
+.swatch { width: 20px; height: 20px; border-radius: 4px; border: 1px solid var(--home-line); }
+.colour { width: 100%; min-height: 44px; padding: 2px; border: 1px solid var(--home-line); border-radius: 8px; background: none; }
+
+.holds {
+  display: grid;
+  gap: 0.35rem;
+  padding: 0.75rem 0.9rem;
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--home-olive) 6%, transparent);
+  font-size: var(--type-support);
+  color: var(--text-secondary);
+}
+
+.holds strong { color: var(--text-primary); }
+
+.making { margin: 0; font-size: var(--type-body); color: var(--text-secondary); }
+
+/* The window's two "Change" buttons keep the tap floor on a phone (/design). */
+.change { font: inherit; }
+@media (max-width: 640px) {
+  .change { min-height: var(--tap-min, 44px); display: inline-flex; align-items: center; }
+}

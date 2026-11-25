@@ -4,6 +4,7 @@ import { shareImageTheme } from '@/lib/tournament-share-look';
 import { teamColor, teamInitials } from '@/lib/team-color';
 import { publicGameStatus, DEFAULT_GAME_DURATION_MINUTES } from '@/lib/game-status';
 import { publicGameDetailView } from '@/lib/public-game-detail';
+import { getClubBySlug } from '@/lib/club-page-meta';
 
 export const alt = 'Tournament score';
 export const size = { width: 1200, height: 630 };
@@ -31,6 +32,8 @@ async function loadCard(params: Promise<{ orgSlug: string; tournamentSlug: strin
     const { orgSlug, tournamentSlug, gameId } = await params;
     const data = await getPublicTournamentPageData(orgSlug, tournamentSlug, 'schedule-preview', { look: true });
     if (!data?.tournament) return null;
+    // A preview club (Track P) shares no card (the plain one instead): a pasted link must not show the club's name and logo as theirs.
+    if ((await getClubBySlug(orgSlug))?.isPreview) return null;
 
     const game = data.games.find(g => g.id === gameId);
     if (!game) return null;

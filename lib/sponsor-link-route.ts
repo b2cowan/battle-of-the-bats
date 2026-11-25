@@ -13,6 +13,7 @@ import { offerLapsedNow } from './club-sponsorship-offer-lapsed';
 import { refundedAway } from './club-sponsor-invoice';
 import type { ClubDeal } from './club-sponsorship-deals';
 import type { Organization } from './types';
+import { previewWriteRefusal } from './preview-write-refusal';
 
 export type LinkDeal = { org: Organization; deal: ClubDeal & { linkVersion: number } };
 
@@ -21,6 +22,7 @@ export async function dealForLink(token: string, opts: { keepRefunded?: boolean 
   if (!door) return { failure: NextResponse.json({ error: DEAL_WORDS.page.notFound, code: 'not_found' }, { status: 404 }) };
   const org = await clubForDoor(door.orgId);
   if (!org) return { failure: NextResponse.json({ error: DEAL_WORDS.page.notFound, code: 'not_found' }, { status: 404 }) };
+  { const previewClosed = previewWriteRefusal(org); if (previewClosed) return { failure: previewClosed }; }
   if (door.kind === 'replaced') return { failure: NextResponse.json({ error: DEAL_WORDS.page.errClosed, code: 'closed' }, { status: 409 }) };
   const deal = await readDeal(org.id, door.dealId);
   if (!deal || (deal.state === 'withdrawn' && !(opts.keepRefunded && refundedAway(deal)))) return { failure: NextResponse.json({ error: DEAL_WORDS.page.errClosed, code: 'closed' }, { status: 409 }) };

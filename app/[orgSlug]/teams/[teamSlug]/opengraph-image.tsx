@@ -18,7 +18,8 @@ export default async function Image({ params }: { params: Promise<{ orgSlug: str
   const { orgSlug, teamSlug } = await params;
   const org = await resolvePublicClub(orgSlug, 'teams').catch(() => null);
   const team = org ? await getClubTeam(org.id, teamSlug).catch(() => null) : null;
-  if (!org || !team) return neutralShareCard();
+  // A preview club (Track P) shares no card of its own: a pasted link must not show the club's name and logo as theirs.
+  if (!org || !team || org.isPreview) return neutralShareCard();
   const season = team.isArchived ? null : liveSeasonOf(await getClubTeamSeasons(team.id));
   return clubShareCard(org, teamCard({ clubName: org.name, teamName: team.name, seasonYear: season?.year ?? null }));
 }

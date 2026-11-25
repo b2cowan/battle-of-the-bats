@@ -33,7 +33,8 @@ async function resolvePublicTournament(
   tournamentSlug: string,
 ): Promise<{ id: string; name: string } | null> {
   const org = await getOrganizationBySlug(orgSlug);
-  if (!org || org.subscriptionStatus === 'canceled') return null;
+  // A preview club (Track P) is never followed: a follow would put its sample games on a real fan's phone.
+  if (!org || org.subscriptionStatus === 'canceled' || org.isPreview) return null;
   return await getPublicTournamentBySlug(org.id, tournamentSlug);
 }
 

@@ -2,15 +2,15 @@
 
 **Generated:** 2026-11-25 by `scripts/refresh-db-snapshots.mjs` (structure only — no business data).
 
-**⚠️ 94 divergence(s)** across dev/prod.
+**⚠️ 97 divergence(s)** across dev/prod.
 
 | Dimension | Only in DEV | Only in PROD | Changed |
 |---|---|---|---|
 | Tables | 2 | 0 | — |
-| Columns | 52 | 0 | 0 |
+| Columns | 54 | 0 | 0 |
 | Indexes | 9 | 0 | 0 |
 | Constraints | 15 | 0 | — |
-| RLS / CHECK | 14 | 0 | 0 (RLS state) |
+| RLS / CHECK | 15 | 0 | 0 (RLS state) |
 
 ## Tables
 ### Only in DEV (2)
@@ -21,7 +21,7 @@
 _none_
 
 ## Columns
-### Only in DEV (52)
+### Only in DEV (54)
 - `club_sponsor_deal_payments.card_brand`
 - `club_sponsor_deal_payments.card_last4`
 - `club_sponsor_deal_payments.dispute_lost_at`
@@ -71,7 +71,9 @@ _none_
 - `organization_previews.org_id`
 - `organization_previews.org_name`
 - `organization_previews.org_slug`
+- `organization_previews.province_code`
 - `organization_previews.removed_at`
+- `organization_previews.sport`
 - `organization_previews.updated_at`
 - `organizations.is_preview`
 
@@ -124,7 +126,7 @@ _none_
 ### RLS state differs (0)
 _none_
 
-### CHECK only in DEV (14)
+### CHECK only in DEV (15)
 - `club_sponsor_deal_payments.club_sponsor_deal_payments_card`
 - `club_sponsor_deal_refunds.club_sponsor_deal_refunds_amount_check`
 - `club_sponsor_deal_refunds.club_sponsor_deal_refunds_check`
@@ -137,6 +139,7 @@ _none_
 - `club_sponsor_deals.club_sponsor_deals_card_fee`
 - `organization_previews.organization_previews_claimer_needs_claim`
 - `organization_previews.organization_previews_logo_source_is_web`
+- `organization_previews.organization_previews_province_code_shape`
 - `organization_previews.organization_previews_removed_or_claimed`
 - `organizations.organizations_preview_has_no_stripe`
 

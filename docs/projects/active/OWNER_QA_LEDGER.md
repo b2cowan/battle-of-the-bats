@@ -28861,3 +28861,16 @@ performed over the shared working tree. The original walk result is not claimed 
 
 **✅ PASSED 2026-11-25, 37 of 37** (paste-back; A 7/7, B 16/16, C 7/7, D 7/7; no notes came back). No owner calls in this walk. Next: the commit at the owner's yes.
 <!-- /§566 -->
+
+## §568 · Club website · Track P · Session P2 · Prospect clubs, making a preview, the marking — **the owner makes a prospect’s own club from platform admin (a Growth staff member never sees the page), every refusal shows under its field, the club is made in one step with its made-up season, rep teams, an unlisted one-day tournament whose first game is live at the meeting time and three “(sample)” sponsors; every page of it carries the band, the footer line and “(preview)” in its title, Register says “Registration isn’t open on this preview”, and the owner removes it by hand from its record**
+<!-- §568 -->
+**Walk published 2026-11-25.** [Interactive walk](https://claude.ai/artifact/GE3Toi49EBuJbdUVUGXrZp) (walks A–C, 37 steps; no owner calls, T2–T6 ruled 2026-11-25) · [repository HTML](CLUB_WEBSITE_TRACK_P_P2_WALK.html). Migration 536 on dev (owner’s word, 2026-11-25). Plan: `CLUB_WEBSITE_ENHANCEMENTS_PLAN.md` §6 Track P and Progress (“Track P Session P2”).
+
+**Where:** `http://localhost:3000`, Platform admin › Growth › Prospect clubs, then the preview at `/oakridge-minor-softball`. **Sign in:** the owner `fieldlogichq@gmail.com` (own password); a Growth staff member `growth@dev.local` / `devpass123` in a private window; nobody for the public pages (a private window).
+
+**Data:** none to seed. The walk makes Oakridge Minor Softball itself (a meeting about five minutes ahead, so the tournament’s first game goes live), and removes it in walk C. One Removed row, Probe Valley Softball, is the building session’s test club.
+
+**Walks:** A Prospect clubs and making one, every refusal in place (22) · B every page of the preview says so, and Register is closed (11) · C removing it by hand until Session P4’s removal ships (4).
+
+**Left out (pinned by tests):** the five-open cap window, a crafted sign-up post refused on the server, the refused share images and calendar feed, a logo whose bytes are not the image it claims, a lost answer after the club was made.
+<!-- /§568 -->

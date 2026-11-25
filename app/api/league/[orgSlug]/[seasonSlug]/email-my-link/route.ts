@@ -8,6 +8,7 @@ import { sendSignupLinks } from '@/lib/league-signup-link-mail';
 import { SIGNUP_LINK_WORDS as SW } from '@/lib/league-pay-words';
 import { holdUntilFloor } from '@/lib/no-tell-floor';
 import { isValidEmail } from '@/lib/auth-errors';
+import { previewWriteRefusal } from '@/lib/preview-write-refusal';
 
 export const dynamic = 'force-dynamic';
 
@@ -38,6 +39,7 @@ export const POST = withObservability(async (req: Request,
 
   const org = await resolvePublicLeagueContext(orgSlug);
   if (!org) return NextResponse.json({ error: 'Not found' }, { status: 404 });
+  const previewClosed = previewWriteRefusal(org); if (previewClosed) return previewClosed;
   const season = await getLeagueSeasonBySlug(org.id, seasonSlug);
   if (!season) return NextResponse.json({ error: 'Not found' }, { status: 404 });
 

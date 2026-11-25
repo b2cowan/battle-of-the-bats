@@ -7,6 +7,7 @@ import { resolvePublicTryout } from '@/lib/public-tryout';
 import { orgLinks } from '@/lib/org-links';
 import { clubPageMetadata } from '@/lib/club-page-meta';
 import { teamTryoutPageName } from '../tryout-metadata';
+import PreviewClosedForm from '@/components/public/PreviewClosedForm';
 
 export const dynamic = 'force-dynamic';
 
@@ -28,6 +29,8 @@ export default async function TeamTryoutRegisterPage({
   const resolved = await resolvePublicTryout(orgSlug, teamSlug);
   if (!resolved) notFound();
   const href = await orgLinks(orgSlug);
+  // A preview club (Track P): no form, ever. The server refuses the sign-up too (lib/preview-write-refusal.ts).
+  if (resolved.org.isPreview) return <PreviewClosedForm clubName={resolved.org.name} homeHref={href()} context={resolved.team.name} />;
   const { org, team, open, contactEmail } = resolved;
   return (
     <TryoutRegisterView

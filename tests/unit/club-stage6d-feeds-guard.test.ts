@@ -98,7 +98,8 @@ describe('2 · a good read touches no counter', () => {
     assert.match(refused, /refusedFeedResponse\(req\)/);
   });
   it('the public and family feeds count only inside their "never issued" guard', () => {
-    assert.match(readCode(PUBLIC_FEED), /if \(!org \|\| !team\) return refusedFeedResponse\(req\);/);
+    // A preview club (Track P Session P2) is refused the same way: a stopped feed.
+    assert.match(readCode(PUBLIC_FEED), /if \(!org \|\| !team( \|\| org\.isPreview)?\) return refusedFeedResponse\(req\);/);
     assert.match(readCode(FAMILY_FEED), /if \(!link\) return refusedFeedResponse\(req\);/);
   });
   it('the shared refusal is the counter\'s only caller, and it counts before it answers', () => {
