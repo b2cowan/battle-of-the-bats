@@ -1564,6 +1564,49 @@ in the card-network sentence); Privacy §5 (who sent an offer is kept with its r
   is taken back; the dispute reminder email later, worded for a sponsor; production order = migrations 530 to 534 and the five files first, the refund-retry step
   of the daily job in its own commit; a refund made in Stripe's own dashboard is a plan item, separate from Part 3b. Owed: migrations 530 to 534 on production before
   the promote, and that plan item. The commit plan: `BOARD_READY_STAGE6_P3B_COMMIT_PLAN.md`.
+- **Part 4a — Offer again: drawn 2026-11-25, all 12 asks RULED 2026-11-25 as recommended (1A–12A).** Drawing:
+  https://claude.ai/artifact/UDHBeMq7hwLkmtJP3MHryJ, source `BOARD_READY_STAGE6_P4A_OFFER_AGAIN_DRAWINGS.html` (the gaps
+  A–K of `BOARD_READY_STAGE6_P4_BUILD_PROMPT.md` Part 4a, plus one new ask). The rulings, as ruled:
+  1. **(A) What "Full" counts:** a deal holds its place in the fiscal year it was offered in; after that year, only while
+     its last day hasn't passed (inclusive, club time zone). A deal with no last day frees its place when the year turns.
+     Withdrawn frees it, as today. The same rule for the Offer window's "Taken: …" warnings. (Fixes the live defect where
+     Full counts every year; ships first.)
+  2. **(B) Which rows the window lists:** one row per deal offered last year that wasn't withdrawn (a business with two
+     deals has two rows). A row is left off when the business already holds that package this year, by ask 1's rule.
+     Ticked by default only when it can go. Three groups: Ready, Waiting, Can't be emailed.
+  3. **(C) A tournament place:** the row asks for this year's tournament in place: a picker of live tournaments other than
+     last year's own, pre-picked when exactly one has last year's name with its year taken off. No live tournament: the
+     row waits. No series link is built.
+  4. **(D) The last day:** the package's last day when it hasn't passed. When it has, the row shows a last-day field in
+     place, filled with the same day a year on, and changeable. No last day on the package: none on the deal, as the
+     single window does.
+  5. **(E) A team row once the new teams exist:** the row becomes a team picker in place, last year's division's teams
+     first, a taken team marked "Taken: …" as in the Offer window. Unticked until a team is picked.
+  6. **(F) A division by name:** match by name against live divisions other than last year's own. One match carries over.
+     None: the row waits ("Spring 2028 has no U15 division yet. Offer it once it has one."). Two or more: the row asks
+     which, in place, each named with its season.
+  7. **(G) An archived package:** listed in Can't be emailed, never ticked: "The Program ad package is archived. Offer them
+     another one."
+  8. **(H) The reason each email rests on:** every row that can go rests on the one reason ruling 14 allows: "They paid us
+     in the last 2 years", dated by the business's latest payment that still stands (a voided payment, a dispute lost to
+     the bank or a refund that ended the deal don't count, F5). The row says "Paid us on Mar 3, 2027". Each email keeps
+     its own offer record: that reason and date, who sent it, the address and the club. **`/legal` reads this before any
+     code** (the CASL basis of a batch of marketing emails; the drawing's standing condition).
+  9. **(I) Price, tax and note:** this year's package price, last year's as a hint when different. The Charge switch
+     copies last year's deal while the club is still registered, off otherwise. No note, amount field or "Make the link
+     only" in the batch; those stay in the single Offer window. A club holding last year's price changes it on the deal
+     after (round 1).
+  10. **(J) A partial failure:** each row stands alone. The result says "Sent 7 of 8 offers. Oakridge Physio's email didn't
+      go: {reason}. Nothing was made for them." Only the failed row's deal is undone; its row is offered again next time.
+  11. **(K) When the callout shows:** on the current year while any of last year's rows can still be offered; its count is
+      businesses that paid a deal last year ("sponsored you"). After a press it says how many are left.
+  12. **(New) Offer again on one old deal:** on a paid deal from an earlier year, Delivered or not. It opens the ordinary
+      Offer window filled in: the business, the package at this year's price, the place as asks 3, 5 and 6 find it, the
+      last day as ask 4, the Charge switch as ask 9, and the reason "They paid us in the last 2 years" with the computed
+      date. Not shown when the business already holds that package this year, or when the address can't be emailed.
+
+  Nothing is built. Next: `/legal` on ask 8, then the build as the Part 4a prompt orders it (ask 1's fix first), at the
+  owner's word.
 - ~~The per-deal "Charge HST" switch carries no words telling a club WHEN to turn it on.~~ **Added 2026-11-22 (owner: "add
   the hint")**, words checked against CRA RC4081 then set in brand voice (`docs/agents/accounting/BOARD_READY_STAGE6_SPONSOR_PAYMENT_FEE_REVIEW.md`
   addendum): the switch's hint reads **"13% for an Ontario address, added to the amount. A sponsorship that shows a name or
