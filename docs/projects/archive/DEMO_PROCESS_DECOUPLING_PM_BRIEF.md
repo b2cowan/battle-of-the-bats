@@ -1,5 +1,7 @@
 # The demos stop holding up development and releases — PM Brief
 
+> **Closed 2026-11-26:** both public demos are retired (`docs/projects/active/RETIRE_PUBLIC_DEMOS_PLAN.md`). Nothing here is open; kept as history.
+
 **Priority:** High (process cost on every release). **Status:** built on dev 2026-09-13; the first
 production build after it ships is the proof. Plan: `DEMO_PROCESS_DECOUPLING_PLAN.md`.
 

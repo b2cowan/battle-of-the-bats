@@ -1,6 +1,6 @@
 # Retire the public demos — Implementation Plan
 
-> **Status:** Building. Phase 1 committed `89814487a` (+ `2bb98904f`) 2026-11-25. Phase 2 committed `ecbc17aed` (migration) + `c5dc00592` (automation) + the script commit 2026-11-26, after `/review`;
+> **Status:** Waiting on its release; all four phases are built (Phase 4, the records, 2026-11-26). Phase 1 committed `89814487a` (+ `2bb98904f`) 2026-11-25. Phase 2 committed `ecbc17aed` (migration) + `c5dc00592` (automation) + the script commit 2026-11-26, after `/review`;
 > its production run happens inside the one release that carries Steps 1–3 (Phase 3 "RELEASE ORDER", owner 2026-11-26).
 > Phase 3 committed `2c8ead6b7` (code) + `494b298b9` (records) 2026-11-26, after `/simplify` and `/review`; walk §574 passed 17 of 17 on 2026-11-26. ⚠ Its promote carries a binding RELEASE ORDER (Phase 3 "As built").
 > **Created:** 2026-11-25
@@ -251,16 +251,29 @@ One unit of work, which may land as several commits. Grep for `demo-org`, `demo-
 
 ### Phase 4 — The records
 
-- [ ] `CLAUDE.md`: delete the "Demo sandboxes" section.
-- [ ] `.claude/commands/demos.md` retired: delete it, or leave a one-line pointer to the ruling. Edit the demo mentions in
-      `.claude/commands/release.md` (any left after Phase 2), `docs.md`, `marketing.md` and `prewalk.md`.
-- [ ] `DEMO_PROCESS_DECOUPLING_PLAN.md` and its PM brief: a closing line pointing at this plan, then move both to `docs/projects/archive/`.
-      Do the same for the other demo/sandbox plans still in `docs/projects/active/` (`DEMO_TOUR_TRIM_PLAN.md`, the sandbox plans;
-      list them at build).
-- [ ] In-repo `memory/`: mark the demo memory files superseded and update `memory/MEMORY.md` in the same change.
-- [ ] Board: `demo-decoupling`'s "remains" stops saying the live demo rebuilds itself; this project's line goes to its done
-      state. The owner closes it.
-- [ ] **Owner step:** delete `NEXT_PUBLIC_SEE_IT_LIVE_DOORS` from the Amplify console (inert after Phase 3; tidy only).
+> **Done ahead of the release** (owner 2026-11-26: *"go ahead"*, after asking whether it had to wait). The reason records
+> went last ("or the reverse") had already come true: after Phases 2 and 3 the instructions on `dev` described checks and a
+> rebuild step that no longer existed. The release order stays written in Phase 3 "As built", the board line and the
+> release-history record. Production keeps its demo copies until that release.
+
+- [x] `CLAUDE.md`: the "Demo sandboxes" section deleted.
+- [x] `.claude/commands/demos.md` deleted. Demo mentions removed from `release.md` (the retired §1d-1 stub), `docs.md` (the
+      screenshot rules now say no script takes pictures), `marketing.md` and `prewalk.md`.
+- [x] The two decoupling files, the other seven demo and sandbox plan files and briefs, the production-readiness note and the
+      two demo drawings moved to `docs/projects/archive/`, each `.md` with a closing line.
+- [x] Found by a census and fixed in the same pass: the one-spelling rule (`AGENCY_RULES.md` and its reference), the Club
+      gate-flip and support runbooks, the nav and table standards, four data-dictionary lines, `LEGAL_FACTS.md`, the
+      price-change notice procedure, the pricing-copy amendment and W71, two ideas-backlog rows, and open demo to-dos in
+      five other plans.
+- [x] In-repo `memory/`: a standing "retired" note in `memory/MEMORY.md`, and the two index lines and the payables note that
+      named the demos marked. The decision log `memory/design_decisions.md` keeps its entries as history.
+- [x] Board: `demo-decoupling` no longer says the live demo rebuilds itself. This project stays "Ready to release"; the
+      owner closes it after the release.
+- [ ] **Owner step, after the release:** delete `NEXT_PUBLIC_SEE_IT_LIVE_DOORS` from the Amplify console (inert once Phase 3 is
+      live; tidy only).
+- **Left for the owner:** the spelling check's failure message still names "the demo sandboxes' dock lines and tour
+  narration" (`scripts/check-spelling-consistency.mjs`, a gate script: changes only on the owner's word).
+- **Carried, not part of this step:** the Terms and Privacy demo sentences (`/legal`, next versions).
 
 ## Architectural Decisions
 

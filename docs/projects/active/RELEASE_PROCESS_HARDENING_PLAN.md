@@ -59,7 +59,7 @@ them runs on the owner's PC beside whatever else is working.** Both halves of th
 | T2 | Two routes to production with different checks. Promote, as written, runs one check (`check:migrations`). | `release.md` 375–423 |
 | T3 | No backup step before a production database change, no way back from one, and the code rollback instruction reverts one commit of a many-commit release. | `release.md` 541–559 |
 | T4 | Nothing checks production after a deploy: no smoke test, no outside uptime monitor; error alerts live in the database they report on. | helper census |
-| T5 | The demo re-seed writes to the production database during the build, before the new code is live, and never fails the build. It failed silently on 2026-10-27. | `amplify.yml` 126 |
+| T5 | The demo re-seed writes to the production database during the build, before the new code is live, and never fails the build. It failed silently on 2026-10-27. **Moot: the public demos are retired and the step is removed (`c5dc00592`, 2026-11-26); the live build carries it until the release that ships the retirement.** | `amplify.yml` 126 |
 | T6 | The release tag goes on the local HEAD, before the build has succeeded. | `release.md` 317–322, 419 |
 | T7 | A migration that must be applied after the deploy has no status of its own, so the gate is passed by override. | `release.md` 154–157 |
 
@@ -323,7 +323,7 @@ names every check `/release master` names.
 - A status for "apply after the deploy" in the manual-steps list, so that class passes the gate without an override.
 - After each deploy: a smoke check of the live site against a short list of pages and one signed-in read; an
   outside uptime monitor.
-- The demo re-seed moves to after the deploy is live, and a failed re-seed is reported, not swallowed.
+- ~~The demo re-seed moves to after the deploy is live, and a failed re-seed is reported, not swallowed.~~ Dropped 2026-11-26: the public demos are retired.
 - A check that every table keeps its access policies (the snapshots learn the policies, not only on/off).
 
 ## 7. Owner asks

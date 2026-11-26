@@ -174,13 +174,13 @@ Found while judging the public pages by audience for the Club release (`docs/pro
 section "Audience review, 2026-11-18"). Each is something a marketing page wanted to say and the product cannot yet back.
 Status `New` for all.
 
-- **A house league or club demo.** League Plus and Club are the only plans a buyer cannot walk before adding a payment
+- **A house league or club demo.** *Dropped: both public demos were retired on 2026-11-25, with no club demo.* League Plus and Club are the only plans a buyer cannot walk before adding a payment
   method. Ruled "not for launch" on 2026-11-18, and the launch definition (2026-11-17) puts the demo after it. The
   release ships pictures of real screens instead (W67). A demo would replace those pictures as the proof.
 - **Bring an existing house league season in from a spreadsheet.** No import exists on the club or house league side
   (tournament teams, tournament schedules and a coach's roster can be imported). The pages say so plainly ("the easiest
   time to switch is your next registration"). An import of registrations and teams would let a league switch mid-season.
-- **A demo link that opens on a chosen screen.** The demo doors take no destination by design, so a page cannot send a
+- **A demo link that opens on a chosen screen.** *Dropped: the public demos were retired on 2026-11-25.* The demo doors take no destination by design, so a page cannot send a
   treasurer straight to a coach's budget or a registrar to the registrations list. Wanted for "see this screen live" links.
 - **Change a club's owner without writing to us.** Today only our staff can move ownership, so the board's "what happens
   when the president changes?" is answered with an email address. A hand-over the current owner starts would make it a

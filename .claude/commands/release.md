@@ -156,12 +156,6 @@ standing example: it rescheduled a nightly job, and applying it before the match
 would have broken the surface that job served until the code caught up. Apply that class *immediately
 after* the deploy lands, not before it. Each entry's `note` says which kind it is.
 
-### 1d-1 — The live demos — RETIRED (2026-11-25)
-
-Both public demos are retired (`BUSINESS_DECISIONS.md`, "2026-11-25 — Both public demos are RETIRED";
-`RETIRE_PUBLIC_DEMOS_PLAN.md`). The build no longer re-seeds them and a release no longer checks them.
-There is nothing to run here. Do not re-seed a demo, by hand or otherwise.
-
 ### 1d-2 — Deploy-only / native-dependency verification (master / promote targets only)
 
 Some failures **cannot be caught locally or by the TypeScript check** — they only appear in the deployed Amplify Lambda, because local has the full `node_modules` and a different bundler path. The worst class is **native/compiled dependencies** (e.g. `sharp` and its `@img/*` / `detect-libc` deps) and **build-config changes**: these can crash at *module load*, which throws **before** `withObservability`'s try/catch, so the in-house observability dashboard never records it — only Amplify CloudWatch shows it (this is the 2026-06-24 `sharp` "Failed to load branding settings" prod-500 incident; see memory `reference_sharp_turbopack_webpack`).

@@ -1,5 +1,7 @@
 # Keeping the demo sandboxes in line with the product — Implementation Plan
 
+> **Closed 2026-11-26:** both public demos are retired (`docs/projects/active/RETIRE_PUBLIC_DEMOS_PLAN.md`). Nothing here is open; kept as history.
+
 **Status:** **MEASURES 1, 2 AND 5 BUILT; MEASURE 4 REPLACED; MEASURE 3 NOT PLANNED.**
 1 on 2026-08-06 · 5 on 2026-08-28 · **2 on 2026-09-13** (`tests/unit/demo-destinations-guard.test.ts`, built
 under `DEMO_PROCESS_DECOUPLING_PLAN.md`). **Measure 4 (the per-commit habit) was RETIRED by owner ruling

@@ -1,5 +1,7 @@
 # The demos stop holding up development and releases — Implementation Plan
 
+> **Closed 2026-11-26:** both public demos are retired (`docs/projects/active/RETIRE_PUBLIC_DEMOS_PLAN.md`). Nothing here is open; kept as history.
+
 **Status:** BUILT on dev 2026-09-13 (all five measures); first master build after this ships is the
 proof of measure A. Owner-approved 2026-09-13 ("go ahead with all 5").
 Companion brief: `DEMO_PROCESS_DECOUPLING_PM_BRIEF.md`.

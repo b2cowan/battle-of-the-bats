@@ -3189,7 +3189,7 @@ HANDOFF → owner       — decide the read-only window's build slot before the 
 
 ### 2026-08-28 — The demo tour becomes DOORS, not narration: the deck carries the story in a conversation, the demo carries it for a stranger
 
-**Status:** **Superseded in part by 2026-11-25 — Both public demos are RETIRED**: the demo half ("the demo carries it for a stranger") is gone; the deck's role for accompanied prospects stands. Was: Decided (owner, 2026-08-28) **and executed** — built on dev the same day (`ea8ddd14`, no migration; plan `docs/projects/active/DEMO_TOUR_TRIM_PLAN.md`). The before/after the owner ruled from: `claude.ai/code/artifact/521b8e63-0014-4c1f-bfc4-9fa28226a59d`.
+**Status:** **Superseded in part by 2026-11-25 — Both public demos are RETIRED**: the demo half ("the demo carries it for a stranger") is gone; the deck's role for accompanied prospects stands. Was: Decided (owner, 2026-08-28) **and executed** — built on dev the same day (`ea8ddd14`, no migration; plan `docs/projects/archive/DEMO_TOUR_TRIM_PLAN.md`). The before/after the owner ruled from: `claude.ai/code/artifact/521b8e63-0014-4c1f-bfc4-9fa28226a59d`.
 
 **Decision:** The guided tour in both demo sandboxes keeps its **entry points** and gives up its **explaining**. Concretely: **1,131 words across 14 steps → 457 across 12.** Three coach steps that carried 65% of all the words are cut to a hook plus one proof point; two tournament steps that restated jumps the moments dock already owned are deleted. **The pitch-deck slides now carry the narrative in accompanied prospect conversations.** Season phases (Registration week, Game day, Tryout day, Off-season, Mid-season, Season's End) are untouched.
 

@@ -1,5 +1,7 @@
 # Tournament Sandbox — Daily Snapshot (retiring the live-scoring cycle)
 
+> **Closed 2026-11-26:** both public demos are retired (`docs/projects/active/RETIRE_PUBLIC_DEMOS_PLAN.md`). Nothing here is open; kept as history.
+
 **Status:** In progress — 2026-09-02
 **Owner call:** the "See it live" tournament demo (`riverdale-minor-ball`) stops simulating a
 scoreboard that moves while a visitor watches. It becomes a once-a-day snapshot, exactly like the

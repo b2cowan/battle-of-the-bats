@@ -1,5 +1,7 @@
 # PM Brief — Tournament Demo Becomes a Daily Snapshot
 
+> **Closed 2026-11-26:** both public demos are retired (`docs/projects/active/RETIRE_PUBLIC_DEMOS_PLAN.md`). Nothing here is open; kept as history.
+
 **What's changing:** The public "See it live" tournament demo currently simulates a scoreboard that
 visibly moves — a semifinal score ticks up while you watch, a banner counts down to the next
 "moment," a guided-tour step brags that nobody typed the score in. We're turning that off. The demo

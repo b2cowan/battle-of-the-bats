@@ -48,7 +48,7 @@ capped by an invitation list. This page's by-hand posture holds while the owner 
 **First reply:** acknowledge, say what you are checking, say when you'll write next. Do not promise a fix date.
 
 **Triage, in this order:**
-1. **One club or everyone?** Try the same screen on the demo clubs and on another real club's record in platform
+1. **One club or everyone?** Try the same screen on another real club's record in platform
    admin. Everyone → §3 (a release problem). One club → its data or its plan state (§4 explains what a cancelled or
    suspended club sees).
 2. **Is money involved?** A payment, payout, bill or Stripe figure → open the club's record in platform admin and the

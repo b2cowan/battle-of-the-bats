@@ -598,7 +598,7 @@ families; a permit edit should never rewrite it without a person pressing Send t
       `f0f36651d`).
 - [ ] `/simplify` and `/review` per session; an owner walk (checkable Artifact) on a two-town fixture with a four-month
       season.
-- [ ] `/demos` at its next cycle (demos follow the product; they don't gate it).
+- ~~`/demos` at its next cycle~~ Dropped 2026-11-26: the public demos are retired.
 - [x] Found at walk 1 (2026-11-16, owner): Fair shares' per-permit hour headings ("Hours · Milton evenings") ran together.
       Now ONE "Hours" heading over the permit columns with the permit names on a second header row (own case, wrap at
       ~8.5rem, right-aligned over their figures). Committed `8be08e758` 2026-11-16, lint clean; the full typecheck ran

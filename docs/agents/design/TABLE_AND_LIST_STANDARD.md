@@ -34,7 +34,7 @@ There are two physical shapes and the standard treats them as one thing:
 | Shape | What it is | Where it lives today |
 |---|---|---|
 | **Table** | a `<table>` with a heading row | 77 files |
-| **Row list** | stacked `<div>`/`<li>` rows under an optional label row | the admin shell's flat rows, the coach schedule and practice lists, the sandbox's team list |
+| **Row list** | stacked `<div>`/`<li>` rows under an optional label row | the admin shell's flat rows, the coach schedule and practice lists |
 
 A row list follows every rule below that applies to a row; the only thing it may lack is a heading
 row, and then its first line must say what the list is. **§3.10 names the axes a row list had no

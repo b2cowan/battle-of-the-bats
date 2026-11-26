@@ -92,19 +92,17 @@ These rules govern every section you write or substantially edit:
    sub-topic; it states the one caution/tip, never restates the body.
 4. **Screenshots are opt-in and rare.** Only where the answer is spatial ("where is that
    control?") or visual (a complex form / a report the reader must recognize) — never
-   decoration, never a picture of a sentence. A screenshot that can't be re-captured from the
-   demo world is **removed**, not kept stale — a stale picture is worse than none, because the
-   reader believes it.
-   - **How to add one:** append an entry to `lib/help-shots.ts` (the manifest — it carries the
-     path, the readiness selector, alt text and caption), run `npm run capture:help-shots`,
-     then place `<HelpScreenshot id="…" />` in the content. Nothing else.
-   - **Demo world only, and it is enforced:** every path must sit in a `riverdale-*` org; the
-     capture script refuses the whole run otherwise. Real orgs hold real families and real
-     money.
-   - **When a screen changes, re-take its picture in the same unit of work** — grep the
-     manifest for the route. `npm run check:help-shots` proves every declared picture exists
-     with alt text, caption and dimensions; it does NOT know whether the image is current.
-     That judgement is yours, and it is the same reflex the demo sandboxes need.
+   decoration, never a picture of a sentence. A screenshot that no longer matches its screen
+   is **removed**, not kept stale — a stale picture is worse than none, because the reader
+   believes it.
+   - **No script takes pictures any more** (the capture source was the public demos, retired
+     2026-11-25). The existing images stay. A new or re-taken picture needs a new source (a dev
+     fixture org or a prospect world, never a real org: real families and real money), which is
+     new work to put to the owner. Until then, write the answer in text.
+   - **When a screen changes, check its picture in the same unit of work** — grep the
+     manifest (`lib/help-shots.ts`) for its entry. `npm run check:help-shots` proves every
+     declared picture exists with alt text, caption and dimensions; it does NOT know whether the
+     image is current. That judgement is yours.
 5. **The search contract still applies unchanged** — rendered content (including sub-topic
    bodies) is not searched; terms must live in `keywords`/`searchText`/`answerText`. Sub-topic
    titles join the section's search haystack once Step 1 lands.

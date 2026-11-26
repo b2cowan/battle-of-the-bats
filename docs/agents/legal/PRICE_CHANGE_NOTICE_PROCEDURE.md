@@ -19,7 +19,7 @@
 1. **Fix the first affected renewal date.** It must be **at least 35 days after the notice is sent**: 30 days is the
    promise, and 5 days covers a bounce and a re-send. Every renewal before that date keeps the old price.
 2. **List the people to tell:** every active owner of each affected paid organization, plus the coach for a Premium portal.
-   Leave out free accounts, accounts on staff-given free time, and the demo accounts.
+   Leave out free accounts and accounts on staff-given free time.
 3. **Send the notice.** It names:
    - the plan;
    - the old and the new price, each "plus applicable taxes";

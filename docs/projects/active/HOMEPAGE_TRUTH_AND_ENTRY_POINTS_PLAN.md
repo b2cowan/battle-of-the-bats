@@ -270,6 +270,8 @@ and the owner ratified the door-placement set (design ruling logged in `memory/d
 - Reroutes (route-to-proof ruling): pricing club segment card, both persona-page club cross-sells
   and the coaches org-bridge link now navigate to `/for-clubs`; League Plus stays form-first.
 
+> **Moot 2026-11-26:** the public demos are retired, so the demo-door checks and the cross-door follow-up below are not owed.
+
 **QA (owner, ~5 min, anonymous + one glance signed-in) — extends ledger §5.5:**
 - [ ] Homepage hero: BOTH live cards carry "See it live — no sign-up →" with the pulsing dot; the
       tournament one lands in the Summer Classic, the coaches one lands on the 12U team signed in

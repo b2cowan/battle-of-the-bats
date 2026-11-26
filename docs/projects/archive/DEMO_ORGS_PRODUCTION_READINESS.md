@@ -1,5 +1,7 @@
 # Demo organizations — production readiness
 
+> **Closed 2026-11-26:** both public demos are retired (`docs/projects/active/RETIRE_PUBLIC_DEMOS_PLAN.md`). Nothing here is open; kept as history.
+
 **Date:** 2026-08-07
 **Purpose:** everything that must be true on production for the two no-login demos to work, in the
 order it has to happen. Written for the release step.

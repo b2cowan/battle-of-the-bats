@@ -1,5 +1,7 @@
 # PM Brief — the demo sandbox's mobile hat
 
+> **Closed 2026-11-26:** both public demos are retired (`docs/projects/active/RETIRE_PUBLIC_DEMOS_PLAN.md`). Nothing here is open; kept as history.
+
 **One line:** the demo's own banners were eating nearly half the phone screen before a prospect saw
 any product; now the honesty claim stays put and everything else gets out of the way as they scroll.
 

@@ -89,7 +89,7 @@ No drawing names a plan, a price or a person. **Open owner question from the sam
 
 **W70 · Questions a board asks:** answers 1–5 as in `CLUB_ON_SALE_COPY.md` W70, except answer 4 reads **"…and if you cancel, we don't refund the unused part."** (`/legal` 2026-11-20: the Terms refund the unused part when WE end a plan), and its closing **", or ask us for a full copy"** shows only once the data terms page is published. The section renders only while the legal pages are published. /pricing shows answers 1–4 under the heading **"Switching, your board and your families' information"**, between **"Plans and billing"** and **"Getting started"**. Answer 6 (open only), /for-clubs: **"Club is {annual} a year or {monthly} a month, {plusTax}. It covers up to {Club team limit} teams with a Premium Coaches Portal, with no per-team fee, and house league teams are unlimited. Club · Association covers up to {Club · Association team limit}."** /for-leagues answer 6 unchanged.
 
-**W71 · paths between audiences:** /for-coaches card **"Is your club considering the Club plan?"**, link **"Copy a link for your club"**, then **"Link copied. Send it to your club's board."** · /demos under the coach demo **"Running a club? This is the portal each of your coaches gets with Club."** · /for-tournament-organizers **"Already running tournaments here? Start League Plus from Plan & billing. Your events, teams and staff stay where they are."** (Club the same) — **in code** (On-sale pages S4 Part 4, 2026-11-22; `lib/plan-cross-sell-words.ts`): the last line of the League Plus and Club cross-sell cards, each only while its plan is open AND the move from Tournament Plus onto it exists (the guard test takes the move away and the line goes); "Plan & billing" is the link, through the plan's start door (a signed-in owner lands on their Plan & billing, a visitor gets the door's sign-in).
+**W71 · paths between audiences:** /for-coaches card **"Is your club considering the Club plan?"**, link **"Copy a link for your club"**, then **"Link copied. Send it to your club's board."** · /for-tournament-organizers **"Already running tournaments here? Start League Plus from Plan & billing. Your events, teams and staff stay where they are."** (Club the same) — **in code** (On-sale pages S4 Part 4, 2026-11-22; `lib/plan-cross-sell-words.ts`): the last line of the League Plus and Club cross-sell cards, each only while its plan is open AND the move from Tournament Plus onto it exists (the guard test takes the move away and the line goes); "Plan & billing" is the link, through the plan's start door (a signed-in owner lands on their Plan & billing, a visitor gets the door's sign-in).
 
 ---
 
@@ -1348,6 +1348,9 @@ Free Coach Portal Experience **Phase B3**. Records the in-product upsell copy th
 ---
 
 ## AMENDMENT — Demo-door lines on the pricing surfaces (applied 2026-08-10)
+
+> **Superseded 2026-11-25:** both public demos are retired and these lines are gone from the pages. The "Not ready?" line now
+> points at the 90-second walkthroughs (`RETIRE_PUBLIC_DEMOS_PLAN.md`, "Words for /marketing").
 
 Records the demo-adjacent copy that shipped with the door placements (design ruling 2026-08-10;
 BUSINESS_DECISIONS.md "THE DOORS ARE OPEN"). No price, plan-name, capacity, or gate change.

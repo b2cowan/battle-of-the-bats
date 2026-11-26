@@ -1,5 +1,7 @@
 # Demo Sandbox — the mobile hat
 
+> **Closed 2026-11-26:** both public demos are retired (`docs/projects/active/RETIRE_PUBLIC_DEMOS_PLAN.md`). Nothing here is open; kept as history.
+
 **Status:** BUILT on `dev`, uncommitted. Owner QA pending (ledger entry to be added).
 **Date:** 2026-08-07
 **Trigger:** owner, on the tournament demo on a phone — *"these many top navs really cram the page"*,

@@ -111,6 +111,9 @@ against LIVE behaviour now, and **H (the demo's money story + the in-app help wo
 rather than pending**. A perishable negative going stale is exactly the drift AGENCY_RULES bans;
 this is a clean specimen.
 
+**2026-11-26:** the public demos are retired, so H's demo money story and every demo check in this note are moot. The help
+wording half of H is still a check.
+
 **✅ THE DEAD COLUMNS ARE DROPPED — mig 270, applied to dev 2026-08-28 (prod owed).** Nine columns
 off `rep_team_expenses` (`expense_paid_at`, the deposit and balance amount/due/paid trios, and the
 two per-half ledger links), plus two FK constraints and two partial indexes. `amount` STAYS — it is

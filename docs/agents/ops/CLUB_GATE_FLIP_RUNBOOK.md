@@ -61,8 +61,7 @@ house-league segment's "Express interest in League Plus", and a billing FAQ with
 
 **`/for-clubs` — `app/for-clubs/page.tsx`**: "Coming soon — Club is in development", "finishing its final workflows
 before self-serve checkout opens", the "Coming soon" tag, three "Express interest in Club" buttons, no Club ·
-Association price, no "plus applicable taxes" line (correct only while gated), and the demo block "Both halves are
-live today … express interest for the day they're one product" (see the demo ruling in the readiness plan's Stage 8).
+Association price, and no "plus applicable taxes" line (correct only while gated).
 
 **`/for-leagues` — `app/for-leagues/page.tsx`**: three "Express interest in League Plus", "built but not currently open
 for sign-up", "when League Plus opens", the gated tag and sentence called with no gate check, no tax line.
@@ -155,7 +154,6 @@ card on file, webhook received, the club's plan and modules correct in platform 
    gave consent to be told (`release_notifications_consent`), naming the plan they picked.
 2. `/strategy` logs the release decision and the cohort shape (Stage 8's own line); the Facts doc's "Purchasable
    today?" column changes in the same unit of work.
-3. `/demos` at the next release cycle (see the demo ruling).
 
 ## Undoing the flip
 

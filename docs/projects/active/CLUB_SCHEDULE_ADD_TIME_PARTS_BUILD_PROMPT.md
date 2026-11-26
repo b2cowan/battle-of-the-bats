@@ -225,7 +225,7 @@ After the owner's yes on the storage decision:
       `check:layout --changed` on the schedule page, Add time, Send the changes.
 - [x] (PUBLISHED 2026-11-17 as §538: https://claude.ai/artifact/MLEQvE49KQyHW9vBtgcU4e, 50 steps; WALKED 2026-11-17, 50/50 pass; calls ruled C1 A build, C2 C both, C3 A as built, C4 C say it in the window; C1, C2, C4 BUILT 2026-11-17 uncommitted, mig 496 on DEV only, see plan Phase 8) An owner walk as a checkable Artifact (20–50 boxes, one action per step): add one practice for one team to a sent schedule; add spring time
       from a permit already on it; bill each part; send; see the coach's two charges; regenerate one part; take a part off.
-- [ ] Plan Phase 8 ticked with commit hashes; the PM brief's "where it stands"; TODO line; Claude memory. `/demos` at its cycle (not here).
+- [ ] Plan Phase 8 ticked with commit hashes; the PM brief's "where it stands"; TODO line; Claude memory.
 
 ## Open owner calls this does not settle (carry forward, do not decide)
 

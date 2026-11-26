@@ -3415,7 +3415,7 @@ same release — logged there as Proposed, confirmed when Stage 9 opens (D11's o
 - [ ] Stage 10 (permits) walked and PASSED — the release waits for it (⚖ D4, 2026-09-25); the homepage "field bookings" line returns with it.
 - [ ] ⚖ 2026-10-12: every stage in this plan walked and PASSED, or cancelled by the owner — Stage 9 (house league, with 11b), the Families redesign (P3), bank reconciliation (both portals), 6d and 6e included (§7).
 - [ ] Support posture + rollback runbook in `docs/agents/ops/`; `/strategy` entry logged.
-- [ ] Demo decision recorded (`/demos`).
+- [x] Demo decision recorded: both public demos retired (`BUSINESS_DECISIONS.md` 2026-11-25).
 
 ## 10. Open questions for the owner (beyond D1–D11)
 

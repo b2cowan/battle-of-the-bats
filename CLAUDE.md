@@ -139,24 +139,6 @@ registration, trademark, and incorporation as a legal question.
   (their waivers, their families' consent) except where the product's design creates FieldLogicHQ's exposure.
 - **No lawyer gate** (see the accounting section above): `/legal` flags what a lawyer should look at; the owner decides when.
 
-# Demo sandboxes — they follow the product; they never gate it
-
-Two no-login demos run the **real** product on fictional clubs (tournament `riverdale-minor-ball`,
-coach `riverdale-ridge`), fully public on production. Owner ruling 2026-09-13: **the demos are
-not a step in development or release.**
-
-- **The live demo rebuilds itself.** The master build re-seeds a demo whose world (seed + imports
-  + migrations) changed since its last seed. Never re-seed prod by hand except as the fallback in
-  the plan. `check:demos:prod` is a morning-after monitor, not a promote gate.
-- **Per commit, ask nothing.** The build fails if a tour destination or anchor stops existing;
-  that is the only per-commit demo signal. Do not add "re-read" notes to the demo files.
-- **The story is curated per release cycle** with `/demos` (checklist in
-  `.claude/commands/demos.md`) — that session decides what a release earns in the shop window.
-- **A number in a demo sentence is computed from the seed or it is not in the sentence.**
-
-Plan: `docs/projects/active/DEMO_PROCESS_DECOUPLING_PLAN.md`. Release/prod state lives in the
-release-history record, not here.
-
 # Business-decision logging
 
 When a **durable business decision** is reached or changed — pricing, packaging/plan structure, what's gated, positioning, segment/GTM focus, monetization model, or commercially-driven roadmap sequencing — proactively offer to run `/strategy` (the steward agent in `.claude/commands/strategy.md`) to record it in the binding Business Decisions Log at `docs/agents/strategy/BUSINESS_DECISIONS.md`. `/strategy` decides the *what* and routes the follow-through (copy → `/marketing`, gates → `/billing`, plan → `/plan`); it never writes customer copy itself, so logging a decision there keeps it consistent and discoverable across all chats. Offer once per decision; log only what the user has actually accepted (record exploratory direction as **Proposed**, not Decided), and skip the offer for pure execution detail, for decisions already logged, or if the user declined.

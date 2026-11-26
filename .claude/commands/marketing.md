@@ -54,7 +54,7 @@ sentence. The building session keeps a **"Words for /marketing"** list in the st
 the section): each entry is the words as written, where they show, and who reads them. When you are called on a
 stage, read that list first and settle every entry in one reply, using the Copy output format below.
 
-- **Do not wait for the end of a whole project** — words get built into screens, help articles, demo lines and the
+- **Do not wait for the end of a whole project** — words get built into screens, help articles and the
   spelling gate, and a late change reopens walks. One pass per stage.
 - **Do not batch the words a customer meets first:** a price, a plan name, an offer, or anything sent to families.
   Those come to you when they are written.

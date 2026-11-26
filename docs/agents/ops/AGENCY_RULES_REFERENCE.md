@@ -40,8 +40,8 @@ area: a hook/permission/database check, or any customer-visible wording, spellin
 - **One spelling, everywhere a customer can read it (owner ruling 2026-08-24, binding).** A word the
   product shows has exactly **one** spelling across every surface — screen copy, table and column
   headings (including `data-label` values, which render as visible text on a phone), empty states,
-  button labels, toasts and API error messages, in-app help articles **and their `keywords` /
-  `searchText` arrays**, and the demo sandboxes' dock lines and tour narration. Two spellings of one
+  button labels, toasts and API error messages, and in-app help articles **and their `keywords` /
+  `searchText` arrays**. Two spellings of one
   word is a product bug, not a typo: help search misses the article, and the same screen calls one
   thing two names.
   - **Build-enforced, and the gate is the list.** `npm run check:spelling` (part of

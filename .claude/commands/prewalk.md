@@ -119,7 +119,7 @@ When in doubt it is the owner's. A wrong tick is worse than a step left on his l
 - Never run without the owner's command; never on :3000; never against anything but the dev project (the rig refuses).
 - Never press a control that emails, texts or notifies a real person, or that takes a card. A send whose every recipient
   is a fixture `.local` address may be pressed only when the walk's own step asks for it. Stop at Stripe's hosted pages.
-- Never touch another walk's fixture, the demo clubs' shared sign-in, or the saved sign-ins in `tests/uat/.auth/`.
+- Never touch another walk's fixture or the saved sign-ins in `tests/uat/.auth/`.
 - Never run a seed, a build, a typecheck or a second browser while a walk script is running.
 - Never fake, skip silently or summarise a step. Every step in the walk ends as checked, failed or the owner's.
 - Never stage, commit or push. Never edit the walk page, its source, or product code.

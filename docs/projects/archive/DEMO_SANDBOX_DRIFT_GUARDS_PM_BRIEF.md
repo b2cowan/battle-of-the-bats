@@ -1,5 +1,7 @@
 # PM Brief — Keeping the demo sandboxes honest as the product moves
 
+> **Closed 2026-11-26:** both public demos are retired (`docs/projects/active/RETIRE_PUBLIC_DEMOS_PLAN.md`). Nothing here is open; kept as history.
+
 **Status:** planned, not built. Owner-approved 2026-08-05.
 Plan: `DEMO_SANDBOX_DRIFT_GUARDS_PLAN.md`.
 

@@ -1,5 +1,7 @@
 # The demo tour keeps its doors and gives up its prose
 
+> **Closed 2026-11-26:** both public demos are retired (`docs/projects/active/RETIRE_PUBLIC_DEMOS_PLAN.md`). Nothing here is open; kept as history.
+
 **Status:** BUILT on dev 2026-08-28. **No migration.** Owner ruling 2026-08-28.
 Before/after the owner approved: `claude.ai/code/artifact/521b8e63-0014-4c1f-bfc4-9fa28226a59d`
 (word counts measured from the shipping copy, not estimated).

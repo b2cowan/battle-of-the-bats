@@ -45,7 +45,7 @@ These rules apply to all AI coding assistants working in this repository.
 - **One spelling, everywhere a customer can read it (owner ruling 2026-08-24, binding).** A word the
   product shows has exactly **one** spelling on every surface — screens, table/column headings (incl.
   `data-label`), empty states, buttons, toasts, API errors, help articles **and their `keywords` /
-  `searchText`**, and the demo sandboxes. Build-enforced: `npm run check:spelling` (part of
+  `searchText`**. Build-enforced: `npm run check:spelling` (part of
   `verify:changed`); escape hatch for a proper noun or quoted external text is `spelling-ok` in a comment.
   - **`installment` (two Ls)** and **"fiscal year"** (club side only; coaches keep "season") are settled and gated.
   - **⏰ The clock is "8:00 a.m."** — lowercase, with periods, everywhere a customer reads a time, no
