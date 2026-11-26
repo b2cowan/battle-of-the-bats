@@ -137,26 +137,29 @@ export default function VenueLibraryPage() {
   const openFromPage = (l: Level) => { setSaid(null); setActionError(''); setStack([l]); };
   const close = () => setStack([]);
 
+  // The toolbar's two doors: at a desk they share the lede's row (owner 2026-11-26); on a phone they stay in the page's
+  // action row above it, so the sentence never pushes them down.
+  const doors = (
+    <>
+      {canClose && (
+        <button type="button" className="btn btn-outline" onClick={() => { setSaid(null); setClosing({ venueId: null }); }}>
+          <CloudRain size={16} aria-hidden />{CW.door}
+        </button>
+      )}
+      {canSave && (
+        <button type="button" className={`btn btn-lime${isPhone ? ` ${ck.iconOnlyPhone}` : ''}`} onClick={() => { setSaid(null); setAsking('add'); }}
+          aria-label="Add venue" id="org-venue-add-btn">
+          <Plus size={15} aria-hidden /><span className={ck.btnWord}>Add venue</span>
+        </button>
+      )}
+    </>
+  );
   const header = (
     <TabPageHeader
       eyebrow="Organization"
       title="Venue library"
       inlineActions
-      actions={planAllowed && (canSave || canClose) ? (
-        <>
-          {canClose && (
-            <button type="button" className="btn btn-outline" onClick={() => { setSaid(null); setClosing({ venueId: null }); }}>
-              <CloudRain size={16} aria-hidden />{CW.door}
-            </button>
-          )}
-          {canSave && (
-            <button type="button" className={`btn btn-lime${isPhone ? ` ${ck.iconOnlyPhone}` : ''}`} onClick={() => { setSaid(null); setAsking('add'); }}
-              aria-label="Add venue" id="org-venue-add-btn">
-              <Plus size={15} aria-hidden /><span className={ck.btnWord}>Add venue</span>
-            </button>
-          )}
-        </>
-      ) : undefined}
+      actions={planAllowed && isPhone && (canSave || canClose) ? doors : undefined}
     />
   );
 
@@ -240,7 +243,7 @@ export default function VenueLibraryPage() {
   return (
     <div className={ck.pageWide}>
       {header}
-      <CoachListToolbar>
+      <CoachListToolbar actions={isPhone ? undefined : doors}>
         <p className={kit.toolbarLede}>{W.lede}</p>
       </CoachListToolbar>
 
