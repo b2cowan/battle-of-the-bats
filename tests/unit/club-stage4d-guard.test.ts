@@ -90,6 +90,34 @@ describe('the logo route is Sponsorships\', opens the file and deletes only the 
   });
 });
 
+describe('a logo in use is never lost to a window left open', () => {
+  const ONE = 'app/api/admin/sponsorships/sponsors/[sponsorId]/route.ts';
+  it('the window sends the logo only when it changed it, and the route keeps the stored one when none is sent', () => {
+    const win = readCode('components/admin/kit/club/sponsorships/SponsorWindow.tsx');
+    assert.match(win, /const sendLogo = g !== \(JSON\.parse\(saved\) as \{ logo: string \}\)\.logo;/);
+    assert.match(win, /'PATCH', body\(n, l, sendLogo \? g : undefined, r\)\)/);
+    assert.match(win, /\.\.\.\(g === undefined \? \{\} : \{ logoUrl: g \|\| null \}\)/);
+    assert.match(code(ONE), /logoUrl: current\.logoUrl,[\s\S]*?\.\.\.\(body \?\? \{\}\)/);
+  });
+  it('a new address whose file is gone is refused before anything is saved', () => {
+    const patch = code(ONE);
+    assert.match(patch, /v\.logoUrl !== current\.logoUrl && !\(await logoFileExists\(org\.id, v\.logoUrl\)\)\) return refused\(/);
+    assert.ok(patch.indexOf('logoFileExists(org.id') < patch.indexOf('await updateSponsor('));
+  });
+  it('a save that leaves the logo alone writes none and deletes none', () => {
+    const patch = code(ONE);
+    assert.match(patch, /const keepLogo = v\.logoUrl === current\.logoUrl;/);
+    assert.match(patch, /updateSponsor\(org\.id, sponsorId, v, \{ keepLogo \}\)/);
+    assert.match(patch, /if \(!keepLogo && current\.logoUrl\) await removeLogoFile\(/);
+    assert.match(between(readCode('lib/club-sponsorships-server.ts'), 'function updateSponsor(', '\n}\n'), /\.\.\.\(keepLogo \? \{\} : \{ logo_url: input\.logoUrl \}\)/);
+  });
+  it('a look-up that failed deletes nothing', () => {
+    const body = between(readCode('lib/club-sponsorships-server.ts'), 'function removeLogoFile(', '\n}\n');
+    assert.match(body, /if \(error\) return;/);
+    assert.ok(body.indexOf('if (error) return;') < body.indexOf('.remove(['));
+  });
+});
+
 describe('the ended filter belongs to the public pages\' loaders', () => {
   // ⚖ Board Ready Stage 6 (asks 1, 11): the one sponsor list moved to Sponsorships' own tables. The pages' loader is
   // `publicSponsorsFor` (the filter by the club's day, the home strip's 20); the place's own read keeps every sponsor.

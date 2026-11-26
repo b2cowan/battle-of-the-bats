@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { withObservability } from '@/lib/observability';
 import { isUuid } from '@/lib/utils';
 import { refused, requireSponsorships } from '@/lib/club-sponsorships-auth';
-import { deleteSponsor, homePlacesShowingNow, readSponsor, removeLogoFile, targetsBelong, updateSponsor } from '@/lib/club-sponsorships-server';
+import { deleteSponsor, homePlacesShowingNow, logoFileExists, readSponsor, removeLogoFile, targetsBelong, updateSponsor } from '@/lib/club-sponsorships-server';
 import { sponsorHasAnyDeal } from '@/lib/club-sponsorship-deals-server';
 import { isOwnSponsorLogo } from '@/lib/sponsor-logo';
 import { HOME_STRIP_MAX, parseSponsorInput, placeShowing, sponsorHasDeal } from '@/lib/club-sponsorships';
@@ -37,6 +37,8 @@ export const PATCH = withObservability(async (req: Request, { params }: Params) 
   if (!parsed.ok) return refused(parsed.error);
   const v = parsed.value;
   if (v.logoUrl && v.logoUrl !== current.logoUrl && !isOwnSponsorLogo(v.logoUrl, org.id)) return refused(W.say.failed);
+  // A new address must still name a file. Saving one that has been deleted would break the logo and then delete the one in use.
+  if (v.logoUrl && v.logoUrl !== current.logoUrl && !(await logoFileExists(org.id, v.logoUrl))) return refused(W.say.logoGone, 409, 'logo_gone');
   if (!(await targetsBelong(org.id, v.places))) return refused(W.sponsor.errTarget);
   const today = tournamentToday(new Date());
   const wasHome = current.places.some(p => p.kind === 'club' && placeShowing(p, today));
@@ -44,8 +46,9 @@ export const PATCH = withObservability(async (req: Request, { params }: Params) 
   if (!wasHome && willHome && (await homePlacesShowingNow(org.id, today)) >= HOME_STRIP_MAX) {
     return refused(W.sponsor.errHomeFull, 409, 'home_full');
   }
-  await updateSponsor(org.id, sponsorId, v);
-  if (current.logoUrl && current.logoUrl !== v.logoUrl) await removeLogoFile(org.id, current.logoUrl);
+  const keepLogo = v.logoUrl === current.logoUrl;
+  await updateSponsor(org.id, sponsorId, v, { keepLogo });
+  if (!keepLogo && current.logoUrl) await removeLogoFile(org.id, current.logoUrl);
   // The saved sponsor, so the window keys its new places by the ids the server gave them.
   return NextResponse.json({ sponsor: await readSponsor(org.id, sponsorId) });
 }, { route: '/api/admin/sponsorships/sponsors/[sponsorId]' });

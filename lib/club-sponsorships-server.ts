@@ -93,10 +93,11 @@ export async function createSponsor(orgId: string, userId: string, input: Sponso
   return id;
 }
 
-/** The sponsor's own fields and its TYPED places (a deal's place is the deal's: never touched here). */
-export async function updateSponsor(orgId: string, id: string, input: SponsorInput): Promise<void> {
+/** The sponsor's own fields and its TYPED places (a deal's place is the deal's: never touched here). `keepLogo` writes no
+ *  logo at all, so one that arrived since the caller read the sponsor is never put back to the old one. */
+export async function updateSponsor(orgId: string, id: string, input: SponsorInput, { keepLogo = false } = {}): Promise<void> {
   const { error } = await supabaseAdmin.from('club_sponsors')
-    .update({ name: input.name, link: input.link, logo_url: input.logoUrl, updated_at: new Date().toISOString() })
+    .update({ name: input.name, link: input.link, ...(keepLogo ? {} : { logo_url: input.logoUrl }), updated_at: new Date().toISOString() })
     .eq('org_id', orgId).eq('id', id);
   if (error) throw error;
   await replaceTypedPlaces(orgId, id, input.places);
@@ -139,9 +140,19 @@ export async function removeLogoFile(orgId: string, url: string | null): Promise
   const parsed = url ? parseSponsorLogoUrl(url, orgId) : null;
   if (!parsed || !url) return;
   // Compared by the file each names, not the string (the logo route's own rule), so another spelling still counts as in use.
-  const { data } = await supabaseAdmin.from('club_sponsors').select('logo_url').eq('org_id', orgId).not('logo_url', 'is', null);
+  const { data, error } = await supabaseAdmin.from('club_sponsors').select('logo_url').eq('org_id', orgId).not('logo_url', 'is', null);
+  // Not knowing is not "nobody names it": a look-up that failed deletes nothing.
+  if (error) return;
   if (((data ?? []) as { logo_url: string }[]).some(s => parseSponsorLogoUrl(s.logo_url, orgId)?.objectPath === parsed.objectPath)) return;
   await supabaseAdmin.storage.from(ORG_LOGO_BUCKET).remove([parsed.objectPath]).catch(() => undefined);
+}
+
+/** Whether the file a logo address names is still there: a window left open can send one replaced and deleted since. */
+export async function logoFileExists(orgId: string, url: string): Promise<boolean> {
+  const parsed = parseSponsorLogoUrl(url, orgId);
+  if (!parsed) return false;
+  const { data } = await supabaseAdmin.storage.from(ORG_LOGO_BUCKET).exists(parsed.objectPath);
+  return data;
 }
 
 // ── The names of the places (the Sponsors tab's captions and its "Shows on" picker) ──────────────────

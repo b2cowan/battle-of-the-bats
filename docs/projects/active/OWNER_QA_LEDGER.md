@@ -28913,3 +28913,16 @@ Committed 2026-11-25, ahead of the walk (owner: "yes commit now").
 **✅ PASSED 2026-11-25, 30 of 30** (owner paste-back; A 9/9, B 8/8, C 6/6, D 7/7; no notes came back). The one owner call, whether every payment method reads lowercase inside a sentence, came back **not answered**: it is not ruled, and the build stands as walked (lowercase). Next: the commit at the owner's word.
 Committed 2026-11-25 as two commits (owner: "commit the sweep and the data change as two commits").
 <!-- /§569 -->
+
+## §570 · Board Ready Stage 6 · Part 4b · The old sponsor list column and a safer logo — **the old sponsor list is out of the code (nothing a person sees changes), and a sponsor’s new logo can no longer be lost to a window left open**
+<!-- §570 -->
+**Walk published 2026-11-25.** [Interactive walk](https://claude.ai/artifact/FR713RKu5wxYxopDMDSfW5) (walks A–C, 38 steps; no owner calls) · [repository HTML](BOARD_READY_STAGE6_P4B_SPONSORS_WALK.html). No database change applied (mig 538 is held). Plan: `BOARD_READY_PLAN.md` §5 Stage 6 (Part 4b step 3).
+
+**Where:** `http://localhost:3000`, after a dev server restart. **Sign in:** `uat-club-owner@uat-rep-club.local` (password `UATPassword2026!`).
+
+**Data:** none to seed; two test pictures at `C:\tmp\sponsor-walk\`. The walk adds one contact and one sponsor and removes both.
+
+**Walks:** A the Public site lists and the sponsors door (12) · B a sponsor on the home and About pages (7) · C a new logo survives a window left open (19).
+
+**Left out:** the help wording (reviewed against the code), the “logo has been replaced” message (only a window opened before this update reaches it), documents and questions (the same window as contacts).
+<!-- /§570 -->

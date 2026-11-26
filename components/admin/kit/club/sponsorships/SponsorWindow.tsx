@@ -65,8 +65,9 @@ export default function SponsorWindow({ slug, sponsor, targets, deals = [], onCh
   const dirty = current() !== saved;
   const options = placeOptions(targets, rows.map(r => r.place));
 
-  const body = (n: string, l: string, g: string, r: TypedRow[]) => ({
-    name: n, link: l, logoUrl: g || null,
+  /** `g` undefined: the logo isn't sent, and the sponsor keeps the one it has. */
+  const body = (n: string, l: string, g: string | undefined, r: TypedRow[]) => ({
+    name: n, link: l, ...(g === undefined ? {} : { logoUrl: g || null }),
     places: r.map(x => ({ ...(x.id ? { id: x.id } : {}), ...placeFromKey(x.place), endsOn: x.endsOn || null })),
   });
 
@@ -74,14 +75,20 @@ export default function SponsorWindow({ slug, sponsor, targets, deals = [], onCh
     if (creating) return;
     if (current(n, l, g, r) === saved) return;
     setBusy(true); setError(null);
-    const res = await send<{ sponsor: ClubSponsor | null }>(sponsorshipsApi(slug, `/sponsors/${sponsor!.id}`), 'PATCH', body(n, l, g, r));
+    // The logo is sent only when this window changed it. It may have been replaced since the window opened (a paid deal
+    // puts the business's logo up; someone else swaps it), and sending the old one back would delete the new one.
+    const sendLogo = g !== (JSON.parse(saved) as { logo: string }).logo;
+    const res = await send<{ sponsor: ClubSponsor | null }>(sponsorshipsApi(slug, `/sponsors/${sponsor!.id}`), 'PATCH', body(n, l, sendLogo ? g : undefined, r));
     setBusy(false);
     if (!res.ok) { setError(res.error); return; }
     // Rows the window added get the ids the server gave them, so a later save updates them instead of re-making them.
     const typed = res.data.sponsor?.places.filter(p => p.source === 'typed') ?? [];
     const keyed = r.map(x => (x.id ? x : { ...x, id: typed.find(p => placeKey(p) === x.place && !r.some(o => o.id === p.id))?.id }));
     setRows(keyed);
-    setSaved(current(n, l, g, keyed));
+    // A logo left alone here shows as the sponsor's own now (unless it was changed while this save was on its way).
+    const logoNow = !sendLogo && res.data.sponsor ? res.data.sponsor.logoUrl ?? '' : g;
+    if (logoNow !== g) setLogo(shown => (shown === g ? logoNow : shown));
+    setSaved(current(n, l, logoNow, keyed));
     onChanged();
   }
 

@@ -1846,6 +1846,13 @@ in the card-network sentence); Privacy §5 (who sent an offer is kept with its r
     sponsor's dispute notification ("the bank is disputing … don't refund") while **Refund** stays offered, because an
     inquiry never blocks one. Not re-checked: the public pages trust a stored logo and link, and the sponsor name, link
     and date rules and the home page's 20 have no test.
+- **From that review, a sponsor's logo is never lost to a window left open: committed on dev 2026-11-25** (its own commit;
+  owner "Yes", then "Commit and write the walk"). A sponsor window sent the logo it opened with on every save, so a logo that had since changed was
+  deleted. Now the window sends the logo only when it changed it and then shows the sponsor's own; a save that leaves it
+  alone writes none; a changed address whose file is gone is refused; a failed in-use look-up deletes nothing. Dev
+  storage answers correctly for a stored and a missing file. Pinned in `club-stage4d-guard`.
+- **Walk §570 published 2026-11-25** (https://claude.ai/artifact/FR713RKu5wxYxopDMDSfW5; walks A–C, 38 steps; no owner calls), owed. It needs a dev server
+  restart first.
 - ~~The per-deal "Charge HST" switch carries no words telling a club WHEN to turn it on.~~ **Added 2026-11-22 (owner: "add
   the hint")**, words checked against CRA RC4081 then set in brand voice (`docs/agents/accounting/BOARD_READY_STAGE6_SPONSOR_PAYMENT_FEE_REVIEW.md`
   addendum): the switch's hint reads **"13% for an Ontario address, added to the amount. A sponsorship that shows a name or

@@ -279,6 +279,7 @@ export const SPONSORSHIPS_WORDS = {
     invoiceLocked: 'The owner, admins and the treasurer change the invoice details.',
     notFound: 'That isn’t here any more. The page has been refreshed.',
     failed: 'That didn’t go through. Try again.',
+    logoGone: 'That logo has been replaced since this window opened. Close it, open the sponsor again and upload your logo.',
   },
 } as const;
 
