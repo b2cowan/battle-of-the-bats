@@ -337,11 +337,13 @@ prompt → the build → `/simplify`, `/review`, `/legal` or `/accounting` where
 - [ ] **Stage 7 — The Big Board (idea 6).** Needs F2, field status, sponsors and the fast score.
 - [ ] **Stage 8 — Trophy case (idea 8).** Independent; placed late only because nothing waits on it.
 - [ ] **Stage 9 — Share kit (idea 10).** Last, so the poster and the social images carry the finished pages.
-- [ ] **Track P — Your club, already built (idea 1; F7).** A separate track with its own drawing session. It shows
+- [x] **Track P — Your club, already built (idea 1; F7).** A separate track with its own drawing session. It shows
   whatever the site is, so it depends on no stage and gets better with each one. Starts on the owner's word (§7 C3).
   *(Drawn 2026-11-25; its 16 asks T1–T16 ruled the same day, all as recommended (§7). Build order as drawn: the
   preview marker and its build check → Prospect clubs + Make one → the marking → the room → the claim → the removal.
   Build prompt: [CLUB_WEBSITE_TRACK_P_BUILD_PROMPT.md](CLUB_WEBSITE_TRACK_P_BUILD_PROMPT.md), sessions P1–P4.)*
+  *(**Closed 2026-11-26** on the owner's word: all four sessions committed, P2–P4 walked (§571, §575; P2's walk
+  passed 37 of 37). Going live is the release's work, listed in Progress ("Track P closed").)*
 
 **What idea 11 would do to this ladder (PROPOSED 2026-11-24; the stages above are unchanged until the owner rules):**
 it adds no stage, it widens two and moves nothing ahead of Stage 1.
@@ -1518,6 +1520,13 @@ the demos follow the product and are curated with `/demos`, never as a build ste
   real preview on production: 547, the code and 548 live there. Before the email can send: the Privacy prospect
   sentence published, then the mailing address set. The four guards listed under P4's build entry (grants, club share
   census, legal-line surfaces, plan-reader door) were rerun after the pass and all four still fail.
+- 2026-11-26 — **Track P closed (owner: "go ahead with 1-3").** The four failing guards pass again (`cf85bc916`): the
+  claim page joined the legal-line census, the room window's link the club share census, the claim step's plan read the
+  plan door's list; migration 540 carries the grants guard's own comment for the wrong-code table's narrow grant (the
+  guard and the database unchanged). The plan door guard also named two files that were not Track P's: the tournament
+  card-payment yes/no now asks the door whether the organization is canceled (the one behaviour change), and the guard
+  reads CRLF files correctly. **Carried to the release:** 547 → the code → 548 on production before the first real
+  preview; the Privacy prospect sentence published, then the mailing address set, before the email can send.
 
 ## 8. Census questions for Stage 0 (answer from code, not from this plan)
 
