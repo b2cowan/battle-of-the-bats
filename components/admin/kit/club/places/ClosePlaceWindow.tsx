@@ -29,13 +29,14 @@ import { SendRow, SendRows } from '../SendParts';
 import { Statement } from '../schedules/ScheduleParts';
 import FormTable, { type FormTableGroup, type FormTableRow } from '@/components/shared/FormTable';
 import LoadingState from '@/components/shared/LoadingState';
+import DateInput from '@/components/shared/DateInput';
 import { useIsPhone } from '@/lib/hooks/useIsPhone';
-import { addCalendarDays, orgDayKey } from '@/lib/timezone';
+import { formatShortWeekdayDate, orgDayKey } from '@/lib/timezone';
 import { teamsHearing } from '@/lib/league-game-changes';
 import {
-  CLOSE_LINE_MAX, CLOSE_MAX_ENTRIES, CLOSE_WORDS as W, canLink, carryTicks, closeDays, closeSummary, diamondTickOff,
-  gameWhereLine, isTyped, linkTargets, pickCount, pickParam, placeGroups, previewSentences, toggleDiamond,
-  typedKind, untilDays,
+  CLOSE_LINE_MAX, CLOSE_MAX_ENTRIES, CLOSE_WORDS as W, canLink, carryTicks, closeSummary, diamondTickOff,
+  gameWhereLine, isTyped, lastCloseDay, linkTargets, pickCount, pickParam, placeGroups, previewSentences, toggleDiamond,
+  typedKind,
   type CloseFrame, type CloseSource, type PlacePick, type RepReach,
 } from '@/lib/place-closure-window';
 import type { ClosureVerb } from '@/lib/place-closures';
@@ -372,7 +373,7 @@ export default function ClosePlaceWindow({ orgSlug, eyebrow, season, initialVenu
       return `/${orgSlug}/admin/tournaments/schedule?${qs.toString()}`;
     };
     return (
-      <KitDialog kind="form" size="medium" eyebrow={W.dayValue(firstDay, '')} title={W.doneTitle(places)} onClose={onClose}
+      <KitDialog kind="form" size="medium" eyebrow={formatShortWeekdayDate(firstDay)} title={W.doneTitle(places)} onClose={onClose}
         footer={(
           <>
             <DialogCancel>{W.done}</DialogCancel>
@@ -443,12 +444,17 @@ export default function ClosePlaceWindow({ orgSlug, eyebrow, season, initialVenu
   const emails = sum?.families ?? 0;
   const total = sum ? W.closing(sum.games, sum.teams) : '';
   const left = CLOSE_LINE_MAX - line.length;
-  const days = frame ? closeDays(frame.today, addCalendarDays) : [];
-  const untils = firstDay ? untilDays(firstDay, addCalendarDays) : [];
 
+  // The calendar refuses days outside its limits, but a typed date (or some phones' own picker) can still hand one over:
+  // the field keeps the day it had.
   function chooseDay(d: string) {
+    if (!frame || d < frame.today || d > lastCloseDay(frame.today)) return;
     setFirstDay(d);
-    if (!lastDay || lastDay < d || addCalendarDays(d, 13) < lastDay) setLastDay(d);
+    if (!lastDay || lastDay < d || lastCloseDay(d) < lastDay) setLastDay(d);
+  }
+  function chooseLastDay(d: string) {
+    if (d < firstDay || d > lastCloseDay(firstDay)) return;
+    setLastDay(d);
   }
 
   // ── The Places field (M1–M7) and the chosen rows ──────────────────────────────────────────────────────────────────
@@ -560,15 +566,13 @@ export default function ClosePlaceWindow({ orgSlug, eyebrow, season, initialVenu
         <div className={s.days}>
           <label className={ck.field}>
             <span className={ck.label}>{W.day}</span>
-            <select className={ck.select} value={firstDay} onChange={e => chooseDay(e.target.value)} disabled={busy}>
-              {days.map(d => <option key={d} value={d}>{W.dayValue(d, frame.today)}</option>)}
-            </select>
+            <DateInput className={ck.input} value={firstDay} min={frame.today} max={lastCloseDay(frame.today)}
+              required onChange={chooseDay} disabled={busy} />
           </label>
           <label className={ck.field}>
             <span className={ck.label}>{W.until}</span>
-            <select className={ck.select} value={lastDay || firstDay} onChange={e => setLastDay(e.target.value)} disabled={busy}>
-              {untils.map(d => <option key={d} value={d}>{d === firstDay ? W.untilSame : W.untilDay(d)}</option>)}
-            </select>
+            <DateInput className={ck.input} value={lastDay || firstDay} min={firstDay} max={lastCloseDay(firstDay)}
+              rangeStart={firstDay} required onChange={chooseLastDay} disabled={busy} />
           </label>
         </div>
         <div className={!source || nothing ? s.room : undefined}>

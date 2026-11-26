@@ -1,5 +1,5 @@
 import { joinWithAnd, pluralize, possessive, formatTime } from './utils';
-import { formatShortWeekdayDate, utcToZonedInputs } from './timezone';
+import { addCalendarDays, formatShortWeekdayDate, utcToZonedInputs } from './timezone';
 import { CLUB_EMAIL_CAP } from './families-words';
 import { teamsHearing } from './league-game-changes';
 import { LEAGUE_RUNNER_ROLES } from './house-league-access';
@@ -195,13 +195,9 @@ export function linkTargets(src: CloseSource, ticked: ReadonlySet<string>): { ki
   });
 }
 
-/** The Day picker: today and the next 13 days. The Until picker: the Day to 13 days after it (mig 539's limit). */
-export function closeDays(today: string, addDays: (d: string, n: number) => string): string[] {
-  return Array.from({ length: CLOSURE_MAX_EXTRA_DAYS + 1 }, (_, i) => addDays(today, i));
-}
-export function untilDays(first: string, addDays: (d: string, n: number) => string): string[] {
-  return Array.from({ length: CLOSURE_MAX_EXTRA_DAYS + 1 }, (_, i) => addDays(first, i));
-}
+/** The last day a calendar offers: 13 days after `from`. Day runs from today to this; Until from the Day to the Day's
+ *  (mig 539's limit). */
+export const lastCloseDay = (from: string) => addCalendarDays(from, CLOSURE_MAX_EXTRA_DAYS);
 
 /** The strip each closed place will put up (the window's preview), in the club's day — a line per closure, shortened past
  *  four lines exactly as the public strip is (`stripLinesShown`: three, then "And N more places are closed."). */
@@ -345,11 +341,7 @@ export const CLOSE_WORDS = {
     : chosen.length === 1 ? chosen[0] : `${chosen.length} of ${of} diamonds`),
   diamondsLabel: (park: string, value: string) => `Diamonds at ${park}: ${value}`,
   day: 'Day',
-  /** "Today · Sat, Nov 28" · "Sun, Nov 29". */
-  dayValue: (day: string, today: string) => `${day === today ? 'Today · ' : ''}${formatShortWeekdayDate(day)}`,
-  until: 'Until',
-  untilSame: 'The end of that day',
-  untilDay: (day: string) => `The end of ${formatShortWeekdayDate(day)}`,
+  until: 'Until the end of',
   what: 'What happens to house league games',
   postpone: 'Postpone them',
   postponeSub: 'They leave their week and wait under “Needs a new date”. You give each a new date later.',

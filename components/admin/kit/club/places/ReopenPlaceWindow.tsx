@@ -13,6 +13,7 @@ import ck from '../ClubKit.module.css';
 import { repKit } from '../RepKit';
 import { CLOSE_WORDS as W, type StaffClosure } from '@/lib/place-closure-window';
 import { closedPlaceName } from '@/lib/place-closures';
+import { formatShortWeekdayDate } from '@/lib/timezone';
 import s from './ClosePlace.module.css';
 
 export type ReopenClosure = Pick<StaffClosure, 'id' | 'scope' | 'placeName' | 'facilityName' | 'firstDay' | 'leagueCalledOff' | 'seasonIds' | 'marks' | 'markTeams' | 'markTeamNames' | 'marksKept' | 'keptWhile' | 'marksSeveral'>;
@@ -47,7 +48,7 @@ export default function ReopenPlaceWindow({ orgSlug, closure, onReopened, onClos
   if (done) {
     const seasonHref = done.seasonIds[0] ? `/${orgSlug}/admin/house-league/seasons/${done.seasonIds[0]}/schedule` : null;
     return (
-      <KitDialog kind="form" eyebrow={W.dayValue(closure.firstDay, '')} title={W.reopened(place)} onClose={onClose}
+      <KitDialog kind="form" eyebrow={formatShortWeekdayDate(closure.firstDay)} title={W.reopened(place)} onClose={onClose}
         footer={(
           <>
             <DialogCancel>{W.done}</DialogCancel>
