@@ -28930,4 +28930,6 @@ Committed 2026-11-25 as two commits (owner: "commit the sweep and the data chang
 **Walks:** A the Public site lists and the sponsors door (12) · B a sponsor on the home and About pages (7) · C a new logo survives a window left open (19).
 
 **Left out:** the help wording (reviewed against the code), the “logo has been replaced” message (only a window opened before this update reaches it), documents and questions (the same window as contacts).
+
+**✅ PASSED 2026-11-25, 38 of 38** (owner paste-back; A 12/12, B 7/7, C 19/19; no notes came back). No owner calls in this walk. The code was committed before the walk (`be50fa63a`, `3727be364`).
 <!-- /§570 -->
