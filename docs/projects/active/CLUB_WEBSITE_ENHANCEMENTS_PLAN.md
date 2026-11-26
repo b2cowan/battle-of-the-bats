@@ -1439,6 +1439,10 @@ the demos follow the product and are curated with `/demos`, never as a build ste
   (`place-closures-2c.test.ts` new, 22 tests); `check:spelling` green; focused lint warnings only; the full suite's
   other failures are other sessions' files. `check:layout --changed` not run (§9). **Walk:** Owner QA Ledger §573,
   four walks, 34 steps. **For the owner:** §9's no-places call is still open; nothing was built for it.
+- 2026-11-26 — **Track P Session P3 closed: the walk passed 47 of 47 (§571; A 19, B 16, C 12; no notes).** It saw the
+  sample game go live at the meeting time, the check P2's walk missed. Committed `15da5e57a`, with the walk's two layout
+  fixes `efb7df706` and `317704c69`. Track P's last session is P4 (the removal, the ended page, the one email); the
+  nightly job still needs the owner's word in that session, and the email waits on the mailing address.
 
 ## 8. Census questions for Stage 0 (answer from code, not from this plan)
 

@@ -28945,6 +28945,8 @@ Committed 2026-11-25 as two commits (owner: "commit the sweep and the data chang
 **Left out (pinned by tests or probes):** the pass lapsing after 24 hours; two claims at once from one account; an account that already runs a club; a claim that did not finish; a claimed club deleted later; the room card with a long web address; the email of a new account (the dev confirm email goes to a test address).
 
 **After the walk:** Oakridge stays on dev as a claimed club on a Stripe test trial; cancel the trial, then Delete it from Clubs & portals.
+
+**✅ PASSED 2026-11-26, 47 of 47** (owner paste-back; A 19/19, B 16/16, C 12/12; no notes came back). No owner calls in this walk. A 11–13 saw the sample game go live at the meeting time (the step §568 could not make). The code was committed before the pass (`15da5e57a`), with two layout fixes made during the walk (`efb7df706` the room and claimed windows, `317704c69` the claim screen's two lists).
 <!-- /§571 -->
 
 ## §572 · Board Ready Stage 6 · Fixes, Part B · Sponsor links and bank questions — **a sponsor link button says whether an email will go, and a bank only asking about a card payment no longer reads as a dispute**
