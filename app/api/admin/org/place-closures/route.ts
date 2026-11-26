@@ -23,7 +23,7 @@ const MAX = { places: 10, league: 500, rep: 200, links: 500 };
  *   GET  — the window's frame (the club's places, its day, what this person may do) and the closures showing now (the
  *          Venue library's rows, the Overview's line). With `first` and `places` (`all`, or `venueId[:facilityId]` comma
  *          separated) and optionally `last`: the window's read of those places on those days. With `seasonId` and `day`:
- *          that season's places that day (the house league Rainout button, K15).
+ *          that season's places that day (the house league schedule's button, K15).
  *   POST { pressKey, places, firstDay, lastDay, verb, line, league, rep, links } — the press (one database step, all or
  *          nothing), then the sends: the families per division (the Rainout's own send) and the rep coaches (K5, K10).
  * ⚖ K1: owner, admin, house league admin (`canClosePlace`). Every place at once only for an owner or an admin.

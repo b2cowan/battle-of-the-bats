@@ -566,6 +566,13 @@ the demos follow the product and are curated with `/demos`, never as a build ste
   Club, Club · Association on the places gate, no new key, replaces the Rainout everywhere · **K15** the house league
   "Rainout" button opens Close a place on that season's places that day; "Rainout" one word everywhere. Milton's
   three answers were not in when drawn.
+  - **K15 amended, owner 2026-11-26** ("not a huge fan of the format of this link … why is it called rainout in house
+    league and close a place in the dashboard and venue library?", then "go ahead and build it"): the house league button
+    is named **"Close a place"**, keeps its rain-cloud icon and still opens on that season's places that day. All three
+    buttons (house league schedule, Venue library, Overview) read the same words with the same icon. On the Overview the
+    underlined link beside This morning is now an outlined button at the right end of the page's first heading (The club
+    today; This morning for those without that band), and it opens the window on the Overview. "Rainout" stays one word
+    where it still appears (the older held Rainout's banner, help search words).
 - [x] **Stage 1 (game day on the club home) — 11 asks G1–G11, RULED 2026-11-25: all eleven A, as recommended, no
   notes** (owner paste-back: G1 A · G2 A · G3 A · G4 A · G5 A · G6 A · G7 A · G8 A · G9 A · G10 A · G11 A). G6 is A,
   not D: no "Updated" time line. Drawn 2026-11-25. Page:

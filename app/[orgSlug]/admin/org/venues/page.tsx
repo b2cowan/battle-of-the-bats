@@ -20,8 +20,8 @@
  * ⚖ WHO SAVES (Ask 9): the owner, an admin, a league admin, and anyone granted the tournament permission. Everyone else
  * who can open Organization READS it — no Add venue, no pencil, no Archive or Delete. A refused save says why in the
  * window (the route's words), never silently.
- * ⚖ CLOSE A PLACE (Club Website Stage 2, K1, K11): the toolbar's "Close a place" is one of the window's three doors (the
- * Overview's and the house league Rainout button are the others; `?close=1` opens it on arrival). A closure showing on the
+ * ⚖ CLOSE A PLACE (Club Website Stage 2, K1, K11): the toolbar's "Close a place" is one of the window's three buttons (the
+ * Overview's and the house league schedule's are the others, same words and icon, owner 2026-11-26). A closure showing on the
  * site sits at the top as one row — the place, its days, who closed it and when, and Reopen — and its place's row wears
  * "Closed today". One row per closure; one that ended by itself at Until is gone. Owner, admin, house league admin only.
  * ⚠ A FAILED LOAD says so, with Try again — never an empty library (S6-09: "No venues in your library yet" over a failed
@@ -29,7 +29,7 @@
  */
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { ChevronDown, ChevronRight, MapPin, Plus } from 'lucide-react';
+import { ChevronDown, ChevronRight, CloudRain, MapPin, Plus } from 'lucide-react';
 import { useOrg } from '@/lib/org-context';
 import { usePageTitle } from '@/lib/usePageTitle';
 import { useIsPhone } from '@/lib/hooks/useIsPhone';
@@ -103,11 +103,6 @@ export default function VenueLibraryPage() {
     setClosures(((d as { closures?: StaffClosure[] } | null)?.closures) ?? []);
   }, [slug, planAllowed, canClose, q]);
   useDeferredLoad(!orgLoading && !!slug && canClose, loadClosures);
-  // The Overview's door lands here with `?close=1` and opens the window once.
-  const closeAsked = search.get('close') === '1';
-  useEffect(() => {
-    if (closeAsked && canClose && planAllowed) setClosing({ venueId: null });
-  }, [closeAsked, canClose, planAllowed]);
   const today = tournamentToday();
   const closedToday = useMemo(() => new Set(closures.filter(c => c.firstDay <= today).flatMap(c => (c.venueId ? [c.venueId] : []))), [closures, today]);
   const everyClosedToday = closures.some(c => c.scope === 'all' && c.firstDay <= today);
@@ -150,7 +145,9 @@ export default function VenueLibraryPage() {
       actions={planAllowed && (canSave || canClose) ? (
         <>
           {canClose && (
-            <button type="button" className="btn btn-outline" onClick={() => { setSaid(null); setClosing({ venueId: null }); }}>{CW.door}</button>
+            <button type="button" className="btn btn-outline" onClick={() => { setSaid(null); setClosing({ venueId: null }); }}>
+              <CloudRain size={16} aria-hidden />{CW.door}
+            </button>
           )}
           {canSave && (
             <button type="button" className={`btn btn-lime${isPhone ? ` ${ck.iconOnlyPhone}` : ''}`} onClick={() => { setSaid(null); setAsking('add'); }}
@@ -346,7 +343,7 @@ export default function VenueLibraryPage() {
           venueLibraryHref={`/${slug}/admin/org/venues`}
           onOpenVenueLibrary={canSave ? () => setAsking('add') : undefined}
           onClosed={() => { void loadClosures(); }}
-          onClose={() => { setClosing(null); if (closeAsked) router.replace(`/${slug}/admin/org/venues`); }}
+          onClose={() => setClosing(null)}
         />
       )}
       {reopening && (

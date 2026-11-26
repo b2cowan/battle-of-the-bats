@@ -4,7 +4,8 @@ import { formatShortWeekdayDate } from './timezone';
 /**
  * RAINOUT (House League 9e-2; rulings 9e·10 to 9e·14, plan HOUSE_LEAGUE_STAGE9_PLAN.md §0i; mig 427) — what is left of it
  * since Club Website Stage 2 (Session 2B retired the one-season Rainout window; Session 2C retired its pure plan, used
- * only by its own tests). The schedule's "Rainout" button now opens Close a place (K15). This file keeps:
+ * only by its own tests). The schedule's button opens Close a place (K15), and is named so since 2026-11-26. This file
+ * keeps:
  *   · the held Rainout's banner and Put all back — an old Rainout made with "Email the families now" unticked can still
  *     be waiting in Changes to send, and a closed place's failed send waits there too (K5: it retries, never goes back);
  *   · the words, types and helpers Close a place shares with it: the send's per-division answer, the short division name,
@@ -40,7 +41,6 @@ const gamesWord = (n: number) => pluralize(n, 'game');
 export const shortDivision = (name: string) => name.replace(/\s+division$/i, '').trim() || name;
 
 export const RAIN_WORDS = {
-  button: 'Rainout',
   errFinished: (season: string) => `${season} has finished, so games can’t be called off.`,
   /** The held Rainout (11.3): Put all back. */
   back: (n: number) => `Put all ${n} back`,

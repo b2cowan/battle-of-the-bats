@@ -23,13 +23,17 @@ import { CLUB_BAND_WORDS as W, owedToTheClub, type ClubBand as Band, type ClubBa
 import ck from './ClubKit.module.css';
 import styles from './ClubBand.module.css';
 
-type Load = { state: 'loading' } | { state: 'error' } | { state: 'ready'; band: Band };
+type Load = { state: 'loading' } | { state: 'error' } | { state: 'ready'; slug: string; band: Band };
 
-export default function ClubBand({ slug, base, ready }: {
+export default function ClubBand({ slug, base, ready, action, refresh = 0 }: {
   slug: string;
   base: string;
   /** "This morning" has rendered (or failed): only then does the band ask. The parent mounts this for the owner / club admin only. */
   ready: boolean;
+  /** The Overview's page action, at the right end of this heading (the page's first). */
+  action?: React.ReactNode;
+  /** Bumped when the page changed something the band counts: it reads again, keeping what it shows meanwhile. */
+  refresh?: number;
 }) {
   const [load, setLoad] = useState<Load>({ state: 'loading' });
   const [revision, setRevision] = useState(0);
@@ -40,14 +44,15 @@ export default function ClubBand({ slug, base, ready }: {
     const controller = new AbortController();
     fetch(`/api/admin/club-band?orgSlug=${encodeURIComponent(slug)}`, { cache: 'no-store', signal: controller.signal })
       .then(r => { if (!r.ok) throw new Error('band'); return r.json(); })
-      .then(band => { if (!controller.signal.aborted) setLoad({ state: 'ready', band: band as Band }); })
-      .catch(() => { if (!controller.signal.aborted) setLoad({ state: 'error' }); });
+      .then(band => { if (!controller.signal.aborted) setLoad({ state: 'ready', slug, band: band as Band }); })
+      // A failed RE-read keeps this club's figures on the page; only a band with nothing to show says it failed.
+      .catch(() => { if (!controller.signal.aborted) setLoad(prev => (prev.state === 'ready' && prev.slug === slug ? prev : { state: 'error' })); });
     return () => controller.abort();
-  }, [ready, slug, revision]);
+  }, [ready, slug, revision, refresh]);
 
   if (load.state === 'error') {
     return (
-      <Shell>
+      <Shell action={action}>
         <p className={styles.retry} role="status">
           {W.failed}{' '}
           <button type="button" className={ck.link} onClick={retry}>{W.retry}</button>
@@ -56,8 +61,10 @@ export default function ClubBand({ slug, base, ready }: {
     );
   }
   if (load.state === 'loading') {
-    // Nothing until "This morning" has rendered; then the band's own skeleton, so the page does not jump twice.
-    return ready ? <Shell busy><div className={styles.skeleton} /></Shell> : null;
+    // Nothing until "This morning" has rendered; then the band's own skeleton, so the page does not jump twice. The
+    // page's action never waits on a read: with one, the heading draws at once.
+    if (!ready && !action) return null;
+    return <Shell busy action={action}>{ready && <div className={styles.skeleton} />}</Shell>;
   }
 
   const { band } = load;
@@ -153,12 +160,13 @@ export default function ClubBand({ slug, base, ready }: {
     </div>
   ) : failedTile('needs', W.needs.label);
 
-  // Nothing at all for this reader (no gate passed): the band is not drawn, and does not leave a heading over nothing.
+  // Nothing at all for this reader (no gate passed): the band is not drawn, and does not leave a heading over nothing. The
+  // page's action still shows, on its own row.
   const tiles = [cash, owed, week, needs].filter(Boolean);
-  if (tiles.length === 0) return null;
+  if (tiles.length === 0) return action ? <div className={ck.sectionHead}>{action}</div> : null;
 
   return (
-    <Shell day={band.today}>
+    <Shell day={band.today} action={action}>
       <div className={styles.band} data-tiles={Math.min(tiles.length, 4)} role="group" aria-label={W.title}>
         {tiles}
       </div>
@@ -167,11 +175,12 @@ export default function ClubBand({ slug, base, ready }: {
 }
 
 /** The band's section: the eyebrow (dated once the band has loaded) over whatever the state draws. */
-function Shell({ day, busy, children }: { day?: string; busy?: boolean; children: React.ReactNode }) {
+function Shell({ day, busy, action, children }: { day?: string; busy?: boolean; action?: React.ReactNode; children: React.ReactNode }) {
   return (
     <section className={ck.section} aria-labelledby="hub-band" aria-busy={busy || undefined}>
       <div className={ck.sectionHead}>
         <span id="hub-band" className={kit.eye}>{day ? W.eyebrow(formatShortWeekdayDate(day)) : W.title}</span>
+        {action}
       </div>
       {children}
     </section>

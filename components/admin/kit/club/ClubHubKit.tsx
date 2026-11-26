@@ -32,7 +32,7 @@ import billing from '@/components/billing/Billing.module.css';
 import { IN_PLACE_RETURN_PARAM, isInPlaceReturn } from '@/lib/workspace-upgrade';
 import {
   Users, DollarSign, Contact, Globe, CalendarDays, Trophy, Building2, UserCheck, Lock, ListChecks,
-  RefreshCw, Pencil, UserPlus, ExternalLink, type LucideIcon,
+  RefreshCw, Pencil, UserPlus, ExternalLink, CloudRain, type LucideIcon,
 } from 'lucide-react';
 import { useOrg } from '@/lib/org-context';
 import { hasCapability, hasBillingAccess } from '@/lib/roles';
@@ -59,6 +59,7 @@ import WhatsNewNote from './WhatsNewNote';
 import TwoStepOverviewNotice from './TwoStepOverviewNotice';
 import ClubBand from './ClubBand';
 import ClubStillToDo, { type StillToDoChecklist } from './ClubStillToDo';
+import ClosePlaceWindow from './places/ClosePlaceWindow';
 import { useBoardPeople } from '@/lib/use-board-people';
 import { boardOwnerName, seasonStarterShort } from '@/lib/board-people';
 import { NOT_YOURS_WORDS } from '@/lib/not-yours-words';
@@ -201,9 +202,14 @@ export default function ClubHubKit() {
   }, [slug, wantsAttention]);
 
   // Close a place (Club Website Stage 2): the closures showing now, for the people who close and reopen (K1), on the places
-  // gate (K14). The Overview's line while one shows; its door ("Close a place") beside This morning's heading.
+  // gate (K14). The Overview's card while one shows; its button sits at the right end of the page's FIRST heading (owner
+  // 2026-11-26) and opens the window here: The club today for the people who get that band, else This morning.
   const closesPlaces = !!currentOrg && hasOrgVenueLibrary(currentOrg.planId) && canClosePlace(userRole);
   const [closures, setClosures] = useState<StaffClosure[]>([]);
+  const [closing, setClosing] = useState(false);
+  /** Bumped by a press: the closures and the band's week read again (the games it called off leave the count); the
+   *  brief is asked again beside it. */
+  const [pressed, setPressed] = useState(0);
   useEffect(() => {
     if (!slug || !closesPlaces) return;
     let stale = false;
@@ -212,7 +218,7 @@ export default function ClubHubKit() {
       .then(d => { if (!stale && d) setClosures((d as { closures?: StaffClosure[] }).closures ?? []); })
       .catch(() => {});
     return () => { stale = true; };
-  }, [slug, closesPlaces]);
+  }, [slug, closesPlaces, pressed]);
 
   // The owner's setup progress, while it is unfinished (a Club's checklist — A11). A club ADMIN reads the same list, read-only,
   // as "Still to do" (Stage 13b, A2); the owner's "Setup: n of 5" line is theirs alone.
@@ -315,9 +321,15 @@ export default function ClubHubKit() {
     });
   }
   const anythingWaits = briefCards.some(c => (brief?.counts[c.key] ?? 0) > 0) || extraCards.length > 0;
-  // Close a place's door lives in this section's head, so the section shows for everyone who closes a place (a house league
-  // admin, a League Plus club with no rep teams), even when nothing else waits.
-  const hasBriefSection = briefCards.length > 0 || extraCards.length > 0 || closesPlaces || status === 'error' || (status === 'loading' && !brief);
+  const hasBand = club && (isOwner || isAdmin);
+  const closeButton = closesPlaces ? (
+    <button type="button" className={`btn btn-outline ${styles.headAction}`} onClick={() => setClosing(true)}>
+      <CloudRain size={16} aria-hidden />{CW.door}
+    </button>
+  ) : null;
+  // With no band, the button lives in this section's head, so the section shows for them even when nothing else waits (a
+  // house league admin, a League Plus club with no rep teams).
+  const hasBriefSection = briefCards.length > 0 || extraCards.length > 0 || (closesPlaces && !hasBand) || status === 'error' || (status === 'loading' && !brief);
 
   // ── Your programs ────────────────────────────────────────────────────────────────────────────
   const teams = brief?.teams;
@@ -398,13 +410,14 @@ export default function ClubHubKit() {
           plan; it asks only once the brief has answered (or failed), so This morning never waits on it. */}
       {club && (isOwner || isAdmin) && <ClubBand
         slug={slug} base={base} ready={status !== 'loading' || !!brief}
+        action={closeButton} refresh={pressed}
       />}
 
       {hasBriefSection && (
         <section className={ck.section} aria-labelledby="hub-brief">
           <div className={ck.sectionHead}>
             <span id="hub-brief" className={kit.eye}>This morning</span>
-            {closesPlaces && <Link className={ck.link} href={`${base}/org/venues?close=1`}>{CW.door}</Link>}
+            {!hasBand && closeButton}
           </div>
           {status === 'error' && !brief ? (
             <div className={`${ck.notice} ${ck.noticeWarn}`} role="status">
@@ -591,6 +604,16 @@ export default function ClubHubKit() {
             <Link href={`${base}/org/billing`} className={ck.link}>View billing and upgrade options</Link>
           </p>
         </section>
+      )}
+
+      {closing && currentOrg && (
+        <ClosePlaceWindow
+          orgSlug={slug}
+          venueLibraryHref={`${base}/org/venues`}
+          // The brief too: a called-off game leaves "Outside the permit", whose count is asked behind each new brief.
+          onClosed={() => { setPressed(n => n + 1); reload(); }}
+          onClose={() => setClosing(false)}
+        />
       )}
     </div>
   );

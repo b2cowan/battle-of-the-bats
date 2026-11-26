@@ -188,7 +188,8 @@ describe('the guards', () => {
   const PAGE = read('app/[orgSlug]/admin/house-league/seasons/[seasonId]/schedule/page.tsx');
   const MAIL = read('lib/place-closure-mail-words.ts');
   const SEND = read('lib/place-closure-mail.ts');
-  it('K15 · the house league Rainout button opens Close a place, on the places gate', () => {
+  it('K15 · the house league button opens Close a place, on the places gate, under that name (owner 2026-11-26)', () => {
+    assert.match(PAGE, /<CloudRain size=\{16\} aria-hidden \/>\{CLOSE_WORDS\.door\}/);
     assert.match(PAGE, /import ClosePlaceWindow from '@\/components\/admin\/kit\/club\/places\/ClosePlaceWindow'/);
     assert.doesNotMatch(PAGE, /RainoutWindow/);
     assert.match(PAGE, /hasOrgVenueLibrary\(currentOrg\.planId\)/);

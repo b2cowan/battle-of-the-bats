@@ -14,6 +14,13 @@
 }
 .briefCard { --card-gap: 0.3rem; }
 
+/* The page's action at the right end of its first heading (Close a place): it stays right when a phone wraps it under the
+   eyebrow, and holds the tap floor there. */
+.headAction { margin-inline-start: auto; }
+@media (max-width: 768px) {
+  .headAction { min-height: var(--tap-min, 44px); }
+}
+
 /* All zero: one calm line, not four zeros. */
 .calm {
   margin: 0;

@@ -8,9 +8,9 @@
  * tournaments (their own Rain delay, K13) and practices. The list and the sentences under it are the preview: there is no
  * second screen. NO HOLD (K5): the press sends. Then the result, in the same window.
  *
- * Three doors open it: the Venue library's toolbar, the Overview, and the house league schedule's Rainout button (K15,
- * `season`: it opens on that season's places that day). A house league admin sees rep and tournaments as counts with no
- * door (K1; the server leaves their names out).
+ * Three buttons open it, all worded "Close a place" with the rain cloud (owner 2026-11-26): the Venue library's toolbar,
+ * the Overview's first heading, and the house league schedule's (K15, `season`: it opens on that season's places that
+ * day). A house league admin sees rep and tournaments as counts with no door (K1; the server leaves their names out).
  */
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
@@ -49,9 +49,9 @@ const newKey = () => (typeof crypto !== 'undefined' && 'randomUUID' in crypto
 
 export default function ClosePlaceWindow({ orgSlug, eyebrow, season, initialVenueId, venueLibraryHref, onOpenVenueLibrary, onClosed, onOpenChanges, onNewDates, onClose }: {
   orgSlug: string;
-  /** "Venue library" · the season's name (the Rainout button's door). */
-  eyebrow: string;
-  /** K15: opened from a season's Rainout button — on that season's places that day. */
+  /** "Venue library" · the season's name (its schedule). None from the Overview: the bar already names where you are. */
+  eyebrow?: string;
+  /** K15: opened from a season's schedule — on that season's places that day. */
   season?: { id: string; name: string } | null;
   initialVenueId?: string | null;
   venueLibraryHref: string;
@@ -94,7 +94,7 @@ export default function ClosePlaceWindow({ orgSlug, eyebrow, season, initialVenu
   const [result, setResult] = useState<PressResult | null>(null);
   const [typedSeen, setTypedSeen] = useState(false);
 
-  // The frame first: the club's places, its day, and (from a season's Rainout button) that season's places today.
+  // The frame first: the club's places, its day, and (from a season's schedule) that season's places today.
   useEffect(() => {
     let live = true;
     void (async () => {
@@ -106,7 +106,7 @@ export default function ClosePlaceWindow({ orgSlug, eyebrow, season, initialVenu
       let sp: string[] = [];
       let day = f.today;
       if (seasonId) {
-        // The season's places today, or on its next day with games (the Rainout opened there).
+        // The season's places today, or on its next day with games (where the one-season Rainout opened).
         const r = await fetch(`${api}?${q}&seasonId=${seasonId}&day=${f.today}&next=1`, { cache: 'no-store' }).catch(() => null);
         const d = r?.ok ? await r.json().catch(() => null) : null;
         sp = ((d as { seasonPlaces?: string[] } | null)?.seasonPlaces ?? []);

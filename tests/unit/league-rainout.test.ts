@@ -20,9 +20,6 @@ describe('the held Rainout (COPY Part C 11.3) and the closed place\'s banner', (
     assert.equal(W.backDone(12), '12 games put back. Nothing was sent.');
     assert.equal(W.errFinished('2027 House League'), '2027 House League has finished, so games can’t be called off.');
   });
-  it('the button is one word (K15)', () => {
-    assert.equal(W.button, 'Rainout');
-  });
 });
 
 describe('what Close a place shares', () => {

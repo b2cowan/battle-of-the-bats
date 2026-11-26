@@ -209,7 +209,7 @@ export const CLOSE_WORDS = {
   eyebrow: 'Venue library',
   place: 'Place',
   everyPlace: 'All our fields',
-  /** K15: the Rainout button's pick. "This season’s places today (2)". */
+  /** K15: the house league schedule button's pick. "This season’s places today (2)". */
   seasonPlaces: (n: number, isToday: boolean) => `This season’s places ${isToday ? 'today' : 'that day'} (${n})`,
   allDiamonds: 'All diamonds',
   diamonds: 'Diamonds',

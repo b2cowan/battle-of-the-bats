@@ -38,7 +38,7 @@ import SchedulePublishLine, { SchedulePublishTag, showPublishButton, type Schedu
 import { CHANGES_TO_SEND_WORDS, SCHEDULE_PUBLISH_WORDS } from '@/lib/league-schedule-words';
 import ChangesToSendWindow from '@/components/admin/kit/club/league/schedule/ChangesToSendWindow';
 import ClosePlaceWindow from '@/components/admin/kit/club/places/ClosePlaceWindow';
-import { RAIN_WORDS } from '@/lib/league-rainout';
+import { CLOSE_WORDS } from '@/lib/place-closure-window';
 import { hasOrgVenueLibrary } from '@/lib/plan-features';
 import cts from '@/components/admin/kit/club/league/schedule/ChangesToSend.module.css';
 import type { ChangeKind, GameSnapshot } from '@/lib/league-game-changes';
@@ -672,8 +672,8 @@ export default function SchedulePage() {
   /** Each game with a change waiting to be sent (9d-2b f1/f2): its net kind, or played since. Runners only. */
   const [changes, setChanges] = useState<Record<string, { kind: ChangeKind | null; played: boolean }>>({});
   const [changesOpen, setChangesOpen] = useState(false);
-  /** Rainout (9e-2): the header's window, across divisions; "Give them new dates" unfolds Needs a new date (a new key). */
-  const [rainOpen, setRainOpen] = useState(false);
+  /** Close a place (9e-2's window, widened by Club Website Stage 2): across divisions; "Give them new dates" unfolds Needs a new date (a new key). */
+  const [closePlaceOpen, setClosePlaceOpen] = useState(false);
   const [newDatesKey, setNewDatesKey] = useState(0);
   const needsDateRef = useRef<HTMLDivElement | null>(null);
   const [loading, setLoading] = useState(true);
@@ -1258,10 +1258,9 @@ export default function SchedulePage() {
   const canPublish = showPublishButton({ canRun: canManage, published: !!divPublishing, teamsPublished: divTeamsPublished, games: divLiveGames });
   // Changes to send (f2): the header's button once a published division has a change waiting, its count the amber pill.
   const divHeld = canManage && divPublishing ? divPublishing.held : 0;
-  // Rainout (9e-2; since Club Website Stage 2, K15, it opens Close a place): whoever runs the live season, once a division
-  // is published; the places gate is the server's too (K14: League Plus, Club, Club · Association).
-  const canRainout = canManage && scheduleRead === 'ok' && Object.keys(publishing).length > 0
-    // K14 (Club Website Stage 2): the Rainout opens Close a place, on the places gate (League Plus, Club, Club · Association).
+  // Close a place (K15): whoever runs the live season, once a division is published; the places gate is the server's too.
+  const showsClosePlace = canManage && scheduleRead === 'ok' && Object.keys(publishing).length > 0
+    // K14 (Club Website Stage 2): League Plus, Club, Club · Association.
     && !!currentOrg && hasOrgVenueLibrary(currentOrg.planId);
   /** A place as a Changes to send row says it: the facility alone when it has one ("Diamond 2"), else the venue or the text. */
   const placeWords = (snap: GameSnapshot) => {
@@ -1395,11 +1394,11 @@ export default function SchedulePage() {
               {CHANGES_TO_SEND_WORDS.button}<span className={cts.count} aria-hidden>{divHeld > 9 ? '9+' : divHeld}</span>
             </button>
           )}
-          {/* Rainout (9e·10): a word on a phone too — it can email hundreds of families. Absent where the plan lacks it
-              (9e·15, never an upgrade line) and for anyone who can't run the season. */}
-          {canRainout && (
-            <button type="button" className="btn btn-outline" onClick={() => setRainOpen(true)}>
-              <CloudRain size={16} aria-hidden />{RAIN_WORDS.button}
+          {/* Close a place (named "Rainout" until 2026-11-26): a word on a phone too (9e·10) — it can email hundreds of
+              families. Absent where the plan lacks it (9e·15, never an upgrade line) and for anyone who can't run the season. */}
+          {showsClosePlace && (
+            <button type="button" className="btn btn-outline" onClick={() => setClosePlaceOpen(true)}>
+              <CloudRain size={16} aria-hidden />{CLOSE_WORDS.door}
             </button>
           )}
           {phone && addMenu}
@@ -1516,10 +1515,10 @@ export default function SchedulePage() {
         />
       )}
 
-      {/* Rainout (K15, Club Website Stage 2): the button stays, named "Rainout", and opens Close a place on this season's
-          places that day — every program there in one press (house league postponed, rep marked, tournaments handed to
+      {/* Close a place (K15, Club Website Stage 2; the button takes the window's name since 2026-11-26): from here it opens
+          on this season's places that day — every program there in one press (house league postponed, rep marked, tournaments handed to
           their Rain delay). Today's one-season window is retired with it (K14: it replaces the Rainout everywhere). */}
-      {rainOpen && (
+      {closePlaceOpen && (
         <ClosePlaceWindow
           orgSlug={orgSlug}
           eyebrow={season?.name ?? ''}
@@ -1532,7 +1531,7 @@ export default function SchedulePage() {
             setNewDatesKey(k => k + 1);
             requestAnimationFrame(() => needsDateRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }));
           }}
-          onClose={() => setRainOpen(false)}
+          onClose={() => setClosePlaceOpen(false)}
         />
       )}
 

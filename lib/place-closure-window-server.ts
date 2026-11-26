@@ -46,7 +46,7 @@ export async function closeFrame(org: Org, role: OrgRole): Promise<CloseFrame> {
 }
 
 /**
- * K15: the places this season's games use on the closure's days (by id) — the Rainout button opens on these. Unordered: the
+ * K15: the places this season's games use on the closure's days (by id) — the house league schedule's button opens on these. Unordered: the
  * caller orders them by the club's place names (the window's order is the press's order).
  */
 export async function seasonPlacesOn(orgId: string, seasonId: string, firstDay: string, lastDay: string = firstDay): Promise<string[]> {
@@ -60,7 +60,7 @@ export async function seasonPlacesOn(orgId: string, seasonId: string, firstDay: 
 }
 
 /** K15: the first day from `from` (within the closure's 13-day reach) on which this season has a game at one of the club's
- *  places — the Rainout button opens there, as the Rainout opened on "today, or the next day with games". Null: none. */
+ *  places — the schedule button opens there, as the Rainout opened on "today, or the next day with games". Null: none. */
 export async function seasonNextDay(orgId: string, seasonId: string, from: string): Promise<string | null> {
   const start = zonedWallClockToUtc(from, '00:00');
   const end = zonedWallClockToUtc(addCalendarDays(from, 14), '00:00');
