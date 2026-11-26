@@ -28984,4 +28984,6 @@ Committed 2026-11-25 as two commits (owner: "commit the sweep and the data chang
 **Left out (pinned by tests or probes):** a real send (needs our mailing address; the words are held word for word by `preview-club-p4-guard.test.ts`); the scheduler calling at 08:05 UTC (scheduled on dev, job 23; the run is the same call); the removal step refusing a claimed and a real club (`.probe/p4-prove.mjs`, 18/18); a second run removing nothing; the record's contents; a send that dies part-way; a promotional send to a stopped address.
 
 **After the walk:** nothing to tidy; both previews stay in Prospect clubs as Removed, by design.
+
+Committed 2026-11-26, ahead of the walk (owner: "simplify and commit"): `d3d1bcc5e` (the build), `0142cdf23` (the nightly job).
 <!-- /§575 -->

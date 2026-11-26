@@ -1451,7 +1451,7 @@ the demos follow the product and are curated with `/demos`, never as a build ste
   fixes `efb7df706` and `317704c69`. Track P's last session is P4 (the removal, the ended page, the one email); the
   nightly job still needs the owner's word in that session, and the email waits on the mailing address.
 - 2026-11-26 — **Track P Session P4 built: the removal, the ended page and the one email (T11–T13; drawing tab 7).
-  Nothing committed at writing.** Start condition held (P3 committed `15da5e57a`, walk passed §571). **Owner rulings in
+  Committed `d3d1bcc5e`, the nightly job `0142cdf23` (2026-11-26, ahead of the walk).** Start condition held (P3 committed `15da5e57a`, walk passed §571). **Owner rulings in
   the session (asked before building, as the prompt required):** the nightly removal job **yes** (shared automation; its
   own commit, AGENCY_RULES 2026-09-26; T11 B's by-hand list NOT built); Today's **"Removal overdue (N)"** line yes (a
   missed or refused removal shows until it is gone); the address stop honoured by **every** FieldLogicHQ promotional send
@@ -1504,6 +1504,15 @@ the demos follow the product and are curated with `/demos`, never as a build ste
   PUBLISHED before that.** Walk: [CLUB_WEBSITE_TRACK_P_P4_WALK.html](CLUB_WEBSITE_TRACK_P_P4_WALK.html),
   https://claude.ai/artifact/FEDVf85o1pc1j81gBQgzJB, Owner QA Ledger §575 (3 walks, 33 steps; the helper
   `.probe/p4-walk.mjs`, dev only, makes a preview due and runs the removal by hand).
+  **`/simplify` before the commit (2026-11-26, four reviewers).** Applied: Delete’s file step is one shared helper
+  (`lib/org-files-purge-server.ts`) that Delete and the removal both call; one day label (`previewDayLabel`, built like the
+  removal date); the claim page’s ended frame is drawn by the ended page’s own component; the room window’s reads run
+  together; unused state removed; the P4 guard reads source through the shared test helpers. No behaviour change, so no
+  second `/review`. Proof after: typecheck and the guards (the one failure is P3’s known grants finding), spelling,
+  dictionary, `.probe/p4-prove.mjs` 18/18, `.probe/p4-unsub-prove.mjs` 7/7. Seen and left: Today’s two owner rows are not
+  in the shared waiting list; Delete’s record row and address release are still written twice; a preview’s files are
+  cleared a second time in the run that removed it. The schema snapshots stay for the release (they carry other
+  sessions’ migrations too).
 
 ## 8. Census questions for Stage 0 (answer from code, not from this plan)
 
