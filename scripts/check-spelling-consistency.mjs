@@ -440,7 +440,7 @@ for (const v of violations) {
 console.error(`
   One word, one spelling, everywhere a customer can read it (AGENCY_RULES.md, owner ruling
   2026-08-24) — screen copy, headings, empty states, buttons, toasts, API error messages, help
-  articles AND their keywords/searchText, and the demo sandboxes' dock lines and tour narration.
+  articles AND their keywords/searchText.
 
   Fix the COPY only. Do NOT rename a column, enum value, route segment, class name or article id
   to satisfy this gate: that is a migration, not a spelling fix.
