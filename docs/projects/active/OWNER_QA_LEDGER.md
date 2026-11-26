@@ -28975,7 +28975,7 @@ Committed 2026-11-25 as two commits (owner: "commit the sweep and the data chang
 
 ## §574 · Retire the public demos · Step 3 · The demo code is gone — **signing in and out, two-step set-up and the phone menu work as before, and an old demo address still lands on pricing**
 <!-- §574 -->
-**Walk published 2026-11-26.** [Interactive walk](https://claude.ai/artifact/UJaijzC43zEVqjQSbJyvz3) (walks A–D, 17 steps; no owner calls inside it) · [repository HTML](RETIRE_PUBLIC_DEMOS_STEP3_WALK.html). No migration. Plan: `RETIRE_PUBLIC_DEMOS_PLAN.md` Phase 3. Not committed (the owner's word first).
+**Walk published 2026-11-26.** [Interactive walk](https://claude.ai/artifact/UJaijzC43zEVqjQSbJyvz3) (walks A–D, 17 steps; no owner calls inside it) · [repository HTML](RETIRE_PUBLIC_DEMOS_STEP3_WALK.html). No migration. Plan: `RETIRE_PUBLIC_DEMOS_PLAN.md` Phase 3. Committed 2026-11-26, ahead of the walk: `2c8ead6b7` (the code), `494b298b9` (the records).
 
 **Where:** `http://localhost:3000`, dev data, after the dev server restart on this code. **Sign in:** tournament admin `uat-owner@uat-test-org.local`, club admin `uat-club-owner@uat-rep-club.local`, coach `uat-coach@uat-test-org.local`, all `UATPassword2026!`; platform console with the owner's own staff login and authenticator code (the `uat-platform@` fixture has two-step on with no held authenticator). Walk A in a private window, signed out.
 
