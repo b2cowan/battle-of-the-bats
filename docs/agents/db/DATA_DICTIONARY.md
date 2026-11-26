@@ -2066,7 +2066,7 @@ the studio and mirrored to the platform audit log.
 <!-- dict:col:club_schedule_slots.id -->
 <!-- dict:col:club_schedule_slots.created_at -->
 <!-- dict:col:club_schedule_slots.updated_at -->
-**`id`** / **`created_at`** / **`updated_at`** — boilerplate. ⚠ A slot KEEPS its id while its place and start stay (`club_schedule_save` matches by `(schedule, venue, facility, starts_at)` — unique index `club_schedule_slots_place_start`, re-keyed to the FAMILY by mig 491 as `club_schedule_slots_family_place_start` on `(family_id, venue, facility, starts_at)`, and since mig 541 the exclusion constraint `club_schedule_slots_family_place_overlap` — see `section_mask`; the save's own lookup still matches by the equal start), so a final schedule's practices keep their link through a regenerate.
+**`id`** / **`created_at`** / **`updated_at`** — boilerplate. ⚠ A slot KEEPS its id while its place and start stay (`club_schedule_save` matches by `(schedule, venue, facility, section_mask, starts_at)` since mig 544 — found through `club_schedule_slots_schedule_idx` on `(schedule_id, org_venue_id, starts_at)`, mig 545, which every schedule_id read also uses; the uniqueness was the unique index `club_schedule_slots_place_start`, re-keyed to the FAMILY by mig 491 as `club_schedule_slots_family_place_start` on `(family_id, venue, facility, starts_at)`, and since mig 541 the exclusion constraint `club_schedule_slots_family_place_overlap` — see `section_mask`; the save's own lookup still matches by the equal start, and by the part), so a final schedule's practices keep their link through a regenerate.
 
 <!-- dict:col:club_schedule_slots.org_id -->
 <!-- dict:col:club_schedule_slots.schedule_id -->

@@ -420,9 +420,10 @@ Migration first. Drawn together with Stage 3.
         save proof covers draft schedules only (a final whole→parts re-save is unproved).
         **Owed to later sessions:** 2C — the coach's hand-back series key (`lib/club-schedule-coach.ts` `placeKey`) and the
         PDF cell (`lib/club-schedule-document.ts:160`) carry the part; Send writes it on the practice. 2E —
-        `lib/club-schedule-league-plan.ts` `sig` carries the part. `/dba` advisory (an owner call, not built): the save's
-        slot lookup has no index on (schedule, venue, start), true before this build too; a separate small migration
-        `club_schedule_slots_schedule_idx` when wanted. For `/marketing` (2E): the sharing rule's "half facilities"
+        `lib/club-schedule-league-plan.ts` `sig` carries the part. `/dba` advisory, BUILT at the owner's word 2026-11-26 ("build
+        the dba index on the slot lookup then apply to dev"): mig 545 `club_schedule_slots_schedule_idx` on (schedule_id,
+        org_venue_id, starts_at) — the table had no index starting with the schedule; applied to dev 2026-11-26, the save's
+        lookup plan reads it (Index Scan); schema-visible, so `check:migrations` tracks it to prod (no order: any time). For `/marketing` (2E): the sharing rule's "half facilities"
         sentence names case C fields only; a part is never shared but is not called a half facility.
 - [ ] Reported by `/design`, not this project's to fix: the shipped "Give it to" menu inside a cell of the "Open slots and
       short teams" window has no row on `docs/agents/design/TABLE_EXCEPTION_REGISTER.md` (it was ruled for that window;
