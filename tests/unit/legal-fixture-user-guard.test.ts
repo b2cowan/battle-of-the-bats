@@ -10,8 +10,8 @@ import { dirname, join, resolve } from 'node:path';
  * That call used to be hand-placed beside ~30 `auth.admin.createUser(` sites, so a new seed could forget it silently. Now a
  * script makes its login through `ensureFixtureUser` (scripts/lib/fixture-user.mjs) and a UAT spec through `createFixtureUser`
  * (tests/uat/helpers/fixture-user.ts); both record acceptance as part of making the account. This test walks `scripts/` and
- * `tests/uat/` and fails when any other file calls `auth.admin.createUser(`. Staff and the two demo seeds are exempt
- * (`lib/legal-acceptance-exempt.ts`) and keep their own — listed below, each with its reason.
+ * `tests/uat/` and fails when any other file calls `auth.admin.createUser(`. Staff is exempt
+ * (`lib/legal-acceptance-exempt.ts`) and keeps its own — listed below, with its reason.
  *
  * The census keys on the NAMED call, asserts the list EXACTLY, and fails loudly when blind (the history-guard shape).
  */
@@ -41,13 +41,11 @@ const CREATE_USER = /auth\s*\.\s*admin\s*\.\s*createUser\s*\(/;
 const SCRIPT_CREATOR = 'scripts/lib/fixture-user.mjs';
 const UAT_CREATOR = 'tests/uat/helpers/fixture-user.ts';
 const CREATORS = [SCRIPT_CREATOR, UAT_CREATOR];
-/** Staff and demo accounts never tick (`lib/legal-acceptance-exempt.ts`), so they keep their own `createUser`. */
+/** Staff accounts never tick (`lib/legal-acceptance-exempt.ts`), so the staff seed keeps its own `createUser`. */
 const EXEMPT: Record<string, string> = {
   'scripts/seed-platform-staff.mjs': 'staff — exempt (R4)',
-  'scripts/seed-demo-tournament.mjs': 'demo — exempt (R4)',
-  'scripts/seed-demo-coach.mjs': 'demo — exempt (R4)',
 };
-const HOW = 'make the login through ensureFixtureUser (scripts) or createFixtureUser (UAT), so it records Terms acceptance — or list it as exempt (staff/demo only)';
+const HOW = 'make the login through ensureFixtureUser (scripts) or createFixtureUser (UAT), so it records Terms acceptance — or list it as exempt (staff only)';
 
 describe('one way to make a login in a script or a UAT spec (6.3 Chunk C)', () => {
   it('is not blind: it walks scripts and UAT files, and finds both creators', () => {

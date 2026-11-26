@@ -2,7 +2,6 @@ import { NextResponse } from 'next/server';
 import { requirePlatformPower } from '@/lib/platform-auth';
 import { withObservability } from '@/lib/observability';
 import { getStripe } from '@/lib/stripe';
-import { isDemoOrgId } from '@/lib/demo-org-server';
 import { staffBelongsToClub } from '@/lib/staff-own-club';
 import { consoleClock } from '@/lib/console-dates';
 import { REFUND_WORDS } from '@/lib/console-money';
@@ -16,7 +15,7 @@ import { stripeKeyIsLive } from '@/lib/online-payments-switch';
  * in this order:
  *   1. the refund power (Super admin, Billing), checked before ANYTHING is read;
  *   2. every refusal, each a fixed sentence and zero writes: the charge must be exactly this club's (customer not empty,
- *      not shared, same mode); the wider "your own club"; a demo club; not paid, disputed, fully refunded; the amount
+ *      not shared, same mode); the wider "your own club"; not paid, disputed, fully refunded; the amount
  *      whole cents, above zero, within Stripe's remainder, and the remainder the person saw; Billing's 6 months and
  *      sixth-in-24-hours; the reason (required, under 500, no card number);
  *   3–5. `makeRefund`: our record as started (or stop), one Stripe call keyed by it, the record completed, the audit entry.
@@ -62,10 +61,7 @@ export const POST = withObservability(async (req: Request, { params }: { params:
   }
   if (!credit.ok) return refuse(credit.status, credit.error);
 
-  const [ownClub, demoClub] = await Promise.all([
-    staffBelongsToClub(id, { id: auth.user.id, email: auth.user.email ?? '' }, { stripeCustomerEmail: customerEmail }),
-    isDemoOrgId(id),
-  ]);
+  const ownClub = await staffBelongsToClub(id, { id: auth.user.id, email: auth.user.email ?? '' }, { stripeCustomerEmail: customerEmail });
 
   let outcome;
   try {
@@ -74,7 +70,6 @@ export const POST = withObservability(async (req: Request, { params }: { params:
       club,
       actor: { email: auth.user.email ?? '', role: auth.role },
       ownClub,
-      demoClub,
       charge,
       invoice: credit.target,
       ask: { amountCents: body.amountCents, beforeTaxCents: body.beforeTaxCents, remainingSeenCents: body.remainingSeenCents, reason: body.reason },

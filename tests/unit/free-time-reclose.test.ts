@@ -22,7 +22,7 @@ import { freeTimeStoryEntries, CLOSES_AGAIN_WORDS } from '../../lib/free-time-st
 import { functionBody, readCode, readSource } from './_source-code.ts';
 
 const NOW = new Date('2026-11-18T16:00:00.000Z');
-const OPEN: GiveContext = { switchOn: true, staffIsMember: false, isDemo: false };
+const OPEN: GiveContext = { switchOn: true, staffIsMember: false };
 const CLUB: ClubFacts = { id: 'c1', name: 'Riverside', planId: 'tournament', accountKind: 'organization', payingThroughStripe: false, runningPlanGrant: null };
 const ENDED: ClubFacts = { ...CLUB, planEnded: true };
 const STATUS = { kind: 'subscription_status', lastDay: '2026-12-15', reason: 'A favour', role: 'billing' };

@@ -642,7 +642,7 @@ describe('14. through a volunteer\'s eyes (Bank check novice UX S1, plan BANK_CH
     assert.match(form, /!afterStart \? W\.balanceHint : null/);
     assert.match(form, /off \? W\.saveOffNote : null/);
     assert.match(form, /replaces \? W\.replacesNote\(dayYear\(date\)\) : null/);
-    assert.match(form, /\{work\.keepFailed\s*\? <>\{W\.workKeepFailed\}\{' '\}<button type="button" className=\{s\.link\} onClick=\{\(\) => void work\.flush\(\)\}>\{W\.tryAgain\}<\/button><\/>\s*: work\.sandboxNote \?\? W\.workKept\}/);
+    assert.match(form, /\{work\.keepFailed\s*\? <>\{W\.workKeepFailed\}\{' '\}<button type="button" className=\{s\.link\} onClick=\{\(\) => void work\.flush\(\)\}>\{W\.tryAgain\}<\/button><\/>\s*: W\.workKept\}/);
     assert.doesNotMatch(form, /draftKept|hasDraft/);
     assert.equal(BANK_WORDS.workKept, 'Kept as you go, on any device you sign in on, until you save this check.');
     assert.equal(BANK_WORDS.saveOffNote, 'You can save this check while it’s off and check again later. Saving changes nothing in your books.');

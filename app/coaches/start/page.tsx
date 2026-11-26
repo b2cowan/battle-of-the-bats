@@ -4,7 +4,6 @@ import { getPlanGatingMap } from '@/lib/plan-gating-server';
 import { getAuthUserCached } from '@/lib/supabase-server';
 import { getBasicCoachTeamForUser } from '@/lib/basic-coach-teams';
 import { readStartDoor } from '@/lib/start-door';
-import { isDemoOrganizerEmail } from '@/lib/demo-org';
 import CoachStartInterest from '@/components/coaches/CoachStartInterest';
 
 export const metadata = {
@@ -24,9 +23,7 @@ export default async function CoachesPortalStartPage({
   // checkout dead-end (Phase 5m / J5-051). The single destination all "express interest" labels
   // point to. Prefilled from the session when signed in; works signed-out. Never a purchase.
   if (gatingMap.team) {
-    const sessionUser = await getAuthUserCached();
-    // The shared demo account is no one's to prefill from (see the buyer rule below).
-    const user = sessionUser && !isDemoOrganizerEmail(sessionUser.email) ? sessionUser : null;
+    const user = await getAuthUserCached();
     const meta = (user?.user_metadata ?? {}) as { full_name?: string; first_name?: string; last_name?: string };
     const defaultName = [meta.first_name, meta.last_name].filter(Boolean).join(' ').trim() || meta.full_name || '';
     return <CoachStartInterest defaultName={defaultName} defaultEmail={user?.email ?? ''} />;
@@ -38,10 +35,7 @@ export default async function CoachesPortalStartPage({
   // coach can only pre-fill from a team they actually own; anything else falls through to a blank
   // form. (Phase 2 will carry this id through checkout to back-link + migrate the team's data.)
   const basicTeamId = sp?.basicTeamId?.trim() || null;
-  // The shared demo account is never a buyer: a demo session that reached this page (an in-app link out of the sandbox,
-  // which the request layer's exit rule does not see) reads as signed out, so step 1 asks for the person's own account.
-  const sessionUser = await getAuthUserCached();
-  const user = sessionUser && !isDemoOrganizerEmail(sessionUser.email) ? sessionUser : null;
+  const user = await getAuthUserCached();
   let prefillTeamName: string | null = null;
   let prefillSport: string | null = null;
   let prefillBasicTeamId: string | null = null;

@@ -555,7 +555,7 @@ function CheckCard({ orgSlug, teamId, view, active = true, againDate, onAddLine,
               {notes.length > 0 && `${notes.join(' ')} `}
               {work.keepFailed
                 ? <>{W.workKeepFailed}{' '}<button type="button" className={b.link} onClick={() => void work.flush()}>{W.tryAgain}</button></>
-                : work.sandboxNote ?? W.workKept}
+                : W.workKept}
             </p>
             {askOver ? (
               <span className={b.overAsk} role="group" aria-label={W.startOver}>

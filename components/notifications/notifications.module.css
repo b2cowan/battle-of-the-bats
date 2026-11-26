@@ -69,14 +69,13 @@
    ruled 2026-10-06 on hub screen 9). It replaced the bell's 320px panel, and with it the panel's
    ≤900px rules: the bell lives in the top strip, which a phone never shows, so those rules never ran.
 
-   The LAYER is fixed under the top strip — the strip's height plus the "See it live" banner term
-   (resolves to 0px for every real org; set on <html>, so it reaches this body-portaled layer) — and
+   The LAYER is fixed under the top strip — the strip's height — and
    holds the light dim and the drawer. 1105, as the panel was: above the What's-New popover (1100),
    since this is the surface that says something is waiting for YOU (top-nav audit §D12). The strip
    (80) is not under it, so the bell and the strip's other doors stay in reach. ═══ */
 .layer {
   position: fixed;
-  top: calc(var(--chrome-bar-h) + var(--sandbox-chrome-h, 0px));
+  top: var(--chrome-bar-h);
   right: 0;
   bottom: 0;
   left: 0;

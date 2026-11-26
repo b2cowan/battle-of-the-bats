@@ -3,7 +3,6 @@ import { amplifyDomainHost } from '@/lib/amplify-domains';
 import { publicDnsLookup } from '@/lib/club-domain-dns';
 import { clubDomainStore } from '@/lib/club-domain-store';
 import type { ServiceDeps } from '@/lib/club-domain-service';
-import { isDemoOrgId } from '@/lib/demo-org-server';
 import { captureError } from '@/lib/observability';
 
 /**
@@ -29,7 +28,6 @@ export function clubDomainDeps(): ServiceDeps {
     dns: publicDnsLookup,
     siteTarget: configured === undefined ? DEFAULT_SITE_TARGET : configured.trim() || null,
     branch: process.env.CLUB_DOMAINS_AMPLIFY_BRANCH ?? '',
-    isDemoOrg: isDemoOrgId,
     now: () => new Date(),
     report: (err, where) => { void captureError(scrubbedCause(err, where)); },
   };

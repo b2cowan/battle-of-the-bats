@@ -2,12 +2,6 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, useRef, ReactNode } from 'react';
 import type { Tournament, TournamentStatus } from './types';
 import { DEFAULT_SPORT } from './sports';
-import {
-  isDemoOrgSlug,
-  SANDBOX_TOURNAMENT_DATASET_KEY,
-  SANDBOX_TOURNAMENT_CHANGED_EVENT,
-  SANDBOX_SELECT_TOURNAMENT_EVENT,
-} from './demo-org';
 import { adminEventCookieName, adminEventCookiePath, chooseTournament } from './admin-event-choice';
 import type { AdminTournamentSeed } from './admin-tournament-list';
 
@@ -175,8 +169,8 @@ export function TournamentProvider({ children, orgSlug, seed }: {
       // Deep-link support: a ?tournamentId= in the URL (notifications, emails)
       // takes priority over the saved/active tournament so links land correctly.
       // ?tournamentSlug= is the same door keyed by slug — slugs are stable across
-      // environments where row ids are not, which is what lets the sandbox (and any
-      // shared link) address "the Invitational" without knowing this database's ids.
+      // environments where row ids are not, which is what lets a shared link address
+      // "the Invitational" without knowing this database's ids.
       // A caller's pick (the event it just created) outranks the address and the saved choice. The order is ONE rule,
       // shared with the server's first paint (`chooseTournament`).
       const params = typeof window !== 'undefined'
@@ -225,77 +219,6 @@ export function TournamentProvider({ children, orgSlug, seed }: {
     setCurrentState(t);
     rememberChoice(orgSlug, t.id);
   }
-
-  /**
-   * Sandbox only — the two-way contract with the demo chrome's moments dock.
-   *
-   * The chrome is mounted by the org shell, OUTSIDE this provider, so it cannot call
-   * `useTournament()`. Instead: the provider stamps the current selection on `<html>` (and
-   * announces changes), so the dock can highlight the moment the visitor is actually editing —
-   * including when they switch through the sidebar's own dropdown; and it listens for the dock's
-   * select events, so pressing a moment switches the editing context without a reload. Both
-   * effects are inert for every real customer: the org is not in the hardcoded demo allow-list,
-   * so neither the stamp nor the listener is installed.
-   */
-  useEffect(() => {
-    if (!orgSlug || !isDemoOrgSlug(orgSlug)) return;
-    const root = document.documentElement;
-    root.dataset[SANDBOX_TOURNAMENT_DATASET_KEY] = currentTournament?.slug ?? '';
-    window.dispatchEvent(new CustomEvent(SANDBOX_TOURNAMENT_CHANGED_EVENT, {
-      detail: { slug: currentTournament?.slug ?? null },
-    }));
-    return () => {
-      delete root.dataset[SANDBOX_TOURNAMENT_DATASET_KEY];
-      // Announce the clearing too, so the chrome's mirror of this value goes stale-free when the
-      // visitor leaves the operator half (review finding: the stamp was symmetric, the signal
-      // was not).
-      window.dispatchEvent(new CustomEvent(SANDBOX_TOURNAMENT_CHANGED_EVENT, {
-        detail: { slug: null },
-      }));
-    };
-  }, [orgSlug, currentTournament]);
-
-  /**
-   * A dock/tour selection that arrives before the tournaments list has loaded (the provider
-   * fetches on mount) would otherwise be silently dropped — the press's navigation still happens,
-   * but the editing context never switches and the chrome's arrival narration never fires. Stash
-   * the ask and honour it the moment the list lands. (Review finding — the window is a few
-   * hundred milliseconds wide, exactly where a fast visitor crossing fan → operator lives.)
-   */
-  const pendingSandboxSelect = useRef<string | null>(null);
-
-  useEffect(() => {
-    if (!orgSlug || !isDemoOrgSlug(orgSlug)) return;
-    const onSelect = (event: Event) => {
-      const slug = (event as CustomEvent<{ slug?: string }>).detail?.slug;
-      if (!slug) return;
-      const target = tournaments.find(t => t.slug === slug);
-      if (target) {
-        pendingSandboxSelect.current = null;
-        if (target.id !== currentTournament?.id) setCurrentTournament(target);
-      } else {
-        pendingSandboxSelect.current = slug;
-      }
-    };
-    window.addEventListener(SANDBOX_SELECT_TOURNAMENT_EVENT, onSelect);
-    return () => window.removeEventListener(SANDBOX_SELECT_TOURNAMENT_EVENT, onSelect);
-    // setCurrentTournament is re-created per render but only wraps stable setters — the deps
-    // that matter are the values the handler closes over.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [orgSlug, tournaments, currentTournament]);
-
-  // Honour a stashed selection once the list exists. Also covers the race where the first fetch
-  // resolves against a URL the router hasn't updated yet: the stash, not the URL, carries intent.
-  useEffect(() => {
-    if (!orgSlug || !isDemoOrgSlug(orgSlug)) return;
-    const wanted = pendingSandboxSelect.current;
-    if (!wanted) return;
-    const target = tournaments.find(t => t.slug === wanted);
-    if (!target) return;
-    pendingSandboxSelect.current = null;
-    if (target.id !== currentTournament?.id) setCurrentTournament(target);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [orgSlug, tournaments]);
 
   const isLocked = currentTournament?.status === 'completed';
 

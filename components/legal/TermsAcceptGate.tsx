@@ -15,7 +15,7 @@ import TermsGateWatch from './TermsGateWatch';
  * Decided on the SERVER, before anything else mounts (the `CoachTeamSeasonGate` pattern): a person who still needs to agree to
  * the current Terms gets the screen INSTEAD of the shell, at the same address — no redirect, no route of its own, no nav, and
  * none of the shell's children render. Everyone else gets the shell untouched: nobody signed in, the pages off (production until
- * 6.7), staff and the demo accounts, and anyone who has agreed (an accepted person costs no query: the mirror rides on the
+ * 6.7), staff, and anyone who has agreed (an accepted person costs no query: the mirror rides on the
  * user `getUser()` already returned).
  *
  * The page renders instead of the screen at a shell's own account doors (`doors`, the consumer shell's sign-in area and family
@@ -45,7 +45,7 @@ interface ScreenOptions {
 
 /**
  * The decision, for a layout with several returns (the club Coaches Portal and its walls) as well as for the gate above:
- *   · null — nothing to do (nobody signed in, the pages off, staff or demo, or agreed);
+ *   · null — nothing to do (nobody signed in, the pages off, staff, or agreed);
  *   · `screen` — return it INSTEAD of the shell;
  *   · `watch` — the page is let through (an account door, or a paid owner's billing page); render it beside the page, so
  *     a navigation away from the let-through set asks the server again (`TermsGateWatch`).

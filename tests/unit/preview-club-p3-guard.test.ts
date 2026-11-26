@@ -79,11 +79,12 @@ describe('2. the pass (T7)', () => {
 describe('3. the claim door (tab 6.3; /legal finding 1; T9)', () => {
   const route = code(read('app/api/start/claim/route.ts'));
   it('holds every rule Start a club’s own door holds, the Terms first', () => {
-    for (const rule of ['demoActorRefusal(', 'isPlatformAdminEmail(', 'requireAcceptance(', 'readRealSeats(', 'hasLiveInvitation(',
+    for (const rule of ['isPlatformAdminEmail(', 'requireAcceptance(', 'readRealSeats(', 'hasLiveInvitation(',
       'getActiveOwnedTeamWorkspace(', "isPaidDoorOpen('club')"]) {
       assert.ok(route.includes(rule), `the claim door must ask ${rule}`);
     }
     assert.ok(route.indexOf('requireAcceptance(') < route.indexOf('openClaimPass('), 'the Terms before anything else is read');
+    assert.ok(!route.includes('demoActorRefusal('), 'the retired demo actor refusal is gone from the claim door');
   });
   it('refuses without the authority tick, and records the sentence shown', () => {
     assert.match(route, /body\.authority !== true/);

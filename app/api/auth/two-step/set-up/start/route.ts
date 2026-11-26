@@ -3,15 +3,12 @@ import { withObservability } from '@/lib/observability';
 import { getSessionTwoStep } from '@/lib/api-auth';
 import { createClient } from '@/lib/supabase-server';
 import { supabaseAdmin } from '@/lib/supabase-admin';
-import { isDemoOrganizerEmail } from '@/lib/demo-org';
 import { REPLACING_AUTHENTICATOR_FLAG, isReplacingAuthenticator } from '@/lib/two-step-session';
 import { freshCodeRefusal, hasFreshCode } from '@/lib/two-step-fresh';
 
 /**
  * Start setting up two-step (drawings tab 2, "Scan"). Returns the QR code, the key and the authenticator link.
  *
- *   - Refused for the shared demo accounts: one visitor setting it up would sign out every visitor and lock the demo
- *     (tab 9). Each new demo visit also clears any authenticator off them (lib/demo-session.ts).
  *   - Clears the person's own half-finished set-ups first: the service counts them toward its 10-per-person limit and
  *     sweeps only those older than about 5 minutes; each attempt is also named uniquely (Part 1 Step 0).
  *   - A person who already has it on may start again only to set up a NEW PHONE, and only with a proof (the app's code
@@ -29,9 +26,6 @@ export const POST = withObservability(async (req: Request) => {
   const state = await getSessionTwoStep();
   if (!state?.passed) return NextResponse.json({ error: 'Sign in first.' }, { status: 401 });
   const { user } = state;
-  if (isDemoOrganizerEmail(user.email)) {
-    return NextResponse.json({ error: 'The demo account can’t use two-step sign-in.', code: 'demo_account' }, { status: 403 });
-  }
 
   const body = await req.json().catch(() => ({})) as { replace?: boolean };
   const { data: listed, error: listErr } = await supabaseAdmin.auth.admin.mfa.listFactors({ userId: user.id });

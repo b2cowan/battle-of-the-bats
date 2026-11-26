@@ -35,7 +35,6 @@ type Status = {
   email?: string | null;
   hasFactor?: boolean;
   passed?: boolean;
-  isDemo?: boolean;
   requiredNow?: boolean;
   replacing?: boolean;
   requiredBy?: { kind: 'staff' | 'club'; orgName?: string; role?: string; state?: 'grace' | 'required'; until?: string | null }[];
@@ -170,10 +169,6 @@ function SetUp() {
       setStatus(s);
       if (!s.signedIn) { window.location.assign(`/auth/login?next=${encodeURIComponent(self)}`); return; }
       if (s.hasFactor && !s.passed) { window.location.assign(twoStepStepUrl('code', self)); return; }
-      if (s.isDemo) {
-        setScreen({ kind: 'refused', title: 'Not on the demo', body: 'The demo account is shared by everyone trying it, so two-step sign-in can’t be turned on here.' });
-        return;
-      }
 
       if (newCodesOnly) {
         setScreen({ kind: 'confirmCodes' });

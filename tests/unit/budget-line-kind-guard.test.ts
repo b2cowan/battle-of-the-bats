@@ -139,10 +139,6 @@ const KIND_AGNOSTIC: Array<{ path: string; reason: string }> = [
       + '`.in(…, FUNDING_LINE_KINDS)`, the shared list, so a fourth kind reaches it automatically.',
   },
   {
-    path: 'lib/demo-coach-reconcile-core.ts',
-    reason: 'Re-anchors period DATES by id and sort order. It never reads an amount.',
-  },
-  {
     path: 'scripts/seed-qa-day-fixtures.mjs',
     reason: 'The owner-QA lab is deliberately COST-ONLY — it exists to exercise the cost side of '
       + 'the money screens. If a funding line is ever seeded there it must say line_kind, and '

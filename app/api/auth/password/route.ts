@@ -4,7 +4,6 @@ import { withObservability } from '@/lib/observability';
 import { getSessionTwoStep } from '@/lib/api-auth';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { createClient } from '@/lib/supabase-server';
-import { isDemoOrganizerEmail } from '@/lib/demo-org';
 import { freshCodeRefusal, hasFreshCode } from '@/lib/two-step-fresh';
 import { passwordChangedEmail, sendTwoStepEmail } from '@/lib/two-step-emails';
 
@@ -26,7 +25,6 @@ export const POST = withObservability(async (req: Request) => {
   const state = await getSessionTwoStep();
   if (!state?.passed) return NextResponse.json({ error: 'Sign in first.' }, { status: 401 });
   const { user } = state;
-  if (isDemoOrganizerEmail(user.email)) return NextResponse.json({ error: 'Not available on the demo.' }, { status: 403 });
   if (!user.email) return NextResponse.json({ error: 'This account signs in without a password.' }, { status: 409 });
 
   const body = await req.json().catch(() => ({})) as { current?: unknown; next?: unknown };

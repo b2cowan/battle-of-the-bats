@@ -1,6 +1,5 @@
 import 'server-only';
 import { supabaseAdmin } from './supabase-admin';
-import { isDemoOrgId } from './demo-org-server';
 import { isPreviewOrgId } from './preview-org-server';
 import { filterUnpausedUsers } from './notification-pause';
 import { findAuthUserIdByEmail } from './auth-account-lookup';
@@ -105,12 +104,11 @@ async function notifyChunk(
     const { data: clubs, error: clubErr } = await supabaseAdmin.from('organizations').select('id, name').in('id', orgIds);
     if (clubErr) throw clubErr;
 
-    // A demo club never notifies anyone. FAIL-CLOSED, like notify(): unable to tell, say nothing.
-    const demoOrgIds = new Set<string>();
+    // A preview club (Track P, T1) notifies nobody. FAIL-CLOSED, like notify(): unable to tell, say nothing.
+    const previewOrgIds = new Set<string>();
     for (const orgId of orgIds) {
       try {
-        // A preview club (Track P, T1) notifies nobody either.
-        if (await isDemoOrgId(orgId) || await isPreviewOrgId(orgId)) demoOrgIds.add(orgId);
+        if (await isPreviewOrgId(orgId)) previewOrgIds.add(orgId);
       } catch {
         return 0;
       }
@@ -126,7 +124,7 @@ async function notifyChunk(
         freeTeams: teamRes.data ?? [],
         members,
         unpaused: await unpausedOf(candidates),
-        demoOrgIds,
+        previewOrgIds,
       },
       opts.eventType,
       opts.compose,
@@ -153,7 +151,7 @@ export async function notifyInvitedFreeCoach(opts: {
   inviteId?: string | null;
 }): Promise<void> {
   try {
-    if (await isDemoOrgId(opts.orgId) || await isPreviewOrgId(opts.orgId)) return;
+    if (await isPreviewOrgId(opts.orgId)) return;
     const userId = await findAuthUserIdByEmail(opts.email);
     if (!userId) return;
 

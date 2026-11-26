@@ -157,21 +157,19 @@ describe('small states', () => {
   });
 });
 
-describe('demo sandboxes carry no billing row', () => {
-  it('kitBillingLink returns nothing in a sandbox, for every plan, the owner included', () => {
+describe('the billing row is the owner\'s on every plan (the demo sandbox\'s "no row" case is gone)', () => {
+  it('kitBillingLink returns the row for the owner on every plan, with no sandbox switch', () => {
     for (const planId of plans) {
-      assert.equal(kitBillingLink({ orgSlug: 'riverdale-minor-ball', planId, role: 'owner', capabilities: null, isSandbox: true }), null, planId);
-      assert.ok(kitBillingLink({ orgSlug: 'riverdale-minor-ball', planId, role: 'owner', capabilities: null, isSandbox: false }), planId);
-      assert.ok(kitBillingLink({ orgSlug: 'riverdale-minor-ball', planId, role: 'owner', capabilities: null }), 'the default is not a sandbox');
+      assert.ok(kitBillingLink({ orgSlug: 'riverdale-minor-ball', planId, role: 'owner', capabilities: null }), planId);
     }
   });
-  it('the nav hook passes the sandbox flag, and the More sheet’s You group no longer keys on the link', () => {
-    assert.match(readCode('components/admin/kit/useAdminKitNav.ts'), /kitBillingLink\(\{[^}]*isSandbox \}\)/);
+  it('the nav hook passes no sandbox flag, and the More sheet’s You group no longer keys on the link', () => {
+    assert.doesNotMatch(readCode('components/admin/kit/useAdminKitNav.ts'), /isSandbox/);
     const sheet = readCode('components/admin/kit/AdminKitBottomNav.tsx');
-    // What's new now sits in the You group (owner 2026-11-07) and the sandbox keeps it, so the group always has a row:
-    // it no longer waits on "not a sandbox, or a coach door". Account and Home stay hidden in the sandbox.
+    // What's new sits in the You group (owner 2026-11-07), so the group always has a row; Account and Home are plain rows.
     assert.match(sheet, /<WhatsNewSheetRow itemClass=\{styles\.dropItem\} id="admin-mob-whats-new"/);
-    assert.match(sheet, /\{!isSandbox && \(\s*<Link className=\{styles\.dropItem\} href="\/account"/);
+    assert.match(sheet, /<Link className=\{styles\.dropItem\} href="\/account"/);
+    assert.doesNotMatch(sheet, /isSandbox/);
     assert.doesNotMatch(sheet, /coachDoor\.show \|\| billingLink/);
   });
 });

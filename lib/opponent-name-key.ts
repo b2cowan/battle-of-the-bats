@@ -3,14 +3,14 @@
  *
  * A leaf module with NO imports, and that is its whole job. The Opponent Scouting book is an
  * overlay keyed on this value (`rep_team_opponents.normalized_name`), so a book row only ever
- * finds its own games if the seed, the app and the URL parser all agree on the answer — and the
- * demo seeders run under Node's type-stripping, which cannot resolve `lib/coach-opponents.ts`'s
- * extensionless transitive imports. Left there, the rule would have had to be re-typed inside
- * `lib/demo-coach.ts`, and a second copy of an IDENTITY rule is a book that silently stops
- * matching its own opponent the first time either copy is touched.
+ * finds its own games if the seed, the app and the URL parser all agree on the answer — and a
+ * seed run under Node's type-stripping cannot resolve `lib/coach-opponents.ts`'s extensionless
+ * transitive imports. Left there, the rule would have had to be re-typed inside the seed, and a
+ * second copy of an IDENTITY rule is a book that silently stops matching its own opponent the
+ * first time either copy is touched.
  *
  * `lib/coach-opponents.ts` re-exports this, so no caller had to move.
- * ⚠ The `.ts` extension on imports of this file is load-bearing (the `lib/demo-org.ts` convention).
+ * ⚠ The `.ts` extension on imports of this file is load-bearing (the convention of every lib file the node test runner imports directly).
  */
 
 /**

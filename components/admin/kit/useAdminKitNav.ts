@@ -17,7 +17,6 @@ import { canReadVenueLibrary } from '@/lib/venue-library';
 import { isTournamentTier, orgSettingsOnTournamentSide } from '@/lib/billing-urls';
 import { adminListsOrgPages } from '@/lib/premium-org-pages';
 import { useCurrentOrgCoachAccess, coachDoorFor } from '@/lib/use-current-org-coach-access';
-import { useIsSandbox } from '@/components/sandbox/SandboxProvider';
 import { kitPrograms, kitOrgLinks, kitBillingLink, adminHelpHref, clubProgramOrder, clubTournamentsDoor, kitPortalDoors, personClubShape, personOnlyProgram, kitCalendarLink, kitSchedulesLink, kitPermitsLink, kitCommunicationsLink, kitSponsorshipsLink, kitOrgPlace, litClubPlace, clubPlaceGroups, orgTabs, showsOrgBoard, isTournamentEventShell, tournamentSettingsTabs, canOpenPdfSettings, type KitLink, type PlaceTab } from '@/lib/admin-kit-nav';
 import { deskTournamentGroups, kitTournamentGroups } from './kit-tournament-groups';
 import type { TourGroup } from '../admin-nav-config';
@@ -58,14 +57,11 @@ export function useOrgLinks() {
 /**
  * A Tournament-plan organization's Settings & access tabs for this person (navigation Phase 2 Part B, E3 + P1), or null on
  * every other plan, where those settings live in the club portal (P2). The sidebar's row and the header's place read it.
- * The demo sandbox has none: its staff, PDF, address and payout corners are the curated "hide the entry point" ones
- * (`lib/sandbox-curation.ts` — the event sidebar's `settings` row was hidden there for the same reason).
  */
 export function useTournamentSettingsTabs(): PlaceTab[] | null {
   const { currentOrg, userRole, tournamentPayoutsTab } = useOrg();
   const { base, isCanceled, canSeeMembers } = useOrgLinks();
-  const isSandbox = useIsSandbox();
-  if (!currentOrg || isCanceled || isSandbox || !orgSettingsOnTournamentSide(currentOrg)) return null;
+  if (!currentOrg || isCanceled || !orgSettingsOnTournamentSide(currentOrg)) return null;
   return tournamentSettingsTabs(base, {
     members: canSeeMembers,
     payouts: tournamentPayoutsTab,
@@ -119,7 +115,6 @@ export function useAdminKitNav() {
   const pathname = usePathname();
   const { currentOrg, userRole, userCapabilities, canOpen } = useOrg();
   const { currentTournament } = useTournament();
-  const isSandbox = useIsSandbox();
   const { orgSlug, base, isCanceled, isTeamWorkspace, orgLinks } = useOrgLinks();
 
   // The role holds the capability AND the plan carries the module — `canOpen`, the ONE gate every
@@ -159,7 +154,7 @@ export function useAdminKitNav() {
   const permitsLink = usePermitsLink();
   const communicationsLink = useCommunicationsLink();
   const sponsorshipsLink = useSponsorshipsLink();
-  const billingLink = kitBillingLink({ orgSlug, planId: currentOrg?.planId, accountKind: currentOrg?.accountKind, role: userRole, capabilities: userCapabilities, isSandbox });
+  const billingLink = kitBillingLink({ orgSlug, planId: currentOrg?.planId, accountKind: currentOrg?.accountKind, role: userRole, capabilities: userCapabilities });
   // The person's own Coaches Portal door — the rail's foot and the More sheet's "You" both show it.
   const coachAccess = useCurrentOrgCoachAccess(currentOrg?.slug, !isCanceled);
   const coachDoor = coachDoorFor(coachAccess, currentOrg?.slug,
@@ -167,7 +162,7 @@ export function useAdminKitNav() {
   // The tournament's groups as this person sees them, every row's address resolved ONCE. Every row is an event page:
   // the club's Accounting book is not one (owner 2026-10-30 — a tournament admin manages payments on Teams).
   const groups = kitTournamentGroups({
-    status: currentTournament?.status, isSandbox, role: userRole, planId: currentOrg?.planId, accountKind: currentOrg?.accountKind,
+    status: currentTournament?.status, role: userRole, planId: currentOrg?.planId, accountKind: currentOrg?.accountKind,
   });
   const withHrefs = (list: TourGroup[]) =>
     list.map(g => ({ ...g, items: g.items.map(i => ({ ...i, href: i.href ?? `${base}/tournaments/${i.key}` })) }));
@@ -191,8 +186,8 @@ export function useAdminKitNav() {
   // exception in a club that has an event: it wears the event's (owner 2026-11-10, amending T1) — `isTournamentEventShell`.
   // ⚖ Owner 2026-11-11: a tournament-only organization's Settings & access and Plan & billing keep the event's sidebar too.
   const inEvent = isTournamentEventShell(pathname, base, { tournamentOnly, hasEvent: !!currentTournament });
-  // The guide for where you are, in a new tab — the phone's More sheet foot (N7) and the demo sandbox's sidebar foot; on a
-  // desktop outside the sandbox it is the account menu's Help row (E16), which reads the same answer.
+  // The guide for where you are, in a new tab — the phone's More sheet foot (N7); on a desktop it is the account menu's
+  // Help row (E16), which reads the same answer.
   const helpHref = adminHelpHref(pathname, base);
   // ⚖ THE OTHER PORTALS (E4, navigation Phase 1): one list, the rail's foot and the sheet's You read it.
   // The phone's list (navigation Phase 3 renamed the phone's bar, not the sheet's You doors).
@@ -207,7 +202,6 @@ export function useAdminKitNav() {
     orgSlug,
     base,
     helpHref,
-    isSandbox,
     isCanceled,
     canUse,
     programs,

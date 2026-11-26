@@ -41,7 +41,6 @@ const NOT_HELD: { file: string; match: string; reason: string }[] = [
   { file: 'app/api/admin/venues/route.ts', match: '', reason: 'A venue renamed or removed rewrites the games\' venue words and ids only: no time, length or source.' },
   { file: 'app/api/admin/setup-tournament/route.ts', match: 'insert', reason: 'The new-event wizard\'s seeded schedule: a dev-tools flag only, never a customer door (Findings §2).' },
   { file: 'app/api/dev/seed/tournament/route.ts', match: '', reason: 'The dev seed is not held (A11).' },
-  { file: 'lib/demo-reconcile-core.ts', match: '', reason: 'The demo\'s own refresh is not held (A11).' },
   { file: 'lib/db.ts', match: 'insert(row)', reason: '`saveGame`: no callers (Findings §2).' },
   { file: 'lib/db.ts', match: 'update(updates)', reason: '`updateGame`: scores, submission and team fields; it can map a time but no caller passes one (Findings §2).' },
 ];

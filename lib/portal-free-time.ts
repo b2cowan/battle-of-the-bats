@@ -374,8 +374,6 @@ export type PortalGiveFacts = {
   coachIsGiver: boolean;
   /** This person holds a platform staff account (T34). */
   coachIsStaff: boolean;
-  /** A public demo or sandbox account (T28). */
-  coachIsDemo: boolean;
   /** The giver belongs to one of this coach's teams or portals, in any role (T1). */
   giverOnTeam: boolean;
   freeTeams: FreeTeamFacts[];
@@ -386,7 +384,7 @@ export type PortalGiveFacts = {
 
 /** The door's one line where it is absent (drawing A, lines 1–9; the console knows before the click). */
 export type PortalGiveBlock = {
-  kind: 'switch' | 'own' | 'demo' | 'running' | 'paying' | 'comped' | 'cancelled' | 'club' | 'had_free_time' | 'no_team' | 'week';
+  kind: 'switch' | 'own' | 'running' | 'paying' | 'comped' | 'cancelled' | 'club' | 'had_free_time' | 'no_team' | 'week';
   tone: 'red' | 'quiet';
   line: string;
   /** The portal the line is about, when there is one (the tab links to its record). */
@@ -450,9 +448,6 @@ export function portalGiveBlockOf(facts: PortalGiveFacts, role: string): PortalG
   }
   if (facts.giverOnTeam) {
     return { kind: 'own', tone: 'red', line: "You belong to this coach's team, so you can't give it free time. Another staff member can." };
-  }
-  if (facts.coachIsDemo) {
-    return { kind: 'demo', tone: 'quiet', line: "This is a public demo coach, so it can't be given free time: everyone who opens the demo would see it." };
   }
   // A portal the coach can use now decides before one that has ended, and any portal before a free team.
   const ordered = [...facts.portals].sort((a, b) => Number(b.inForce) - Number(a.inForce));

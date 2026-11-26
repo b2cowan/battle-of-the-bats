@@ -154,8 +154,7 @@ export default function SlideCard({
                   <span className={styles.caveat}>
                     Declared properly: file{health.present === null ? ' recorded' : ' present'}, size{' '}
                     {health.size ? `${health.size.w}×${health.size.h}` : 'missing'}, description and
-                    caption both written. Taken at {health.captureWidth}px from{' '}
-                    <span className={kit.code}>{health.demoPath}</span>.
+                    caption both written. Taken at {health.captureWidth}px.
                   </span>
                 )}
                 {/* ⚠ THE AGE SITS DIRECTLY ABOVE THE SENTENCE THAT LIMITS IT, and that adjacency is
@@ -165,8 +164,7 @@ export default function SlideCard({
                 <span className={styles.caveat}>
                   {health.takenAt
                     ? <>Taken <strong>{describeAge(health.ageDays)}</strong> — {health.takenAt}.</>
-                    : <>No capture date recorded — it was taken before we started stamping them.
-                        Re-taking this picture will stamp it.</>}
+                    : <>No capture date recorded — it was taken before we started stamping them.</>}
                 </span>
                 <span className={styles.caveat}>{PICTURE_FRESHNESS_IS_UNCHECKED}</span>
               </>

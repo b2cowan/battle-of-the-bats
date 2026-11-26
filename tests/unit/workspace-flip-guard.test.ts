@@ -233,7 +233,7 @@ const FIXTURES: Array<[string, OrgRow, WorkspaceRow, string]> = [
 
 /** The portal tests that can be loaded here, asked of one org-shaped row. */
 function portalVerdicts(o: OrgRow): Record<string, boolean> {
-  const block = freeTimeBlockOf({ name: o.name, planId: o.plan_id as never, accountKind: o.account_kind }, { switchOn: true, staffIsMember: false, isDemo: false });
+  const block = freeTimeBlockOf({ name: o.name, planId: o.plan_id as never, accountKind: o.account_kind }, { switchOn: true, staffIsMember: false });
   return {
     isTeamWorkspaceOrg: isTeamWorkspaceOrg({ accountKind: o.account_kind, planId: o.plan_id }),
     isTeamWorkspaceRelation: isTeamWorkspaceRelation({ account_kind: o.account_kind, plan_id: o.plan_id }),
@@ -330,7 +330,7 @@ describe('2 · a flipped workspace is a club everywhere a portal test is asked',
       const want = isTeamWorkspaceOrg({ accountKind: k, planId: p });
       assert.equal(isTeamWorkspaceRelation({ account_kind: k, plan_id: p }), want, `relation ${k}/${p}`);
       assert.equal(isTeamWorkspaceRelation([{ account_kind: k, plan_id: p }]), want, `relation (array) ${k}/${p}`);
-      const block = freeTimeBlockOf({ name: 'x', planId: (p ?? 'tournament') as never, accountKind: k ?? null }, { switchOn: true, staffIsMember: false, isDemo: false });
+      const block = freeTimeBlockOf({ name: 'x', planId: (p ?? 'tournament') as never, accountKind: k ?? null }, { switchOn: true, staffIsMember: false });
       const wantBlock = isTeamWorkspaceOrg({ accountKind: k ?? null, planId: p ?? 'tournament' });
       assert.equal(block?.kind === 'portal', wantBlock, `freeTimeBlockOf ${k}/${p}`);
     }

@@ -12,13 +12,13 @@
  *      the seat (a club's switch); the platform context always requires it; the proxy uses the same check.
  *   3. Every one of the twelve password sign-in doors hands off to the one code step.
  *   4. The rule itself, and the session read, as behaviour.
- *   5. The demos: set-up refused for the shared accounts, and each visit clears any authenticator.
+ *   5. The retired demos left no special case in the set-up doors.
  *   6. The database half (mig 463) exists and is the same rule.
  * ══════════════════════════════════════════════════════════════════════════════════════════════
  */
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
-import { filesUnder, functionBody, readCode, readSource } from './_source-code.ts';
+import { filesUnder, functionBody, readCode, readSource, sourceExists } from './_source-code.ts';
 import {
   TWO_STEP_GRACE_DAYS, platformStaffTwoStepRequired, requiredSeatNeed, seatTwoStepRequirement,
 } from '../../lib/two-step-rule.ts';
@@ -29,7 +29,6 @@ import { twoStepStepUrl } from '../../lib/two-step-paths.ts';
 const SESSION_READERS: Record<string, string> = {
   'lib/two-step-session.ts': 'THE one read: getUser, then the same session’s token for its two-step level',
   'lib/platform-sign-in-again.ts': 'getClaims for the password clock, only for a staff account with NO authenticator (dev opt-out)',
-  'lib/sandbox-exit.ts': 'WHOSE session this is, for the demo doors ("may I replace this?"); it gates nothing, and a person mid-code-step must read as somebody',
 };
 
 /** Browser modules: they read the browser's own session, and every server answer they lead to is checked server-side. */
@@ -242,18 +241,12 @@ describe('4 · the rule, and the session read', () => {
   });
 });
 
-describe('5 · the demos', () => {
-  it('set-up is refused for the shared demo accounts', () => {
+describe('5 · the retired demos left no special case in the set-up doors', () => {
+  it('set-up has no shared-account refusal any more, and the demo session maker is gone', () => {
     for (const f of ['app/api/auth/two-step/set-up/start/route.ts', 'app/api/auth/two-step/set-up/verify/route.ts']) {
-      assert.match(readCode(f), /if \(isDemoOrganizerEmail\((?:state\.)?user\.email\)\)/, f);
+      assert.doesNotMatch(readCode(f), /isDemoOrganizerEmail|demo-org/, f);
     }
-  });
-
-  it('every new demo visit clears any authenticator off the shared account', () => {
-    const body = functionBody(readCode('lib/demo-session.ts'), 'attachDemoSession');
-    const clear = body.indexOf('await clearDemoAuthenticators(link.user.id)');
-    assert.ok(clear > 0, 'the demo no longer heals itself');
-    assert.ok(clear < body.indexOf('verifyOtp('), 'cleared before the session is made');
+    assert.ok(!sourceExists('lib/demo-session.ts'), 'lib/demo-session.ts is gone');
   });
 });
 

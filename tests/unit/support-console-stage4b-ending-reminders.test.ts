@@ -88,10 +88,10 @@ describe('the wiring', () => {
     assert.match(job, /wave === 3 \? \['free_time_reminded_3_for', 'free_time_reminded_14_for'\] as const : \['free_time_reminded_14_for'\] as const/);
     assert.match(job, /\.update\(Object\.fromEntries\(columns\.map\(c => \[c, ft\.lastDay\]\)\)\)/);
   });
-  it('only a portal still billed by nobody, only its owner, never a demo coach, and only the ending state', () => {
+  it('only a portal still billed by nobody, only its owner, and only the ending state', () => {
     assert.match(job, /\.eq\('billing_mode', 'platform_override'\)/);
     assert.match(job, /primary_owner_user_id/);
-    assert.match(job, /isDemoOrganizerEmail/);
+    assert.doesNotMatch(job, /isDemoOrganizerEmail/, 'the retired demo coach filter is gone');
     assert.match(job, /ft\.state === 'ended'/); // running (14 days left) and ending are read; an ended one never sends
   });
   it('is a logged account email of its own kind, and never imports a cancel or retention function (T15)', () => {

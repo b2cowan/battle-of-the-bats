@@ -135,7 +135,7 @@ describe('Stage 7 · the offered match reads an address its owner confirmed (bui
     assert.equal(selfConfirmed({ ...ok, email_confirmed_at: '2026-10-26T22:00:00Z' }), false, 'confirmed before we sent anything');
   });
 
-  it('refuses when a check cannot be read, and leaves out staff, console-confirmed accounts, invites, demo and staff-owned clubs', () => {
+  it('refuses when a check cannot be read, and leaves out staff, console-confirmed accounts, invites, preview and staff-owned clubs', () => {
     const code = readCode('lib/lead-book.ts');
     for (const refusal of ['touchedError', 'memberError', 'ownerError', 'dismissError']) {
       assert.match(code, new RegExp(`if \\(${refusal}\\) return \\{ kind: 'not_read' \\}`), refusal);
@@ -146,7 +146,8 @@ describe('Stage 7 · the offered match reads an address its owner confirmed (bui
     assert.match(code, /const staff = await readStaffAddresses\(\);[\s\S]*?\} catch \{\s*return \{ kind: 'not_read' \};/);
     assert.match(code, /\.in\('action', \['confirm_email', 'update_user'\]\)/);
     assert.match(code, /\.in\('role', \['owner', 'admin'\]\)\.eq\('status', 'active'\)\.not\('accepted_at', 'is', null\)/);
-    assert.match(code, /demo\.has\(m\.organization_id\) \|\| staffOwned\.has\(m\.organization_id\)/);
+    assert.match(code, /preview\.has\(m\.organization_id\) \|\| staffOwned\.has\(m\.organization_id\)/);
+    assert.doesNotMatch(code, /isDemoOrgSlug|demoOrgIds|getDemoOrg/, 'the retired demo list is not read');
     // organization_members keys the club as organization_id (a wrong name failed every offer, found by the render probe).
     assert.doesNotMatch(code, /from\('organization_members'\)[^;]*\b(?:eq|in)\('org_id'/);
     assert.match(code, /!dismissedKey\.has/);

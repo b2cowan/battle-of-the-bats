@@ -68,9 +68,7 @@ export default function PlayerRecapPreview({ orgSlug, teamId, playerId, playerFi
 
   const who = playerFirstName ? `${possessive(playerFirstName)} family` : 'the family';
   return (
-    // data-sandbox-tour: the beat the demo's "read what a parent gets" step rings. Inert off a
-    // demo org — the attribute carries no styling and no behaviour.
-    <div data-sandbox-tour="family-recap">
+    <div>
       <div className={styles.recapRow}>
         <button type="button" className={styles.recapRowBtn} onClick={toggle} aria-expanded={open}>
           {open ? <EyeOff size={14} aria-hidden /> : <Eye size={14} aria-hidden />}

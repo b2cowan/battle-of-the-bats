@@ -10,7 +10,7 @@ import { decideGive, freeTimeBlockOf, type ClubFacts, type GiveContext, type Giv
 
 const NOW = new Date('2026-10-25T16:00:00.000Z');
 const CLUB: ClubFacts = { id: 'c1', name: 'UAT Test Org', planId: 'tournament', accountKind: 'organization', payingThroughStripe: false, runningPlanGrant: null };
-const OPEN: GiveContext = { switchOn: true, staffIsMember: false, isDemo: false };
+const OPEN: GiveContext = { switchOn: true, staffIsMember: false };
 const PLAN: GiveRequest = { kind: 'plan_tier', plan: 'club', lastDay: '2027-03-31', reason: 'Trying Club', role: 'billing' };
 
 const refusal = (r: ReturnType<typeof decideGive>) => (r.ok ? null : r.error);
@@ -44,8 +44,9 @@ describe('giving free time: every refusal', () => {
     assert.equal(refusal(decideGive(PLAN, CLUB, { ...OPEN, staffIsMember: true }, NOW)), "You belong to UAT Test Org, so you can't give it free time. Another staff member can.");
   });
 
-  it('a public demo club (T12)', () => {
-    assert.match(refusal(decideGive(PLAN, CLUB, { ...OPEN, isDemo: true }, NOW))!, /public demo club/);
+  it('a preview club (Track P, T1); the retired demo kind is gone', () => {
+    assert.match(refusal(decideGive(PLAN, CLUB, { ...OPEN, isPreview: true }, NOW))!, /is a preview club/);
+    assert.equal(freeTimeBlockOf(CLUB, { ...OPEN, isPreview: true })?.kind, 'preview');
   });
 
   it('a Coaches Portal (Q10), by account kind or by the portal plan', () => {
@@ -146,7 +147,7 @@ describe('giving free time: every refusal', () => {
     assert.equal(refusal(decideGive({ ...PLAN, kind: 'module_addon', addons: ['module_tournaments'] }, CLUB, OPEN, NOW)), 'That section is not one the console gives.');
   });
 
-  it('the record knows before the click: switch and own club are red, portal and demo amber', () => {
+  it('the record knows before the click: switch and own club are red, portal and preview amber', () => {
     assert.equal(freeTimeBlockOf(CLUB, { ...OPEN, switchOn: false })?.tone, 'red');
     assert.equal(freeTimeBlockOf(CLUB, { ...OPEN, staffIsMember: true })?.tone, 'red');
     assert.equal(freeTimeBlockOf({ ...CLUB, accountKind: 'team_workspace' }, OPEN)?.tone, 'amber');

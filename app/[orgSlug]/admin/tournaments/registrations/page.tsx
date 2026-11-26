@@ -1374,7 +1374,7 @@ export default function UnifiedTeamsPage() {
       capacityGaps: registrationHealthCapacity.gaps,
     });
   }, [attentionSummary, regs, commandCenterAvailable, tracksPayments, registrationHealthCapacity]);
-  // Registration health's window — the header button opens it; it never arrives open, the demo included (the schedule's rule).
+  // Registration health's window — the header button opens it; it never arrives open (the schedule's rule).
   const [healthOpen, setHealthOpen] = useState(false);
   const showRegistrationHealth = Boolean(currentTournament) && !isLocked && !areas.inviteOnly && registrationHealth.hasTeams;
   // The window closes for good when its button goes (a lock, a refresh that finds no teams) — it must not reopen by itself
@@ -1840,10 +1840,9 @@ export default function UnifiedTeamsPage() {
         actions={(
           <>
             {/* Registration health — the header's first action, across every division (owner 2026-10-21; the Schedule
-                health button's shape). The demo tour and the marketing picture ring it. */}
+                health button's shape). The marketing picture rings it. */}
             {showRegistrationHealth && listMode === 'normal' && (
               <HealthButton
-                data-sandbox-tour="registration-health"
                 score={registrationHealth.score}
                 tone={registrationHealth.tone === 'neutral' ? 'good' : registrationHealth.tone}
                 issues={registrationHealth.issues.length}

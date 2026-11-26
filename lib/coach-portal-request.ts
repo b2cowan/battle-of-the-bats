@@ -8,7 +8,6 @@ import { coachHostedTournamentsLink, type CoachTournamentOrg } from './coach-bil
 import { isTeamWorkspaceOrg } from './team-workspace-kind';
 import { orgPlanCarriesCoachesPortal } from './coach-portal-plan';
 import { isOrgBillingSuspended } from './org-billing-access';
-import { getDemoOrgBySlug } from './demo-org';
 import { typedOnlyPageHome, type TypedOnlyPage } from './typed-only-pages';
 import { premiumPortalHome, premiumWithoutOrgPages, type RetiredOrgPage } from './premium-org-pages';
 import type { OrgRole } from './types';
@@ -85,10 +84,9 @@ export async function getStandaloneAdminHref(
   userId: string,
   role: OrgRole | null,
   capabilities: Record<string, boolean> | null,
-  inSandbox = !!getDemoOrgBySlug(org.slug),
 ): Promise<string> {
   const portal = `/${org.slug}/coaches`;
-  const tournaments = coachHostedTournamentsLink(org, role, capabilities, inSandbox);
+  const tournaments = coachHostedTournamentsLink(org, role, capabilities);
   // Owners and suspended workspaces reach the portal's wall without assignment reads.
   if (role === 'owner' || !tournaments) return portal;
   try {

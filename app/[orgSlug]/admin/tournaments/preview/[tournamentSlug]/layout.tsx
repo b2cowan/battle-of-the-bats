@@ -5,7 +5,6 @@ import { hasRoundRobin } from '@/lib/tournament-phase';
 import { resolveOrgHomeHref } from '@/lib/module-entitlements';
 import { runsInviteOnlyEvents } from '@/lib/invite-only-event';
 import { showsFreeCredit } from '@/lib/plan-config';
-import { isDemoOrgSlug } from '@/lib/demo-org';
 import { tournamentToday } from '@/lib/timezone';
 import { publicFrameBandFacts, publicTournamentContactEmail } from '@/lib/public-frame-server';
 import { publicFrameAttr, publicFrameBand, publicFrameHost, publicFrameRoleCss } from '@/lib/public-frame';
@@ -78,7 +77,7 @@ export default async function TournamentPreviewLayout({
             host={host}
             hiddenPages={hiddenPages}
             hasBracket={false}
-            showCredit={!showsFreeCredit(org.planId) && !isDemoOrgSlug(orgSlug)}
+            showCredit={!showsFreeCredit(org.planId)}
             basePath={previewBase}
             frameContent={frameContent}
           />

@@ -1,5 +1,4 @@
 import { supabaseAdmin } from '@/lib/supabase-admin';
-import { listDemoOrgIdsQuietly } from '@/lib/demo-org-server';
 import { openPreviewOrgIds } from '@/lib/preview-org-server';
 import { PLAN_CONFIG } from '@/lib/plan-config';
 import type { OrgPlan } from '@/lib/types';
@@ -74,57 +73,51 @@ export function statusLabel(status: string) {
 }
 
 /**
- * The sandbox ("See it live") org and everything it owns, so the platform's own numbers describe
- * CUSTOMERS. A demo org we run ourselves is not a customer, its seeded event is not an event
- * somebody chose to run, and its eight invented teams are not registrations — counted, they quietly
+ * The preview clubs (Track P, T1) and everything they own, so the platform's own numbers describe
+ * CUSTOMERS. A prospect's preview club is not a customer, its seeded event is not an event
+ * somebody chose to run, and its invented teams are not registrations — counted, they quietly
  * inflate every headline on this page and every snapshot taken from it.
  *
  * Two ids, resolved once and reused across the queries below: the org (which scopes most tables
  * directly) and its tournaments (which is how `teams` is scoped — teams hang off a tournament, not
- * an org). Fails quiet: if either lookup breaks, the metrics are momentarily off by one sandbox,
- * which is the right failure for a reporting page.
+ * an org). Fails quiet on a page (the snapshot fails closed): the metrics are momentarily off by one
+ * preview, which is the right failure for a reporting page.
  */
-async function resolveSandboxExclusions(strictPreviews = false): Promise<{ orgIds: string[]; tournamentIds: string[] }> {
-  // The preview clubs (Track P, T1) too, read fresh. The SNAPSHOT fails closed (`strictPreviews`): a snapshot written with a
+async function resolvePreviewExclusions(strictPreviews = false): Promise<{ orgIds: string[]; tournamentIds: string[] }> {
+  // The preview clubs (Track P, T1), read fresh. The SNAPSHOT fails closed (`strictPreviews`): a snapshot written with a
   // prospect's preview in it would keep counting a club that is not a customer. A page (Today, the menu counts, Business
   // numbers) says so in the log and goes on: the club list itself still drops previews by its own column below, and a
   // failed read of the marker is the database failing, when the page has bigger news.
-  const [demoIds, previewIds] = await Promise.all([
-    listDemoOrgIdsQuietly(),
-    openPreviewOrgIds().catch((error: unknown) => {
-      if (strictPreviews) throw error;
-      console.warn('[platform-admin] preview exclusion failed', error);
-      return [] as string[];
-    }),
-  ]);
-  const orgIds = [...demoIds, ...previewIds];
+  const orgIds = await openPreviewOrgIds().catch((error: unknown) => {
+    if (strictPreviews) throw error;
+    console.warn('[platform-admin] preview exclusion failed', error);
+    return [] as string[];
+  });
   if (orgIds.length === 0) return { orgIds, tournamentIds: [] };
   const { data, error } = await supabaseAdmin
     .from('tournaments')
     .select('id')
     .in('org_id', orgIds);
   if (error) {
-    console.warn('[platform-admin] sandbox tournament exclusion failed', error);
+    console.warn('[platform-admin] preview tournament exclusion failed', error);
     return { orgIds, tournamentIds: [] };
   }
   return { orgIds, tournamentIds: (data ?? []).map(row => row.id as string) };
 }
 
 /**
- * The orgs every customer count leaves out, as one set: the sandbox demos, the preview clubs (Track P, T1; read fail-closed
+ * The orgs every customer count leaves out, as one set: the preview clubs (Track P, T1; read fail-closed
  * when not handed in), and the Coaches Portals staff gave free time
  * (Support console Stage 4b, T35: stored cancelled for their whole life, so they would read as churn). Business numbers
  * and Renewals (Plans & pricing Stage 2 Part 4) read this one rule. A free-time read failure leaves the portals counted,
  * as before.
  */
-export async function notCustomerOrgIds(sandboxOrgIds?: readonly string[]): Promise<Set<string>> {
-  const [sandbox, freeTimePortals] = await Promise.all([
-    sandboxOrgIds
-      ? Promise.resolve([...sandboxOrgIds])
-      : Promise.all([listDemoOrgIdsQuietly(), openPreviewOrgIds()]).then(([demo, preview]) => [...demo, ...preview]),
+export async function notCustomerOrgIds(previewOrgIds?: readonly string[]): Promise<Set<string>> {
+  const [previews, freeTimePortals] = await Promise.all([
+    previewOrgIds ?? openPreviewOrgIds(),
     freeTimePortalOrgIds().catch(() => new Set<string>()),
   ]);
-  return new Set([...sandbox, ...freeTimePortals]);
+  return new Set([...previews, ...freeTimePortals]);
 }
 
 /** PostgREST's `in` list literal. Returns null when there is nothing to exclude. */
@@ -133,12 +126,12 @@ function notInList(ids: string[]): string | null {
 }
 
 export async function getCommandCenterStats(options: { since?: string | null; strictPreviews?: boolean } = {}) {
-  const { orgIds: sandboxOrgIds, tournamentIds: sandboxTournamentIds } = await resolveSandboxExclusions(options.strictPreviews);
-  const notSandboxOrg = notInList(sandboxOrgIds);
-  const notSandboxTournament = notInList(sandboxTournamentIds);
+  const { orgIds: previewOrgIds, tournamentIds: previewTournamentIds } = await resolvePreviewExclusions(options.strictPreviews);
+  const notPreviewOrg = notInList(previewOrgIds);
+  const notPreviewTournament = notInList(previewTournamentIds);
   /** Apply an org exclusion to a count query, or leave it exactly as it was. */
   const exOrg = <T extends { not: (col: string, op: string, val: string) => T }>(q: T, column = 'org_id'): T =>
-    notSandboxOrg ? q.not(column, 'in', notSandboxOrg) : q;
+    notPreviewOrg ? q.not(column, 'in', notPreviewOrg) : q;
 
   const now = new Date().toISOString();
   const sevenDaysAgo = daysAgo(7);
@@ -181,7 +174,7 @@ export async function getCommandCenterStats(options: { since?: string | null; st
   ] = await Promise.all([
     supabaseAdmin
       .from('organizations')
-      // No `slug`: the sandbox filter below keys on row id, so fetching the slug would be a column
+      // No `slug`: the preview filter below keys on row id, so fetching the slug would be a column
       // pulled on every platform-admin dashboard load and read by nobody.
       .select('id, name, plan_id, subscription_status, current_period_end, created_at, stripe_subscription_id')
       // A preview club (Track P, T1) is never a customer, whether or not the id read above answered.
@@ -198,17 +191,17 @@ export async function getCommandCenterStats(options: { since?: string | null; st
     safeCount('tournaments active', exOrg(supabaseAdmin.from('tournaments').select('*', { count: 'exact', head: true }).eq('status', 'active'))),
     safeCount('tournaments created 30 days', exOrg(supabaseAdmin.from('tournaments').select('*', { count: 'exact', head: true }).gte('created_at', thirtyDaysAgo))),
     safeCount('teams total', (() => {
-      // `teams` hangs off a tournament, not an org — so the sandbox exclusion is by its event.
+      // `teams` hangs off a tournament, not an org — so the preview exclusion is by its event.
       const q = supabaseAdmin.from('teams').select('*', { count: 'exact', head: true });
-      return notSandboxTournament ? q.not('tournament_id', 'in', notSandboxTournament) : q;
+      return notPreviewTournament ? q.not('tournament_id', 'in', notPreviewTournament) : q;
     })()),
     safeCount('league seasons total', exOrg(supabaseAdmin.from('league_seasons').select('*', { count: 'exact', head: true }))),
     safeCount('league seasons active', exOrg(supabaseAdmin.from('league_seasons').select('*', { count: 'exact', head: true }).in('status', ['registration_open', 'registration_closed', 'active']))),
     safeCount('league active registrations', exOrg(supabaseAdmin.from('league_registrations').select('*', { count: 'exact', head: true }).eq('status', 'active'))),
     safeCount('rep teams total', exOrg(supabaseAdmin.from('rep_teams').select('*', { count: 'exact', head: true }).eq('is_archived', false))),
     safeCount('rep program years active', exOrg(supabaseAdmin.from('rep_program_years').select('*', { count: 'exact', head: true }).eq('status', 'active'))),
-    // Entries hang off a ledger, and the ledger names the club (the same sandbox and preview exclusion, one join away).
-    safeCount('accounting entries total', notSandboxOrg
+    // Entries hang off a ledger, and the ledger names the club (the same preview exclusion, one join away).
+    safeCount('accounting entries total', notPreviewOrg
       ? exOrg(supabaseAdmin.from('accounting_entries').select('id, accounting_ledgers!inner(org_id)', { count: 'exact', head: true }), 'accounting_ledgers.org_id')
       : supabaseAdmin.from('accounting_entries').select('*', { count: 'exact', head: true })),
     safeCount(
@@ -239,21 +232,20 @@ export async function getCommandCenterStats(options: { since?: string | null; st
       .limit(5000),
   ]);
 
-  // Sandbox orgs are dropped here rather than in the query so the exclusion is stated in one place
-  // and reads the same hardcoded allow-list everything else does.
-  const sandboxOrgIdSet = new Set(sandboxOrgIds);
-  const notCustomers = await notCustomerOrgIds(sandboxOrgIds);
+  // Preview clubs are dropped from members and overrides here rather than in the queries, by the ids read above.
+  const previewOrgIdSet = new Set(previewOrgIds);
+  const notCustomers = await notCustomerOrgIds(previewOrgIds);
   const orgs = ((orgsRes.data ?? []) as OrgMetricRow[]).filter(org => !notCustomers.has(org.id));
   const members = ((membersRes.data ?? []) as MemberRow[])
-    .filter(member => !sandboxOrgIdSet.has(member.organization_id));
+    .filter(member => !previewOrgIdSet.has(member.organization_id));
   const overrides = ((overridesRes.data ?? []) as OverrideRow[])
-    .filter(row => !sandboxOrgIdSet.has(row.org_id));
+    .filter(row => !previewOrgIdSet.has(row.org_id));
   if (eventsRes.error) console.warn('[platform-admin] platform events metric failed', eventsRes.error);
   // A club closed AGAIN when free time that reopened it ran out (owner ruling 2026-11-18) churned once, at its first end.
   const events = eventsRes.error ? [] : ((eventsRes.data ?? []) as Array<PlatformEventRow & { metadata?: { freeTimeEnded?: boolean } | null }>)
     .filter(e => !(e.event_type === 'subscription_canceled' && e.metadata?.freeTimeEnded === true))
-    // A sandbox's events are not a customer's: the demos and the previews (the same set the counts above leave out).
-    .filter(e => !e.org_id || !sandboxOrgIdSet.has(e.org_id));
+    // A preview club's events are not a customer's (the same set the counts above leave out).
+    .filter(e => !e.org_id || !previewOrgIdSet.has(e.org_id));
   const ownerOrgIds = new Set(
     members
       .filter(member => (member.status ?? 'active') !== 'suspended')

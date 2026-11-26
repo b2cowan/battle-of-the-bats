@@ -21,10 +21,9 @@
  * fallback. This module used to key by lowercased name alone, which is how Months and the statement
  * bucketed one report two ways; the header on that function has the two shapes it broke.
  */
-/* ⚠ THE `.ts` EXTENSION IS LOAD-BEARING. Both modules are pure, and `scripts/check-demos.mjs` loads
-   this one under plain Node — where an extensionless specifier does not resolve and the demo check
-   dies with ERR_MODULE_NOT_FOUND rather than anything about money. Same reason the other pure
-   `lib/coach-*` modules spell it out. */
+/* ⚠ THE `.ts` EXTENSION IS LOAD-BEARING. Both modules are pure, and a plain Node script can load this
+   one — where an extensionless specifier does not resolve and the script dies with ERR_MODULE_NOT_FOUND
+   rather than anything about money. Same reason the other pure `lib/coach-*` modules spell it out. */
 import {
   categoryKey as categoryIdentity, displayCategoryName, NO_CATEGORY_LABEL,
 } from './coach-budget-rollup.ts';
@@ -203,8 +202,8 @@ export function bandTotalLabel(band: MoneyRowDirection, lens: MoneyLens): string
 /**
  * A door out of a drill-in panel.
  *
- * ⚠ THE SECTION, NEVER THE HREF. This module is pure and framework-free (`check:demos` loads it
- * under plain Node); `moneySectionHref` needs the team's base path, which only a rendering surface
+ * ⚠ THE SECTION, NEVER THE HREF. This module is pure and framework-free (plain Node can load
+ * it); `moneySectionHref` needs the team's base path, which only a rendering surface
  * has. The caller turns these into links — the RULE about which doors a panel offers lives here,
  * once, so the grid and anything that follows it cannot answer differently.
  */

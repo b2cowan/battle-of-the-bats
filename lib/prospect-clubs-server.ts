@@ -4,7 +4,6 @@ import { supabaseAdmin } from './supabase-admin';
 import { ensureOrgLogoBucket, ORG_LOGO_BUCKET } from './org-logo-storage';
 import { readImageSize } from './org-logo-measure';
 import { isReservedOrgSlug } from './reserved-slugs';
-import { isDemoOrgSlug } from './demo-org';
 import { openPreviewOrgIds } from './preview-org-server';
 import { writePlatformAuditLog } from './platform-audit';
 import { captureError } from './observability';
@@ -54,7 +53,7 @@ async function clubWasMade(orgId: string): Promise<boolean> {
 }
 
 async function addressTaken(slug: string): Promise<boolean> {
-  if (isReservedOrgSlug(slug) || isDemoOrgSlug(slug)) return true;
+  if (isReservedOrgSlug(slug)) return true; // a route's name or a retired demo club's (lib/reserved-slugs.ts)
   const { data, error } = await supabaseAdmin.from('organizations').select('id').eq('slug', slug).maybeSingle();
   if (error) throw new Error(`[prospect-clubs] could not check the address: ${error.message}`);
   return !!data;

@@ -216,18 +216,6 @@
   min-height: var(--tap-min, 44px);
 }
 
-/* The one "this is happening now" signal: the live red the scores use. */
-.live { display: inline-flex; align-items: center; gap: 0.5rem; }
-.live::before {
-  content: '';
-  flex: none;
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: var(--home-live);
-  box-shadow: 0 0 0 3px var(--home-live-soft);
-}
-
 .row {
   display: flex;
   flex-wrap: wrap;

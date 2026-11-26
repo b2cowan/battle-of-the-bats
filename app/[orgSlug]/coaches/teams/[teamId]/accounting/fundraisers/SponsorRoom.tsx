@@ -33,7 +33,7 @@ import SponsorCreditPlanEditor, { type SponsorCreditPlanRow, type StoredArrangem
 import { fetchFamilyPaymentSchedules, type FamilyPaymentSchedules } from '@/lib/coach-family-schedules';
 import { tournamentToday, formatStoredDate } from '@/lib/timezone';
 import { moneyMovedMaxDate } from '@/lib/money-date-guards';
-import { writeFailure } from '@/lib/coach-sandbox-refusal';
+import { refusalText } from '@/lib/money-fetch';
 import {
   DUES_PAYMENT_METHOD_LABEL,
   type BudgetCategoryWithItems, type DuesPaymentMethod, type RepTeamTag,
@@ -239,7 +239,7 @@ export function SponsorRoomBody({
         { method: 'DELETE' },
       );
       if (!res.ok) {
-        onFailure(writeFailure(res, await res.json().catch(() => ({})), 'That cheque could not be removed.'));
+        onFailure(refusalText(await res.json().catch(() => ({})), 'That cheque could not be removed.'));
         return;
       }
       onChanged();
@@ -482,7 +482,7 @@ function CreditPlanZone({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ creditPlan: shares }),
       });
-      if (!res.ok) throw new Error(writeFailure(res, await res.json().catch(() => ({})), 'The split could not be saved.'));
+      if (!res.ok) throw new Error(refusalText(await res.json().catch(() => ({})), 'The split could not be saved.'));
       /* ⚠ "KEEP THESE" IS SPENT BY THE SAVE (/review 2026-09-21, High). The flag is what makes a
          row read as dirty, so a draft that kept it after a successful save could never settle —
          Save reappeared, and every further press restamped the arrangement, hiding the re-run cue
@@ -611,7 +611,7 @@ export function ArrivalQuestion({
           }),
         },
       );
-      if (!res.ok) throw new Error(writeFailure(res, await res.json().catch(() => ({})), 'Save failed'));
+      if (!res.ok) throw new Error(refusalText(await res.json().catch(() => ({})), 'Save failed'));
       onSaved();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Save failed');
@@ -769,7 +769,7 @@ export function EditSponsorshipSheet({
           budgetItemId: raisingFor?.itemId ?? null,
         }),
       });
-      if (!res.ok) throw new Error(writeFailure(res, await res.json().catch(() => ({})), 'Save failed'));
+      if (!res.ok) throw new Error(refusalText(await res.json().catch(() => ({})), 'Save failed'));
       onSaved();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Save failed');

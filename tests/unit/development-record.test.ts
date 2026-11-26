@@ -467,6 +467,7 @@ describe('the surfaces read through the one home', () => {
     assert.match(move, /restampRepSessionObservations\(session\.id, teamId, sessionDate\)/, 'an observation dated by the session moves with it');
     assert.doesNotMatch(session, /['"]not_recorded['"]|['"]not_assessed['"]/, 'the page never spells a row state itself');
     assert.doesNotMatch(section, /Log a measurable/, 'F20 — the profile says "Record a result"');
-    assert.match(read('lib', 'marketing-shots.ts'), /Record a result/, 'the marketing-shot harness follows the label in the same commit');
+    // (The marketing-shot harness no longer carries capture steps — they went with the retired demos — so nothing there follows the label.)
+    assert.doesNotMatch(read('lib', 'marketing-shots.ts'), /Log a measurable/, 'no capture step still names the old label');
   });
 });

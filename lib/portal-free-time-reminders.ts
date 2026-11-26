@@ -3,7 +3,6 @@ import { supabaseAdmin } from './supabase-admin';
 import { fetchAll } from './supabase-paging';
 import { sendEmail, escapeHtml } from './email';
 import { warmEmailButton, warmEmailDocument, warmEmailParagraph } from './email-envelope-warm';
-import { isDemoOrganizerEmail } from './demo-org';
 import { teamWorkspaceReactivatePath } from './coaches-portal-routes';
 import { customerPortalFreeTime } from './portal-free-time-server';
 import { portalEndingEmailWords, portalEndingReminderDue } from './portal-free-time';
@@ -17,7 +16,7 @@ import { portalEndingEmailWords, portalEndingReminderDue } from './portal-free-t
  * ⚠ ONCE, CLAIMED BEFORE IT IS SENT (the online-payments owner notices' rule): the stamp is a conditional update only one
  * run can win, so a run that dies after sending never sends again. The stamp is released if nothing went out (no mail key,
  * the provider refused), so tomorrow's run tries again. Keep Premium turns the portal `team_direct`, which drops it out of
- * the read; ending free time early (End it now) leaves nothing "ending", so neither sends. Demo coaches are skipped.
+ * the read; ending free time early (End it now) leaves nothing "ending", so neither sends.
  */
 
 type WorkspaceRow = {
@@ -53,7 +52,7 @@ export async function sendPortalFreeTimeReminders(now: Date = new Date()): Promi
 
       const { data: u } = await supabaseAdmin.auth.admin.getUserById(ws.primary_owner_user_id);
       const to = u?.user?.email;
-      if (!to || isDemoOrganizerEmail(to)) { skipped += 1; continue; }
+      if (!to) { skipped += 1; continue; }
       const { data: org } = await supabaseAdmin.from('organizations').select('slug, name').eq('id', ws.workspace_org_id).maybeSingle();
       if (!org?.slug) continue;
 

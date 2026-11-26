@@ -134,7 +134,7 @@ describe('while chat is paused', { skip: !CHAT_PAUSED }, () => {
   it('the tournament admin\'s rail and More list no Chat row, on any plan, in any phase', () => {
     for (const planId of ['tournament', 'team', 'tournament_plus', 'league', 'club', 'club_large']) {
       for (const status of ['draft', 'active', 'completed', 'archived']) {
-        const keys = kitTournamentGroups({ status, isSandbox: false, role: 'owner', planId }).flatMap(g => g.items.map(i => i.key));
+        const keys = kitTournamentGroups({ status, role: 'owner', planId }).flatMap(g => g.items.map(i => i.key));
         assert.ok(!keys.includes('chat'), `${planId} ${status}`);
       }
     }

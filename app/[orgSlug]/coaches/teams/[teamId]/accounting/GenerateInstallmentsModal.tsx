@@ -172,8 +172,6 @@ export default function GenerateInstallmentsModal({
   const [previewError,   setPreviewError]   = useState('');
   const [generating,     setGenerating]     = useState(false);
   const [generateError,  setGenerateError]  = useState('');
-  /** The sandbox's own answer — an invitation, not a failure. See `handleGenerate`. */
-  const [sandboxNote,    setSandboxNote]    = useState('');
   const [result,         setResult]         = useState<GenerateResult | null>(null);
   /** Set when the server reports a schedule already exists — the coach is asked to confirm a
    *  replace instead of being handed the raw refusal. Carries WHAT is at stake, including the
@@ -484,24 +482,6 @@ export default function GenerateInstallmentsModal({
         }),
       });
       const data = await res.json().catch(() => null);
-
-      /**
-       * ⚠ THE SANDBOX SAYING NO IS THE DEMO WORKING, NOT BREAKING.
-       *
-       * Both demo orgs refuse every write at the request layer, so a prospect who builds a schedule
-       * here and presses Confirm always lands on a 403. Without this branch they read the literal
-       * string "SandboxReadOnly" — an internal code name, on a marketing surface, at the exact
-       * moment they have decided they want the feature. The guard already ships the sentence that
-       * belongs there ("Nothing is saved here. To keep your changes, start your own team — it's
-       * free."); this shows it, in its own voice rather than in red.
-       *
-       * The header is the contract, checked the same way the two admin screens check it — the body
-       * flag is belt to its braces.
-       */
-      if (res.headers.get('X-Sandbox-Blocked') === '1' || (res.status === 403 && data?.sandbox)) {
-        setSandboxNote(data?.message ?? 'Nothing is saved here. To keep your changes, start your own team — it\'s free.');
-        return;
-      }
 
       // The roster already has dues. Ask rather than refuse — the coach keeps their form and
       // answers one question, now with the facts attached. Only THEIR yes sends replace.
@@ -1000,7 +980,6 @@ export default function GenerateInstallmentsModal({
                 </p>
               </div>
             )}
-            {sandboxNote && <p className={styles.sandboxNote}>{sandboxNote}</p>}
             {/* Why the run was refused, beside its buttons in the foot (One Window 2b). */}
             <QuestionReason className={styles.errorText}>{generateError}</QuestionReason>
           </div>
@@ -1357,7 +1336,6 @@ export default function GenerateInstallmentsModal({
                 </div>
                 )}
 
-                {sandboxNote && <p className={styles.sandboxNote}>{sandboxNote}</p>}
                 {/* Why the run was refused, beside Set dues in the foot (One Window 2b). The Back · Set dues strip that
                     stood below is the window's foot now (`footer`, above). */}
                 <QuestionReason className={styles.errorText}>{generateError}</QuestionReason>

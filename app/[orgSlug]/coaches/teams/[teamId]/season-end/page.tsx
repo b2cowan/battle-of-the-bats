@@ -664,10 +664,7 @@ export default function SeasonEndPage({
               no guardian was connected to this season — a "0 of 0" is not a fact worth
               printing, and it would read as a failure rather than as "nobody signed up". */}
           {recapEngagement && recapEngagement.eligible > 0 && (
-            /* data-sandbox-tour: the beat the demo's closing step rings — the recap the families
-               actually opened. Inert off a demo org. */
-            <section className={styles.setupPanel} aria-labelledby="season-end-recaps"
-              data-sandbox-tour="season-recaps">
+            <section className={styles.setupPanel} aria-labelledby="season-end-recaps">
               <p className={styles.setupKicker} id="season-end-recaps">Family season recaps</p>
               <p className={styles.seasonEndNote} style={{ marginTop: 0 }}>
                 <b>{recapEngagement.viewers} of {recapEngagement.eligible}</b> connected

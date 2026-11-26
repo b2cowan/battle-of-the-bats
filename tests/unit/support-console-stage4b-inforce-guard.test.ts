@@ -187,7 +187,7 @@ describe('5 · a free-time portal is not a customer, so it is never churn (T35, 
     // Plans & pricing Stage 2 Part 4 moved the rule into one helper that Renewals reads too: the free-time portals are in
     // the set Business numbers filters its orgs by.
     const metrics = readCode('lib/platform-metrics.ts');
-    assert.match(metrics, /return new Set\(\[\.\.\.sandbox, \.\.\.freeTimePortals\]\)/);
+    assert.match(metrics, /return new Set\(\[\.\.\.previews, \.\.\.freeTimePortals\]\)/);
     assert.match(metrics, /filter\(org => !notCustomers\.has\(org\.id\)\)/);
     assert.match(readCode('lib/renewals-read.ts'), /notCustomerOrgIds\(\)/);
     assert.match(readCode('lib/lead-book.ts'), /!freeTimePortals\.has\(r\.id\)/);

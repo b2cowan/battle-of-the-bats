@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server';
 import { withObservability } from '@/lib/observability';
 import { getSessionTwoStep } from '@/lib/api-auth';
-import { isDemoOrganizerEmail } from '@/lib/demo-org';
 import { twoStepRequirementsFor } from '@/lib/two-step-requirements';
 import { backupCodesLeft } from '@/lib/two-step-codes';
 import { isReplacingAuthenticator } from '@/lib/two-step-session';
@@ -40,8 +39,6 @@ export const GET = withObservability(async () => {
     hasFactor: state.hasFactor,
     /** This session has typed the code (or a backup code let it through). */
     passed: state.passed,
-    /** A shared demo account can never set it up (tab 9). */
-    isDemo: isDemoOrganizerEmail(state.user.email),
   };
   // Before the code is typed, nothing about seats or codes: a stolen password learns only "a code is asked".
   if (!state.passed) return NextResponse.json(base);

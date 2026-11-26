@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server';
 import { withObservability } from '@/lib/observability';
 import { getSessionTwoStep } from '@/lib/api-auth';
-import { isDemoOrganizerEmail } from '@/lib/demo-org';
 import { twoStepRequirementsFor } from '@/lib/two-step-requirements';
 import { removeEveryAuthenticator } from '@/lib/two-step-reset';
 import { freshCodeRefusal, hasFreshCode } from '@/lib/two-step-fresh';
@@ -22,7 +21,6 @@ export const POST = withObservability(async () => {
   const state = await getSessionTwoStep();
   if (!state?.passed) return NextResponse.json({ error: 'Sign in first.' }, { status: 401 });
   const { user } = state;
-  if (isDemoOrganizerEmail(user.email)) return NextResponse.json({ error: 'Not available on the demo.' }, { status: 403 });
   if (!state.hasFactor) return NextResponse.json({ error: 'Two-step sign-in is already off.', code: 'already_off' }, { status: 409 });
 
   const requirements = await twoStepRequirementsFor(user);

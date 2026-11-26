@@ -27,7 +27,6 @@ import { notify } from '@/lib/notify';
 import { notifyTeamCoaches } from '@/lib/team-coach-notices';
 import { registrationNoticeWords } from '@/lib/team-coach-notice-plan';
 import { captureError, captureAndJson, withObservability } from '@/lib/observability';
-import { assertNotDemoOrg, demoActorRefusal } from '@/lib/demo-guard';
 import { throttleRegisterForm, throttleRegisterRecipient } from '@/lib/public-form-throttle';
 import { tournamentToday } from '@/lib/timezone';
 import type { OrgPlan, TournamentRegistrationField } from '@/lib/types';
@@ -284,10 +283,6 @@ export const POST = withObservability(async (req: NextRequest) => {
     let signedInCoach: { id: string; email: string } | null = null;
     const supabase = await createClient();
     const user = await getSignedInUser(supabase);
-    // A "See it live" demo account never files a real entry or makes a team through it (Board Ready trust close-out 1):
-    // signed in, this door files the entry under a coach team and can create one. Signed out, anyone may still register.
-    const demoRefusal = demoActorRefusal(user);
-    if (demoRefusal) return demoRefusal;
     if (user?.id && user.email) {
       signedInCoach = { id: user.id, email: user.email.toLowerCase() };
     }
@@ -465,12 +460,6 @@ export const POST = withObservability(async (req: NextRequest) => {
       return NextResponse.json({ error: INVITE_REFUSALS.registration }, { status: 403 });
     }
 
-    // Sandbox write block, body-identified branch. This is one of the few write endpoints whose
-    // org is named in the REQUEST BODY (via the tournament id) rather than the URL, so the proxy
-    // chokepoint cannot see it — the guard has to be called here, at the first point the org is
-    // actually known. Without it, a visitor could register a real team into the demo tournament.
-    const sandboxBlocked = assertNotDemoOrg(organization.slug);
-    if (sandboxBlocked) return sandboxBlocked;
     const previewClosed = await previewWriteRefusalById(organization.id); if (previewClosed) return previewClosed;
 
     const registrationFields = organization && hasPlanFeature(organization.planId, 'custom_registration_fields')

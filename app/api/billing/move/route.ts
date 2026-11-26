@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server';
 import { withObservability } from '@/lib/observability';
-import { demoBillingRefusal } from '@/lib/demo-guard';
 import { applyMove, cancelScheduledMove, getScheduledMove, hasLiveSubscription, moveLandedInStripe, moveRefusalBeforeStripe, paymentFailingRefusal } from '@/lib/plan-move';
 import { moveDirection } from '@/lib/plan-move-options';
 import { authorizeMove, parseTargetPlan, refuseBelowFreePlan, refuseIfGated, refusalResponse } from '@/lib/plan-move-route';
@@ -55,9 +54,6 @@ export const POST = withObservability(async (req: Request) => {
   const body = await req.json().catch(() => ({})) as { orgSlug?: unknown; planKey?: unknown; prorationDate?: unknown; expectedAmountDue?: unknown; clubName?: unknown; billingAddress?: unknown };
   const authorized = await authorizeMove(typeof body.orgSlug === 'string' ? body.orgSlug : undefined);
   if (!authorized.ok) return authorized.response;
-  // The sandboxes run the real product and the demo organizer holds the billing power (the shared refusal: lib/demo-guard.ts).
-  const demoRefusal = demoBillingRefusal(authorized.user);
-  if (demoRefusal) return demoRefusal;
   const { org, actor } = authorized;
   // A move changes a paid plan: never without the current Terms (GST/HST Stage 6 step 6.3, C1) — before the address save and
   // every branch. DELETE (keep my current plan) and the preview are never asked: cancelling is never gated (§18).
@@ -146,8 +142,6 @@ export const DELETE = withObservability(async (req: Request) => {
   const orgSlug = new URL(req.url).searchParams.get('orgSlug') ?? undefined;
   const authorized = await authorizeMove(orgSlug);
   if (!authorized.ok) return authorized.response;
-  const demoRefusal = demoBillingRefusal(authorized.user);
-  if (demoRefusal) return demoRefusal;
   const cancelled = await cancelScheduledMove(authorized.org);
   if (typeof cancelled !== 'boolean') return refusalResponse(cancelled);
   if (cancelled) {

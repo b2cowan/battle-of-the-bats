@@ -147,11 +147,11 @@ describe('2 · once only (§3.3)', () => {
       assert.equal(h.store.row.purchase_email_at, null);
     }
   });
-  it('no owner to tell (a demo address is never one: orgOwnerEmails leaves it out) sends nothing', async () => {
+  it('no owner to tell sends nothing', async () => {
     const h = harness({ owners: [] });
     assert.equal((await runPurchaseEmail('in_1', h.deps)).outcome, 'no_recipient');
     const src = read('lib/notify-recipients.ts');
-    assert.match(src.slice(src.indexOf('export async function orgOwnerEmails')), /!isDemoOrganizerEmail\(email\)/);
+    assert.doesNotMatch(src, /isDemoOrganizerEmail/, 'the retired demo address filter is gone from the recipients');
   });
   it('a two-owner club: both addresses, each with its own once-only key, one claim', async () => {
     const h = harness({ owners: [{ userId: 'u1', email: 'a@club.test' }, { userId: 'u2', email: 'b@club.test' }] });

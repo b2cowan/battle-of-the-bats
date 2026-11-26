@@ -343,9 +343,9 @@ async function openScheduleMoveOutOfOrder(page) {
   if (await start.count() > 0 && await page.getByRole('button', { name: /^Move/ }).count() > 0) await start.first().fill('08:00');
 }
 /** Schedule health's window, from its header button (owner 2026-10-19) — a phone's button is the bare pulse, so it is
- *  found by the tour's anchor rather than its words. The entry's scope measures the window alone. */
+ *  found by its spoken name ("Schedule health, …") rather than its visible words. The entry's scope measures the window alone. */
 async function openScheduleHealth(page) {
-  const button = page.locator('button[data-sandbox-tour="schedule-health"]:visible');
+  const button = page.locator('button[aria-label^="Schedule health"]:visible');
   // openKitDialogBy skips a missing door; here a missing button must fail the entry, never measure the page behind it.
   if (await button.count() === 0) throw new Error('Schedule health button not found');
   await openKitDialogBy(page, button);
@@ -1965,8 +1965,8 @@ export const SCREENS = [
    * different bar (Account / Open app →), and it is measured by the header's own unit
    * measurements rather than here, because a signed-in session on a billboard is the rare case.
    *
-   * These nine are the whole public marketing surface: the homepage, the four persona pages,
-   * pricing, the demos door and both pre-sales walkthroughs.
+   * These eight are the whole public marketing surface: the homepage, the four persona pages,
+   * pricing and both pre-sales walkthroughs.
    * ══════════════════════════════════════════════════════════════════════════════════════════
    */
   { id: 'mkt-home',              session: 'anon', path: () => '/',                                   ready: 'h1', widths: ['320'] },
@@ -1975,7 +1975,6 @@ export const SCREENS = [
   { id: 'mkt-for-clubs',         session: 'anon', path: () => '/for-clubs',                          ready: 'h1', widths: ['320'] },
   { id: 'mkt-for-leagues',       session: 'anon', path: () => '/for-leagues',                        ready: 'h1', widths: ['320'] },
   { id: 'mkt-for-tournaments',   session: 'anon', path: () => '/for-tournament-organizers',          ready: 'h1', widths: ['320'] },
-  { id: 'mkt-demos',             session: 'anon', path: () => '/demos',                              ready: 'h1', widths: ['320'] },
   { id: 'mkt-walkthrough-coach', session: 'anon', path: () => '/for-coaches/walkthrough',            ready: 'h1', widths: ['320'] },
   { id: 'mkt-walkthrough-tourn', session: 'anon', path: () => '/for-tournament-organizers/walkthrough', ready: 'h1', widths: ['320'] },
   // The legal pages (GST/HST Stage 6 step 6.2): marketing ground, dark until step 6.7 — measured only where LEGAL_PAGES_PREVIEW is on (dev);

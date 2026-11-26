@@ -32,15 +32,25 @@ export const RESERVED_ORG_SLUGS: ReadonlySet<string> = new Set([
   'pricing', 'blog', 'changelog', 'about', 'contact', 'support', 'help', 'legal',
   'privacy', 'terms', 'data-terms', 'subprocessors', 'security', 'unsubscribe', 'second-parent-stop', 'invitation-stop',
   'for-tournament-organizers', 'for-leagues', 'for-clubs', 'for-coaches',
-  // The sandbox door (app/see-it-live) and its shareable chooser (app/demos) — static routes, so
-  // an org holding either slug would be shadowed by it and lose every page it owns.
+  // The retired demo doors (owner 2026-11-25). Their addresses still redirect to /pricing (next.config),
+  // so an org holding either slug would be shadowed by the redirect and lose every page it owns.
   'see-it-live', 'demos',
   // Framework / asset paths that must never be shadowed
   'icons', 'favicon', 'manifest', 'sw', 'offline', 'robots', 'sitemap',
   'static', 'public', '_next', 'assets', 'images', 'fonts',
 ]);
 
-/** True when `slug` collides with a top-level app route and must not be assigned. */
+/**
+ * The two retired public demo clubs (owner 2026-11-25, "Both public demos are RETIRED"; Decision D3 of
+ * docs/projects/active/RETIRE_PUBLIC_DEMOS_PLAN.md). They are NOT routes, so they are kept apart from the set
+ * above, which other code reads as "a real top-level route". Old links, QR codes and cached pages still point at
+ * `/riverdale-minor-ball/…` and `/riverdale-ridge/…`: a real club that signed up under one of these names would
+ * receive a stranger's traffic labelled as a demo. Never assignable, and disallowed in robots.txt.
+ */
+export const RETIRED_DEMO_ORG_SLUGS: readonly string[] = ['riverdale-minor-ball', 'riverdale-ridge'];
+
+/** True when `slug` collides with a top-level app route, or is a retired demo club's name, and must not be assigned. */
 export function isReservedOrgSlug(slug: string): boolean {
-  return RESERVED_ORG_SLUGS.has(slug.trim().toLowerCase());
+  const normalized = slug.trim().toLowerCase();
+  return RESERVED_ORG_SLUGS.has(normalized) || RETIRED_DEMO_ORG_SLUGS.includes(normalized);
 }

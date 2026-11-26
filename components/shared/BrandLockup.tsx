@@ -15,9 +15,7 @@
  *
  * The three DOM shapes it absorbs:
  *   • a link home (`href`, default `/discover`, the grammar's Zone 1) — the bars and strips;
- *   • inert text (`href={null}`) — the footer, the volunteer shells, the sign-in and system pages;
- *   • inside a "See it live" demo the link goes inert by itself: whose product this is stays the point, but the
- *     mark stops being a door out to the real platform.
+ *   • inert text (`href={null}`) — the footer, the volunteer shells, the sign-in and system pages.
  *
  * `tone` says which ground it sits on: `warm` (paper, always — the marketing set, the volunteer shells), `follow` (the
  * account's Warm / Dark choice — the admin and coach strips, the consumer app's bar), or `mono` (the one-colour lockup
@@ -27,7 +25,6 @@
  */
 
 import Link from 'next/link';
-import { useIsSandbox } from '@/components/sandbox/SandboxProvider';
 import { BRAND_NAME, BRAND_NAME_HQ, MARK_BARE_VIEWBOX, MARK_PATH_MAIN } from '@/lib/brand-mark';
 import styles from './BrandLockup.module.css';
 
@@ -50,7 +47,6 @@ export default function BrandLockup({
   label?: string;
   className?: string;
 }) {
-  const inSandbox = useIsSandbox();
   const cls = `${styles.lockup} ${styles[tone]} ${className ?? ''}`;
   const inner = (
     <>
@@ -65,7 +61,7 @@ export default function BrandLockup({
   );
   const style = size !== undefined ? { fontSize: `${size}px` } : undefined;
 
-  if (href === null || inSandbox) {
+  if (href === null) {
     return <span className={cls} style={style}>{inner}</span>;
   }
   return (

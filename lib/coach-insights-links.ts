@@ -1,5 +1,5 @@
-// ⚠ Extension is load-bearing: the demo seeders run this module under plain node, which does not
-// resolve extensionless ESM imports (the demo-coach.ts convention).
+// ⚠ Extension is load-bearing: the unit runner loads this module under plain node, which does not
+// resolve extensionless ESM imports.
 import { pathWithSearchParams, type SearchParamsRecord } from './coaches-portal-routes.ts';
 
 // The ONE way to address an Insights-portal tab from outside the portal.
@@ -8,7 +8,7 @@ import { pathWithSearchParams, type SearchParamsRecord } from './coaches-portal-
 // COACH_INSIGHTS_REPORTS_PORTAL_PLAN.md). The hub — app/[orgSlug]/coaches/teams/[teamId]/history —
 // navigates by query string (`?section=<tab>`) and builds its own hrefs internally with
 // `sectionHref`, which must preserve that page's live query state and so cannot be shared here.
-// Every OTHER surface (the team Overview, the game console, the season-end page, the demo chrome)
+// Every OTHER surface (the team Overview, the game console, the season-end page)
 // builds its link with `insightsSectionHref`.
 //
 // ⚠ **A DELIBERATE SECOND MODULE, NOT AN EXTENSION OF `coach-money-links.ts`.** The two hubs share
@@ -19,7 +19,7 @@ import { pathWithSearchParams, type SearchParamsRecord } from './coaches-portal-
 // The six legacy standalone routes (history/results, history/playing-time, …, and the top-level
 // /attendance) are permanent redirects into these hrefs — the shared page shell they export lives
 // in ./coach-insights-legacy-redirect.tsx, NOT here: this module stays framework-free on purpose,
-// because node scripts (the demo seeders, sandbox-chrome) import it.
+// because node scripts import it.
 
 /**
  * The portal's tabs. Dashboard is the absence of a section, exactly as Money's Overview is — so it

@@ -2,24 +2,23 @@ import { createServerClient } from '@supabase/ssr';
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { assertSafeSupabaseServerEnvironment } from './lib/supabase-safety';
-import { demoOrgSlugForBlockedWrite, sandboxRejectionResponse } from './lib/demo-guard';
-import { getDemoOrgBySlug } from './lib/demo-org';
-import { SEE_IT_LIVE_PATH, SEE_IT_LIVE_COACHES_PATH } from './lib/sandbox-door';
-import { sandboxExitResponse, isSandboxSurfacePath } from './lib/sandbox-exit';
-import { decodePathSegment } from './lib/demo-org';
 import { isOwnHost } from './lib/own-hosts';
 import { clubHostResponse } from './lib/club-host-response';
 import { RESERVED_ORG_SLUGS } from './lib/reserved-slugs';
 import { getSignedInUser } from './lib/two-step-session';
 
 /**
- * The org sections this file bounces an unauthenticated visitor out of (see the guards below).
- * Read only by the sandbox short-circuit, which must not skip a guard that would have run: a demo
- * org has an admin half like any other org, and its anonymous arrivals are walked back through the
- * demo's own front door rather than to a login form. Adding a guarded section below means adding
- * it here.
+ * One percent-decode of a path segment, as the router decodes it before a page sees it, so a reserved-name test here
+ * agrees with the page that serves the request. A malformed escape is compared raw.
  */
-const PROXY_GUARDED_ORG_SECTIONS = ['admin', 'scorekeeper', 'check-in'];
+function decodePathSegment(segment: string): string {
+  if (!segment.includes('%')) return segment; // the overwhelmingly common case, untouched
+  try {
+    return decodeURIComponent(segment);
+  } catch {
+    return segment;
+  }
+}
 
 export async function proxy(request: NextRequest) {
   assertSafeSupabaseServerEnvironment('Proxy Supabase client');
@@ -32,8 +31,8 @@ export async function proxy(request: NextRequest) {
 
   // ── A club's OWN web address (Club Tier Stage 4e) ──────────────────────────────────────────────
   // A host that is not ours is a club's own address: serve that club's public pages at the host's root and nothing else. This
-  // comes first and returns, so such a request pays only an in-memory host lookup: no session work, no sandbox rules, none of
-  // the guards below (a club's own host has no session, no sandbox and no operator surface). The matcher below runs the proxy
+  // comes first and returns, so such a request pays only an in-memory host lookup: no session work, none of
+  // the guards below (a club's own host has no session and no operator surface). The matcher below runs the proxy
   // for these hosts and for no other public page, so www's pages still pay nothing. See lib/club-host-response.ts.
   if (!isOwnHost(request.headers.get('host'))) return clubHostResponse(request);
 
@@ -59,20 +58,6 @@ export async function proxy(request: NextRequest) {
   const requestId = crypto.randomUUID();
   requestHeaders.set('x-request-id', requestId);
 
-  // ── Sandbox write block ────────────────────────────────────────────────────────────────────
-  // THE chokepoint for demo ("See it live") organizations: nothing that changes anything gets
-  // through, for any route, including ones written after this line. Deliberately placed ABOVE the
-  // API fast-path below and above every redirect and session check, so no future reordering can
-  // let a write slip past it, and so a blocked write costs no Supabase round-trip.
-  //
-  // The response carries `sandbox: true`, which the client fetch layer turns into the
-  // "not saved in the sandbox" nudge rather than an error. See lib/demo-guard.ts.
-  {
-    // The slug picks the copy (each sandbox nudges toward its own signup) — never the verdict.
-    const demoSlug = demoOrgSlugForBlockedWrite(request.method, request.nextUrl);
-    if (demoSlug) return sandboxRejectionResponse(demoSlug);
-  }
-
   // Cheap fast-path for API routes that don't need the session work below: stamp the id and return
   // immediately — no Supabase getUser() round-trip. /api/admin/* is excluded so it keeps the full
   // proxy flow (its existing unauthenticated → login guard below is preserved unchanged).
@@ -80,33 +65,6 @@ export async function proxy(request: NextRequest) {
     const apiRes = NextResponse.next({ request: { headers: requestHeaders } });
     apiRes.headers.set('x-request-id', requestId);
     return apiRes;
-  }
-
-  // ── Leaving the demo world ends the demo ───────────────────────────────────────────────────
-  // The twin of the write block above, for identity rather than data: a "See it live" session is
-  // a real session for a fictional account, so anywhere outside the sandbox reads it as a login
-  // and draws that fictional person's chrome — a workspace card and a COACHES PORTAL door on
-  // Discover, their account on /account, their follows in this browser. Owner ruling 2026-08-26:
-  // the demo is self-contained. Decided HERE, before the page renders, because the surfaces that
-  // leaked are server-rendered and the two earlier browser-side patches could never reach them.
-  //
-  // Costs a session read only for a browser carrying the sandbox marker; ends a session only for
-  // the hardcoded fictional addresses; never reaches past this browser. See lib/sandbox-exit.ts.
-  {
-    const leaving = await sandboxExitResponse(request);
-    if (leaving) return leaving;
-  }
-
-  // …and get out of the way INSIDE it. A marked browser standing in the sandbox reaches this
-  // function only because of the marker-gated matcher entry at the foot of this file: most demo
-  // paths (the fan side, the coach portal) have never had proxy work of their own, and buying
-  // them a session round-trip per navigation would make the shop window slower for nobody. The
-  // exception is the sections this file genuinely guards below — a demo org has those too.
-  if (isSandboxSurfacePath(pathname)
-      && !PROXY_GUARDED_ORG_SECTIONS.includes(decodePathSegment(segments[1] ?? ''))) {
-    const sandboxRes = NextResponse.next({ request: { headers: requestHeaders } });
-    sandboxRes.headers.set('x-request-id', requestId);
-    return sandboxRes;
   }
 
   // ── A club's Coaches Portal pages: the headers, and nothing else ──────────────────────────────────
@@ -280,21 +238,6 @@ export async function proxy(request: NextRequest) {
   const isOrgCheckIn = segments.length >= 2 && segments[0] !== 'api' && segments[1] === 'check-in';
 
   if ((isOrgAdmin || isLegacyAdmin || isOrgScorekeeper || isOrgCheckIn) && !user) {
-    // A SANDBOX org has no login to send anyone to — its whole promise is that there isn't one,
-    // and the shared demo account's password was discarded at seed time, so this form is a wall
-    // rather than a door. An anonymous arrival on a demo org's operator half (a Back after the
-    // marketing bar ended the demo session, a second tab, a forwarded deep link) is walked back
-    // through that sandbox's own front door instead. Twin of the coach portal's branch in
-    // `app/[orgSlug]/coaches/layout.tsx`; both exist because the session is now deliberately
-    // short-lived. The door takes NO redirect target (open-redirect ruling), and `segments[0]` is
-    // only ever a lookup key here — so nothing user-controlled reaches the destination.
-    const demoOrg = getDemoOrgBySlug(segments[0]);
-    if (demoOrg) {
-      const doorUrl = request.nextUrl.clone();
-      doorUrl.pathname = demoOrg.kind === 'coach' ? SEE_IT_LIVE_COACHES_PATH : SEE_IT_LIVE_PATH;
-      doorUrl.search = '';
-      return NextResponse.redirect(doorUrl);
-    }
     const url = request.nextUrl.clone();
     url.pathname = '/auth/login';
     // WI-2: preserve the query string so a deep-linked score push (…/results?tournamentId=&gameId=)
@@ -369,26 +312,8 @@ export const config = {
     '/:slug/coaches/:path*',
     // The family join page: so `x-pathname` is ours (the early return above, step 6.3).
     '/family/claim/:path*',
-    // ── Every route in the app, for a browser that has been through a demo door ────────────
-    // The leave-the-demo rule (lib/sandbox-exit.ts) is dead code on a route the proxy never sees,
-    // and the entries above are an allow-list — which is exactly HOW a demo session came to be
-    // read as a login on Discover, on /account and on the sign-up form: the request layer simply
-    // did not run there. Enumerating those tabs by hand fixed the screens that had already leaked
-    // and left the next one to leak, so the reach is expressed as a CONDITION instead.
-    //
-    // `has` is evaluated by the router BEFORE this function is invoked, so a visitor who has never
-    // opened a sandbox — very nearly everyone — pays nothing for this entry at all. A marked
-    // browser gets the rule everywhere: the consumer tabs, the marketing site, a real club's
-    // public event pages, anywhere a future screen appears. No enrollment, ever.
-    // ⚠ The cookie name is a LITERAL and cannot be the imported constant: Next requires matcher
-    // values to be statically analyzable and silently IGNORES a variable — which here would not
-    // fail a build, it would just quietly stop the rule from ever running. Pinned to
-    // SANDBOX_MARKER_COOKIE by tests/unit/demo-sandbox-exit.test.ts instead.
-    { source: '/((?!api|_next/static|_next/image|favicon.ico).*)',
-      has: [{ type: 'cookie', key: 'flhq-in-sandbox' }] },
     // ── A club's own web address (Club Tier Stage 4e): every request to a host that is NOT ours ──────────
-    // Evaluated by the router before the proxy runs, so a request to www.fieldlogichq.ca pays nothing for this entry. It must
-    // stay AFTER the cookie entry above (tests/unit/demo-sandbox-exit.test.ts reads the matcher up to that entry's `has`).
+    // Evaluated by the router before the proxy runs, so a request to www.fieldlogichq.ca pays nothing for this entry.
     // ⚠ The host pattern is a LITERAL copy of OWN_HOST_PATTERN (lib/own-hosts.ts): matcher values must be statically analyzable
     // and a variable is silently ignored. tests/unit/club-host.test.ts pins the two together.
     { source: '/((?!_next/static|_next/image).*)',

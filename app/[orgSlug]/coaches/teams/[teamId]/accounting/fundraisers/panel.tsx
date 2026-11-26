@@ -55,7 +55,7 @@ import type { BudgetItemSelection } from '@/components/accounting/BudgetItemPick
 import MoneySummaryBand, { type MoneyTile } from '@/components/coaches/MoneySummaryBand';
 import { stillToCome } from '@/lib/sponsor-arrivals';
 import { fmt } from '@/lib/coach-money-summary';
-import { writeFailure } from '@/lib/coach-sandbox-refusal';
+import { refusalText } from '@/lib/money-fetch';
 import { pluralize } from '@/lib/utils';
 import DateInput from '@/components/shared/DateInput';
 import type { DriveEntryRow, Fundraiser, RoomRecord, SponsorArrival } from './types';
@@ -345,7 +345,7 @@ export function FundraisersPanel({
           budgetItemId:       formRaisingFor?.itemId ?? null,
         }),
       });
-      if (!res.ok) throw new Error(writeFailure(res, await res.json().catch(() => ({})), 'Save failed'));
+      if (!res.ok) throw new Error(refusalText(await res.json().catch(() => ({})), 'Save failed'));
       setShowCreate(false);
       await load();
       bumpMoneyRevision();
@@ -477,7 +477,7 @@ export function FundraisersPanel({
     try {
       const res = await fetch(`/api/coaches/${orgSlug}/teams/${teamId}/fundraisers/${f.id}`, { method: 'DELETE' });
       if (!res.ok) {
-        setRoomError({ for: f.id, text: writeFailure(res, await res.json().catch(() => ({})), 'That record could not be deleted.') });
+        setRoomError({ for: f.id, text: refusalText(await res.json().catch(() => ({})), 'That record could not be deleted.') });
         return;
       }
       /* Mark it dead FIRST (see `deletedIdRef`), then close, then bump. The URL change behind

@@ -35,7 +35,6 @@ import WorkspacesPill from '@/components/shared/WorkspacesPill';
 import AccountMenu from '@/components/shared/AccountMenu';
 import type { WorkspaceDoor } from '@/lib/user-contexts';
 import { isWarmSkinPath, showsTournamentChrome } from '@/lib/consumer-routes';
-import { isDemoOrgSlug, decodePathSegment } from '@/lib/demo-org';
 import StartMenu from './StartMenu';
 import styles from './ConsumerShell.module.css';
 import warm from './warmTheme.module.css';
@@ -116,27 +115,6 @@ export default function ConsumerNav({
   const params = useParams();
   const isActive = (href: string) => underPrefix(pathname, href);
 
-  /**
-   * Is the visitor inside the "See it live" demo?
-   *
-   * Read from the URL rather than the sandbox context, because this bar is mounted by the ROOT
-   * layout — above the org layout that provides that context — so the hook every other component
-   * uses is unavailable here. The org allow-list is the same single source of truth either way,
-   * and deriving it from the path keeps it synchronous: no flash of a door that then disappears.
-   *
-   * Everything this bar offers — the wordmark, Discover, Chat, Account, Sign In, and all four
-   * bottom tabs — leaves the sandbox for the real platform. A prospect who wandered out of a demo
-   * they were told was a demo has simply been lost, and the honest sandbox rule (hide the entry
-   * point, never dead-end it) says to close those doors rather than let them dead-end.
-   * The ONE door that stays is the operator flip, because that is the tour's own beat.
-   *
-   * Decoded like every other "is this a demo org's path?" predicate (lib/demo-org.ts): the router
-   * decodes, so `/%72iverdale-…` IS the demo — and this gate now hides the account menu's Sign out,
-   * which on the shared demo account would end every visitor's session at once.
-   */
-  const firstSegment = pathname?.split('/')[1];
-  const inSandbox = isDemoOrgSlug(firstSegment && decodePathSegment(firstSegment));
-
   // Phase 5 tournament variant self-gates to REAL public tournament routes, needing
   // BOTH signals: showsTournamentChrome excludes org pages + every operator shell —
   // including the admin PREVIEW, whose route ALSO carries a [tournamentSlug] param, so
@@ -157,11 +135,7 @@ export default function ConsumerNav({
   // cookie read; anonymous visitors never hit the network; re-resolves on SPA sign-in/
   // out). Inert off tournament routes; the consumer variant keeps its SSR prop — identity
   // is NEVER SSR'd into SW-cached tournament HTML (the shared-device replay guard).
-  // Enabled on the consumer tabs too — NOT for its answer there (that variant keeps its SSR
-  // prop, below), but for the demo teardown it carries: these tabs are where a "See it live"
-  // session used to be read as a login, and a client-side route change into them is the one case
-  // the request layer deliberately cannot judge.
-  const clientSignedIn = useClientSignedIn(onTournamentRoute || variant === 'consumer');
+  const clientSignedIn = useClientSignedIn(onTournamentRoute);
   const signedIn = variant === 'tournament' ? clientSignedIn : signedInProp;
 
   // Unified cross-tab badge policy (Phase 5, owner-ratified): a red count means "something is
@@ -285,8 +259,7 @@ export default function ConsumerNav({
   // at the right, just left of the operator door (owner 2026-10-23, reversing the 2026-10-16 "tabs stay links"
   // carve-out for the top bar only). The phone bottom bar keeps Account as a tab — it has to say "you are
   // here" — so `visibleTabs` (and `tabItems`) are untouched.
-  const accountInMenu = signedIn && !inSandbox;
-  const topLinks = visibleTabs.filter(t => !(accountInMenu && t.href === '/account')).map(({ href, label }) => {
+  const topLinks = visibleTabs.filter(t => !(signedIn && t.href === '/account')).map(({ href, label }) => {
     const active = isActive(href);
     const badge = badges[href];
     return (
@@ -306,9 +279,9 @@ export default function ConsumerNav({
   const warmRoute = isWarmSkinPath(pathname) || variant === 'coach';
   // The one name (BrandLockup, P9) — shared by the consumer top bar and the tournament strip. On the app's warm
   // routes it follows the account's Warm / Dark; on a public tournament page's strip it is the one-colour lockup in
-  // the strip's own ink, because that page's light or dark is the organizer's. Inside a demo it goes inert by itself.
+  // the strip's own ink, because that page's light or dark is the organizer's.
   const wordmark = (
-    <BrandLockup href={inSandbox ? null : '/discover'} tone={warmRoute ? 'follow' : 'mono'} size={17} className={styles.wordmark} />
+    <BrandLockup href="/discover" tone={warmRoute ? 'follow' : 'mono'} size={17} className={styles.wordmark} />
   );
 
   // ONE persistent operator door (WI-3 precedence + Stage D.2 pill-vs-popover), via the
@@ -359,7 +332,7 @@ export default function ConsumerNav({
             coach bars use (bell, person, Workspaces). Lit while the visitor is on an Account page, since the
             tab that used to say so has left this row. Sign out stays on the page for the browsable tabs; on
             Account and Chat (signed-in only) it goes to the sign-in page, like the portals. */}
-        {accountInMenu && (
+        {signedIn && (
           <AccountMenu
             className={`${styles.stripIcon} ${isActive('/account') ? styles.stripIconActive : ''}`}
             warm={warmRoute}
@@ -421,52 +394,37 @@ export default function ConsumerNav({
         <header className={`${styles.topbar} ${styles.topbarStrip}`} data-app-bar="">
           <div className={styles.topLeft}>
             {wordmark}
-            {!inSandbox && (
-              <nav className={styles.topNav} aria-label="FieldLogicHQ">
-                <Link href="/discover" className={styles.topLink}>Discover</Link>
-              </nav>
-            )}
+            <nav className={styles.topNav} aria-label="FieldLogicHQ">
+              <Link href="/discover" className={styles.topLink}>Discover</Link>
+            </nav>
           </div>
           <div className={styles.topUtil}>
-            {/* Everything in this cluster is a door OUT of the sandbox, so the demo closes the
-                whole group at once rather than gating each item — one decision, and a new door
-                added here inherits it instead of having to remember. */}
-            {!inSandbox && (
-              <>
-                {/* Membership-gated chat door — unread>0 also opens it, so a fan added to a
-                    room AFTER the one-shot role-summary fetch never has live messages with
-                    no visible way in (the unread hook is realtime; hasChat is not). */}
-                {!CHAT_PAUSED && signedIn && (roleSummary?.hasChat || chatUnread > 0) && (
-                  <Link
-                    href="/chat"
-                    className={styles.stripIcon}
-                    aria-label={chatUnread > 0 ? `Chat — ${cap(chatUnread)} unread` : 'Chat'}
-                  >
-                    <MessageCircle size={17} strokeWidth={1.8} />
-                    {chatUnread > 0 && (
-                      <span className={`${styles.topBadge} ${styles.stripBadge}`} aria-hidden>{cap(chatUnread)}</span>
-                    )}
-                  </Link>
+            {/* Membership-gated chat door — unread>0 also opens it, so a fan added to a
+                room AFTER the one-shot role-summary fetch never has live messages with
+                no visible way in (the unread hook is realtime; hasChat is not). */}
+            {!CHAT_PAUSED && signedIn && (roleSummary?.hasChat || chatUnread > 0) && (
+              <Link
+                href="/chat"
+                className={styles.stripIcon}
+                aria-label={chatUnread > 0 ? `Chat — ${cap(chatUnread)} unread` : 'Chat'}
+              >
+                <MessageCircle size={17} strokeWidth={1.8} />
+                {chatUnread > 0 && (
+                  <span className={`${styles.topBadge} ${styles.stripBadge}`} aria-hidden>{cap(chatUnread)}</span>
                 )}
-                {/* The same in-place account menu the portal strips wear (owner ask 2026-10-16) —
-                    no theme block (the venue's colors rule here), and signing out keeps the fan on
-                    this event rather than throwing them to the sign-in page. */}
-                {signedIn && <AccountMenu className={styles.stripIcon} signOutTo="here" />}
-                {!signedIn && <Link href={signInHref(pathname)} className={styles.utilCta}>Sign in</Link>}
-              </>
+              </Link>
             )}
-            {/* The operator flip stays. It is the tour's third beat and the demo's whole point. */}
+            {/* The same in-place account menu the portal strips wear (owner ask 2026-10-16) —
+                no theme block (the venue's colors rule here), and signing out keeps the fan on
+                this event rather than throwing them to the sign-in page. */}
+            {signedIn && <AccountMenu className={styles.stripIcon} signOutTo="here" />}
+            {!signedIn && <Link href={signInHref(pathname)} className={styles.utilCta}>Sign in</Link>}
             {doorSlot}
           </div>
         </header>
-        {/* Every tab in this bar leaves the sandbox, so the demo does without it — the tournament's
-            own tab row carries navigation on a phone, and `--bottom-nav-height` drops to 0 so the
-            page reclaims the space instead of ending in a blank strip. */}
-        {!inSandbox && (
-          <nav className={`${styles.bottomNav} ${styles.bottomNavTournament}`} aria-label="Primary" data-app-bar="">
-            {bottomTabs}
-          </nav>
-        )}
+        <nav className={`${styles.bottomNav} ${styles.bottomNavTournament}`} aria-label="Primary" data-app-bar="">
+          {bottomTabs}
+        </nav>
       </>
     );
   }

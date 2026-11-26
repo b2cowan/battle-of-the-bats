@@ -51,8 +51,7 @@ import { formButtonLinksOrNone } from './club-form-email-links';
  * A one-family message (`messageOneFamily`) is the household door both Families and a season use; it never counts toward
  * a season's three (9d1·5).
  *
- * ⚠ Email only: no notice, no push, no chat, no family login. ⚠ A demo club never reaches here: the proxy refuses a demo
- * club's POST.
+ * ⚠ Email only: no notice, no push, no chat, no family login.
  * ══════════════════════════════════════════════════════════════════════════════════════════════
  */
 

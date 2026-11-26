@@ -2210,9 +2210,7 @@ export function BudgetVsActualPanel({
             const groupProps = { expandedCats, toggleCat, openBehind };
 
             return (
-            // data-sandbox-tour: the beat the demo's "is the season on budget" step rings —
-            // planned against actually spent, line by line. Inert off a demo org.
-            <div className={styles.section} data-sandbox-tour="budget-variance">
+            <div className={styles.section}>
              {/* Budgeted / Actual / Variance side by side IS the report — card-stacking it
                  would remove the sideways scroll and the comparison with it (Chunk A D1). So
                  the table keeps its shape, scrolls inside the frame, pins the line name, and

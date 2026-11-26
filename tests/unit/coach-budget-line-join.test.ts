@@ -120,7 +120,6 @@ describe('"What makes this line different?" is gone from everywhere a coach can 
   const SURFACES = [
     'app/[orgSlug]/coaches/teams/[teamId]/accounting/budget/panel.tsx',
     'lib/help-content/coaches.tsx',
-    'scripts/seed-demo-coach.mjs',
   ];
 
   for (const file of SURFACES) {

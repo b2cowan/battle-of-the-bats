@@ -24,7 +24,6 @@ import { closeClubPayPages } from '@/lib/online-pay-pages';
 import { hasBillingLocation, requireBillingLocation } from '@/lib/billing-location-server';
 import { BILLING_LOCATION_WORDS, BILLING_REGION_CLOSED, isClosedRegion } from '@/lib/billing-location';
 import { requireFreshCode } from '@/lib/two-step-fresh';
-import { demoBillingRefusal } from '@/lib/demo-guard';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -177,9 +176,6 @@ export const PATCH = withObservability(async (req: Request) => {
   if (c instanceof Response) return c;
   if (!c.isOwner) return forbidden();
   const { ctx } = c;
-  // Names its club only in the body, so the proxy cannot see it, and the demo organizer is an owner (the shared refusal).
-  const demoRefusal = demoBillingRefusal(ctx.user);
-  if (demoRefusal) return demoRefusal;
   const update: Record<string, unknown> = { updated_at: new Date().toISOString() };
   if ('feePayer' in body || 'sponsorFeePayer' in body) {
     // 12d-2 (ask 6): changing who pays the fee needs the current terms; agreeing again is the terms window's.
@@ -221,8 +217,6 @@ export const POST = withObservability(async (req: Request) => {
   if (c instanceof Response) return c;
   if (!c.isOwner) return forbidden();
   const { ctx } = c;
-  const demoRefusal = demoBillingRefusal(ctx.user);
-  if (demoRefusal) return demoRefusal;
   // Not `new URL(req.url).origin`: on the hosted site that is the server's internal address (localhost).
   const origin = resolveTrustedAppOrigin(req);
   const back = (refresh: boolean) =>

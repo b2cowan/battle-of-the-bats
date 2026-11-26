@@ -26,7 +26,7 @@ import styles from '@/app/[orgSlug]/coaches/coaches.module.css';
  *
  * ⚠ The "new tab" above is a real invariant, not an assumption: both entry points
  * carry target="_blank" (HelpDrawer's "Open the full guide" and the account
- * menu's Help row; the demo sandbox's sidebar keeps a Help item too). If either ever navigates in place, this surface becomes reachable
+ * menu's Help row). If either ever navigates in place, this surface becomes reachable
  * with no way out and needs one — that is the condition to re-check, not the tab.
  *
  * ── AND THE THEME ─────────────────────────────────────────────────────────────

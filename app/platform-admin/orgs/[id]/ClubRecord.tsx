@@ -1445,7 +1445,7 @@ function FinishEndingWindow({ orgId, orgName, ending, tournamentCount: count, on
 function DeleteWindow({ orgId, orgName, orgSlug, hasStripeCustomer, onDone, onClose }: {
   orgId: string; orgName: string; orgSlug: string; hasStripeCustomer: boolean; onDone: () => void; onClose: () => void;
 }) {
-  const [pre, setPre] = useState<{ hasActiveSubscription?: boolean; memberCount?: number; tournamentCount?: number; coachesLinkCount?: number; retentionRecordCount?: number; paymentsInFlight?: string | null; fileCount?: number | null; demoRefusal?: string | null } | null>(null);
+  const [pre, setPre] = useState<{ hasActiveSubscription?: boolean; memberCount?: number; tournamentCount?: number; coachesLinkCount?: number; retentionRecordCount?: number; paymentsInFlight?: string | null; fileCount?: number | null } | null>(null);
   const [typed, setTyped] = useState('');
   const [notify, setNotify] = useState(false);
   const [dropStripe, setDropStripe] = useState(false);
@@ -1455,9 +1455,7 @@ function DeleteWindow({ orgId, orgName, orgSlug, hasStripeCustomer, onDone, onCl
   }, [orgId]);
   // 12d-2 (owner ruling 2): money in flight (an open dispute, a clearing debit) waits too.
   const inFlight = pre?.paymentsInFlight ?? null;
-  // The public demo clubs are never deleted from the console (owner 2026-11-15).
-  const demo = pre?.demoRefusal ?? null;
-  const blocked = !!demo || !!pre?.hasActiveSubscription || !!inFlight;
+  const blocked = !!pre?.hasActiveSubscription || !!inFlight;
   // Board Ready Stage 0a: the files the club uploaded go with it, and the window counts them (null = could not be counted).
   const files = !pre || pre.fileCount === 0 ? '' : typeof pre.fileCount === 'number'
     ? `, ${pre.fileCount} stored file${pre.fileCount === 1 ? '' : 's'}`
@@ -1465,7 +1463,7 @@ function DeleteWindow({ orgId, orgName, orgSlug, hasStripeCustomer, onDone, onCl
   return (
     <RecordWindow
       title={`Delete ${orgName}`}
-      sentence={demo ? <>{demo}</> : pre?.hasActiveSubscription
+      sentence={pre?.hasActiveSubscription
         ? <>{orgName} still has a running subscription. <strong>Cancel the subscription first</strong>, then delete the club.</>
         : inFlight ? <>{inFlight}</>
         : <>{orgName} and everything in it — {pre?.memberCount ?? 0} member{pre?.memberCount === 1 ? '' : 's'}, {pre?.tournamentCount ?? 0} tournament{pre?.tournamentCount === 1 ? '' : 's'}

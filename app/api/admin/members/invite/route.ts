@@ -7,7 +7,6 @@ import { isAssignableRole } from '@/lib/board-roles';
 import { memberOpensSentence, roleEmailLabel } from '@/lib/member-access';
 import { memberDisplayName } from '@/lib/member-names';
 import { acceptInvitePath, sendExistingAccountInvite } from '@/lib/invite-links';
-import { isDemoOrganizerEmail } from '@/lib/demo-org';
 import { isPlatformAdminEmailStrict } from '@/lib/platform-auth';
 import { PLAN_CONFIG } from '@/lib/plan-config';
 import { sendEmail, orgInviteHtml } from '@/lib/email';
@@ -57,20 +56,19 @@ export const POST = withObservability(async (req: Request) => {
     return NextResponse.json({ error: 'Valid email required' }, { status: 400 });
   }
 
-  // ⚖ Two kinds of address a club can never invite (Board Ready trust close-out 13, 2026-11-18). A "See it live" demo's
-  // shared account: every anonymous visitor signs in as it, so a club that invited it would be opening itself to the
-  // public. And FieldLogicHQ support: sign-up, team creation and the registration import already turn a staff address
-  // away, and a staff account holding a club seat is refused support work on that club (lib/staff-own-club.ts).
-  // ONE neutral answer for both (/review): two distinct refusals would let any club admin test an address for "is this
-  // FieldLogicHQ support?".
+  // ⚖ An address a club can never invite (Board Ready trust close-out 13, 2026-11-18): FieldLogicHQ support. Sign-up, team
+  // creation and the registration import already turn a staff address away, and a staff account holding a club seat is
+  // refused support work on that club (lib/staff-own-club.ts). The answer is neutral (/review): it must not let any club
+  // admin test an address for "is this FieldLogicHQ support?". (The shared demo accounts, refused the same way, went with
+  // the public demos, 2026-11-26.)
   // ⚖ Leftover call 13 (owner 2026-11-19): when the staff read can't answer, refuse with "try again" rather than let the
-  // address through; the strict read fails the same way for every address (a demo one too), so the refusal says nothing
+  // address through; the strict read fails the same way for every address, so the refusal says nothing
   // about it.
   const staff = await isPlatformAdminEmailStrict(email);
   if (staff === null) {
     return NextResponse.json({ error: 'We couldn’t check that address just now. Try again.', code: 'address_check_failed' }, { status: 503 });
   }
-  if (staff || isDemoOrganizerEmail(email)) {
+  if (staff) {
     return NextResponse.json({ error: 'That address can’t be invited to a club.', code: 'address_not_invitable' }, { status: 403 });
   }
 

@@ -26,35 +26,33 @@ describe('the workspace tournament door needs the plan and the tournament grant,
     for (const grant of [true, false, undefined]) it(`${role}/grant=${grant}`, () => {
       const caps = grant === undefined ? null : { create_tournaments: grant };
       const allowed = role === 'owner' || (grant === undefined ? role === 'admin' : grant && !!role);
-      assert.equal(coachHostedTournamentsLink(workspace, role, caps, false), allowed ? '/falcons/admin/tournaments/manage' : null);
-      assert.equal(coachHostedTournamentsLink(workspace, role, caps, true), null, 'the sandbox hides Tournaments you run by name');
-      assert.equal(coachHostedTournamentsLink({ ...workspace, subscriptionStatus: 'canceled' }, role, caps, false), null);
-      assert.equal(coachHostedTournamentsLink({ ...workspace, planId: 'club', accountKind: 'organization' }, role, caps, false), null);
+      assert.equal(coachHostedTournamentsLink(workspace, role, caps), allowed ? '/falcons/admin/tournaments/manage' : null);
+      assert.equal(coachHostedTournamentsLink({ ...workspace, subscriptionStatus: 'canceled' }, role, caps), null);
+      assert.equal(coachHostedTournamentsLink({ ...workspace, planId: 'club', accountKind: 'organization' }, role, caps), null);
     });
   }
   it('requires a known workspace and an entitled plan, including legacy and effective-plan identities', () => {
-    assert.equal(coachHostedTournamentsLink(null, 'owner', null, false), null);
-    assert.equal(coachHostedTournamentsLink({ ...workspace, planId: 'unknown' as Organization['planId'] }, 'owner', null, false), null);
-    assert.equal(coachHostedTournamentsLink({ ...workspace, accountKind: 'organization' }, 'owner', null, false), '/falcons/admin/tournaments/manage');
-    assert.equal(coachHostedTournamentsLink({ ...workspace, planId: 'club' }, 'owner', null, false), '/falcons/admin/tournaments/manage');
+    assert.equal(coachHostedTournamentsLink(null, 'owner', null), null);
+    assert.equal(coachHostedTournamentsLink({ ...workspace, planId: 'unknown' as Organization['planId'] }, 'owner', null), null);
+    assert.equal(coachHostedTournamentsLink({ ...workspace, accountKind: 'organization' }, 'owner', null), '/falcons/admin/tournaments/manage');
+    assert.equal(coachHostedTournamentsLink({ ...workspace, planId: 'club' }, 'owner', null), '/falcons/admin/tournaments/manage');
   });
 });
 
-describe('the standalone owner predicate and sandbox billing door', () => {
+describe('the standalone owner predicate and the billing door', () => {
   for (const role of ['owner', 'admin', 'staff', 'coach', null] as const) {
     for (const standalone of [true, false]) for (const billing of [false, true]) {
       it(`${role}/${standalone ? 'standalone' : 'club'}/stale grant=${billing}`, () => {
         const org = standalone ? workspace : { ...workspace, accountKind: 'organization' as const, planId: 'club' as const };
         const allowed = role === 'owner' && standalone;
         assert.equal(isStandaloneCoachOwner(org, role, { billing }), allowed);
-        assert.equal(coachBillingLink(org, role, { billing }, false), allowed ? '/falcons/coaches/billing' : null);
-        assert.equal(coachBillingLink(org, role, { billing }, true), null);
+        assert.equal(coachBillingLink(org, role, { billing }), allowed ? '/falcons/coaches/billing' : null);
       });
     }
   }
   it('the legacy team plan signal still identifies a standalone owner', () => {
     assert.equal(isStandaloneCoachOwner({ accountKind: 'organization', planId: 'team' }, 'owner', null), true);
-    assert.equal(coachBillingLink(null, 'owner', null, false), null);
+    assert.equal(coachBillingLink(null, 'owner', null), null);
   });
 });
 
@@ -108,7 +106,6 @@ async function layoutFixture({ role = 'owner', org = workspace, pathname = '/fal
     '@/lib/coach-portal-plan': { orgPlanCarriesCoachesPortal: () => carriesPortal },
     '@/lib/member-names': { orgOwnerDisplayName: async () => 'The owner' },
     '@/lib/user-preferences': { getCoachOnboardingPrefs: async () => ({}) },
-    '@/lib/demo-org': { getDemoOrgBySlug: () => null },
     '@/lib/portal-free-time-server': { endedPortalFreeTime: async () => freeTimeEnded ? { lastDay: '2026-10-20', basicTeamId: 'basic-a' } : null },
     '@/lib/org-context': { OrgProvider: pass, useOrg: () => ({ currentOrg: org, userRole: role, userCapabilities: null, loading: false, refresh: async () => {} }) },
     '@/lib/coaches-context': { CoachesProvider: pass },
@@ -249,7 +246,7 @@ describe('workspace billing stays outside the team nav and season gates', () => 
       else Reflect.deleteProperty(globalThis, 'window');
     }
   });
-  for (const scenario of ['owner', 'helper', 'granted-coach', 'board-admin', 'club-owner', 'sandbox', 'cancelled-owner', 'closed-owner', 'zero-team-owner'] as const) {
+  for (const scenario of ['owner', 'helper', 'granted-coach', 'board-admin', 'club-owner', 'cancelled-owner', 'closed-owner', 'zero-team-owner'] as const) {
     it(`${scenario}: the real rail and open More sheet render the correct billing door`, () => {
       const org = scenario === 'club-owner' ? { ...workspace, planId: 'club', accountKind: 'organization' }
         : scenario === 'cancelled-owner' ? { ...workspace, subscriptionStatus: 'canceled' } : workspace;
@@ -259,8 +256,8 @@ describe('workspace billing stays outside the team nav and season gates', () => 
       const assignment = { teamId: 'team-a', teamName: 'Falcons', programYearName: '2026 Season', capabilities: { isHeadCoach: true } };
       const assignments = closed || noTeam ? [] : [assignment];
       const closedAssignments = closed ? [assignment] : [];
-      const allowed = !['helper', 'granted-coach', 'board-admin', 'club-owner', 'sandbox'].includes(scenario);
-      const tournamentsAllowed = !['helper', 'club-owner', 'sandbox', 'cancelled-owner'].includes(scenario);
+      const allowed = !['helper', 'granted-coach', 'board-admin', 'club-owner'].includes(scenario);
+      const tournamentsAllowed = !['helper', 'club-owner', 'cancelled-owner'].includes(scenario);
       for (const mobile of [false, true]) {
         let stateCalls = 0;
         const load = billingTestLoader({
@@ -275,7 +272,6 @@ describe('workspace billing stays outside the team nav and season gates', () => 
             resolveLiveSeason: () => assignments[0] ?? null,
             resolveClosedSeason: () => closedAssignments[0] ?? null,
           },
-          '@/components/sandbox/SandboxProvider': { useIsSandbox: () => scenario === 'sandbox' },
           '@/lib/use-chat-unread': { useChatUnread: () => 0 },
           '@/lib/use-notification-unread': { useNotificationUnread: () => ({ count: 0 }) },
           '@/lib/coaches-overlay': { useAnyOverlayOpen: () => false },
@@ -315,12 +311,13 @@ describe('workspace billing stays outside the team nav and season gates', () => 
       }
     });
   }
-  it('both navs use the shared sandbox-aware row and the phone lights More on billing', () => {
+  it('both navs use the shared billing row and the phone lights More on billing', () => {
     const rail = readCode('components/coaches/CoachesSidebar.tsx');
     const phone = readCode('components/coaches/CoachesBottomNav.tsx');
-    for (const source of [rail, phone]) assert.match(source, /coachBillingLink\(currentOrg, userRole, userCapabilities, inSandbox\)/);
-    // Navigation Phase 1 (N4, E16): the sandbox's Help, Plan & billing, the hairline, Club, Tournaments you run, Collapse.
-    assert.ok(rail.indexOf('id="coaches-billing"') > rail.indexOf('>Help</span>'));
+    for (const source of [rail, phone]) assert.match(source, /coachBillingLink\(currentOrg, userRole, userCapabilities\)/);
+    for (const source of [rail, phone]) assert.doesNotMatch(source, /inSandbox/);
+    // Navigation Phase 1 (N4, E16): Plan & billing, the hairline, Club, Tournaments you run, Collapse (Help is the account menu's).
+    assert.doesNotMatch(rail, />Help<\/span>/);
     assert.ok(rail.indexOf('styles.sidebarFootSep') > rail.indexOf('id="coaches-billing"'));
     assert.ok(rail.indexOf('id="coaches-tournaments"') > rail.indexOf('>Club</span>'));
     assert.ok(rail.indexOf('>Club</span>') > rail.indexOf('styles.sidebarFootSep'));

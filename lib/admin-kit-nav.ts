@@ -432,14 +432,13 @@ export function sponsorshipsDealId(pathname: string, base: string): string | nul
 /** Organization's icon (its sidebar row and its More sheet row share it). */
 export const ORGANIZATION_ICON: LucideIcon = Building2;
 
-/** Plan & billing lives beside Help on every admin plan, including a suspended account's comeback path. The demo
- *  sandboxes hide every billing entry point (lib/sandbox-curation.ts): a comped demo org's billing answers nothing. */
-export function kitBillingLink({ orgSlug, planId, accountKind, role, capabilities, isSandbox = false }: {
+/** Plan & billing lives beside Help on every admin plan, including a suspended account's comeback path. */
+export function kitBillingLink({ orgSlug, planId, accountKind, role, capabilities }: {
   orgSlug: string; planId: OrgPlan | null | undefined; role: OrgRole | null | undefined;
   accountKind?: string | null;
-  capabilities: Record<string, boolean> | null; isSandbox?: boolean;
+  capabilities: Record<string, boolean> | null;
 }): KitLink | null {
-  return !isSandbox && hasBillingAccess(role, capabilities)
+  return hasBillingAccess(role, capabilities)
     ? { key: 'org/billing', label: PLAN_BILLING_TITLE, href: getBillingHref({ slug: orgSlug, planId, accountKind }), icon: CreditCard }
     : null;
 }
@@ -521,8 +520,7 @@ export function activeKitSection(pathname: string, base: string): AdminProgramKe
 /**
  * The guide for where you are, opened in a new tab: any tournament page → the tournaments guide, a program's or
  * Organization's pages → theirs, everything else → the admin help home. ONE answer for its two homes (E16, navigation
- * Phase 1): the desktop account menu's Help row, and the phone More sheet's foot (and the demo sandbox's sidebar foot,
- * which keeps Help because the sandbox hides the account menu).
+ * Phase 1): the desktop account menu's Help row, and the phone More sheet's foot.
  */
 export function adminHelpHref(pathname: string, base: string): string {
   if (pathname.startsWith(`${base}/tournaments`)) return `${base}/help/tournaments`;

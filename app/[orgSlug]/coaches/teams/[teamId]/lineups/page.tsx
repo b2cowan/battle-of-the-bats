@@ -422,11 +422,9 @@ export default function CoachesLineupsPage({
           )}
 
           {/* ONE frame for both halves (standard §3.10, F-27): "Upcoming games" and "Recent
-              games" are band rows inside it. data-sandbox-tour: the beat the demo's "count the
-              lineups" step rings — the games still waiting behind the one lineup already saved —
-              anchors on the whole list. Inert off a demo org. */}
+              games" are band rows inside it. */}
           {(upcomingShown.length > 0 || recentShown.length > 0) && (
-            <CoachRowList label="Games" className={styles.hubRowList} data-sandbox-tour="lineups-upcoming">
+            <CoachRowList label="Games" className={styles.hubRowList}>
               {upcomingShown.length > 0 && (
                 <>
                   <CoachRowBand id="lineups-upcoming">Upcoming games</CoachRowBand>

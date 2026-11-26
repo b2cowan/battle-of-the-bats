@@ -4,7 +4,6 @@ import { canGate, canScore } from './volunteer-jobs';
 import { volunteerShut } from './invite-only-event';
 import { hasCapability } from './roles';
 import { LEAGUE_RUNNER_ROLES, canHouseLeague } from './house-league-access';
-import { isDemoOrganizerEmail } from './demo-org';
 import type { Organization, OrgRole } from './types';
 
 /**
@@ -29,8 +28,7 @@ export type OwnerRecipient = { userId: string; email: string };
 /**
  * EVERY ACTIVE OWNER'S EMAIL (GST/HST Stage 6 step 6.4, owner ruling Q4 2026-11-13: "every owner, not one"). The one reader for an
  * email about the club's plan or billing: the purchase email, the yearly reminder, a trial ending, a plan ending, welcome back, the
- * retention notice and the online-payments notices. A coach's Premium workspace's owner is the coach. A demo account's address
- * (`isDemoOrganizerEmail`) is never one: `sendEmail` skips only `.local`, and the demo accounts are `@example.com`.
+ * retention notice and the online-payments notices. A coach's Premium workspace's owner is the coach.
  *
  * ⚠ It replaced `getOrgOwnerEmail` for these emails, which read ONE owner with `.single()`: a club with two owners got an error,
  * no address and NO email at all. Throws on a failed read; an owner whose sign-in cannot be read (or has no email) is left out.
@@ -40,7 +38,7 @@ export async function orgOwnerEmails(orgId: string): Promise<OwnerRecipient[]> {
   for (const userId of await orgOwnerUserIds(orgId)) {
     const { data } = await supabaseAdmin.auth.admin.getUserById(userId);
     const email = data?.user?.email?.trim();
-    if (email && !isDemoOrganizerEmail(email) && !out.some(r => r.email.toLowerCase() === email.toLowerCase())) out.push({ userId, email });
+    if (email && !out.some(r => r.email.toLowerCase() === email.toLowerCase())) out.push({ userId, email });
   }
   return out;
 }

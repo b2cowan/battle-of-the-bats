@@ -40,7 +40,7 @@ const portal = (over: Partial<CoachPortalFacts> = {}): CoachPortalFacts => ({
 });
 
 const facts = (over: Partial<PortalGiveFacts> = {}): PortalGiveFacts => ({
-  switchOn: true, coachIsGiver: false, coachIsStaff: false, coachIsDemo: false, giverOnTeam: false,
+  switchOn: true, coachIsGiver: false, coachIsStaff: false, giverOnTeam: false,
   freeTeams: [team()], portals: [], givesInWindow: 0, ...over,
 });
 
@@ -75,10 +75,6 @@ describe('Part 3 · the give refuses, each with one sentence and nothing written
     assert.match(refused(give(facts({ coachIsGiver: true }))) ?? '', /your own account, or a platform staff account/);
     assert.match(refused(give(facts({ coachIsStaff: true }))) ?? '', /your own account, or a platform staff account/);
     assert.match(refused(give(facts({ giverOnTeam: true }))) ?? '', /You belong to this coach's team/);
-  });
-
-  it('a public demo coach (T28)', () => {
-    assert.match(refused(give(facts({ coachIsDemo: true }))) ?? '', /public demo coach/);
   });
 
   it('a team a portal already holds, and a shadow team, are never offered (T20)', () => {
@@ -262,9 +258,9 @@ describe('Part 3 · the server: who, what, and nothing written on a no (T23)', (
     assert.match(fn, /claimed: t\.team_workspace_id != null/);
   });
 
-  it('a staff account is checked against the platform staff list, a demo coach against the demo list (T34, T28)', () => {
+  it('a staff account is checked against the platform staff list (T34); the demo-coach check left with the demos', () => {
     assert.match(give, /coach\.email \? isPlatformAdminEmail\(coach\.email\)/);
-    assert.match(give, /coachIsDemo: isDemoOrganizerEmail\(coach\.email\)/);
+    assert.doesNotMatch(give, /coachIsDemo|isDemoOrganizerEmail/);
   });
 });
 

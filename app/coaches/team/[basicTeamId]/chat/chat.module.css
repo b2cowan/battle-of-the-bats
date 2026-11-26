@@ -7,14 +7,14 @@
        band when a page shows one (it measures 0 on this team-only page), and nothing below.
    Measured values only — never a guessed height, which is what once left a gap under a sticky layer. */
 .chatWrap {
-  --coach-topbar-h: calc(var(--coach-mhead-h, 0px) + var(--sandbox-chrome-h, 0px));
+  --coach-topbar-h: var(--coach-mhead-h, 0px);
   --coach-bottomnav-h: var(--bottom-nav-height, 72px);
   min-width: 0;
 }
 
 @media (min-width: 901px) {
   .chatWrap {
-    --coach-topbar-h: calc(var(--coach-topstrip-h, 0px) + var(--coach-mhead-h, 0px) + var(--sandbox-chrome-h, 0px));
+    --coach-topbar-h: calc(var(--coach-topstrip-h, 0px) + var(--coach-mhead-h, 0px));
     --coach-bottomnav-h: 0px;
   }
 }

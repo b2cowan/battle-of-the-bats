@@ -81,9 +81,8 @@ export default function DevelopmentHubPage({
  *
  * ⚠ The header's lime action follows the stage: absent while nothing can start (a switched-off
  * primary was the first thing on the old landing), "+ Start session" once a test exists.
- * ⚠ `data-sandbox-tour="development-sessions"` on the sessions card is a contract with the demo
- * tour ("Find the two blanks" lands on it) — the tour's destination is the Sessions TAB now that
- * the landing is the Overview. It stays on the Sessions view's card.
+ * ⚠ `data-testid="development-sessions"` on the sessions card is a contract with the UAT spec
+ * coach-development-metrics — it stays on the Sessions view's card.
  * ⚠ The four door tiles (Insights · Drills · Plan templates · Players) and the "practice plans live
  * in your Schedule" line are GONE (stage 0): Insights has its own door, and the practice
  * instruments belong to the practice-plans work. The drill library keeps no door here.
@@ -396,10 +395,9 @@ function SessionsView({
 
   return (
     <>
-      {/* data-sandbox-tour: the beat the demo's "Find the two blanks" step rings — a session where
-          eleven of thirteen were tested and the other two read as a dash. Inert off a demo org.
+      {/* data-testid: the sessions card's handle for tests/uat/scenarios/coach-development-metrics.spec.ts.
           Money's list-tab grammar (2026-09-14): the toolbar on the paper, the table on white. */}
-      <div data-sandbox-tour="development-sessions">
+      <div data-testid="development-sessions">
         {/* ONE line above the table (round 2, owner 2026-09-15): the count. The lesson ("run your
             tests for the whole roster in one go…") lives on the empty state and the Overview's
             first-run card, where a coach who has not run a session reads it; a list that has

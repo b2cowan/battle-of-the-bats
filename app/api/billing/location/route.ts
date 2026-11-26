@@ -1,6 +1,5 @@
 import { getAuthContext, getAuthenticatedUser, requireCapability, unauthorized } from '@/lib/api-auth';
 import { withObservability } from '@/lib/observability';
-import { demoBillingRefusal } from '@/lib/demo-guard';
 import {
   billingAddressFromBody,
   billingBuyerOf,
@@ -21,20 +20,20 @@ import {
  *   PUT { orgSlug? | scope: 'person', address fields, usDeclared } → { location } · 400 { errors, usClosed } · 500
  */
 
-type Resolved = { ok: true; buyer: BillingBuyer; name: string | null; email: string | null } | { ok: false; response: Response };
+type Resolved = { ok: true; buyer: BillingBuyer; name: string | null } | { ok: false; response: Response };
 
 async function resolveBuyer(orgSlug: string | null, scope: string | null): Promise<Resolved> {
   if (scope === 'person' || !orgSlug) {
     const user = await getAuthenticatedUser();
     if (!user) return { ok: false, response: unauthorized() };
-    return { ok: true, buyer: { kind: 'user', userId: user.id }, name: null, email: user.email ?? null };
+    return { ok: true, buyer: { kind: 'user', userId: user.id }, name: null };
   }
   const auth = await getAuthContext({ orgSlug, requireOrgSlug: true, allowSuspendedOrg: true });
   if (!auth) return { ok: false, response: unauthorized() };
   const denied = await requireCapability(auth, 'billing');
   if (denied) return { ok: false, response: denied };
   const buyer = billingBuyerOf(auth.org, auth.user);
-  return { ok: true, buyer, name: buyer.kind === 'org' ? auth.org.name : null, email: auth.user.email ?? null };
+  return { ok: true, buyer, name: buyer.kind === 'org' ? auth.org.name : null };
 }
 
 export const GET = withObservability(async (req: Request) => {
@@ -57,11 +56,6 @@ export const PUT = withObservability(async (req: Request) => {
     typeof body.scope === 'string' ? body.scope : null,
   );
   if (!resolved.ok) return resolved.response;
-  // The sandboxes run the real product and the demo organizer holds the billing power: a visitor must not save an address
-  // onto the public demo club. This route names its org only in the body, so the proxy cannot see it (the shared refusal;
-  // pinned for every billing write in tests/unit/demo-sandbox-write-guard.test.ts).
-  const demoRefusal = demoBillingRefusal({ email: resolved.email });
-  if (demoRefusal) return demoRefusal;
   const result = await saveBillingLocation(resolved.buyer, billingAddressFromBody(body) ?? {});
   if (!result.ok) return saveRefusalResponse(result);
   return Response.json({ location: result.location });

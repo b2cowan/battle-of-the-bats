@@ -201,20 +201,21 @@ describe('N4 + N7 · one foot, one More-sheet order', () => {
   });
 
   // ⚖ N4 (navigation Phase 1, E4 + E16, owner 2026-11-09): Plan & billing, a hairline, the other portals, Collapse.
-  it('the admin sidebar’s foot: Plan & billing, a hairline, the portal doors; Help only in the sandbox; no Public site, Sign out or Send feedback', () => {
+  it('the admin sidebar’s foot: Plan & billing, a hairline, the portal doors; no Help, Public site, Sign out or Send feedback', () => {
     const rail = readCode(ADMIN_RAIL);
     const foot = rail.slice(rail.indexOf('<div className={styles.foot}>'), rail.indexOf('<CollapseSidebarRow'));
-    order(foot, ['billingLink.href', '{isSandbox && (', 'styles.footSep', 'portalDoors.map'], ADMIN_RAIL);
+    order(foot, ['billingLink.href', 'styles.footSep', 'portalDoors.map'], ADMIN_RAIL);
     assert.match(foot, /billingLink && <Link/);
     assert.match(foot, /styles\.footItem/);
     assert.match(foot, /<billingLink\.icon size=\{14\}/);
-    assert.match(foot, /\{isSandbox && \(\s*<Link href=\{helpHref\}/, 'Help is the sandbox’s only (the account menu has it elsewhere)');
+    // Help was the demo sandbox's sidebar row only (it had no account menu); with the sandbox retired the sidebar has none.
+    assert.doesNotMatch(foot, /helpHref|isSandbox/, 'Help is the account menu’s, never a sidebar row');
     // ⚖ + Settings & access in the event's shell of a Tournament plan (owner 2026-11-11): the hairline follows whichever rows came first.
-    assert.match(foot, /\{\(billingLink \|\| isSandbox \|\| \(inEvent && settingsAccess\)\) && portalDoors\.length > 0 && <div className=\{styles\.footSep\} aria-hidden \/>\}/);
+    assert.match(foot, /\{\(billingLink \|\| \(inEvent && settingsAccess\)\) && portalDoors\.length > 0 && <div className=\{styles\.footSep\} aria-hidden \/>\}/);
     assert.match(readCode('components/admin/kit/useAdminKitNav.ts'), /const portalDoors = kitPortalDoors\(\{ base, onTournaments, tournamentOnly, isCanceled, tournamentsDoor: order\.door, canUse, coachDoor \}\);/);
     assert.match(readCode(ADMIN_SHEET), /billingLink && <Link[\s\S]*?<billingLink\.icon size=\{17\}/);
     const hook = readCode('components/admin/kit/useAdminKitNav.ts');
-    assert.match(hook, /const billingLink = kitBillingLink\(\{ orgSlug, planId: currentOrg\?\.planId, accountKind: currentOrg\?\.accountKind, role: userRole, capabilities: userCapabilities, isSandbox \}\)/);
+    assert.match(hook, /const billingLink = kitBillingLink\(\{ orgSlug, planId: currentOrg\?\.planId, accountKind: currentOrg\?\.accountKind, role: userRole, capabilities: userCapabilities \}\)/);
     assert.doesNotMatch(rail, /Sign out|<FeedbackLauncher|signOut/);
     // NOT pinned (owner 2026-11-09): the foot is the last rows of the ONE scrolling list, a spacer resting it at the bottom.
     assert.ok(rail.indexOf('<div className={styles.railFoot}>') < rail.indexOf('</nav>'), 'the foot rides inside the scrolling nav');
@@ -249,22 +250,21 @@ describe('N4 + N7 · one foot, one More-sheet order', () => {
   });
 
   // ⚖ ONE HELP DOOR PER SCREEN (E16, owner 2026-11-09): on a desktop the account menu's row, on a phone the More sheet's
-  // foot, in the demo sandbox (no account menu) the sidebar's foot — never two at once, never none.
-  it('Help: the admin and Premium coach account menus opt in, desktop only; the sidebars keep it only in the sandbox', () => {
+  // foot — never two at once, never none. (The demo sandbox, which had no account menu and kept Help in the sidebar, is retired.)
+  it('Help: the admin and Premium coach account menus opt in, desktop only; the sidebars carry none', () => {
     const menu = readCode('components/shared/AccountMenu.tsx');
     assert.match(menu, /\{helpHref && !inSheet && \(/, 'never in the phone’s Account sheet');
     assert.ok(menu.indexOf('{helpHref && !inSheet && (') > menu.indexOf('What’s new'), 'under What’s new');
     assert.match(menu, /<HelpCircle size=\{15\} aria-hidden \/>/);
     const admin = readCode('components/admin/AdminTopStrip.tsx');
-    assert.match(admin, /\{!inSandbox && \(\s*<AccountMenu[\s\S]*?helpHref=\{!suspended && currentOrg\?\.slug \? adminHelpHref\(pathname, base\) : undefined\}/, 'never on a cancelled account’s one page (its help bounces to billing)');
+    assert.match(admin, /<AccountMenu[\s\S]*?helpHref=\{!suspended && currentOrg\?\.slug \? adminHelpHref\(pathname, base\) : undefined\}/, 'never on a cancelled account’s one page (its help bounces to billing)');
     const coach = readCode('components/coaches/CoachTopStrip.tsx');
-    assert.match(coach, /\{!inSandbox && \(\s*<AccountMenu[\s\S]*?helpHref=\{!wall && !free && currentOrg\?\.slug \? `\/\$\{currentOrg\.slug\}\/coaches\/help` : undefined\}/);
+    assert.match(coach, /<AccountMenu[\s\S]*?helpHref=\{!wall && !free && currentOrg\?\.slug \? `\/\$\{currentOrg\.slug\}\/coaches\/help` : undefined\}/);
     for (const f of ['app/platform-admin/PlatformShell.tsx', 'components/public/ClubBar.tsx', 'components/public/TournamentBand.tsx', 'components/consumer/ConsumerNav.tsx', 'components/Navbar.tsx']) {
       assert.doesNotMatch(readCode(f), /helpHref/, `${f}: no Help in a public, family, marketing or support-console menu`);
     }
-    assert.match(readCode(COACH_RAIL), /\{inSandbox && \(\s*<Link href=\{`\$\{base\}\/help`\}/, 'the coach sidebar keeps Help only in the sandbox');
-    assert.equal((readCode(COACH_RAIL).match(/>Help<\/span>/g) ?? []).length, 1);
-    assert.equal((readCode(ADMIN_RAIL).match(/>Help<\/span>/g) ?? []).length, 1);
+    assert.equal((readCode(COACH_RAIL).match(/>Help<\/span>/g) ?? []).length, 0, 'the coach sidebar carries no Help row');
+    assert.equal((readCode(ADMIN_RAIL).match(/>Help<\/span>/g) ?? []).length, 0, 'the admin sidebar carries no Help row');
     // The phone keeps Help at the sheet's foot, one answer for where you are.
     assert.match(readCode(ADMIN_SHEET), /<MoreSheetFoot idPrefix="admin-mob" helpHref=\{helpHref\}/);
     assert.equal(adminHelpHref('/o/admin/tournaments/divisions', '/o/admin'), '/o/admin/help/tournaments');
@@ -302,27 +302,27 @@ describe('N4 + N7 · one foot, one More-sheet order', () => {
     assert.match(css, /@media \(max-width: 900px\) \{\s*\.inline \.labelText \{ display: none; \}\s*\.inline \.pill,\s*\.clubLook \.pill \{/);
   });
 
-  it('the demo sandbox never shows Sign out or Send feedback on a sheet (a shared demo user is never signed out)', () => {
+  it('a phone sheet shows Sign out and Send feedback, and no sheet carries a demo-sandbox gate any more', () => {
     const code = readCode(FOOT);
     for (const id of ['`${idPrefix}-feedback`', '`${idPrefix}-logout`']) {
-      const at = code.indexOf(id);
-      assert.ok(at > 0 && code.lastIndexOf('{!inSandbox && (', at) > code.lastIndexOf('</button>', at), `${id} sits inside the sandbox gate`);
+      assert.ok(code.indexOf(id) > 0, `${id} is on the sheet`);
     }
+    assert.doesNotMatch(code, /inSandbox|isSandbox/);
   });
 
-  it('nor Account, Home or Download app: each leads out of the demo (arriving ends it; the installed app opens outside it)', () => {
-    for (const [f, flag, prefix] of [[ADMIN_SHEET, 'isSandbox', 'admin'], [COACH_SHEET, 'inSandbox', 'coaches']] as const) {
+  it('Account and Home are plain rows under You on both sheets, and Download app asks only for an installable browser', () => {
+    for (const [f, prefix] of [[ADMIN_SHEET, 'admin'], [COACH_SHEET, 'coaches']] as const) {
       const code = readCode(f);
       for (const id of [`id="${prefix}-mob-account"`, `id="${prefix}-mob-home"`]) {
-        const at = code.indexOf(id);
-        assert.ok(at > 0 && code.lastIndexOf(`{!${flag} && (`, at) > code.lastIndexOf('>You</div>', at), `${f}: ${id} sits inside the sandbox gate`);
+        assert.ok(code.indexOf(id) > code.indexOf('>You</div>'), `${f}: ${id} sits under You`);
       }
+      assert.doesNotMatch(code, /inSandbox|isSandbox/, `${f}: no sandbox gate left`);
     }
-    assert.match(readCode('components/coaches/MoreSheetFoot.tsx'), /\{canInstall && !inSandbox && \(/);
+    assert.match(readCode('components/coaches/MoreSheetFoot.tsx'), /\{canInstall && \(/);
   });
 
   it('a tournament’s nav has no Accounting row: the club’s book is not an event page (owner 2026-10-30)', () => {
-    const groups = kitTournamentGroups({ status: 'active', isSandbox: false, role: 'owner', planId: 'club' });
+    const groups = kitTournamentGroups({ status: 'active', role: 'owner', planId: 'club' });
     assert.ok(!groups.some(g => g.items.some(i => i.key === 'accounting')));
     assert.doesNotMatch(readCode(ADMIN_RAIL), /label="Accounting"/, 'no lone Accounting row after the groups');
   });
@@ -430,7 +430,7 @@ describe('N8 · the tiles', () => {
     for (const phase of ['draft', 'open', 'completed', 'archived'] as const) assert.equal(tournamentSheetTiles(phase, ops), null, phase);
     assert.equal(tournamentSheetTiles('gameday', ops.filter(o => o.key !== 'staff-kit')), null);
     // From the real groups: an invite-only event (the free tournament tier) has no Check-in or Staff kit, so no tiles.
-    const free = kitTournamentGroups({ status: 'active', isSandbox: false, role: 'owner', planId: 'tournament' })
+    const free = kitTournamentGroups({ status: 'active', role: 'owner', planId: 'tournament' })
       .find(g => g.key === 'operations')!.items.map(i => t(i.key));
     assert.equal(tournamentSheetTiles('gameday', free), null);
   });
@@ -504,9 +504,9 @@ describe('13i · places in the sidebar, pages on the page', () => {
     assert.match(rail, /<ChevronDown size=\{16\} aria-hidden className=\{`\$\{styles\.eventChevron\} \$\{strip\.fullOnly\}`\} \/>/);
   });
 
-  it('N4 (navigation Phase 1): Plan & billing first (its plan-payment pill on it), the sandbox’s Help, the hairline, the portal doors, then Collapse', () => {
+  it('N4 (navigation Phase 1): Plan & billing first (its plan-payment pill on it), the hairline, the portal doors, then Collapse', () => {
     const foot = rail.slice(rail.indexOf('<div className={styles.foot}>'), rail.indexOf('<SidebarStripTip'));
-    const at = ['billingLink.href', 'billingAlert && <WaitingCount', 'helpHref', 'styles.footSep', 'portalDoors.map', '<CollapseSidebarRow'].map(m => foot.indexOf(m));
+    const at = ['billingLink.href', 'billingAlert && <WaitingCount', 'styles.footSep', 'portalDoors.map', '<CollapseSidebarRow'].map(m => foot.indexOf(m));
     at.forEach((i, n) => assert.ok(i > 0 && (n === 0 || i > at[n - 1]), `foot order at ${n}`));
   });
 

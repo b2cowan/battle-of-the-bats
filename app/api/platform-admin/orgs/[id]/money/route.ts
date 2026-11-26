@@ -2,7 +2,6 @@ import { NextResponse } from 'next/server';
 import { requirePlatformPower, hasPlatformPower } from '@/lib/platform-auth';
 import { withObservability } from '@/lib/observability';
 import { getStripe } from '@/lib/stripe';
-import { isDemoOrgId } from '@/lib/demo-org-server';
 import { staffBelongsToClub } from '@/lib/staff-own-club';
 import { stripeKeyIsLive } from '@/lib/online-payments-switch';
 import { readClubMoney } from '@/lib/console-money-stripe';
@@ -64,15 +63,14 @@ export const GET = withObservability(async (req: Request, { params }: { params: 
 
   // What the console knows before the click (drawing G), as facts: the screen asks refundDoorRefusal — the rule the refund
   // route asks — whether the door shows and which line says why.
-  const refundGate = { role: auth.role, ownClub: false, demoClub: false, refundsLast24h: 0 };
+  const refundGate = { role: auth.role, ownClub: false, refundsLast24h: 0 };
   if (hasPlatformPower(auth.role, 'refund')) {
-    const [own, demo, count] = await Promise.all([
+    const [own, count] = await Promise.all([
       staffBelongsToClub(id, { id: auth.user.id, email: auth.user.email ?? '' }, { stripeCustomerEmail: read.customer.email }),
-      isDemoOrgId(id),
       // Only Billing's limit uses it (decideRefund); counting for a Super admin too keeps the role out of this route.
       refundStore.countByActorSince(auth.user.email ?? '', new Date(readAt.getTime() - 86_400_000).toISOString()), // utc-intentional
     ]);
-    Object.assign(refundGate, { ownClub: own, demoClub: demo, refundsLast24h: count });
+    Object.assign(refundGate, { ownClub: own, refundsLast24h: count });
   }
 
   return NextResponse.json({

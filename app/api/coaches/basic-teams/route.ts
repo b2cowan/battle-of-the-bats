@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase-server';
 import { isPlatformAdminEmail } from '@/lib/platform-auth';
-import { demoActorRefusal } from '@/lib/demo-guard';
 import {
   getCoachTeamContextsForUser,
   getPendingTournamentRegistrationForUser,
@@ -138,9 +137,6 @@ export const POST = withObservability(async (req: NextRequest) => {
   try {
     const user = await requireCoachUser();
     if (!user) return json({ error: 'Sign in required.' }, 401);
-    // A claim can make a new coach team: a "See it live" demo account never does (Board Ready trust close-out 1).
-    const demoRefusal = demoActorRefusal(user);
-    if (demoRefusal) return demoRefusal;
 
     const body = await req.json().catch(() => ({})) as {
       registrationId?: unknown;

@@ -43,7 +43,7 @@ export function applyNoFlashAttributes(themeOnly?: boolean): void {
     // signed-in browser (owner 2026-10-23: signed out is warm everywhere). The stored choice is
     // never cleared or rewritten here, so signing back in finds Dark exactly where it was left;
     // a signed-out visit simply does not consult it. "Signed in" is the PRESENCE of a Supabase
-    // session cookie — the same match as isSupabaseAuthCookieName (lib/sandbox-exit-rule) except
+    // session cookie — the same match as isSupabaseAuthCookieName (lib/supabase-auth-cookie) except
     // that the half-finished-sign-in `-code-verifier` sibling does not count; this self-contained
     // function cannot import the helper, so tests/unit/no-flash-script.test.ts pins the two together. A hint, never an auth decision: a stale cookie only paints Dark until the auth
     // watcher (components/ThemeSessionWatch) hears the session is gone.

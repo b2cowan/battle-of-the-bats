@@ -1,13 +1,12 @@
-// ⚠ If an import is ever added back here, its extension is load-bearing: the demo seeders run
-// this module under plain node, which does not resolve extensionless ESM imports (the
-// demo-coach.ts convention).
+// ⚠ If an import is ever added back here, its extension is load-bearing: the unit runner loads
+// this module under plain node, which does not resolve extensionless ESM imports.
 
 // The ONE way to address a Money-hub tab from outside the hub.
 //
 // The hub (app/[orgSlug]/coaches/teams/[teamId]/accounting/page.tsx) navigates by query string —
 // `?section=<tab>` — and builds its own hrefs internally with `sectionHref`, which must preserve
 // the page's live query state and so cannot be shared here. Every OTHER surface (a panel
-// cross-link, the team Overview, the roster page, the demo chrome) builds its link with
+// cross-link, the team Overview, the roster page) builds its link with
 // `moneySectionHref` instead of hand-assembling a query string: a hand-built string one line away
 // from a correct one is exactly how the 2026-08-13 tab-less-page defect shipped.
 //
@@ -16,8 +15,8 @@
 // their redirect life 2026-08-13 → 2026-08-31; ./coach-money-legacy-redirect.tsx went with them.
 // ⚠ `legacyMoneyAddress` below is NOT part of that layer and stays: it normalises retired
 // `?section=` / `?tab=` QUERY names inside the live hub, which years of saved hub links carry.
-// This module stays framework-free on purpose — node scripts (the demo seeders) and
-// node-test-run lib code (sandbox-chrome) import it.
+// This module stays framework-free on purpose — node scripts and
+// node-test-run lib code import it.
 
 /** The hub's tabs. The hub's own `SectionId` is derived from this (this ∪ 'overview') — keep ONE
  *  list, or a renamed tab compiles clean in one file and 404s from the other. */

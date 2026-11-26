@@ -15,7 +15,6 @@
  */
 import { supabaseAdmin } from './supabase-admin';
 import { getBootstrapAdminEmails } from './platform-auth';
-import { DEMO_ORG_SLUGS } from './demo-org';
 
 export type PlatformPerson = {
   id: string;
@@ -126,11 +125,11 @@ export async function findPeople(query: string): Promise<{ rows: PlatformPerson[
   return { rows: rows.map(toPerson), total: totalOf(rows) };
 }
 
-/** Find's Clubs group: name, web name, own web address or owner email; demo sandboxes left out; at most 8 rows. */
+/** Find's Clubs group: name, web name, own web address or owner email; at most 8 rows. */
 export async function findClubs(query: string): Promise<{ rows: FoundClub[]; total: number }> {
   const { data, error } = await supabaseAdmin.rpc('platform_find_clubs', {
     p_query: query,
-    p_exclude_slugs: [...DEMO_ORG_SLUGS],
+    p_exclude_slugs: [], // the SQL function (migration 367) has no default for this parameter; no slug is left out now
   });
   if (error) throw new PeopleLookupError();
   const rows = (data ?? []) as Array<{

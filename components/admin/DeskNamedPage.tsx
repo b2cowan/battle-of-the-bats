@@ -17,7 +17,6 @@ import { usePathname } from 'next/navigation';
 import { useOrg } from '@/lib/org-context';
 import { useTournament } from '@/lib/tournament-context';
 import { kitBillingLink } from '@/lib/admin-kit-nav';
-import { useIsSandbox } from '@/components/sandbox/SandboxProvider';
 import { deskTitleAt } from './kit/kit-tournament-groups';
 
 const DeskTitle = createContext<string | null>(null);
@@ -27,18 +26,16 @@ export function DeskTitleProvider({ suspended, children }: { suspended: boolean;
   const pathname = usePathname();
   const { currentOrg, userRole, userCapabilities } = useOrg();
   const { currentTournament } = useTournament();
-  const isSandbox = useIsSandbox();
   const title = !suspended && currentOrg
     ? deskTitleAt({
       pathname,
       base: `/${currentOrg.slug}/admin`,
       status: currentTournament?.status,
-      isSandbox,
       role: userRole,
       planId: currentOrg.planId,
       billingLink: kitBillingLink({
         orgSlug: currentOrg.slug, planId: currentOrg.planId, accountKind: currentOrg.accountKind, role: userRole,
-        capabilities: userCapabilities, isSandbox,
+        capabilities: userCapabilities,
       }),
     })
     : null;

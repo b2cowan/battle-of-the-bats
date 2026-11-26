@@ -57,7 +57,7 @@ loadEnv();
  * Most UAT specs in this repo trust `.env.local` to point at dev. This one writes MONEY — an
  * accounting income row, a dues credit on a family's bill — and then deletes it, so a mis-pointed
  * env here does not just leave litter, it moves real numbers on a real team and then removes the
- * evidence. The seed scripts already carry this guard (`scripts/seed-demo-coach.mjs`); a spec with
+ * evidence. The seed and backfill scripts already carry this guard (e.g. `scripts/backfill-card-on-file.mjs`); a spec with
  * money-write side effects has at least as much claim to it.
  */
 const PROD_PROJECT_REF = 'qcttcboqysynwcdyghil';

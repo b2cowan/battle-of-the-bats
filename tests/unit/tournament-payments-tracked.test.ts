@@ -155,7 +155,6 @@ const EXEMPT: Record<string, string> = {
   'lib/tournament-board-words.ts': 'the dashboard\'s fee words read `free` as "Not tracked here" themselves',
   'lib/tournament-setup-copy.ts': 'copies an event\'s set-up into next year\'s',
   'lib/db.ts': 'data access and copying an event; shows no payment',
-  'lib/demo-moments.ts': 'the demo sandbox\'s seeded events (both track payments)',
   'lib/types.ts': 'types',
   'lib/team-pay-options.ts': 'pure arithmetic on a fee; lib/team-pay-facts.ts refuses an untracked event (`not_tracked`) before any option is offered',
 };

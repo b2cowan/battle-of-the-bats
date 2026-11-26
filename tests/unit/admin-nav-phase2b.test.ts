@@ -20,7 +20,7 @@ const keysOf = (groups: { items: { key: string }[] }[]) => groups.flatMap(g => g
 
 describe('Part B · the event’s sidebar on a computer is the event’s pages only (E3, T1, T2)', () => {
   it('Settings & access and the Tournaments list leave; "Your notifications" is the last row, under Admin', () => {
-    const desk = deskTournamentGroups(kitTournamentGroups({ status: 'active', isSandbox: false, role: 'owner', planId: 'tournament_plus' }));
+    const desk = deskTournamentGroups(kitTournamentGroups({ status: 'active', role: 'owner', planId: 'tournament_plus' }));
     const keys = keysOf(desk);
     assert.ok(!keys.includes('settings') && !keys.includes('manage'));
     assert.equal(keys.at(-1), 'settings/notifications');
@@ -30,28 +30,23 @@ describe('Part B · the event’s sidebar on a computer is the event’s pages o
   });
   it('⚖ Settings & access is one click from the event: a foot row above Plan & billing, only where the settings are tournament-side (owner 2026-11-11)', () => {
     const rail = readCode('components/admin/kit/AdminKitRail.tsx');
-    assert.match(rail, /\{inEvent && settingsAccess && \(/, 'in the event’s shell, when the person holds a settings tab (null for a club and for the sandbox)');
+    assert.match(rail, /\{inEvent && settingsAccess && \(/, 'in the event’s shell, when the person holds a settings tab (null for a club)');
     const row = rail.indexOf('{inEvent && settingsAccess && (');
     assert.ok(row > rail.indexOf('<div className={styles.railFoot}>') && row < rail.indexOf('{billingLink && <Link'), 'it is the foot’s first row, above Plan & billing');
-    assert.match(rail, /\(billingLink \|\| isSandbox \|\| \(inEvent && settingsAccess\)\) && portalDoors\.length > 0/, 'the hairline before the doors follows it');
-  });
-  it('the demo sandbox has no mute page to show, so its Admin label goes with it', () => {
-    const desk = deskTournamentGroups(kitTournamentGroups({ status: 'active', isSandbox: true, role: 'owner', planId: 'tournament_plus' }));
-    assert.ok(!keysOf(desk).includes('settings/notifications'));
-    assert.ok(!desk.some(g => g.key === 'admin'));
+    assert.match(rail, /\(billingLink \|\| \(inEvent && settingsAccess\)\) && portalDoors\.length > 0/, 'the hairline before the doors follows it');
   });
   it('⚖ P2: a club’s phone More sheet has no Settings & access row (its settings live in the club portal); a Tournament plan keeps it', () => {
-    assert.ok(!keysOf(kitTournamentGroups({ status: 'active', isSandbox: false, role: 'owner', planId: 'club' })).includes('settings'));
-    assert.ok(keysOf(kitTournamentGroups({ status: 'active', isSandbox: false, role: 'owner', planId: 'tournament' })).includes('settings'));
+    assert.ok(!keysOf(kitTournamentGroups({ status: 'active', role: 'owner', planId: 'club' })).includes('settings'));
+    assert.ok(keysOf(kitTournamentGroups({ status: 'active', role: 'owner', planId: 'tournament' })).includes('settings'));
     // ⚖ UPDATED IN THE OPEN (Settings in both workspaces, Session 3 — ruling 1R, 2026-11-20): a one-team workspace's row
     // goes. Its people and settings live in the Coaches Portal now, so the row had nothing behind it.
     for (const planId of ['team', 'tournament', 'club']) {
-      assert.ok(!keysOf(kitTournamentGroups({ status: 'active', isSandbox: false, role: 'owner', planId, accountKind: 'team_workspace' })).includes('settings'), planId);
+      assert.ok(!keysOf(kitTournamentGroups({ status: 'active', role: 'owner', planId, accountKind: 'team_workspace' })).includes('settings'), planId);
     }
-    assert.ok(keysOf(kitTournamentGroups({ status: 'active', isSandbox: false, role: 'owner', planId: 'tournament_plus' })).includes('settings'));
+    assert.ok(keysOf(kitTournamentGroups({ status: 'active', role: 'owner', planId: 'tournament_plus' })).includes('settings'));
   });
   it('the phone’s More sheet reaches the event’s mute page too — its only other door was the retired card page', () => {
-    const phone = keysOf(kitTournamentGroups({ status: 'active', isSandbox: false, role: 'owner', planId: 'club' }));
+    const phone = keysOf(kitTournamentGroups({ status: 'active', role: 'owner', planId: 'club' }));
     assert.equal(phone.at(-1), 'settings/notifications');
   });
 });
@@ -65,7 +60,7 @@ describe('Part B · the strip names the lit row (E2)', () => {
     assert.equal(litTournamentRow(`${B}/tournaments/summary`, B, keys, null), null, 'a page with no row keeps its paper title');
   });
   it('ONE answer for the strip and the page headers (`deskTitleAt`): the lit row’s words, the org’s list, or nothing', () => {
-    const at = (path: string, planId = 'club') => deskTitleAt({ pathname: `${B}${path}`, base: B, status: 'active', isSandbox: false, role: 'owner', planId, billingLink: null });
+    const at = (path: string, planId = 'club') => deskTitleAt({ pathname: `${B}${path}`, base: B, status: 'active', role: 'owner', planId, billingLink: null });
     assert.equal(at('/tournaments/registrations'), 'Teams');
     assert.equal(at('/tournaments/settings/notifications/'), 'Your notifications', 'a trailing slash is the same page');
     assert.equal(at('/tournaments/manage'), 'Tournaments');

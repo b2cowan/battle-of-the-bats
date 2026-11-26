@@ -81,8 +81,9 @@ describe('registration health is one number on Teams and the dashboard', () => {
 });
 
 describe('the Teams page wears health as a header button and a window — never the At a glance card', () => {
-  test('the button is the header\'s first action and carries the tour anchor literally', () => {
-    assert.match(TEAMS, /<HealthButton\s+data-sandbox-tour="registration-health"/);
+  test('the button is the header\'s first action, with no demo tour anchor on it', () => {
+    assert.match(TEAMS, /<HealthButton\s+score=\{registrationHealth\.score\}/);
+    assert.doesNotMatch(TEAMS, /data-sandbox-tour/);
     assert.ok(TEAMS.indexOf('<HealthButton') < TEAMS.indexOf('<ExportMenu'), 'health comes before Export, as on the Schedule');
     assert.doesNotMatch(TEAMS, /TeamsGlance|RegistrationHealthPanel/, 'the card and its row are gone');
     assert.equal(existsSync('app/[orgSlug]/admin/tournaments/registrations/components/TeamsGlance.tsx'), false);

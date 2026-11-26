@@ -25,8 +25,6 @@ const NO_REASON_FILES: Record<string, string> = {
   'app/api/platform-admin/renewals/export/route.ts': 'console work tool: the Renewals export (Plans & pricing Stage 2 Part 4) records who, which list and how many rows, written before the file; it changes nothing',
   'app/api/platform-admin/feedback/[id]/reply/route.ts': 'console work tool: a reply to feedback asks no reason (owner Q5, Stage 5); the reply row keeps its words and who sent it',
   'app/api/platform-admin/club-domains-tick/route.ts': 'product job (scheduler tick)',
-  'app/api/platform-admin/coach-sandbox-tick/route.ts': 'product job (scheduler tick)',
-  'app/api/platform-admin/demo-sandbox-tick/route.ts': 'product job (scheduler tick)',
   'app/api/platform-admin/dues-reminders/route.ts': 'product job (scheduler sweep)',
   'app/api/platform-admin/club-form-files-sweep/route.ts': 'product job (scheduler sweep: Board Ready Stage 4 Part 2, family files that never joined a sign-up, deleted within a day)',
   'app/api/platform-admin/insights-digest/route.ts': 'product job (scheduler sweep)',

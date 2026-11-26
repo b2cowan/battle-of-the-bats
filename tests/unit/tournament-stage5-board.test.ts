@@ -180,9 +180,9 @@ describe('the boards (E2, A56)', () => {
     assert.doesNotMatch(read('components/admin/tournament/GuidanceRail.module.css'), /data-admin-kit/);
     assert.doesNotMatch(code('components/admin/LiveEventLog.tsx'), /useKitStyle/);
   });
-  it('the weeks-before board keeps the demo tour\'s schedule-health anchor and says Payments truly', () => {
+  it('the weeks-before board says Payments truly and carries no demo tour anchor', () => {
     const weeks = code('app/[orgSlug]/admin/tournaments/dashboard/WeeksBeforeBoard.tsx');
-    assert.match(weeks, /data-sandbox-tour="schedule-health"/);
+    assert.doesNotMatch(weeks, /data-sandbox-tour/);
     assert.match(weeks, /settings\/event\?section=fees/, 'Payments opens Fees & Payments (F55), never the Tournaments list');
     assert.doesNotMatch(weeks, /No fee schedule configured/);
   });

@@ -1510,21 +1510,6 @@
 .reconOver  { background: rgba(var(--danger-rgb),  0.12); color: var(--danger-light); }
 .reconMatch { background: rgba(var(--success-rgb), 0.12); color: var(--success-light); }
 
-/* ── The sandbox's answer to Confirm ────────────────────────────────────────────────────────
-   Deliberately NOT `.errorText`. A demo refusing to save is the demo working exactly as promised,
-   and the sentence it carries is an invitation to start a real team — read in red, at the moment a
-   prospect has just decided they want the feature, that reads as "this product is broken". */
-.sandboxNote {
-  margin: 0.6rem 0 0;
-  padding: 0.6rem 0.8rem;
-  border-radius: 9px;
-  background: var(--home-card, var(--card-bg));
-  border: 1px solid var(--home-line, rgba(255,255,255,0.08));
-  color: var(--text-primary);
-  font-size: var(--type-body);
-  line-height: 1.45;
-}
-
 .previewSection { margin-bottom: 1rem; }
 
 .previewTable {

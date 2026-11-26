@@ -706,7 +706,6 @@ export type RefundFacts = {
   role: string;
   /** The staff member belongs to the club (the wider check). */
   ownClub: boolean;
-  demoClub: boolean;
   /** The charge as Stripe returned it, already ownership- and mode-checked by the caller. */
   charge: Pick<MoneyCharge, 'createdAt' | 'amountCents' | 'refundedCents' | 'currency' | 'status' | 'disputed'>;
   /** This person's refunds in the last 24 hours (our record: started, done or unknown). */
@@ -723,7 +722,6 @@ export type RefundRefusal = { ok: false; status: number; error: string; field?: 
 
 export const REFUND_WORDS = {
   ownClub: 'You belong to this club, so you cannot refund its charges. Another Billing or Super admin can.',
-  demo: 'This is a public demo club, so its charges are not refunded here.',
   notOurs: 'That charge is not this club’s.',
   notPaid: 'This charge was not paid, so there is nothing to refund.',
   disputed: 'This charge is disputed. A disputed charge is answered in Stripe, not refunded. No money moved.',
@@ -787,7 +785,7 @@ export function billingLimitRefusal(role: string, chargeCreatedAt: string, refun
   return null;
 }
 
-export type DoorFacts = Pick<RefundFacts, 'role' | 'ownClub' | 'demoClub' | 'refundsLast24h' | 'now'>;
+export type DoorFacts = Pick<RefundFacts, 'role' | 'ownClub' | 'refundsLast24h' | 'now'>;
 
 /**
  * Why this charge cannot be refunded by this person, known BEFORE the click (drawing G): the door is then absent and the
@@ -797,7 +795,6 @@ export type DoorFacts = Pick<RefundFacts, 'role' | 'ownClub' | 'demoClub' | 'ref
 export function refundDoorRefusal(facts: DoorFacts, c: RefundFacts['charge']): { status: number; text: string; bad: boolean } | null {
   if (facts.role !== 'super_admin' && facts.role !== 'billing') return { status: 403, text: REFUND_WORDS.readerRole, bad: false };
   if (facts.ownClub) return { status: 403, text: REFUND_WORDS.ownClub, bad: true };
-  if (facts.demoClub) return { status: 403, text: REFUND_WORDS.demo, bad: false };
   if (c.disputed) return { status: 409, text: REFUND_WORDS.disputed, bad: true };
   if (c.status !== 'succeeded') return { status: 409, text: REFUND_WORDS.notPaid, bad: false };
   if (remainingCents(c) === 0) return { status: 409, text: REFUND_WORDS.fullyRefunded, bad: false };

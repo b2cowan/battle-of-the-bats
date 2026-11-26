@@ -5,8 +5,7 @@
    has not asked to keep its name and colours on display. So it wears no club bar or footer, and the page wears the
    platform's own
    system-screen ground (system-screens.module.css `.page` + bg-pitch-black, the root 404's) — dark by default,
-   paper for the warm theme. The sandbox
-   banner (the demo's own way around) is not club chrome and stays.
+   paper for the warm theme.
    (Since Club Tier Stage 4b-1 the club's frame is not drawn at all for a closed site, and the platform's phone bar no
    longer renders on a club page, so this rule is a backstop: nothing marked as the club's may ever frame a refusal.) */
 :global(body):has(.refusal) :global([data-club-chrome]) {

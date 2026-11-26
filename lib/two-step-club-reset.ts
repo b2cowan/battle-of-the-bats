@@ -1,6 +1,5 @@
 import { supabaseAdmin } from './supabase-admin';
 import { isPlatformAdminEmail } from './platform-auth';
-import { isDemoOrganizerEmail } from './demo-org';
 import { isTeamWorkspaceOrg } from './team-workspace-kind';
 
 /**
@@ -15,7 +14,7 @@ import { isTeamWorkspaceOrg } from './team-workspace-kind';
  *   - a free Coaches Portal team (it has no organization, but it is the person's own place);
  *   - coaching a house-league team in another club (that seat creates no club membership);
  *   - a family link to another club (anything but declined or revoked).
- * Platform staff and the shared demo accounts are never the club's to reset.
+ * Platform staff are never the club's to reset.
  */
 
 /** True when the account reaches anywhere beyond `orgId`, or when that could not be read (fails toward support). */
@@ -37,10 +36,9 @@ export async function accountReachesAnotherPlace(userId: string, orgId: string):
   return false;
 }
 
-/** Is this account one a club could ever reset (not staff, not a shared demo account)? */
+/** Is this account one a club could ever reset (not staff)? */
 export async function accountIsClubResettable(email: string | null | undefined): Promise<boolean> {
   if (!email) return false;
-  if (isDemoOrganizerEmail(email)) return false;
   return !(await isPlatformAdminEmail(email));
 }
 

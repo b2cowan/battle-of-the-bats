@@ -215,13 +215,14 @@ describe('5 · input: 2–120 characters, wildcards literal, Stripe whole only, 
     assert.equal(FIND_ROWS_PER_GROUP, 8);
   });
 
-  it('staff are left out of People, and the demo sandboxes out of every group', () => {
+  it('staff are left out of People (the demo exclusion left with the demos: the slug list is passed empty)', () => {
     const sql = readSource(MIGRATION);
     assert.match(sql, /NOT EXISTS \(SELECT 1 FROM public\.platform_users pu WHERE lower\(pu\.email\) = lower\(u\.email::text\)\)/);
     const lookup = readCode('lib/platform-people-lookup.ts');
     assert.match(lookup, /p_exclude_emails: getBootstrapAdminEmails\(\)/);
-    assert.match(lookup, /p_exclude_slugs: \[\.\.\.DEMO_ORG_SLUGS\]/);
-    assert.match(readCode('app/api/platform-admin/find/route.ts'), /isDemoOrgSlug\(org\.slug\)/);
+    assert.match(lookup, /p_exclude_slugs: \[\]/);
+    assert.doesNotMatch(lookup, /DEMO_ORG_SLUGS/);
+    assert.doesNotMatch(readCode('app/api/platform-admin/find/route.ts'), /isDemoOrgSlug/);
   });
 });
 

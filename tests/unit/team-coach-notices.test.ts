@@ -43,7 +43,7 @@ function listTs(dir: string): string[] {
  */
 
 const HOST = 'org-host';
-const DEMO = 'org-demo';
+const PREVIEW = 'org-preview';
 
 function facts(over: Partial<TeamCoachNoticeFacts> = {}): TeamCoachNoticeFacts {
   return {
@@ -57,7 +57,7 @@ function facts(over: Partial<TeamCoachNoticeFacts> = {}): TeamCoachNoticeFacts {
       { basic_coach_team_id: 'free-1', user_id: 'coach-b', status: 'active' },
     ],
     unpaused: null,
-    demoOrgIds: new Set(),
+    previewOrgIds: new Set(),
     ...over,
   };
 }
@@ -137,10 +137,10 @@ describe('who hears a free coach’s notice (A5)', () => {
     assert.equal(rows.length, 0);
   });
 
-  it('a demo club notifies no one', () => {
+  it('a preview club notifies no one', () => {
     const rows = planTeamCoachNotices(facts({
-      tournaments: [{ id: 't-1', name: 'Demo Cup', org_id: DEMO }],
-      demoOrgIds: new Set([DEMO]),
+      tournaments: [{ id: 't-1', name: 'Preview Cup', org_id: PREVIEW }],
+      previewOrgIds: new Set([PREVIEW]),
     }), 'team_coach_accepted', accepted);
     assert.equal(rows.length, 0);
   });

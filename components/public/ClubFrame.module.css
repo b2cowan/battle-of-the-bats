@@ -175,7 +175,7 @@
 }
 
 /* No platform phone bar on a club page (Ask 8), so no room is kept for one at the foot of <main> (globals.css reserves
-   --bottom-nav-height on every page ≤900 px; the demo's public side zeroes it the same way). */
+   --bottom-nav-height on every page ≤900 px). */
 :global(:root):has(.site) {
   --bottom-nav-height: 0px;
 }
@@ -493,11 +493,11 @@
    The tab row PINS and the band scrolls away (owner 2026-10-20): the tabs are how a family moves between a club's long
    pages, while the band is identity, seen once. The whole bar is sticky with its top pulled up by the band's height,
    so only the accent rule and the tabs (48 px) stay — the tabs live inside the bar, and a sticky child cannot outlast
-   its parent. The demo's pinned chrome, when there is one, stays above. A desk keeps the one band scrolling away. */
+   its parent. A desk keeps the one band scrolling away. */
 @media (max-width: 900px) {
   .bar:has(.tabsSlot) {
     position: sticky;
-    top: calc(var(--sandbox-chrome-h, 0px) - var(--club-band-h));
+    top: calc(0px - var(--club-band-h));
     z-index: 90;
     border-bottom: 0;
   }
@@ -505,7 +505,7 @@
 
   /* An in-page jump (the skip link, a #section) lands below the pinned row, not under it. */
   :global(html):has(.bar .tabsSlot) {
-    scroll-padding-top: calc(var(--sandbox-chrome-h, 0px) + 48px);
+    scroll-padding-top: 48px;
   }
 }
 

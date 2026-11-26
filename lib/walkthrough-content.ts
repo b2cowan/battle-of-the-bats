@@ -57,7 +57,6 @@
 
 import type { Metadata } from 'next';
 import type { DrawingId } from '@/components/marketing/SlideDrawings';
-import { SEE_IT_LIVE_COACHES_PATH, SEE_IT_LIVE_PATH } from './sandbox-door';
 import { derivedSeoDescriptionFrom } from './walkthrough-derive';
 import { possessive } from './utils';
 
@@ -74,7 +73,7 @@ export type SlideImageClass = 'proof' | 'composed' | 'explainer';
 
 /**
  * A callout ring, drawn OVER the picture and never baked into it — so the stored PNG stays
- * exactly what the machine captured and can be re-taken and re-verified forever.
+ * exactly what the machine captured.
  *
  * Geometry is percentages OF THE PICTURE (not of the stage): the renderer gives the picture
  * box the capture's own aspect ratio inside the fixed stage, so these percentages land on the
@@ -886,19 +885,6 @@ export interface Walkthrough {
   title: string;
   sub: string;
   /**
-   * The demo door. Each sandbox keeps its OWN door constant (lib/sandbox-door.ts) rather than a
-   * parameterized one — "which account does this sign in" stays a compile-time constant — so the
-   * walkthrough names its world's door here rather than deriving one from `persona`.
-   *
-   * ⚠ The LABEL is the walkthrough's own, from the approved mockup, and deliberately does NOT
-   * match the persona page's button for the same door (`/for-coaches` says "See it live →"; the
-   * coach walkthrough says "See a coach's season →"). By the time a reader reaches this page they
-   * have been shown particular screens, and the door promises the season those screens came from.
-   * If that inconsistency is ever ruled against, the fix belongs on BOTH pages — the tournament
-   * pair drifts the same way and always has.
-   */
-  door: { path: string; label: string };
-  /**
    * The page's ask: the lime button in both CTA rows. Per walkthrough, because the two products start
    * differently. Tournament is free, so its ask is "Start free". The Premium Coaches Portal is paid, so its
    * ask is `/for-coaches`' own button word for word ("Start now" → the coach sign-up), and `gated` names the
@@ -959,7 +945,6 @@ export const TOURNAMENT_WALKTHROUGH: Walkthrough = {
   eyebrow: 'For tournament organizers · a 90-second walkthrough',
   title: 'The weekend the phone stayed in your pocket.',
   sub: 'Five jobs that stop being yours the day the tournament runs on FieldLogicHQ.',
-  door: { path: SEE_IT_LIVE_PATH, label: 'See a live tournament' },
   ask: { href: '/start/tournament', label: 'Start free' },
   back: { href: '/for-tournament-organizers', label: 'Everything else Tournament does' },
   fallbackPull: [
@@ -1011,7 +996,6 @@ export const COACH_WALKTHROUGH: Walkthrough = {
   eyebrow: 'For head coaches · a 90-second walkthrough',
   title: 'Run the team. Keep your evenings.',
   sub: 'The jobs the Coaches Portal takes off your plate, one screen at a time.',
-  door: { path: SEE_IT_LIVE_COACHES_PATH, label: 'See a coach’s season' },
   // The same button, destination and interest form as /for-coaches (W73, 2026-11-18: no "free" over a paid plan).
   ask: {
     href: '/coaches/start?source=coach_walkthrough',

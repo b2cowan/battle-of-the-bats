@@ -2,7 +2,7 @@ import { cache } from 'react';
 import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
 import { assertSafeSupabaseServerEnvironment } from './supabase-safety';
-import { isSupabaseAuthCookieName } from './sandbox-exit-rule';
+import { isSupabaseAuthCookieName } from './supabase-auth-cookie';
 import { getSignedInUser } from './two-step-session';
 
 export async function createClient() {
@@ -50,9 +50,9 @@ export const getAuthUserCached = cache(async () => {
 /**
  * Cheap "might this request be signed in" — cookie-NAME presence only. @supabase/ssr names
  * its session cookies `sb-<project-ref>-auth-token` (chunked as `.0`, `.1`, … when large);
- * the match itself lives in `lib/sandbox-exit.ts` (the leave-the-demo rule has to CLEAR
- * those same cookies, and two hand-written copies of the pattern is how one of them ends up
- * clearing three out of four) — never inline the string match at a call site. For anonymous fast-paths that want to skip session
+ * the match itself lives in `lib/supabase-auth-cookie.ts` (two hand-written copies of the
+ * pattern is how one of them ends up clearing three out of four) — never inline the string
+ * match at a call site. For anonymous fast-paths that want to skip session
  * resolution entirely on high-traffic public renders (e.g. the tournament layout's
  * acquisition banner). NEVER an auth decision — a stale cookie passes this check; anything
  * gating real access must still resolve the session.

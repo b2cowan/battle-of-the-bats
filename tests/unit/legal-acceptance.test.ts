@@ -256,19 +256,18 @@ describe('checkAcceptance: the table is the truth, the mirror a cache', () => {
   });
 });
 
-describe('who is exempt: exactly staff and the demo accounts (R4)', () => {
+describe('who is exempt: exactly staff (R4)', () => {
   it('the kinds are pinned', () => {
     const h = harness();
-    assert.deepEqual([...h.exempt.ACCEPTANCE_EXEMPT_KINDS], ['staff', 'demo'],
-      'R4: exactly two kinds are exempt — FieldLogicHQ staff and the demo accounts. Fixture and seed accounts record acceptance; a third kind is an owner decision.');
+    assert.deepEqual([...h.exempt.ACCEPTANCE_EXEMPT_KINDS], ['staff'],
+      'R4: exactly one kind is exempt — FieldLogicHQ staff (the demo accounts left with the demos). Fixture and seed accounts record acceptance; a second kind is an owner decision.');
   });
-  it('the demo accounts read exempt, never see the screen, and cost no staff query', async () => {
+  it('the retired demo accounts get no free pass: they are asked like any customer, after the staff check', async () => {
     const h = harness();
     for (const email of ['demo-organizer@example.com', 'demo-coach@example.com']) {
-      assert.equal(await h.mod.acceptanceState(person({ email }), PREVIEW), 'exempt');
+      assert.equal(await h.mod.acceptanceState(person({ email }), PREVIEW), 'needed');
     }
-    assert.deepEqual(h.staffChecks, []);
-    assert.deepEqual(h.reads, []);
+    assert.deepEqual(h.staffChecks, ['demo-organizer@example.com', 'demo-coach@example.com']);
   });
   it('staff read exempt; a customer is not', async () => {
     const h = harness({ staff: ['ops@fieldlogichq.test'] });

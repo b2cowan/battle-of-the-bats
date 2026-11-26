@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import { applyNoFlashAttributes, NO_FLASH_SCRIPT } from '../../lib/no-flash-script.ts';
-import { isSupabaseAuthCookieName } from '../../lib/sandbox-exit-rule.ts';
+import { isSupabaseAuthCookieName } from '../../lib/supabase-auth-cookie.ts';
 import { readCode } from './_source-code.ts';
 
 /**

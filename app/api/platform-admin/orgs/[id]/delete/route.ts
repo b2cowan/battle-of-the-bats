@@ -16,9 +16,6 @@ import { closeClubPayPages } from '@/lib/online-pay-pages';
 import { countOrgFiles, type OrgFilesResult } from '@/lib/org-storage-purge';
 import { readOrgLegacyResourceKeys } from '@/lib/resource-file-server';
 import { purgeOrgFiles } from '@/lib/org-files-purge-server';
-import { isDemoOrgSlug } from '@/lib/demo-org';
-
-const DEMO_DELETE_REFUSAL = 'This is a public demo club. It can’t be deleted from the console.';
 
 /**
  * The delete now removes the club's stored files after its rows (Board Ready Stage 0a): six stores walked and emptied, which
@@ -99,7 +96,6 @@ export const GET = withObservability(async (_req: NextRequest,
     coachesLinkCount: coachesLinkCount.count ?? 0,
     retentionRecordCount: retentionCount.count ?? 0,
     paymentsInFlight: !outstanding ? 'Couldn’t read this club’s online payments. Try again.' : inFlight.length ? inFlightRefusal(inFlight) : null,
-    demoRefusal: isDemoOrgSlug(org.slug) ? DEMO_DELETE_REFUSAL : null,
     fileCount: filesCounted ? files.removed : null,
     filesByBucket: filesCounted ? files.byBucket : null,
   });
@@ -136,12 +132,6 @@ export const DELETE = withObservability(async (req: NextRequest,
 
   if (orgError || !org) {
     return NextResponse.json({ error: 'Organization not found.' }, { status: 404 });
-  }
-
-  // The public demo clubs are the shop window (owner 2026-11-15, Board Ready Stage 0a): never deleted from the console. The
-  // proxy's demo write guard reads the slug in the URL, and this route carries the slug in the body, so it refuses here.
-  if (isDemoOrgSlug(org.slug)) {
-    return NextResponse.json({ error: DEMO_DELETE_REFUSAL }, { status: 403 });
   }
 
   if (confirmSlug !== org.slug) {

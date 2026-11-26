@@ -6,7 +6,6 @@ import { onlinePaymentsOn } from '@/lib/online-payments-switch';
 import { canConnectPayouts } from '@/lib/online-payment-access';
 import { onboardingLink } from '@/lib/stripe-connect';
 import { resolveSameHostOrigin } from '@/lib/app-origin';
-import { demoBillingRefusal } from '@/lib/demo-guard';
 import { payoutsHref, syncPayoutsAccount } from '@/lib/online-payment-landing';
 
 export const runtime = 'nodejs';
@@ -27,8 +26,6 @@ export const GET = withObservability(async (req: Request) => {
   const origin = resolveSameHostOrigin(req);
   if (!ctx) return NextResponse.redirect(new URL(`/auth/login?next=${encodeURIComponent(url.pathname + url.search)}`, origin));
   const home = new URL(payoutsHref(ctx.org), origin);
-  // A GET, so the proxy lets it through, but it asks Stripe and writes the account's state back: not for the demo organizer.
-  if (demoBillingRefusal(ctx.user)) return NextResponse.redirect(home);
   // 12d-2 (ask 4): not plan-gated — an account still connected after a downgrade can still finish what Stripe asks for
   // (the needs-attention fix-up returns here). It only re-reads an account that exists and isn't disconnected (below).
   if (!onlinePaymentsOn() || !canConnectPayouts({ role: ctx.role })) {

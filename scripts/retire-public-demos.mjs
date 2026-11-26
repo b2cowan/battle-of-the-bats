@@ -76,19 +76,24 @@ if (!wantProd && ref !== DEV_PROJECT_REF) {
 // The app's modules import each other without extensions; this resolver (the unit suite's) lets node load them.
 await import('../tests/ts-resolver.mjs');
 const { supabaseAdmin: db } = await import('../lib/supabase-admin.ts');
-const { DEMO_ORGS } = await import('../lib/demo-org.ts');
+// The demo registry (lib/demo-org.ts) was deleted with the rest of the demo code (Phase 3); the two names stay reserved.
+const { RETIRED_DEMO_ORG_SLUGS } = await import('../lib/reserved-slugs.ts');
 const { countOrgFiles, removeOrgFiles } = await import('../lib/org-storage-purge.ts');
 const { readOrgLegacyResourceKeys, legacyKeysNoRowNames } = await import('../lib/resource-file-server.ts');
 const { writePlatformAuditLog, writePlatformAuditLogStrict } = await import('../lib/platform-audit.ts');
 
-/** The two retired demos. Checked against the product's own registry below, so a typo cannot aim this at a real club. */
+/**
+ * The two retired demos and their shared accounts. Each slug is checked against the product's reserved list of retired
+ * demo names below, so a typo cannot aim this at a real club (no real club can hold a reserved name). The accounts are
+ * reached only as the demo club's own member and must carry exactly this address (see the member check further down).
+ */
 const DEMOS = [
   { slug: 'riverdale-minor-ball', email: 'demo-organizer@example.com' },
   { slug: 'riverdale-ridge', email: 'demo-coach@example.com' },
 ];
 for (const d of DEMOS) {
-  if (!DEMO_ORGS.some(o => o.slug === d.slug && o.organizerEmail === d.email)) {
-    console.error(`✖ ${d.slug} / ${d.email} is not in lib/demo-org.ts's demo registry. Nothing was read or changed.`);
+  if (!RETIRED_DEMO_ORG_SLUGS.includes(d.slug)) {
+    console.error(`✖ ${d.slug} is not in lib/reserved-slugs.ts's retired demo names. Nothing was read or changed.`);
     process.exit(1);
   }
 }

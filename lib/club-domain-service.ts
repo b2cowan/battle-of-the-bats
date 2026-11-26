@@ -2,7 +2,7 @@
  * A CLUB'S OWN WEB ADDRESS: what the four routes do (Club Tier Stage 4e, Part 2).
  *
  * Connect, check now, try again, stop. Everything they need from the outside world comes in as `ServiceDeps` (the
- * stored row, the host, a DNS lookup, "is this the demo club"), so the rules run under a plain Node test with fakes and
+ * stored row, the host, a DNS lookup), so the rules run under a plain Node test with fakes and
  * the routes stay thin. No `server-only` for the same reason: nothing here touches a secret itself.
  *
  * ⚖ Check now reads our own lookup of the two records and writes what it saw. It NEVER moves a connection to
@@ -98,8 +98,6 @@ export interface ServiceDeps {
   siteTarget: string | null;
   /** The Amplify branch a club's address serves; stored for diagnosis. */
   branch: string;
-  /** Fail-closed: throws when the demo list cannot load. */
-  isDemoOrg(orgId: string): Promise<boolean>;
   now(): Date;
   /** Where the real cause of a failure goes (observability), so the owner's "couldn't start" is not the only trace of it. Never shown. */
   report?(error: unknown, where: string): void;
@@ -121,7 +119,6 @@ export function isClaimableHold(row: DomainRow, now: Date): boolean {
 
 export type ConnectRefusal =
   | AddressRefusal
-  | 'demo' // the demo club
   | 'taken' // another club holds the name
   | 'already_connected' // this club already has an address
   | 'held_elsewhere' // another website service still has it (frame g2)
@@ -139,8 +136,6 @@ export async function connectClubDomain(
   const { fullName, domain, prefix } = parsed.address;
 
   try {
-    if (await deps.isDemoOrg(input.orgId)) return { ok: false, reason: 'demo' };
-
     if (await deps.store.getByOrg(input.orgId)) return { ok: false, reason: 'already_connected' };
     const holder = (await deps.store.getByFullName(fullName)) ?? (await deps.store.getByDomain(domain));
     if (holder) {

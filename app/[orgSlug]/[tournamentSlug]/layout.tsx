@@ -12,7 +12,6 @@ import { hasRoundRobin } from '@/lib/tournament-phase';
 import { crownStands } from '@/lib/club-site-home';
 import { isPublicBracketVisible } from '@/lib/public-pages';
 import { publicPosts } from '@/lib/public-tournament-shape';
-import { isDemoOrgSlug } from '@/lib/demo-org';
 import { tournamentToday } from '@/lib/timezone';
 import { hasPlanFeature } from '@/lib/plan-features';
 import { runsInviteOnlyEvents } from '@/lib/invite-only-event';
@@ -238,8 +237,7 @@ export default async function TournamentLayout({
    * The bracket has always had a public page and has NEVER had a way in — no entry in the side
    * rail, the phone tabs or the desktop top bar, on any tournament. The overview offers a link
    * only after pool play finishes completely, so for most of an event the page is reachable only
-   * by typing the URL. The "See it live" demo made that visible (its tour sends a stranger there
-   * and stranded them), but the gap is every customer's, not the sandbox's.
+   * by typing the URL.
    *
    * The test is STRUCTURAL — has the organizer configured a bracket? — deliberately, not
    * "have playoff games been played?". A tab that appears and disappears as pool play finishes is
@@ -281,9 +279,9 @@ export default async function TournamentLayout({
   const frameBand = publicFrameBand(org, tournament, todayISO, registration?.state === 'open');
   // Who runs it — ONE answer for the desk band and the footer, from the same door as the rail's crumb (Part 2).
   const frameHost = publicFrameHost(org.name, tournament.name, orgHomeHref);
-  // The paid plan's credit (WI-10), never the demo's. It sits in the footer; a free event keeps its badge. A preview
-  // club wears no badge, so it carries the credit, as its club pages do (Track P, owner 2026-11-26).
-  const showBuiltOnCredit = (!isFreeTournamentPlan || org.isPreview === true) && !isDemoOrgSlug(orgSlug);
+  // The paid plan's credit (WI-10). It sits in the footer; a free event keeps its badge. A preview club wears no
+  // badge, so it carries the credit, as its club pages do (Track P, owner 2026-11-26).
+  const showBuiltOnCredit = !isFreeTournamentPlan || org.isPreview === true;
   const fanAlertsEnabled = hasPlanFeature(org.planId, 'fan_score_alerts');
 
   // Stage 7 (Ask 6): the focused page (the team pay page, lib/public-focused-page.ts) wears none of the event's chrome.

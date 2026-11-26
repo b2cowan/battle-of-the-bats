@@ -333,22 +333,21 @@ describe('the admin kit nav — one model, two navs', () => {
     }
   });
 
-  it('a role-gated row drops out of EVERY group, the sandbox corners drop out, Summary joins once the event is over', () => {
-    const keys = (role: string, status: string, isSandbox = false, planId = 'tournament_plus') =>
-      kitTournamentGroups({ status, isSandbox, role, planId }).flatMap(g => g.items.map(i => i.key));
+  it('a role-gated row drops out of EVERY group, Summary joins once the event is over', () => {
+    const keys = (role: string, status: string, planId = 'tournament_plus') =>
+      kitTournamentGroups({ status, role, planId }).flatMap(g => g.items.map(i => i.key));
     assert.ok(keys('owner', 'draft').includes('settings/event'));
     assert.ok(!keys('treasurer', 'draft').includes('settings/event'), 'Event Settings is owner/admin-only');
     assert.ok(!keys('owner', 'active').includes('summary'));
     assert.ok(keys('owner', 'completed').includes('summary') && keys('owner', 'archived').includes('summary'));
-    assert.ok(keys('owner', 'active', true).length < keys('owner', 'active').length, 'the sandbox hides its curated corners');
-    for (const g of kitTournamentGroups({ status: 'active', isSandbox: true, role: 'official', planId: 'tournament_plus' })) {
+    for (const g of kitTournamentGroups({ status: 'active', role: 'official', planId: 'tournament_plus' })) {
       assert.ok(g.items.length > 0, `${g.key} kept as an empty group`);
     }
   });
 
   it('an invite-only event has no Check-in, Staff kit, Chat or Summary row — absent, never a wall (free tier R5)', () => {
     const keys = (planId: string, status: string) =>
-      kitTournamentGroups({ status, isSandbox: false, role: 'owner', planId }).flatMap(g => g.items.map(i => i.key));
+      kitTournamentGroups({ status, role: 'owner', planId }).flatMap(g => g.items.map(i => i.key));
     for (const plan of ['tournament', 'team']) {
       for (const status of ['draft', 'active', 'completed', 'archived']) {
         for (const gone of ['check-in', 'staff-kit', 'chat', 'summary']) {

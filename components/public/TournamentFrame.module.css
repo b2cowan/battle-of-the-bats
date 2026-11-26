@@ -13,7 +13,7 @@
      game-day line under it scrolls away, so it adds nothing), and no page pads itself for a fixed header that is not there. */
   --nav-event-h: 0px;
   --nav-visual-h: var(--frame-pin-h);
-  --chrome-top-h: calc(var(--frame-pin-h) + var(--ticker-h, 0px) + var(--desktop-strip-h, 0px) + var(--sandbox-chrome-h, 0px));
+  --chrome-top-h: calc(var(--frame-pin-h) + var(--ticker-h, 0px) + var(--desktop-strip-h, 0px));
   --chrome-top-static-h: 0px;
   /* Inside the installed app on a desk the platform's strip is the app's bar, fixed over the top of the page, and the band
      starts under it. In a browser there is no strip (below), and on a phone it is 0. */

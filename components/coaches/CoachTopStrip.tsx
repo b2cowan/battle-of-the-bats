@@ -34,8 +34,6 @@
  * in place (bell drawer · account menu · Workspaces popover); actual exits live INSIDE
  * them, chosen knowingly, and the menu's outbound rows carry the way back. The sidebar's
  * own Sign out retired into the menu in the same change (one door per destination).
- * Hidden in the demo sandbox — a "Sign out" on the SHARED demo account must never render,
- * and a prospect who wanders out of a demo has simply been lost (mirrors AdminTopStrip).
  *
  * ⚠ THE CHAT DOOR WAS REMOVED (owner-ruled 2026-07-31; logged in memory/design_decisions.md —
  * do NOT re-add it from the earlier mockup). It was justified here as "your own conversations"
@@ -62,7 +60,6 @@ import AccountMenu from '@/components/shared/AccountMenu';
 import { useRoleSummary } from '@/lib/use-role-summary';
 import { coachOffTeamPageName } from '@/lib/coach-off-team-pages';
 import { useOrg } from '@/lib/org-context';
-import { useIsSandbox } from '@/components/sandbox/SandboxProvider';
 import { useCoachDeskTitle, useCoachRecordSlotRef } from './CoachDeskTitle';
 import { CoachStripHelp } from './CoachPageHelpSlot';
 import own from '@/components/admin/AdminTopStrip.module.css';
@@ -156,9 +153,6 @@ export default function CoachTopStrip({ wall = false, free = false, facts = null
   // The premium portal only renders signed-in, so this may run unconditionally.
   const roleSummary = useRoleSummary(true);
   const { currentOrg } = useOrg();
-  /** "See it live" demo: hidden rather than disabled — the binding sandbox rule is hide the
-   *  entry point, never let it dead-end. False for every real org. */
-  const inSandbox = useIsSandbox();
   // The bell's settings door carries the way home, exactly as the AccountMenu's row does —
   // AccountReturnBar reads `?back=` and pins "← Back to your Coaches Portal" over /account. Until
   // 2026-09-03 this was the one strip door that ejected a coach with no way back (coach-notifications
@@ -196,23 +190,21 @@ export default function CoachTopStrip({ wall = false, free = false, facts = null
             (no host). The width is held where a topic is coming — a team's pages (`split`) and those three, known from the address —
             so the bell does not slide when the page's help lands after the first paint. */}
         {!wall && !free && <CoachStripHelp reserve={split || offTeamHelp} holdMs={offTeamHelp ? OFF_TEAM_HOLD_MS : undefined} />}
-        {!inSandbox && (
-          <AccountMenu
-            warm
-            showWhatsNew
-            showTheme
-            showFeedback={!wall}
-            // ⚖ Help, under What's new (E16, owner 2026-11-09) — the Premium portal's sidebar gave it up. Not on a wall (no
-            // sidebar had it there) nor the free portal (out of this project, E13: its own sidebar keeps Help).
-            helpHref={!wall && !free && currentOrg?.slug ? `/${currentOrg.slug}/coaches/help` : undefined}
-            className={styles.iconDoor}
-            settingsHref={
-              currentOrg?.slug
-                ? `/account/notifications?focus=coach-${currentOrg.slug}`
-                : '/account/notifications'
-            }
-          />
-        )}
+        <AccountMenu
+          warm
+          showWhatsNew
+          showTheme
+          showFeedback={!wall}
+          // ⚖ Help, under What's new (E16, owner 2026-11-09) — the Premium portal's sidebar gave it up. Not on a wall (no
+          // sidebar had it there) nor the free portal (out of this project, E13: its own sidebar keeps Help).
+          helpHref={!wall && !free && currentOrg?.slug ? `/${currentOrg.slug}/coaches/help` : undefined}
+          className={styles.iconDoor}
+          settingsHref={
+            currentOrg?.slug
+              ? `/account/notifications?focus=coach-${currentOrg.slug}`
+              : '/account/notifications'
+          }
+        />
         {/* 2+ places only (shared threshold inside the pill) — a single-team coach is
             already standing in their one place. warm: the popover reads the portal's
             --home-* set when the warm skin is active (falls back to HUD tokens in dark). */}

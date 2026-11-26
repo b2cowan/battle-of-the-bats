@@ -539,9 +539,7 @@ export default function TryoutDecisionBoard({ apiBase, teamName = '', rosterBase
   }
 
   return (
-    // data-sandbox-tour: the beat the demo's "how 28 kids got ranked" step rings — the ranked
-    // board, still blind. Inert off a demo org.
-    <div className={styles.card} data-sandbox-tour="tryout-decisions">
+    <div className={styles.card}>
       {acceptWindows}
       <div className={styles.head}>
         <div>

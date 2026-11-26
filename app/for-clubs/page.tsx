@@ -17,7 +17,6 @@ import { getPlanConfigOverrides } from '@/lib/plan-config-db';
 import { planTrialLine } from '@/lib/plan-trial-line';
 import { FIELDLOGICHQ_CONTACT_EMAIL } from '@/lib/fieldlogichq-contact';
 import { START_PATH_FOR_PLAN, parseStartPricing, withStartPricing } from '@/lib/start-door';
-import { SEE_IT_LIVE_PATH, SEE_IT_LIVE_COACHES_PATH, sandboxDoorsVisible } from '@/lib/sandbox-door';
 
 export const metadata = marketingMetadata({
   // W64 (ruled 2026-11-18): the words a club board would search.
@@ -129,7 +128,6 @@ export default async function ForClubsPage() {
   const clubCta = clubTrial ? 'Start your Club trial' : 'Start Club';
   const clubLargeCta = clubLargeTrial ? 'Start your Club · Association trial' : 'Start Club · Association';
   const startHref = (plan: 'club' | 'club_large') => withStartPricing(START_PATH_FOR_PLAN[plan], parseStartPricing(plan, 'monthly'));
-  const showSandboxDoor = sandboxDoorsVisible();
   // W70 answer 6, open only: every price and both team limits from PLAN_CONFIG, never typed.
   const clubYearCost =
     `Club is ${formatPriceAmount(PLAN_CONFIG.club.annualPrice)} a year or ${formatPriceAmount(PLAN_CONFIG.club.monthlyPrice)} a month, ${BILLING_TAX_WORDS.plusTax}. ` +
@@ -199,50 +197,6 @@ export default async function ForClubsPage() {
         </div>
       </section>
 
-      {/* ── The demo block (owner-ratified 2026-08-10) ───────────────────────
-          Renders only while the doors are on; a door pattern must never appear anywhere it would promise a demo that
-          doesn't exist. Closed: proof-by-parts, both halves. Open (W24, Ask 11): one coach's season inside a club, and
-          no promise of a club demo (none for launch, 2026-11-18). */}
-      {showSandboxDoor && (
-        <section className={kit.section}>
-          <div className="container">
-            <div className={`${kit.card} ${kit.cardEdge}`}>
-              {clubOpen ? (
-                <>
-                  <p className={kit.eyebrow}>A coach&apos;s season inside a club</p>
-                  <p className={`${kit.body} ${fp.measure}`}>
-                    Every coach on your staff works in the Premium Coaches Portal that comes with Club. This is one
-                    coach&apos;s season in a fictional club: roster, lineups, schedule and budget. No sign-up.
-                  </p>
-                  <div className={kit.row}>
-                    <Link href={SEE_IT_LIVE_COACHES_PATH} prefetch={false} className={`${kit.link} ${kit.linkBlock} ${kit.live}`}>
-                      See a coach&apos;s season
-                    </Link>
-                  </div>
-                </>
-              ) : (
-                <>
-                  <p className={kit.eyebrow}>Both halves are live today</p>
-                  <p className={`${kit.body} ${fp.measure}`}>
-                    Club bundles what&apos;s already running: tournaments and the Premium Coaches
-                    Portal. Walk both right now — no sign-up — and express interest for the day
-                    they&apos;re one product.
-                  </p>
-                  <div className={kit.row}>
-                    <Link href={SEE_IT_LIVE_PATH} prefetch={false} className={`${kit.link} ${kit.linkBlock} ${kit.live}`}>
-                      See a live tournament
-                    </Link>
-                    <Link href={SEE_IT_LIVE_COACHES_PATH} prefetch={false} className={`${kit.link} ${kit.linkBlock} ${kit.live}`}>
-                      See a coach&apos;s season
-                    </Link>
-                  </div>
-                </>
-              )}
-            </div>
-          </div>
-        </section>
-      )}
-
       {/* ── Pain recognition ─────────────────────────────────────────────── */}
       <section className={kit.section}>
         <div className="container">
@@ -276,12 +230,6 @@ export default async function ForClubsPage() {
                 <p className={kit.eyebrow}>{mod.label}</p>
                 <p className={kit.title}>{mod.title}</p>
                 <p className={kit.body}>{mod.body}</p>
-                {/* W67 (drawing tab 4): a coach's season, live, on the rep teams card while the demo doors are on. */}
-                {mod.num === '03' && showSandboxDoor && (
-                  <Link href={SEE_IT_LIVE_COACHES_PATH} prefetch={false} className={`${kit.link} ${kit.linkBlock} ${kit.live}`}>
-                    See a coach&apos;s season
-                  </Link>
-                )}
               </div>
             ))}
           </div>

@@ -254,7 +254,7 @@ export function isAccepted(recorded: string | null | undefined, oldest: string |
 /**
  * A person's acceptance standing, as a shell or a gated route reads it.
  *   · `off`      — the legal pages are off: nothing renders, records or refuses.
- *   · `exempt`   — FieldLogicHQ staff or a demo account (`lib/legal-acceptance-exempt.ts`).
+ *   · `exempt`   — FieldLogicHQ staff (`lib/legal-acceptance-exempt.ts`).
  *   · `accepted` — the latest tick satisfies the oldest accepted version.
  *   · `needed`   — the sign-in screen, or the window over a stopped purchase.
  */

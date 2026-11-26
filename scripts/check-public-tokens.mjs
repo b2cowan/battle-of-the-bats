@@ -161,10 +161,8 @@ const SCOPES = {
   marketing: {
     // Logged-out marketing site. 'app/for-*' is a prefix glob so a new segment page is
     // guarded from the moment it exists.
-    // app/see-it-live is the sandbox door's confirm screen — a funnel surface between the
-    // marketing site and the demo, wearing the marketing ground.
     // components/legal: the Terms and Privacy pages (marketing ground) and the legal line under the sign-in forms (GST/HST Stage 6.2).
-    dirs: ['app/for-*', 'app/pricing', 'app/changelog', 'app/demos', 'components/marketing', 'app/see-it-live', 'components/legal'],
+    dirs: ['app/for-*', 'app/pricing', 'app/changelog', 'components/marketing', 'components/legal'],
     files: [
       'app/page.module.css',
       'components/PricingSection.module.css',
@@ -181,10 +179,8 @@ const SCOPES = {
     // Given their own scope (owner call 2026-07-25) rather than double-listed, so the debt
     // is counted once and cross-cutting screens are obvious. app/system-screens.module.css is
     // root chrome (error/404/offline) reachable from every shell, so it lives here too.
-    // components/sandbox is here for the same reason: the "See it live" chrome mounts over the
-    // PUBLIC tournament pages and the OPERATOR admin shell from one place in the org layout.
     // components/venue (Club Tier Stage 6a): the ONE Venue field — the coach portal's forms AND house league's admin windows.
-    dirs: ['components/chat', 'components/shared', 'components/help', 'components/whats-new', 'components/bracket', 'components/sandbox', 'components/venue'],
+    dirs: ['components/chat', 'components/shared', 'components/help', 'components/whats-new', 'components/bracket', 'components/venue'],
     files: [
       'components/InstallAppPrompt.module.css',
       'components/TeamAvatar.module.css',

@@ -91,8 +91,9 @@ describe('the focused page — the chrome asks the rule', () => {
     assert.match(band, /data-public-frame-focused-band=""/);
     const foot = readCode('components/public/TournamentFooter.tsx');
     assert.match(foot, /const short = !basePath && isFocusedPublicPage\(pathname, orgSlug, tournamentSlug\)/);
-    // A5: the short footer's credit is every plan's but the demo's (a free event wears no badge there).
-    assert.match(foot, /\{!isDemoOrgSlug\(orgSlug\) && <BuiltOnCredit className=\{clubStyles\.credit\} \/>\}/);
+    // A5: the short footer's credit is every plan's, with no exception left for the retired demos.
+    assert.match(foot, /<BuiltOnCredit className=\{clubStyles\.credit\} \/>/);
+    assert.doesNotMatch(foot, /isDemoOrgSlug/);
   });
 
   it('the pay page is always focused only because its section is the focused one', () => {

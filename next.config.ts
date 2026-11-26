@@ -133,6 +133,11 @@ const nextConfig: NextConfig = {
       // the Families book before a page under it could forward (T23); the destination applies Communications' own gate.
       // Not permanent: no browser should learn it, in case the address is ever used again.
       { source: '/:orgSlug/admin/families/emails', has: ownHost, destination: '/:orgSlug/admin/club-emails', permanent: false },
+      // The two public demos are RETIRED (owner 2026-11-25). Their old addresses — the chooser, both doors and both switch
+      // screens — sit in shared links and QR codes, so they land on pricing (Ask A1 ruled A) with a permanent redirect and
+      // never touch a session. `:path*` also matches the bare `/see-it-live`. Plan: RETIRE_PUBLIC_DEMOS_PLAN.md, D2.
+      { source: '/demos', has: ownHost, destination: '/pricing', permanent: true },
+      { source: '/see-it-live/:path*', has: ownHost, destination: '/pricing', permanent: true },
     ];
   },
 };

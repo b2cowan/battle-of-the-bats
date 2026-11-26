@@ -339,11 +339,7 @@
      published the nav heights) — it stays a 0 fallback. --desktop-strip-h by the
      tournament layout ≥901px (the Phase 3 global strip). All fall back cleanly
      to the plain fixed bar. */
-  /* --sandbox-chrome-h rides in --chrome-top-h (whose consumers are sticky/fixed tops, which a
-     body padding cannot move) but deliberately NOT in --chrome-top-static-h, whose consumers are
-     page PADDING — the sandbox rule below already pads the document, and adding it twice would
-     open a gap. Unset outside a demo org, so both resolve to today's exact geometry. */
-  --chrome-top-h: calc(var(--nav-visual-h, var(--nav-height)) + var(--ticker-h, 0px) + var(--desktop-strip-h, 0px) + var(--sandbox-chrome-h, 0px));
+  --chrome-top-h: calc(var(--nav-visual-h, var(--nav-height)) + var(--ticker-h, 0px) + var(--desktop-strip-h, 0px));
   --chrome-top-static-h: calc(var(--nav-event-h, var(--nav-height)) + var(--ticker-h, 0px) + var(--desktop-strip-h, 0px));
 
   /* Opacity-alpha text tokens used by some component CSS */
@@ -483,20 +479,6 @@ body {
   line-height: 1.6;
 }
 
-/* ─── Sandbox chrome geometry (demo orgs only) ──────────────────────────────────
-   The "See it live" sandbox pins a banner + tour rail to the top of the viewport
-   (components/sandbox/SandboxChrome). It measures itself and publishes its height as
-   --sandbox-chrome-h, plus this attribute, so the document can make room for it.
-
-   Everything else that has to move is a FIXED or STICKY element, which a body padding
-   cannot shift — those (the operator top strip, the sticky sidebar, the sticky event
-   header) each add the var to their own `top` in their own stylesheet. Off a demo org
-   the var is never set, every one of those calc()s resolves to today's exact geometry,
-   and this rule never matches. */
-html[data-sandbox-chrome='true'] body {
-  padding-top: var(--sandbox-chrome-h, 0px);
-}
-
 /* Full-bleed app route (the coach-portal chat) — the chat owns the dynamic viewport and
    scrolls ONLY internally. The shell's `.content:has([data-chat-fullbleed])` pins itself to
    100dvh, but the SCROLL CONTAINER is an ancestor: `body { min-height: 100vh }` makes the page
@@ -619,21 +601,6 @@ body:has([data-chat-fullbleed]) {
      itself never lightens; ordinary text keeps --white so it can re-anchor on paper. */
   --white-fixed:          #FFFFFF;
 
-  /* ── Coach sandbox chrome coat (COACH_SANDBOX_SEASON_PHASES_PLAN.md, approved mockups
-     2026-08-04). The "See it live" chrome mounts ABOVE the coach shell, so it cannot consume
-     the [data-coach-warm-enabled]-scoped --home-* tokens; these are its own copy of the
-     ratified warm values (ink/dim/amber/blue are byte-identical to the AA-corrected --home-*
-     set — if those move, move these). Band is the one value of its own: the banner ground,
-     a step deeper than paper so the chrome reads as a hat, not a card. */
-  --sandbox-warm-paper: #F8F4ED;
-  --sandbox-warm-band:  #EFE7DB;
-  --sandbox-warm-card:  #FFFFFF;
-  --sandbox-warm-ink:   #241E15;
-  --sandbox-warm-dim:   #615A54;   /* moves with --home-dim by the note above (AA, 2026-09-03) */
-  --sandbox-warm-gold:  #835006;
-  --sandbox-warm-blue:  #134FD3;
-  --sandbox-warm-line-rgb: 70, 55, 30;
-  --sandbox-warm-paper-rgb: 248, 244, 237;
   /* Dark ink for TEXT/GLYPHS on a bright fill (lime / gold / amber chips + the
      .btn-lime CTA) — the on-fill counterpart to --on-primary (text on --primary).
      Consolidates the hand-copied #0f1123 "dark text on lime" literal across the
@@ -1078,8 +1045,7 @@ html[data-user-theme="warm"] [data-coach-warm-enabled] {
    near-black turned the bar grey there, and on any page too short to scroll), and the iPhone's bounce
    past the top or bottom of a page. Painting <body> the paper fixes both and keeps the frost (frosted
    bars are the platform's chrome — the 2026-07-13 backdrop-filter ruling).
-   ⚠ A COPY of `--home-paper`, because <body> is outside the marker that declares it (the sandbox
-   chrome's `--sandbox-warm-paper` is the same kind of copy for the same reason);
+   ⚠ A COPY of `--home-paper`, because <body> is outside the marker that declares it;
    `warm-palette-contrast.test.ts` fails if the two drift. Only under the warm account theme and only on a
    page carrying the portal's marker: Dark, the public site and the volunteer shells are untouched.
    The FAN APP had the same black strip (owner, 2026-10-09, a phone screenshot of an empty Home) and
@@ -2787,13 +2753,6 @@ tbody tr:last-child td { border-bottom: none; }
      end of a page the swipe carried on into the document and took the pinned bar off the top (Admin header bar
      Phase 2, measured 2026-11-07). The same stand-down. */
   #main-content:has([data-admin-locked]) { padding-bottom: 0; }
-
-  /* The "See it live" demo hides that bar on the FAN side, because every one of its tabs — Home,
-     Scores, Chat, Account — walks the visitor out of the sandbox and into the real platform. With
-     no bar there is no space to reserve, and the demo gets 72px of a phone screen back. Scoped to
-     the fan side: the operator half keeps its own admin bar, which handles the sandbox itself.
-     Set only on a demo org, so a real customer's phone layout is byte-identical. */
-  :root[data-sandbox-side='public'] { --bottom-nav-height: 0px; }
 }
 
 @media (max-width: 768px) {
@@ -2831,44 +2790,5 @@ tbody tr:last-child td { border-bottom: none; }
     min-height: 44px;
     flex: 1 1 9rem;
     justify-content: center;
-  }
-}
-
-/* ── Sandbox tour spotlight (moved from SandboxChrome.module.css) ───────────
-   Applied by JS to an arbitrary element elsewhere on the page, so it must be a
-   plain global class — CSS Modules rejects a bare :global() rule with no local
-   class attached. The ring holds for the WHOLE duration and breathes on top of
-   itself rather than fading to nothing between pulses, so a visitor who glanced
-   away still sees it when they look back. */
-/* A tour beat, scrolled to and ringed once. `scroll-margin-top` keeps the fixed sandbox hat from
-   painting over the top of whatever was just scrolled to — the chrome pads the DOCUMENT, which
-   does nothing for an element the browser is aligning to the top of the scrollport.
-
-   ⚠ Scoped to `[data-sandbox-chrome]`, which the sandbox chrome stamps on <html> and removes when
-   it unmounts. The markers themselves ship to EVERY customer (they sit on ten real product
-   screens), so an unscoped rule here would permanently shift those ten elements by 0.75rem for
-   people who will never see a demo — a small, silent, real behaviour change bought for nothing.
-   The first version of this rule claimed to be "zero off a demo org" and was not: the fallback
-   only zeroes the variable, never the constant beside it. (2026-08-06 review.) */
-[data-sandbox-chrome] [data-sandbox-tour] {
-  scroll-margin-top: calc(var(--sandbox-chrome-h, 0px) + 0.75rem);
-}
-
-.sandboxSpotlight {
-  border-radius: 8px;
-  outline: 2px solid var(--logic-lime);
-  outline-offset: 2px;
-  animation: sandboxSpot 0.8s ease-in-out 3;
-}
-
-@keyframes sandboxSpot {
-  0%, 100% { box-shadow: 0 0 10px rgba(var(--logic-lime-rgb), 0.25); }
-  50%      { box-shadow: 0 0 26px rgba(var(--logic-lime-rgb), 0.55); }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .sandboxSpotlight {
-    animation: none;
-    box-shadow: 0 0 20px rgba(var(--logic-lime-rgb), 0.4);
   }
 }

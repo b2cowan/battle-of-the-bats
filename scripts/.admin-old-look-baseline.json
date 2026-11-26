@@ -28,7 +28,7 @@
     "helpers": 1
   },
   "app/[orgSlug]/admin/tournaments/schedule/schedule-admin.module.css": {
-    "kitScope": 100
+    "kitScope": 99
   },
   "components/admin/NumberStepper.module.css": {
     "kitScope": 5

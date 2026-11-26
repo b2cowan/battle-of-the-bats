@@ -5,8 +5,6 @@ import { clearStartDoor } from '@/lib/start-door-server';
 import { isPlatformAdminEmail } from '@/lib/platform-auth';
 import { createOrganization, createOrganizationMember, generateUniqueOrgSlug } from '@/lib/db';
 import { isReservedOrgSlug } from '@/lib/reserved-slugs';
-import { isDemoOrgSlug } from '@/lib/demo-org';
-import { demoActorRefusal } from '@/lib/demo-guard';
 import { readRealSeats, userBelongsToOtherRealOrg } from '@/lib/org-membership-policy';
 import { isTheSameStart, isUniqueViolation, settleClaim } from '@/lib/org-create-claim';
 import { captureError, captureAndJson, withObservability } from '@/lib/observability';
@@ -21,9 +19,6 @@ import { getActiveOwnedTeamWorkspace } from '@/lib/team-workspace-owned';
 async function isSlugAvailable(slug: string) {
   // Never hand out a slug that collides with a top-level app route (it would shadow the org's pages).
   if (isReservedOrgSlug(slug)) return false;
-  // Demo-org slugs are never available to a real signup — a real org squatting one would be
-  // adopted, and overwritten, by the demo seed the day the sandbox ships to this environment.
-  if (isDemoOrgSlug(slug)) return false;
   const { data, error } = await supabaseAdmin
     .from('organizations')
     .select('id')
@@ -51,10 +46,6 @@ export const POST = withObservability(async (req: Request) => {
     if (!user?.id || !user.email) {
       return NextResponse.json({ error: 'Sign in required.' }, { status: 401 });
     }
-    // A "See it live" demo account never creates a real club (Board Ready trust close-out 1) — refused by WHO it is, not
-    // through the one-club rule below, which lets a request through when its own read fails.
-    const demoRefusal = demoActorRefusal(user);
-    if (demoRefusal) return demoRefusal;
     // FieldLogicHQ staff are not organizers — a platform-admin session must never become
     // the owner of a public org (matches the guard on the coach create routes + register).
     if (await isPlatformAdminEmail(user.email)) {

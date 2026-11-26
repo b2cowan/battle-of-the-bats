@@ -17,7 +17,6 @@ import { captureError } from './observability';
 import { hasPlanFeature, type PlanFeature } from './plan-features';
 import { PUSH_DEFAULT_ON_EVENTS, NOTIFICATION_CATEGORY } from './notification-labels';
 import { PAUSE_EXEMPT_EVENTS, filterUnpausedUsers } from './notification-pause';
-import { isDemoOrgId } from './demo-org-server';
 import { isPreviewOrgId } from './preview-org-server';
 import type { NotificationEventType } from './types';
 
@@ -116,21 +115,15 @@ export async function notify(opts: NotifyOptions): Promise<void> {
   // recipient/device) so a broken deploy surfaces as a single observability issue.
   let pushMisconfigReported = false;
 
-  // ── Sandbox outbound silence ───────────────────────────────────────────────
-  // A demo ("See it live") org can never notify anyone — no bell row, no push, no email.
-  // This is the SECOND of two independent guarantees: the write block in proxy.ts already stops
-  // the actions that would trigger a notification, and this stops the notification even if one
-  // is somehow reached (a cron sweep, a server-side job, a future code path nobody predicted).
-  // Either alone would be sufficient; both is what makes "it can never email anyone" a fact
-  // rather than an argument.
+  // ── Preview-club outbound silence ───────────────────────────────────────────────
+  // A preview club (Track P, T1) can never notify anyone — no bell row, no push, no email.
   //
-  // FAIL-CLOSED, unlike the user-level pause below: if the demo-org list cannot be resolved we
+  // FAIL-CLOSED, unlike the user-level pause below: if the preview-club list cannot be resolved we
   // return without dispatching. Staying silent when we cannot tell is the only safe direction —
   // the cost of a wrong "no" is a missed notification on a real org during an outage; the cost
-  // of a wrong "yes" is the sandbox mailing a stranger.
+  // of a wrong "yes" is a prospect's preview mailing a stranger.
   try {
-    // A preview club (Track P, T1) is as silent as a demo: no bell, push or email, by the same fail-closed read.
-    if (await isDemoOrgId(opts.orgId) || await isPreviewOrgId(opts.orgId)) return;
+    if (await isPreviewOrgId(opts.orgId)) return;
   } catch {
     return;
   }

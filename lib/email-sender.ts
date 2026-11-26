@@ -20,7 +20,6 @@
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { FIELDLOGICHQ_CONTACT_EMAIL } from '@/lib/fieldlogichq-contact';
 import { buildUnsubscribeUrl, buildUserUnsubscribeUrl, oneClickUnsubscribeHeaders } from '@/lib/unsubscribe-token';
-import { isDemoOrgId } from '@/lib/demo-org-server';
 import { isPreviewOrgId } from '@/lib/preview-org-server';
 import { isAddressStopped } from '@/lib/email-address-stops';
 import { insertAtWarmCardEnd, warmUnsubscribeFooterHtml } from '@/lib/email-envelope-warm';
@@ -106,15 +105,14 @@ export async function sendMarketingEmail(opts: SendEmailOptions): Promise<SendRe
     scheduledAt,
   } = opts;
 
-  // ── 0. Sandbox outbound silence ──────────────────────────────────────────────
-  // A demo ("See it live") org can never send email to anyone. Reported as 'suppressed', the
+  // ── 0. Preview-club outbound silence ─────────────────────────────────────────
+  // A preview club (Track P, T1) can never send email to anyone. Reported as 'suppressed', the
   // existing outcome for "we deliberately did not send this", so callers and the send log treat
-  // it exactly like an opt-out rather than as a failure. FAIL-CLOSED: if the demo-org list cannot
+  // it exactly like an opt-out rather than as a failure. FAIL-CLOSED: if the preview-club list cannot
   // be resolved we suppress, because the cost of wrongly staying silent is a missed email and the
-  // cost of wrongly sending is the sandbox mailing a stranger.
+  // cost of wrongly sending is a prospect's preview mailing a stranger.
   try {
-    // A preview club (Track P, T1) is as silent as a demo, by the same fail-closed read.
-    if (await isDemoOrgId(orgId) || await isPreviewOrgId(orgId)) return 'suppressed';
+    if (await isPreviewOrgId(orgId)) return 'suppressed';
   } catch {
     return 'suppressed';
   }

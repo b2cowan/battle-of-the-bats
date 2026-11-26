@@ -6,7 +6,7 @@
  *
  *   · Arrived    — the lead's first form (`created_at`) falls in the period. A second form is the same lead.
  *   · Signed up  — a person linked a club or Coaches Portal to it (`linked_at`; an offered match confirmed, or by hand).
- *                  A demo club never counts. A deleted club still counts ("Signed up, club since deleted").
+ *                  A preview club never counts. A deleted club still counts ("Signed up, club since deleted").
  *   · Pays now   — of those, the ones whose club pays today (`paysNow` in `lib/plan-growth.ts`).
  *   · Time to sign up — days from the first form to the club's or portal's CREATION, not the link (S7-D4).
  *   · Stuck      — an open lead (not Signed up, not Lost, not Waiting for launch) with no step change, note or follow-up
@@ -40,7 +40,7 @@ export type LeadFacts = {
   lastNoteAt: string | null;
   /** The newest edit that set or moved the follow-up (from the edit log). */
   lastFollowUpSetAt: string | null;
-  /** Linked to a demo club: never Signed up. */
+  /** Linked to a preview club (Track P): never Signed up. (Named `demo` before the public demos were retired.) */
   demo: boolean;
 };
 
@@ -52,7 +52,7 @@ export const PAYING_RECORDED_FROM = '2026-10-25';
  * a recorded subscription start since PAYING_RECORDED_FROM; without it Month by month shows no paying figure.
  */
 export type PayRead = { kind: 'read'; paying: ReadonlySet<string>; started?: ReadonlySet<string> } | { kind: 'not_read' };
-/** New accounts in the period (demo clubs left out), or that they could not be read. */
+/** New accounts in the period (preview clubs and portals given free time left out), or that they could not be read. */
 export type AccountsRead = { kind: 'read'; created: { id: string; createdAt: string }[] } | { kind: 'not_read' };
 
 export type Period = { from: string | null; to: string | null };

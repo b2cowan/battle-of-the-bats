@@ -14,28 +14,25 @@ export function isStandaloneCoachOwner(
   return isTeamWorkspaceOrg(org) && hasBillingAccess(role, capabilities);
 }
 
-/** Demo sandboxes keep the real product, but never offer a billing entry point. */
+/** The standalone owner's Plan & billing door; null for anyone else. */
 export function coachBillingLink(
   org: Pick<Organization, 'slug' | 'accountKind' | 'planId'> | null | undefined,
   role: OrgRole | null | undefined,
   capabilities: Record<string, boolean> | null,
-  inSandbox: boolean,
 ): string | null {
-  return !inSandbox && org && isStandaloneCoachOwner(org, role, capabilities)
+  return org && isStandaloneCoachOwner(org, role, capabilities)
     ? getBillingHref(org, { host: 'coach', purpose: 'return' }) : null;
 }
 
 export type CoachTournamentOrg = EntitlementOrg & Pick<Organization, 'slug' | 'accountKind'>;
 
-/** Tournaments you run is independent of team and season assignments.
- * The demo hides this door by name, even if its viewer later gains the tournament grant. */
+/** Tournaments you run is independent of team and season assignments. */
 export function coachHostedTournamentsLink(
   org: CoachTournamentOrg | null | undefined,
   role: OrgRole | null | undefined,
   capabilities: Record<string, boolean> | null,
-  inSandbox: boolean,
 ): string | null {
-  return !inSandbox && org && isTeamWorkspaceOrg(org)
+  return org && isTeamWorkspaceOrg(org)
     && hasModuleEntitlement(org, 'module_tournaments')
     && !!role && hasCapability(role, capabilities, TOURNAMENT_GRANT_KEY)
     ? `/${org.slug}/admin/tournaments/manage` : null;

@@ -8,7 +8,6 @@ import { cn } from '@/lib/utils';
 import AccountMenu from '@/components/shared/AccountMenu';
 import CoachThemeColor from '@/components/coaches/CoachThemeColor';
 import BrandLockup from '@/components/shared/BrandLockup';
-import { DEMOS_PATH } from '@/lib/sandbox-door';
 import { isLegalPath, SECURITY_PATH } from '@/lib/legal-paths';
 import { usePlanGating } from '@/lib/use-plan-gating';
 import { PROGRAM_PLANS, allProgramPlansOpen, isEffectivelyGated } from '@/lib/plan-config';
@@ -52,7 +51,6 @@ function isMarketingPath(pathname: string) {
     pathname.startsWith('/changelog') ||
     isLegalPath(pathname) ||
     pathname === SECURITY_PATH ||
-    pathname.startsWith(DEMOS_PATH) ||
     pathname.startsWith('/my')
   );
 }
@@ -73,18 +71,10 @@ export default function Navbar() {
   // anonymous visitor's page is byte-identical to before. Deliberately does NOT fetch the role
   // summary: the two doors below need only "is someone signed in", and marketing is the one
   // surface where a per-visit identity round-trip would be pure cost.
-  //
-  // Marketing ground is also where a "See it live" visit ENDS — the demo doors establish a real
-  // session for a shared fictional account, which this check would otherwise read as a login and
-  // answer with "Account" / "Open app →", offering a prospect two doors into somebody else's demo
-  // and telling them they have an account they never made. That teardown is no longer this call's
-  // to ask for: the hook now ends a demo session on ANY page outside the demo world, the same rule
-  // the request layer applies before a page renders (lib/sandbox-exit.ts, owner ruling 2026-08-26).
-  // A real customer's session is untouched either way.
   const onMarketing = isMarketingPath(pathname);
   const marketingSignedIn = useClientSignedIn(onMarketing);
   // The live gate, asked only on the pages that already read it per request (home, /pricing, the persona pages): the
-  // rest of the marketing ground (legal pages, the changelog, the demos) stays a request-free page and orders the bar
+  // rest of the marketing ground (legal pages, the changelog) stays a request-free page and orders the bar
   // from the code's values, which the flip's step 4.3 turns live the same day (`/review` S3).
   const readsGate = pathname === '/' || pathname.startsWith('/pricing') || pathname.startsWith('/for-');
   const gating = usePlanGating(onMarketing && !isAdmin && readsGate);

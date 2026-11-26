@@ -8,8 +8,8 @@ import { readStaffAddresses } from '@/lib/lead-book';
 import { consoleDay } from '@/lib/console-dates';
 
 /**
- * The lead page's club picker (Support console Stage 7 Part 4, drawing C): searches by name like Find. Demo clubs are
- * left out by the search itself; a club a staff address owns is left out here. A failed read says so, never "none".
+ * The lead page's club picker (Support console Stage 7 Part 4, drawing C): searches by name like Find. A club a staff
+ * address owns is left out here. A failed read says so, never "none".
  */
 export const GET = withObservability(async (req: NextRequest) => {
   const auth = await requirePlatformPower('growth');

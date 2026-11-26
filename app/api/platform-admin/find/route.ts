@@ -8,7 +8,6 @@ import { findClubs, findPeople, personAuthStatus } from '@/lib/platform-people-l
 import { freeTimePortalLabelsAmong } from '@/lib/portal-free-time-server';
 import { planLabel, subscriptionStatusLabel } from '@/lib/platform-labels';
 import { roleEmailLabel } from '@/lib/member-access';
-import { isDemoOrgSlug } from '@/lib/demo-org';
 import { getStripe } from '@/lib/stripe';
 import { customerSharing, findStripeItem, type CustomerWorkspace } from '@/lib/console-money-stripe';
 import { stripeKeyIsLive } from '@/lib/online-payments-switch';
@@ -47,7 +46,7 @@ const NO_STORE = { 'Cache-Control': 'no-store' };
 const TOO_SHORT = 'Type two characters or more.';
 
 /** The organization columns a Stripe match reads, from any of its three sources. */
-type OrgCols = { id: string; name: string; slug: string; plan_id: string | null };
+type OrgCols = { id: string; name: string; plan_id: string | null };
 
 function json(body: unknown, status = 200) {
   return NextResponse.json(body, { status, headers: NO_STORE });
@@ -104,16 +103,16 @@ const readers: FindReaders = {
   async personClubs(personIds) {
     const { data, error } = await supabaseAdmin
       .from('organization_members')
-      .select('user_id, role, organizations(id, name, slug)')
+      .select('user_id, role, organizations(id, name)')
       .in('user_id', personIds)
       .limit(200);
     if (error) throw new Error(FIND_FAILED);
     const out = new Map<string, FindPersonClub[]>();
     for (const row of (data ?? []) as unknown as Array<{
-      user_id: string; role: string; organizations: { id: string; name: string; slug: string } | null;
+      user_id: string; role: string; organizations: { id: string; name: string } | null;
     }>) {
       const org = row.organizations;
-      if (!org || isDemoOrgSlug(org.slug)) continue;
+      if (!org) continue;
       const list = out.get(row.user_id) ?? [];
       list.push({ id: org.id, name: org.name, role: roleEmailLabel(row.role) });
       out.set(row.user_id, list);
@@ -123,13 +122,13 @@ const readers: FindReaders = {
   async stripe(number, kind) {
     const rows: FindStripeRow[] = [];
     const seen = new Set<string>();
-    // One gate for all three sources: a demo sandbox never shows, and a club found twice shows once.
+    // One gate for all three sources: a club found twice shows once.
     const add = (org: OrgCols | null, k: FindStripeRow['kind'], extra: Partial<FindStripeRow> = {}) => {
-      if (!org || seen.has(org.id) || isDemoOrgSlug(org.slug)) return;
+      if (!org || seen.has(org.id)) return;
       seen.add(org.id);
       rows.push({ orgId: org.id, orgName: org.name, planLabel: planLabel(org.plan_id ?? 'tournament'), number, kind: k, ...extra });
     };
-    const orgCols = 'id, name, slug, plan_id';
+    const orgCols = 'id, name, plan_id';
     if (kind === 'customer' || kind === 'subscription') {
       const column = kind === 'customer' ? 'stripe_customer_id' : 'stripe_subscription_id';
       const [orgs, workspaces] = await Promise.all([

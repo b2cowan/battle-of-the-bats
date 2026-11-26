@@ -81,10 +81,10 @@ async function writeMirror(userId: string, version: string): Promise<void> {
  * The person's standing. Order, so an accepted person costs no query:
  *   1. the pages are off → `off`;
  *   2. the mirror says accepted → `accepted` (no query);
- *   3. exempt (staff or demo) → `exempt` (the demo check is pure; staff may read `platform_users`);
+ *   3. exempt (staff) → `exempt` (may read `platform_users`);
  *   4. the table — the truth: accepted → repair the mirror, `accepted`; otherwise `needed`.
  * (The build prompt put "exempt" before the mirror. The outcome is the same — both let the person through — but that order
- * costs a `platform_users` read on every page load for every customer. Staff and demo accounts never tick, so they never carry
+ * costs a `platform_users` read on every page load for every customer. Staff never tick, so they never carry
  * a mirror and still read `exempt`.)
  */
 export async function checkAcceptance(user: AcceptanceUser, env: Env = process.env): Promise<AcceptanceCheck> {

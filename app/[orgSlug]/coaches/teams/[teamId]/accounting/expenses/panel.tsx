@@ -7553,7 +7553,7 @@ function MoneyRecordsPanel({
               date range never does. ⚠ THE PROJECTED-BALANCE SENTENCE remains GONE (owner,
               2026-08-19); `book.projectedBalance` stays computed and used elsewhere. */}
           {!onPayables && showBalance && book && (
-            <span className={styles.registerInlineCash} data-sandbox-tour="register-balance">
+            <span className={styles.registerInlineCash}>
               Cash on hand <b>{fmt(book.cashOnHand)}</b>
             </span>
           )}

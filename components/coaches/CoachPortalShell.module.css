@@ -84,9 +84,7 @@
 /* ── Persistent team/event header (sticky, frosted — the public event-header grammar) ── */
 .mhead {
   position: sticky;
-  /* --sandbox-chrome-h: the coach sandbox's demo banner pins above everything (globals.css);
-     resolves to 0px for every real customer. Same term every top-pinned bar carries. */
-  top: var(--sandbox-chrome-h, 0px);
+  top: 0;
   z-index: 100;
   background: var(--nav-bg-scrolled, rgba(13, 11, 20, 0.92));
   border-bottom: 1px solid var(--border-2);
@@ -109,7 +107,7 @@
 
 @media (min-width: 901px) {
   .mhead {
-    top: calc(var(--coach-top-strip) + var(--sandbox-chrome-h, 0px));
+    top: var(--coach-top-strip);
     margin-left: var(--coach-rail-w);
   }
   /* Team-only pages: the rail already carries team identity on desktop — the header band
@@ -404,7 +402,7 @@
     display: flex;
     flex-direction: column;
     position: fixed;
-    top: calc(var(--coach-top-strip) + var(--sandbox-chrome-h, 0px));
+    top: var(--coach-top-strip);
     left: 0;
     bottom: 0;
     width: var(--coach-rail-w);

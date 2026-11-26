@@ -3,7 +3,6 @@ import { supabaseAdmin } from './supabase-admin';
 import { randomUUID } from 'node:crypto';
 import { auditFirst, writePlatformAuditLog } from './platform-audit';
 import { isPlatformAdminEmail } from './platform-auth';
-import { isDemoOrganizerEmail } from './demo-org';
 import { grantsEnabled } from './entitlement-grants';
 import { isGrantRunning, lastDayOfInstant, todayEastern } from './free-time';
 import { endFreeTimeNow, staleSentence, type Actor } from './free-time-writes';
@@ -192,7 +191,6 @@ export async function readPortalGiveFacts(coach: CoachIdentity, actor: Actor): P
     switchOn: grantsEnabled(),
     coachIsGiver: coach.id === actor.id,
     coachIsStaff,
-    coachIsDemo: isDemoOrganizerEmail(coach.email),
     giverOnTeam: (giverRows ?? []).length > 0 || giverInPortal,
     freeTeams,
     portals,

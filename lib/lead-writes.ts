@@ -5,12 +5,11 @@
  * customer, so none asks a reason (owner Q6; `tests/unit/platform-audit-reason-guard.test.ts`).
  *
  * ⚠ A link is made only by a person's press (owner Q2): an offered match is re-checked against `readOffers` at the
- * moment of the press, and a hand link passes the same exclusions as an offer (no demo club, no club a staff address
+ * moment of the press, and a hand link passes the same exclusions as an offer (no preview club, no club a staff address
  * owns).
  */
 import { supabaseAdmin } from './supabase-admin';
 import { writePlatformAuditLog, writePlatformAuditLogStrict } from './platform-audit';
-import { isDemoOrgId } from './demo-org-server';
 import { isPreviewOrgId } from './preview-org-server';
 import { readLeadBook, readOffers, readStaffAddresses, type BookLead, type OfferedClub, type Read } from './lead-book';
 import { normalAddress } from './lead-numbers';
@@ -30,9 +29,9 @@ async function leadNow(leadId: string): Promise<LeadNow | null | 'error'> {
   return (data as LeadNow | null) ?? null;
 }
 
-/** A club a staff address owns, a demo club or a preview club (Track P): never linked, never offered. Throws when it cannot tell. */
+/** A club a staff address owns or a preview club (Track P): never linked, never offered. Throws when it cannot tell. */
 async function refusedClub(orgId: string): Promise<boolean> {
-  if (await isDemoOrgId(orgId) || await isPreviewOrgId(orgId)) return true;
+  if (await isPreviewOrgId(orgId)) return true;
   const { data: owners, error } = await supabaseAdmin.from('organization_members').select('user_id').eq('organization_id', orgId).eq('role', 'owner');
   if (error) throw error;
   const ids = ((owners ?? []) as { user_id: string }[]).map(o => o.user_id);
@@ -65,7 +64,7 @@ export async function linkLead(actor: string, leadId: string, orgId: string, met
       if (offers.kind === 'not_read') return fail(503, 'The match could not be checked just now. Nothing was linked.');
       if (!(offers.value.get(lead.id) ?? []).some(c => c.orgId === orgId)) return fail(409, 'That club is no longer offered for this lead.');
     } else if (await refusedClub(orgId)) {
-      return fail(400, 'A demo club or a staff test club cannot be linked to a lead.');
+      return fail(400, 'A staff test club cannot be linked to a lead.');
     }
   } catch {
     return fail(503, 'The club could not be checked just now. Nothing was linked.');

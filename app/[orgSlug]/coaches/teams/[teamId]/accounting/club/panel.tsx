@@ -32,7 +32,6 @@ import refusal from '@/components/coaches/CoachSeasonRefusalNotice.module.css';
 import { DUES_PAYMENT_METHODS, DUES_PAYMENT_METHOD_LABEL, type RepAllocationInstallment, type BudgetCategoryWithItems } from '@/lib/types';
 import { CLUB_MONEY_COLUMNS, clubMoneyRows } from '@/lib/coach-money-exports';
 import CoachLoadError from '@/components/coaches/CoachLoadError';
-import { sandboxRefusal } from '@/lib/coach-sandbox-refusal';
 import LoadingState from '@/components/shared/LoadingState';
 import DateInput from '@/components/shared/DateInput';
 import styles from '../../../../coaches.module.css';
@@ -200,9 +199,6 @@ const STATUS_CHIP: Record<string, { cls: string; label: string }> = {
   credited: { cls: 'badgeApproved', label: HB.credited },
 };
 
-/* `sandboxRefusal` lived here (it was born on this screen) and moved to `lib/coach-sandbox-refusal.ts`
-   when the fundraising rooms gained the same write paths — one sentence, every money door. */
-
 /**
  * ONE RECORD'S FILING, AS A LIVE CONTROL — the money-in question where the record carries one, the
  * item picker, the sentence that says what it means for the report, and its own saving/error
@@ -247,8 +243,6 @@ function ClubFilingControl({
   const [pending, setPending] = useState<{ sel: BudgetItemSelection | null; meaning: ClubMoneyInMeaning | null } | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
-  /** The demo's "nothing is saved here" — its own voice, never the red of a real failure. */
-  const [note, setNote] = useState('');
 
   /**
    * ⚠⚠ PENDING STOPS APPLYING BY VALUE, AND IT IS DERIVED RATHER THAN CLEARED (`/review`,
@@ -291,20 +285,16 @@ function ClubFilingControl({
     setBusy(true);
     onBusyChange?.(true);
     setError('');
-    setNote('');
     try {
       await save(sel, nextMeaning);
     } catch (e: any) {
-      if (e?.sandbox) setNote(e.message);
-      else {
-        setError(e?.message ?? 'Failed to file this.');
-        /* ⚠ AND ONCE MORE WHERE IT SURVIVES THIS COMPONENT. A coach can collapse the row while the
-           write is in flight; this control then unmounts and its error has nowhere to render, so a
-           failed filing would pass in complete silence. The banner is deliberately a SECOND home
-           for the same sentence rather than a replacement — the fold is where the coach is looking
-           while it is open, and the banner is what is left when it is not. */
-        onFailure?.(e?.message ?? 'Failed to file this.');
-      }
+      setError(e?.message ?? 'Failed to file this.');
+      /* ⚠ AND ONCE MORE WHERE IT SURVIVES THIS COMPONENT. A coach can collapse the row while the
+         write is in flight; this control then unmounts and its error has nowhere to render, so a
+         failed filing would pass in complete silence. The banner is deliberately a SECOND home
+         for the same sentence rather than a replacement — the fold is where the coach is looking
+         while it is open, and the banner is what is left when it is not. */
+      onFailure?.(e?.message ?? 'Failed to file this.');
       /* The write did NOT land, so the screen goes back to what is actually stored. On the success
          path the effect above drops this instead, once the row itself carries the answer. */
       setPending(null);
@@ -363,7 +353,6 @@ function ClubFilingControl({
               : consequence(value)}
         </p>
         {error && <p className={styles.errorText}>{error}</p>}
-        {note && <p className={styles.formHint}>{note}</p>}
       </div>
     </>
   );
@@ -1224,9 +1213,6 @@ export function ClubPanel({
         },
       );
       const data = await res.json().catch(() => ({}));
-      /* Same reason as `sandboxRefusal`'s own note — the sandbox's refusal in words, never the code. */
-      const refused = sandboxRefusal(res, data);
-      if (refused) { setActionError(refused); release(); return false; }
       /* ⚖ A STALE TAP IS REFUSED IN WORDS, AND THE CARD REFRESHES IN PLACE (specimen 7's rule): the
          club confirmed it, or another coach on the team said it first. The sentence is the server's
          (lib/club-money-words.ts), and the bill re-reads quietly under it. */
@@ -1264,7 +1250,7 @@ export function ClubPanel({
    * clothes.
    *
    * ⚠ THE SERVER OWNS THE REFUSALS — a payment recorded before the books could be reversed
-   * together, a race with another coach, a read-only money coach, the sandbox. Everything here is
+   * together, a race with another coach, a read-only money coach. Everything here is
    * the sentence the coach reads.
    *
    * ⚠ QUIET RELOAD, same as `markPaid` and `writeFiling`: this button lives INSIDE the bill's
@@ -1281,8 +1267,6 @@ export function ClubPanel({
         { method: 'DELETE' },
       );
       const data = await res.json().catch(() => ({}));
-      const refused = sandboxRefusal(res, data);
-      if (refused) { setActionError(refused); release(); return; }
       // A stale tap (the club confirmed it a minute ago): refused in words, the card refreshes in place.
       if (res.status === 409) { await refusedAsStale(data, release); return; }
       if (!res.ok) throw new Error(data?.error ?? 'Failed to take this payment back.');
@@ -1311,8 +1295,6 @@ export function ClubPanel({
       body: JSON.stringify(target.body),
     });
     const data = await res.json().catch(() => ({}));
-    const refused = sandboxRefusal(res, data);
-    if (refused) { const e: any = new Error(refused); e.sandbox = true; throw e; }
     if (!res.ok) throw new Error(data?.error ?? target.failure);
     /* ⚠⚠ QUIET, AND THAT IS NOT A TIDY-UP (`/simplify`, 2026-09-02). A loud reload sets `loading`,
        and the whole table is behind that flag — so every category a coach picked blanked the
@@ -1441,12 +1423,6 @@ export function ClubPanel({
         },
       );
       const data = await res.json().catch(() => ({}));
-      /* ⚠ AND HERE TOO (`/review`, 2026-09-02, reversing this pass's own "out of scope" note).
-         Make a request and Withdraw are the two buttons a prospect is most likely to press on this
-         tab in the public coach demo — leaving them showing "SandboxReadOnly" while the fold beside
-         them was fixed is the wrong half of a fix, whatever the diff's boundary was. */
-      const refusedHere = sandboxRefusal(res, data);
-      if (refusedHere) { setFormError(refusedHere); return; }
       if (!res.ok) throw new Error(data?.error ?? 'Failed to save this request.');
       setShowForm(false);
       await refreshAfterWrite();
@@ -1478,8 +1454,6 @@ export function ClubPanel({
         method: 'DELETE',
       });
       const data = await res.json().catch(() => ({}));
-      const refusedHere = sandboxRefusal(res, data);
-      if (refusedHere) { setFormError(refusedHere); return; }
       if (!res.ok) throw new Error(data?.error ?? 'Failed to withdraw this request.');
       setShowForm(false);
       setConfirmWithdraw(false);
@@ -2010,7 +1984,7 @@ export function ClubPanel({
             nav={{ ...billRoom.walk, noun: 'bills', onSelect: setOpenBillId }}
           >
             {/* ⚠ The panel's banner sits BEHIND this overlay (`/review`, 2026-09-02) — a refused tap
-                (the sandbox's sentence included) has to be read in the room too.
+                has to be read in the room too.
                 ⚖ A STALE TAP READS AS STAGE 2'S REFUSED-SAVE NOTE (specimen 7): a white card with the
                 live-red edge, the server's sentence (what changed, and who can fix it), and the cards
                 below already refreshed. The same recipe as `CoachSeasonRefusalNotice`, not a copy. */}

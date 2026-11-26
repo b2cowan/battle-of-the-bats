@@ -51,9 +51,10 @@ describe('schedule health is one number on the Schedule and the dashboard', () =
   });
 
   test('the Schedule wears health as its header button, opening the one window — never a row at the day\'s foot', () => {
-    assert.match(SCHEDULE, /<HealthButton\s+data-sandbox-tour="schedule-health"/, 'the button carries the tour anchor literally');
+    assert.match(SCHEDULE, /<HealthButton\s+score=\{healthMetrics\.timedGames > 0/, 'the header button is there');
+    assert.doesNotMatch(SCHEDULE, /data-sandbox-tour/, 'the retired demo tour left no anchor');
     assert.doesNotMatch(SCHEDULE, /<HealthRow\b/, 'the foot row is gone');
-    assert.match(SCHEDULE, /const \[healthOpen, setHealthOpen\] = useState\(false\);/, 'the window never arrives open, the demo included');
+    assert.match(SCHEDULE, /const \[healthOpen, setHealthOpen\] = useState\(false\);/, 'the window never arrives open');
     const WINDOW = read('app/[orgSlug]/admin/tournaments/schedule/components/ScheduleHealthWindow.tsx');
     assert.match(WINDOW, /<KitDialog kind="form" size="wide"[^>]*dirty=\{dirty\}/, 'the one form window; unsaved rules ask first');
     assert.match(SCHEDULE, /<ScheduleHealthWindow[\s\S]{0,200}dirty=\{healthRulesDirty\}/);

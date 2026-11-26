@@ -291,10 +291,9 @@ describe('the delete route removes the files after the club, and records it', ()
     assert.match(code, /export const maxDuration = 300;/);
   });
 
-  it('a public demo club is refused before anything is read or changed (owner 2026-11-15)', () => {
-    const refuse = at(/if \(isDemoOrgSlug\(org\.slug\)\) \{\s*return NextResponse\.json\(\{ error: DEMO_DELETE_REFUSAL \}, \{ status: 403 \}\)/);
-    assert.ok(refuse < at(/readOutstanding\(id\)/) && refuse < at(/readOrgLegacyResourceKeys\(id\)/));
-    assert.match(code, /demoRefusal: isDemoOrgSlug\(org\.slug\)/);
+  it('the delete route no longer carries the retired public demos\' refusal (owner 2026-11-26)', () => {
+    assert.doesNotMatch(code, /isDemoOrgSlug|DEMO_DELETE_REFUSAL|demoRefusal/);
+    assert.ok(at(/readOutstanding\(id\)/) > 0 && at(/readOrgLegacyResourceKeys\(id\)/) > 0, 'the reads that guard the delete are still there');
   });
 
   it('the preview counts the files', () => {

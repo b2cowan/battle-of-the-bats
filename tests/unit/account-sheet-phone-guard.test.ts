@@ -102,11 +102,9 @@ describe('the door steps aside on a phone only where the sheet carries it', () =
     const doors = band.slice(band.indexOf('function BandDoors'));
     assert.match(doors, /<AccountMenu[^>]*door=\{resolution\}/);
     assert.match(doors, /className=\{`\$\{styles\.bandDoor\} \$\{styles\.bandDoorInSheet\}`\}/);
-    assert.match(band, /\{!inSandbox && !preview \? \(\s*<BandDoors/);
-    // The sandbox shows no account menu: its door must NOT carry the hide class.
-    const sandbox = band.slice(0, band.indexOf('function BandDoors'));
-    assert.match(sandbox, /<span className=\{styles\.bandDoor\}>\s*<TournamentFlipPill look="band" \/>/);
-    assert.doesNotMatch(sandbox, /bandDoorInSheet/);
+    assert.match(band, /\{!preview && <BandDoors/);
+    // The retired demo sandbox's no-account-menu branch is gone: the band has one door path.
+    assert.doesNotMatch(band, /inSandbox|isSandbox/);
   });
 
   it('tournament band: the viewer\'s hats are read once and shared', () => {
@@ -117,9 +115,9 @@ describe('the door steps aside on a phone only where the sheet carries it', () =
 
   it('club bar: the door hides at ≤900 only when the account menu is mounted; the sheet gets the same resolution', () => {
     const bar = readCode('components/public/ClubBar.tsx');
-    assert.match(bar, /const accountMounted = signedIn && !isDemoOrgSlug\(club\.slug\)/);
     assert.match(bar, /<AccountMenu[^>]*teams=\{myTeams\} door=\{door\}/);
-    assert.match(bar, /accountMounted \? styles\.doorInSheet : ''/);
+    assert.match(bar, /signedIn \? styles\.doorInSheet : ''/);
+    assert.doesNotMatch(bar, /isDemoOrgSlug/);
     const css = readSource('components/public/ClubFrame.module.css');
     assert.match(css, /@media \(max-width: 900px\) \{\s*\.actions \.doorInSheet \{ display: none; \}/);
   });

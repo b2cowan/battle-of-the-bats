@@ -17,8 +17,8 @@
  * PRINT (J1-110): one Letter page — the club, Summary, the event and its dates; How it finished as
  * Division · Team · How it finished; the event in numbers; each division's final standings (W-L-T, the
  * published order); a footer. Rendered as a COPY straight onto <body> (the coaches portal's certificate
- * form): in print every other child of <body> leaves the paper, so no strip, rail, header, button, bar
- * or demo bar can print around it.
+ * form): in print every other child of <body> leaves the paper, so no strip, rail, header, button or bar
+ * can print around it.
  *
  * THE TOURNAMENT PLAN: the title, one sentence, one plain lock line (no full-page upsell, F38). Nothing
  * a free organizer had is lost: How it finished is on their board.
@@ -26,7 +26,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Printer } from 'lucide-react';
 import { useOrg } from '@/lib/org-context';
-import { isDemoOrgSlug } from '@/lib/demo-org';
 import { usePageTitle } from '@/lib/usePageTitle';
 import { hasPlanFeature } from '@/lib/plan-features';
 import { useTournament } from '@/lib/tournament-context';
@@ -97,18 +96,15 @@ export default function TournamentSummaryPage() {
     return () => { cancelled = true; };
   }, [hasSummary, tournamentId, orgQuery, reloadKey]);
 
-  const inDemo = isDemoOrgSlug(currentOrg?.slug);
   const track = useCallback((action: 'print' | 'share_public_results') => {
-    // The demo refuses every write, and its chrome reads ANY refused write as "Nothing is saved
-    // here" — so counting a tap there told a visitor that copying a link failed to save.
-    if (!tournamentId || inDemo) return;
+    if (!tournamentId) return;
     // Analytics never blocks the organizer's recap.
     void fetch(`/api/admin/tournaments/${encodeURIComponent(tournamentId)}/summary${orgQuery}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ action }),
     }).catch(() => {});
-  }, [tournamentId, orgQuery, inDemo]);
+  }, [tournamentId, orgQuery]);
 
   // A read for a different event than the one on screen is never shown.
   const ready = summary && summary.tournament.id === tournamentId ? summary : null;
@@ -128,11 +124,8 @@ export default function TournamentSummaryPage() {
       </button>
     </>
   ) : null;
-  // The demo tour's closing beat anchors on the title band (it renders in every state of this page).
   const header = (
-    <div data-sandbox-tour="post-event-summary">
-      <AdminPageHeader inlineActions title={SUMMARY_WORDS.title} actions={hasSummary ? tools ?? undefined : undefined} />
-    </div>
+    <AdminPageHeader inlineActions title={SUMMARY_WORDS.title} actions={hasSummary ? tools ?? undefined : undefined} />
   );
 
   if (absent || !hasSummary) return null;

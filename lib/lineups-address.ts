@@ -7,8 +7,8 @@
  * ⚠ This replaced `?tab=templates`, which was page STATE mirrored into the URL by hand
  * (`history.replaceState`) — a tab that looked like an address but was not one: no Back, no
  * middle-click, and the template editor's "All lineups" door could only land on Games. Nothing
- * outside the hub ever linked to the old form (`lib/sandbox-chrome.ts` and the Overview address
- * the bare hub), so there is no redirect to keep.
+ * outside the hub ever linked to the old form (the Overview
+ * addresses the bare hub), so there is no redirect to keep.
  *
  * The template editor is a drill-in of its own at `/lineups/templates/{id}` — the list is a tab,
  * the record is a page, the same split the Practice plans room makes.

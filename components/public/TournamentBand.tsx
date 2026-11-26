@@ -37,14 +37,13 @@ import Link from 'next/link';
 import { User } from 'lucide-react';
 import { useOrgHref, usePublicPathname, useSignInHref } from '@/lib/use-public-pathname';
 import { useClientSignedIn } from '@/lib/use-client-signed-in';
-import { isDemoOrgSlug } from '@/lib/demo-org';
 import { isFocusedPublicPage } from '@/lib/public-focused-page';
 import type { PublicPageKey } from '@/lib/public-pages';
 import type { FrameTabContent } from '@/lib/tournament-page-tabs';
 import type { PublicFrameHost } from '@/lib/public-frame';
 import AccountMenu from '@/components/shared/AccountMenu';
 import SharePageButton from './SharePageButton';
-import TournamentFlipPill, { TournamentFlipDoor } from './TournamentFlipPill';
+import { TournamentFlipDoor } from './TournamentFlipPill';
 import { usePublicFlip } from '@/lib/use-public-flip';
 import TournamentTopTabs from './TournamentTopTabs';
 import clubStyles from './ClubFrame.module.css';
@@ -82,11 +81,9 @@ export default function TournamentBand({
   const href = useOrgHref(orgSlug);
   const signInHref = useSignInHref();
   const homeHref = basePath ?? href(`/${tournamentSlug}`);
-  // The demo is a closed world: every sign-in door is a door out of it (ConsumerNav's strip rule), so it shows none.
-  const inSandbox = isDemoOrgSlug(orgSlug);
   const focused = !preview && isFocusedPublicPage(pathname, orgSlug, tournamentSlug);
   // The preview, and the focused page, show no visitor's door, so they ask nobody who they are.
-  const signedIn = useClientSignedIn(!inSandbox && !preview && !focused);
+  const signedIn = useClientSignedIn(!preview && !focused);
 
   if (focused) {
     return (
@@ -130,14 +127,7 @@ export default function TournamentBand({
             : <Link href={href()} className={styles.hostLink}>Hosted by {host.name} ›</Link>
         )}
         {!preview && <SharePageButton url={homeHref} title={name} text="Live on FieldLogicHQ" compact className={styles.icon} />}
-        {!inSandbox && !preview ? (
-          <BandDoors signedIn={signedIn} signInHref={signInHref(pathname)} />
-        ) : !preview && (
-          // The demo sandbox shows no account menu, so nothing carries the door for it: it keeps its own icon at every width.
-          <span className={styles.bandDoor}>
-            <TournamentFlipPill look="band" />
-          </span>
-        )}
+        {!preview && <BandDoors signedIn={signedIn} signInHref={signInHref(pathname)} />}
       </div>
 
       <TournamentTopTabs
@@ -155,7 +145,7 @@ export default function TournamentBand({
 /** The visitor's own door and the operator door, sharing ONE read of the viewer's hats. In a browser on a phone the account
  *  sheet carries the operator door as its "Go to" block, so the band's separate icon steps aside there (TournamentFrame
  *  `.bandDoorInSheet`); the installed app has no account menu in the band, so it keeps the icon. Mounted only where the
- *  account menu is (not in the demo sandbox, not in the preview), which is also the only time there is a hat-holder to show. */
+ *  account menu is (not in the preview), which is also the only time there is a hat-holder to show. */
 function BandDoors({ signedIn, signInHref }: { signedIn: boolean; signInHref: string }) {
   const { resolution } = usePublicFlip();
   return (

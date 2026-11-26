@@ -50,7 +50,6 @@ import BrandLockup from '@/components/shared/BrandLockup';
 import WorkspacesPill from '@/components/shared/WorkspacesPill';
 import { useRoleSummary } from '@/lib/use-role-summary';
 import { useOrg } from '@/lib/org-context';
-import { useIsSandbox } from '@/components/sandbox/SandboxProvider';
 import { getNotificationSettingsHref } from '@/lib/billing-urls';
 import FlipPill from '@/components/shared/FlipPill';
 import { useAdminFlip } from '@/lib/use-admin-flip';
@@ -126,11 +125,6 @@ export default function AdminTopStrip({ notifCount, onNotifCountChange, suspende
   const { currentOrg, canOpen } = useOrg();
   // The admin shell only renders signed-in — the hook may run unconditionally.
   const roleSummary = useRoleSummary(true);
-  /** "See it live" demo: the account door leads out of the sandbox into the real platform, and a
-   *  prospect who wanders out of a demo has simply been lost. Hidden rather than disabled — the
-   *  binding sandbox rule is hide the entry point, never let it dead-end. The wordmark beside it
-   *  goes inert for the same reason (BrandLockup). False for every real org. */
-  const inSandbox = useIsSandbox();
   const flip = useAdminFlip();
   // Admin Design Continuity — the strip wears the COACHES PORTAL'S strip, stylesheet and all (one
   // stylesheet is the only way two strips cannot drift), its doors take their warm skins, and the
@@ -174,27 +168,25 @@ export default function AdminTopStrip({ notifCount, onNotifCountChange, suspende
         )}
         {/* ⚖ THE PAGE'S "?" (navigation Phase 6b, T1, owner 2026-11-13): between the bell and the account button, as in the Coaches
             Portal — help's place the same in all three portals. Drawn from the address on the first paint (no width to hold),
-            nothing where the page has no topic, never on a cancelled account's page. The demo shows it: it opens in place. */}
+            nothing where the page has no topic, never on a cancelled account's page. */}
         <AdminPageHelpDoor suspended={suspended} className={styles.stripHelp} spacerClassName={styles.stripHelpSpacer} />
         {/* The account door opens IN PLACE (2026-09-01, shared with the coach strip — plan
             `docs/projects/active/COACH_ACCOUNT_MENU_PLAN.md`): identity, notification
             settings, feedback, the account pages, sign out — and the Appearance choice, since
             the admin follows the account theme (above). */}
-        {!inSandbox && (
-          <AccountMenu
-            showWhatsNew
-            // ⚖ Help lives here on a desktop, under What's new (E16, owner 2026-11-09): the guide for where you are, in a
-            // new tab. The phone keeps it at the More sheet's foot; the sandbox (no menu) keeps it in the sidebar's foot. Not on
-            // a cancelled account's one page: its help would bounce to billing (a door that dead-ends).
-            helpHref={!suspended && currentOrg?.slug ? adminHelpHref(pathname, base) : undefined}
-            className={styles.iconDoor}
-            settingsHref={
-              currentOrg?.slug ? getNotificationSettingsHref(currentOrg.slug) : '/account/notifications'
-            }
-            warm
-            showTheme
-          />
-        )}
+        <AccountMenu
+          showWhatsNew
+          // ⚖ Help lives here on a desktop, under What's new (E16, owner 2026-11-09): the guide for where you are, in a
+          // new tab. The phone keeps it at the More sheet's foot. Not on a cancelled account's one page: its help would
+          // bounce to billing (a door that dead-ends).
+          helpHref={!suspended && currentOrg?.slug ? adminHelpHref(pathname, base) : undefined}
+          className={styles.iconDoor}
+          settingsHref={
+            currentOrg?.slug ? getNotificationSettingsHref(currentOrg.slug) : '/account/notifications'
+          }
+          warm
+          showTheme
+        />
         <WorkspacesPill workspaces={roleSummary?.workspaces ?? []} className={styles.pill} warm />
       </div>
   );

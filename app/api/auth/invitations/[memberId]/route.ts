@@ -7,7 +7,6 @@ import { destinationAfterAccept } from '@/lib/invite-acceptance';
 import { withObservability, captureAndJson } from '@/lib/observability';
 import { getSignedInUser } from '@/lib/two-step-session';
 import { startTwoStepGrace } from '@/lib/two-step-grace';
-import { isDemoOrganizerEmail } from '@/lib/demo-org';
 import { PENDING_INVITATION_FILTER, WAITING_ROLE_CLEARED, waitingBoardRole } from '@/lib/waiting-board-role';
 import { invitationSender } from '@/lib/member-names';
 import { roleLabel } from '@/lib/member-access';
@@ -109,11 +108,6 @@ export const POST = withObservability(async (req: Request, { params }: Params) =
   const user = await getAuthenticatedUser();
   if (!user) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
-  // A "See it live" demo's shared account never joins a club (trust close-out 13): every anonymous visitor is signed in as
-  // it. The invite route refuses to write such a row; this refuses one that exists anyway.
-  if (isDemoOrganizerEmail(user.email)) {
-    return NextResponse.json({ error: 'A demo account can’t join a club.', code: 'demo_account' }, { status: 403 });
   }
 
   const { memberId } = await params;

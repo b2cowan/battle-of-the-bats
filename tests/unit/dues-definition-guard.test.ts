@@ -182,10 +182,9 @@ describe('dues definitions have one home', () => {
     // paid_at with no payment row behind it — the family showed as owing everything while both
     // reminder paths skipped them. Stamp writes are sanctioned only where they travel WITH the
     // payment facts: the projection itself, the mark-paid claim (reverted on failure), the
-    // upgrade migration's stamp+payment pair, and the demo re-anchor (which shifts payments too).
+    // upgrade migration's stamp+payment pair. (The demo re-anchor, which shifted payments too, left with the demos.)
     const SANCTIONED_STAMP_WRITERS = new Set([
       'lib/db.ts',
-      'lib/demo-coach-reconcile-core.ts',
       'lib/coach-upgrade-migration.ts',
       'app/api/coaches/[orgSlug]/teams/[teamId]/dues/[scheduleId]/installments/[installId]/route.ts',
     ]);

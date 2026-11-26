@@ -12,7 +12,6 @@ import {
 } from '@/lib/plan-config';
 import { BILLING_TAX_WORDS } from '@/lib/billing-tax';
 import { getPlanGatingMap } from '@/lib/plan-gating-server';
-import { SEE_IT_LIVE_COACHES_PATH, sandboxDoorsVisible } from '@/lib/sandbox-door';
 
 export const metadata = marketingMetadata({
   title: 'For coaches',
@@ -32,11 +31,6 @@ export default async function ForCoachesPage() {
   // The live gate, per request (on-sale pages S1).
   const checkoutOpen = isPlanOpen(await getPlanGatingMap(), 'team');
   const startHref = '/coaches/start?source=for_coaches';
-  // The demo door (owner-ratified 2026-08-10) — same arrangement /for-tournament-organizers
-  // settled: "Start free" first, "See a coach's season" with a live dot second. The sandbox is
-  // the proof; signup is still the ask. Independent of the checkout gate on purpose: the demo
-  // proves the product exists either way.
-  const showSandboxDoor = sandboxDoorsVisible();
   return (
     <main className={kit.page}>
 
@@ -67,23 +61,14 @@ export default async function ForCoachesPage() {
                 {interestButtonLabel()}
               </EarlyAccessModalTrigger>
             )}
-            {showSandboxDoor && (
-              <Link href={SEE_IT_LIVE_COACHES_PATH} prefetch={false} className={`${kit.btn} ${kit.btnSecondary} ${kit.live}`}>
-                See a coach&apos;s season
-              </Link>
-            )}
             <Link href="/pricing" className={`${kit.link} ${kit.linkBlock}`}>
               See all plans
             </Link>
           </div>
-          {/* The objection this answers — "is this another form?" — is why the door converts. */}
-          {showSandboxDoor && (
-            <p className={kit.small}>No sign-up, no email. Walk a full season — tryout day to season&apos;s end.</p>
-          )}
           {/* Open: the price pills below say it, and the old "Start free — no credit card required" line
               promised what the paid sign-up page does not deliver (the plan has no trial). No line here. */}
           {!checkoutOpen && (
-            <div className={showSandboxDoor ? fp.afterNote : undefined}>
+            <div>
               <p className={kit.small}>
                 <span className={fp.noteStrong}>{gatedPlanTag('team')}</span>
                 {' '}— it isn&apos;t open for sign-up yet. {GATED_PLAN_INTEREST_LINE}
@@ -258,8 +243,7 @@ export default async function ForCoachesPage() {
           <p className={kit.eyebrow}>More from FieldLogicHQ</p>
           <div className={`${kit.grid2} ${fp.gridTop}`}>
             {/* Routes to the Club page, not straight to the interest form (2026-08-10 ruling:
-                route to a page when the page has proof — /for-clubs now carries both demo doors;
-                express interest waits there). */}
+                route to a page when the page has proof; express interest waits there). */}
             <Link href="/for-clubs" className={`${kit.card} ${fp.crossCard}`}>
               <span className={kit.eyebrow}>Club</span>
               <span className={kit.title}>Is your organization on FieldLogicHQ yet?</span>
@@ -308,11 +292,6 @@ export default async function ForCoachesPage() {
               >
                 {interestButtonLabel()}
               </EarlyAccessModalTrigger>
-            )}
-            {showSandboxDoor && (
-              <Link href={SEE_IT_LIVE_COACHES_PATH} prefetch={false} className={`${kit.btn} ${kit.btnSecondary} ${kit.live}`}>
-                See a coach&apos;s season
-              </Link>
             )}
             <Link href="/pricing" className={`${kit.btn} ${kit.btnSecondary}`}>
               See all plans

@@ -75,7 +75,6 @@ function deps(over: Partial<ServiceDeps> & { rows?: DomainRow[]; hostOver?: Part
     dns: { async cnames(name) { return over.cnames?.[name] ?? []; } },
     siteTarget: 'sites.fieldlogichq.ca',
     branch: 'dev',
-    isDemoOrg: async () => false,
     now: () => NOW,
     ...over,
   };
@@ -111,15 +110,6 @@ describe('connecting an address', () => {
     assert.deepEqual(await connectClubDomain(d, { ...ME, raw: 'not a domain', mode: 'www' }), { ok: false, reason: 'not_a_domain' });
     assert.deepEqual(await connectClubDomain(d, { ...ME, raw: 'lynx.ca', mode: 'other' }), { ok: false, reason: 'needs_a_name' });
     assert.deepEqual(calls, []);
-  });
-
-  it('refuses the demo club, and fails closed when the demo list cannot load', async () => {
-    const demo = deps({ isDemoOrg: async () => true });
-    assert.deepEqual(await connectClubDomain(demo.d, { ...ME, raw: 'lynx.ca', mode: 'www' }), { ok: false, reason: 'demo' });
-    assert.deepEqual(demo.calls, []);
-    const broken = deps({ isDemoOrg: async () => { throw new Error('list unavailable'); } });
-    assert.deepEqual(await connectClubDomain(broken.d, { ...ME, raw: 'lynx.ca', mode: 'www' }), { ok: false, reason: 'failed' });
-    assert.deepEqual(broken.calls, []);
   });
 
   it('refuses a name another club holds, and a club that already has one', async () => {
@@ -338,11 +328,13 @@ describe('the host\'s answers, in our words', () => {
 
 describe('every refusal has words and a status', () => {
   it('no refusal is left unspoken', () => {
-    const reasons = ['ours', 'not_a_domain', 'needs_a_name', 'demo', 'taken', 'already_connected', 'held_elsewhere', 'limit', 'failed'] as const;
+    const reasons = ['ours', 'not_a_domain', 'needs_a_name', 'taken', 'already_connected', 'held_elsewhere', 'limit', 'failed'] as const;
     for (const reason of reasons) {
       assert.ok(OWN_ADDRESS_REFUSALS[reason].length > 10, reason);
       assert.ok(OWN_ADDRESS_REFUSAL_STATUS[reason] >= 400, reason);
     }
     assert.equal(Object.keys(OWN_ADDRESS_REFUSALS).length, reasons.length);
+    // The retired demo club's refusal is gone with the demo.
+    assert.ok(!('demo' in OWN_ADDRESS_REFUSALS));
   });
 });

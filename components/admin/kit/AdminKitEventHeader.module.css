@@ -201,7 +201,7 @@
 
 @media (min-width: 901px) {
   .header {
-    top: calc(var(--admin-topstrip-h, 0px) + var(--sandbox-chrome-h, 0px));
+    top: var(--admin-topstrip-h, 0px);
     padding: 0.5rem 2rem;
   }
   .header .name { font-size: var(--type-title); }

@@ -11,7 +11,7 @@
  *
  * THE CREDIT RULES DO NOT CHANGE: a paid plan's credit moves here from the bottom of the page (where it rendered alone);
  * a free event keeps its FieldLogicHQ badge exactly as it is, and the footer carries no second credit (WI-10: stacking
- * them says the same thing twice). The demo carries none (the caller decides `showCredit`).
+ * them says the same thing twice).
  *
  * The tab row and this page list replace the Overview's old row of "Explore" buttons.
  *
@@ -21,12 +21,11 @@
  * THE SHORT FOOTER (Stage 7, Ask A5) is the focused page's (lib/public-focused-page.ts — the team pay page): the event's
  * name and the credit, nothing else. The page list, the host line and the address go (that page carries its own one way
  * to ask, under the pay block, A1). The credit shows for EVERY plan there, a free event's included: the focused page wears
- * no floating badge, so the footer is its one credit. Never in the demo (the credit is a door out of it).
+ * no floating badge, so the footer is its one credit.
  */
 import Link from 'next/link';
 import { Check, Copy } from 'lucide-react';
 import { useParams } from 'next/navigation';
-import { isDemoOrgSlug } from '@/lib/demo-org';
 import { isFocusedPublicPage } from '@/lib/public-focused-page';
 import BuiltOnCredit from '@/components/marketing/BuiltOnCredit';
 import { useCopyToClipboard } from '@/lib/hooks/useCopyToClipboard';
@@ -70,7 +69,7 @@ export default function TournamentFooter({
       <footer className={clubStyles.footer} data-public-frame-footer="">
         <div className={clubStyles.footInner}>
           <p className={clubStyles.footName}>{name}</p>
-          {!isDemoOrgSlug(orgSlug) && <BuiltOnCredit className={clubStyles.credit} />}
+          <BuiltOnCredit className={clubStyles.credit} />
         </div>
       </footer>
     );

@@ -443,7 +443,6 @@ export type RefundInput = {
   club: ClubStripe;
   actor: { email: string; role: string };
   ownClub: boolean;
-  demoClub: boolean;
   charge: MoneyCharge;
   /**
    * The invoice the charge paid, read by the route just before (`invoiceIdsForCharge` → `readCreditTarget`), or null when it
@@ -473,7 +472,7 @@ export async function makeRefund(stripe: Stripe, store: RefundStore, input: Refu
   const since = new Date(input.now.getTime() - DAY).toISOString(); // utc-intentional: a 24-hour window
   const refundsLast24h = actor.role === 'billing' ? await store.countByActorSince(actor.email, since) : 0;
   const decision = decideRefund(
-    { role: actor.role, ownClub: input.ownClub, demoClub: input.demoClub, charge, refundsLast24h, now: input.now },
+    { role: actor.role, ownClub: input.ownClub, charge, refundsLast24h, now: input.now },
     input.ask,
   );
   if (!decision.ok) return { ...decision, nothingSent: true };

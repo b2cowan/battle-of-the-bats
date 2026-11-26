@@ -2,7 +2,6 @@ import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase-server';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { isPlatformAdminEmail } from '@/lib/platform-auth';
-import { demoActorRefusal } from '@/lib/demo-guard';
 import { readRealSeats } from '@/lib/org-membership-policy';
 import { captureAndJson, withObservability } from '@/lib/observability';
 import { requireAcceptance } from '@/lib/legal-acceptance';
@@ -20,7 +19,7 @@ import { claimPreviewClub, holdsSeatIn, openClaimPass, readClaimDoor, claimVisit
  * drawing tab 6.3). Body `{ slug, pass, authority: true }`.
  *
  * A new door that makes someone an organization's owner, so it holds every rule Start a club's own door holds
- * (`app/api/org/create/route.ts`): signed in, not a demo account, not staff, the CURRENT Terms (/legal: it joins the
+ * (`app/api/org/create/route.ts`): signed in, not staff, the CURRENT Terms (/legal: it joins the
  * acceptance census), the one-club rule, no live invitation, Club on sale, and a Premium coach's portal. Then the pass
  * (a right code, still the club's current code), and the authority tick, kept word for word in the claim record.
  *
@@ -36,8 +35,6 @@ export const POST = withObservability(async (req: Request) => {
     const supabase = await createClient();
     const user = await getSignedInUser(supabase);
     if (!user?.id || !user.email) return NextResponse.json({ error: 'Sign in required.' }, { status: 401 });
-    const demoRefusal = demoActorRefusal(user);
-    if (demoRefusal) return demoRefusal;
     if (await isPlatformAdminEmail(user.email)) {
       return NextResponse.json({ error: CLAIM_WORDS.err.staff, code: 'staff' }, { status: 403 });
     }

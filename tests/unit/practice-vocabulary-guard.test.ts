@@ -295,11 +295,10 @@ describe('the editor\'s read mode is a FACE, not a disabled form (stage 6, R2)',
 });
 
 describe('the shelf is "Practices" (stage 6, R6) — the product never says "ran"', () => {
-  it('the closed-season shelf\'s title, its intro sentence, and the demo\'s tour line', () => {
+  it('the closed-season shelf\'s title and its intro sentence', () => {
     const seasonEnd = prose(SEASON_END);
     assert.ok(seasonEnd.includes('title="Practices"'));
     assert.ok(!seasonEnd.toLowerCase().includes('practices you ran'), 'the forbidden verb on the record\'s own shelf');
-    assert.ok(!prose('lib/sandbox-chrome.ts').includes('practices you ran'));
   });
 });
 

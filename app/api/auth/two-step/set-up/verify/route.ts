@@ -2,7 +2,6 @@ import { NextResponse } from 'next/server';
 import { withObservability } from '@/lib/observability';
 import { getSessionTwoStep } from '@/lib/api-auth';
 import { createClient } from '@/lib/supabase-server';
-import { isDemoOrganizerEmail } from '@/lib/demo-org';
 import { createBackupCodes, normalizeAuthenticatorCode, recordCodeUse } from '@/lib/two-step-codes';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { REPLACING_AUTHENTICATOR_FLAG, isReplacingAuthenticator } from '@/lib/two-step-session';
@@ -18,9 +17,6 @@ import { sendTwoStepEmail, twoStepTurnedOnEmail } from '@/lib/two-step-emails';
 export const POST = withObservability(async (req: Request) => {
   const state = await getSessionTwoStep();
   if (!state?.passed) return NextResponse.json({ error: 'Sign in first.' }, { status: 401 });
-  if (isDemoOrganizerEmail(state.user.email)) {
-    return NextResponse.json({ error: 'The demo account can’t use two-step sign-in.', code: 'demo_account' }, { status: 403 });
-  }
   // Like set-up/start (/review of Part 2): an account that already has two-step (or is replacing a lost phone) finishes
   // a set-up only with a proof from the last 15 minutes. Otherwise a stale session that set up an authenticator directly
   // with the sign-in service could finish here and remove the real one, or swap the backup codes. A first set-up (two-step

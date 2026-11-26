@@ -24,9 +24,9 @@
 .rail {
   width: var(--admin-rail-w);
   flex-shrink: 0;
-  height: calc(100vh - var(--admin-topstrip-h, 0px) - var(--sandbox-chrome-h, 0px));
+  height: calc(100vh - var(--admin-topstrip-h, 0px));
   position: sticky;
-  top: calc(var(--admin-topstrip-h, 0px) + var(--sandbox-chrome-h, 0px));
+  top: var(--admin-topstrip-h, 0px);
   background: var(--card-bg);
   border-right: 1px solid var(--home-line);
   display: flex;
@@ -241,7 +241,7 @@
 /* The foot's rows ride the ONE scrolling list (owner 2026-11-09: not pinned); the spacer rests them at the bottom on a tall screen. */
 .spacer { flex: 1; min-height: 1rem; }
 .railFoot { flex: none; display: flex; flex-direction: column; padding-bottom: 0.5rem; }
-/* The hairline between Plan & billing (or the sandbox's Help) and the other portals' doors (N4). */
+/* The hairline between Plan & billing and the other portals' doors (N4). */
 .footSep { height: 1px; background: var(--home-line); margin: 0.3rem 1.25rem; flex: none; }
 .footItem { font-size: var(--type-support); }
 

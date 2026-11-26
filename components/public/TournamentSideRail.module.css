@@ -32,10 +32,10 @@
   }
   :global([data-public-frame='light']) .stick {
     position: sticky;
-    top: var(--sandbox-chrome-h, 0px);
+    top: 0;
     display: flex;
     flex-direction: column;
-    max-height: calc(100dvh - var(--sandbox-chrome-h, 0px));
+    max-height: 100dvh;
     overflow-y: auto;
   }
   :global([data-public-frame='light']) .nav {

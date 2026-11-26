@@ -118,42 +118,6 @@
   padding: 0 0.75rem 0.72rem;
 }
 
-/* The sandbox's one added line: an invitation to a stranger who doesn't yet know this panel
-   reacts to what they do. Renders only inside a demo org (components/sandbox/SandboxProvider). */
-.healthSandboxPrompt {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 0.5rem 0.75rem;
-  margin: 0;
-  padding: 0.5rem 0.65rem;
-  font-size: 0.76rem;
-  line-height: 1.45;
-  color: var(--logic-lime);
-  background: rgba(var(--logic-lime-rgb), 0.07);
-  border: 1px solid rgba(var(--logic-lime-rgb), 0.32);
-  border-radius: 6px;
-}
-
-/* "Put it back" — a local reset, because nothing was ever written down. */
-.healthSandboxReset {
-  margin-left: auto;
-  font-family: var(--font-data);
-  font-size: 0.65rem;
-  font-weight: 700;
-  letter-spacing: 0.07em;
-  text-transform: uppercase;
-  color: var(--fl-text);
-  background: rgba(255, 255, 255, 0.06);
-  border: 1px solid rgba(255, 255, 255, 0.14);
-  border-radius: 2px;
-  padding: 0.35rem 0.6rem;
-  cursor: pointer;
-}
-
-.healthSandboxReset:hover { border-color: var(--logic-lime); }
-.healthSandboxReset:focus-visible { outline: 2px solid var(--logic-lime); outline-offset: 2px; }
-
 /* The health row's door to the rules (Tournament admin redesign Stage 3, S1): the row has no gear, so its body opens
    with a quiet worded button. Written on the kit's tokens — no old look. */
 .healthRulesDoor {
@@ -176,8 +140,7 @@
 .healthRulesDoor[aria-pressed='true'] { border-color: var(--home-olive); background: var(--home-olive-soft); color: var(--home-olive); }
 .healthRulesDoor:focus-visible { outline: 2px solid var(--home-olive); outline-offset: 2px; }
 @media (max-width: 768px) {
-  .healthRulesDoor,
-  .healthSandboxReset { min-height: var(--tap-min, 44px); }
+  .healthRulesDoor { min-height: var(--tap-min, 44px); }
 }
 /* Schedule health's window opens on the score with its scale and the row's old caption (owner 2026-10-19, A2). */
 .healthWindowSummary { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.25rem 0.65rem; margin: 0; color: var(--text-secondary); font-size: var(--type-body); }
@@ -1500,29 +1463,6 @@
   border-color: var(--home-olive);
   color: var(--home-olive);
 }
-
-/* Sandbox-only "try it" invitation — a lime tint accent callout → olive-soft/olive (same mapping as
-   GameList's .gameDateTodayBadge: a lime TINT is an accent, not a solid highlight). */
-:global([data-admin-kit]) .healthSandboxPrompt {
-  color: var(--home-olive);
-  background: var(--home-olive-soft);
-  border-color: var(--home-olive);
-}
-/* "Put it back" — a quiet secondary button (KIT_BUTTON.secondary shape), not the sandbox's own
-   accent, so it doesn't compete with the banner it sits inside. */
-:global([data-admin-kit]) .healthSandboxReset {
-  font-family: var(--font-sans, system-ui, sans-serif);
-  letter-spacing: normal;
-  text-transform: none;
-  color: var(--text-secondary);
-  background: var(--card-bg);
-  border-color: var(--home-line-strong);
-}
-:global([data-admin-kit]) .healthSandboxReset:hover {
-  border-color: var(--home-olive);
-  color: var(--text-primary);
-}
-:global([data-admin-kit]) .healthSandboxReset:focus-visible { outline-color: var(--home-olive); }
 
 /* ── Health rules editor (organizer-set thresholds) — a recessed sub-panel inside the card ── */
 :global([data-admin-kit]) .healthRules {

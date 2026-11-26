@@ -23,7 +23,7 @@ import LoadingState from '@/components/shared/LoadingState';
 import { buildFilename, downloadSponsorInvoice, fetchResolvedPdfSettings, DEFAULT_PDF_SETTINGS } from '@/lib/export';
 import { formatStoredDate, tournamentToday } from '@/lib/timezone';
 import { fmt } from '@/lib/coach-money-summary';
-import { writeFailure } from '@/lib/coach-sandbox-refusal';
+import { refusalText } from '@/lib/money-fetch';
 import { DUES_PAYMENT_METHOD_LABEL, type DuesPaymentMethod } from '@/lib/types';
 import {
   invoiceStanding, oneLineAddress, paymentDetailsEmpty,
@@ -189,7 +189,7 @@ export function SponsorInvoiceWindow({
         }),
       });
       const body = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(writeFailure(res, body, 'The invoice could not be saved.'));
+      if (!res.ok) throw new Error(refusalText(body, 'The invoice could not be saved.'));
       kept = body;
     } catch (err) {
       setError(err instanceof Error ? err.message : 'The invoice could not be saved.');

@@ -12,7 +12,6 @@ import { planTrialLine } from '@/lib/plan-trial-line';
 import { BILLING_TAX_WORDS } from '@/lib/billing-tax';
 import { getPlanGatingMap } from '@/lib/plan-gating-server';
 import { getPlanConfigOverride } from '@/lib/plan-config-db';
-import { SEE_IT_LIVE_PATH, sandboxDoorsVisible } from '@/lib/sandbox-door';
 import type { OrgPlan } from '@/lib/types';
 import { alreadyRunningTournamentsLine, type AlreadyRunningPlan } from '@/lib/plan-cross-sell-words';
 
@@ -52,7 +51,7 @@ const CROSS_SELLS: Array<{
   /** The plan whose gate makes the card live (each card reads its own plan's gate). */
   livePlan?: OrgPlan;
   /** Unconditional navigation — the destination page is worth visiting regardless of any gate
-   *  (Club's page carries the two demo doors). Wins over the modal always. */
+   *  (Club's page carries the proof). Wins over the modal always. */
   alwaysHref?: string;
   initialPlanInterest: string[];
   initialFeaturesInterested: string[];
@@ -77,9 +76,8 @@ const CROSS_SELLS: Array<{
     q: 'Running a full club with rep teams?',
     body: 'Club adds rep teams, accounting, and coaching staff management to the full tournament and house league toolkit.',
     cta: 'See what Club includes',
-    // 2026-08-10 reroute: to the Club page, not straight to the interest form — that page now
-    // carries both demo doors, and the form waits there. (League Plus above stays form-first on
-    // purpose: its page has no demo to show yet.)
+    // 2026-08-10 reroute: to the Club page, not straight to the interest form — the form waits
+    // there. (League Plus above stays form-first on purpose.)
     alwaysHref: '/for-clubs',
     initialPlanInterest: ['club'],
     initialFeaturesInterested: ['accounting', 'rep_teams', 'coach_portal'],
@@ -102,9 +100,6 @@ const CROSS_SELLS: Array<{
 ];
 
 export default async function ForTournamentOrganizersPage() {
-  // The sandbox door. Hidden in a production build until the owner turns it on deliberately —
-  // see lib/sandbox-door.ts for why that release step is a decision and not a merge.
-  const showSandboxDoor = sandboxDoorsVisible();
   // The live gate, per request (on-sale pages S1).
   const gatingMap = await getPlanGatingMap();
   // Tournament Plus's trial sentence with the length checkout will use (Ask 31, ruled 2026-11-18).
@@ -134,23 +129,10 @@ export default async function ForTournamentOrganizersPage() {
             <Link href="/start/tournament" className={kit.btn}>
               Start free
             </Link>
-            {/* Second position, deliberately: a secondary button with a live dot, so it reads as a
-                live thing without out-shouting the lime primary. The sandbox is the proof;
-                signup is still the ask. */}
-            {showSandboxDoor && (
-              <Link href={SEE_IT_LIVE_PATH} prefetch={false} className={`${kit.btn} ${kit.btnSecondary} ${kit.live}`}>
-                See a live tournament
-              </Link>
-            )}
             <Link href="/pricing" className={`${kit.link} ${kit.linkBlock}`}>
               See all plans
             </Link>
           </div>
-          {/* The objection this answers — "is this another form?" — is the whole reason the door
-              converts. It is also literally true: no email, no form, no lead capture, ever. */}
-          {showSandboxDoor && (
-            <p className={kit.small}>No sign-up, no email. Walk into a tournament that&apos;s running right now.</p>
-          )}
           <div className={fp.afterNote}>
             <ul className={kit.facts}>
               {['Free plan — no time limit', 'No credit card required', 'Billed in CAD'].map(s => (
@@ -356,13 +338,6 @@ export default async function ForTournamentOrganizersPage() {
             <Link href="/start/tournament" className={kit.btn}>
               Get started free
             </Link>
-            {/* The reader who finished the whole pitch and still isn't ready gets one more exit
-                that isn't "leave" (2026-08-10 door placements). */}
-            {showSandboxDoor && (
-              <Link href={SEE_IT_LIVE_PATH} prefetch={false} className={`${kit.btn} ${kit.btnSecondary} ${kit.live}`}>
-                See a live tournament
-              </Link>
-            )}
             <Link href="/pricing" className={`${kit.btn} ${kit.btnSecondary}`}>
               View pricing
             </Link>

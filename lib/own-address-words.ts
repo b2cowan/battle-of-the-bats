@@ -10,7 +10,6 @@ export const OWN_ADDRESS_REFUSALS: Record<ConnectRefusal, string> = {
   ours: 'That is FieldLogicHQ’s address. Type the address your club bought, like lakeshorelynx.ca.',
   not_a_domain: 'That is not a web address. It looks like lakeshorelynx.ca, with no spaces.',
   taken: 'Another club on FieldLogicHQ uses this address. If it is yours, write to us from Help and we will sort it out.',
-  demo: 'The demo club can’t use its own address. Your club can, from this row.',
   needs_a_name: 'Add a name in front, like teams.lakeshorelynx.ca. The bare name can only forward.',
   already_connected: 'This club already has an address. Stop using it first, then connect a new one.',
   held_elsewhere:
@@ -34,7 +33,6 @@ export const OWN_ADDRESS_REFUSAL_STATUS: Record<ConnectRefusal, number> = {
   ours: 400,
   not_a_domain: 400,
   needs_a_name: 400,
-  demo: 403,
   taken: 409,
   already_connected: 409,
   held_elsewhere: 409,

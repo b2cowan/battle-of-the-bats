@@ -38,7 +38,7 @@
  */
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
-import { filesUnder, readCode, stripComments, readSource, functionBody, between } from './_source-code.ts';
+import { filesUnder, readCode, readSource, functionBody, between } from './_source-code.ts';
 import { foldGrants, ownFactsOf } from '../../lib/free-time.ts';
 import { PREVIEW_SECTIONS, isPreviewRow } from '../../lib/preview-org.ts';
 
@@ -57,7 +57,7 @@ const ENUMERATORS: Record<string, [Klass, string]> = {
   'app/platform-admin/plans-pricing/page.tsx': ['rule', 'Plans & pricing: who a price change touches'],
   'app/platform-admin/email/page.tsx': ['rule', 'the email opt-out list'],
   'app/api/platform-admin/find/route.ts': ['rule', 'Find: the phone/number and Stripe searches; Find labels a preview "Preview club" and still finds it by name'],
-  'lib/platform-metrics.ts': ['rule', 'Business numbers, the snapshot and Today: notCustomerOrgIds and the sandbox exclusions carry the previews'],
+  'lib/platform-metrics.ts': ['rule', 'Business numbers, the snapshot and Today: notCustomerOrgIds and the preview exclusions carry them'],
   'lib/renewals-read.ts': ['rule', 'Renewals: notCustomerOrgIds'],
   'lib/lead-book.ts': ['rule', 'Leads: New accounts, sign-ups and offered clubs'],
   'lib/directory.ts': ['rule', '/discover, /scores, search, follows and every sitemap: getUnlistedOrgIds and scopeFollowableOrgs'],
@@ -148,7 +148,7 @@ describe('preview clubs: the surfaces reached through other tables read the rule
     assert.match(code, /exOrg\(supabaseAdmin\.from\('league_registrations'\)/);
     assert.match(code, /exOrg\(supabaseAdmin\.from\('accounting_entries'\)[^]*?'accounting_ledgers\.org_id'\)/);
     assert.match(code, /exOrg\(supabaseAdmin\s*\.from\('billing_retained_records'\)/);
-    assert.match(functionBody(code, 'resolveSandboxExclusions'), /openPreviewOrgIds\(\)/);
+    assert.match(functionBody(code, 'resolvePreviewExclusions'), /openPreviewOrgIds\(\)/);
   });
   it('the shared not-a-customer set carries the previews itself (Renewals reads it with no ids handed in)', () => {
     assert.match(functionBody(readCode('lib/platform-metrics.ts'), 'notCustomerOrgIds'), /openPreviewOrgIds\(\)/);
@@ -158,8 +158,8 @@ describe('preview clubs: the surfaces reached through other tables read the rule
     assert.match(functionBody(code, 'getCommandCenterStats'), /\.from\('organizations'\)[^;]*?\.eq\('is_preview', false\)/);
     assert.match(functionBody(code, 'writeTodayPlatformMetricSnapshot'), /getCommandCenterStats\(\{ strictPreviews: true \}\)/);
   });
-  it('the senders refuse a preview by the club they are handed, in the same fail-closed try as the demo check', () => {
-    assert.match(functionBody(readCode('lib/notify.ts'), 'notify'), /isDemoOrgId\(opts\.orgId\) \|\| await isPreviewOrgId\(opts\.orgId\)\) return;/);
+  it('the senders refuse a preview by the club they are handed, in the same fail-closed try', () => {
+    assert.match(functionBody(readCode('lib/notify.ts'), 'notify'), /if \(await isPreviewOrgId\(opts\.orgId\)\) return;/);
     assert.match(functionBody(readCode('lib/fan-notify.ts'), 'fanPushContext'), /isPreviewOrgId\(tournament\.org_id as string\)\) return null;/);
     assert.match(functionBody(readCode('lib/email-sender.ts'), 'sendMarketingEmail'), /isPreviewOrgId\(orgId\)\) return 'suppressed';/);
     assert.match(functionBody(readCode('lib/platform-events.ts'), 'writePlatformEvent'), /isPreviewOrgId\(input\.orgId\)/);
@@ -219,7 +219,7 @@ describe('preview clubs: every email names its club (rule 3)', () => {
 
 describe('preview clubs: not indexed, not listed (rule 4)', () => {
   it('the org layout says "don\'t index" for a preview', () => {
-    assert.match(readCode('app/[orgSlug]/layout.tsx'), /getDemoOrgBySlug\(orgSlug\) \|\| org\.isPreview\s*\?\s*\{ robots: \{ index: false/);
+    assert.match(readCode('app/[orgSlug]/layout.tsx'), /org\.isPreview\s*\?\s*\{ robots: \{ index: false/);
   });
   it('the directory leaves previews out of listed tournaments and followable clubs', () => {
     const dir = readCode('lib/directory.ts');
@@ -259,8 +259,8 @@ describe('preview clubs: the door (rule 6)', () => {
     assert.equal(isPreviewRow({ is_preview: true }), true);
     assert.equal(isPreviewRow({}), false);
   });
-  it('the preview rule is not the demo list (no write block, no sandbox chrome, no silenced alerts)', () => {
-    assert.doesNotMatch(stripComments(readSource('lib/demo-org.ts')), /preview/i);
-    assert.doesNotMatch(readCode('lib/demo-guard.ts'), /isPreview|is_preview/);
+  it('the preview rule never grew a demo-style write block or silenced alerts (the demo files are gone)', () => {
+    assert.doesNotMatch(readCode('proxy.ts'), /isPreview|is_preview/, 'no write block for a preview in the proxy');
+    assert.doesNotMatch(readCode('lib/observability/capture.ts'), /preview/i);
   });
 });

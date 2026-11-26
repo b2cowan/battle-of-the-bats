@@ -1,5 +1,4 @@
 import { getAuthenticatedUser, unauthorized } from '@/lib/api-auth';
-import { demoBillingRefusal } from '@/lib/demo-guard';
 import { isBillingMockEnabled, isStripeConfigured } from '@/lib/billing-mock';
 import { getPlanGatingMap } from '@/lib/plan-gating-server';
 import { getPlanConfigOverride } from '@/lib/plan-config-db';
@@ -30,9 +29,6 @@ function appendSuccess(url: string) {
 export const POST = withObservability(async (req: Request) => {
   const user = await getAuthenticatedUser();
   if (!user) return unauthorized();
-  // The sandboxes run the real product and the demo organizer holds the billing power (one shared refusal: lib/demo-guard.ts).
-  const demoRefusal = demoBillingRefusal(user);
-  if (demoRefusal) return demoRefusal;
   // Nobody starts a paid plan without the current Terms (GST/HST Stage 6 step 6.3, C1) — before every branch: the comp
   // and dev-mock paths provision a workspace without Stripe.
   const terms = await requireAcceptance(user);

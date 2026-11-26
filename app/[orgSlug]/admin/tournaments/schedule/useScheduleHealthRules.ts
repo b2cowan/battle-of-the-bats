@@ -8,7 +8,7 @@
 import { useEffect, useState } from 'react';
 import type { Tournament } from '@/lib/types';
 import { getScheduleHealthRules } from '@/lib/schedule-metrics';
-import { writeFailure } from '@/lib/coach-sandbox-refusal';
+import { refusalText } from '@/lib/money-fetch';
 import type { ScheduleHealthRulesDraft } from './components/ScheduleHealthPanel';
 
 export const DEFAULT_HEALTH_RULES: ScheduleHealthRulesDraft = { maxGamesPerDay: 2, minRestMinutes: 15, targetGamesPerTeam: null };
@@ -51,8 +51,7 @@ export function useScheduleHealthRules({ tournament, orgSlug, onSaved, onSaveErr
       });
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
-        // The demo's refusal in its own sentence, never its code name (/review 2026-10-19).
-        onSaveError(writeFailure(res, data, 'The schedule health rules could not be saved. Please try again.'));
+        onSaveError(refusalText(data, 'The schedule health rules could not be saved. Please try again.'));
         return;
       }
       setSaved(rules);

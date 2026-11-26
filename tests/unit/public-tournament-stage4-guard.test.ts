@@ -134,12 +134,13 @@ describe('Stage 4 Part 3: a live, published-only Playoffs body', () => {
     assert.match(body, /getDivisionPref\(orgSlug\)/);
     assert.doesNotMatch(body, /followedTeamId|readFollowed|ScoreTicker|TodaysResultsLine|Full Bracket|Playoff schedule/);
   });
-  it('reuses the game-card and seeding builders; the bracket anchor follows the move', () => {
+  it('reuses the game-card and seeding builders; the bracket section is named for a screen reader, with no demo tour anchor', () => {
     const body = readCode('components/public/PublicPlayoffs.tsx');
     assert.match(body, /<PublicLiveCard/);
     assert.match(body, /buildPlayoffPicture\(/);
     assert.match(body, /<PublicDisclosure title="How seeding works"/);
-    assert.match(body, /data-sandbox-tour="playoff-bracket"/);
+    assert.match(body, /<section className=\{styles\.bracket\} aria-label="Playoff bracket">/);
+    assert.doesNotMatch(body, /data-sandbox-tour/);
     assert.match(body, /requireFinalization=\{requireFinalization\} now=\{clock\} \/>/);
     assert.ok(body.indexOf('<PublicLiveCard') < body.indexOf('<TieredBracket'));
   });

@@ -115,7 +115,7 @@ export default function PublicPlayoffs({ orgSlug, tournamentSlug, initialData, i
           <PublicSectionHead title="Champion" /><PublicChampions cards={champions} />
         </> : <PublicTournamentState title="No upcoming playoff games" description="The bracket below has the latest results. A champion has not been decided." compact />}
       </section>
-      <section className={styles.bracket} data-sandbox-tour="playoff-bracket" aria-label="Playoff bracket">
+      <section className={styles.bracket} aria-label="Playoff bracket">
         <PublicSectionHead title="Bracket" />
         <TieredBracket games={games} teams={teams} pools={division?.pools ?? []}
           orgSlug={orgSlug} tournamentSlug={tournamentSlug} venues={data.venues} divisions={data.divisions} requireFinalization={requireFinalization} now={clock} />

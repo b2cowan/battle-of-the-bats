@@ -45,8 +45,8 @@
  *     editing the baseline by hand, where a reviewer sees it.
  *
  * Scope — the public surfaces The public face, warm owns (found in the code, not from a plan):
- *   marketing         the home page, /pricing, the four /for-* pages and their walkthroughs, /changelog, /demos,
- *                     /see-it-live, /pitch, the bar, the footer, the plan cards, components/marketing
+ *   marketing         the home page, /pricing, the four /for-* pages and their walkthroughs, /changelog,
+ *                     /pitch, the bar, the footer, the plan cards, components/marketing
  *   signed-out shell  the consumer bar, /start, /auth/*, components/auth, the shared name lockup
  *   system screens    the 404, the crash and fatal-crash screens, the offline page, /unsubscribe, the paused screen
  *   emails            lib/ files that build one: the listed builders plus any lib/*.ts named like one
@@ -81,9 +81,7 @@ const DIRS = [
   'app/for-*',
   'app/pricing',
   'app/changelog',
-  'app/demos',
   'app/pitch',
-  'app/see-it-live',
   'app/unsubscribe',
   'app/(consumer)/auth',
   'app/(consumer)/start',

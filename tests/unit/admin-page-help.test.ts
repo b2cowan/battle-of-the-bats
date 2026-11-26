@@ -156,12 +156,12 @@ describe('the chrome draws the "?"; no admin page draws its own (two "?"s would 
     assert.equal((layout.match(/<HelpDrawerProvider\b/g) ?? []).length, 1);
     assert.match(readCode('app/[orgSlug]/admin/AdminChrome.tsx'), /<PageHelpChannelProvider>[\s\S]*\{frame\}[\s\S]*<\/PageHelpChannelProvider>/);
   });
-  it('the strip: View site · bell · "?" · account · Workspaces — and the demo shows it (outside the sandbox gate)', () => {
+  it('the strip: View site · bell · "?" · account · Workspaces', () => {
     const strip = readCode('components/admin/AdminTopStrip.tsx');
     const at = (s: string) => { const i = strip.indexOf(s); assert.ok(i >= 0, s); return i; };
     assert.ok(at('<FlipPill') < at('<NotificationBell') && at('<NotificationBell') < at('<AdminPageHelpDoor') && at('<AdminPageHelpDoor') < at('<AccountMenu') && at('<AccountMenu') < at('<WorkspacesPill'));
     assert.equal((strip.match(/<AdminPageHelpDoor /g) ?? []).length, 1);
-    assert.ok(strip.indexOf('<AdminPageHelpDoor') < strip.indexOf('{!inSandbox &&'));
+    assert.doesNotMatch(strip, /inSandbox/, 'the retired demo sandbox gate is gone');
   });
   it('the phone bar: the "?" is the row’s last control, after the globe; one per width', () => {
     const bar = readCode('components/admin/AdminEventHeader.tsx');

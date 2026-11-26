@@ -78,11 +78,11 @@ describe('2. the email asks them to sign in and accept', () => {
   });
 });
 
-describe('3. demo and support addresses', () => {
-  it('the invite refuses both, with ONE neutral answer, before anything is read or written', () => {
+describe('3. support addresses', () => {
+  it('the invite refuses a staff address, with ONE neutral answer, before anything is read or written', () => {
     const at = invite.indexOf('const staff = await isPlatformAdminEmailStrict(email);');
     assert.ok(at > 0);
-    assert.match(invite, /if \(staff \|\| isDemoOrganizerEmail\(email\)\) \{\s*return NextResponse\.json\(\{ error: 'That address can’t be invited to a club\.', code: 'address_not_invitable' \}/);
+    assert.match(invite, /if \(staff\) \{\s*return NextResponse\.json\(\{ error: 'That address can’t be invited to a club\.', code: 'address_not_invitable' \}/);
     // Leftover call 13 (owner 2026-11-19): a read that can't answer refuses with "try again", never lets the address through.
     assert.match(invite, /if \(staff === null\) \{\s*return NextResponse\.json\(\{ error: 'We couldn’t check that address just now\. Try again\.', code: 'address_check_failed' \}, \{ status: 503 \}\);/);
     const strict = readCode('lib/platform-auth.ts');
@@ -100,12 +100,9 @@ describe('3. demo and support addresses', () => {
     assert.ok(accept.indexOf("code: 'invitation_changed'") < accept.indexOf('.update(memberUpdate)'));
     assert.match(readCode('components/home/PendingInvitationsCard.tsx'), /body: JSON\.stringify\(\{ action, role \}\)/);
   });
-  it('a demo account can accept at neither accept door', () => {
-    for (const file of ['app/api/auth/invitations/[memberId]/route.ts', 'app/api/auth/accept-invite/route.ts']) {
-      const code = readCode(file);
-      const post = code.slice(code.indexOf('export const POST'));
-      assert.ok(post.indexOf('isDemoOrganizerEmail(user.email)') > 0, file);
-      assert.ok(post.indexOf('isDemoOrganizerEmail(user.email)') < post.indexOf(".from('organization_members')"), `${file}: refused after the read`);
+  it('neither accept door nor the invite knows the retired demo accounts', () => {
+    for (const file of ['app/api/auth/invitations/[memberId]/route.ts', 'app/api/auth/accept-invite/route.ts', 'app/api/admin/members/invite/route.ts']) {
+      assert.doesNotMatch(readCode(file), /isDemoOrganizerEmail/, file);
     }
   });
 });

@@ -3,7 +3,6 @@ import Link from 'next/link';
 import { usePublicPathname } from '@/lib/use-public-pathname';
 import { isCoachPortalShellPath } from '@/lib/coaches-portal-routes';
 import { isConsumerShellPath, isWarmJourneyPath } from '@/lib/consumer-routes';
-import { DEMOS_PATH, sandboxDoorsVisible } from '@/lib/sandbox-door';
 import GetAppQr from './shared/GetAppQr';
 import styles from './Footer.module.css';
 import BrandLockup from '@/components/shared/BrandLockup';
@@ -21,9 +20,6 @@ const STATIC_ROOTS = new Set([
   // The four persona marketing pages: without these the footer vanished there,
   // leaving /for-coaches a dead end in the installed app (no way back).
   'for-coaches', 'for-leagues', 'for-clubs', 'for-tournament-organizers',
-  // The demo chooser — a shared outbound link, so it is the one page a stranger is most
-  // likely to arrive on cold, and the least able to afford having no way onward.
-  'demos',
   // The legal pages (GST/HST Stage 6.2): marketing ground, "not found" while they are off.
   'legal',
   // The public Security page (Board Ready §0c, S3): live only with the legal pages, on the same ground.
@@ -39,12 +35,6 @@ const FOOTER_GROUPS = [
     links: [
       ['Discover', '/discover'],
       ['Pricing', '/pricing'],
-      // Filtered out below on two conditions (see `showDemosLink`): when the doors are closed,
-      // and on the warm/in-app surface. A link to a page of doors nobody is meant to find yet is
-      // the same mistake as advertising the doors themselves — and offering a DEMO to somebody
-      // already signed in and using the product is the "marketing layout only" rule (binding,
-      // design_decisions 2026-08-10 rule 1) being broken by a shared component's reach.
-      ['Live demos', DEMOS_PATH],
       ['What’s new', '/changelog'],
     ],
   },
@@ -159,7 +149,6 @@ export default function Footer() {
   // section (Phase 2). EXACT matches only — a prefix would strip the QR from every other
   // /account/* section (that regression shipped once and was caught in /review).
   const isAccount = pathname === '/account' || pathname === '/account/get-the-app';
-  const showDemosLink = surface === 'marketing' && sandboxDoorsVisible();
 
   return (
     <footer className={`${styles.footer} ${skin}`}>
@@ -176,7 +165,7 @@ export default function Footer() {
 
           {groups.map(group => {
             const links = group.links.filter(
-              ([, href]) => href !== pathname && (href !== DEMOS_PATH || showDemosLink),
+              ([, href]) => href !== pathname,
             );
             if (links.length === 0) return null;
             return (

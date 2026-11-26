@@ -1,6 +1,5 @@
 import type { MetadataRoute } from 'next';
 import { getClubPageSitemapEntries, getDirectorySitemapEntries, getOrgSitemapEntries } from '@/lib/directory';
-import { isDemoOrgSlug } from '@/lib/demo-org';
 import { bareHost, isOwnHost } from '@/lib/own-hosts';
 import { clubHosts } from '@/lib/club-host';
 import { clubOwnUrl } from '@/lib/club-base';
@@ -29,25 +28,14 @@ const STATIC_PATHS: { path: string; priority: number; changeFrequency: MetadataR
   { path: '/changelog',                priority: 0.5, changeFrequency: 'weekly'  },
 ];
 
-/**
- * Is this href inside a sandbox ("See it live") org? Those pages are genuine public tournament
- * pages, which is exactly why they must never be submitted for indexing — a demo event surfacing
- * in a search for a real one is the failure this guards. The seed already keeps them out of the
- * directory; this covers the case where somebody later flips a discovery flag by hand.
- * Both scans emit org-rooted hrefs (`/{orgSlug}/…`), so the first segment is the org.
- */
-function isSandboxHref(href: string): boolean {
-  return isDemoOrgSlug(href.split('/')[1] ?? '');
-}
-
 /** Map one dynamic scan's rows into sitemap entries, or contribute nothing if the scan fails.
  *  States the fail-quiet contract once, for every scan. */
-async function safeEntries<T extends { href: string }>(
+async function safeEntries<T>(
   scan: Promise<T[]>,
   toEntry: (row: T) => MetadataRoute.Sitemap[number],
 ): Promise<MetadataRoute.Sitemap> {
   try {
-    return (await scan).filter(row => !isSandboxHref(row.href)).map(toEntry);
+    return (await scan).map(toEntry);
   } catch {
     return [];
   }

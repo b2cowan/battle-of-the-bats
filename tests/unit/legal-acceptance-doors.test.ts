@@ -84,11 +84,10 @@ const INVITATION_MINTS: Record<string, string> = {
   'app/api/admin/members/invite/route.ts': 'an organization invites a member — the invitee ticks at /auth/accept-invite',
   'lib/invite-links.ts': 'reinvite and resend of the same invitation — the invitee ticks at /auth/accept-invite',
 };
-/** Staff and demo accounts never tick (lib/legal-acceptance-exempt.ts, R4). */
+/** Staff accounts never tick (lib/legal-acceptance-exempt.ts, R4). */
 const EXEMPT: Record<string, string> = {
   'app/api/platform-admin/company-users/route.ts': 'staff — FieldLogicHQ’s own team',
   'app/api/dev/seed/platform-user/route.ts': 'staff — a dev seed of a platform user',
-  'lib/demo-session.ts': 'demo — the no-login demo door signs in the two demo accounts',
 };
 /** Recovery and verification: an existing account, nothing agreed. */
 const NOT_A_DOOR: Record<string, string> = {
@@ -114,7 +113,7 @@ describe('the account-door census (B3): every login maker is a door, or named wi
   it('every login maker is listed, and every listed file still makes one', () => {
     assert.deepEqual(makers, listed,
       'A file that makes a login is not on a list (or a listed one no longer makes one). Decide: a door (refuse without the box, '
-      + 'record after — accountDoorRefusal / recordDoorAcceptance), exempt (staff or demo only, R4), or not a door, with its reason.');
+      + 'record after — accountDoorRefusal / recordDoorAcceptance), exempt (staff only, R4), or not a door, with its reason.');
   });
   it('nothing reaches the auth admin through an alias the scan cannot follow', () => {
     const aliased = filesMatching(/=\s*supabaseAdmin\.auth(\.admin)?\s*;|\{\s*admin\s*\}\s*=\s*\w+\.auth/);
@@ -230,7 +229,6 @@ const EXEMPT_SUBTREES: Record<string, string> = {
 };
 /** One file that reads the user and does not mount it. */
 const EXEMPT_FILES: Record<string, string> = {
-  'app/[orgSlug]/layout.tsx': 'reads the user only for a demo organization (the demo accounts are exempt); its signed-in children are the shells above',
   'app/page.tsx': 'a signed-in person is redirected to their workspace, which mounts the screen',
 };
 const RESOLVES_USER = /getAuthUserCached|getAuthContextWithRole|getCoachPortalAuth|getPlatformAdminContext|getAuthenticatedUser|getSignedInUser|\.getUser\(/;

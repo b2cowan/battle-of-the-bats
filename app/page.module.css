@@ -44,27 +44,6 @@
 .whole .ctaText { margin-top: 0.75rem; }
 .whole:hover .ctaText { text-decoration: underline; text-underline-offset: 3px; }
 
-/* ── A persona card carrying two doors (Tournament + "See it live") ─────────────────
-   Links can't nest, so this variant is a div: the persona link stretches over the whole card
-   via ::after (whole-card clickability preserved), and the demo link sits above it. */
-.doored {
-  position: relative;
-  transition: border-color 0.15s ease;
-}
-.doored:hover { border-color: var(--home-line-strong); }
-
-.stretch::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  z-index: 1;
-}
-
-.secondary {
-  position: relative;
-  z-index: 2;
-}
-
 /* ── The roadmap strip (live products lead, 2026-08-08) ─────────────────────────────
    Every not-yet-purchasable persona on one quiet row below the live cards. */
 .roadmap {

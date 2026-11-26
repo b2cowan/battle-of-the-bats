@@ -271,9 +271,8 @@ describe('8 · the work reaches our servers through ONE hook, keys only; the car
     assert.match(hook, /if \(!d\) \{ setKeepFailed\(true\); return; \}/);
     // Back to what the server holds: the failed line goes.
     assert.match(hook, /if \(text === keptText\.current\) \{ cancelPause\(\); setKeepFailed\(false\); return; \}/);
-    // The demo refusing is the demo working: the card carries on and says the sandbox's own sentence, never its code name.
-    assert.match(hook, /if \(r\.status !== 403 \|\| d\?\.sandbox !== true\) return null;/);
-    assert.match(hook, /if \(sandbox\) \{ setSandboxNote\(sandbox\); return \{ ok: true, saved: null \}; \}/);
+    // The retired demo's by-design refusal (a 403 the card carried on through) is gone: a refused keep is a failed keep.
+    assert.doesNotMatch(hook, /sandbox/i);
   });
   it('the helper has no network, no route and no server import; its one browser touch is deleting the old keys', () => {
     const src = readCode(HELPER);
@@ -340,7 +339,7 @@ describe('9 · the club card wires it as ruled (S7)', () => {
     assert.match(form, /<Callout tone="warn" role="status" flush>\{W\.draftDropped\(droppedMarks\)\}<\/Callout>/);
   });
   it('the resting sentence is the server\'s promise; a failed keep says so in its place, with Try again', () => {
-    assert.match(form, /\{work\.keepFailed\s*\? <>\{W\.workKeepFailed\}\{' '\}<button type="button" className=\{s\.link\} onClick=\{\(\) => void work\.flush\(\)\}>\{W\.tryAgain\}<\/button><\/>\s*: work\.sandboxNote \?\? W\.workKept\}/);
+    assert.match(form, /\{work\.keepFailed\s*\? <>\{W\.workKeepFailed\}\{' '\}<button type="button" className=\{s\.link\} onClick=\{\(\) => void work\.flush\(\)\}>\{W\.tryAgain\}<\/button><\/>\s*: W\.workKept\}/);
     assert.doesNotMatch(form, /draftKept|hasDraft|canKeep\b/, 'no browser-storage promise is left on the card');
   });
   it('Save settles what waits, then saves the check, and forgets the work only once the check saved; a refusal keeps it', () => {
@@ -489,7 +488,7 @@ describe('12 · the coach card wires it as the club card does (S7)', () => {
     assert.match(card, /\{cashCents !== null && <><span className=\{b\.stripDot\} aria-hidden>·<\/span><span>\{W\.stripCash\} <b>\{cents\(cashCents\)\}<\/b><\/span><\/>\}/);
   });
   it('the resting sentence is one of the card\'s note line\'s sentences, replaced by the failed keep\'s when a keep failed', () => {
-    assert.match(card, /\{work\.keepFailed\s*\? <>\{W\.workKeepFailed\}\{' '\}<button type="button" className=\{b\.link\} onClick=\{\(\) => void work\.flush\(\)\}>\{W\.tryAgain\}<\/button><\/>\s*: work\.sandboxNote \?\? W\.workKept\}/);
+    assert.match(card, /\{work\.keepFailed\s*\? <>\{W\.workKeepFailed\}\{' '\}<button type="button" className=\{b\.link\} onClick=\{\(\) => void work\.flush\(\)\}>\{W\.tryAgain\}<\/button><\/>\s*: W\.workKept\}/);
     assert.doesNotMatch(card, /draftKept|hasDraft|canKeep\b/);
   });
   it('Save settles, saves, and forgets only once the check saved; Start over asks only when lines are marked and never touches the notice', () => {

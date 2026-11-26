@@ -7,14 +7,12 @@
  *
  * In order: the Summary row joins Operations once the event is over (the old rails' rule) on a plan that carries
  * Summary, the areas the plan doesn't carry drop out (an invite-only event has no Check-in, Staff kit or Chat — the
- * free tournament tier, R5, 2026-10-16: absent, never a wall reached from the nav), the "See it live" sandbox's
- * curated corners drop out (lib/sandbox-curation.ts), role-gated rows drop out for roles that cannot open them, and a
- * group left empty drops out entirely.
+ * free tournament tier, R5, 2026-10-16: absent, never a wall reached from the nav), role-gated rows drop out for roles
+ * that cannot open them, and a group left empty drops out entirely.
  */
 import { Bell, FileText } from 'lucide-react';
 // Relative, not '@/': the unit runner imports this file directly and resolves no path alias.
 import { TOUR_GROUPS, type TourGroup, type TourNavItem } from '../admin-nav-config.ts';
-import { isNavKeyHiddenInSandbox } from '../../../lib/sandbox-curation.ts';
 import { eventAreas } from '../../../lib/invite-only-event.ts';
 import { orgSettingsOnTournamentSide } from '../../../lib/billing-urls.ts';
 import { isTournamentEventPath, litTournamentRow, tournamentOrgScreenName, type KitLink } from '../../../lib/admin-kit-nav.ts';
@@ -30,9 +28,8 @@ export function isTournamentSummaryPhase(status: string | null | undefined): boo
   return status === 'completed' || status === 'archived';
 }
 
-export function kitTournamentGroups({ status, isSandbox, role, planId, accountKind }: {
+export function kitTournamentGroups({ status, role, planId, accountKind }: {
   status: string | null | undefined;
-  isSandbox: boolean;
   role: string | null | undefined;
   /** The organization's plan: it decides which areas an event has (`eventAreas`). */
   planId: string | null | undefined;
@@ -58,7 +55,6 @@ export function kitTournamentGroups({ status, isSandbox, role, planId, accountKi
       ...g,
       items: g.items.filter(i =>
         !absent.has(i.key)
-        && !(isSandbox && isNavKeyHiddenInSandbox(true, i.key))
         && (!i.roles || (!!role && i.roles.includes(role)))),
     }))
     .filter(g => g.items.length > 0);
@@ -88,11 +84,10 @@ export function deskTournamentGroups(groups: readonly TourGroup[]): TourGroup[] 
  * a Tournament plan's Settings & access, which is a place on both widths; the public preview; a cancelled account's one page).
  * Pure, and every input is known on the server's first paint.
  */
-export function deskTitleAt({ pathname, base, status, isSandbox, role, planId, billingLink }: {
+export function deskTitleAt({ pathname, base, status, role, planId, billingLink }: {
   pathname: string;
   base: string;
   status: string | null | undefined;
-  isSandbox: boolean;
   role: string | null | undefined;
   planId: string | null | undefined;
   /** The foot's Plan & billing door (`kitBillingLink`): its page is the more specific door under Settings & access. */
@@ -100,7 +95,7 @@ export function deskTitleAt({ pathname, base, status, isSandbox, role, planId, b
 }): string | null {
   if (!pathname.startsWith(`${base}/tournaments/`) || pathname.startsWith(`${base}/tournaments/preview`)) return null;
   if (!isTournamentEventPath(pathname, base)) return tournamentOrgScreenName(pathname, base);
-  const rows = deskTournamentGroups(kitTournamentGroups({ status, isSandbox, role, planId })).flatMap(g => g.items);
+  const rows = deskTournamentGroups(kitTournamentGroups({ status, role, planId })).flatMap(g => g.items);
   const lit = litTournamentRow(pathname.replace(/\/+$/, ''), base, rows.map(r => r.key), billingLink);
   return rows.find(r => r.key === lit)?.label ?? null;
 }

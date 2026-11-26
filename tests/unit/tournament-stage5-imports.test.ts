@@ -176,10 +176,9 @@ describe('each import lives with its data (A59)', () => {
 });
 
 describe('Data tools retires (A59)', () => {
-  it('its address opens Teams; its rail row, sandbox key and guidance shortcut are gone', () => {
+  it('its address opens Teams; its rail row and guidance shortcut are gone', () => {
     assert.match(code('app/[orgSlug]/admin/tournaments/data-tools/page.tsx'), /redirect\(`\/\$\{encodeURIComponent\(orgSlug\)\}\/admin\/tournaments\/registrations`\)/);
     assert.doesNotMatch(code('components/admin/admin-nav-config.ts'), /key: 'data-tools'/);
-    assert.doesNotMatch(code('lib/sandbox-curation.ts'), /'data-tools'/);
     assert.doesNotMatch(read('lib/tournament-guidance.ts'), /data-tools-imports/);
   });
   it('its help article moved into Teams\' and the schedule\'s topics', () => {

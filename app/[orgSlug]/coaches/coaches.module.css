@@ -506,16 +506,10 @@
      Derived from the shared --chrome-bar-h (Stage G) — the ONE platform chrome-bar height, worn
      also by the other operator strip and the consumer app strip, so none can drift. The local var stays because the zeroing below is shell-local. */
   --coach-topstrip-h: var(--chrome-bar-h);
-  /* The strip's actual on-screen top, not just its height — in the "See it live" demo the
-     sandbox banner sits above it and pushes it down by --sandbox-chrome-h (0px for every
-     real customer). The STICKY/FIXED things pinned below the strip (the team header, the
-     sidebar, the reference rail, deep-link scroll targets) must offset by THIS, or they
-     stick too high and tuck under the strip.
-     ⚠ NOT this element's own padding-top below — globals.css already pads the whole
-     document by --sandbox-chrome-h once (html[data-sandbox-chrome] body), because a body
-     padding can't reach a sticky/fixed element's `top`. Adding the term here too would
-     double-count the banner and open a gap under the strip (caught 2026-08-11 review). */
-  --coach-topstrip-top: calc(var(--coach-topstrip-h) + var(--sandbox-chrome-h, 0px));
+  /* The strip's actual on-screen top, not just its height. The STICKY/FIXED things pinned below
+     the strip (the team header, the sidebar, the reference rail, deep-link scroll targets) offset
+     by THIS, or they stick too high and tuck under the strip. */
+  --coach-topstrip-top: var(--coach-topstrip-h);
   /* ⚖ THE BAND'S HEIGHT, 0 unless this address has one (navigation Phase 4b, R1, owner 2026-11-11). A room with tabs pins them in a
      band directly under the strip on a computer; everything that docks under the strip adds this to its base — the register's
      toolbar and column heads, the section deep-link margin. ⚠ Added, never folded into `--coach-header-h` (the team bar's own
@@ -1128,7 +1122,7 @@
 /* The foot's quiet doors — Help, Admin, Collapse sidebar — at 12px, as the admin foot (`.footItem`, the nav standard's
    N1, 2026-10-17): they are ways out, not pages of the team. Rows and icons keep the row recipe. */
 .sidebarFootItem { font-size: var(--type-support); }
-/* The hairline between Plan & billing (or the sandbox's Help) and the other portals' doors — the admin foot's `.footSep`
+/* The hairline between Plan & billing and the other portals' doors — the admin foot's `.footSep`
    (N4, navigation Phase 1). */
 .sidebarFootSep { height: 1px; flex-shrink: 0; background: var(--home-line, rgba(255,255,255,0.06)); margin: 0.3rem 1.25rem; }
 

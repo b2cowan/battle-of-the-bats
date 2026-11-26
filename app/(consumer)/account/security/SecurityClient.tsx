@@ -19,7 +19,6 @@ export type SecurityView = {
   graceNotice: { lead: string; by: string } | null;
   requiredNow: boolean;
   backupCodesLeft: number;
-  isDemo: boolean;
   hasPassword: boolean;
 };
 
@@ -82,8 +81,6 @@ export default function SecurityClient({ view }: { view: SecurityView }) {
     if (await run('/api/auth/sign-out-others', {}, 'Your other devices are signed out. This one stays signed in.')) setAsk(null);
   }
 
-  const demoNote = view.isDemo ? <p className={styles.fine}>Not available on the demo: the demo account is shared by everyone trying it.</p> : null;
-
   return (
     <div className={styles.stack}>
       {view.graceNotice && (
@@ -108,13 +105,11 @@ export default function SecurityClient({ view }: { view: SecurityView }) {
                 : <>{view.onSince ? `On since ${view.onSince}. ` : ''}Signing in asks for a code from your authenticator app.</>}
             </p>
             {view.covered && view.reason && <p className={styles.fine}>{view.reason}, so it can’t be turned off.</p>}
-            {!view.isDemo && (
-              <div className={styles.acts}>
-                <Link href={setUpHref('replace=1')} className={styles.btn}>{view.replacing ? 'Finish setting up my new phone' : 'Set up a new phone'}</Link>
-                <Link href={setUpHref('step=codes')} className={styles.btn}>New backup codes</Link>
-                {!view.covered && <button type="button" className={styles.btn} onClick={() => setAsk('turnOff')}>Turn off</button>}
-              </div>
-            )}
+            <div className={styles.acts}>
+              <Link href={setUpHref('replace=1')} className={styles.btn}>{view.replacing ? 'Finish setting up my new phone' : 'Set up a new phone'}</Link>
+              <Link href={setUpHref('step=codes')} className={styles.btn}>New backup codes</Link>
+              {!view.covered && <button type="button" className={styles.btn} onClick={() => setAsk('turnOff')}>Turn off</button>}
+            </div>
             <p className={styles.fine}>
               {view.backupCodesLeft} of 10 backup codes left. New codes replace the old ones.
               {!view.covered && ' Turning it off, getting new codes or setting up a new phone asks for a code first.'}
@@ -125,37 +120,28 @@ export default function SecurityClient({ view }: { view: SecurityView }) {
             {!(view.graceNotice || view.requiredNow) && (
               <p className={styles.body}>Turn it on so a stolen password isn’t enough to sign in as you.</p>
             )}
-            {!view.isDemo && (
-              <div className={styles.acts}>
-                <Link href={setUpHref('')} className={styles.btnLime}>Turn on two-step sign-in</Link>
-              </div>
-            )}
+            <div className={styles.acts}>
+              <Link href={setUpHref('')} className={styles.btnLime}>Turn on two-step sign-in</Link>
+            </div>
           </>
         )}
-        {demoNote}
       </section>
 
       <section className={styles.card} aria-labelledby="sec-devices">
         <h3 id="sec-devices" className={styles.head}>Signed in on other devices</h3>
         <p className={`${styles.body} ${styles.wideOnly}`}>Sign out everywhere except this device, if a phone or computer is lost or shared.</p>
-        {!view.isDemo && (
-          <div className={styles.acts}>
-            <button type="button" className={styles.btn} onClick={() => setAsk('signOutOthers')}>Sign out everywhere else</button>
-          </div>
-        )}
-        {demoNote}
+        <div className={styles.acts}>
+          <button type="button" className={styles.btn} onClick={() => setAsk('signOutOthers')}>Sign out everywhere else</button>
+        </div>
       </section>
 
       {view.hasPassword && (
         <section className={styles.card} aria-labelledby="sec-password">
           <h3 id="sec-password" className={styles.head}>Password</h3>
           <p className={styles.body}>Change the password you sign in with.</p>
-          {!view.isDemo && (
-            <div className={styles.acts}>
-              <button type="button" className={styles.btn} onClick={() => setAsk('password')}>Change password</button>
-            </div>
-          )}
-          {demoNote}
+          <div className={styles.acts}>
+            <button type="button" className={styles.btn} onClick={() => setAsk('password')}>Change password</button>
+          </div>
         </section>
       )}
 

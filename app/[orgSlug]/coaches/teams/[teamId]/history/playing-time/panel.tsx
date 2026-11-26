@@ -192,15 +192,11 @@ export function PlayingTimePanel({
         <>
           <p className={styles.insightsBasis}>One row per player, based on the {analytics.gamesWithLineup} game{analytics.gamesWithLineup === 1 ? '' : 's'} you&apos;ve saved a lineup for.</p>
 
-          {/* data-sandbox-tour: the beat the demo's "who's actually been on the field" step rings.
-              Inert off a demo org — no styling, no behaviour. It sits on a wrapper now, because the
-              scroller below carries no attributes of its own.
-              ⚠ K-05 FINISHED (stage 6 · R2, owner 2026-09-24): every table on this report keeps its columns
+          {/* ⚠ K-05 FINISHED (stage 6 · R2, owner 2026-09-24): every table on this report keeps its columns
               on a phone INSIDE the portal's pinned scroller — the player pinned, a hint naming what is off
               to the right, every cell on one line. Before this the names wrapped to three lines (rows 82 ·
               76 · 104px) and the page was 4.5 screens; the one warning here ("over cap") sat in a column
               nothing said existed. `.insightsTableWrap` rides on the scroller, so the frame is unchanged. */}
-          <div data-sandbox-tour="playing-time">
           <CoachScrollX sticky hint="Swipe for sits, positions played and pitching" scrollerClassName={styles.insightsTableWrap}>
             <table className={styles.insightsTable}>
               <thead>
@@ -249,7 +245,6 @@ export function PlayingTimePanel({
               </tbody>
             </table>
           </CoachScrollX>
-          </div>
 
           {/* ══ POSITION RECENCY (Reports Portal P2) ═══════════════════════════════════════════
               The retired Ask bar's "who hasn't played a position lately?" made permanent. It reads

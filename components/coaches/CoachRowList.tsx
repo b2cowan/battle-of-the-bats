@@ -40,7 +40,6 @@ export function CoachRowList({
   label,
   labelledBy,
   className,
-  'data-sandbox-tour': tourAnchor,
 }: {
   children: ReactNode;
   /** Inside a card or a shelf that already paints the ground: no frame of its own. */
@@ -49,9 +48,6 @@ export function CoachRowList({
   label?: string;
   labelledBy?: string;
   className?: string;
-  /** The demo tour anchors on a LIST, never on a row. Written as the literal attribute at the call
-   *  site (`data-sandbox-tour="…"`), which is what the tour-anchor guard's static scan reads. */
-  'data-sandbox-tour'?: string;
 }) {
   return (
     <ul
@@ -59,7 +55,6 @@ export function CoachRowList({
       data-row-list={inset ? 'inset' : 'frame'}
       aria-label={label}
       aria-labelledby={labelledBy}
-      data-sandbox-tour={tourAnchor}
     >
       {children}
     </ul>

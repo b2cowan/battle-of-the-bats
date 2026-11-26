@@ -35,7 +35,6 @@ import { repKit } from '@/components/admin/kit/club/RepKit';
 import ck from '@/components/admin/kit/club/ClubKit.module.css';
 import PlanLockLine from '@/components/admin/tournament/PlanLockLine';
 import { screenParts } from '@/components/admin/tournament/ScreenParts';
-import { SandboxLockNote, useSandboxLock } from '@/components/sandbox/SandboxLock';
 import {
   COMMS_LOCK, COMMS_LOCK_PLAN, COMMS_WORDS, COMPOSER_WORDS as W, PAYMENT_CHOICES, TEAM_CHOICES, recipientCountLine, sendLabel,
 } from '@/lib/communication-words';
@@ -123,9 +122,6 @@ export default function MessageComposer({
   emailPart?: ReactNode;
 }) {
   const [template, setTemplate] = useState('');
-  // "See it live" sandbox: the send is disabled BEFORE it is pressed, with the honest line beneath
-  // (SandboxLockNote). False for every real org.
-  const sandboxLocked = useSandboxLock();
   // ── The live count: a dry run of the route's own rule, newest read only. A capped plan's read also carries its
   //    limits, so it is asked as the window opens: the email box is switched off before it is ticked, never after. ──
   const [count, setCount] = useState<number | null>(null);
@@ -197,7 +193,7 @@ export default function MessageComposer({
         <>
           <button type="button" className="btn btn-outline" onClick={onCancel} disabled={sending}>{W.cancel}</button>
           <button type="button" className="btn btn-lime" onClick={onSubmit}
-            disabled={sandboxLocked || sending || noChannel || blocked || tooMany || !values.title.trim() || !values.body.trim()}>
+            disabled={sending || noChannel || blocked || tooMany || !values.title.trim() || !values.body.trim()}>
             {sending ? <><RefreshCw className="spin" size={15} aria-hidden /> {W.sending}</> : label}
           </button>
         </>
@@ -325,7 +321,6 @@ export default function MessageComposer({
 
       {emailPart}
       {error && <p className={styles.error} role="alert">{error}</p>}
-      <SandboxLockNote />
     </KitDialog>
   );
 }

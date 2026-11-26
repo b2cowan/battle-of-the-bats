@@ -54,7 +54,6 @@ import {
   type InsightsDigestTeam,
 } from './db';
 import { notify } from './notify';
-import { excludeDemoOrgTeams } from './demo-org';
 import { getSportPack, DEFAULT_SPORT } from './sports';
 import { playerDisplayName } from './coach-roster-name';
 import { computeSeasonLineupAnalytics } from './lineup-season-analytics';
@@ -271,10 +270,7 @@ async function digestTeam(
 export async function runInsightsDigestSweep(
   opts: InsightsDigestSweepOptions = {},
 ): Promise<InsightsDigestSweepResult> {
-  // Sandbox teams are never on a send list (pure slug filter — see excludeDemoOrgTeams).
-  const teams = excludeDemoOrgTeams(
-    await getInsightsDigestTeams({ orgId: opts.orgId, teamId: opts.teamId }),
-  );
+  const teams = await getInsightsDigestTeams({ orgId: opts.orgId, teamId: opts.teamId });
   const now = new Date();
   const todayISO = localDateISO(now);
   const sinceISO = new Date(now.getTime() - DIGEST_DEDUPE_DAYS * 86400000).toISOString();

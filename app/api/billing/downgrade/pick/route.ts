@@ -1,5 +1,4 @@
 import { getAuthContextWithRole, forbidden, unauthorized } from '@/lib/api-auth';
-import { demoBillingRefusal } from '@/lib/demo-guard';
 import { writeOrgBillingAudit } from '@/lib/billing-retention';
 import { captureAndJson, withObservability } from '@/lib/observability';
 import { changeKeptTournaments } from '@/lib/plan-ending';
@@ -20,9 +19,6 @@ export const POST = withObservability(async (req: Request) => {
   const orgSlug = typeof body.orgSlug === 'string' ? body.orgSlug : undefined;
   const ctx = await getAuthContextWithRole({ orgSlug, requireOrgSlug: true });
   if (!ctx) return unauthorized();
-  // The sandboxes run the real product and the demo organizer holds the billing power (one shared refusal: lib/demo-guard.ts).
-  const demoRefusal = demoBillingRefusal(ctx.user);
-  if (demoRefusal) return demoRefusal;
   if (ctx.role !== 'owner') return forbidden();
 
   try {

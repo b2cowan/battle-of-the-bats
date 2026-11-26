@@ -7,9 +7,6 @@
  * On a phone the header's actions are icons (A6): a pulse in the score's tone, the count as its badge, the score said
  * in the spoken name and read in the window. The score stays bare at a desk, as the row's was; the window gives the
  * scale ("78/100").
- *
- * The demo tour's "Break the schedule" step rings this button: a caller passes the anchor as the literal attribute
- * (`data-sandbox-tour="schedule-health"`), which is what the tour-anchor guard's static scan reads.
  */
 import { Activity } from 'lucide-react';
 import screenParts from './ScreenParts.module.css';
@@ -17,7 +14,7 @@ import kit from '@/components/admin/kit/AdminKitFrame.module.css';
 import styles from './HealthButton.module.css';
 
 export default function HealthButton({
-  score, tone, issues, title, label, onOpen, 'data-sandbox-tour': tourAnchor,
+  score, tone, issues, title, label, onOpen,
 }: {
   /** The health score, or null when there is no timed schedule to score ("—"). */
   score: number | null;
@@ -29,7 +26,6 @@ export default function HealthButton({
   /** The spoken name: the score with its scale, and its issues. */
   label: string;
   onOpen: () => void;
-  'data-sandbox-tour'?: string;
 }) {
   const shownTone = score != null ? tone : undefined;
   return (
@@ -40,7 +36,6 @@ export default function HealthButton({
       aria-label={label}
       title={label}
       onClick={onOpen}
-      data-sandbox-tour={tourAnchor}
     >
       <Activity size={18} className={styles.pulse} data-tone={shownTone} aria-hidden />
       <span className={styles.score} data-tone={shownTone} aria-hidden>{score != null ? score : '—'}</span>

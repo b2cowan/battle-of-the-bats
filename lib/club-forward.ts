@@ -1,10 +1,9 @@
 import 'server-only';
-import { cookies } from 'next/headers';
 import { permanentRedirect } from 'next/navigation';
 import { clubHosts } from './club-host';
 import { usesOwnAddress } from './club-domain';
 import { isOwnHost } from './own-hosts';
-import { isSupabaseAuthCookieName } from './sandbox-exit-rule';
+import { hasSupabaseSessionCookie } from './supabase-server';
 import { requestHost } from './request-host';
 
 /**
@@ -32,8 +31,7 @@ export async function forwardToOwnAddress(orgSlug: string, path: string, query?:
   if (!isOwnHost(await requestHost())) return; // already on the club's own address
   const club = await clubHosts.forSlug(orgSlug);
   if (!club || club === 'unavailable' || !usesOwnAddress(club.status)) return;
-  const jar = await cookies();
-  if (jar.getAll().some(c => isSupabaseAuthCookieName(c.name))) return; // a signed-in visitor stays
+  if (await hasSupabaseSessionCookie()) return; // a signed-in visitor stays
   const kept = new URLSearchParams(Object.entries(query ?? {}).filter((e): e is [string, string] => typeof e[1] === 'string')).toString();
   permanentRedirect(`https://${club.host}${path || '/'}${kept ? `?${kept}` : ''}`);
 }

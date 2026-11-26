@@ -31,7 +31,7 @@ import { useLatestRef } from '@/components/coaches/useLatestRef';
 import TagSearchCombobox, { MONEY_TAG_MANAGE } from '@/components/coaches/TagSearchCombobox';
 import { formatStoredDate } from '@/lib/timezone';
 import { moneyMovedMaxDate } from '@/lib/money-date-guards';
-import { writeFailure } from '@/lib/coach-sandbox-refusal';
+import { refusalText } from '@/lib/money-fetch';
 import type { BudgetCategoryWithItems, RepTeamTag } from '@/lib/types';
 import { fmt } from '@/lib/coach-money-summary';
 import { RAISING_FOR_NUDGE, driveParticipants, driveLoggedPlayerCount } from '@/lib/coach-fundraising';
@@ -324,7 +324,7 @@ export function DriveRoomBody({
         { method: 'DELETE' },
       );
       if (!res.ok) {
-        onFailure(writeFailure(res, await res.json().catch(() => ({})), 'That entry could not be removed.'));
+        onFailure(refusalText(await res.json().catch(() => ({})), 'That entry could not be removed.'));
         return;
       }
       onChanged();
@@ -556,7 +556,7 @@ export function DriveEntryQuestion({
           }),
         },
       );
-      if (!res.ok) throw new Error(writeFailure(res, await res.json().catch(() => ({})), 'Save failed'));
+      if (!res.ok) throw new Error(refusalText(await res.json().catch(() => ({})), 'Save failed'));
       onSaved();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Save failed');
@@ -706,7 +706,7 @@ export function EditDriveSheet({
           budgetItemId: raisingFor?.itemId ?? null,
         }),
       });
-      if (!res.ok) throw new Error(writeFailure(res, await res.json().catch(() => ({})), 'Save failed'));
+      if (!res.ok) throw new Error(refusalText(await res.json().catch(() => ({})), 'Save failed'));
       onSaved();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Save failed');

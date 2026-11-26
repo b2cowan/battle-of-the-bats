@@ -38,7 +38,7 @@ import BillingAddressPanel, { BILLING_ADDRESS_ANCHOR, ReviewText, reviewOf, type
 import { BILLING_LOCATION_CONSOLE_WORDS } from '@/lib/billing-location';
 
 /** What the server knows of this person and club before any click (the refund route asks the same rule with them). */
-type RefundGate = { role: string; ownClub: boolean; demoClub: boolean; refundsLast24h: number };
+type RefundGate = { role: string; ownClub: boolean; refundsLast24h: number };
 /** GST/HST Stage 3 Part 2: our kept records and the registration date ride beside Stripe in every state (null = not readable). */
 type OurSales = { records?: SalesRecords; registrationDate?: string | null };
 export type MoneyResponse =

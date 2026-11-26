@@ -49,7 +49,6 @@ describe('neither sender hands a reserved address to the mail service', () => {
   });
 
   const load = billingTestLoader({
-    '@/lib/demo-org-server': { isDemoOrgId: async () => false },
     '@/lib/preview-org-server': { isPreviewOrgId: async () => false },
     '@/lib/supabase-admin': { supabaseAdmin: { from: () => ({
       insert: () => ({ select: () => ({ single: async () => ({ data: { id: 'send-1' }, error: null }) }) }),

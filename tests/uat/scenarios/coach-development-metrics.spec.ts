@@ -218,7 +218,7 @@ test.describe('the three views and the exact addresses, rendered', () => {
   test('the Sessions tab carries the tour anchor (the Overview is the landing since stage 0); the hub has no Players tab; Coverage in Insights is the one roster table, with the chosen metric and ITS date; the way back returns', async ({ page }) => {
     await signIn(page, COACH);
     await page.goto(`${base()}/development?section=sessions`);
-    await expect(page.locator('[data-sandbox-tour="development-sessions"]')).toBeVisible();
+    await expect(page.locator('[data-testid="development-sessions"]')).toBeVisible();
     const tabs = page.getByRole('navigation', { name: 'Skills and Goals views' });
     await expect(tabs.getByRole('link', { name: 'Metrics' })).toBeVisible();
     // Re-evaluation stage 4 (G1): the Players tab is gone; its old address lands on the Overview.

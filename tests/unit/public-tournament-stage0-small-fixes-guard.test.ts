@@ -75,7 +75,6 @@ describe('D4 · the countdown is sport-neutral', () => {
       HOME, GAME, GAME_VIEW, SCHEDULE_ROWS, 'components/public/PublicSchedule.tsx',
       'components/admin/TournamentCreationPreview.tsx',
       'lib/entity-follow-status.ts',
-      'lib/sandbox-chrome.ts',
     ]) {
       assert.doesNotMatch(readCode(file), /First pitch/i, file);
     }

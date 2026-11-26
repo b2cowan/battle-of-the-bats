@@ -38,12 +38,9 @@
      globals.css). It went unseen because a pre-event hero is 70vh tall and centres its content,
      which absorbs a 48px shortfall invisibly. On an IN-PROGRESS event the hero collapses to
      `min-height: auto` (.heroCompact) and the score ticker appears — and the shortfall becomes the
-     ticker sitting on top of the event title. Affects every customer on game day, not just the
-     demo, which is simply where it was noticed.
-     `--chrome-top-static-h` composes nav + ticker + strip, and deliberately excludes
-     `--sandbox-chrome-h` because the document is already padded by that — adding it here would
-     open a gap in the demo instead. Below 900px the live shell hides this hero entirely and
-     `.page` does the clearing, so there is no double-count there either. */
+     ticker sitting on top of the event title. Affects every customer on game day.
+     `--chrome-top-static-h` composes nav + ticker + strip. Below 900px the live shell hides this hero
+     entirely and `.page` does the clearing, so there is no double-count there either. */
   padding-top: var(--chrome-top-static-h);
 }
 

@@ -16,7 +16,6 @@ import { useOrg } from '@/lib/org-context';
 import { usePageTitle } from '@/lib/usePageTitle';
 import { hasPlanFeature, hasOrgVenueLibrary, requiresTournamentPlusCopy } from '@/lib/plan-features';
 import { SCHEDULE_REFUSAL, SCHEDULE_REFUSAL_TITLE, readRefusal } from '@/lib/schedule-words';
-import { isSandboxRefusal } from '@/lib/coach-sandbox-refusal';
 import ExportMenu from '@/components/admin/ExportMenu';
 import ScheduleGenerator from './Generator';
 import PlayoffGenerator from './PlayoffGenerator';
@@ -27,7 +26,7 @@ import PlayoffBracketView from './components/PlayoffBracketView';
 import ScheduleTimeline from './components/ScheduleTimeline';
 import { Game, Venue, PoolSlot } from '@/lib/types';
 import { fieldNounFor } from '@/lib/sports';
-import { formatVenueLocation, resolveGameFieldLabel } from '@/lib/venue-label';
+import { resolveGameFieldLabel } from '@/lib/venue-label';
 import { formatTime } from '@/lib/utils';
 import ZeroVenuePrompt from './components/ZeroVenuePrompt';
 import ResolveLocationsModal from './components/ResolveLocationsModal';
@@ -65,7 +64,6 @@ import CoinTossRecorder from '@/components/admin/CoinTossRecorder';
 import { placeOfWhere } from '@/lib/tournament-where';
 import { clashLine } from '@/lib/venue-clash-words';
 import { GAME_DAY_WORDS } from '@/lib/game-day-words';
-import { useIsSandbox } from '@/components/sandbox/SandboxProvider';
 import { CoachToolbarMenu, CoachToolbarMenuItem, CoachToolbarMenuSeparator } from '@/components/coaches/CoachToolbarMenu';
 import KitDialog from '@/components/admin/kit/club/KitDialog';
 import { Callout, ClubRow, ClubRowList, NoticePill } from '@/components/admin/kit/club/RepKit';
@@ -135,10 +133,7 @@ export default function AdminSchedulePage() {
   // "Playing now" turns to "Needs a score" by the clock: the day re-reads its states each minute.
   const [nowMs, setNowMs] = useState(() => Date.now());
   useEffect(() => { const t = window.setInterval(() => setNowMs(Date.now()), 60_000); return () => window.clearInterval(t); }, []);
-  // Schedule health's window, from its header button (owner 2026-10-19). It never arrives open, the demo included: a
-  // window dims the schedule the demo's "Break the schedule" step asks a visitor to drag, and the button's own score
-  // is what reacts.
-  const isSandbox = useIsSandbox();
+  // Schedule health's window, from its header button (owner 2026-10-19). It never arrives open.
   const [healthOpen, setHealthOpen] = useState(false);
   const [resolveFacilitiesOpen, setResolveFacilitiesOpen] = useState(false);
   const [resolveLocationsOpen, setResolveLocationsOpen] = useState(false);
@@ -407,7 +402,7 @@ export default function AdminSchedulePage() {
         const replies = await Promise.all(published.map(g => unpublishDivision(g.id).catch(() => null)));
         // F71: one request per division, so it can partly succeed. Show unpublished only what the server
         // unpublished; name the divisions still published, with the server's reason.
-        const went = (r: Response | null) => !!r && (r.ok || isSandboxRefusal(r));
+        const went = (r: Response | null) => !!r && r.ok;
         const done = new Set(published.filter((_, i) => went(replies[i])).map(g => g.id));
         setDivisions(prev => prev.map(g => done.has(g.id) ? { ...g, scheduleVisibility: 'unpublished' } : g));
         const refusedAt = replies.findIndex(r => !went(r));
@@ -436,11 +431,11 @@ export default function AdminSchedulePage() {
   // writes 403 — the `authenticated` role has no INSERT/UPDATE/DELETE grant on `games`.
   /**
    * F71 (Stage 3 defects pass): a single write the server refused says why, through the page's message window — the
-   * route's own reason, or our words when it has none (lib/schedule-words.ts). The sandbox's by-design refusal is not
-   * a refusal here (its chrome speaks). True when the write was refused, so the caller stops.
+   * route's own reason, or our words when it has none (lib/schedule-words.ts). True when the write was refused, so
+   * the caller stops.
    */
   async function refusedWrite(res: Response, title: string, fallback?: string): Promise<boolean> {
-    if (res.ok || isSandboxRefusal(res)) return false;
+    if (res.ok) return false;
     setFeedback({ isOpen: true, title, message: await readRefusal(res, fallback), type: 'warning' });
     return true;
   }
@@ -563,8 +558,7 @@ export default function AdminSchedulePage() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ action: 'create', tournamentId, games: [data] }),
     });
-    // The sandbox refuses by design and its chrome says so; the window closes as a save would.
-    if (!res.ok && !isSandboxRefusal(res)) throw new Error(await readRefusal(res, SCHEDULE_REFUSAL.gameFallback));
+    if (!res.ok) throw new Error(await readRefusal(res, SCHEDULE_REFUSAL.gameFallback));
     setCreatingGame(false);
     await reloadGames();
   }
@@ -709,30 +703,6 @@ export default function AdminSchedulePage() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ action: 'update', id: gameId, ...patch }),
     });
-    // The "see it live" sandbox keeps the change on screen (nothing is saved, and its chrome says so).
-    if (res.headers.get('X-Sandbox-Blocked') === '1') {
-      const venue = patch.venueId ? venues.find(v => v.id === patch.venueId) : null;
-      const facility = patch.venueFacilityId ? venue?.facilities?.find(f => f.id === patch.venueFacilityId) : null;
-      setGames(prev => prev.map((g): Game => {
-        if (g.id !== gameId) return g;
-        const next: Game = { ...g };
-        if (patch.date) next.date = patch.date;
-        if (patch.time) next.time = patch.time;
-        if ('durationMinutes' in patch) next.durationMinutes = patch.durationMinutes ?? null;
-        if ('venueId' in patch) {
-          next.venueId = patch.venueId ?? undefined;
-          next.venueFacilityId = patch.venueFacilityId ?? undefined;
-          next.location = venue ? formatVenueLocation(venue.name, facility?.name) : (patch.location ?? '');
-        }
-        if ('notes' in patch) next.notes = patch.notes ?? undefined;
-        if ('homeTeamId' in patch) next.homeTeamId = patch.homeTeamId ?? '';
-        if ('awayTeamId' in patch) next.awayTeamId = patch.awayTeamId ?? '';
-        if ('homePlaceholder' in patch) next.homePlaceholder = patch.homePlaceholder ?? undefined;
-        if ('awayPlaceholder' in patch) next.awayPlaceholder = patch.awayPlaceholder ?? undefined;
-        return next;
-      }));
-      return { crossLine: null };
-    }
     if (!res.ok) {
       const reason = await readRefusal(res, SCHEDULE_REFUSAL.gameFallback);
       // The refusal can be BECAUSE the game changed (scored a moment ago): re-read, quietly.
@@ -1441,11 +1411,10 @@ export default function AdminSchedulePage() {
         locked={isLocked}
         actions={(
           <>
-            {/* Schedule health — the header's first action, across every division (owner 2026-10-19, A1). The demo
-                tour rings it. Hidden while a bracket is being edited, as its row was. */}
+            {/* Schedule health — the header's first action, across every division (owner 2026-10-19, A1). Hidden
+                while a bracket is being edited, as its row was. */}
             {healthMetrics && !editingBracket && (
               <HealthButton
-                data-sandbox-tour="schedule-health"
                 score={healthMetrics.timedGames > 0 ? healthMetrics.healthScore : null}
                 tone={healthMetrics.healthTone}
                 issues={healthMetrics.issues.length}
@@ -1700,9 +1669,6 @@ export default function AdminSchedulePage() {
           busy={savingHealthRules}
           metrics={healthMetrics}
           showTeamTable
-          isSandbox={isSandbox}
-          // The sandbox's own undo: nothing was ever persisted, so "put it back" is a re-read of the server's copy.
-          onSandboxReset={() => { void refresh(); }}
           // Saving the rules is a tournament-settings write (create_tournaments): staff see their effect, not an editor
           // the server refuses (/review 2026-10-19).
           showRulesEditor={!isLocked && !!userRole && hasCapability(userRole, userCapabilities, 'create_tournaments')}

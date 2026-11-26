@@ -9,7 +9,6 @@ import { notify } from './notify';
 import { sendTransactionalEmail } from './platform-email-templates';
 import { customerSenders, type RunOptions } from './billing-event-customer-messages';
 import { orgOwnerEmails, type OwnerRecipient } from './notify-recipients';
-import { isDemoOrganizerEmail } from './demo-org';
 import { getUserPersonName } from './user-display';
 import { getPlanFromPriceId } from './stripe-prices';
 import { PLAN_CONFIG } from './plan-config';
@@ -67,7 +66,7 @@ async function recipientsOf(record: PurchaseRecord): Promise<OwnerRecipient[]> {
   const owners = record.org_id ? await orgOwnerEmails(record.org_id) : [];
   if (owners.length || !record.user_id) return owners;
   const { email } = await personOf(record.user_id);
-  return email && !isDemoOrganizerEmail(email) ? [{ userId: record.user_id, email }] : [];
+  return email ? [{ userId: record.user_id, email }] : [];
 }
 
 /** Our GST/HST number as THIS invoice prints it (never typed into code): the account tax ID of type ca_gst_hst. */

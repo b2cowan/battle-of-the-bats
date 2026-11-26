@@ -167,7 +167,9 @@ describe('a club place names itself in the bar, and its tabs pin inside it', () 
     assert.match(readCode('app/[orgSlug]/admin/AdminChrome.tsx'), /\{\.\.\.\(!isFocused \? \{ 'data-admin-locked': '' \} : \{\}\)\}/);
     assert.match(readCode('app/globals.css'), /#main-content:has\(\[data-admin-locked\]\) \{ padding-bottom: 0; \}/);
     const shell = readCode('app/[orgSlug]/admin/admin.module.css');
-    assert.match(shell, /height: calc\(100dvh - var\(--sandbox-chrome-h, 0px\)\);\s*overflow: hidden;\s*position: relative;/);
+    assert.match(shell, /height: 100dvh;\s*overflow: hidden;\s*position: relative;/);
+    // The demo banner's chrome variable went with the retired sandbox.
+    assert.doesNotMatch(shell, /--sandbox-chrome-h/);
   });
 
   it('the in-bar tab row is opt-in: the coaches portal’s rows are untouched', () => {

@@ -3,7 +3,6 @@ import { captureError, withObservability } from '@/lib/observability';
 import { resolvePracticePlanRouteContext } from '@/lib/practice-plan-route-context';
 import { denyUnless, canWritePracticePlans } from '@/lib/coach-capabilities';
 import { getRepRosterPlayers, getRepTeamTagLibrary, stampRepTeamEventPracticePlanSent } from '@/lib/db';
-import { isDemoOrgId } from '@/lib/demo-org-server';
 import { getPracticeStaffPeople } from '@/lib/practice-plan-staff';
 import {
   mineTagIdsOf, myLabelsOnPlan, practiceDayLabel, practicePlanRecipients, practicePlanSentMessage, sanitizeAudience,
@@ -40,9 +39,7 @@ import { practiceLengthMinutes } from '@/lib/practice-state';
  * `notify()`'s pref-gated channel and never the family door; the email names the coach and its
  * footer says why it arrived. `lib/family-email.ts`'s audit of who is outside its door lists this.
  *
- * ⚠ Writes ONE event id and reads no year — not a `HISTORY_ENDPOINTS` entry. Demo orgs are
- * silenced inside `notify()` (fail-closed) and the proxy's write block stops this route on the
- * sandbox anyway; the email is guarded below by the same demo check so a sandbox can never mail.
+ * ⚠ Writes ONE event id and reads no year — not a `HISTORY_ENDPOINTS` entry.
  */
 export const POST = withObservability(async (req: Request,
   { params }: { params: Promise<{ orgSlug: string; teamId: string; eventId: string }> },) => {
@@ -138,8 +135,6 @@ export const POST = withObservability(async (req: Request,
       stations: b.stations.map((s, si) => ({ ...s, mine: mine[i].stations[si]?.mine === true })),
     }));
   };
-  // A sandbox can never mail anyone — the same fail-closed answer `notify()` gives itself.
-  const demo = await isDemoOrgId(ctx.org.id).catch(() => true);
 
   // ── One dispatch per person, the body theirs — the people are independent, so in parallel ──
   const results = await Promise.all(recipients.map(async r => {
@@ -155,7 +150,7 @@ export const POST = withObservability(async (req: Request,
       userIds: [r.userId],
       metadata: { teamId, eventId, audience, sentBy: ctx.user.id, facts },
     });
-    if (!withEmail || !r.email || demo) return false;
+    if (!withEmail || !r.email) return false;
     const { subject, html } = practicePlanEmail({
       coachName, teamName: team.name, whenLine, whereLine, arriveLabel, myLabels, dayLabel,
       outline: outlineFor(mineTagIds), planUrl: `${appUrl}${planPath}`,

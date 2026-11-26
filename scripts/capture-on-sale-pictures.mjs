@@ -6,7 +6,7 @@
  *
  * CAPTURE THE ON-SALE PAGES' PICTURES — the product's own screens for /for-leagues' four steps and /for-clubs' four
  * modules (plan docs/projects/active/CLUB_ON_SALE_PAGES_PLAN.md S3b, copy W67), shot from KESTREL BAY, an invented club on
- * the DEV database built for the purpose. Never the live demo clubs (anyone can type into them), never a production row.
+ * the DEV database built for the purpose. Never a production row.
  *
  *   node --env-file=.env.local scripts/capture-on-sale-pictures.mjs             take every picture
  *   node --env-file=.env.local scripts/capture-on-sale-pictures.mjs --only=a,b  just these ids
@@ -14,14 +14,14 @@
  *                                                                               .probe/on-sale-survey/ (to choose crops)
  *   node --env-file=.env.local scripts/capture-on-sale-pictures.mjs --list      print the shots and exit
  *
- * ORDER (each re-shoot, the /demos pass's per-cycle job):
+ * ORDER (each re-shoot):
  *   1. node --env-file=.env.local scripts/seed-prospect-demo.mjs --club=kestrel   the house league (a rebuild)
  *   2. node --env-file=.env.local scripts/seed-on-sale-pictures-extras.mjs        the tournament, a rep team, the books
  *   3. this script, within about an hour of step 2: "Live now" on the event page is judged by the clock.
  * Needs the dev server up (`npm run dev`).
  *
- * ⚖ WHY ITS OWN SCRIPT: scripts/lib/shot-capture.mjs refuses any path outside the demo worlds on purpose, and signs in only
- * through the demo doors. Loosening that guard is not this script's call, so this one carries its own, the same shape:
+ * ⚖ WHY ITS OWN SCRIPT: scripts/lib/shot-capture.mjs was the demo-world capture (retired with the demos) and signed in only
+ * through the demo doors. It carries its own guard instead, the same shape:
  *   - the base URL must be this machine's dev server, and the Supabase project must be dev's;
  *   - every shot path must be inside /kestrel-bay/, checked before the browser opens, after navigating, after the prepare
  *     steps and immediately before the shutter (a redirect, e.g. to a sign-in page, refuses the shot);
@@ -179,7 +179,6 @@ async function settle(page, shot) {
   }
   if (shot.prepare?.length) assertInside('after the prepare steps');
   if (shot.readyAfterPrepare) await page.locator(`${shot.readyAfterPrepare} >> visible=true`).first().waitFor({ timeout: 20_000 });
-  await page.addStyleTag({ content: '[data-sandbox-banner] { display: none !important; } :root { --sandbox-chrome-h: 0px !important; }' });
   // The dev-tools badge only, from inside the overlay's shadow root; Next's error overlay stays visible on purpose (a broken
   // screen must look broken in the picture, never quietly pass).
   await page.evaluate(() => {

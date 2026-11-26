@@ -12,7 +12,6 @@ import FeedbackWidget from '@/components/feedback/FeedbackWidget';
 import MoreSheetTiles from './MoreSheetTiles';
 import MoreSheetFoot from './MoreSheetFoot';
 import WhatsNewSheetRow from '@/components/whats-new/WhatsNewSheetRow';
-import { useIsSandbox } from '@/components/sandbox/SandboxProvider';
 import { useOrg } from '@/lib/org-context';
 import { coachBillingLink, coachHostedTournamentsLink } from '@/lib/coach-billing-access';
 import { adminDoorHome } from '@/lib/member-home';
@@ -108,9 +107,8 @@ export default function CoachesBottomNav() {
 
   const [moreOpen, setMoreOpen] = useState(false);
   const [feedbackOpen, setFeedbackOpen] = useState(false);
-  const inSandbox = useIsSandbox();
-  const billingHref = coachBillingLink(currentOrg, userRole, userCapabilities, inSandbox);
-  const tournamentsHref = coachHostedTournamentsLink(currentOrg, userRole, userCapabilities, inSandbox);
+  const billingHref = coachBillingLink(currentOrg, userRole, userCapabilities);
+  const tournamentsHref = coachHostedTournamentsLink(currentOrg, userRole, userCapabilities);
   const moreRef = useRef<HTMLDivElement>(null);
   const chatUnread = useChatUnread();
   // Chunk B (P1 #4): until now the notification bell existed ONLY in the desktop sidebar, which is
@@ -374,32 +372,25 @@ export default function CoachesBottomNav() {
                 carries on a computer and a phone never had (the strip is hidden at 900px and below), and Admin beside the
                 other ways out. Account chrome, NOT a nav group: it stays out of MORE_SECTIONS, which the nav-groups guard
                 pins to the sidebar. A closed season's sheet keeps these too — they are no live instrument. */}
-            {/* Account and Home lead out of the demo sandbox (arriving ends the demo), so the sandbox hides them, as the
-                top strip hides the account menu. What's new sits beside Account (owner 2026-11-07); it opens a public page in a new
-                tab, so the sandbox keeps it and the group always has a row to show. */}
-            <>
+            {/* What's new sits beside Account (owner 2026-11-07). */}
             <div className={styles.dropSectionLabel}>You</div>
             <div className={styles.dropGrid} data-cols="2">
-              {!inSandbox && (
-                /* `?back=` pins "Back to your Coaches Portal" over the account pages (AccountReturnBar), as the free bar does. */
-                <Link
-                  href={`/account?back=${encodeURIComponent(pathname)}`}
-                  className={styles.dropItem}
-                  role="menuitem"
-                  id="coaches-mob-account"
-                  onClick={() => setMoreOpen(false)}
-                >
-                  <User size={17} aria-hidden />
-                  <span>Account</span>
-                </Link>
-              )}
+              {/* `?back=` pins "Back to your Coaches Portal" over the account pages (AccountReturnBar), as the free bar does. */}
+              <Link
+                href={`/account?back=${encodeURIComponent(pathname)}`}
+                className={styles.dropItem}
+                role="menuitem"
+                id="coaches-mob-account"
+                onClick={() => setMoreOpen(false)}
+              >
+                <User size={17} aria-hidden />
+                <span>Account</span>
+              </Link>
               <WhatsNewSheetRow itemClass={styles.dropItem} id="coaches-mob-whats-new" onClose={() => setMoreOpen(false)} />
-              {!inSandbox && (
-                <Link href="/discover" className={styles.dropItem} role="menuitem" id="coaches-mob-home" onClick={() => setMoreOpen(false)}>
-                  <Home size={17} aria-hidden />
-                  <span>Home</span>
-                </Link>
-              )}
+              <Link href="/discover" className={styles.dropItem} role="menuitem" id="coaches-mob-home" onClick={() => setMoreOpen(false)}>
+                <Home size={17} aria-hidden />
+                <span>Home</span>
+              </Link>
               {/* ⚖ The other portals, then Plan & billing — the one You order (N7, navigation Phase 1, owner 2026-11-09):
                   the sidebar foot's doors in its order (Club · Tournaments you run). The club's door says "Club" as the
                   admin's does (was "Admin"). */}
@@ -429,7 +420,6 @@ export default function CoachesBottomNav() {
               )}
             </div>
             <div className={styles.dropDivider} />
-            </>
 
             <MoreSheetFoot idPrefix="coaches-mob" helpHref={`${base}/help`} onClose={() => setMoreOpen(false)} onFeedback={() => setFeedbackOpen(true)} />
           </div>

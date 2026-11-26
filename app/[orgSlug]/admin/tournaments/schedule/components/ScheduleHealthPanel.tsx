@@ -5,7 +5,6 @@ import { AlertTriangle, CheckCircle2, ChevronDown, Info, ShieldAlert, SlidersHor
 import type { ScheduleIssue, ScheduleMetrics } from '@/lib/schedule-metrics';
 import { formatRestMinutes } from '@/lib/schedule-metrics';
 import { pluralize } from '@/lib/utils';
-import { useIsSandbox } from '@/components/sandbox/SandboxProvider';
 import { SCHEDULE_DAY_WORDS } from '@/lib/schedule-words';
 import styles from '../schedule-admin.module.css';
 
@@ -46,11 +45,6 @@ interface ScheduleHealthPanelProps {
   onResetRules?: () => void;
   /** Set the rules back to the engine defaults (2 / 15 / no target). */
   onRestoreDefaultRules?: () => void;
-  /**
-   * The sandbox's own undo — discard local, never-persisted changes by re-reading the server.
-   * Rendered only inside a demo org; omitting it just hides the button.
-   */
-  onSandboxReset?: () => void;
 }
 
 export default function ScheduleHealthPanel({
@@ -68,18 +62,8 @@ export default function ScheduleHealthPanel({
   onSaveRules,
   onResetRules,
   onRestoreDefaultRules,
-  onSandboxReset,
 }: ScheduleHealthPanelProps) {
-  // "See it live" sandbox — false for every real org, so nothing below changes for a customer.
-  const isSandbox = useIsSandbox();
-  /**
-   * The schedule page collapses this panel by default, which is right for an organizer who opens
-   * the screen twenty times a day — and wrong for the demo, where this panel IS the destination.
-   * The tour's "try to break the schedule" step used to land on a 53px strip reading "Show", with
-   * the drag invitation the whole beat depends on hidden behind a click nobody knew to make.
-   * Measured 2026-08-03. In a demo org the panel arrives open; a real customer is untouched.
-   */
-  const [expanded, setExpanded] = useState(isSandbox || defaultOpen);
+  const [expanded, setExpanded] = useState(defaultOpen);
   const [editing, setEditing] = useState(false);
   const showRulesEditor = canEditRules && !!rules && !!onRuleChange;
   const conflictTotal = metrics.venueConflictCount + metrics.bufferConflictCount;
@@ -93,8 +77,6 @@ export default function ScheduleHealthPanel({
     <details
       className={styles.healthPanel}
       open={expanded}
-      // The beat the sandbox's "try to break the schedule" step rings. Inert everywhere else.
-      data-sandbox-tour="schedule-health"
       onToggle={event => setExpanded(event.currentTarget.open)}
     >
       <summary className={styles.healthSummary} aria-label={`${expanded ? 'Collapse' : 'Expand'} ${title}`}>
@@ -140,7 +122,7 @@ export default function ScheduleHealthPanel({
 
       <div className={styles.healthBody}>
         <ScheduleHealthBody
-          metrics={metrics} showTeamTable={showTeamTable} isSandbox={isSandbox} onSandboxReset={onSandboxReset}
+          metrics={metrics} showTeamTable={showTeamTable}
           showRulesEditor={showRulesEditor} editing={editing} rules={rules} rulesDirty={rulesDirty} savingRules={savingRules}
           onRuleChange={onRuleChange} onSaveRules={onSaveRules} onResetRules={onResetRules} onRestoreDefaultRules={onRestoreDefaultRules}
         />
@@ -150,13 +132,13 @@ export default function ScheduleHealthPanel({
 }
 
 /**
- * The panel's BODY — the demo's invitation, the figures, the issues and the rules editor — worn by the panel (the
+ * The panel's BODY — the figures, the issues and the rules editor — worn by the panel (the
  * generator's drafts) and by the Schedule health window (the header button, owner 2026-10-19, A1–A3). The window
  * carries no gear, so it passes `rulesToggle` and the body draws its own door — at the END, a rare door ending the
  * body (A3), the rules opening under it. The panel's gear keeps its editor at the top.
  */
 export function ScheduleHealthBody({
-  metrics, showTeamTable = false, isSandbox, onSandboxReset, showRulesEditor, editing, rules, rulesDirty = false,
+  metrics, showTeamTable = false, showRulesEditor, editing, rules, rulesDirty = false,
   savingRules = false, onRuleChange, onSaveRules, onResetRules, onRestoreDefaultRules, rulesToggle, issueAction,
   showFigures = true,
 }: {
@@ -164,8 +146,6 @@ export function ScheduleHealthBody({
   /** The figures and issues; false before any game is timed, when there is nothing to score (the rules still show). */
   showFigures?: boolean;
   showTeamTable?: boolean;
-  isSandbox: boolean;
-  onSandboxReset?: () => void;
   showRulesEditor: boolean;
   editing: boolean;
   rules?: ScheduleHealthRulesDraft;
@@ -189,23 +169,6 @@ export function ScheduleHealthBody({
   ) : null;
   return (
     <>
-      {/* Sandbox-only invitation. The panel already exists and is untouched for customers; on the
-          demo it grows one line that tells a stranger what to do with it. The score genuinely
-          reacts to a dragged game — the health engine recomputes in the browser — so this is a
-          promise the product keeps. */}
-      {isSandbox && (
-        <p className={styles.healthSandboxPrompt}>
-          {/* In the window the schedule behind is dimmed, so the drag happens after closing it (owner 2026-10-19). */}
-          <span>{rulesAtEnd
-            ? "Try it: close this, drag a game onto a slot that's already busy, and watch the Schedule health score react."
-            : "Try it — drag a game onto a slot that's already busy, and watch this score react."}</span>
-          {onSandboxReset && (
-            <button type="button" className={styles.healthSandboxReset} onClick={onSandboxReset}>
-              Put it back
-            </button>
-          )}
-        </p>
-      )}
       {!rulesAtEnd && editor}
       {showFigures && <ScheduleHealthContent metrics={metrics} showTeamTable={showTeamTable} issueAction={issueAction} />}
       {showRulesEditor && rulesToggle && (

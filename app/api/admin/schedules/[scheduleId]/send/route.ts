@@ -22,7 +22,7 @@ import { carriesMoney } from '@/lib/club-schedule-money-audience';
 //      first send, its bill of its own; or its own changes) — the preview's `parts` (a part's bill figure to a money reader
 //      only), and the POST names them back with their versions (`parts: [{ id, version }]`). The schedule's own address only.
 //
-// ⚠ Emails leave only from this POST (the proxy refuses a demo club's POST; `sendEmail` has no demo check of its own).
+// ⚠ Emails leave only from this POST.
 // ---------------------------------------------------------------------------
 
 type Params = { params: Promise<{ scheduleId: string }> };

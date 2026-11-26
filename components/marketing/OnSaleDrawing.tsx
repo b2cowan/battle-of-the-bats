@@ -12,10 +12,9 @@ import SlideDrawing, { type DrawingId } from '@/components/marketing/SlideDrawin
  * rules they follow, live in `SlideDrawings.tsx`; this file only says which card gets which and what a screen reader hears.
  *
  * ⚠ THERE IS NO LINE UNDER THE CARDS, AND THAT IS DELIBERATE. The owner picked "Walk the real screens in the demo."
- * subject to the `/marketing` and `/legal` reads, and both found it untrue: the two public demos are a tournament and a
- * coach's season (`lib/demo-org.ts` DEMO_ORGS), so no visitor can walk a house league or the club's books. /for-clubs
- * already carries its own scoped demo block and card 03's "See a coach's season". Do not add a demo line here until a demo
- * shows the screens the cards are about.
+ * subject to the `/marketing` and `/legal` reads, and both found it untrue: the public demos were a tournament and a
+ * coach's season, so no visitor could walk a house league or the club's books. Both public demos were retired
+ * (owner ruling 2026-11-25), so there is no demo line to add here.
  *
  * A drawing quotes no figure, no name and no plan: the alt text below follows the same rule.
  */

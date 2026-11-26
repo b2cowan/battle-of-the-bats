@@ -100,7 +100,7 @@ function fakeStripe(opts: { error?: unknown; listed?: Array<{ id: string; metada
 }
 
 const input = (over: Partial<RefundInput> = {}): RefundInput => ({
-  orgId: 'org-1', club: CLUB, actor: { email: 'billing@fieldlogichq.ca', role: 'billing' }, ownClub: false, demoClub: false,
+  orgId: 'org-1', club: CLUB, actor: { email: 'billing@fieldlogichq.ca', role: 'billing' }, ownClub: false,
   charge: CHARGE, invoice: null, ask: { amountCents: 10000, remainingSeenCents: 10000, reason: 'Charged twice on the Oct 1 renewal' },
   flaggedDuplicate: true, live: false, now: NOW, clock: () => '3:06 p.m.', ...over,
 });
@@ -218,7 +218,7 @@ describe('1 · one refund per click, per retry; no means no money moved; recover
 
 // ── 2 · The server's rules ──────────────────────────────────────────────────────────────────────
 
-const FACTS: RefundFacts = { role: 'billing', ownClub: false, demoClub: false, charge: CHARGE, refundsLast24h: 0, now: NOW };
+const FACTS: RefundFacts = { role: 'billing', ownClub: false, charge: CHARGE, refundsLast24h: 0, now: NOW };
 const ASK = { amountCents: 10000, remainingSeenCents: 10000, reason: 'Charged twice' };
 const why = (r: ReturnType<typeof decideRefund>) => (r.ok ? null : r.error);
 
@@ -235,9 +235,9 @@ describe('2 · every refusal the server makes before Stripe is asked', () => {
     assert.ok(body.indexOf("requirePlatformPower('refund')") < body.indexOf('req.json('), 'power before the body');
   });
 
-  it('your own club and a demo club are refused', () => {
+  it('your own club is refused (the demo club refusal left with the demos)', () => {
     assert.equal(why(decideRefund({ ...FACTS, ownClub: true }, ASK)), REFUND_WORDS.ownClub);
-    assert.equal(why(decideRefund({ ...FACTS, demoClub: true }, ASK)), REFUND_WORDS.demo);
+    assert.equal((REFUND_WORDS as Record<string, unknown>).demo, undefined);
   });
 
   it('"your own club" is the wide check: a member, an invite, a team coach, a portal the club pays for, the owner’s or customer’s email', () => {
@@ -860,7 +860,8 @@ describe('7 · Find builds a Stripe query only for a whole Stripe or invoice num
     assert.match(route, /const shared = orgs\.length === 0\s*\|\| customerSharing\(/);
     assert.match(route, /from\('team_workspaces'\)\.select\('billing_owner_org_id, billing_owner_user_id, workspace_org_id'\)\.eq\('stripe_customer_id', item\.customerId\)/);
     assert.match(route, /invoiceNumberQuery\(number\) : null\)\s*\.catch\(\(\) => null\);/, 'Stripe down never costs the clubs and people');
-    assert.match(route, /if \(!org \|\| seen\.has\(org\.id\) \|\| isDemoOrgSlug\(org\.slug\)\) return;/);
+    assert.match(route, /if \(!org \|\| seen\.has\(org\.id\)\) return;/);
+    assert.doesNotMatch(route, /isDemoOrgSlug/);
     assert.doesNotMatch(route, /\.insert\(|\.update\(|\.upsert\(/);
     assert.match(readCode('lib/console-money-stripe.ts'), /res\.data\.length === 1 \? invoiceItem/);
   });

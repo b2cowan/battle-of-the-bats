@@ -1,51 +1,27 @@
-// `.ts` extension is deliberate and matches lib/help-shots.ts: this module is imported
-// BOTH by the app (through the bundler) and directly by scripts/capture-marketing-shots.mjs
-// running under Node's type-stripping, which needs the real filename.
-import { DEMO_COACH_SHOWCASE, DEMO_COACH_TEAM_IDS } from './demo-org.ts';
-
 /**
  * THE MARKETING SCREENSHOT MANIFEST — the one place a walkthrough image is declared.
  *
  * Sibling of `lib/help-shots.ts`, deliberately separate: help shots are rare, documentation-only
  * pictures governed by the help format standard; marketing shots are the SPINE of the pre-sales
  * walkthrough pages (docs/projects/active/PRESALES_WALKTHROUGH_PLAN.md) — the page is built
- * around them. Different editorial rules, different output root, same non-negotiables:
+ * around them. Different editorial rules, different output root.
  *
- * ── DEMO WORLD ONLY, ENFORCED ─────────────────────────────────────────────────
- * Every `path` must sit inside a `riverdale-*` demo organization. The capture script REFUSES any
- * other path before a browser opens. The failure this prevents — publishing a real family's name
- * or a real team's money onto the public marketing site — is permanent the moment it ships.
- *
- * ── A STALE SCREENSHOT IS WORSE THAN NO SCREENSHOT ────────────────────────────
- * These pictures are re-taken by machine (`npm run capture:marketing-shots`) so "the screen
- * changed" has a one-command answer, and `--check` (wired into `verify:changed`) fails when a
+ * ── THE PICTURES STAY; THEIR CAPTURE SOURCE IS GONE (owner ruling 2026-11-25, plan D6) ──
+ * Every image under `public/marketing/**` was photographed in the public demo worlds, which were
+ * retired. The images are kept; the page addresses, readiness selectors and capture steps that
+ * re-took them went with the demos, and `scripts/capture-marketing-shots.mjs` no longer takes a
+ * picture. A future re-shoot needs another source (a dev fixture org or a prospect world) and is
+ * new work, not this file's job. `--check` (wired into `verify:changed`) still fails when a
  * declared picture is missing its file, alt, caption, or size. The walkthrough page reads THIS
  * manifest for alt/caption/dimensions, so a picture and its words cannot drift apart.
  *
  * ── PANEL COPY MUST NOT READ THE PICTURE ALOUD ────────────────────────────────
- * The demo worlds re-anchor on a schedule; scores and counts in a capture are perishable. Panel
- * sentences describe what the SCREEN DOES, never quote a number the next capture might change.
- * (The demo-drift lesson from CLAUDE.md, applied to a surface prospects see first.)
+ * Scores and counts in a picture are perishable. Panel sentences describe what the SCREEN DOES,
+ * never quote a number a re-shoot might change.
  *
- * ── ⚠ EVERY SELECTOR HERE IS COUPLED TO THE APP, AND THAT IS AN OPEN QUESTION ──
- * This manifest addresses product elements three ways: by `aria-label`, by rendered TEXT
- * (`th:text-is("Balance")`, `button:has-text("Review settlement")`), and — where a CSS-module
- * element offers no semantic hook — by class substring (`[class*="duesPhoneLens"]`, the idiom
- * lib/help-shots.ts already uses). A /simplify pass in 2026-08 argued the class-substring form
- * should become `data-shot="…"` attributes on the product components, mirroring `data-sandbox-tour`.
- *
- * **Not done, deliberately, and here is the reasoning so it does not have to be re-derived.**
- * Roughly two dozen selectors here are text- or aria-based and are exactly as fragile as a class
- * name — a re-worded column header breaks a capture just as silently as a renamed class. So adding
- * hooks to the nine class-based ones would spread marketing-only markup through nine product
- * components while closing under a third of the exposure.
- *
- * ⚠ **And it would not close the failure that actually matters.** A broken selector does not fail
- * the build: the capture run reports it, but a failed shot LEAVES THE PREVIOUS PNG IN PLACE, and
- * `--check` only proves a file exists with alt, caption and size. So the real hazard is a STALE
- * picture that passes CI — and the fix for that is a staleness check, which is already **P3 of
- * this project** ("a check that fails when a slide's pictured screen or gated claim has moved").
- * Hooks now would be a partial measure taken instead of the whole one. Revisit if P3 is dropped.
+ * ⚠ A stale picture still passes `--check`: it proves a file exists with alt, caption and size,
+ * never that the picture still looks like the screen. That gap is P3 of the pitch slide library
+ * ("a check that fails when a slide's pictured screen or gated claim has moved").
  */
 
 export interface MarketingShot {
@@ -53,65 +29,15 @@ export interface MarketingShot {
   id: string;
   /** Which walkthrough the picture belongs to; also its asset folder. */
   persona: 'tournament' | 'coach';
-  /**
-   * How the capture browser gets there:
-   *  - 'tournament' / 'coach' press that demo door once per run (attaches the demo session —
-   *    required for admin/coach screens, rate-limited so it is pressed once, never per shot)
-   *  - 'public' uses a fresh visitor context with NO door press — for fan-facing pictures,
-   *    where the operator session would leak operator chrome into "what parents see".
-   */
-  door: 'tournament' | 'coach' | 'public';
-  /** Path INSIDE the demo world. Must be a riverdale-* org — the script enforces it. */
-  path: string;
-  /** Playwright selector proving the screen actually resolved (never an error/empty state). */
-  ready: string;
-  /** Optional clicks (by selector) to open the thing being pictured — a tab, a tool, a drawer. */
-  prepare?: string[];
-  /**
-   * Viewport-pinned chrome to take out of the way for this shot — applied before the prepare
-   * clicks and left in place through the shutter.
-   *
-   * ⚠ Exists for the coach portal's phone navigation bar, which breaks a capture in two ways at
-   * once (capture-core incidents #6 and #7). It swallows a prepare click aimed near the foot of a
-   * long phone screen — reported as a timeout on an element Playwright has already found, so it
-   * reads like an animation problem. And because a union crop is taken `fullPage` in document
-   * coordinates while a `position: fixed` element paints at its VIEWPORT position, it lands as an
-   * opaque band across the MIDDLE of the crop. The second one is the reason this is not
-   * lifted before the screenshot: on a real phone that bar sits at the foot of the screen and
-   * never covers the middle of a list, so hiding it photographs the product more honestly, not
-   * less.
-   */
-  hide?: string;
-  /**
-   * Optional: proof that what `prepare` OPENED has finished loading. `ready` covers the screen;
-   * a panel that fetches its own data when it opens renders "Loading…" first, and without this
-   * the shot is a race against that fetch. Same visibility discipline as `ready`.
-   */
-  readyAfterPrepare?: string;
-  /** Optional selector to crop to ONE element. Without either clip the capture is the viewport. */
-  clip?: string;
-  /**
-   * The COMPOSED crop: the union bounding box of every VISIBLE match. Lets a manifest say
-   * "the header and the first seven rows" or "the three game cards" and stay re-derivable —
-   * which is the rule that keeps a composed crop honest (cropping to the rows that make the
-   * point is the technique; cropping to the rows that make a DIFFERENT point is falsification).
-   * Mutually exclusive with `clip`; the capture script refuses both.
-   *
-   * ⚠ The callout rings that mark the point are NOT here and never will be — they are drawn
-   * page-side over the picture (lib/walkthrough-content.ts), so the stored PNG stays exactly
-   * what the machine took and can be re-taken and re-verified forever.
-   */
-  clipAll?: string;
-  /** Capture width. 1280 = desktop; 390 when the picture's subject is the phone experience. */
+  /** The width the picture was taken at. 1280 = desktop; 390 when its subject is the phone experience. */
   width: number;
-  /** Rendered pixel size of the saved file, written back by the capture script. */
+  /** Rendered pixel size of the saved file. */
   size?: { w: number; h: number };
   /**
    * The day this picture was last taken, `YYYY-MM-DD` in the org’s zone.
    *
-   * ⚠ WRITTEN BY THE CAPTURE, NEVER BY HAND — like `size`. A hand-typed date would be a claim
-   * about when a machine did something, which is exactly the kind of number that goes quietly
-   * wrong. Missing means "taken before we started recording this"; re-capture stamps it.
+   * ⚠ Never typed by hand: it was stamped by the capture run, and a hand-typed date would be a claim
+   * about when a machine did something. Missing means "taken before we started recording this".
    *
    * ⚠⚠ AND IT IS A PROXY, NOT AN ANSWER. It tells a reader WHEN, never WHETHER the picture still
    * resembles the screen. A six-month-old picture of a screen nobody has touched is fine; a
@@ -125,29 +51,10 @@ export interface MarketingShot {
   caption: string;
 }
 
-/**
- * One coach-sandbox team's workspace root. Built from `DEMO_COACH_TEAM_IDS` rather than typed
- * out, matching lib/help-shots.ts: a bare UUID is exactly the kind of value nobody can
- * eyeball-check against its source, so the compiler holds it instead of a comment.
- */
-const COACH_TEAM = (team: keyof typeof DEMO_COACH_TEAM_IDS) =>
-  `/riverdale-ridge/coaches/teams/${DEMO_COACH_TEAM_IDS[team]}`;
-
 export const MARKETING_SHOTS: MarketingShot[] = [
   {
     id: 'fan-live-score',
     persona: 'tournament',
-    // 'public' on purpose: this picture is "what a parent sees", and the operator session
-    // would be a lie in it. The page is public — no door needed.
-    door: 'public',
-    path: '/riverdale-minor-ball/summer-classic/standings',
-    // Retargeted 2026-09-02: the demo no longer simulates a live game, so `#live-now` on the
-    // landing page never renders any more (see
-    // docs/projects/active/TOURNAMENT_SANDBOX_DAILY_SNAPSHOT_PLAN.md). This anchor is the same
-    // one the guided tour's step 2 points at, and it reliably shows the bracket with both
-    // semifinals played and the championship slot already filled in.
-    ready: '[data-sandbox-tour="playoff-bracket"]',
-    clip: '[data-sandbox-tour="playoff-bracket"]',
     width: 390,
     size: { w: 390, h: 240 },
     takenAt: '2026-09-02',
@@ -157,12 +64,6 @@ export const MARKETING_SHOTS: MarketingShot[] = [
   {
     id: 'scorekeeper-view',
     persona: 'tournament',
-    door: 'tournament',
-    path: '/riverdale-minor-ball/scorekeeper',
-    // The ARIA label is only present on the populated board — the empty state is a different
-    // section without it, so this doubles as the "never photograph an empty state" proof.
-    ready: 'section[aria-label="Games"]',
-    clip: 'section[aria-label="Games"]',
     width: 390,
     size: { w: 350, h: 546 },
     takenAt: '2026-08-20',
@@ -172,11 +73,6 @@ export const MARKETING_SHOTS: MarketingShot[] = [
   {
     id: 'rain-delay',
     persona: 'tournament',
-    door: 'tournament',
-    path: '/riverdale-minor-ball/admin/tournaments/schedule?tournamentSlug=summer-classic',
-    ready: 'button:has-text("Tools")',
-    prepare: ['button:has-text("Tools")', '[role="menuitem"]:has-text("Rain delay")'],
-    clip: '.modal',
     width: 1280,
     size: { w: 560, h: 684 },
     takenAt: '2026-08-20',
@@ -186,23 +82,7 @@ export const MARKETING_SHOTS: MarketingShot[] = [
   {
     id: 'playoff-bracket',
     persona: 'tournament',
-    // Public on purpose, same reason as the fan shot: the bracket every parent refreshes.
-    door: 'public',
-    path: '/riverdale-minor-ball/summer-classic/standings',
-    // The demo tour's own anchor. The bracket sits on Standings, NOT the Playoffs page —
-    // that page is the seeding narrative (lib/sandbox-chrome.ts step 2 records the same bug).
-    ready: '[data-sandbox-tour="playoff-bracket"]',
-    // COMPOSED (slide #14, "two semifinals feeding a final — not the whole bracket"). The
-    // section is 984px wide but the bracket drawing inside it is only ~520 — the rest is empty
-    // gutter, and photographing it is what made this the least legible picture on the page.
-    // The union of the game cards and the round labels IS the bracket, at half the width.
-    // ⚠ Deliberately expressed as "every game card", not "the third div": it re-derives
-    // correctly if the demo's bracket ever gains a round.
-    clipAll:
-      '[data-sandbox-tour="playoff-bracket"] a[aria-label^="View game details"], [data-sandbox-tour="playoff-bracket"] svg text',
     width: 1280,
-    // ⚠ Cycle-proof wording: the demo replays its game day, so this picture can show any
-    // phase — a live semifinal, a waiting final, or a crowned champion. Describe the shape.
     size: { w: 480, h: 266 },
     takenAt: '2026-08-20',
     alt: 'The playoff bracket on the public standings page: semifinal cards feeding the final’s slot, with scores and states filling in as games finish.',
@@ -211,16 +91,6 @@ export const MARKETING_SHOTS: MarketingShot[] = [
   {
     id: 'registration-health',
     persona: 'tournament',
-    door: 'tournament',
-    // The Invitational is the event with a real registration pipeline mid-flight; the demo
-    // world seeds it that way on purpose (waitlist, pending review, partial payments).
-    path: '/riverdale-minor-ball/admin/tournaments/registrations?tournamentSlug=invitational',
-    ready: '[data-sandbox-tour="registration-health"]',
-    // Registration health is the Teams header's button and the window it opens (owner 2026-10-21): the picture is the window.
-    // ⚠ RECAPTURE OWED: the stored picture below is still the old in-page panel, and `size` follows the next capture.
-    prepare: ['[data-sandbox-tour="registration-health"]'],
-    readyAfterPrepare: '[data-kit-dialog]',
-    clip: '[data-kit-dialog]',
     width: 1280,
     size: { w: 976, h: 227 },
     takenAt: '2026-08-20',
@@ -228,35 +98,14 @@ export const MARKETING_SHOTS: MarketingShot[] = [
     caption: 'Registration Health — one score for the whole field, weeks out. Every figure opens the exact teams behind its number.',
   },
 
-  /* ── The coach walkthrough ────────────────────────────────────────────────────
-     The coach sandbox runs FIVE teams, one per season phase (`DEMO_COACH_TEAM_IDS` in
-     lib/demo-org.ts — those ids are hardcoded there on purpose and are stable across reseeds
-     and environments). Each picture is taken on the team whose PHASE makes that screen true,
-     which is why the two money shots below come from two different teams:
-
-       · Player dues → 12U, MID-SEASON. The only team seeded rich enough to photograph:
-         installments part-paid, two families genuinely past due, and a closed fundraiser
-         crediting five families' dues. Everyone else is thin by design.
-       · Season settlement → 14U, OFF-SEASON ("the books are open, the season isn't"), because
-         squaring up is an END-of-season job. ⚠ Photographed mid-season instead, the same sheet
-         is honest and useless: a team half-way through its spending is legitimately in the red,
-         so every family's refund shows as a debt and the panel's whole point inverts. The
-         phase is the picture. (The season's-end 13U team is NOT an option: its season is
-         closed, and the season gate sends every money route to the closed-season page.)
-
-     ⚠ THEME: these are captured with the SAME context as every other shot. The coach portal
-     is warm-themed, and the capture context's `colorScheme: 'dark'` does not change that —
-     the portal's palette is chosen by a `data-user-theme` attribute that defaults to warm
-     with no stored preference, and nothing in the app reads `prefers-color-scheme`. A fresh
-     capture context therefore photographs exactly what a coach's first visit renders. */
+  /* ── The coach pictures ───────────────────────────────────────────────────────
+     Each was taken on a coach team whose SEASON PHASE made that screen true, which is an editorial
+     decision rather than a convenience: the settlement sheet photographed mid-season shows every
+     family in debt and argues the opposite of what it means to. Money shots: Player dues from a
+     mid-season team, Season settlement from an off-season one (squaring up is an end-of-season job). */
   {
     id: 'coach-player-dues',
     persona: 'coach',
-    door: 'coach',
-    // The Money hub is ONE page with a `?section=` tab; the old /accounting/dues route is now a
-    // permanent redirect, so address the tab directly and skip the extra hop. The tab is open on
-    // the first paint (the hub seeds its visited set from the URL), so no prepare click is needed.
-    path: `${COACH_TEAM('midSeason')}/accounting?section=dues`,
     /**
      * ⚠⚠ **PHOTOGRAPHED AT PHONE WIDTH, AND THAT IS THE WHOLE POINT OF THIS ENTRY** (2026-08-20,
      * closing the QA §65/§66 defect). This used to be the 1280px desktop table, which measured
@@ -270,28 +119,6 @@ export const MARKETING_SHOTS: MarketingShot[] = [
      * is the defect, not the fix.
      */
     width: 390,
-    // ⚠ NOT `[aria-label="Dues view"]` — that is the lens toggle, and it is `duesDesktopOnly`, so
-    // at 390px it never mounts and the old readiness wait would hang here forever. The phone
-    // lens's own wrapper is the proof that the phone surface (not a loading state) has resolved.
-    // Class-substring is the established idiom for a CSS-module element with no semantic hook
-    // (lib/help-shots.ts does the same); it is why the class carries a meaningful name.
-    ready: '[class*="duesPhoneLens"]',
-    // Incidents #6/#7 — see the field's own note. Without this the pinned phone bar photographs
-    // as an opaque band straight across the middle of this crop, over a family's card.
-    hide: 'nav[aria-label="Coaches mobile navigation"]',
-    /**
-     * COMPOSED — the first seven families, which is deliberately the SAME editorial choice the
-     * desktop crop made ("the rows that carry the story"): seven is the count that reaches the
-     * first family in arrears, the thing the claim beside it promises, without naming a row
-     * position the nightly re-anchor could move.
-     *
-     * ⚠ The collection-schedule band above these cards is NOT in frame, and that is a trade made
-     * on purpose. Including it would put the crop at roughly 358×1005 — a 0.36 ratio, which the
-     * fixed 16:10 stage would draw about 140px wide on a desktop reader's screen. Seven cards
-     * come out near the scorekeeper capture's proportions, which is the shape the stage is known
-     * to render at full size. The band's team-level totals are the part the caption carries.
-     */
-    clipAll: 'details[class*="duesCard"]:nth-of-type(-n+7)',
     size: { w: 358, h: 550 },
     takenAt: '2026-08-21',
     alt: 'The Player dues screen as a coach sees it on a phone: one card per family, each giving the player’s name, what they still owe and when it is next due — most of them a plain amount, one written in amber because part of it is already past due.',
@@ -300,75 +127,20 @@ export const MARKETING_SHOTS: MarketingShot[] = [
   {
     id: 'coach-season-settlement',
     persona: 'coach',
-    door: 'coach',
-    // Season settlement is a door at the FOOT of the dues tab, not a screen of its own.
-    path: `${COACH_TEAM('offSeason')}/accounting?section=dues`,
     // ⚠ Phone width, same defect and same reasoning as the dues entry above — measured at 39% of
     // true size at 390px before this. The settlement sheet has a real phone form: it opens as a
     // full-screen sheet and its family table re-flows into one stacked card per family.
     width: 390,
-    ready: '[class*="duesPhoneLens"]',
-    // The button's label is stateful: "Review settlement" while the season still has money
-    // outstanding, "Close out the season" once everything is in.
-    prepare: ['button:has-text("Review settlement")'],
-    // ⚠ Capture-core incident #6. This door sits at the very foot of a ~2,100px phone screen and
-    // the portal's phone navigation is pinned over the bottom of the viewport, so the click never
-    // becomes actionable — reported as a timeout on an element Playwright has already found. The
-    // bar is put back before anything is photographed, and the sheet covers it anyway.
-    hide: 'nav[aria-label="Coaches mobile navigation"]',
-    // The sheet FETCHES when it opens — without this wait the shot races a "Loading…" line.
-    // ⚠ NOT the desktop entry's `th:has-text("Owed back")`: at phone width the table is stacked
-    // into cards and the header cells are re-captioned per row rather than sitting in a `thead`.
-    readyAfterPrepare: '[aria-label="Season settlement"]',
-    /**
-     * COMPOSED — the checklist of what is stopping the season closing, down through the first
-     * family's figures. Both halves of the claim beside it, and nothing else.
-     *
-     * ⚠ The whole sheet was the first crop and it was 390×1000 — a 0.39 ratio, which the stage
-     * draws about 165px wide on a laptop (42% of true size, measured). The team's-money summary
-     * is nine lines of small figures that are unreadable at that scale anyway, so dropping it from
-     * frame buys the rest of the picture ~90% at phone width and ~66% on a laptop. **A phone
-     * capture has to be short enough to be drawn at full width** — the same arithmetic that
-     * decided the dues crop one entry above, and the P1 lesson applied to height rather than rows.
-     */
-    clipAll: '[aria-label="Season settlement"] [class*="settlementNotes"], [aria-label="Season settlement"] table tbody tr:nth-child(1)',
     size: { w: 359, h: 395 },
     takenAt: '2026-08-21',
     alt: 'The Season settlement sheet on a phone: a heading reading “before the season can close”, then each reason it cannot — families who still owe, a shortfall between what paying everyone needs and what the team is holding, and spending the season still plans — followed by the first family’s figures stacked as a card: what they are owed back, their even share, anything they still owe, and the refund that falls out.',
     caption: 'Season settlement on a phone — every reason the books are not ready to close, named one by one, and each family’s refund worked out from the season’s real ledger rather than a spreadsheet.',
   },
 
-  /* ── P2a: the six coach slides whose picture is a real screen ─────────────────
-     Every one is shot on the demo team whose SEASON PHASE makes that screen true, which is an
-     editorial decision rather than a convenience: the settlement sheet photographed mid-season
-     shows every family in debt and argues the opposite of what it means to.
-
-     ⚠ Three of these could not be photographed at all until the demo world was widened in the
-     same change (awards, the scouting book's contents, and a second testing day). A prospect
-     walking the live sandbox was meeting the same empty screens. */
+  /* ── The six coach slides whose picture is a real screen ────────────────────── */
   {
     id: 'coach-fundraiser-credit',
     persona: 'coach',
-    door: 'coach',
-    // 12U, MID-SEASON: the only team with a CLOSED drive, so its rebates are real credits sitting
-    // on real bills rather than a promise. An open drive has issued nothing and the picture would
-    // be a leaderboard with an empty Rebate column.
-    path: `${COACH_TEAM('midSeason')}/accounting?section=fundraisers`,
-    // ⚠ The door's LABEL is on `aria-label`, not in the element's text — `:has-text()` reads text
-    // content and finds nothing here, which is a silent 20-second wait rather than an error.
-    // ⚠ A BUTTON since 2026-08-31: the drill-in retired and the drive expands IN PLACE, so the
-    // old `a[aria-label=…]` Link is now the row's toggle button. The drive's NAME is still the
-    // world constant (`MIDSEASON_FUNDRAISER.name`) that keeps the door stable across reseeds.
-    ready: 'button[aria-label="Open Bottle Drive"]',
-    prepare: ['button[aria-label="Open Bottle Drive"]'],
-    // The expansion's meta line — "Credits families 50% · N of M players logged" — is the first
-    // thing only the OPEN state renders, so it is the wait.
-    readyAfterPrepare: 'td:has-text("players logged")',
-    // COMPOSED (slide #04, reframed 2026-08-31 for the band): the drives band heading, then the
-    // drive's own row (raised · team keeps · credits · Closed) with its expansion — the meta line
-    // and each family's entry sharing the table's columns. ⚠ A union is a RECTANGLE: the rows
-    // between the heading and the last matched row are all in frame.
-    clipAll: 'h3:has-text("Fundraisers"), tbody tr:nth-child(-n+8)',
     width: 1280,
     size: { w: 958, h: 546 },
     takenAt: '2026-08-21',
@@ -378,19 +150,6 @@ export const MARKETING_SHOTS: MarketingShot[] = [
   {
     id: 'coach-lineup-board',
     persona: 'coach',
-    door: 'coach',
-    // 12U, MID-SEASON — the only team with saved lineups across a run of games, which is what
-    // makes the bench-time warning real rather than an artefact of a single game.
-    path: `${COACH_TEAM('midSeason')}/lineups`,
-    ready: 'a:has-text("Open lineup")',
-    // Event ids are regenerated on every reseed, so the board is reached through the list. The
-    // FIRST "Open lineup" is the most recent played game, which is the one whose grid is full.
-    prepare: ['a:has-text("Open lineup")'],
-    readyAfterPrepare: 'th:has-text("Bat")',
-    // COMPOSED (slide #06): the warning the claim is actually about, plus the grid it is about.
-    // ⚠ The warning is matched by its ROLE, not its wording — the sentence names how many innings
-    // players sit for, and that number moves with the lineup.
-    clipAll: 'p:has-text("bench time"), table:has(th:text-is("Bat")) thead, table:has(th:text-is("Bat")) tbody tr:nth-child(-n+6)',
     width: 1280,
     size: { w: 996, h: 353 },
     takenAt: '2026-08-21',
@@ -400,30 +159,9 @@ export const MARKETING_SHOTS: MarketingShot[] = [
   {
     id: 'coach-tryout-scorecard',
     persona: 'coach',
-    door: 'coach',
-    // 11U, TRYOUT DAY — the only team with a tryout in flight. Its sessions are re-anchored to
-    // today by the nightly job, so the scoring screen is always live. The hub's Score FACE since
-    // the One-Room build (2026-08-23) — the standalone /tryouts/score page is a redirect.
-    path: `${COACH_TEAM('tryoutDay')}/tryouts?stage=tryout-day&view=score`,
     // ⚠ PHONE WIDTH because the phone IS the subject: "evaluators score on their phones" is the
     // claim, and this screen is built dark with 44px targets for exactly that. Never enlarge it.
     width: 390,
-    // The scorer's LIST view — its progress line ("N of M scored") only renders on the list,
-    // never the open-player state, so it pins the state as the retired back link used to.
-    ready: 'text=/\\d+ of \\d+ scored/',
-    // Incidents #6/#7 — the same pinned phone bar as the money screens.
-    hide: 'nav[aria-label="Coaches mobile navigation"]',
-    // ⚠ The evaluator list is in BLIND mode — candidates show as a jersey number and a placeholder,
-    // never a name. That is the product's own default, and it happens to be the right thing for a
-    // public marketing picture too: there is no invented child's name to go stale or to explain.
-    prepare: ['text=Player 2'],
-    readyAfterPrepare: 'button:has-text("Done")',
-    // COMPOSED — the candidate's header and the first three of five criteria. ⚠ The whole card is
-    // ~830px tall against 342 wide, and the slide stage spends its height budget on the WIDTH, so
-    // the full card would be drawn about 160px across on a desktop reader's screen — legible on a
-    // phone and useless everywhere else. Three criteria come out near the scorekeeper capture's
-    // proportions, which is the shape this stage is known to render at full size.
-    clipAll: '[class*="detailBib"], [class*="cats"] > div:nth-child(-n+3)',
     size: { w: 334, h: 453 },
     takenAt: '2026-08-21',
     alt: 'The tryout scorecard as an evaluator holds it: a dark phone screen showing one candidate by jersey number, then five criteria — hitting, fielding, throwing, speed and attitude — each with a row of large one-to-five buttons, and a Done button at the foot.',
@@ -432,19 +170,6 @@ export const MARKETING_SHOTS: MarketingShot[] = [
   {
     id: 'coach-awards',
     persona: 'coach',
-    door: 'coach',
-    // 12U, MID-SEASON — awards handed out AT GAMES through the season, which is the beat the
-    // slide is about ("in the moment", not written up the week before the banquet). The 13U's
-    // banquet award belongs to a closed season and is unreachable behind the season gate.
-    path: `${COACH_TEAM('midSeason')}/history?section=awards`,
-    ready: 'text=Give an award',
-    // COMPOSED (slide #21): the history table — who won what, for which game, when, and the note,
-    // each row with the print icon that turns it into a certificate.
-    // ⚠ A first crop reached up to the award-type filter pills, which dragged the whole leaderboard
-    // into the rectangle: 996×890 of mostly whitespace, with the history — the part that carries
-    // the claim — cut off at the bottom. The invented award names are in the Award column anyway,
-    // so the pills were never load-bearing.
-    clipAll: 'table:has(th:text-is("Award")) thead, table:has(th:text-is("Award")) tbody tr:nth-child(-n+4)',
     width: 1280,
     size: { w: 996, h: 327 },
     takenAt: '2026-08-21',
@@ -454,28 +179,6 @@ export const MARKETING_SHOTS: MarketingShot[] = [
   {
     id: 'coach-development',
     persona: 'coach',
-    door: 'coach',
-    // 14U, OFF-SEASON — the only team that has run its tests TWICE, which is the entire claim.
-    // ⚠ Addressed by a fixed roster id (`DEMO_COACH_SHOWCASE.offSeasonPlayerId`): that player is
-    // pinned because he is the one carrying both halves of this screen — an active focus area and
-    // a reading at both testing days. See the constant's own note before repointing this.
-    // ⚠ `?section=development` is the PRODUCT's own deep link (`CoachCollapseSection`), which
-    // opens the card and scrolls to it. Clicking the summary instead is what a first attempt did,
-    // and it timed out — the card is one of eight collapsed sections on a 3,400px page.
-    // ⚠ `&view=results` (development lifecycle Phase 2, 2026-09-13): the section is four views now
-    // and opens on Goals; the tests live on Results. The address module's own view parameter.
-    path: `${COACH_TEAM('offSeason')}/roster/${DEMO_COACH_SHOWCASE.offSeasonPlayerId}?section=development&view=results`,
-    ready: '#development',
-    // One click, and it is the one that matters: opening a test's full history is the "beside
-    // last month's" half of the claim. The closed row shows only the latest headline and a spark;
-    // opened, it lists every session with its three attempts (the showcase player sprints three
-    // times per testing day since Phase 2).
-    prepare: ['button:has-text("60-yard dash")'],
-    // F20 — "Log a measurable" became "Record a result" in Phase 2; this wait follows the label.
-    readyAfterPrepare: 'button:has-text("Record a result")',
-    // The collapse section carries its own section id as the element id — a real hook, not a
-    // class-substring guess.
-    clip: '#development',
     width: 1280,
     size: { w: 960, h: 678 },
     takenAt: '2026-09-13',
@@ -485,15 +188,6 @@ export const MARKETING_SHOTS: MarketingShot[] = [
   {
     id: 'coach-playing-time',
     persona: 'coach',
-    door: 'coach',
-    // 12U, MID-SEASON — six saved lineups behind it, and a deliberate playing-time outlier the
-    // demo world seeds on purpose. ⚠ Never the word "fair" anywhere near this picture (standing
-    // owner ruling): the screen measures, it does not judge.
-    path: `${COACH_TEAM('midSeason')}/history?section=playing-time`,
-    ready: 'th:has-text("Back-to-back sits")',
-    // COMPOSED (slide #23): the header and the first rows, which is where the outlier sits — the
-    // report is ordered fewest-innings-first, so the crop reaches the story without naming a row.
-    clipAll: 'table:has(th:text-is("Back-to-back sits")) thead, table:has(th:text-is("Back-to-back sits")) tbody tr:nth-child(-n+7)',
     width: 1280,
     size: { w: 996, h: 333 },
     takenAt: '2026-08-21',
@@ -503,16 +197,6 @@ export const MARKETING_SHOTS: MarketingShot[] = [
   {
     id: 'coach-season-wrapped',
     persona: 'coach',
-    door: 'coach',
-    path: `${COACH_TEAM('seasonsEnd')}/season-end`,
-    ready: 'text=Season Wrapped',
-    // ⚠ THE CARD ALONE, NOT THE SPREAD (owner call 2026-08-21). The earlier crop paired the card
-    // with the four collapsed shelves beside it — 960×591, which is 34% of true size at phone
-    // width and unreadable, and is why this slide briefly became a drawing at all. The owner chose
-    // the card on its own instead: it is the artifact a coach actually shares, its type is large
-    // (the record is the biggest number in the portal), and ONE element is far narrower than two
-    // side by side — which is the whole lever on phone legibility.
-    clip: '[class*="wrappedCard"]',
     width: 1280,
     size: { w: 468, h: 477 },
     takenAt: '2026-08-21',

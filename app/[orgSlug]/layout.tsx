@@ -1,5 +1,4 @@
 import type { Metadata } from 'next';
-import { Suspense } from 'react';
 import { notFound } from 'next/navigation';
 import { Inter, Barlow_Condensed, DM_Serif_Display, DM_Sans } from 'next/font/google';
 import { resolveTheme } from '@/lib/themes';
@@ -10,13 +9,8 @@ import { loadClubFrame } from '@/lib/club-frame-data';
 import { hasModuleEntitlement } from '@/lib/module-entitlements';
 import ClubFrame from '@/components/public/ClubFrame';
 import PreviewBand from '@/components/public/PreviewBand';
-import { getDemoOrgBySlug } from '@/lib/demo-org';
-import { getAuthUserCached } from '@/lib/supabase-server';
-import { SandboxProvider } from '@/components/sandbox/SandboxProvider';
-import SandboxChrome from '@/components/sandbox/SandboxChrome';
 import { PublicClubProvider } from '@/components/public/PublicClubContext';
 import { isPublicClubSiteOpen } from '@/lib/public-club-access';
-import { getCoachStartHref } from '@/lib/start-menu';
 import { bareHost, isOwnHost } from '@/lib/own-hosts';
 import { requestHost } from '@/lib/request-host';
 import { previewBandText, previewTitle } from '@/lib/preview-org';
@@ -68,15 +62,10 @@ export async function generateMetadata({
   const siteContent = isPublicClubSiteOpen(org) && hasModuleEntitlement(org, 'module_public_site')
     ? await getClubSiteContent(org.id)
     : null;
-  // Sandbox ("See it live") orgs are kept out of search results entirely. Their fan pages are
-  // real public tournament pages, so without this they could be indexed and surface in a search
-  // for a genuine event — or be mistaken for a real association. `robots.txt` asks crawlers not to
-  // fetch these paths at all; this stops one that fetched anyway from listing the page. Applies to
-  // the whole subtree, because this layout wraps every page the org owns.
-  // A preview club (Track P, T1) is kept out the same way, by this tag, and NEVER by a robots.txt line: that file is
+  // A preview club (Track P, T1) is kept out of search results by this tag, and NEVER by a robots.txt line: that file is
   // public, and a line per preview would list our prospects. (No response header: the request gate never sees a public
   // club page; the non-page routes a preview could serve are refused for it instead, Track P Session P2.)
-  const demoRobots = getDemoOrgBySlug(orgSlug) || org.isPreview
+  const previewRobots = org.isPreview
     ? { robots: { index: false, follow: false, nocache: true } }
     : {};
   // On a club's own web address (Club Tier Stage 4e) every relative address in the metadata (a preview card, say) resolves
@@ -99,7 +88,7 @@ export async function generateMetadata({
     // No preview image here (Club Tier Stage 4b-2b): the club's generated card (app/[orgSlug]/opengraph-image.tsx) carries
     // its logo in its colours, and every page under the club inherits it unless it names its own. An image set HERE would
     // silently replace that card — Next skips a segment's generated image when the same segment's metadata names one.
-    ...demoRobots,
+    ...previewRobots,
   };
 }
 
@@ -135,33 +124,6 @@ export default async function OrgLayout({
   // editor's preview shares (lib/club-frame-data.ts): the site content once, the tabs, the live notice.
   const frameClub = await loadClubFrame(org, orgSlug, { ownHost: !isOwnHost(await requestHost()) });
 
-  // ── The sandbox hat ────────────────────────────────────────────────────────────
-  // Mounted HERE because this one layout wraps both halves of the product for an org — the public
-  // tournament pages and the admin shell — which is exactly the span the sandbox chrome has to
-  // cover. The lookup is a hardcoded allow-list (lib/demo-org.ts), so it costs no query and every
-  // real customer takes the `null` branch and renders precisely what they render today.
-  const demoOrg = getDemoOrgBySlug(orgSlug);
-
-  // Is this visitor actually holding the demo organizer's session? The tour uses it to decide where
-  // its operator step POINTS: straight at the dashboard for the demo organizer, and at the door for
-  // anyone else — the door is what knows how to get an anonymous visitor or a signed-in customer
-  // there, and the admin shell would simply bounce them.
-  //
-  // The session lookup is INSIDE the demo branch on purpose. Resolving a session on every public
-  // org render is exactly the cost this layout is careful to avoid (see the Stage F note above);
-  // paying it on one fictional org, whose whole traffic is people looking at invented teams, is
-  // free in the way that matters.
-  //
-  // The demo's start button opens the sign-up its own story is about (The first look, rule 8 / F14, owner
-  // 2026-10-19: one door per thing): the coach demo the one "Coach a team" rule (it opened the organization
-  // sign-up), the tournament demo Run a tournament. Only the coach demo reads gating; the two lookups are
-  // independent, so they run side by side.
-  const [demoUser, demoStartHref] = await Promise.all([
-    demoOrg ? getAuthUserCached() : null,
-    demoOrg?.kind === 'coach' ? getCoachStartHref().catch(() => '/start') : '/start/tournament',
-  ]);
-  const isDemoOrganizer = !!demoOrg && demoUser?.email?.trim().toLowerCase() === demoOrg.organizerEmail;
-
   const cssVars = [
     `--primary:       ${theme.primary}`,
     `--primary-light: ${theme.primaryLight}`,
@@ -195,29 +157,9 @@ export default async function OrgLayout({
   ].join(' ');
 
   return (
-    <SandboxProvider
-      value={{
-        isSandbox: demoOrg !== null,
-        kind: demoOrg?.kind ?? null,
-        slug: demoOrg?.slug ?? null,
-        landingPath: demoOrg?.landingPath ?? null,
-      }}
-    >
+    <>
       {/* Sets vars on :root so globally-mounted components (Navbar, ConsumerNav) inherit the org theme */}
       <style dangerouslySetInnerHTML={{ __html: `:root { ${cssVars} }` }} />
-      {demoOrg && (
-        /* Suspense: the chrome reads useSearchParams (Money-hub tabs are query-addressed), which
-           Next requires a boundary for if this tree is ever statically prerendered. */
-        <Suspense fallback={null}>
-          <SandboxChrome
-            kind={demoOrg.kind}
-            slug={demoOrg.slug}
-            landingPath={demoOrg.landingPath}
-            isDemoOrganizer={isDemoOrganizer}
-            startHref={demoStartHref}
-          />
-        </Suspense>
-      )}
       <div
         className={fontClasses}
         data-card-style={org.themeCardStyle ?? 'default'}
@@ -240,7 +182,7 @@ export default async function OrgLayout({
           </ClubFrame>
         </PublicClubProvider>
       </div>
-    </SandboxProvider>
+    </>
   );
 }
 

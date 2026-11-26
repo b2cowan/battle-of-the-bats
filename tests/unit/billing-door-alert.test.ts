@@ -38,7 +38,7 @@ describe('where the pill is worn', () => {
     const rail = readCode('components/admin/kit/AdminKitRail.tsx');
     assert.match(rail, /billingAlert && <WaitingCount count=\{billingAlert\.count\} label=\{billingAlert\.label\} tone=\{billingAlert\.tone\}/);
     const hook = readCode('components/admin/kit/useAdminKitNav.ts');
-    assert.match(hook, /const billingLink = kitBillingLink\(\{ orgSlug, planId: currentOrg\?\.planId, accountKind: currentOrg\?\.accountKind, role: userRole, capabilities: userCapabilities, isSandbox \}\)/);
+    assert.match(hook, /const billingLink = kitBillingLink\(\{ orgSlug, planId: currentOrg\?\.planId, accountKind: currentOrg\?\.accountKind, role: userRole, capabilities: userCapabilities \}\)/);
   });
   it('the hook shows it to the billing door\'s owner only and reads the plan status from the org (no fetch)', () => {
     const hook = readCode('components/admin/kit/useBillingDoorAlert.ts');

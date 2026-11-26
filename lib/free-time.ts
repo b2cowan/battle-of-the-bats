@@ -429,12 +429,12 @@ export type ClubFacts = {
 };
 
 /** What the server read about the giver and the server. */
-export type GiveContext = { switchOn: boolean; staffIsMember: boolean; isDemo: boolean; isPreview?: boolean };
+export type GiveContext = { switchOn: boolean; staffIsMember: boolean; isPreview?: boolean };
 
 export type Refusal = { ok: false; status: number; error: string };
 
 /** Known before the click: the record shows it as one line where the door would be (D-3). */
-export type GiveBlock = { tone: 'red' | 'amber'; kind: 'switch' | 'own_club' | 'portal' | 'preview' | 'demo'; lead: string; rest: string };
+export type GiveBlock = { tone: 'red' | 'amber'; kind: 'switch' | 'own_club' | 'portal' | 'preview'; lead: string; rest: string };
 
 export function freeTimeBlockOf(club: Pick<ClubFacts, 'name' | 'planId' | 'accountKind'>, ctx: GiveContext): GiveBlock | null {
   if (!ctx.switchOn) {
@@ -450,9 +450,6 @@ export function freeTimeBlockOf(club: Pick<ClubFacts, 'name' | 'planId' | 'accou
   if (ctx.isPreview) {
     // Track P, T1: free time is a customer grant, and a whole-plan grant would refuse the claim's checkout.
     return { tone: 'amber', kind: 'preview', lead: `${club.name} is a preview club`, rest: ", so it can't be given free time. It becomes a customer when it is claimed." };
-  }
-  if (ctx.isDemo) {
-    return { tone: 'amber', kind: 'demo', lead: `${club.name} is a public demo club`, rest: ", so it can't be given free time: everyone who opens the demo would see it." };
   }
   return null;
 }

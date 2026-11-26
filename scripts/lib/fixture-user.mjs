@@ -7,7 +7,7 @@
  * making it — there is nothing to remember. `tests/unit/legal-fixture-user-guard.test.ts` fails the build when a script or
  * UAT file calls `auth.admin.createUser(` anywhere else.
  *
- * Not for staff (`seed-platform-staff`) or the two demo seeds (`seed-demo-tournament`, `seed-demo-coach`): those accounts are
+ * Not for staff (`seed-platform-staff`): those accounts are
  * exempt (`lib/legal-acceptance-exempt.ts`), never tick, and keep their own `createUser`. The UAT specs' counterpart is
  * `tests/uat/helpers/fixture-user.ts`.
  */

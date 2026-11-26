@@ -1,10 +1,11 @@
 /**
  * The one-off demo retirement script (Retire the public demos, Phase 2) deletes the two demo clubs by the SAME purge the
- * platform-admin delete runs, without calling the route (whose demo refusal stays until Phase 3). That promise holds only
- * while the script's table deletes and the route's match, so this pins them together: a table the route learns to clear
- * before the organization row must be cleared by the script too, in the same order.
+ * platform-admin delete runs, without calling the route (the route's demo refusal went in Phase 3; the script is kept for
+ * the production run and checks its slugs against RETIRED_DEMO_ORG_SLUGS). That promise holds only while the script's table
+ * deletes and the route's match, so this pins them together: a table the route learns to clear before the organization row
+ * must be cleared by the script too, in the same order.
  *
- * Retired with the script itself (Phase 3 deletes both).
+ * Retired with the script itself, once production has been run.
  */
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';

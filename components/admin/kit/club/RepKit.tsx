@@ -63,21 +63,17 @@ export function ClubSection({
 
 /** The row list — framed on the page, or `inset` inside a section that already paints the ground. */
 export function ClubRowList({
-  inset = false, label, children, 'data-sandbox-tour': tourAnchor,
+  inset = false, label, children,
 }: {
   inset?: boolean;
   label?: string;
   children: ReactNode;
-  /** The demo tour anchors on a LIST, never on a row — written as the literal attribute at the call
-   *  site (`data-sandbox-tour="…"`), which is what the tour-anchor guard's static scan reads. */
-  'data-sandbox-tour'?: string;
 }) {
   return (
     <ul
       className={inset ? styles.rowListInset : styles.rowList}
       data-row-list={inset ? 'inset' : 'frame'}
       aria-label={label}
-      data-sandbox-tour={tourAnchor}
     >
       {children}
     </ul>

@@ -1,7 +1,6 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { getSessionTwoStep } from '@/lib/api-auth';
-import { isDemoOrganizerEmail } from '@/lib/demo-org';
 import { twoStepRequirementsFor, type TwoStepReason } from '@/lib/two-step-requirements';
 import { backupCodesLeft } from '@/lib/two-step-codes';
 import { isReplacingAuthenticator } from '@/lib/two-step-session';
@@ -52,7 +51,6 @@ export default async function AccountSecurityPage() {
   }
 
   const { user } = state;
-  const isDemo = isDemoOrganizerEmail(user.email);
   const [requirements, left] = await Promise.all([
     twoStepRequirementsFor(user),
     state.hasFactor ? backupCodesLeft(user.id).catch(() => 0) : Promise.resolve(0),
@@ -78,7 +76,6 @@ export default async function AccountSecurityPage() {
       : null,
     requiredNow: requirements.requiredNow,
     backupCodesLeft: left,
-    isDemo,
     hasPassword: Boolean(user.email),
   };
 

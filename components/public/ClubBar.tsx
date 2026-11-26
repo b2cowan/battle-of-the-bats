@@ -38,7 +38,6 @@ import { resolveOrgReturnFlip } from '@/lib/flip-twins';
 import { activeOrgSectionKey, ORG_SECTION_TABS_MIN } from '@/lib/org-public-sections';
 import { clubInitials } from '@/lib/club-site';
 import { siteEdit } from '@/lib/site-edit-marks';
-import { isDemoOrgSlug } from '@/lib/demo-org';
 import FlipPill from '@/components/shared/FlipPill';
 import AccountMenu from '@/components/shared/AccountMenu';
 import OrgSectionTabs from './OrgSectionTabs';
@@ -61,8 +60,6 @@ export default function ClubBar({ club, preview = false }: { club: ClubFrameClub
   const myTeams = (roles?.leagueTeams ?? []).filter(t => t.orgSlug === club.slug)
     .map(t => ({ teamName: t.teamName, href: href(t.href.slice(club.slug.length + 1)), current: pathname === t.href }));
   const onMyTeam = myTeams.some(t => t.current);
-  // A demo club shows no account menu (the shared demo account is never offered Sign out), so nothing carries the door there.
-  const accountMounted = signedIn && !isDemoOrgSlug(club.slug);
 
   return (
     // data-club-chrome: the club refusal steps this bar aside (components/public/ClubNotFound.module.css).
@@ -92,19 +89,16 @@ export default function ClubBar({ club, preview = false }: { club: ClubFrameClub
       <div className={styles.actions}>
         {signedIn && myTeams.length === 1 && <MyTeamDoor team={myTeams[0]} />}
         {signedIn ? (
-          // The shared demo account is never offered Sign out (the strips' rule), so a demo club shows no Account.
-          accountMounted && (
-            <AccountMenu className={styles.word} wrapClassName={styles.account} signOutTo="here" teams={myTeams} door={door}>
-              <User className={styles.wordIcon} strokeWidth={1.8} aria-hidden />
-            </AccountMenu>
-          )
+          <AccountMenu className={styles.word} wrapClassName={styles.account} signOutTo="here" teams={myTeams} door={door}>
+            <User className={styles.wordIcon} strokeWidth={1.8} aria-hidden />
+          </AccountMenu>
         ) : (
           // On a club's own address sign-in lives on FieldLogicHQ (host-only cookies), and returns the visitor to this same page there.
           // pathname is the club-named path, which is exactly the page's address on fieldlogichq.ca.
           <Link href={signInHref(pathname)} className={styles.word}>Sign in</Link>
         )}
         {/* On a phone the account sheet carries this door ("Go to"), so the bar's own icon steps aside — only where the menu is. */}
-        {door && <FlipPill resolution={door} variant="inline" className={`${flipStyles.clubLook} ${accountMounted ? styles.doorInSheet : ''}`} />}
+        {door && <FlipPill resolution={door} variant="inline" className={`${flipStyles.clubLook} ${signedIn ? styles.doorInSheet : ''}`} />}
       </div>
     </header>
   );

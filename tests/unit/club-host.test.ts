@@ -212,7 +212,7 @@ describe('the proxy\'s answer', () => {
 });
 
 describe('the matcher keeps www\'s own pages out of the proxy', () => {
-  it('carries the own-host pattern as a literal, identical to OWN_HOST_PATTERN, and sits after the sandbox cookie entry', async () => {
+  it('carries the own-host pattern as a literal, identical to OWN_HOST_PATTERN, and the retired sandbox cookie entry is gone', async () => {
     const src = await readFile(new URL('../../proxy.ts', import.meta.url), 'utf8');
     const matcher = src.slice(src.indexOf('matcher: ['));
     const at = matcher.indexOf("missing: [{ type: 'host', value: ");
@@ -220,15 +220,18 @@ describe('the matcher keeps www\'s own pages out of the proxy', () => {
     const literal = matcher.slice(at).split("value: ")[1].split(" }]")[0];
     const value = new Function(`return ${literal}`)() as string;
     assert.equal(value, OWN_HOST_PATTERN, 'the matcher\'s host literal must equal OWN_HOST_PATTERN');
-    assert.ok(at > matcher.indexOf("has: [{ type: 'cookie', key: '"), 'it must come after the cookie entry (the sandbox test slices the matcher up to it)');
+    // The demo sandbox's cookie-keyed matcher entry went with the demo: no cookie-keyed entry, no flhq-in-sandbox.
+    assert.ok(!matcher.includes("type: 'cookie'"), 'the matcher carries no cookie-keyed entry any more');
+    assert.ok(!src.includes('flhq-in-sandbox'), 'the proxy no longer knows the sandbox cookie');
   });
 
   it('the proxy answers a club host before any session work', async () => {
     const src = await readFile(new URL('../../proxy.ts', import.meta.url), 'utf8');
     const branch = src.indexOf('clubHostResponse(request)');
     assert.ok(branch > 0);
-    for (const later of ['createServerClient(', 'sandboxExitResponse(request)', 'demoOrgSlugForBlockedWrite(']) {
-      assert.ok(src.indexOf(later, branch) > branch, `${later} must come after the club-host branch`);
+    assert.ok(src.indexOf('createServerClient(', branch) > branch, 'createServerClient( must come after the club-host branch');
+    for (const gone of ['sandboxExitResponse', 'demoOrgSlugForBlockedWrite', 'isDemoOrgSlug']) {
+      assert.ok(!src.includes(gone), `${gone} left the proxy with the demo`);
     }
   });
 });

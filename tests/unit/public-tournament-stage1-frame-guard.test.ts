@@ -265,7 +265,7 @@ describe('the band (Asks 2, 8, 16 and the app-bar direction)', () => {
   });
 
   it('the operator door sits in the band on the club bar\'s neutral look', () => {
-    assert.match(band, /<TournamentFlipPill look="band" \/>/);
+    assert.match(band, /<TournamentFlipDoor resolution=\{resolution\} look="band" \/>/);
   });
 });
 
@@ -287,7 +287,7 @@ describe('Part 2: the desk, the footer and the admin preview', () => {
   it('the footer, the rail\'s place in the desk grid and the credit in the footer, on every page', () => {
     assert.equal((layout.match(/<TournamentFooter\b/g) ?? []).length, 1);
     assert.doesNotMatch(layout, /<BuiltOnCredit|import BuiltOnCredit/, 'the paid credit lives in the footer only (Stage 8 Part 3d removed the old in-flow one)');
-    assert.match(layout, /const showBuiltOnCredit = \(!isFreeTournamentPlan \|\| org\.isPreview === true\) && !isDemoOrgSlug\(orgSlug\);/, 'the credit: paid plans, and a preview club, which wears no badge');
+    assert.match(layout, /const showBuiltOnCredit = !isFreeTournamentPlan \|\| org\.isPreview === true;/, 'the credit: paid plans, and a preview club, which wears no badge (the retired demos\' exception is gone)');
     // Stage 7: the rail goes through the focused-page gate (public-focused-page.test.ts); one mount, frame facts passed.
     assert.match(layout, /\{unlessFocused\(<TournamentSideRail hiddenPages=\{navHiddenPages\} hasBracket=\{hasPublicBracket\}\s+frameContent=\{frameContent\} \/>\)\}/);
     // The rail's old `.shell` (it padded the page past a fixed dark rail) went with it in Stage 8 Part 4a: the grid places it.
@@ -344,9 +344,9 @@ describe('Part 2: the desk, the footer and the admin preview', () => {
       'the live band\'s one helper');
     assert.match(preview, /basePath=\{previewBase\}\s*\/>\s*<TournamentSideRail basePath=\{previewBase\}/);
     assert.match(band, /\{!preview && <SharePageButton/);
-    // The visitor's doors share one read of the viewer's hats (BandDoors); the sandbox shows no account menu but keeps its door.
-    assert.match(band, /\{!inSandbox && !preview \? \(\s*<BandDoors/);
-    assert.match(band, /\) : !preview && \(\s*<span className=\{styles\.bandDoor\}>/);
+    // The visitor's doors share one read of the viewer's hats (BandDoors); the retired sandbox's door-without-account-menu branch is gone.
+    assert.match(band, /\{!preview && <BandDoors/);
+    assert.doesNotMatch(band, /inSandbox/);
   });
 });
 

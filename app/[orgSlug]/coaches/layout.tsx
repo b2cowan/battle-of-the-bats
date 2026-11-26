@@ -18,8 +18,6 @@ import { isTeamWorkspaceOrg } from '@/lib/team-workspace-entitlements';
 import { COACHES_HOME_PATH, teamWorkspaceReactivatePath } from '@/lib/coaches-portal-routes';
 import { coachBillingLink, coachHostedTournamentsLink } from '@/lib/coach-billing-access';
 import { PLAN_BILLING_WORDS as W } from '@/lib/plan-billing-words';
-import { getDemoOrgBySlug } from '@/lib/demo-org';
-import { SEE_IT_LIVE_COACHES_PATH } from '@/lib/sandbox-door';
 // The main shell (sidebar + bottom nav + strip) now lives in CoachesChrome, which owns the
 // focused-surface decision. CoachTopStrip is still imported here for the "not assigned"
 // fallback shells below, which render their own minimal frame.
@@ -86,15 +84,6 @@ export default async function CoachesLayout({
     // read, and only on a path that was already failing.
     const user = await getAuthenticatedUser();
     if (!user) {
-      // The coach SANDBOX has no login to send anyone to — its whole promise is that there
-      // isn't one. An anonymous arrival here is a visitor who lost the shared demo session
-      // (the marketing bar ends it when they leave the demo; a shared deep link never had
-      // it), so walk them back through their own door instead of showing a form they can
-      // never fill in. The door re-establishes the session and lands on the sandbox's own
-      // constant landing path — it takes no redirect target, by ruling (`/see-it-live`), so
-      // this cannot become an open redirect, and every failure branch inside it lands on
-      // /for-coaches rather than back here.
-      if (getDemoOrgBySlug(orgSlug)?.kind === 'coach') redirect(SEE_IT_LIVE_COACHES_PATH);
       redirect(`/auth/login?next=/${orgSlug}/coaches`);
     }
     return (
@@ -143,7 +132,7 @@ export default async function CoachesLayout({
     };
   };
   const readRole = async () => (await readMember()).role;
-  const ownerDoorHref = (role: OrgRole | null) => coachBillingLink(authCtx.org, role, null, !!getDemoOrgBySlug(orgSlug));
+  const ownerDoorHref = (role: OrgRole | null) => coachBillingLink(authCtx.org, role, null);
 
   // Billing rail (owner ruling 2026-08-06) — the portal's human half. Every coach API route is
   // already closed for a cancelled org; this stops the shell from rendering into a wall of failed
@@ -214,7 +203,7 @@ export default async function CoachesLayout({
   const initialUserCapabilities = member.capabilities;
   const ownerBillingHref = ownerDoorHref(initialUserRole);
   const ownerTournamentsHref = initialUserRole === 'owner'
-    ? coachHostedTournamentsLink(authCtx.org, initialUserRole, null, !!getDemoOrgBySlug(orgSlug)) : null;
+    ? coachHostedTournamentsLink(authCtx.org, initialUserRole, null) : null;
   // Same shaping as the assignments API: one entry per team, only teams with no active year.
   const activeTeamIds = new Set(assignments.map(a => a.teamId));
   const seenClosedTeams = new Set<string>();

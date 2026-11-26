@@ -61,7 +61,7 @@ export default function AdminKitBottomNav({ notifUnread = 0 }: { notifUnread?: n
   const {
     base, navPrograms, alsoOnPlan, brief, placeGroups, litPlace, tournamentOnly, onTournaments, isCanceled, portalDoors,
     tournamentGroups,
-    calendarLink, permitsLink, permitsCount, schedulesLink, billingLink, helpHref, isSandbox,
+    calendarLink, permitsLink, permitsCount, schedulesLink, billingLink, helpHref,
   } = nav;
   const { currentOrg } = useOrg();
   const { currentTournament } = useTournament();
@@ -81,7 +81,7 @@ export default function AdminKitBottomNav({ notifUnread = 0 }: { notifUnread?: n
   }, [pathname]);
 
   // ── The tournament bar: today's lifecycle-aware tabs, from the SAME groups the rail lists ──────
-  // (sandbox-curated, role-gated, Summary once the event is over, every row's address resolved — `useAdminKitNav`).
+  // (role-gated, Summary once the event is over, every row's address resolved — `useAdminKitNav`).
   const groupItems = (key: string) => tournamentGroups.find(g => g.key === key)?.items ?? [];
   const opsByKey = new Map(groupItems('operations').map(i => [i.key, i]));
   const setupByKey = new Map(groupItems('setup').map(i => [i.key, i]));
@@ -303,36 +303,28 @@ export default function AdminKitBottomNav({ notifUnread = 0 }: { notifUnread?: n
                 </>
               )}
 
-              {/* You: Account and Home lead out of the demo sandbox (it ends the demo on arrival), so the sandbox hides
-                  them, as the top strip hides the account menu. What's new sits beside Account (owner 2026-11-07); it opens a
-                  public page in a new tab, so the sandbox keeps it and the group always has a row to show. */}
-              <>
-                  <div className={styles.dropDivider} />
-                  <div className={styles.dropSectionLabel}>You</div>
-                  <div className={styles.dropGrid} data-cols="2">
-                    {!isSandbox && (
-                      <Link className={styles.dropItem} href="/account" role="menuitem" id="admin-mob-account" onClick={close}>
-                        <User size={17} aria-hidden /><span>Account</span>
-                      </Link>
-                    )}
-                    <WhatsNewSheetRow itemClass={styles.dropItem} id="admin-mob-whats-new" onClose={close} />
-                    {!isSandbox && (
-                      <Link className={styles.dropItem} href="/discover" role="menuitem" id="admin-mob-home" onClick={close}>
-                        <Home size={17} aria-hidden /><span>Home</span>
-                      </Link>
-                    )}
-                    {/* The other portals, the sidebar foot's doors in its order (N4): Club · Tournaments · Coaches Portal. */}
-                    {portalDoors.map(door => (
-                      <Link key={door.key} className={styles.dropItem} href={door.href} role="menuitem" id={`admin-mob-${door.key}`} onClick={close}>
-                        {door.icon && <door.icon size={17} aria-hidden />}<span>{door.label}</span>
-                      </Link>
-                    ))}
-                    {billingLink && <Link className={styles.dropItem} href={billingLink.href} role="menuitem" id="admin-mob-billing" onClick={close} aria-current={isKitLinkActive(pathname, billingLink) ? 'page' : undefined}>
-                      {billingLink.icon && <billingLink.icon size={17} aria-hidden />}<span>{billingLink.label}</span>
-                      {billingAlert && <span className={`${styles.dropCount} ${billingTone}`} aria-label={billingAlert.label}>{kitCountText(billingAlert.count)}</span>}
-                    </Link>}
-                  </div>
-              </>
+              {/* You: What's new sits beside Account (owner 2026-11-07). */}
+              <div className={styles.dropDivider} />
+              <div className={styles.dropSectionLabel}>You</div>
+              <div className={styles.dropGrid} data-cols="2">
+                <Link className={styles.dropItem} href="/account" role="menuitem" id="admin-mob-account" onClick={close}>
+                  <User size={17} aria-hidden /><span>Account</span>
+                </Link>
+                <WhatsNewSheetRow itemClass={styles.dropItem} id="admin-mob-whats-new" onClose={close} />
+                <Link className={styles.dropItem} href="/discover" role="menuitem" id="admin-mob-home" onClick={close}>
+                  <Home size={17} aria-hidden /><span>Home</span>
+                </Link>
+                {/* The other portals, the sidebar foot's doors in its order (N4): Club · Tournaments · Coaches Portal. */}
+                {portalDoors.map(door => (
+                  <Link key={door.key} className={styles.dropItem} href={door.href} role="menuitem" id={`admin-mob-${door.key}`} onClick={close}>
+                    {door.icon && <door.icon size={17} aria-hidden />}<span>{door.label}</span>
+                  </Link>
+                ))}
+                {billingLink && <Link className={styles.dropItem} href={billingLink.href} role="menuitem" id="admin-mob-billing" onClick={close} aria-current={isKitLinkActive(pathname, billingLink) ? 'page' : undefined}>
+                  {billingLink.icon && <billingLink.icon size={17} aria-hidden />}<span>{billingLink.label}</span>
+                  {billingAlert && <span className={`${styles.dropCount} ${billingTone}`} aria-label={billingAlert.label}>{kitCountText(billingAlert.count)}</span>}
+                </Link>}
+              </div>
 
               <div className={styles.dropDivider} />
               {/* Help (new on the admin phone, N7), Send feedback, Download app, Sign out — the one foot every sheet wears. */}

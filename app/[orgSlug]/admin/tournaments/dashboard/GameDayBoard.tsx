@@ -172,7 +172,7 @@ function BoardRow({ game, href, today, withScore }: { game: BoardGame; href: str
 
 /** One of the four lists: its band (the words and the count, once), its rows, and a door to the rest. */
 function BoardList({
-  label, games, total, withScore, today, gameHref, moreHref, showEmpty, 'data-sandbox-tour': tourAnchor,
+  label, games, total, withScore, today, gameHref, moreHref, showEmpty,
 }: {
   label: string;
   games: BoardGame[];
@@ -183,13 +183,12 @@ function BoardList({
   moreHref: string;
   /** Customize shows a list's place even while it has nothing in it. */
   showEmpty: boolean;
-  'data-sandbox-tour'?: string;
 }) {
   const count = Math.max(total, games.length);
   if (count === 0 && !showEmpty) return null;
   const more = count - games.length;
   return (
-    <ClubRowList inset label={label} data-sandbox-tour={tourAnchor}>
+    <ClubRowList inset label={label}>
       <ClubRowBand count={count}>{label}</ClubRowBand>
       {games.map(g => <BoardRow key={g.id} game={g} href={gameHref(g.id)} today={today} withScore={withScore} />)}
       {more > 0 && <ClubRow as="link" href={moreHref} title={GAME_DAY_WORDS.moreRows(more)} chevron />}
@@ -250,8 +249,7 @@ export default function GameDayBoard({
         <BoardList {...listProps} label={GAME_DAY_LIST.needsScore} games={gd.needsScoreGames} total={gd.needsScoreTotal} withScore={false} moreHref={needsYou} />
       )}
       {visible('playingNow') && (
-        // The demo tour's "Watch a score land" step rings this list (it renders only while a game is live).
-        <BoardList {...listProps} label={GAME_DAY_LIST.playingNow} games={gd.liveGames} total={gd.liveGamesTotal} withScore moreHref={needsYou} data-sandbox-tour="now-playing" />
+        <BoardList {...listProps} label={GAME_DAY_LIST.playingNow} games={gd.liveGames} total={gd.liveGamesTotal} withScore moreHref={needsYou} />
       )}
       {visible('upNext') && (
         <BoardList {...listProps} label={GAME_DAY_LIST.upNext} games={gd.upNextGames} total={gd.upNextTotal} withScore={false} moreHref={allGames} />
@@ -318,9 +316,7 @@ export default function GameDayBoard({
     ? GAME_DAY_WORDS.healthCaption(health.tone, health.issueCount)
     : GAME_DAY_WORDS.healthNotBuilt;
   const healthRow = visible('gdScheduleHealth') ? (
-    // The demo tour's "Break the schedule" step rings this row (and the Schedule's header button).
     <HealthRow
-      data-sandbox-tour="schedule-health"
       score={health.timedGames > 0 ? health.score : null}
       tone={health.tone}
       title={GAME_DAY_WORDS.healthTitle}

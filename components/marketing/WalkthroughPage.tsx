@@ -5,7 +5,7 @@
  * · docs/projects/active/PRESALES_WALKTHROUGH_PLAN.md (the page itself)
  * · the format: https://claude.ai/code/artifact/b1706db6-8f65-43d1-a5c7-39ffa722300f
  *
- * Everything a walkthrough differs by (its door, its way back, its address, its fallback pull)
+ * Everything a walkthrough differs by (its ask, its way back, its address, its fallback pull)
  * is DATA in lib/walkthrough-content.ts; each persona's route file is a shell that also resolves
  * WHICH slides to show — the owner's saved pull, or the code fallback (stage B) — and hands it
  * in as `pull`.
@@ -31,7 +31,6 @@ import {
   type SlideId,
   type Walkthrough,
 } from '@/lib/walkthrough-content';
-import { sandboxDoorsVisible } from '@/lib/sandbox-door';
 import { pictureFor } from './slide-picture';
 import SlidePanels from './SlidePanels';
 import WalkthroughPresent, { type PresentSlide } from './WalkthroughPresent';
@@ -115,35 +114,20 @@ export default function WalkthroughPage({
     { eyebrow: w.closing.eyebrow, title: w.closing.title, body: w.closing.body },
   ];
 
-  // Same gate, same posture as the persona pages: the walkthrough is the pitch, the demo is the
-  // proof one step behind it, and signup stays the ask. When the doors are dark, the panels still
-  // stand on their pictures — only the door links go.
-  const showSandboxDoor = sandboxDoorsVisible();
-
-  // The standing placement ruling, rendered once: the ask leads, the door follows one step
-  // behind it. Both CTA rows carry the identical pair, so they cannot drift apart. The ask is the
-  // page's lime button; the door is the secondary, with the live dot (no arrow on either).
-  const askThenDoor = (
-    <>
-      {w.ask.gated && !askOpen ? (
-        <EarlyAccessModalTrigger
-          className={kit.btn}
-          initialPlanInterest={w.ask.gated.planInterest}
-          initialFeaturesInterested={w.ask.gated.featuresInterested}
-        >
-          {interestButtonLabel()}
-        </EarlyAccessModalTrigger>
-      ) : (
-        <Link href={w.ask.href} className={kit.btn}>
-          {w.ask.label}
-        </Link>
-      )}
-      {showSandboxDoor && (
-        <Link href={w.door.path} prefetch={false} className={cn(kit.btn, kit.btnSecondary, kit.live)}>
-          {w.door.label}
-        </Link>
-      )}
-    </>
+  // The ask, rendered once: both CTA rows carry the identical button, so they cannot drift apart. It is the
+  // page's lime button.
+  const askButton = w.ask.gated && !askOpen ? (
+    <EarlyAccessModalTrigger
+      className={kit.btn}
+      initialPlanInterest={w.ask.gated.planInterest}
+      initialFeaturesInterested={w.ask.gated.featuresInterested}
+    >
+      {interestButtonLabel()}
+    </EarlyAccessModalTrigger>
+  ) : (
+    <Link href={w.ask.href} className={kit.btn}>
+      {w.ask.label}
+    </Link>
   );
 
   return (
@@ -155,7 +139,7 @@ export default function WalkthroughPage({
           <p className={kit.eyebrow}>{w.eyebrow}</p>
           <h1 className={kit.headline}>{w.title}</h1>
           <p className={kit.lead}>{w.sub}</p>
-          <div className={cn(kit.row, styles.heroActions)}>{askThenDoor}</div>
+          <div className={cn(kit.row, styles.heroActions)}>{askButton}</div>
           {/* Computed from the pull it describes (finding F3) — a hand-typed count cannot see
               the owner recomposing the page. */}
           <div className={styles.finePrint}>
@@ -176,7 +160,7 @@ export default function WalkthroughPage({
           <h2 className={cn(kit.heading, styles.ctaTitle)}>{w.closing.title}</h2>
           <p className={cn(kit.body, styles.ctaBody)}>{w.closing.body}</p>
           <div className={cn(kit.row, styles.heroActions)}>
-            {askThenDoor}
+            {askButton}
             {/* The label is the walkthrough's own data (`back.label`): it names the product the
                 persona page is about, so it differs by persona. */}
             <Link href={w.back.href} className={cn(kit.link, kit.linkBlock, styles.backLink)}>

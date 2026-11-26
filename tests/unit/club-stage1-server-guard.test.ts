@@ -140,7 +140,7 @@ describe('B05 — the coaches portal checks the club\'s plan', () => {
     const planWall = layout.indexOf('if (!orgPlanCarriesCoachesPortal(authCtx.org))');
     const exception = layout.indexOf("const ownerBillingPage = noTeams && !!ownerBillingHref && (await headers()).get('x-pathname') === ownerBillingHref;");
     assert.ok(exception > planWall, 'billing-path exception must never bypass the cancelled or club plan walls');
-    assert.match(layout, /const ownerDoorHref = \(role: OrgRole \| null\) => coachBillingLink\(authCtx\.org, role, null, !!getDemoOrgBySlug\(orgSlug\)\);/);
+    assert.match(layout, /const ownerDoorHref = \(role: OrgRole \| null\) => coachBillingLink\(authCtx\.org, role, null\);/);
     assert.match(layout, /const ownerBillingHref = ownerDoorHref\(initialUserRole\);/);
     assert.match(layout, /ownerBillingHref && \([\s\S]*?<a href=\{ownerBillingHref\} className="btn btn-lime">\{W\.page\.title\}<\/a>/,
       'the wall door must request the server layout again, so it can render the billing destination');

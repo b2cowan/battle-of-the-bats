@@ -10,7 +10,7 @@
  *                                                    set up — "payments aren't tracked here", never "free" (F92)
  *   Coaches        0 of 15 signed up                 the sign-up reminder beside its row (one tap, then it rests)
  *   Messages                                         Communications' door
- *   Schedule                                         the schedule's door — the demo tour's schedule-health anchor
+ *   Schedule                                         the schedule's door
  *   Customize this board                             drag to reorder, hide or bring back a card (unchanged)
  *
  * Each panel became a kit section card: its title inside at 16px sentence case, its one figure on the head row, then ONE
@@ -394,8 +394,7 @@ export default function WeeksBeforeBoard({
     const href = `${base}/schedule`;
     return (
       <ClubSection list title={W.schedule}>
-        {/* The demo tour's "Break the schedule" anchor (it also lives on the schedule page and the game-day board). */}
-        <ClubRowList inset label={W.schedule} data-sandbox-tour="schedule-health">
+        <ClubRowList inset label={W.schedule}>
           {health.timedGames === 0
             ? <ClubRow as="link" href={href} title={W.noTimes} caption={W.teamsIn(teams, divisions)} chevron />
             : <ClubRow as="button" onClick={onOpenHealth} aria-haspopup="dialog" title={W.timed(health.timedGames, health.totalGames)} caption={health.topIssue ?? W.healthLine(health.tone, health.issueCount)} chevron />}

@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server';
 import { withObservability } from '@/lib/observability';
 import { createClient } from '@/lib/supabase-server';
-import { isDemoOrganizerEmail } from '@/lib/demo-org';
 import { passwordChangedEmail, sendTwoStepEmail } from '@/lib/two-step-emails';
 
 /** The password must have been saved this recently, by the service's own clock, for the notice to go out. */
@@ -27,7 +26,6 @@ export const POST = withObservability(async () => {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user?.email) return NextResponse.json({ error: 'Sign in first.' }, { status: 401 });
-  if (isDemoOrganizerEmail(user.email)) return NextResponse.json({ ok: true, sent: false });
 
   const changedAt = Date.parse(user.updated_at ?? '');
   if (!Number.isFinite(changedAt) || Date.now() - changedAt > FRESH_MS) {

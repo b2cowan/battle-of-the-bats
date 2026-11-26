@@ -76,8 +76,7 @@ import { familyTeamFacts, partBillOf, samePartsSeen, type LostShare, type Member
  * database CLAIM against a double send before a single email goes; reply-to the sender; the sender never a recipient;
  * the send log row completed with what actually went. ⚖ THE CLUB'S COACHES ONLY — never the venue (owner 2026-10-12, walk
  * §300 W7: "this is between clubs and their coaches"; it amends Ask 7). The venue keeps its Bookings contact as a contact,
- * and a club that wants the dome to have the schedule sends it the Export. ⚠ EMAIL ONLY FROM THESE POSTS: `sendEmail` has no demo check of its
- * own — the proxy refuses a demo club's POST, and `notify()` stays silent for one.
+ * and a club that wants the dome to have the schedule sends it the Export. ⚠ EMAIL ONLY FROM THESE POSTS.
  * ══════════════════════════════════════════════════════════════════════════════════════════════
  */
 

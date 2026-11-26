@@ -2,7 +2,7 @@
 import { Fragment, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { HelpCircle, Shield, Trophy, CreditCard } from 'lucide-react';
+import { Shield, Trophy, CreditCard } from 'lucide-react';
 import { useCoaches, resolveLiveSeason, resolveClosedSeason } from '@/lib/coaches-context';
 import { coachTeamIdIn, resolveNavTeamId } from '@/lib/coach-nav-visibility';
 import { coachNavGroupsFor, isCoachNavItemLit, type CoachNavItem } from '@/lib/coach-team-nav';
@@ -10,7 +10,6 @@ import { useOrg } from '@/lib/org-context';
 import { coachBillingLink, coachHostedTournamentsLink } from '@/lib/coach-billing-access';
 import { adminDoorHome } from '@/lib/member-home';
 import { PLAN_BILLING_TITLE } from '@/lib/plan-billing-title';
-import { useIsSandbox } from '@/components/sandbox/SandboxProvider';
 import { useChatUnread } from '@/lib/use-chat-unread';
 import ChatUnreadBadge from '@/components/chat/ChatUnreadBadge';
 import { CollapseSidebarRow, SidebarStripTip } from '@/components/shared/SidebarStrip';
@@ -40,9 +39,8 @@ export default function CoachesSidebar({ orgSlug }: { orgSlug: string }) {
   const pathname = usePathname();
   const { assignments, closedAssignments } = useCoaches();
   const { currentOrg, userRole, userCapabilities } = useOrg();
-  const inSandbox = useIsSandbox();
-  const billingHref = coachBillingLink(currentOrg, userRole, userCapabilities, inSandbox);
-  const tournamentsHref = coachHostedTournamentsLink(currentOrg, userRole, userCapabilities, inSandbox);
+  const billingHref = coachBillingLink(currentOrg, userRole, userCapabilities);
+  const tournamentsHref = coachHostedTournamentsLink(currentOrg, userRole, userCapabilities);
   // The "Admin" door — for anyone the club admin itself admits, landing on THEIR home (F-XR-2; the rule is
   // lib/member-home.ts `adminDoorHome`, shared with the phone bar's More sheet). A coach-only user has no door.
   const adminHome = adminDoorHome(orgSlug, userRole, currentOrg, userCapabilities);
@@ -135,27 +133,20 @@ export default function CoachesSidebar({ orgSlug }: { orgSlug: string }) {
       )}
       {/* ⚖ ONE SIDEBAR FOOT (N4, rewritten by navigation Phase 1, E4 + E16, owner 2026-11-09), the admin's order: Plan &
           billing (the standalone owner), a hairline, the doors to the other portals this person holds (Club · Tournaments
-          you run), then Collapse sidebar last. Help is the desktop account menu's (under What's new) — except in the demo
-          sandbox, which hides the account menu, so its sidebar keeps Help where Plan & billing would be. */}
+          you run), then Collapse sidebar last. Help is the desktop account menu's (under What's new). */}
       <div className={styles.sidebarSpacer} />
       {/* ⚠ No doors in the foot (a club-run team's coach with no admin seat) = no hairline and no empty section: the
           Collapse row carries its own hairline, so drawing this one too left two rules with nothing between them. */}
-      {(inSandbox || billingHref || adminHome || tournamentsHref) && (<>
+      {(billingHref || adminHome || tournamentsHref) && (<>
       <div className={styles.sidebarDivider} />
       <div className={styles.sidebarSection}>
-        {inSandbox && (
-          <Link href={`${base}/help`} className={`${styles.sidebarItem} ${styles.sidebarFootItem}`} target="_blank" rel="noopener noreferrer">
-            <HelpCircle size={14} />
-            <span className={strip.rowLabel}>Help</span>
-          </Link>
-        )}
         {billingHref && (
           <Link href={billingHref} id="coaches-billing" className={`${styles.sidebarItem} ${styles.sidebarFootItem}${pathname === billingHref ? ` ${styles.sidebarItemActive}` : ''}`}>
             <CreditCard size={14} />
             <span className={strip.rowLabel}>{PLAN_BILLING_TITLE}</span>
           </Link>
         )}
-        {(billingHref || inSandbox) && (adminHome || tournamentsHref) && <div className={styles.sidebarFootSep} aria-hidden />}
+        {billingHref && (adminHome || tournamentsHref) && <div className={styles.sidebarFootSep} aria-hidden />}
         {adminHome && (
           // The club's door, named "Club" as the admin's foot names it (was "Admin" — the owner's strip words, 2026-11-09).
           <Link href={adminHome.href} className={`${styles.sidebarItem} ${styles.sidebarFootItem}`}>

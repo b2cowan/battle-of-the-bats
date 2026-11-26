@@ -353,8 +353,8 @@ export default async function PitchDeckStudioPage() {
           but takes a click most readers never make. ⚠ The picture column proves a picture is{' '}
           <em>declared</em> properly — it cannot prove one still looks like the screen it
           photographed. Nothing we run can — <strong>age tells you where to look, not what is
-          wrong.</strong> Re-taking a picture is a one-line request in chat; it is a command that
-          drives a real browser through the demo world, so it cannot be a button on this page.
+          wrong.</strong> The demo worlds these pictures were taken in are retired, so re-taking one needs a new
+          capture source first, and that is a request in chat, not a button on this page.
         </p>
 
         {report.reserved.length > 0 && (

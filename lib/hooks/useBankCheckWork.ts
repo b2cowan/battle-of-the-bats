@@ -18,8 +18,6 @@
  *   nothing is on its way (`settle`, a loop: two waiters on one keep never both go with the same revision), so none of them
  *   meets its own last keep as "another device". A failed keep is not re-sent on a timer: the next change or Try again
  *   sends it. A failed re-read keeps the card as it is and says the keep failed; it never says the work is gone.
- * ⚖ THE DEMO SANDBOX REFUSES EVERY WRITE BY DESIGN (lib/demo-guard.ts): a refused keep there is the demo working, so the card
- *   carries on in this visit and `sandboxNote` carries the sandbox's own sentence for the resting line (never its code name).
  */
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { clearLegacyDrafts } from '@/lib/bank-check-draft';
@@ -48,8 +46,6 @@ export interface BankCheckWork {
   changed: 'there' | 'gone' | null;
   /** The last keep failed: nothing since the last good one is kept yet. */
   keepFailed: boolean;
-  /** In a demo sandbox: its own "Nothing is saved here…" sentence, in place of the resting line. Null everywhere else. */
-  sandboxNote: string | null;
   /** The last day the work is kept, as the server last said (null before the first keep, and after Start over). */
   endsOn: string | null;
   /** The work after Start, as `workText`, whenever it changes: kept after a short pause. */
@@ -70,13 +66,6 @@ export interface BankCheckWork {
 
 type Sent = { ok: true; saved: SavedWork | null } | { ok: false; changed: boolean; error: string };
 
-/** The demo sandbox's refusal (403 `sandbox: true`): its sentence, or null for any other answer. */
-function sandboxSentence(r: { status: number; data: unknown }): string | null {
-  const d = r.data as { sandbox?: unknown; message?: unknown } | null;
-  if (r.status !== 403 || d?.sandbox !== true) return null;
-  return typeof d.message === 'string' && d.message ? d.message : 'Nothing is saved here.';
-}
-
 /**
  * `url` is the card's own work route (it carries `orgSlug` for the club). `fallback` is the card's failed-keep words, for a
  * refusal that carries none. The card mounts after the bank is read, so `url` is known from the first render.
@@ -89,7 +78,6 @@ export function useBankCheckWork(url: string, fallback: string): BankCheckWork {
   const [seed, setSeed] = useState(0);
   const [changed, setChanged] = useState<BankCheckWork['changed']>(null);
   const [keepFailed, setKeepFailed] = useState(false);
-  const [sandboxNote, setSandboxNote] = useState<string | null>(null);
   const [endsOn, setEndsOn] = useState<string | null>(null);
   const [readAgain, setReadAgain] = useState(0);
 
@@ -183,10 +171,7 @@ export function useBankCheckWork(url: string, fallback: string): BankCheckWork {
     onTheWay.set(url, go);
     try {
       const r = await go;
-      if (r.ok) { setSandboxNote(null); return { ok: true, saved: r.data.saved ?? null }; }
-      // The demo refusing is the demo working: the card carries on in this visit, held nowhere (`saved` null).
-      const sandbox = sandboxSentence(r);
-      if (sandbox) { setSandboxNote(sandbox); return { ok: true, saved: null }; }
+      if (r.ok) return { ok: true, saved: r.data.saved ?? null };
       return { ok: false, changed: r.data.code === 'work_changed', error: refusalText(r.data, fallback) };
     } catch {
       return { ok: false, changed: false, error: fallback };
@@ -251,12 +236,11 @@ export function useBankCheckWork(url: string, fallback: string): BankCheckWork {
     // The DELETE is the one on its way: a keep made meanwhile waits for it, then finds nothing to send (`forget`).
     const r = await exclusive(async () => {
       const got = await moneyFetch<{ ok?: boolean }>(url, { method: 'DELETE' }).catch(() => null);
-      // The demo refusing is the demo working: the card starts over in this visit.
-      if (got?.ok || (got && sandboxSentence(got))) forget();
+      if (got?.ok) forget();
       return got;
     });
     if (!live.current) return { ok: false, error: fallback };
-    if (r && (r.ok || sandboxSentence(r))) return { ok: true, endsOn: null };
+    if (r && r.ok) return { ok: true, endsOn: null };
     return { ok: false, error: r ? refusalText(r.data, fallback) : fallback };
   }, [url, fallback, forget, exclusive]);
 
@@ -277,7 +261,7 @@ export function useBankCheckWork(url: string, fallback: string): BankCheckWork {
   }, [flush]);
 
   return {
-    read, mine, colleagues, elsewhere, seed, changed, keepFailed, sandboxNote, endsOn,
+    read, mine, colleagues, elsewhere, seed, changed, keepFailed, endsOn,
     keep, keepNow, startOver, flush: useCallback(() => flush(), [flush]), forget,
     retryRead: useCallback(() => { setRead('loading'); setReadAgain(n => n + 1); }, []),
     clearChanged: useCallback(() => setChanged(null), []),

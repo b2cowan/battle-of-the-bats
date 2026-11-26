@@ -39,7 +39,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Fragment, useEffect, useRef, useState, type ElementType } from 'react';
 import {
-  LayoutGrid, ChevronDown, HelpCircle, Trophy, Settings,
+  LayoutGrid, ChevronDown, Trophy, Settings,
 } from 'lucide-react';
 import ChatUnreadBadge from '@/components/chat/ChatUnreadBadge';
 import { CollapseSidebarRow, SidebarStripTip } from '@/components/shared/SidebarStrip';
@@ -176,7 +176,7 @@ export default function AdminKitRail() {
   const {
     base, brief, placeGroups, litPlace, tournamentOnly, isCanceled,
     // The computer's foot (Part B, T1) — named `portalDoors` here, as the phone's list is in the More sheet (its own list: navigation Phase 3 changed the phone's bar, not the sheet's rows).
-    inEvent, deskPortalDoors: portalDoors, calendarLink, permitsLink, permitsCount, schedulesLink, billingLink, helpHref, isSandbox,
+    inEvent, deskPortalDoors: portalDoors, calendarLink, permitsLink, permitsCount, schedulesLink, billingLink,
   } = nav;
   const billingAlert = useBillingDoorAlert();
   const currentOrg = useOrg().currentOrg;
@@ -306,8 +306,7 @@ export default function AdminKitRail() {
           SCROLLING LIST (owner 2026-11-09: the whole nav scrolls, the foot is not pinned — a spacer rests it at the bottom
           when the screen is tall): Plan & billing (the owner, with its bill pill), a hairline, the doors to the other portals this person holds
           (Club inside a tournament · Tournaments in the club once it hosts one · Coaches Portal), then Collapse sidebar.
-          Help is the desktop account menu's (beside What's new) — except in the demo sandbox, which hides the account menu,
-          so its sidebar keeps Help where Plan & billing would be (a sandbox has no billing door). On Plan & billing's page
+          Help is the desktop account menu's (beside What's new). On Plan & billing's page
           its row is the one lit row (`litClubPlace`). Send feedback and Sign out live in the account menu only (2026-09-01).
           No live-site door (Ask 9, Stage 13a): the header's "View site" pill is on every screen. */}
       <div className={styles.spacer} />
@@ -329,12 +328,7 @@ export default function AdminKitRail() {
             {/* Fee invoice alerts, Part 2 (Ask 7): a plan payment that didn't go through (amber). */}
             {billingAlert && <WaitingCount count={billingAlert.count} label={billingAlert.label} tone={billingAlert.tone} className={strip.cornerCount} />}
           </Link>}
-          {isSandbox && (
-            <Link href={helpHref} className={`${styles.item} ${styles.footItem}`} target="_blank" rel="noopener noreferrer">
-              <HelpCircle size={14} aria-hidden /> <span className={strip.rowLabel}>Help</span>
-            </Link>
-          )}
-          {(billingLink || isSandbox || (inEvent && settingsAccess)) && portalDoors.length > 0 && <div className={styles.footSep} aria-hidden />}
+          {(billingLink || (inEvent && settingsAccess)) && portalDoors.length > 0 && <div className={styles.footSep} aria-hidden />}
           {/* A door leaves for another portal and never lights: Tournaments opens an event's Dashboard (owner 2026-11-10). */}
           {portalDoors.map(door => (
             <Link key={door.key} href={door.href} className={`${styles.item} ${styles.footItem}`}>

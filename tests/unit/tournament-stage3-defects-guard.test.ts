@@ -14,7 +14,6 @@ const PLAYOFFS = 'app/[orgSlug]/admin/tournaments/schedule/PlayoffGenerator.tsx'
 const PAGE = 'app/[orgSlug]/admin/tournaments/schedule/page.tsx';
 // Stage 3 Part 0 split the page: the Publish window and the sandbox's refusal test live here now.
 const PUBLISH = 'app/[orgSlug]/admin/tournaments/schedule/components/PublishScheduleModal.tsx';
-const SANDBOX = 'lib/coach-sandbox-refusal.ts';
 const ROUTE = 'app/api/admin/games/route.ts';
 const MIGRATION = 'supabase/migrations/320_a_round_robin_draft_saves_in_one_step.sql';
 
@@ -97,13 +96,13 @@ describe('F69 — both generators are offered only the slots no kept game holds'
 describe('F71 — a refused save says why', () => {
   const page = readCode(PAGE);
 
-  it('the save handler reads the reply, keeps the sandbox branch first, and throws so the window stays open', () => {
+  it('the save handler reads the reply and throws so the window stays open', () => {
     // Stage 3 Part 3–4: ONE save for a game (the game window, the timeline's drop, the phone's move sheet, Undo).
     const save = page.slice(page.indexOf('async function writeGameFields('));
-    const sandbox = save.indexOf("if (res.headers.get('X-Sandbox-Blocked') === '1')");
     const refused = save.indexOf('if (!res.ok) {');
     const reread = save.indexOf('await reloadGames();', refused);
-    assert.ok(sandbox > 0 && sandbox < refused && refused < reread);
+    assert.ok(refused > 0 && refused < reread);
+    assert.ok(!save.includes('X-Sandbox-Blocked'), 'the retired demo\'s blocked-write branch is gone');
     // The refusal says the route's own reason; it can be BECAUSE the game changed, so a quiet re-read (no loading
     // state — the open window survives it), then throw: the window's save word shows why, a drop goes back.
     assert.match(save.slice(refused, reread), /const reason = await readRefusal\(res, SCHEDULE_REFUSAL\.gameFallback\);\s*void reloadGames\(\);\s*throw new Error\(reason\);/);
@@ -114,9 +113,9 @@ describe('F71 — a refused save says why', () => {
     assert.match(page, /say\(MW\.putBack\(w\.when, w\.where, otherDay\)\);\s*\} catch \(e\) \{\s*setFeedback\(\{ isOpen: true, title: SCHEDULE_REFUSAL_TITLE\.saveGame,/);
   });
 
-  it('one helper reports a refused write — never the sandbox\'s by-design refusal', () => {
-    assert.match(page, /async function refusedWrite\(res: Response, title: string, fallback\?: string\): Promise<boolean> \{\s*if \(res\.ok \|\| isSandboxRefusal\(res\)\) return false;/);
-    assert.match(readCode(SANDBOX), /export const isSandboxRefusal = \(res: Response\): boolean => sandboxRefusal\(res, null\) !== null;/);
+  it('one helper reports every refused write (the demo\'s by-design refusal exemption is gone)', () => {
+    assert.match(page, /async function refusedWrite\(res: Response, title: string, fallback\?: string\): Promise<boolean> \{\s*if \(res\.ok\) return false;/);
+    assert.doesNotMatch(page, /isSandboxRefusal/);
   });
 
   it('Cancel Game, Reinstate, Unpublish, Unpublish all and the publish read their replies too', () => {

@@ -154,10 +154,8 @@ export default function TournamentOverview({
       }))}
     </section>
   ) : null;
-  // data-sandbox-tour: the demo tour's first step rings it (the finished semifinals are the newest results). Inert off a
-  // demo; tests/unit/demo-destinations-guard.test.ts reads this literal.
   const latestEl = latest.length > 0 ? (
-    <section className={styles.section} aria-labelledby="overview-results" data-sandbox-tour="latest-results">
+    <section className={styles.section} aria-labelledby="overview-results">
       <PublicSectionHead id="overview-results" title="Latest results" link={{ href: scheduleHref, label: 'All results' }} />
       {gameList(latest.map(g => <li key={g.id}><ScheduleMatchup form="stacked" time="" division={context(g)} round={round(g)}
         state="final" href={gameHref(g.id)} sides={gameRowView(g, sides(g), '', today).sides} /></li>))}

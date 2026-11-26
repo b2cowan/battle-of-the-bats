@@ -14,7 +14,6 @@ import { getActiveTeamEntitledRepTeamIds } from './team-workspace-entitlements';
 import { isTeamWorkspaceOrg } from './team-workspace-kind';
 import { applyEntitlementGrants, effectiveStatuses } from './entitlement-grants';
 import { isReservedOrgSlug } from './reserved-slugs';
-import { isDemoOrgSlug } from './demo-org';
 import { moneyInEntryDescription } from './coach-money-in';
 import { resolveAwardTypeMergeCollisions, awardOccasionLabel, describeDatedAwardOccasion } from './rep-award-occasion';
 import { dropLegacyLineupProfileKeys } from './lineup-profile';
@@ -1677,13 +1676,9 @@ export async function generateUniqueOrgSlug(name: string): Promise<string> {
     .replace(/^-+|-+$/g, '')) || 'org';
 
   const isTaken = async (slug: string) => {
-    // A slug that collides with a top-level app route is "taken" — treat it so the
+    // A slug that collides with a top-level app route, or names a retired demo club, is "taken" — treat it so the
     // loop below appends a suffix (e.g. "scores" → "scores-2") rather than shadowing a route.
     if (isReservedOrgSlug(slug)) return true;
-    // Demo-org slugs are never available to a real signup, even in an environment where the
-    // sandbox is not seeded yet: a real org squatting one would be adopted — and overwritten —
-    // by the demo seed's "org exists" branch the day the sandbox ships there.
-    if (isDemoOrgSlug(slug)) return true;
     const { data, error } = await supabaseAdmin
       .from('organizations')
       .select('id')
@@ -3544,10 +3539,8 @@ export interface InsightsDigestTeam {
  * cross-table join dependency); optional filters narrow a manual/test run to one org or team.
  *
  * ⚠ Every consumer is an outbound SENDER (the Insights digest emails coaches; the dues sweep
- * emails guardians), and demo/sandbox orgs must never be on a send list. The exclusion lives in
- * the consumers (`lib/insights-digest.ts`, `lib/dues-reminders.ts`) via `excludeDemoOrgTeams`,
- * NOT here — this module is bundled by client pages, and the demo-org id resolver is
- * `server-only`. A new consumer of this list must apply the same filter.
+ * emails guardians). Any club-level exclusion belongs in the consumers (`lib/insights-digest.ts`,
+ * `lib/dues-reminders.ts`), NOT here — this module is bundled by client pages.
  */
 export async function getInsightsDigestTeams(filter?: { orgId?: string; teamId?: string }): Promise<InsightsDigestTeam[]> {
   let yearQuery = supabaseAdmin

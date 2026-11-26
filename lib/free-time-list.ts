@@ -1,6 +1,5 @@
 import 'server-only';
 import { supabaseAdmin } from './supabase-admin';
-import { listDemoOrgIdsQuietly } from './demo-org-server';
 import { openPreviewOrgIds } from './preview-org-server';
 import { daysLeft, isEndingSoon, isGrantRunning, lastDayOfInstant } from './free-time';
 import { planLabel, sectionLabel, subscriptionStatusLabel } from './platform-labels';
@@ -11,8 +10,6 @@ import { freeTimePortalOrgIds } from './portal-free-time-server';
  * by staff" view and Today's "Free time ending" both read THIS, so the queue's number is the number of clubs the list's
  * "Ending in 14 days" filter shows (owner ruling Q7: one queue, 14 days, counting clubs). A club with a plan and a section
  * both running is one row, named by both, dated by the one that ends first.
- *
- * The public demo clubs are left out, as every console count is.
  */
 
 export type StaffFreeTimeClub = {
@@ -45,23 +42,22 @@ function freeOnWords(r: Row, portal: boolean): string {
 }
 
 export async function getStaffFreeTime(now: Date = new Date()): Promise<StaffFreeTimeClub[]> {
-  const [{ data, error }, demoIds, portalIds, previewIds] = await Promise.all([
+  const [{ data, error }, portalIds, previewIds] = await Promise.all([
     supabaseAdmin
       .from('org_overrides')
       .select('org_id, type, value, target, starts_at, expires_at, revoked_at, reason, created_by')
       .in('type', ['plan_tier', 'module_addon', 'subscription_status'])
       .is('revoked_at', null)
       .limit(5000),
-    listDemoOrgIdsQuietly(),
     freeTimePortalOrgIds(),
     // A preview club (Track P, T1) is never on the list: free time is a customer grant (fails closed: throws).
     openPreviewOrgIds(),
   ]);
   if (error) throw error;
-  const demo = new Set([...demoIds, ...previewIds]);
+  const preview = new Set(previewIds);
   const byOrg = new Map<string, Row[]>();
   for (const r of (data ?? []) as Row[]) {
-    if (demo.has(r.org_id) || !isGrantRunning(r, now)) continue;
+    if (preview.has(r.org_id) || !isGrantRunning(r, now)) continue;
     byOrg.set(r.org_id, [...(byOrg.get(r.org_id) ?? []), r]);
   }
   if (byOrg.size === 0) return [];

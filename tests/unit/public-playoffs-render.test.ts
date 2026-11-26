@@ -44,8 +44,9 @@ describe('the real Playoffs body and preview bracket', () => {
     const html = render();
     assert.match(html, /data-public-playoffs="live"/);
     assert.ok(html.indexOf('data-public-live-card') > -1, 'the live game renders as the live card');
-    assert.ok(html.indexOf('data-public-live-card') < html.indexOf('data-sandbox-tour="playoff-bracket"'));
-    assert.ok(html.indexOf('data-sandbox-tour="playoff-bracket"') < html.indexOf('How seeding works'));
+    assert.ok(html.indexOf('data-public-live-card') < html.indexOf('aria-label="Playoff bracket"'));
+    assert.ok(html.indexOf('aria-label="Playoff bracket"') < html.indexOf('How seeding works'));
+    assert.ok(!html.includes('data-sandbox-tour'), 'the retired demo tour left no anchor in the markup');
     assert.match(html, /aria-expanded="false"/);
     // A game in play wears the Schedule's live card (time, division · round, stakes), not the playoff card's venue line.
     assert.match(html, /data-public-live-card/);

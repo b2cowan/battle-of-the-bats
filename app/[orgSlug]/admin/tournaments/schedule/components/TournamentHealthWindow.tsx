@@ -91,8 +91,6 @@ export default function TournamentHealthWindow({ tournament, orgSlug, scheduleHr
       onClose={close}
       metrics={metrics}
       showTeamTable
-      // The demo's invitation is to drag a game on the Schedule; there is no schedule here to drag.
-      isSandbox={false}
       showRulesEditor={!locked && canEditRules}
       editing={health.editing}
       rules={health.rules}

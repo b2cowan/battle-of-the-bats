@@ -16,8 +16,7 @@
  * place a link from outside the app can put text, and following it anywhere else is an open
  * redirect wearing a politer face.
  *
- * Framework-free on purpose (the demo seeders and sandbox chrome import their link helpers under
- * plain node); the extension on the import is the repo's convention for that.
+ * Framework-free on purpose (plain node scripts can import it); the extension on the import is the repo's convention for that.
  */
 import { insightsSectionHref } from './coach-insights-links.ts';
 import { UNTAGGED_FILTER } from './rep-drills.ts';

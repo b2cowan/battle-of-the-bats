@@ -2,7 +2,6 @@ import 'server-only';
 import { supabaseAdmin } from './supabase-admin';
 import { randomUUID } from 'node:crypto';
 import { auditFirst, FAILED_SUFFIX, withoutFailedChanges } from './platform-audit';
-import { isDemoOrgId } from './demo-org-server';
 import { isPreviewOrgId } from './preview-org-server';
 import { hasLiveSubscription } from './plan-move';
 import { grantsEnabled } from './entitlement-grants';
@@ -104,8 +103,8 @@ export async function readClubFacts(orgId: string, opts: { withGrant?: boolean }
  * invite, a team coach, a Coaches Portal the club pays for, the owner's or the Stripe customer's email.
  */
 export async function readGiveContext(orgId: string, staff: StaffIdentity): Promise<GiveContext> {
-  const [staffIsMember, isDemo, isPreview] = await Promise.all([staffBelongsToClub(orgId, staff), isDemoOrgId(orgId), isPreviewOrgId(orgId)]);
-  return { switchOn: grantsEnabled(), staffIsMember, isDemo, isPreview };
+  const [staffIsMember, isPreview] = await Promise.all([staffBelongsToClub(orgId, staff), isPreviewOrgId(orgId)]);
+  return { switchOn: grantsEnabled(), staffIsMember, isPreview };
 }
 
 /** For the record: why the door is absent (one line), and why a whole plan cannot be given (in the window). */

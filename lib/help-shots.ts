@@ -1,36 +1,22 @@
-// `.ts` extension is deliberate and matches lib/demo-coach.ts: this module is imported
-// BOTH by the app (through the bundler) and directly by scripts/capture-help-shots.mjs
-// running under Node's type-stripping, which needs the real filename.
-import { DEMO_COACH_TEAM_IDS } from './demo-org.ts';
-
 /**
  * THE HELP SCREENSHOT MANIFEST — the one place a help image is declared.
  *
- * Read by BOTH sides so a picture and its capture can never drift apart:
- *   - `components/help/HelpScreenshot.tsx` renders `alt`, `caption`, `width`/`height`
- *   - `scripts/capture-help-shots.mjs` uses `door`, `path`, `ready`, `prepare`, `clip`
- *     to re-take the picture, and writes `width`/`height` back here after it does.
+ * `components/help/HelpScreenshot.tsx` renders `alt`, `caption`, `size` and `highlight`;
+ * `scripts/capture-help-shots.mjs --check` (wired into `verify:changed`) fails when a declared
+ * picture is missing its file, alt, caption or size.
  *
- * ── WHY A MANIFEST AT ALL ─────────────────────────────────────────────────────
- * A screenshot is the one kind of help content that goes stale SILENTLY: the product
- * moves, the words get updated because someone read them, and the picture underneath
- * keeps showing last quarter's screen. The manifest is what makes staleness findable —
- * a change to a screen listed here has a `path` you can grep for, and re-taking every
- * affected picture is one command.
+ * ── THE PICTURES STAY; THEIR CAPTURE SOURCE IS GONE (owner ruling 2026-11-25, plan D6) ──
+ * Every image under `public/help/**` was photographed in a public demo world, which was retired.
+ * The images are kept; the page addresses, readiness selectors and capture steps that re-took them
+ * went with the demos, and no script takes a picture any more. A future re-shoot needs another
+ * source (a dev fixture org or a prospect world) and is new work, not this file's job.
  *
  * ── THE RULE THAT KEEPS THESE HONEST (format standard, `.claude/commands/docs.md`) ──
  * Screenshots are OPT-IN and RARE: only where the answer is spatial ("where is that
  * control?") or visual (a form you fill once, a report you must recognise). Never
- * decoration, never a picture of a sentence. A picture that can no longer be re-taken
- * from the demo world comes OUT and the text carries the answer — a stale screenshot
- * is worse than no screenshot, because the reader believes it.
- *
- * ── DEMO WORLD ONLY, AND IT IS ENFORCED, NOT REMEMBERED ───────────────────────
- * Every `path` must sit inside a `riverdale-*` demo organization. The capture script
- * REFUSES any other path (see its DEMO-ONLY assertion) rather than trusting whoever
- * edits this file, because the failure mode is publishing a real family's name or a
- * real team's money into the product's own documentation. The demo worlds are also
- * write-blocked at the proxy, so a capture run cannot mutate anything either.
+ * decoration, never a picture of a sentence. A picture that no longer matches the screen
+ * comes OUT and the text carries the answer — a stale screenshot is worse than no
+ * screenshot, because the reader believes it.
  *
  * ⚠ NOT A VERIFICATION TOOL. `check:layout` renders pages and reads COMPUTED STYLES
  * precisely because eyeballing a screenshot produced the wrong fix twice in this
@@ -43,32 +29,15 @@ export interface HelpShot {
   id: string;
   /** Which guide the picture belongs to; also its asset folder. */
   module: 'coaches' | 'tournaments' | 'accounting' | 'org' | 'house-league' | 'registrations' | 'exports';
-  /** Which demo door to press before navigating (it attaches the demo session). */
-  door: 'coach' | 'tournament';
-  /** Path INSIDE the demo world. Must be a riverdale-* org — the script enforces it. */
-  path: string;
-  /** Playwright selector proving the screen actually resolved (never an error/empty state). */
-  ready: string;
-  /** Optional clicks (by selector) to open the thing being pictured — a form, a tab, a drawer. */
-  prepare?: string[];
-  /**
-   * Optional: proof that what `prepare` OPENED has finished loading. `ready` covers the screen;
-   * a panel that fetches its own data when it opens renders "Loading…" first, and without this
-   * the shot is a race against that fetch. Same visibility discipline as `ready`.
-   */
-  readyAfterPrepare?: string;
-  /** Optional selector to crop to. Without one the capture is the viewport. */
-  clip?: string;
-  /** Capture width. 1280 = desktop; use 390 only when the ANSWER is phone-specific. */
+  /** The width the picture was taken at. 1280 = desktop; 390 only where the ANSWER is phone-specific. */
   width: number;
-  /** Rendered pixel size of the saved file, written back by the capture script. */
+  /** Rendered pixel size of the saved file. */
   size?: { w: number; h: number };
   /**
    * The day this picture was last taken, `YYYY-MM-DD` in the org’s zone.
    *
-   * ⚠ WRITTEN BY THE CAPTURE, NEVER BY HAND — like `size`. A hand-typed date would be a claim
-   * about when a machine did something, which is exactly the kind of number that goes quietly
-   * wrong. Missing means "taken before we started recording this"; re-capture stamps it.
+   * ⚠ Never typed by hand: it was stamped by the capture run, and a hand-typed date would be a claim
+   * about when a machine did something. Missing means "taken before we started recording this".
    *
    * ⚠⚠ AND IT IS A PROXY, NOT AN ANSWER. It tells a reader WHEN, never WHETHER the picture still
    * resembles the screen. A six-month-old picture of a screen nobody has touched is fine; a
@@ -84,16 +53,10 @@ export interface HelpShot {
   highlight?: { top: string; left: string; width: string; height: string };
 }
 
-const RIDGE = '/riverdale-ridge/coaches/teams';
-const MID = `${RIDGE}/${DEMO_COACH_TEAM_IDS.midSeason}`;
-
 export const HELP_SHOTS: HelpShot[] = [
   {
     id: 'money-record-payment',
     module: 'coaches',
-    door: 'coach',
-    path: `${MID}/accounting?section=dues`,
-    ready: 'table, [class*="cardList"]',
     width: 1280,
     /* ⚠ RE-TAKEN AND RE-DESCRIBED 2026-09-08 (QA §151 docs pass). Both lines described a table
        that had stopped existing the day before: a single "Credits" column, and a status word
@@ -113,17 +76,6 @@ export const HELP_SHOTS: HelpShot[] = [
   {
     id: 'money-budget-vs-actual-months',
     module: 'coaches',
-    door: 'coach',
-    path: `${MID}/accounting?section=budget-vs-actual`,
-    /* The report opens on Statement, which has no month grid — the picture is of Months, which
-       only exists once the view changes.
-       ⚠ TWO CLICKS SINCE 2026-08-20, NOT ONE. `View` became a dropdown pill (one control shape
-       across the reports), so the old single `button:has-text("Months")` step no longer finds
-       anything until the pill is opened: open it, then pick. `readyAfterPrepare` waits for the
-       grid itself rather than trusting the fixed post-click pause. */
-    ready: 'summary:has-text("View")',
-    prepare: ['summary:has-text("View")', 'button:has-text("Months")'],
-    readyAfterPrepare: 'table',
     width: 1280,
     size: { w: 1280, h: 1000 },
     takenAt: '2026-10-01',

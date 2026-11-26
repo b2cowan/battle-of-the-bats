@@ -80,9 +80,7 @@ export default async function AdminLayout({
     //
     // The login page already refuses to walk a session into a destination it can't reach; this is
     // the same rule stated on the other end. A signed-in stranger goes to their OWN workspace.
-    // (Found while QA-ing the "See it live" sandbox, where the demo's operator URL is one tap from
-    // a public page — but the loop was reachable by any signed-in visitor typing any org's
-    // /admin URL.)
+    // (The loop was reachable by any signed-in visitor typing any org's /admin URL.)
     const signedIn = await getAuthUserCached();
     if (signedIn) {
       redirect(await getAuthDestination());

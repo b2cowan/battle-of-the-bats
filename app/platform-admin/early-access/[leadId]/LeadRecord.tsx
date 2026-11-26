@@ -398,7 +398,7 @@ function ClubPicker({ onClose, onPick }: { onClose: () => void; onPick: (c: Club
   }, [q]);
   return (
     <KitDialog kind="form" title="Link a club or portal by hand" onClose={onClose}
-      footerStart={<span>Searches by name, like Find. Demo clubs and staff test clubs are never offered.</span>}
+      footerStart={<span>Searches by name, like Find. Preview clubs and staff test clubs are never offered.</span>}
       footer={<button type="button" className="btn btn-outline" onClick={onClose}>Cancel</button>}>
       <input type="search" className={kit.search} aria-label="Search clubs by name" placeholder="Club or portal name" value={q} autoFocus
         onChange={e => { setQ(e.target.value); if (e.target.value.trim().length < 2) setClubs(null); }} />

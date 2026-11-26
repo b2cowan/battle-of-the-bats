@@ -40,7 +40,16 @@ describe('a scheduled call carries a receipt', () => {
   });
 
   it('2 · every scheduled tick path is one of those routes, so its receipt is never refused by its own job', () => {
-    const paths = new Set(MIGRATIONS.flatMap(m => [...m.sql.matchAll(/app_cron_http_tick\('[^']+',\s*'([^']+)'\)/g)].map(h => h[1])));
+    // The two retired demo ticks (scheduled in 224/226/273) are unscheduled by migration 543, and their routes are deleted: a
+    // path leaves this list only while a migration unschedules its job by name.
+    const RETIRED_TICKS: Record<string, string> = {
+      '/api/platform-admin/demo-sandbox-tick': 'demo-sandbox-tick',
+      '/api/platform-admin/coach-sandbox-tick': 'coach-sandbox-tick',
+    };
+    for (const [path, job] of Object.entries(RETIRED_TICKS)) {
+      assert.ok(MIGRATIONS.some(m => /cron\.unschedule\(/.test(m.sql) && m.sql.includes(`'${job}'`)), `${path}: a migration unschedules ${job}`);
+    }
+    const paths = new Set(MIGRATIONS.flatMap(m => [...m.sql.matchAll(/app_cron_http_tick\('[^']+',\s*'([^']+)'\)/g)].map(h => h[1])).filter(p => !(p in RETIRED_TICKS)));
     assert.ok(paths.size >= 10, `found ${paths.size} scheduled paths`);
     for (const p of paths) assert.ok(jobRoutes.has(`app${p}/route.ts`), `${p}: a job route that takes its receipt`);
     // No job reaches the app any other way: the only HTTP post in the migrations is inside the tick itself.

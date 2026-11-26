@@ -67,8 +67,9 @@ describe('R1 · R2 — every report table on a phone is a table, a pinned scroll
     assert.equal(count(playing, 'className={styles.insightsNameCell}'), 3, 'the three player-row tables mark the pinned name');
   });
 
-  it('the Playing time demo anchor survives the scroller (it cannot carry the attribute itself)', () => {
-    assert.match(playing, /<div data-sandbox-tour="playing-time">\s*<CoachScrollX/);
+  it('the Playing time tables sit straight in the scroller; the retired demo tour\'s anchor wrapper is gone', () => {
+    assert.doesNotMatch(playing, /data-sandbox-tour/);
+    assert.match(playing, /<CoachScrollX sticky /);
   });
 
   it('Attendance is a table on a phone — no card reflow, no card labels', () => {

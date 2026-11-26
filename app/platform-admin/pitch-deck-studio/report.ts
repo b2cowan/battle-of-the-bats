@@ -14,9 +14,8 @@
  *
  *  1. **A capture's health is DECLARATION health, not freshness.** `shotManifestProblems` proves a
  *     picture exists with its alt, caption and size recorded. It cannot prove the picture still
- *     resembles the screen it photographed — a failed re-capture leaves the previous PNG in place
- *     (lib/marketing-shots.ts says so in its own header), so a picture of a screen redesigned three
- *     months ago passes this and passes CI. `PICTURE_FRESHNESS_IS_UNCHECKED` below is that fact,
+ *     resembles the screen it photographed (lib/marketing-shots.ts says so in its own header), so a
+ *     picture of a screen redesigned three months ago passes this and passes CI. `PICTURE_FRESHNESS_IS_UNCHECKED` below is that fact,
  *     rendered rather than hidden.
  *  2. **A DRAWING HAS NO MANIFEST ENTRY AT ALL**, so the capture-side question is meaningless for
  *     one. ⚠ Nearly half the library is drawn — not an edge case, most of a screen — and reporting
@@ -63,8 +62,8 @@ export { AUDIENCE_LABEL } from '@/lib/walkthrough-content';
 
 /** The sentence every capture card carries, so the tick above it cannot be over-read. */
 export const PICTURE_FRESHNESS_IS_UNCHECKED =
-  'Nothing checks whether this picture still looks like the screen it photographed. A failed ' +
-  're-capture leaves the old file in place, so a stale picture passes every check we have.';
+  'Nothing checks whether this picture still looks like the screen it photographed, so a stale ' +
+  'picture passes every check we have.';
 
 /* ── One slide ──────────────────────────────────────────────────────────────── */
 
@@ -98,12 +97,10 @@ export type PictureHealth =
       kind: 'capture';
       /** The file the page requests. Reported whether or not this process can see the disk. */
       publicPath: string;
-      /** Recorded pixel size, written back by the capture script. */
+      /** Recorded pixel size of the saved file. */
       size?: { w: number; h: number };
       /** The width the browser was set to — 390 where the picture's SUBJECT is a phone. */
       captureWidth: number;
-      /** Where in the demo world it was taken, so a reader can go and look at the live screen. */
-      demoPath: string;
       /**
        * The day the capture stamped, and how many days ago that is — `null` for a picture taken
        * before we started recording it.
@@ -290,7 +287,6 @@ function healthOf(
       kind: 'capture',
       publicPath: '—',
       captureWidth: 0,
-      demoPath: '—',
       takenAt: null,
       ageDays: null,
       present: null,
@@ -304,7 +300,6 @@ function healthOf(
     publicPath,
     size: shot.size,
     captureWidth: shot.width,
-    demoPath: shot.path,
     takenAt: shot.takenAt ?? null,
     // `daysBetweenDateStrings` rather than date arithmetic: both sides are already calendar-day
     // strings in the org's zone, which is the only comparison that means the same thing on a

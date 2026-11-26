@@ -15,7 +15,6 @@ import { BILLING_TAX_WORDS } from '@/lib/billing-tax';
 import { getPlanConfigOverrides } from '@/lib/plan-config-db';
 import { createClient } from '@/lib/supabase-server';
 import { getAuthDestination } from '@/lib/auth-destination';
-import { SEE_IT_LIVE_PATH, SEE_IT_LIVE_COACHES_PATH, sandboxDoorsVisible } from '@/lib/sandbox-door';
 import { getSignedInUser } from '@/lib/two-step-session';
 
 // The home page's one absolute title; its description is the site's own (words doc items 1 and 4).
@@ -332,11 +331,6 @@ export default async function HomePage({
   }
 
   const gatingMap = await getPlanGatingMap();
-  // The sandbox door. Hidden in a production build until the owner turns it on deliberately
-  // (lib/sandbox-door.ts) — and note the demo orgs are seeded on dev only today, so this is a
-  // local-only affordance until the "do the demos go public?" decision is made
-  // (BUSINESS_DECISIONS.md 2026-08-07, logged as Proposed).
-  const showSandboxDoor = sandboxDoorsVisible();
   // "Live products lead" (owner-ratified 2026-08-08, closing the question left open on 08-07):
   // live personas get full cards; not-yet-purchasable ones compress into one roadmap strip below.
   // The split is the same `isLive` the badges use, so a persona is promoted from strip to card by
@@ -384,10 +378,10 @@ export default async function HomePage({
       href: '/for-coaches',
     },
   ].filter(row => row.heading !== 'Coaching one team' || teamOpen); // each row only while its plans can be bought (`/accounting`)
-  // A live persona's door (tournament, coaches): one card, or two links when its product has a public demo.
+  // A live persona's door (tournament, coaches): one whole-card link.
   function renderPersonaDoor(p: ReturnType<typeof resolvePersonas>[number]) {
-    const body = (
-      <>
+    return (
+      <Link key={p.id} href={p.href} className={`${kit.card} ${kit.stack} ${styles.whole}`}>
         <div className={styles.cardHead}>
           <p className={`${kit.eyebrow} ${styles.flush}`}>{p.label}</p>
           {/* Defensive only — `resolvePersonas` guarantees a string either way. Absent
@@ -397,42 +391,7 @@ export default async function HomePage({
         </div>
         <h3 className={kit.title}>{p.question}</h3>
         <p className={`${kit.body} ${styles.grow}`}>{p.body}</p>
-      </>
-    );
-    const linkClass = `${kit.link} ${kit.linkBlock}`;
-
-    // The TWIN DOOR (owner-ratified 2026-08-10): every live persona whose product has
-    // a public demo carries a second, quieter link into it — proof one step after the
-    // claim, never competing with the ask. Two links cannot nest, so a doored card
-    // becomes a div and the persona link stretches over it (::after) to keep
-    // whole-card clickability. A persona with no demo gets no door — a door pattern
-    // on League/Club would promise a demo that does not exist.
-    const doorPath =
-      p.id === 'tournament' ? SEE_IT_LIVE_PATH
-      : p.id === 'coaches' ? SEE_IT_LIVE_COACHES_PATH
-      : null;
-    if (showSandboxDoor && doorPath) {
-      return (
-        <div key={p.id} className={`${kit.card} ${kit.stack} ${styles.doored}`}>
-          {body}
-          <div className={styles.links}>
-            <Link href={p.href} className={`${linkClass} ${styles.stretch}`}>
-              {p.cta}
-            </Link>
-            {/* One label for both worlds — the card's own title says which "it" you'll
-                see. Product-specific wording was considered and parked (2026-08-10). */}
-            <Link href={doorPath} prefetch={false} className={`${linkClass} ${kit.live} ${styles.secondary}`}>
-              See it live — no sign-up
-            </Link>
-          </div>
-        </div>
-      );
-    }
-
-    return (
-      <Link key={p.id} href={p.href} className={`${kit.card} ${kit.stack} ${styles.whole}`}>
-        {body}
-        <span className={`${linkClass} ${styles.ctaText}`}>{p.cta}</span>
+        <span className={`${kit.link} ${kit.linkBlock} ${styles.ctaText}`}>{p.cta}</span>
       </Link>
     );
   }

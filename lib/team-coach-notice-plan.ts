@@ -14,7 +14,7 @@
  *   · The Pause switch silences these too, with no exempt floor (none of these kinds is protected).
  *   · A6 — the host's EMAIL switches (`coach_email_*`, the pause-all) are NOT read here: they govern
  *     email. The writers call this outside those checks.
- *   · A demo ("See it live") club never notifies anyone, exactly as notify() refuses to.
+ *   · A preview club (Track P) never notifies anyone, exactly as notify() refuses to.
  *   · Nobody is told about their own action (`excludeUserIds`).
  */
 import { formatEventDateRange } from './timezone';
@@ -63,8 +63,8 @@ export interface TeamCoachNoticeFacts {
   members: { basic_coach_team_id: string | null; user_id: string | null; status: string | null }[];
   /** Who is NOT paused. Null when the lookup failed: deliver to everyone (fail-open, as notify()). */
   unpaused: ReadonlySet<string> | null;
-  /** Demo clubs, which never notify anyone. */
-  demoOrgIds: ReadonlySet<string>;
+  /** Preview clubs (Track P), which never notify anyone. */
+  previewOrgIds: ReadonlySet<string>;
 }
 
 /** The registration's record in the free portal — where every registration notice opens. */
@@ -107,7 +107,7 @@ export function planTeamCoachNotices(
   for (const reg of facts.registrations) {
     const tournament = reg.tournament_id ? tournaments.get(reg.tournament_id) : undefined;
     const orgId = tournament?.org_id ?? null;
-    if (!tournament || !orgId || facts.demoOrgIds.has(orgId)) continue;
+    if (!tournament || !orgId || facts.previewOrgIds.has(orgId)) continue;
 
     // Everyone on every free team linked to this registration, once each.
     const people = new Set<string>();

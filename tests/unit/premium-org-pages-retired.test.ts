@@ -174,7 +174,7 @@ describe('each old address lands on its portal home', () => {
 describe('nothing on the tournament side links a Premium coach to the retired pages', () => {
   it('the phone More sheet’s Settings & access row goes for a one-team workspace; the Tournament plans keep it', () => {
     const keys = (planId: string, accountKind?: string) =>
-      kitTournamentGroups({ status: 'active', isSandbox: false, role: 'owner', planId, accountKind }).flatMap(g => g.items.map(i => i.key));
+      kitTournamentGroups({ status: 'active', role: 'owner', planId, accountKind }).flatMap(g => g.items.map(i => i.key));
     for (const planId of ['team', 'tournament', 'tournament_plus', 'club']) {
       assert.ok(!keys(planId, 'team_workspace').includes('settings'), planId);
     }

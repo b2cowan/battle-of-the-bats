@@ -224,7 +224,7 @@ describe('the tournament’s "In the club’s book" (13d-11 A, tab 5 note 1)', (
   });
   it('the tournament nav still has no Accounting row (B4 stands)', () => {
     for (const role of ['owner', 'admin'] as const) {
-      const groups = kitTournamentGroups({ status: 'active', isSandbox: false, role, planId: 'club' });
+      const groups = kitTournamentGroups({ status: 'active', role, planId: 'club' });
       assert.ok(!groups.some(g => g.items.some(i => i.key === 'accounting')), role);
     }
   });

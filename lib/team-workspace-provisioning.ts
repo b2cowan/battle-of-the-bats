@@ -10,6 +10,7 @@ import { addStaffMember } from './coach-membership';
 import { writePlatformAuditLog } from './platform-audit';
 import { writePlatformEvent, type PlatformEventInput } from './platform-events';
 import { supabaseAdmin } from './supabase-admin';
+import { isReservedOrgSlug } from './reserved-slugs';
 import { findBasicCoachTeamIdForTournamentRegistration, resolveBasicCoachTeamIdForWorkspace } from './basic-coach-teams';
 import { migrateBasicTeamIntoWorkspace, pendingMigrationSummary } from './coach-upgrade-migration';
 import { clearStartDoor } from './start-door-server';
@@ -176,6 +177,9 @@ async function resolveUniqueOrgSlug(baseValue: string): Promise<string> {
   const base = slugify(baseValue) || 'team-workspace';
   for (let index = 0; index < 50; index += 1) {
     const candidate = index === 0 ? base : `${base}-${index + 1}`;
+    // A route's name or a retired demo club's (lib/reserved-slugs.ts) is never a workspace's address: a team named
+    // "Pricing" would be shadowed by /pricing, and "Riverdale Ridge" would inherit the old demo's links. Next suffix.
+    if (isReservedOrgSlug(candidate)) continue;
     const { data, error } = await supabaseAdmin
       .from('organizations')
       .select('id')
