@@ -349,6 +349,7 @@
   cursor: pointer;
 }
 .divSelect option { background: var(--hud-surface); }
+@media (max-width: 768px) { .divSelect { min-height: var(--tap-min, 44px); } }
 
 .teamsLayout {
   display: flex;

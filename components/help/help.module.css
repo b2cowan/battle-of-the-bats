@@ -110,6 +110,17 @@
   }
 }
 
+/* Phone and tablet: the callout's link and its dismiss take the 44px tap floor (owner, 2026-11-25). The dismiss pulls
+   back into the card's padding, so the card keeps its shape. */
+@media (max-width: 768px) {
+  .calloutCta { display: inline-flex; align-items: center; min-height: var(--tap-min, 44px); margin-top: 0.15rem; }
+  .calloutDismiss {
+    display: inline-flex; flex: none; align-items: center; justify-content: center;
+    width: var(--tap-min, 44px); height: var(--tap-min, 44px);
+    margin: -0.55rem -0.65rem -0.55rem 0; padding: 0;
+  }
+}
+
 /* ── HelpTooltip ─────────────────────────────────────────────────────────── */
 .tooltip {
   position: relative;

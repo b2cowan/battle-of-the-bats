@@ -61,6 +61,14 @@
 .tab:hover { color: var(--text-secondary); }
 .tabActive,
 .tabActive:hover { color: var(--home-olive); border-bottom-color: var(--home-olive); }
+/* A phone and a tablet: the tabs scroll sideways rather than spill, and each is 44px tall. */
+@media (max-width: 768px) {
+  .tabs { overflow-x: auto; overflow-y: hidden; }
+  /* The strip now clips what leaves it, so the tab stops overlapping its line (the underline would lose a pixel) and
+     draws its focus ring inside itself. */
+  .tab { flex: none; white-space: nowrap; min-height: var(--tap-min, 44px); margin-bottom: 0; }
+  .tab:focus-visible { outline-offset: -2px; }
+}
 
 /* ── Chips → the kit's chips. A draft or finished season NAMES something, so it is the quiet chip (a
    finished season is not a verdict — slice 2 set House league's the same); a division is the blue identity

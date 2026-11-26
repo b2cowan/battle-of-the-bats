@@ -76,10 +76,8 @@ Rules:
   gutter (`--scrollx-pin-gutter`), including any hierarchy indent.
 - **At touch widths (≤ 768) a row that carries a control is at least `--tap-min` tall**, because
   the control inside it is. A row with no control keeps its density.
-  - ⚠ **One exception, and it is named: the admin shell and platform console keep their own 38px
-    control height (K-18, owner A-08 2026-09-07).** That shell's density is an owner-ruled system
-    across every control it owns; a table is not a reason to overrule it, and raising it here alone
-    would put two control heights on one admin screen. The 6px is deliberate — do not "fix" it.
+  - The admin shell and staff console follow the same 44px (owner, 2026-11-25; the 38px exception,
+    K-18, is retired). A name that opens a record from a table row is 44px tall there too.
 - Two heights on one surface are only ever *compact + comfortable by content*. Three heights side by
   side is the defect §9 of the one-surface plan made visible.
 

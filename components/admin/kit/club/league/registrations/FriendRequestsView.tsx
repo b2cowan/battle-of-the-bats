@@ -319,8 +319,10 @@ export default function FriendRequestsView({
             <tr>
               {anySelectable && (
                 <th scope="col" className={css.tickCol}>
-                  <input type="checkbox" className={screenParts.check22} checked={allOn} aria-label={W.selectAll}
-                    onChange={() => setSelected(allOn ? new Set() : new Set(shownToConfirm.map(r => r.key)))} />
+                  <label className={css.tickTap}>
+                    <input type="checkbox" className={screenParts.check22} checked={allOn} aria-label={W.selectAll}
+                      onChange={() => setSelected(allOn ? new Set() : new Set(shownToConfirm.map(r => r.key)))} />
+                  </label>
                 </th>
               )}
               <th scope="col">{W.col.player}</th>
@@ -343,8 +345,10 @@ export default function FriendRequestsView({
                       {anySelectable && (
                         <td className={css.tickCol} onClick={e => e.stopPropagation()}>
                           {tickable(row) && (
-                            <input type="checkbox" className={screenParts.check22} checked={selected.has(row.key)}
-                              onChange={() => toggle(row.key)} aria-label={W.selectRow(p.name)} />
+                            <label className={css.tickTap}>
+                              <input type="checkbox" className={screenParts.check22} checked={selected.has(row.key)}
+                                onChange={() => toggle(row.key)} aria-label={W.selectRow(p.name)} />
+                            </label>
                           )}
                         </td>
                       )}

@@ -209,11 +209,15 @@ describe('one admin button size, the portal’s (owner, 2026-10-01, option A)', 
   });
   // ⚖ The HEIGHT is superseded (owner, 2026-10-03, "One control height"): the 10-01 38px rested on "the portal's
   // buttons are ~38", which measured 33.4 (white) and 31.4 (lime). One number now holds across the product.
-  it('one control height, the portal’s button: 34px on a computer, 38 below 769px and in comfortable density', () => {
+  it('one control height, the portal’s button: 34px on a computer, 44 at 768px and below, 38 in comfortable density above it', () => {
     const root = css.match(/--admin-row-pad-y:\s*0\.38rem;[\s\S]*?--admin-control-h:\s*(\d+)px;/)?.[1];
-    assert.equal(root, '38', 'the default — a phone or a tablet — keeps 38, so no touch size moved');
+    assert.equal(root, '38', 'the base value is what the two width blocks leave: comfortable density above 768');
     assert.match(css, /\[data-density="comfortable"\] \{[^}]*--admin-control-h:\s*38px;/);
     assert.match(css, /@media \(min-width: 769px\) \{\s*:root:not\(\[data-density="comfortable"\]\) \{ --admin-control-h: 34px; \}/);
+    // Owner, 2026-11-25: the tap floor on a phone and a tablet, in either density.
+    assert.match(css, /@media \(max-width: 768px\) \{\s*:root,\s*\[data-density="comfortable"\] \{ --admin-control-h: 44px; \}/);
+    // The coaches portal keeps 38. The admin wears the coaches theme marker too, so the exception excludes the admin kit.
+    assert.match(css, /\[data-coach-warm-enabled\]:not\(\[data-admin-kit\], \[data-admin-kit\] \*\),\s*\[data-coach-window\]:not\(\[data-admin-kit\] \*\) \{ --admin-control-h: 38px; \}/);
   });
   it('the portal’s buttons take the same 34px on a computer, at no weight, so the lime and white match and any sized variant still wins', () => {
     const coach = readCode('app/[orgSlug]/coaches/coaches.module.css');

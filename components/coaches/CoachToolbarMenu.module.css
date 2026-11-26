@@ -42,6 +42,11 @@
 @media (min-width: 769px) {
   :where(.trigger:not(.triggerChip):not(.triggerGlyph)) { min-height: 34px; }
 }
+/* Borrowed into the admin on a phone or a tablet, the same triggers take the 44px tap floor. The admin kit alone defines
+   the variable (`app/globals.css`); in the coaches portal it is unset, so the portal's triggers do not move. */
+@media (max-width: 768px) {
+  :where(.trigger:not(.triggerChip):not(.triggerGlyph)) { min-height: var(--admin-trigger-floor); }
+}
 
 .panel {
   position: absolute;

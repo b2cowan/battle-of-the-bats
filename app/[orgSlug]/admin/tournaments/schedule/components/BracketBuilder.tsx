@@ -697,7 +697,7 @@ export default function BracketBuilder({ teams, venues, defaultDate, templatePre
   );
 
   return (
-    <BracketZoomFrame fitKey={rounds.map(r => r.id).join('|')} hint="Drag empty space to scroll · click a game to edit">
+    <BracketZoomFrame fitKey={rounds.map(r => r.id).join('|')} hint="Drag empty space to scroll · click a game to edit" fullSizeOnPhone>
       {(zoom) => (
       isSplitMode ? (
         <div className={styles.splitBrackets}>

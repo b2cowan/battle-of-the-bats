@@ -383,11 +383,21 @@
   .compactCard { width: 72vw; flex: 0 0 72vw; }
 
   /* Expanded per-game editor fills the round column on phones (the inline editor
-     has the full screen width — no modal squeeze), and its scheduling inputs get
-     finger-friendly hit targets. */
+     has the full screen width — no modal squeeze). The editor opens at full size here
+     (`BracketZoomFrame` fullSizeOnPhone), its fields and buttons take the control height (44px), and
+     the controls that have none — the two trash buttons, the drag handle, the round's name — are
+     brought to the same floor. */
   .matchupCard { width: 72vw; }
-  .dateInput, .timeInput, .fieldSelect, .teamInput, .codeInput { min-height: 38px; }
-  .doneBtn { min-height: 40px; }
+  .deleteBtn {
+    display: inline-flex; flex: none; align-items: center; justify-content: center;
+    width: var(--tap-min, 44px); height: var(--tap-min, 44px);
+  }
+  .dragHandle {
+    display: inline-flex; flex: none; align-items: center; justify-content: center;
+    min-width: var(--tap-min, 44px); min-height: var(--tap-min, 44px);
+    margin: -0.3rem 0 -0.3rem -0.45rem;
+  }
+  .roundTitleInput { min-height: var(--tap-min, 44px); padding-block: 0.7rem; }
   .addBtn { padding: 0.7rem; }
   .addRoundBtnSimple { width: 48px; height: 48px; }
 }
@@ -582,6 +592,16 @@
 
 @media (max-width: 768px) {
   .zoomHud { display: none; }
+  /* The editor opens at full size here, so its frame is the sideways scroller. The phone rule above hides the frame's
+     overflow, which was harmless while the bracket was shrunk to fit and would now clip the later rounds. */
+  .builderScrollOnPhone { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  /* At full size a round is a column a thumb can read past (the desk's is 220), and a game card is as tall as what it
+     holds: the phone rule above sizes cards for a shrunk bracket, which at full size made them most of a screen tall. */
+  .builderScrollOnPhone .roundColumn { flex: 0 0 260px; width: 260px; }
+  .builderScrollOnPhone .compactCard,
+  .builderScrollOnPhone .matchupCard { flex: 0 0 auto; width: 100%; }
+  /* A pool section is as wide as its bracket, so its "Add round" keeps to its words, at the left where the eye is. */
+  .builderScrollOnPhone .poolSection > .addBtn { width: fit-content; padding-inline: 1rem; }
 }
 
 /* ═══ ON THE KIT (Admin Design Continuity slice 4c — only with the switch on) ═══════════════════════

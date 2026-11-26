@@ -114,6 +114,38 @@ them runs on the owner's PC beside whatever else is working.** Both halves of th
     `check:layout` slice @361 p95 **3.8 s** (staging before: 33.6 s), the same 13 findings as sets. A coach notices
     nothing on screen. The next whole-product sweep's cost line is the measure on the release.
 
+### 2.6 The fix pass on the accepted findings (2026-11-25, not Stage 1B)
+
+Source: the 23 Nov staging dump against `scripts/.layout-baseline.json`: **310 new** (the 22 Nov release record said
+301). By area: staff console 210, club and house league admin 52, tournament admin 32, public demo 14, coaches 2. The
+two sideways spills were the CLUB admin's rep-team season history, not the coaches portal's. None was a coaches portal
+dialog-footer button.
+
+**Owner rulings (2026-11-25):** admin and staff-console controls are 44px at ≤768, replacing the 38px touch value
+(A-08 / K-18 retired); console table names are 44px tall at 641–768; the bracket editor opens full size on a phone and
+scrolls sideways; links inside sentences stay; the demo tour bar is drawn first
+(`DEMO_TOUR_BAR_44_MOCKUPS.html`, not ruled).
+
+**Built and committed 2026-11-25:** the control-height token (the coaches portal keeps 38 by an explicit
+exception, since the admin also wears its theme marker); the console's own controls and strip; the help callout; the
+borrowed toolbar menu in the admin; small admin links; registration and friend-request tick boxes (a 44px tap area
+around the same box); the history tabs scroll; the bracket editor (full size, a sideways-scrolling frame, 260px
+rounds, natural-height cards, and back to full size when a tablet turns upright).
+
+**Measured on dev** (63 screens at 361 / 768 / 1440, before and after): 292 new findings before, 238 fixed; element
+sizes at 769 and 1440 unchanged (data-driven rows aside); no toolbar gained a line from the taller controls. Still
+showing, all expected: 26 tick boxes (the sweep measures the box; its label or tap area is 44), 14 demo tour bar, 15
+links inside sentences (one of them, "See why" on a club schedule, shipped after the 23 Nov run).
+
+**The accepted list was not touched.** It still holds old 38px admin entries (97 by its own wording) that this change
+should stop producing; clearing them is `--prune`, on the owner's word only.
+
+**Wrong or awkward in the sweep (reported, not changed):** `UAT_BASE_URL=http://localhost:3000` in `.env.local` makes
+it treat the dev server as a production build (four pages at once, 30 s budgets), so a dev run needs `--workers=1` and
+`LAYOUT_BUDGET_S=150`; findings are keyed by control wording and by data names, so console rows rotate in and out and a
+wording change re-raises an accepted entry; a tick box is reported even when its label or tap area meets the floor; the
+`admin-sponsorships-form` ready marker is stale.
+
 ## 3. The shape of the fix
 
 1. **Make the checks code, not prose.** One command runs the gate for both routes and prints one table. A waiver

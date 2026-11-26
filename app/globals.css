@@ -298,9 +298,10 @@
   --admin-row-min:    36px;
   --admin-row-pad-y:  0.38rem;
   /* The admin's ONE control height: every admin button (the kit button block below) and the tournament
-     toolbars' selects, search and segmented controls read it, so a toolbar is one height. 38 here is the
-     touch value — a phone, a tablet, comfortable density. On a computer it is 34, the portal's button
-     (the "One control height" block after the comfortable density, owner 2026-10-03). */
+     toolbars' selects, search and segmented controls read it, so a toolbar is one height. Three values,
+     all by width and density (the "One control height" blocks after the comfortable density): 44 at
+     768px and below (the tap floor, owner 2026-11-25), 34 on a computer in compact density (the
+     portal's button, owner 2026-10-03), and the 38 here for what is left, comfortable density above 768. */
   --admin-control-h:  38px;
   --admin-tap-min:    44px;
 
@@ -360,10 +361,21 @@
    floored at (`coaches.module.css`, after `.btnSecondary`), so one number holds across the product.
    The 38 had rested on "the portal's buttons are ~38"; measured, they were 33.4 (white) and 31.4
    (lime), and the first portal control borrowed into an admin toolbar (the club Ledger's Tools) sat
-   4.6px short. Compact density at ≥769px ONLY: below that, and in comfortable (touch) density, the
-   token stays 38, so no phone, tablet or touch size moved. */
+   4.6px short. Compact density at ≥769px ONLY; comfortable density above 768 stays 38. */
 @media (min-width: 769px) {
   :root:not([data-density="comfortable"]) { --admin-control-h: 34px; }
+}
+/* At 768px and below every admin and staff-console control meets the 44px tap floor, in either density
+   (owner, 2026-11-25 — it replaces the 38px touch value). The coaches portal keeps the 38 it had: it
+   borrows a few admin parts, and its own touch sizes are its own rules. ⚠ The admin wears the
+   coaches theme marker too (`adminKitAttr`), so the exception must exclude everything inside the admin kit. */
+@media (max-width: 768px) {
+  :root,
+  [data-density="comfortable"] { --admin-control-h: 44px; }
+  [data-coach-warm-enabled]:not([data-admin-kit], [data-admin-kit] *),
+  [data-coach-window]:not([data-admin-kit] *) { --admin-control-h: 38px; }
+  /* The borrowed coaches menu trigger (`CoachToolbarMenu`) reads this; only the admin sets it. */
+  [data-admin-kit] { --admin-trigger-floor: var(--tap-min, 44px); }
 }
 
 /* ─── Light Mode Token Overrides ────────────────────────────────────────────── */

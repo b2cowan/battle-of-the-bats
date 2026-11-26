@@ -170,6 +170,10 @@ p.finishedNote { margin: 0 0 0.75rem; }
       under its divider ("Earlier emails · counted per child") ── */
 .tagButton { margin-left: 0.4rem; padding: 0; border: 0; background: none; font: inherit; cursor: pointer; vertical-align: baseline; }
 .tagButton:focus-visible { outline: 2px solid var(--home-olive); outline-offset: 2px; border-radius: 999px; }
+/* The tag that is a button takes the 44px tap floor on a phone and a tablet; the row keeps its height. */
+@media (max-width: 768px) {
+  .tagButton { display: inline-flex; align-items: center; min-height: var(--tap-min, 44px); margin-block: -0.7rem; vertical-align: middle; }
+}
 .divider { margin: 1rem 0 0.4rem; font-size: var(--type-support); font-weight: 650; color: var(--text-tertiary); }
 .dividerRow td { padding-top: 0.9rem; font-size: var(--type-support); font-weight: 650; color: var(--text-tertiary); }
 /* ── Duplicates: the Parents · Children switch above the queue (Stage 14 S6). The kit's switch brings its own touch floor. ── */

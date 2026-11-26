@@ -180,7 +180,9 @@ export default function RegistrationsList({
           <tr>
             {h.selectable && (
               <th scope="col" className={css.tickCol}>
-                <Check allOn={allOn} someOn={someOn} onChange={onSelectAll} label={REGS_WORDS.selectAll} />
+                <label className={css.tickTap}>
+                  <Check allOn={allOn} someOn={someOn} onChange={onSelectAll} label={REGS_WORDS.selectAll} />
+                </label>
               </th>
             )}
             <th scope="col">{REGS_WORDS.col.player}</th>
@@ -197,8 +199,10 @@ export default function RegistrationsList({
               onClick={() => { if (window.getSelection()?.toString()) return; h.onOpen(row.reg.id); }}>
               {h.selectable && (
                 <td className={css.tickCol} onClick={e => e.stopPropagation()}>
-                  <input type="checkbox" className={screenParts.check22} checked={h.selected.has(row.reg.id)}
-                    onChange={() => h.onToggle(row.reg.id)} aria-label={REGS_WORDS.selectRow(row.name)} />
+                  <label className={css.tickTap}>
+                    <input type="checkbox" className={screenParts.check22} checked={h.selected.has(row.reg.id)}
+                      onChange={() => h.onToggle(row.reg.id)} aria-label={REGS_WORDS.selectRow(row.name)} />
+                  </label>
                 </td>
               )}
               <td>

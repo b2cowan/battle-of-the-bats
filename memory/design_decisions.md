@@ -11125,3 +11125,10 @@ Newest entries first. All decisions here are binding in future sessions unless e
 **Decision:** The Tournament Plus locked-targeting upsell was removed from the New/Edit Post modal. The `NEWS PAGE VISIBILITY` section only renders when `canTargetAnnouncements` is true (Plus/League/Club). Free orgs see a clean Title → Body → Pin → Publish flow.
 **Rationale:** Free org posts are all-divisions by default — there is no decision to make, so showing a locked feature block mid-form adds friction to every create/edit action without enabling any task. Upsells belong on plan/subscription pages, not inside creation modals.
 **Applies to:** `app/[orgSlug]/admin/tournaments/announcements/page.tsx`, upgrade gate placement globally
+
+---
+
+### 2026-11-25 — Admin and staff console controls are 44px on a phone and a tablet
+**Decision (owner):** Every admin and staff-console control is 44px tall at 768px and below, in either density. Computer widths do not change. The coaches portal is not changed by this. With it: a staff-console name in a table is 44px tall between 641 and 768px (rows grow); the tournament bracket EDITOR opens full size on a phone or tablet and scrolls sideways instead of shrinking to fit (the read-only bracket still opens fitted); links inside sentences stay as they are; the demo sandbox's tour bar is drawn for approval before it is changed.
+**Replaces:** the 38px touch value (A-08 / K-18, 2026-09-07) and the touch half of the 2026-10-03 "one control height" ruling. The 34px computer height stands.
+**Applies to:** `--admin-control-h` in `app/globals.css`; admin and platform-admin controls that set their own height.

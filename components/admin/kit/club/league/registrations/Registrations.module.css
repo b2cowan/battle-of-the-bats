@@ -78,6 +78,17 @@
 
 /* ── The table's own cells ── */
 .tickCol { width: 2.75rem; }
+/* The tick's tap area. On a computer it draws no box at all; on a tablet it is 44px around the same 22px box,
+   pulled into the cell's padding so the row and the column keep their size (owner, 2026-11-25). */
+.tickTap { display: contents; }
+@media (max-width: 768px) {
+  .tickTap {
+    display: flex; align-items: center; justify-content: center;
+    width: var(--tap-min, 44px); height: var(--tap-min, 44px); margin: -0.7rem -0.6rem; cursor: pointer;
+  }
+  /* The heading row is shorter than a tap: it grows to hold its tick's area, which the table's frame would clip. */
+  th .tickTap { margin-block: -0.42rem; }
+}
 .noEmail { color: var(--badge-warning-ink); }
 .actionsCol { width: 1%; white-space: nowrap; text-align: right; }
 .actions { display: inline-flex; align-items: center; gap: 0.35rem; justify-content: flex-end; }

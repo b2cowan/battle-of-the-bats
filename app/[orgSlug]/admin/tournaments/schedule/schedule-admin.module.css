@@ -1795,3 +1795,10 @@
   /* A phone cannot seat seven columns: the table scrolls inside its own frame, never the window. */
   .healthWindowBody .healthTeamTable { min-width: 560px; }
 }
+
+/* The health window's "Team detail" line at the 44px tap floor (owner, 2026-11-25). Padding, not a display change: the
+   disclosure keeps its triangle. */
+@media (max-width: 768px) {
+  .healthDetailsSummary,
+  .healthWindowBody .healthDetailsSummary { min-height: var(--tap-min, 44px); box-sizing: border-box; padding-block: 0.75rem; }
+}

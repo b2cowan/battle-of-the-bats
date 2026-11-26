@@ -8,7 +8,9 @@
  *  - a horizontally-scrollable canvas with drag-to-pan (grab empty space),
  *  - CSS `zoom` on a content wrapper (reflows, so pan/scrollbar work at any level),
  *  - default-to-Fit (whole bracket visible, capped at 100%) on mount and whenever
- *    `fitKey` changes (a new bracket).
+ *    `fitKey` changes (a new bracket). The editor opts out at 768px and below
+ *    (`fullSizeOnPhone`): it opens at 100% and scrolls sideways, so its fields and
+ *    buttons keep the tap floor (owner, 2026-11-25).
  *
  * Children is a render-prop receiving the current zoom, so the bracket content can
  * pass `scale={zoom}` to BracketConnectors (which divides measurements by it to
@@ -22,11 +24,13 @@ import styles from './BracketBuilder.module.css';
 const ZOOM_STEPS = [0.5, 0.65, 0.8, 1, 1.25, 1.5];
 const MIN_ZOOM = 0.4;
 
-export default function BracketZoomFrame({ children, fitKey, hint = 'Drag empty space to scroll' }: {
+export default function BracketZoomFrame({ children, fitKey, hint = 'Drag empty space to scroll', fullSizeOnPhone = false }: {
   children: (zoom: number) => React.ReactNode;
   /** Changes when the bracket structure changes → re-fit. */
   fitKey?: string | number;
   hint?: string;
+  /** At 768px and below, open at 100% instead of Fit (a bracket the reader edits, not only reads). */
+  fullSizeOnPhone?: boolean;
 }) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const bracketRef = useRef<HTMLDivElement>(null);
@@ -76,13 +80,23 @@ export default function BracketZoomFrame({ children, fitKey, hint = 'Drag empty 
     return below.length ? below[below.length - 1] : Math.max(MIN_ZOOM, z);
   });
 
-  // Default to Fit on mount and whenever the bracket changes.
+  // Default to Fit on mount and whenever the bracket changes (the editor on a phone: full size).
   useEffect(() => { didFitRef.current = false; }, [fitKey]);
   useEffect(() => {
     if (didFitRef.current) return;
     didFitRef.current = true;
-    setZoom(computeFit());
-  }, [fitKey]);
+    setZoom(fullSizeOnPhone && window.matchMedia('(max-width: 768px)').matches ? 1 : computeFit());
+  }, [fitKey, fullSizeOnPhone]);
+
+  // The editor has no zoom controls on a phone, so a window that narrows to that width (a tablet turned upright) goes
+  // back to full size rather than keeping a shrunk fit it cannot undo.
+  useEffect(() => {
+    if (!fullSizeOnPhone) return;
+    const narrow = window.matchMedia('(max-width: 768px)');
+    const onChange = () => { if (narrow.matches) setZoom(1); };
+    narrow.addEventListener('change', onChange);
+    return () => narrow.removeEventListener('change', onChange);
+  }, [fullSizeOnPhone]);
 
   // Ctrl/⌘ + wheel zoom (scoped to the canvas; non-passive listener).
   useEffect(() => {
@@ -112,7 +126,7 @@ export default function BracketZoomFrame({ children, fitKey, hint = 'Drag empty 
       </div>
       <div
         ref={scrollRef}
-        className={`${styles.builderContainer} ${styles.builderContainerPan} ${panning ? styles.builderContainerPanning : ''}`}
+        className={`${styles.builderContainer} ${styles.builderContainerPan} ${panning ? styles.builderContainerPanning : ''} ${fullSizeOnPhone ? styles.builderScrollOnPhone : ''}`}
         onMouseDown={onPanStart}
       >
         <div ref={bracketRef} style={{ zoom, width: 'max-content', margin: '0 auto' }}>

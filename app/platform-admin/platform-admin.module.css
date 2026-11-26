@@ -76,6 +76,13 @@
   .menuBtn { display: inline-flex; }
 }
 
+@media (max-width: 768px) {
+  /* The strip's two small doors at the tap floor (owner, 2026-11-25): the account button (the shared door's size, for
+     this strip only) and the wordmark. */
+  .strip { --icon-door-size: var(--tap-min, 44px); }
+  .strip > a { min-height: var(--tap-min, 44px); }
+}
+
 /* ── The page ── The kit's ground (the page tone with its quiet 40px grid), the way `.adminMain.adminMainKit` paints it. */
 .main {
   flex: 1;

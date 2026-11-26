@@ -31,6 +31,10 @@
   .choiceRow, .terms { min-height: 44px; }
 }
 .statusLine { margin: 0 0 0.75rem; display: flex; flex-wrap: wrap; align-items: center; gap: 0.25rem 0.4rem; }
+/* The status line's door at the 44px tap floor on a phone and a tablet. */
+@media (max-width: 768px) {
+  .statusLine a { display: inline-flex; align-items: center; min-height: var(--tap-min, 44px); }
+}
 
 /* Payouts card redraw (drawings tab 1): the other-Stripe-fees line is a footnote under the record, read and edit alike. */
 .otherFees { display: block; margin: 0.25rem 0 0; }
