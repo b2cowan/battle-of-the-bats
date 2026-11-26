@@ -43,7 +43,7 @@ import Link from 'next/link';
 import { Check, Circle, Undo2, X } from 'lucide-react';
 import { useCoaches } from '@/lib/coaches-context';
 import { hasNonMoneyRecordAccess } from '@/lib/coach-capabilities';
-import { getSportPack, surfaceLabel, DEFAULT_SPORT } from '@/lib/sports';
+import { getSportPack, eventSurfaceLabel, DEFAULT_SPORT } from '@/lib/sports';
 import { lineupBuilderHref } from '@/lib/lineups-address';
 import { analyzeLineup, BENCH_POSITION } from '@/lib/lineup-analysis';
 import { generateBestLineup } from '@/lib/lineup-generator';
@@ -1278,7 +1278,7 @@ export default function CoachGameConsolePage({
             </span>
           </div>
           <div className={styles.gdChips}>
-            {event.fieldNumber && <span className={styles.gdChip}>{surfaceLabel(sportPack.id, event.fieldNumber)}</span>}
+            {event.fieldNumber && <span className={styles.gdChip}>{eventSurfaceLabel(sportPack.id, event)}</span>}
             {event.arrivalTime && <span className={styles.gdChip}>Arrive {formatStoredClock(event.arrivalTime)}{arrivalNoteSuffix(arrivalIsAfterStartAt(event.startsAt, event.arrivalTime))}</span>}
             {event.uniform && <span className={styles.gdChip}>{event.uniform}</span>}
           </div>

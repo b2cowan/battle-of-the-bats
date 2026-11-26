@@ -61,7 +61,7 @@ import styles from '../../../../../../coaches.module.css';
 type LoadState = {
   event: {
     id: string; name: string; startsAt: string; endsAt: string | null;
-    location: string | null; fieldNumber: string | null;
+    location: string | null; fieldNumber: string | null; sectionMask?: number; fieldSections?: number;
   };
   plan: PracticePlan | null;
   recap: string | null;

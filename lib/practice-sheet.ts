@@ -23,7 +23,8 @@ import type { PracticeSheetBlock, PracticeSheetOptions, PracticeSheetRotation, P
 import { playerDisplayName } from './coach-roster-name';
 import { formatInOrgZone } from './timezone';
 import { formatStoredClock } from './utils';
-import { surfaceLabel } from './sports';
+import { eventSurfaceLabel } from './sports';
+import type { EventPart } from './field-parts';
 import {
   blockOwnGroupingId, blockOwnPeople, blockRotates, computeBlockClocks, computeRotation, formatDuration, groupNames,
   groupingById, groupingWords, isPairSet, practiceKitBag, resolvePracticePlanTagNames, resolveStationTeaching,
@@ -68,10 +69,10 @@ export type PracticeSheetInput = {
  * two ways. Empty when the schedule has neither.
  */
 export function practicePlaceLabel(
-  event: { location?: string | null; fieldNumber?: string | null },
+  event: { location?: string | null; fieldNumber?: string | null } & EventPart,
   sport: string | null | undefined,
 ): string {
-  return [event.location, surfaceLabel(sport, event.fieldNumber)].filter(Boolean).join(', ');
+  return [event.location, eventSurfaceLabel(sport, event)].filter(Boolean).join(', ');
 }
 
 export function buildPracticeSheet(input: PracticeSheetInput): PracticeSheetOptions {

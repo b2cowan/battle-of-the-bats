@@ -194,6 +194,8 @@ export const POST = withObservability(async (req: Request,
             delete changes.fieldNumber;
           }
         }
+        // The same field re-imported keeps the part the club booked (Club schedules Stage 2); a new field is whole.
+        if (changes.orgVenueFacilityId !== undefined && changes.orgVenueFacilityId === stored?.orgVenueFacilityId) changes.sectionMask = stored.sectionMask;
         if (row.uniform.trim()) changes.uniform = row.uniform.trim();
         if (r.opponent !== null) changes.opponent = r.opponent;
         if (r.homeAway !== null) changes.homeAway = r.homeAway as 'home' | 'away' | 'neutral';

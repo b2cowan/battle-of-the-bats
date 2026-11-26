@@ -22,7 +22,7 @@ import {
 import styles from '@/app/[orgSlug]/coaches/coaches.module.css';
 import { formatStoredClock as fmtClock } from '@/lib/utils';
 import { arrivalIsAfterStartAt, arrivalNoteSuffix } from '@/lib/coach-arrival';
-import { surfaceLabel, type SportPack } from '@/lib/sports';
+import { eventSurfaceLabel, type SportPack } from '@/lib/sports';
 import type { ScheduleDrawerDoors } from '@/lib/coach-schedule-doors';
 import type { CoachCapabilities } from '@/lib/coach-capabilities';
 import { canWriteMoney, canWritePracticePlans } from '@/lib/coach-capabilities';
@@ -743,7 +743,7 @@ export default function ScheduleEventSheet({
   ].filter(Boolean) as string[];
   // Location is rendered separately as a tappable Google Maps link (reusing the shared helper),
   // with the optional field/diamond # appended to the label (the maps query stays the location).
-  const locationLabel = [ev.location, surfaceLabel(sportPack.id, ev.fieldNumber)].filter(Boolean).join(' · ');
+  const locationLabel = [ev.location, eventSurfaceLabel(sportPack.id, ev)].filter(Boolean).join(' · ');
 
   // Attendance ↔ lineup disagreement for the open game — the Lineup row's warning (E4). Only when a
   // lineup exists.

@@ -285,8 +285,14 @@ export interface PlaceNames {
  * The part joins with a comma, as the club calendar says it (round 2 facts).
  */
 export function clubPlaceWords(places: PlaceNames, venueId: string, facilityId: string | null, mask?: number | null): string {
+  return placeWords(places.venueName.get(venueId) ?? '', clubFieldWords(places, facilityId, mask));
+}
+
+/** The field with its part, a comma between ("Field 1, side A"); null with no named field. ONE home for both the
+ *  coach line above and a change line that puts the park in front ("Prospect Park · Field 1, side A"). */
+export function clubFieldWords(places: PlaceNames, facilityId: string | null, mask?: number | null): string | null {
   const field = facilityId ? places.facilityName.get(facilityId) ?? null : null;
-  return placeWords(places.venueName.get(venueId) ?? '', field ? fieldPartName(field, mask, places.sectionsOf.get(facilityId!) ?? 1, ', ') : null);
+  return field ? fieldPartName(field, mask, places.sectionsOf.get(facilityId!) ?? 1, ', ') : null;
 }
 
 // ── The bill, in words (specimen 14) ─────────────────────────────────────────────────────────────

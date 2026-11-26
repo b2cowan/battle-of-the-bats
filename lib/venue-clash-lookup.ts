@@ -545,7 +545,7 @@ export function clashesForSavedRepEvents(orgId: string, teamName: string, saved:
   return checksFor(orgId, saved.map(e => repEventBooking({
     id: e.id, team_id: e.teamId, event_type: e.eventType, starts_at: e.startsAt, ends_at: e.endsAt, status: e.status,
     org_venue_id: e.orgVenueId, org_venue_facility_id: e.orgVenueFacilityId, source_tournament_game_id: e.sourceTournamentGameId,
-    club_schedule_slot_id: e.clubScheduleSlotId ?? null,
+    club_schedule_slot_id: e.clubScheduleSlotId ?? null, section_mask: e.sectionMask,
   }, { team: teamName, venue: e.location, facility: e.fieldNumber })));
 }
 
@@ -557,7 +557,7 @@ export function clashesForSavedRepEvents(orgId: string, teamName: string, saved:
 export function clashesForSavedClubPractices(orgId: string, saved: readonly {
   id: string; team_id: string; teamName: string; starts_at: string; ends_at: string | null; org_venue_id: string | null;
   org_venue_facility_id: string | null; location: string | null; field_number: string | null; club_schedule_slot_id: string | null;
-  /** The slot's part (mig 541); absent reads the whole field (Send writes it from Session 2C). */
+  /** The practice's part (mig 541, written by Finalize and Send since mig 546); absent reads the whole field. */
   section_mask?: number | null;
 }[]): Promise<SavedChecks> {
   return checksFor(orgId, saved.map(r => repEventBooking({

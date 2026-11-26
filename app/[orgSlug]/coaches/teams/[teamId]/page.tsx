@@ -47,7 +47,7 @@ import { tallyResults, formatRecord } from '@/lib/coach-season-record';
 import { countsTowardRecord } from '@/lib/season-wrapped';
 import { calendarDaysBetween, tournamentToday, daysBetweenDateStrings, formatInOrgZone, formatShortWeekdayDate, relativeDayLabel } from '@/lib/timezone';
 import { armCareCopy, type ArmCareConcern } from '@/lib/coach-arm-care';
-import { surfaceLabel, getSportPack, DEFAULT_SPORT } from '@/lib/sports';
+import { eventSurfaceLabel, getSportPack, DEFAULT_SPORT } from '@/lib/sports';
 import { analyzeLineup, deriveLineupBadge, type LineupBadge } from '@/lib/lineup-analysis';
 import { gameDayEntryHref, isInGameDayWindow, toGameDayEventShape } from '@/lib/coach-game-day';
 import { lineupBuilderHref } from '@/lib/lineups-address';
@@ -1618,7 +1618,7 @@ export default function TeamOverviewPage({
     const venue = nextEvent.location?.trim() || null;
     // A bare code takes the sport's noun ("Diamond 1"); a value that already names itself stays as
     // typed — the rule lived here alone until 2026-09-21, now `surfaceLabel` is its one home.
-    const surface = surfaceLabel(assignment.teamSport, nextEvent.fieldNumber) || null;
+    const surface = eventSurfaceLabel(assignment.teamSport, nextEvent) || null;
     return [venue, surface].filter(Boolean).join(', ') || null;
   })();
 

@@ -40,6 +40,7 @@ import {
 import { generateWeeklyOccurrences, type RecurrenceOccurrenceInput } from '@/lib/coach-recurrence';
 import { DAYS_OF_WEEK, dayStr, errorMessage, fmtDate, fmtTime, shortDate } from '@/lib/coach-schedule-view';
 import type { ClubVenueOption, RepEventResource, RepEventType, RepTeamEvent, RepTeamPlace, RepTeamTag } from '@/lib/types';
+import { eventFieldName, type EventPart } from '@/lib/field-parts';
 
 /**
  * THE SCHEDULE'S ADD / EDIT FORM — the QuestionShell form every "Add Event" door and every sheet's
@@ -256,7 +257,7 @@ export interface ScheduleFormInit {
      * club's (`CLUB_OWNED_API_FIELDS`; the PATCH refuses them with `409 club_slot`), so they read as context and only the
      * coach's own fields are sent: arrival, notes, links. Null on any other event.
      */
-    club?: { scheduleName: string } | null;
+    club?: ({ scheduleName: string } & EventPart) | null;
     /**
      * Which dates of a repeating event the edit reaches — chosen at the pencil, BEFORE the form opens (owner ruling
      * 2026-10-09). 'one' on a one-off. It replaced the "Apply your changes to:" chooser Save used to open, which came
@@ -990,7 +991,7 @@ export default function ScheduleEventForm({
                   <p className={styles.formHint} style={{ marginTop: 0 }}>{SCHEDULE_COACH_WORDS.formFromClubHint(editingClub.scheduleName)}</p>
                   <dl className={styles.sourceFacts}>
                     <div><dt>When</dt><dd>{form.startsAt ? `${fmtDate(form.startsAt)} · ${fmtTime(form.startsAt)}${form.endsAt ? ` – ${fmtTime(form.endsAt)}` : ''}` : 'To be scheduled'}</dd></div>
-                    {(form.location || form.fieldNumber) && <div><dt>Where</dt><dd>{[form.location, form.fieldNumber].filter(Boolean).join(' · ')}</dd></div>}
+                    {(form.location || form.fieldNumber) && <div><dt>Where</dt><dd>{[form.location, eventFieldName(form.fieldNumber, editingClub)].filter(Boolean).join(' · ')}</dd></div>}
                   </dl>
                 </section>
                 <section className={styles.formSection}>

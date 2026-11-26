@@ -28,6 +28,7 @@ import { planInstallmentWrites, paymentRestatements, legacyEntryDescriptionsForP
 import { whyPlanStrandsPaidMoney } from './payable-scope-edit';
 import { CLUB_OWNED_BOOK_KINDS } from './club-money-figures';
 import { toCents, toDollars } from './coach-register';
+import { maskOf, sectionsOf } from './field-parts';
 import { registrationOwes } from './league-price';
 import { checklistLeft, seasonChecklist } from './house-league-season';
 import { cleanSiteList } from './public-site-patch';
@@ -5791,6 +5792,14 @@ export async function getRepPlayerDuesSummary(
 
 // Team Events
 
+/**
+ * Every read of a team event that the mapper turns into a `RepTeamEvent`: the row, and its field's split (Club schedules
+ * Stage 2, 2C part 2) so the part reads in words at READ time ("side A" on a field in two sides) — never stored as text,
+ * since the Venue library's rename rewrites `field_number`. One foreign key to `org_venue_facilities`, so the embed is
+ * unambiguous. A read that forgot it still says true words: a part on a field of unknown split reads in quarters.
+ */
+const REP_EVENT_SELECT = '*, facility_split:org_venue_facilities(sections)';
+
 function mapRepTeamEvent(r: any): RepTeamEvent {
   // A scrimmage is a Game with the box ticked (mig 306); `readStoredEventKind` also folds a row
   // still carrying the pre-306 kind, so no screen meets a kind the vocabulary no longer has.
@@ -5812,6 +5821,9 @@ function mapRepTeamEvent(r: any): RepTeamEvent {
     // The club's venue + facility (mig 319). Degrades to null before the migration.
     orgVenueId: r.org_venue_id ?? null,
     orgVenueFacilityId: r.org_venue_facility_id ?? null,
+    // The part of the field (Stage 2, mig 541) and the field's split, read together so a place helper can say the part.
+    sectionMask: maskOf(r.section_mask),
+    fieldSections: sectionsOf(r.facility_split?.sections),
     arrivalTime: r.arrival_time ?? null,
     fieldNumber: r.field_number ?? null,
     uniform: r.uniform ?? null,
@@ -5876,7 +5888,7 @@ export async function stampRepTeamEventPracticePlanSent(
     .eq('id', eventId)
     .eq('team_id', teamId)
     .eq('program_year_id', programYearId)
-    .select()
+    .select(REP_EVENT_SELECT)
     .maybeSingle();
   if (error) throw error;
   return data ? mapRepTeamEvent(data) : null;
@@ -5888,7 +5900,7 @@ export async function getRepTeamEvents(
 ): Promise<RepTeamEvent[]> {
   let q = supabaseAdmin
     .from('rep_team_events')
-    .select('*')
+    .select(REP_EVENT_SELECT)
     .eq('program_year_id', programYearId)
     .order('starts_at', { ascending: true });
   if (opts?.from) q = q.gte('starts_at', opts.from);
@@ -5902,7 +5914,7 @@ export async function getRepTeamEvents(
 export async function getRepTeamEventById(eventId: string): Promise<RepTeamEvent | null> {
   const { data, error } = await supabaseAdmin
     .from('rep_team_events')
-    .select('*')
+    .select(REP_EVENT_SELECT)
     .eq('id', eventId)
     .maybeSingle();
   if (error) throw error;
@@ -5975,7 +5987,7 @@ export async function createRepTeamEvent(fields: CreateRepTeamEventFields): Prom
       status: fields.status ?? 'scheduled',
       source_basic_event_id: fields.sourceBasicEventId ?? null,
     })
-    .select()
+    .select(REP_EVENT_SELECT)
     .single();
   if (error) throw error;
   return mapRepTeamEvent(data);
@@ -6013,7 +6025,7 @@ export async function createRepTeamEvents(rows: CreateRepTeamEventFields[]): Pro
       status: f.status ?? 'scheduled',
       source_basic_event_id: f.sourceBasicEventId ?? null,
     })))
-    .select();
+    .select(REP_EVENT_SELECT);
   if (error) throw error;
   return (data ?? []).map(mapRepTeamEvent);
 }
@@ -6029,6 +6041,8 @@ export async function updateRepTeamEvent(eventId: string, fields: {
   placeId?: string | null;
   orgVenueId?: string | null;
   orgVenueFacilityId?: string | null;
+  /** The part kept with `orgVenueFacilityId` — only a caller re-saving the SAME field passes the stored one; else 0. */
+  sectionMask?: number;
   arrivalTime?: string | null;
   fieldNumber?: string | null;
   uniform?: string | null;
@@ -6051,7 +6065,11 @@ export async function updateRepTeamEvent(eventId: string, fields: {
   if (fields.locationAddress !== undefined) patch.location_address = fields.locationAddress;
   if (fields.placeId !== undefined)     patch.place_id = fields.placeId;
   if (fields.orgVenueId !== undefined)  patch.org_venue_id = fields.orgVenueId;
-  if (fields.orgVenueFacilityId !== undefined) patch.org_venue_facility_id = fields.orgVenueFacilityId;
+  // A field written here is the WHOLE field (Stage 2) unless the caller re-saves the same field with its stored part:
+  // only the club's schedule books a part, and a club practice's place is refused on the coach's routes. So a practice
+  // a send left detached from its slot can be moved without carrying a part onto a field that doesn't offer it (the
+  // database would refuse the save), and an edit that leaves its field alone keeps its part.
+  if (fields.orgVenueFacilityId !== undefined) { patch.org_venue_facility_id = fields.orgVenueFacilityId; patch.section_mask = fields.sectionMask ?? 0; }
   if (fields.arrivalTime !== undefined) patch.arrival_time = fields.arrivalTime;
   if (fields.fieldNumber !== undefined) patch.field_number = fields.fieldNumber;
   if (fields.uniform !== undefined)     patch.uniform = fields.uniform;
@@ -6067,7 +6085,7 @@ export async function updateRepTeamEvent(eventId: string, fields: {
     .from('rep_team_events')
     .update(patch)
     .eq('id', eventId)
-    .select()
+    .select(REP_EVENT_SELECT)
     .single();
   if (error) throw error;
   return mapRepTeamEvent(data);
@@ -6106,7 +6124,7 @@ export async function updateRepTeamEventPracticePlan(
     // team has had. Found by `season-scoped-lookup-guard.test.ts` the day it was written — this
     // was a FOURTH sibling of the three the review listed by hand.
     .eq('program_year_id', programYearId)
-    .select()
+    .select(REP_EVENT_SELECT)
     .maybeSingle();
   if (error) throw error;
   return data ? mapRepTeamEvent(data) : null;
@@ -6142,7 +6160,7 @@ export async function updateRepTeamEventPracticeRecap(
     .eq('id', eventId)
     .eq('team_id', teamId)
     .eq('program_year_id', programYearId)
-    .select()
+    .select(REP_EVENT_SELECT)
     .maybeSingle();
   if (error) throw error;
   return data ? mapRepTeamEvent(data) : null;
@@ -6161,7 +6179,7 @@ export async function getRepTeamEventsWithPracticePlans(
 ): Promise<RepTeamEvent[]> {
   let q = supabaseAdmin
     .from('rep_team_events')
-    .select('*')
+    .select(REP_EVENT_SELECT)
     .eq('program_year_id', programYearId)
     .not('practice_plan', 'is', null)
     .order('starts_at', { ascending: false })
@@ -6219,7 +6237,9 @@ export async function updateRepTeamEventSeries(
   if (fields.locationAddress !== undefined) base.location_address = fields.locationAddress;
   if (fields.placeId !== undefined)         base.place_id = fields.placeId;
   if (fields.orgVenueId !== undefined)      base.org_venue_id = fields.orgVenueId;
-  if (fields.orgVenueFacilityId !== undefined) base.org_venue_facility_id = fields.orgVenueFacilityId;
+  // The whole field, as `updateRepTeamEvent` says why (a series names one field for every date; each date's own part
+  // is not the picker's to keep).
+  if (fields.orgVenueFacilityId !== undefined) { base.org_venue_facility_id = fields.orgVenueFacilityId; base.section_mask = 0; }
   if (fields.fieldNumber !== undefined)     base.field_number = fields.fieldNumber;
   if (fields.uniform !== undefined)         base.uniform = fields.uniform;
   if (fields.resources !== undefined)       base.resources = fields.resources;
@@ -6241,7 +6261,7 @@ export async function updateRepTeamEventSeries(
     const nextEnd = fields.endTime ? zonedWallClockToUtc(date, fields.endTime) : null;
     if (nextStart) patch.starts_at = nextStart;
     if (nextEnd)   patch.ends_at = nextEnd;
-    const { data: updated, error: uErr } = await supabaseAdmin.from('rep_team_events').update(patch).eq('id', row.id).select().single();
+    const { data: updated, error: uErr } = await supabaseAdmin.from('rep_team_events').update(patch).eq('id', row.id).select(REP_EVENT_SELECT).single();
     if (uErr) throw uErr;
     written.push(mapRepTeamEvent(updated));
   }
@@ -8893,7 +8913,7 @@ export async function getRepTeamPracticesWithPlanOrRecap(
   const limit = opts?.limit ?? 200;
   const { data, error } = await supabaseAdmin
     .from('rep_team_events')
-    .select('*')
+    .select(REP_EVENT_SELECT)
     .eq('program_year_id', programYearId)
     .eq('event_type', 'practice')
     /**

@@ -459,6 +459,50 @@ Migration first. Drawn together with Stage 3.
         practice or game that changes only part is told to nobody; (d) the club calendar’s clash line names the other
         booking’s field without its part. **2E:** the house-league season calendar and public schedule say no part
         (`lib/league-season-calendar.ts`).
+  - [x] **2C part 2 built 2026-11-26** (no migration; the owner’s go 2026-11-26: “go ahead with (a)–(e), no family
+        notice”). (a) Send the changes’ email: the pattern lines (`patternsFor`, now through `clubPlaceWords`) and the
+        moved / gains / loses lines (`changePlaceOf`, through the new `clubFieldWords`, the one home `clubPlaceWords`
+        also calls) say the part: “Prospect Park · Field 1, side A”. **Finding #56 addressed:** a gained slot carries
+        every holder on it (`billSlotsOf([g], …)`), so its hours (`splitValue`) are the team’s share (`pricedMinutes`);
+        the correction’s amount was already right and does not move (house league on a slot counts as the bill counts
+        it). The send’s clash count (`checkWritten`) now reads each practice’s `section_mask`: side A beside side B is
+        no clash. (b) **The two shared readers:** every read the coach mapper turns into an event asks for its field’s
+        split (`REP_EVENT_SELECT` = `*, facility_split:org_venue_facilities(sections)`, all 11 sites, a census guard
+        holds it); `RepTeamEvent.sectionMask` / `fieldSections`; the family reader likewise (`EVENT_COLUMNS`,
+        `FamilyScheduleEntry`, optional; absent on house-league entries). Words: `eventFieldName` (field-parts,
+        `EventPart`) and `eventSurfaceLabel` (sports: the sport’s word plus the part), at the event sheet’s Where, the
+        team’s next-up card, the game-day chip, the practice plan’s where-line and its printed sheet (live and the
+        closed-season page, whose read route passes the two fields), the calendar file and subscribed feed (coach,
+        family, public: `feedPlace`), the coach’s CSV/XLSX Field column, the family team schedule and family home, and
+        the restricted form’s “From the club” Where line (the schedule page passes the part on `editing.club`). Seven
+        places name only the park, never the field (practice and lineup hubs, helper home, public team page, club
+        website games, the family change notice, the availability reminder): left as they are. With no split field
+        every place reads byte-for-byte as before (tests). (c) **Owner ruling 2026-11-26: a side-only change tells
+        families nothing**, as a field change at the same park already doesn’t (the coach event route’s standing rule:
+        a family hears a new time, a new park, called off, back on); the coach is told: the send’s email counts a
+        side-only change as a move and names both sides (test). A house-league practice or game changed only in part is
+        told to nobody (`planLeagueChanges` sees the same venue, field and time; `league_games_record_change` compares
+        the field): **2E’s**. (d) The club calendar’s clash line names the other booking’s part, joined as a
+        booking’s own line joins it (`partProp`). (e) Found in the session: a coach-side field write is the whole field
+        (`updateRepTeamEvent`, the series edit), so a cancelled club practice a send left detached from its slot can be
+        moved onto a field that isn’t split without the database refusing it; an edit or a re-import that leaves the
+        field alone keeps its part (the route and the import pass the stored one). Tests:
+        `club-schedule-send-parts` (8), `schedule-parts-readers` (15); `coach-tournament-games`’s fixture and
+        `club-website-stage1-live`’s column order kept.
+        **`/simplify` + `/review` 2026-11-26 (before the commit):** one home for “park · field, part”
+        (`clubFieldWords`) and for an event’s field words (`eventSurfaceLabel`); `feedPlace` takes the event; the
+        two misses `/simplify` found (the form’s “From the club” line, the send’s clash count) built; `/review`: an
+        unchanged field kept its part (fixed), whole fields not trimmed (fixed), house league on a gained slot tested.
+        **Accepted:** a series edit resets each date’s part (a series names one field for every date); the feed line
+        reads “Field 1, side A, 1 Park Rd” (two commas); the house-league writers (`lib/db.ts` league practices and
+        games) still keep a part when their field changes, harmless until house league carries parts: **2E’s**.
+        **`/legal` 2026-11-26:** no finding. The send email stays the club’s service notice to its own coaches
+        (`CASL_LATE_BILL_EMAIL.md`, `CASL_COACH_GROUP_EMAIL.md`, both unstale; a part word adds no offer or link); no
+        new data about a person; no notice sent is never a CASL exposure, and no help article or policy draft promises
+        families a notice for every change (the coach help’s “field changed” line is a tournament organizer’s game).
+        ⚠ **Release order, sharper now:** every coach and family schedule read asks for `section_mask` and the field’s
+        `sections`, so **541 must be on a database before this code is** (a read fails outright without it, where the
+        old `select('*')` did not). Production order unchanged: 541 → 544 → 546 before the 2B/2C promote.
 - [ ] Reported by `/design`, not this project's to fix: the shipped "Give it to" menu inside a cell of the "Open slots and
       short teams" window has no row on `docs/agents/design/TABLE_EXCEPTION_REGISTER.md` (it was ruled for that window;
       a register row should say it is not a precedent).

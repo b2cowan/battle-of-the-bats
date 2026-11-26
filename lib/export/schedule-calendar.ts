@@ -33,6 +33,7 @@
 import type { ICSInstantEventInput } from './ics';
 import type { LeagueGame, RepTeamEvent } from '../types';
 import { formatStoredClock } from '../utils';
+import { eventFieldName } from '../field-parts';
 import { eventTypeCell } from '../coach-schedule-vocab';
 import { formatInOrgZone, orgDayKey } from '../timezone';
 import { teamFeedEntries, type FeedEntryKind, type FeedOrganizerGame, type FeedTryoutDay } from './team-feed-words';
@@ -44,7 +45,7 @@ export type CoachCalendarEvent = Pick<
   RepTeamEvent,
   | 'id' | 'name' | 'eventType' | 'isScrimmage' | 'opponent' | 'homeAway' | 'startsAt' | 'endsAt'
   | 'arrivalTime' | 'uniform' | 'description' | 'location' | 'locationAddress' | 'fieldNumber' | 'status'
-> & Partial<Pick<RepTeamEvent, 'sourceTournamentGameId'>>;
+> & Partial<Pick<RepTeamEvent, 'sourceTournamentGameId' | 'sectionMask' | 'fieldSections'>>;
 
 /**
  * The coach Schedule's calendar FILE — the coach's feed entries (F1–F10), from what the screen holds: the season's
@@ -85,7 +86,8 @@ export function coachScheduleSheetRows(events: readonly CoachCalendarEvent[]) {
     opponent:  e.opponent ?? '',
     location:  e.location ?? '',
     address:   e.locationAddress ?? '',
-    field:     e.fieldNumber ?? '',
+    // The raw field (its column header names it), with the part the club booked.
+    field:     eventFieldName(e.fieldNumber, e),
     uniform:   e.uniform ?? '',
     homeAway:  e.homeAway ?? '',
   }));

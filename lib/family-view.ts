@@ -4,6 +4,7 @@ import { countsTowardRecord } from './season-wrapped';
 import { COACH_GAME_EVENT_TYPES } from './coach-tournament-games';
 import { repEntryState } from './club-game-live';
 import { fetchAll } from './supabase-paging';
+import { maskOf, sectionsOf } from './field-parts';
 import { LIVE_SEASON_STATUSES } from './season-live';
 import { repMarkWords } from './place-closures-server';
 import type { MarkWords } from './place-closures';
@@ -42,6 +43,10 @@ export interface FamilyScheduleEntry {
   location: string | null;
   locationAddress: string | null;
   fieldNumber: string | null;
+  /** The part of the field the club booked (0 = whole) and how the field splits (`EventPart`, read with the row).
+   *  Absent on a house-league entry (2E). */
+  sectionMask?: number;
+  fieldSections?: number;
   arrivalTime: string | null;
   opponent: string | null;
   homeAway: 'home' | 'away' | 'neutral' | null;
@@ -104,7 +109,9 @@ export const PUBLIC_EVENT_TYPES = [...COACH_GAME_EVENT_TYPES, 'external_tourname
 
 const EVENT_COLUMNS =
   'id, event_type, is_scrimmage, name, starts_at, ends_at, location, location_address, field_number, ' +
-  'arrival_time, opponent, home_away, team_score, opponent_score, result, status, source_tournament_game_id';
+  // The part and its field's split (Stage 2): one foreign key to the facilities, so the embed is unambiguous.
+  'arrival_time, opponent, home_away, team_score, opponent_score, result, status, section_mask, facility_split:org_venue_facilities(sections), ' +
+  'source_tournament_game_id';
 
 interface EventRow {
   id: string;
@@ -125,6 +132,8 @@ interface EventRow {
   status: 'scheduled' | 'cancelled';
   /** Read to tell a game copied from a tournament from one the coach keeps (`repEntryState`); never leaves the server. */
   source_tournament_game_id: string | null;
+  section_mask: number | null;
+  facility_split: { sections: number | null } | null;
 }
 
 /** Is the row over, and is it live? ONE rule (`lib/club-game-live.ts`, Club Website Stage 1 G7): a game is over when the
@@ -164,6 +173,8 @@ function toEntry(row: EventRow, nextUpId: string | null, now: number, mark: Mark
     location: row.location,
     locationAddress: row.location_address,
     fieldNumber: row.field_number,
+    sectionMask: maskOf(row.section_mask),
+    fieldSections: sectionsOf(row.facility_split?.sections),
     arrivalTime: row.arrival_time,
     opponent: row.opponent,
     homeAway: row.home_away,

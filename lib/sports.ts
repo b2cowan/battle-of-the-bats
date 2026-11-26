@@ -1,5 +1,6 @@
 import { FACILITY_TYPE_LABELS, type FacilityType } from './types';
 import type { TieBreaker } from './tie-breakers';
+import { eventFieldName, type EventPart } from './field-parts';
 
 /**
  * Single source of truth for "what sport is this?" across the platform.
@@ -394,4 +395,13 @@ export function surfaceLabel(sport: SportId | string | null | undefined, fieldNu
   if (!field) return '';
   if (!/^#?\d+[A-Za-z]?$/.test(field)) return field;
   return `${fieldNounFor(sport)} ${field.replace(/^#/, '')}`;
+}
+
+/**
+ * An EVENT's facility in the sport's word with the part the club booked: "Diamond 1, side A" (Club schedules Stage 2,
+ * 2C part 2). The one call for every coach screen, sheet and feed that names an event's field; `surfaceLabel` stays the
+ * sport's vocabulary alone (tryouts and the place book have no part).
+ */
+export function eventSurfaceLabel(sport: SportId | string | null | undefined, event: { fieldNumber?: string | null } & EventPart): string {
+  return eventFieldName(surfaceLabel(sport, event.fieldNumber), event);
 }

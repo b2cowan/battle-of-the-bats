@@ -31,7 +31,7 @@ import {
 } from './club-schedule-bill';
 import {
   PART_WORDS, SCHEDULE_REFUSALS as R, SCHEDULE_WORDS as W, changeGroups, changeLine, houseLeagueUse, linesAsGroups, patternLine,
-  placeWords, unreachableSentence, billNotToldSentence, moneyCents, type ChangeGroup, type EmailWords, type ScheduleUnreachableWhy, type TeamChange,
+  clubFieldWords, clubPlaceWords, unreachableSentence, billNotToldSentence, moneyCents, type ChangeGroup, type EmailWords, type ScheduleUnreachableWhy, type TeamChange,
 } from './club-schedule-words';
 import {
   billSlotsOf, computeBill, liveSlots, loadSchedule, readBill, readBillTerms, readClubTeams, schedulePrices, stepRefusal, teamNamer, touchesRepTeams,
@@ -309,16 +309,15 @@ async function contextFor(sctx: SchedulerCtx, loaded: LoadedSchedule): Promise<C
   };
 }
 
-const placeOf = (c: Context, venueId: string, facilityId: string | null) =>
-  placeWords(c.places.venueName.get(venueId) ?? '', facilityId ? c.places.facilityName.get(facilityId) ?? null : null);
 /** A change's place names the park AND the facility ("Prospect Park · Diamond 1"), as an added part's lines always did:
- *  two parks can each have a Diamond 1 (owner 2026-11-17, ask 6 — the Send window said "Diamond 1", the page the park). */
-const changePlaceOf = (c: Context, venueId: string, facilityId: string | null) =>
-  [c.places.venueName.get(venueId) ?? '', facilityId ? c.places.facilityName.get(facilityId) ?? '' : ''].filter(Boolean).join(' · ');
+ *  two parks can each have a Diamond 1 (owner 2026-11-17, ask 6 — the Send window said "Diamond 1", the page the park).
+ *  The field carries its part (Stage 2): "Prospect Park · Field 1, side A". */
+const changePlaceOf = (c: Pick<Context, 'places'>, s: Pick<Slot, 'venueId' | 'facilityId' | 'sectionMask'>) =>
+  [c.places.venueName.get(s.venueId) ?? '', clubFieldWords(c.places, s.facilityId, s.sectionMask)].filter(Boolean).join(' · ');
 
-/** A team's slots as the email's pattern lines (specimen 9). */
-function patternsFor(c: Context, teamId: string): string[] {
-  return slotPatterns(c.slots, teamId, c.assignments).map(p => patternLine(p, placeOf(c, p.venueId, p.facilityId)));
+/** A team's slots as the email's pattern lines (specimen 9), each place with its part as the review card says it. */
+export function patternsFor(c: Pick<Context, 'slots' | 'assignments' | 'places'>, teamId: string): string[] {
+  return slotPatterns(c.slots, teamId, c.assignments).map(p => patternLine(p, clubPlaceWords(c.places, p.venueId, p.facilityId, p.sectionMask)));
 }
 
 /** The teams the schedule gives time to, in the club's order. */
@@ -416,17 +415,18 @@ export function planChanges(c: Context, practices: readonly Practice[]): Changes
   );
   const plan: ChangesPlan = { inserts: [], updates: [], retire: [], byTeam: new Map(), gainedSlots: new Map(), seasonless: [] };
   const push = (t: string, ch: TeamChange) => (plan.byTeam.get(t) ?? plan.byTeam.set(t, []).get(t)!).push(ch);
+  // The gained slot as the bill reads it, with EVERY team on it (Finding #56): a shared slot's hours are this team's share.
   const gained = (t: string, g: Slot) => (plan.gainedSlots.get(t) ?? plan.gainedSlots.set(t, []).get(t)!)
-    .push({ day: g.day, startMs: g.startMs, endMs: g.endMs, weight: g.weight, teamIds: [t], permitId: c.prices.priceKeyOf(g.permitId ?? null) });
+    .push(...billSlotsOf([g], c.assignments, c.prices.priceKeyOf));
   const placeOfPractice = (p: Practice) => {
     const from = slotById.get(p.club_schedule_slot_id);
-    return from ? changePlaceOf(c, from.venueId, from.facilityId) : '';
+    return from ? changePlaceOf(c, from) : '';
   };
   for (const m of diff.moves) {
     const p = practiceById.get(m.practiceId)!, g = slotByKey.get(m.toKey)!;
     const row = rowFor(c, g, m.teamId, p.program_year_id);
     plan.updates.push({ eventId: p.id, slotId: row.slotId, startsAt: row.startsAt, endsAt: row.endsAt, venueId: row.venueId, facilityId: row.facilityId, location: row.location, locationAddress: row.locationAddress, fieldNumber: row.fieldNumber });
-    push(m.teamId, { kind: 'moved', fromStartMs: Date.parse(p.starts_at), fromPlace: placeOfPractice(p), toStartMs: g.startMs, toEndMs: g.endMs, toPlace: changePlaceOf(c, g.venueId, g.facilityId) });
+    push(m.teamId, { kind: 'moved', fromStartMs: Date.parse(p.starts_at), fromPlace: placeOfPractice(p), toStartMs: g.startMs, toEndMs: g.endMs, toPlace: changePlaceOf(c, g) });
     gained(m.teamId, g);
   }
   for (const gn of diff.gains) {
@@ -434,7 +434,7 @@ export function planChanges(c: Context, practices: readonly Practice[]): Changes
     const season = c.teams.find(t => t.id === gn.teamId)?.season?.id ?? null;
     if (!season) { if (!plan.seasonless.includes(gn.teamId)) plan.seasonless.push(gn.teamId); continue; }
     plan.inserts.push(rowFor(c, g, gn.teamId, season));
-    push(gn.teamId, { kind: 'gains', startMs: g.startMs, endMs: g.endMs, place: changePlaceOf(c, g.venueId, g.facilityId) });
+    push(gn.teamId, { kind: 'gains', startMs: g.startMs, endMs: g.endMs, place: changePlaceOf(c, g) });
     gained(gn.teamId, g);
   }
   for (const l of diff.losses) {
@@ -674,7 +674,7 @@ export function changesMoney(
   const correction = billCorrections(before, now);
   const splits: TimeSplit[] = [...correction.gains].map(([t, cents]) => {
     const installments = correctionInstallments(cents, t, plan.gainedSlots.get(t) ?? [], o.periods, o.today, paymentWeight);
-    const gainedMinutes = (plan.gainedSlots.get(t) ?? []).reduce((n, g) => n + ((g.endMs - g.startMs) / 60_000) * g.weight, 0);
+    const gainedMinutes = pricedMinutes(plan.gainedSlots.get(t) ?? []).get(t) ?? 0;
     return {
       teamId: t, programYearId: c.teams.find(x => x.id === t)?.season?.id ?? '', amount: cents / 100,
       splitValue: Math.max(0.01, Math.round((gainedMinutes / 60) * 100) / 100),
@@ -1429,8 +1429,9 @@ async function tellHouseLeague(sctx: SchedulerCtx, scheduleName: string, half: L
 async function checkWritten(orgId: string, written: { slotIds: string[]; teamIds: Set<string> | null }, names: { id: string; name: string }[]): Promise<{ clashes: number; outsidePermit: number }> {
   if (!written.slotIds.length) return { clashes: 0, outsidePermit: 0 };
   try {
-    const rows = await fetchAllIn<{ id: string; team_id: string; starts_at: string; ends_at: string | null; org_venue_id: string | null; org_venue_facility_id: string | null; location: string | null; field_number: string | null; club_schedule_slot_id: string | null }>(written.slotIds, (ch, a, b) => supabaseAdmin
-      .from('rep_team_events').select('id, team_id, starts_at, ends_at, org_venue_id, org_venue_facility_id, location, field_number, club_schedule_slot_id')
+    // The part rides with each practice (mig 546), so side A and side B of one field at one time are two places, not a clash.
+    const rows = await fetchAllIn<{ id: string; team_id: string; starts_at: string; ends_at: string | null; org_venue_id: string | null; org_venue_facility_id: string | null; section_mask: number | null; location: string | null; field_number: string | null; club_schedule_slot_id: string | null }>(written.slotIds, (ch, a, b) => supabaseAdmin
+      .from('rep_team_events').select('id, team_id, starts_at, ends_at, org_venue_id, org_venue_facility_id, section_mask, location, field_number, club_schedule_slot_id')
       .eq('org_id', orgId).in('club_schedule_slot_id', ch).eq('status', 'scheduled').order('id').range(a, b));
     const teamName = teamNamer(names);
     const saved = rows.filter(r => !written.teamIds || written.teamIds.has(r.team_id)).map(r => ({ ...r, teamName: teamName(r.team_id) }));

@@ -294,10 +294,12 @@ export async function readClubCalendar(reader: CalendarReader, from: string, to:
     const list = others.get(selfKey) ?? new Map<string, CalendarOther>();
     const was = list.get(otherKey);
     if (was && (was.clash === 'booked_by' || kind === 'busy_then')) return; // keep the stronger finding, once per other side
+    // The other side's field with its part ("Field 1, side B"), joined as a booking's own line joins it (`facilityLine`).
+    const field = facilityWords(sportOf.get(other.key), other.facilityName);
     list.set(otherKey, {
       key: otherKey, program: other.program, kind: other.kind, label: clashOtherName(other),
       startMs: other.startMs, endMs: other.endMs,
-      where: facilityWords(sportOf.get(other.key), other.facilityName) || other.venueName || '',
+      where: (field ? [field, partProp(other.facilityId, other.sectionMask).part].filter(Boolean).join(', ') : '') || other.venueName || '',
       contact: other.program === 'rep' ? headOf(teamOfKey.get(other.key)) : null,
       clash: kind,
     });

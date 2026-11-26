@@ -15,6 +15,7 @@ import FamilyCalendarCard from './_parts/FamilyCalendarCard';
 import { SignupRow } from './_parts/FamilyRows';
 import { getSignedInUser } from '@/lib/two-step-session';
 import { MARK_WORDS } from '@/lib/place-closures';
+import { eventFieldName } from '@/lib/field-parts';
 
 /**
  * /family — "Your family" (Signed-in family accounts Stage 4a, Part 6.1; drawing 3.3, 3.4 and 5.3). The list, shown when the
@@ -94,7 +95,7 @@ export default async function FamilyHomePage({ searchParams }: { searchParams: P
                   {[scheduleRowTitle(t.nextUp, t.teamName), scheduleDayLabel(t.nextUp.startsAt), scheduleTimeLabel(t.nextUp.startsAt)].join(' · ')}
                 </div>
                 {(t.nextUp.location || t.nextUp.fieldNumber) && (
-                  <div className={styles.rowSub}>{[t.nextUp.location, t.nextUp.fieldNumber].filter(Boolean).join(', ')}</div>
+                  <div className={styles.rowSub}>{[t.nextUp.location, eventFieldName(t.nextUp.fieldNumber, t.nextUp)].filter(Boolean).join(', ')}</div>
                 )}
                 {/* Club Website Stage 2 (K9): the club closed this game's place; it waits for a new date. */}
                 {t.nextUp.mark && <div className={styles.rowMark}>{MARK_WORDS.line(t.nextUp.mark)}</div>}

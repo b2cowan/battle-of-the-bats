@@ -25,7 +25,8 @@
  */
 
 import type { ICSInstantEventInput } from './ics';
-import { surfaceLabel } from '../sports';
+import { eventSurfaceLabel } from '../sports';
+import type { EventPart } from '../field-parts';
 import { sideWord, COACH_GAME_EVENT_TYPES } from '../coach-tournament-games';
 import { tournamentSpan } from '../coach-schedule-view';
 import { formatStoredClock, isStoredClock } from '../utils';
@@ -39,7 +40,7 @@ import { ORG_TIME_ZONE, zoneTimeWords } from '../timezone';
 export type FeedReader = 'coach' | 'family';
 
 /** A team event as either reader holds it. `uniform` and `description` exist only on the coach's side. */
-export interface FeedTeamEvent {
+export interface FeedTeamEvent extends EventPart {
   id: string;
   name: string;
   eventType: string;
@@ -129,10 +130,11 @@ export function arrivalNote(arrivalTime: string | null | undefined, timeZone: st
   return isStoredClock(raw) ? `Arrive by ${clock} (${zoneTimeWords(timeZone)})` : `Arrive by ${clock}`;
 }
 
-/** F5 — "Kinsmen Park · Diamond 2, 15 Main St": the place, its facility in the sport's word, the street address. */
-function feedPlace(location: string | null, fieldNumber: string | null, address: string | null, sport: string | null): string | undefined {
-  const place = [location, surfaceLabel(sport, fieldNumber)].filter(Boolean).join(' · ');
-  return [place, address].filter(Boolean).join(', ') || undefined;
+/** F5 — "Kinsmen Park · Diamond 2, 15 Main St": the place, its facility in the sport's word (with the part the club
+ *  booked: "Diamond 2, side A, 15 Main St"), the street address. */
+function feedPlace(at: Pick<FeedTeamEvent, 'location' | 'fieldNumber' | 'locationAddress'> & EventPart, sport: string | null): string | undefined {
+  const place = [at.location, eventSurfaceLabel(sport, at)].filter(Boolean).join(' · ');
+  return [place, at.locationAddress].filter(Boolean).join(', ') || undefined;
 }
 
 const isGameKind = (eventType: string) => COACH_GAME_EVENT_TYPES.includes(eventType);
@@ -210,7 +212,7 @@ export function teamFeedEntries(input: TeamFeedInput): ICSInstantEventInput[] {
       endsAtIso: e.endsAt ?? null,
       durationHours: e.eventType === 'practice' ? PRACTICE_HOURS : GAME_HOURS,
       ...(span ? { allDay: { start: span.start, end: span.end } } : {}),
-      location: feedPlace(e.location, e.fieldNumber, e.locationAddress, sport),
+      location: feedPlace(e, sport),
       description: eventNotes(e, reader, timeZone),
       url: link('event', e.id),
       // F3: a postponed game won't be played at this time either — free time, like a cancelled one.
@@ -228,7 +230,7 @@ export function teamFeedEntries(input: TeamFeedInput): ICSInstantEventInput[] {
         startsAtIso: t.startsAt,
         endsAtIso: t.endsAt,
         durationHours: GAME_HOURS,
-        location: feedPlace(t.location, t.fieldNumber, t.locationAddress, sport),
+        location: feedPlace(t, sport),
         description: t.label?.trim() || undefined,
         url: link('tryout', t.id),
         cancelled,

@@ -121,6 +121,18 @@ export function fieldPartName(name: string, mask: number | null | undefined, sec
   return part ? `${name}${sep}${part}` : name;
 }
 
+/** The part an event carries and how its field splits, both read with the event (2C part 2) — never stored as text. */
+export interface EventPart { sectionMask?: number | null; fieldSections?: number | null }
+
+/**
+ * A coach's or family's field words with the part the event carries (2C part 2): "Diamond 1, side A" — a coach line joins
+ * with a comma. The name alone for the whole field; '' with no name (a part said without its field means nothing).
+ */
+export function eventFieldName(name: string | null | undefined, at: EventPart): string {
+  // The name exactly as stored (a whole field reads byte-for-byte as before parts); blank says nothing.
+  return name?.trim() ? fieldPartName(name, at.sectionMask, sectionsOf(at.fieldSections), ', ') : '';
+}
+
 /** A split field said whole: "Field 1 in two sides", "Field 1 in four quarters". The name alone when not split. */
 export function splitFieldWords(name: string, sections: FieldSections): string {
   return sections === 2 ? `${name} in two sides` : sections === 4 ? `${name} in four quarters` : name;

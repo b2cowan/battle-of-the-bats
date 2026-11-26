@@ -583,7 +583,10 @@ export default function CoachesSchedulePage({
       editing: {
         eventId: event.id, mirrored: isMirroredEvent(event), scope, scopeDates: scope === 'one' ? [] : [...dates],
         // The club's practice opens the restricted form, in the club's words (Club Tier 11a).
-        club: event.clubScheduleSlotId && clubSources[event.clubScheduleSlotId] ? { scheduleName: clubSources[event.clubScheduleSlotId].scheduleName } : null,
+        // Its part rides along so the read-only Where says "Field 1, side A" (Club schedules Stage 2).
+        club: event.clubScheduleSlotId && clubSources[event.clubScheduleSlotId]
+          ? { scheduleName: clubSources[event.clubScheduleSlotId].scheduleName, sectionMask: event.sectionMask, fieldSections: event.fieldSections }
+          : null,
       },
     });
   }

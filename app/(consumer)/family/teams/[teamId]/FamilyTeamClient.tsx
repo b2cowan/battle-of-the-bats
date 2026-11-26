@@ -20,6 +20,7 @@ import { useFamilyAnswers } from './FamilyAnswers';
 import answerStyles from './FamilyAnswers.module.css';
 import { MARK_WORDS } from '@/lib/place-closures';
 import { LIVE_NOW } from '@/lib/club-game-live';
+import { eventFieldName } from '@/lib/field-parts';
 
 /**
  * The family team page (S3; Signed-in family accounts Stage 4a, Part 6, drawing tab 3) — one scrolling schedule, opened at
@@ -37,7 +38,7 @@ import { LIVE_NOW } from '@/lib/club-game-live';
  */
 
 function placeLabel(entry: FamilyScheduleEntry): string {
-  return [entry.location, entry.fieldNumber].filter(Boolean).join(' · ');
+  return [entry.location, eventFieldName(entry.fieldNumber, entry)].filter(Boolean).join(' · ');
 }
 
 /** The warm consumer token set's rendering of a result tone. The public page maps the same tone to the dark public tokens —

@@ -1928,6 +1928,14 @@ export interface RepTeamEvent {
    */
   orgVenueId: string | null;
   orgVenueFacilityId: string | null;
+  /**
+   * The part of that facility (Club schedules Stage 2, mig 541): 0 = the whole field. Only the club's schedule writes a
+   * part (a practice takes its slot's); the coach's own pickers offer whole fields. With `fieldSections` it reads as
+   * words at read time (`fieldPartName` in lib/field-parts.ts) — never stored as text.
+   */
+  sectionMask: number;
+  /** How the facility splits today (1, 2 or 4), read with the event; 1 for no club facility. */
+  fieldSections: 1 | 2 | 4;
   // Game-day detail (mig 160), all optional / UI-shaped free text:
   arrivalTime: string | null;   // "be there by" clock time, HH:mm (same day as startsAt)
   fieldNumber: string | null;   // diamond/field label within the location, e.g. "Diamond 2"

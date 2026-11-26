@@ -56,7 +56,9 @@ Full text: `docs/projects/active/SCHEDULE_FIELDS_SAME_TIME_TRADES_PLAN.md` §5.
 not. Pre-existing; it becomes visible once parts exist, because a gained part would record its share.
 **Tables affected:** club_schedule_sends
 **Recommendation:** Fix in Club schedules Stage 2 so sharing and parts record hours alike.
-**Status:** Open
+**Status:** Addressed 2026-11-26 (Stage 2, Session 2C part 2): a gained slot carries every holder (`billSlotsOf`), and its
+recorded hours are the team's priced minutes (`pricedMinutes`), so a shared slot and a part record their share alike; the
+amount was already right and is unchanged. Test: `tests/unit/club-schedule-send-parts.test.ts`.
 
 ### [2026-11-22] — Finding #54: Migrations 522–523 (a bank check in progress, kept on the server per person) designed and reviewed before apply
 **Severity:** Advisory
