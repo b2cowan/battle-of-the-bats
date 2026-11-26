@@ -3,14 +3,13 @@
  *
  * An organization's slug is the first URL segment (`/{orgSlug}/…`), so it must
  * never equal a top-level app route — otherwise the static route wins and the
- * org's own pages become unreachable at their URL. This blocklist is checked at
- * every org-creation entry point (create / league-create / signup) and by the
- * auto-slug generator, so neither a hand-typed slug nor an auto-derived one can
- * land on a reserved word.
+ * org's own pages become unreachable at their URL. This blocklist is checked wherever
+ * a web name is chosen (creation, the auto-slug generator, and a change of web name by
+ * the owner or from the platform console), so no club can be given a reserved word.
  *
  * Keep in sync with the top-level segments under `app/` (dirs + the consumer
- * shell routes in `lib/consumer-routes.ts`). It's checked at creation time only —
- * it never affects an org that already exists.
+ * shell routes in `lib/consumer-routes.ts`). A club that already holds a reserved
+ * name keeps it: only choosing one is refused.
  *
  * Slugs are validated to `^[a-z0-9]+(?:-[a-z0-9]+)*$` (lowercase, hyphens, no dots)
  * before reaching here, so dotted asset paths (robots.txt, sitemap.xml, favicon.ico,

@@ -8,7 +8,7 @@
  */
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
-import { readCode, sourceExists } from './_source-code.ts';
+import { functionBody, readCode, sourceExists } from './_source-code.ts';
 import { RESERVED_ORG_SLUGS, RETIRED_DEMO_ORG_SLUGS, isReservedOrgSlug } from '../../lib/reserved-slugs.ts';
 import { robotsFor } from '../../lib/robots-rules.ts';
 import nextConfig from '../../next.config.ts';
@@ -32,6 +32,17 @@ describe('the two retired club names stay unassignable and out of robots.txt', (
       assert.ok(disallow.includes(`/${slug}/`), `/${slug}/`);
     }
     assert.ok(!disallow.some(p => p.includes('see-it-live')), 'no /see-it-live line');
+  });
+});
+
+describe('a change of web name cannot claim a reserved name either', () => {
+  it('the owner\'s change answers it as taken, and only when the name changes', () => {
+    assert.match(readCode('app/api/admin/org-settings/route.ts'),
+      /if \(existing \|\| \(slug !== org\.slug && isReservedOrgSlug\(slug\)\)\) \{\s*return NextResponse\.json\([^\n]*status: 409/);
+  });
+  it('the platform console\'s change refuses it before the taken check', () => {
+    assert.match(functionBody(readCode('lib/club-record-changes.ts'), 'applyClubIdentity'),
+      /if \(slug !== current\.slug\) \{\s*if \(isReservedOrgSlug\(slug\)\) return \{ ok: false, status: 409/);
   });
 });
 

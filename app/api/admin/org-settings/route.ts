@@ -9,6 +9,7 @@ import { NAME_MAX } from '@/lib/workspace-identity';
 import { CLUB_LOOK_FIELDS } from '@/lib/public-site-builder';
 import { hasModuleEntitlement } from '@/lib/module-entitlements';
 import { parseTournamentLookPolicy, sanitizeTournamentLookPolicy } from '@/lib/tournament-look';
+import { isReservedOrgSlug } from '@/lib/reserved-slugs';
 
 const HEX_RE = /^#[0-9A-Fa-f]{6}$/;
 const VALID_PRESETS     = new Set(Object.keys(PRESETS));
@@ -96,7 +97,9 @@ export const PATCH = withObservability(async (req: Request) => {
       .eq('slug', slug)
       .neq('id', org.id)
       .maybeSingle();
-    if (existing) {
+    // A reserved name (a page of the site, or a retired demo club's) answers as taken, as at creation. Only on a CHANGE:
+    // a club that already holds one can still save its other settings.
+    if (existing || (slug !== org.slug && isReservedOrgSlug(slug))) {
       return NextResponse.json({ error: 'That slug is already taken' }, { status: 409 });
     }
     updates.slug = slug;

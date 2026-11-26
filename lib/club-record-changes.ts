@@ -13,6 +13,7 @@ import { auditFirst, writePlatformAuditLog } from './platform-audit';
 import { CLUB_SECTIONS } from './platform-labels';
 import { isReopeningGrant } from './free-time';
 import { closeAgainAfterEnd } from './free-time-reclose-server';
+import { isReservedOrgSlug } from './reserved-slugs';
 
 // The four add-on sections and their names live with the console's other words (client-safe), re-exported here.
 export { CLUB_SECTIONS, sectionLabel } from './platform-labels';
@@ -47,6 +48,7 @@ export async function applyClubIdentity(opts: {
   if (name === current.name && slug === current.slug) return { ok: true };
 
   if (slug !== current.slug) {
+    if (isReservedOrgSlug(slug)) return { ok: false, status: 409, error: 'That web name is reserved.' };
     const { count, error } = await supabaseAdmin
       .from('organizations')
       .select('id', { count: 'exact', head: true })
