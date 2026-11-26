@@ -116,6 +116,24 @@ At the end a club can build a schedule on parts and see it on the grid and the b
    0.25 slot reads "more" today); the Split hint's "a half field or one side". By price, as round 1 kept it.
 7. Tests in `tests/unit/club-schedule-engine.test.ts` and beside the bill: the two pictures above; a run with no split
    field unchanged (byte-for-byte on an existing fixture).
+8. **Carried from 2A (committed `e080b0750`; the plan's "2A built" line under Stage 2 holds the reasons):**
+   - **The save must learn the part.** `club_schedule_save` (latest in mig 494) finds a stored slot by (schedule, venue,
+     facility, `starts_at`) at `:155-159` and inserts slots and a schedule's block rows with no `section_mask`. Side A
+     and side B at one start would match one row. A NEW migration (next number at commit time) re-makes the function:
+     the lookup and both inserts carry the mask from the payload. Apply to dev at the owner's word, `/dba` on the text
+     first, and add it to `MANUAL_PROD_STEPS.json` (function-only, so the drift check cannot see it).
+   - **The floor is an exclusion constraint now** (`club_schedule_slots_family_place_overlap`: live rows, deferred to
+     commit, raises 23P01, which `floorRefusal` says as "changed since you opened it"). So if the cut or a hand move ever
+     puts a whole field and its part at overlapping times, the club sees "changed" in a loop, not a builder message.
+     Test that the cut and `planMove` never produce overlapping ground. Do not lean on the database to catch it.
+   - **A block can now hold several rows for one facility** (primary key (block, facility, mask)). Every reader that
+     builds `facilityIds` from a block's rows must carry (facility, mask) or de-duplicate:
+     `lib/club-schedule-server.ts:272` and `:1142`, `lib/permit-lookup.ts:170`, and the held-facility check in
+     `app/api/admin/org/venues/route.ts`.
+   - **The part words and size come only from `lib/field-parts.ts`** (`partsOverlap`, `partFactor`, `partWords`,
+     `fieldPartName`, `splitFieldWords`, `legalMasks`). `weightOf` = the field's share × `partFactor(mask)`. No reader
+     writes its own bit arithmetic. A field's split reads from `org_venue_facilities.sections` (the Venue library
+     route returns it as `sections`).
 
 ## Session 2C — after the builder: Send, the coaches portal, the calendar, the PDF
 
