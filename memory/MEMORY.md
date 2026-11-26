@@ -4,6 +4,8 @@
 
 - **Both public demos are RETIRED** (owner 2026-11-25; plan `docs/projects/active/RETIRE_PUBLIC_DEMOS_PLAN.md`). Any demo or sandbox instruction or ruling in these notes is history: build no demo work. The prospect demo and club previews are separate and stay.
 
+- [No dotted lines in lists or table cells](design_decisions.md) — owner 2026-11-26: different facts get columns; like things get a count with names underneath; the rest goes in the opened row; a dot only in a quiet caption, two items at most. Draw it that way; `check:dot-joins` holds new code.
+
 - [Sign out is black everywhere](design_decisions.md) — owner 2026-11-26: no red on any sign-out control; it takes the ink of its neighbours. Rule: nav standard N4.
 
 - [Bank check novice UX evaluation](bank-check-novice-ux-evaluation.md) — Codex evaluated both portals on dev at 1440/390 on 2026-11-08, with a source-checked comparison with Claude; the revised drawings and eight owner asks live in the local HTML artifact. Status on the board.

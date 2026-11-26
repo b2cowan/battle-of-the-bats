@@ -7,6 +7,14 @@ a date does not, and "we decided this before" is never an argument. Many entries
 side-clauses of a larger decision, context-specific, or the assistant's own inference recorded as
 binding — weight them accordingly, and say so when citing one.
 
+### 2026-11-26 — A LIST OR A TABLE CELL IS NOT A DOTTED LINE (owner: "Agreed with all 3. Go ahead", after the Venue library table's Facilities and Booked by cells)
+
+**Decision:** (1) One rule for every table and list: different facts get columns; a list of like things gets a count with the names underneath; anything more belongs in the opened row. A dot is allowed only in a quiet caption, with two items at most. (2) It is applied at the drawing stage. (3) A build check makes any new dot-joined text state its reason (`check:dot-joins`), looking across all code, not only table screens.
+**Rationale:** the same finding kept coming back because the dot was the first-pass default: it fits any number of things into one slot without deciding which matters. Earlier fixes were one screen each, the standard's own examples showed the dot, the approved drawing for this table drew it, and no check caught it.
+**Then ruled on the drawing** (owner: "Yes much better, go ahead with your recommendations", `claude.ai/artifact/5GzLu7JhmRyqgbycghrHVD`, source `docs/projects/active/VENUE_LIBRARY_TABLE_DRAWINGS.html`): (1) the Venue library table as drawn — the facility count leads with the names under it, and Teams, House league and Tournaments are columns under "Booked this season", a dash for none; (2) House league reads "Yes" or a dash; (3) four facility names, then "and N more"; (4) the phone row says only what books the venue, as a sentence, with "Closed today" beside the name; (5) the closed notice is two plain lines, in the same change. (6) A money table's band heading reads "Overdue (2)" with the total set apart (not yet drawn or built). (7) The bank screens' one dotted phone line is redrawn when that screen is next worked on.
+**Not ruled:** any sweep of the other dotted lines already in the product.
+**Applies to:** every table, row list and drawing; `docs/agents/design/TABLE_AND_LIST_STANDARD.md` (above §1).
+
 ### 2026-11-26 — SIGN OUT IS BLACK EVERYWHERE (owner: "yes, make it black everywhere and build it now")
 
 **Decision:** Sign out wears no red anywhere: it takes the ink of the rows or buttons around it (dark text on Warm, light text on Dark), in the account menu, the phone sheets and on pages. An invite screen's "Sign out & continue" keeps the primary button. Held by `sign-out-ink-guard`; rule text in `docs/agents/design/NAV_STANDARD.md` N4.

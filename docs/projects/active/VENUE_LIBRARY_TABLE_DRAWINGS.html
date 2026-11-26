@@ -1,0 +1,213 @@
+<title>Venue library table</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;650;700&family=Barlow+Condensed:wght@700;800&family=IBM+Plex+Mono:wght@700&display=swap">
+<style>
+/* Layout: sticky tabs, a View row, one section at a time; product frames are fixed Warm specimens on a cooler page. */
+:root{--page:#E7E9EC;--panel:#F6F7F8;--ink:#1C2126;--soft:#4B545D;--rule:#C9CED4;--accent:#2F5D8A;--accent-ink:#FFFFFF;--note:#FFFFFF;
+  --f-body:'Inter',system-ui,sans-serif;--f-disp:'Barlow Condensed','Arial Narrow',sans-serif;--f-data:'IBM Plex Mono',ui-monospace,monospace}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--page:#14171A;--panel:#1D2125;--ink:#E8EBEE;--soft:#A8B1BA;--rule:#363D44;--accent:#8DBBE6;--accent-ink:#0F1A24;--note:#23282D;color-scheme:dark}}
+:root[data-theme="dark"]{--page:#14171A;--panel:#1D2125;--ink:#E8EBEE;--soft:#A8B1BA;--rule:#363D44;--accent:#8DBBE6;--accent-ink:#0F1A24;--note:#23282D;color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--page);color:var(--ink);font-family:var(--f-body);font-size:14px;line-height:1.5;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-bottom:48px}
+h1{font-family:var(--f-disp);font-size:30px;margin:16px 0 4px;text-wrap:balance}
+section>p:first-child{margin-top:14px}
+h2{font-family:var(--f-disp);font-size:20px;margin:22px 0 8px}
+p{max-width:68ch;margin:0 0 10px}
+button{font:inherit;color:inherit;cursor:pointer}
+button:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.bar{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--page);border-bottom:1px solid var(--rule);padding:8px 0}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--page)}
+.tabs{display:flex;gap:4px;flex-wrap:wrap}
+.tabs button{background:none;border:1px solid transparent;border-radius:6px;padding:7px 12px;font-weight:600;color:var(--soft)}
+.tabs button[aria-selected="true"]{background:var(--accent);color:var(--accent-ink)}
+.view{display:flex;gap:16px;flex-wrap:wrap;align-items:center;margin-top:8px;color:var(--soft);font-size:12px}
+.seg{display:inline-flex;background:var(--note);border:1px solid var(--rule);border-radius:999px;padding:2px}
+.seg button{border:0;background:none;border-radius:999px;padding:5px 12px;font-size:12px;font-weight:600}
+.seg button[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink)}
+.lbl{font-family:var(--f-data);font-size:11px;letter-spacing:.07em;text-transform:uppercase;color:var(--soft);margin:18px 0 6px}
+.scroll{overflow-x:auto;padding-bottom:4px}
+.mk{display:inline-flex;align-items:center;gap:5px;border:1px solid var(--accent);background:var(--note);color:var(--ink);border-radius:999px;padding:3px 10px;font-size:12px;font-weight:600}
+.mk b{font-family:var(--f-data);font-size:10px;color:var(--accent);text-transform:uppercase}
+.marks{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0}
+.why{background:var(--note);border:1px solid var(--rule);border-radius:8px;padding:10px 14px;max-width:68ch;margin:0 0 10px}
+
+/* ── Product specimens: the Warm skin's own values ── */
+.app{--paper:#F8F4ED;--card:#fff;--hink:#241E15;--hsoft:#4A4235;--dim:#615A54;--line:rgba(70,55,30,.12);--line2:rgba(70,55,30,.2);--olive:#57651E;--amber:#835006;--chipink:#6B4105;
+  background:var(--paper);color:var(--hink);border-radius:10px;padding:18px;border:1px solid rgba(0,0,0,.14);font-size:14px;line-height:1.45}
+.desk{width:1200px}.laptop{width:1000px}.phone{width:390px;padding:14px}
+.lede{display:flex;justify-content:space-between;gap:16px;align-items:center;margin-bottom:14px}
+.lede p{margin:0;font-size:14px;color:var(--hsoft);max-width:72ch}
+.btns{display:flex;gap:8px;flex:none}
+.btn{border:1px solid var(--line2);background:var(--card);border-radius:8px;padding:8px 14px;font-weight:650;font-size:13px;white-space:nowrap}
+.btn.lime{background:#D9F99D;border-color:#D9F99D}
+.closed{display:flex;justify-content:space-between;gap:14px;align-items:center;background:var(--card);border:1px solid var(--line);border-left:3px solid var(--amber);border-radius:8px;padding:12px 14px;margin-bottom:14px}
+.closed strong{font-weight:650;margin-left:6px}
+.closed small{display:block;font-size:12px;color:var(--hsoft);margin-top:3px}
+.chip{display:inline-flex;font-family:var(--f-data);font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;padding:2px 8px;border-radius:999px;border:1px solid rgba(131,80,6,.3);background:rgba(131,80,6,.08);color:var(--chipink);white-space:nowrap}
+.frame{background:var(--card);border:1px solid var(--line);border-radius:8px;overflow:hidden}
+table{width:100%;border-collapse:collapse}
+th{text-align:left;padding:7px 16px;font-family:var(--f-disp);font-size:12px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--hsoft);border-bottom:1px solid var(--line2);white-space:nowrap;vertical-align:bottom}
+th.grp{text-align:center;border-bottom:1px solid var(--line);padding-bottom:4px}
+td{padding:11px 16px;border-bottom:1px solid var(--line);vertical-align:middle}
+tr:last-child td{border-bottom:0}
+.n{text-align:right;font-variant-numeric:tabular-nums;width:104px}
+.name{font-weight:650}
+.sub{display:block;margin-top:1px;font-size:12px;color:var(--dim)}
+.dim{color:var(--dim)}
+.go{width:44px;text-align:right;color:var(--dim)}
+.rows .r{display:flex;gap:12px;align-items:center;padding:11px 16px;border-bottom:1px solid var(--line)}
+.rows .r:last-child{border-bottom:0}
+.rows .m{flex:1;min-width:0}
+.rows .m>b{font-weight:600;display:block}
+
+body.diff .same{opacity:.18}
+.ask{background:var(--note);border:1px solid var(--rule);border-radius:8px;padding:12px 14px;margin:0 0 12px;max-width:760px}
+.ask legend{font-weight:700;padding:0 4px}
+.ask label{display:flex;gap:8px;margin-top:6px;align-items:flex-start}
+.copy{background:var(--accent);color:var(--accent-ink);border:0;border-radius:8px;padding:10px 16px;font-weight:700}
+textarea{width:100%;max-width:760px;min-height:110px;font:13px var(--f-data);background:var(--note);color:var(--ink);border:1px solid var(--rule);border-radius:8px;padding:10px;margin-top:10px}
+</style>
+
+<h1>Venue library table</h1>
+<p>Today's table beside the proposal. Park names and bookings come from your screenshot. Tap any blue pill to see what changed and why. Nothing is built yet.</p>
+
+<div class="bar">
+  <div class="tabs" role="tablist">
+    <button role="tab" data-tab="t1" aria-selected="true">1 · Whole screen</button>
+    <button role="tab" data-tab="t2" aria-selected="false">2 · Long and empty rows</button>
+    <button role="tab" data-tab="t3" aria-selected="false">3 · Phone</button>
+    <button role="tab" data-tab="t4" aria-selected="false">4 · Closed notice</button>
+    <button role="tab" data-tab="t5" aria-selected="false">5 · Asks</button>
+  </div>
+  <div class="view">
+    <span>View</span>
+    <span class="seg" id="diffSeg"><button aria-pressed="true" data-diff="0">Everything</button><button aria-pressed="false" data-diff="1">Show only what differs</button></span>
+    <span class="seg" id="wSeg"><button aria-pressed="true" data-w="desk">Desk</button><button aria-pressed="false" data-w="laptop">Narrow laptop</button></span>
+  </div>
+</div>
+
+<div class="why" id="why" hidden aria-live="polite"></div>
+
+<section id="t1">
+  <div class="marks">
+    <button class="mk" data-n="fac"><b>Restyled</b> Facilities</button>
+    <button class="mk" data-n="cols"><b>New</b> Three booking columns</button>
+    <button class="mk" data-n="dash"><b>Restyled</b> Nothing booked</button>
+    <button class="mk" data-n="keep"><b>Unchanged</b> Venue, chip, row opening</button>
+  </div>
+  <div class="lbl">Today</div><div class="scroll" id="before"></div>
+  <div class="lbl">Proposed</div><div class="scroll" id="after"></div>
+</section>
+
+<section id="t2" hidden>
+  <p>Made-up parks, to test the cases your five don't show: more than four facilities, mixed kinds, none at all, and a park booked by several teams.</p>
+  <div class="marks"><button class="mk" data-n="long"><b>New</b> "and 4 more"</button><button class="mk" data-n="mixed"><b>New</b> Mixed kinds</button></div>
+  <div class="lbl">Today</div><div class="scroll" id="edgeBefore"></div>
+  <div class="lbl">Proposed</div><div class="scroll" id="edgeAfter"></div>
+</section>
+
+<section id="t3" hidden>
+  <div class="marks"><button class="mk" data-n="phone"><b>Restyled</b> The second line</button></div>
+  <div style="display:flex;gap:20px;flex-wrap:wrap">
+    <div class="scroll" style="max-width:100%"><div class="lbl">Today</div><div id="phBefore"></div></div>
+    <div class="scroll" style="max-width:100%"><div class="lbl">Proposed</div><div id="phAfter"></div></div>
+  </div>
+</section>
+
+<section id="t4" hidden>
+  <p>This notice sits above the table in your screenshot. It joins three facts with dots, so it breaks the new rule too.</p>
+  <div class="marks"><button class="mk" data-n="notice"><b>Restyled</b> Two plain lines</button></div>
+  <div class="lbl">Today</div><div class="scroll" id="noteBefore"></div>
+  <div class="lbl">Proposed</div><div class="scroll" id="noteAfter"></div>
+</section>
+
+<section id="t5" hidden>
+  <h2>Five choices</h2>
+  <p>A is my recommendation in each. Pick, then copy your answers into the chat.</p>
+  <div id="asks"></div>
+  <button class="copy" id="copy">Copy my answers</button>
+  <textarea id="out" readonly aria-label="Your answers" hidden></textarea>
+</section>
+
+<script>
+const NOTES={
+ fac:"Today the names are strung together with dots. Proposed: the count leads in the park's own word (diamonds, courts), with the names quietly underneath. Rows are already two lines tall, so the table doesn't grow.",
+ cols:"Today three different facts share one cell. Proposed: Teams, House league and Tournaments each get a column under 'Booked this season', so you can read straight down one. A heading that spans columns is new to our table standard; approving this adds it.",
+ dash:"Today an unbooked park says 'Nothing booked'. With three columns it shows a dash in each.",
+ keep:"Park name, address, the Closed today chip, and tapping a row to open the park all stay as they are.",
+ long:"Up to four names show. After that, 'and 4 more'; opening the park lists them all.",
+ mixed:"A park with two kinds of surface reads 'facilities', the same word the park's own window uses for a mixed park. A park with none says 'No facilities'.",
+ phone:"Today the phone joins both cells into one long dotted line. Proposed: one sentence saying what books the park. Facility names stay in the window the row opens. The Closed today chip moves up beside the name, where the desk table has it.",
+ notice:"The first line says which day it is closed for, then who closed it and at what time. The second says what it did to games. Reopen doesn't move. (Corrected at build: an earlier version read 'Closed Thu, Nov 26 at 3:26 p.m.', which is wrong when someone closes a place for a later day.)"
+};
+const P=[
+ {n:"Alder Fields",a:"300 Alder Line",f:["Diamond 1","Diamond 2","Diamond 3"],w:"diamond",t:0,h:1,u:1,c:1},
+ {n:"Harbourview Park",a:"12 Harbourview Rd",f:["Diamond 1","Diamond 2","Diamond 3"],w:"diamond",t:0,h:1,u:1,c:1},
+ {n:"Lions Park",a:"40 Lions Park Rd, Kestrel Bay",f:["Diamond 1","Diamond 2","Diamond 3"],w:"diamond",t:1,h:0,u:1,c:1},
+ {n:"Northshore Park",a:"8 Northshore Way",f:["Diamond 1"],w:"diamond",t:0,h:0,u:0,c:1},
+ {n:"Pinecrest Park",a:"45 Pinecrest Dr",f:["Diamond 1","Diamond 2"],w:"diamond",t:0,h:0,u:0,c:1}];
+const E=[
+ {n:"Millrace Sports Complex",a:"1200 Millrace Side Road, Kestrel Bay",f:["North Diamond","South Diamond","Memorial Field","T-ball East","T-ball West","Batting Cage","Bullpen","Dome"],w:"facility",t:6,h:2,u:3},
+ {n:"Cedar Grove",a:"5 Cedar Grove Ln",f:["Diamond A","Indoor Cage"],w:"facility",t:2,h:0,u:0},
+ {n:"Winter Dome",a:"77 Station St",f:[],w:"",t:1,h:0,u:0}];
+let hl="yes",names="four",phoneMode="book";
+const plural=(n,w)=>n+" "+(n===1?w:w==="facility"?"facilities":w+"s");
+const chip=p=>p.c?' <span class="chip">Closed today</span>':'';
+const nameCell=p=>`<td class="same"><span class="name">${p.n}</span>${chip(p)}<span class="sub">${p.a}</span></td>`;
+const bookedWords=p=>[p.t&&plural(p.t,"team"),p.h&&"house league",p.u&&plural(p.u,"tournament")].filter(Boolean);
+const joinAnd=a=>a.length<2?a.join(""):a.slice(0,-1).join(", ")+" and "+a[a.length-1];
+const sentence=s=>s.charAt(0).toUpperCase()+s.slice(1);
+const dot=a=>a.join(" · ");
+function today(rows){return `<table><thead><tr><th class="same">Venue</th><th>Facilities</th><th>Booked by this season</th><th class="same"></th></tr></thead><tbody>${rows.map(p=>`<tr>${nameCell(p)}<td class="${p.f.length?'':'dim'}">${p.f.length?dot(p.f):'No facilities'}</td><td class="${bookedWords(p).length?'':'dim'}">${bookedWords(p).length?dot(bookedWords(p)):'Nothing booked'}</td><td class="go same">›</td></tr>`).join('')}</tbody></table>`}
+function nameList(f){if(names==="all"||f.length<=4)return f.join(", ");return f.slice(0,4).join(", ")+" and "+(f.length-4)+" more"}
+const num=v=>`<td class="n${v?'':' dim'}">${v||'—'}</td>`;
+function proposed(rows){return `<table><thead>
+<tr><th class="same" rowspan="2">Venue</th><th rowspan="2">Facilities</th><th class="grp" colspan="3">Booked this season</th><th class="same" rowspan="2"></th></tr>
+<tr><th class="n">Teams</th><th class="n">House league</th><th class="n">Tournaments</th></tr></thead><tbody>${rows.map(p=>`<tr>${nameCell(p)}<td style="max-width:290px">${p.f.length?`${plural(p.f.length,p.w)}<span class="sub">${nameList(p.f)}</span>`:'<span class="dim">No facilities</span>'}</td>${num(p.t)}${num(p.h?(hl==="yes"?"Yes":p.h):0)}${num(p.u)}<td class="go same">›</td></tr>`).join('')}</tbody></table>`}
+const TODAY_NOTE="Thu, Nov 26 · closed 3:26 p.m. by Morgan Ashby · 4 postponed, 2 rep games marked";
+const notice=(lines)=>`<div class="closed"><div><span class="chip">Closed</span><strong>All our fields</strong>${lines.map(l=>`<small>${l}</small>`).join('')}</div><span class="btn same">Reopen</span></div>`;
+const NEW_NOTE=["For Thu, Nov 26, closed at 3:26 p.m. by Morgan Ashby","4 postponed, 2 rep games marked"];
+let w="desk";
+function screen(table,note){return `<div class="app ${w}"><div class="lede same"><p>The club’s venues and their facilities. Teams, house league and tournaments book them from here, and two bookings on the same facility at the same time are flagged.</p><div class="btns"><span class="btn">Close a place</span><span class="btn lime">+ Add venue</span></div></div>${note}<div class="frame">${table}</div></div>`}
+function phone(rows,isNew){return `<div class="app phone"><div class="frame rows">${rows.map(p=>{
+ const b=bookedWords(p);let cap;
+ if(!isNew)cap=dot([p.f.length?dot(p.f):'No facilities',b.length?dot(b):'Nothing booked']);
+ else{cap=b.length?"Booked by "+joinAnd(b):"Nothing booked this season";if(phoneMode==="both")cap+=`<span class="sub">${p.f.length?sentence(plural(p.f.length,p.w)):'No facilities'}</span>`}
+ return `<div class="r"><div class="m"><b>${p.n}${isNew?chip(p):''}</b><span class="sub">${!isNew&&p.c?'<span class="chip">Closed today</span> ':''}${cap}</span></div><span class="dim">›</span></div>`}).join('')}</div></div>`}
+const $=id=>document.getElementById(id);
+function render(){
+ $('before').innerHTML=screen(today(P),notice([TODAY_NOTE]));
+ $('after').innerHTML=screen(proposed(P),notice([TODAY_NOTE]));
+ const box=t=>`<div class="app ${w}"><div class="frame">${t}</div></div>`;
+ $('edgeBefore').innerHTML=box(today(E));$('edgeAfter').innerHTML=box(proposed(E));
+ const some=[P[0],P[2],P[3],E[0]];
+ $('phBefore').innerHTML=phone(some,false);$('phAfter').innerHTML=phone(some,true);
+ $('noteBefore').innerHTML=`<div class="app ${w}">${notice([TODAY_NOTE])}</div>`;
+ $('noteAfter').innerHTML=`<div class="app ${w}">${notice(NEW_NOTE)}</div>`;
+}
+const ASKS=[
+ ["The table (tab 1)","As drawn: facility count with names underneath, and three booking columns.","Change something (say what in the chat)."],
+ ["House league column","“Yes” or a dash, which is what the table says today.","The number of house league seasons booking the park."],
+ ["Long facility lists (tab 2)","Four names, then “and 4 more”.","Every name, wrapping onto more lines."],
+ ["Phone second line (tab 3)","What books the park, and nothing else.","What books the park, plus a facility count on a third line."],
+ ["Closed notice (tab 4)","Two plain lines, in the same change.","Leave it as it is for now."]];
+$('asks').innerHTML=ASKS.map((a,i)=>`<fieldset class="ask"><legend>Ask ${i+1}. ${a[0]}</legend>${["A","B"].map((k,j)=>`<label><input type="radio" id="a${i}${k}" name="a${i}" value="${k}"><span><b>${k}</b>${k==="A"?" (recommended)":""}. ${a[j+1]}</span></label>`).join('')}</fieldset>`).join('');
+$('asks').addEventListener('change',e=>{const v=e.target.value;
+ if(e.target.name==="a1")hl=v==="A"?"yes":"count";
+ if(e.target.name==="a2")names=v==="A"?"four":"all";
+ if(e.target.name==="a3")phoneMode=v==="A"?"book":"both";
+ render()});
+$('copy').onclick=()=>{
+ const text="Venue library table: "+ASKS.map((a,i)=>{const c=document.querySelector(`input[name=a${i}]:checked`);return `Ask ${i+1} ${c?c.value:'(no answer)'}`}).join(", ");
+ const o=$('out');o.hidden=false;o.value=text;
+ const fallback=()=>{o.focus();o.select()};
+ if(navigator.clipboard)navigator.clipboard.writeText(text).then(()=>{$('copy').textContent="Copied"},fallback);else fallback()};
+document.querySelectorAll('[data-tab]').forEach(b=>b.onclick=()=>{
+ document.querySelectorAll('[data-tab]').forEach(x=>{const on=x===b;x.setAttribute('aria-selected',on);$(x.dataset.tab).hidden=!on});
+ $('why').hidden=true;$('wSeg').hidden=b.dataset.tab==="t3"||b.dataset.tab==="t5";$('diffSeg').hidden=b.dataset.tab==="t5"});
+function seg(id,fn){$(id).addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;$(id).querySelectorAll('button').forEach(x=>x.setAttribute('aria-pressed',x===b));fn(b)})}
+seg('diffSeg',b=>document.body.classList.toggle('diff',b.dataset.diff==="1"));
+seg('wSeg',b=>{w=b.dataset.w;render()});
+document.querySelectorAll('.mk').forEach(m=>m.onclick=()=>{const y=$('why');y.textContent=NOTES[m.dataset.n];y.hidden=false;m.closest('.marks').after(y)});
+render();
+</script>

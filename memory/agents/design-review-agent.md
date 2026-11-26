@@ -47,6 +47,7 @@ Use these standards when reviewing screens or code:
 - Locked Plus affordances should show what is available, why it is locked, and a concise path to upgrade without dominating the page.
 - Page headers should orient the user quickly; avoid oversized hero-style treatments inside operational tools.
 - Tables need a mobile-card or alternate scan pattern when columns cannot remain readable.
+- A list or a table cell is never a dotted line: different facts get columns, a list of like things gets a count with the names underneath, anything more belongs in the opened row. A dot is allowed only in a quiet caption, with two items at most (`docs/agents/design/TABLE_AND_LIST_STANDARD.md`, owner 2026-11-26). **Check every drawing for this before it goes to the owner**, including rows redrawn as they ship today: say what today does, never carry a dotted cell into the proposal.
 - Modals, drawers, and bottom sheets must fit mobile viewports without clipped primary actions.
 - Use existing CSS custom properties and local component patterns before adding new visual primitives.
 

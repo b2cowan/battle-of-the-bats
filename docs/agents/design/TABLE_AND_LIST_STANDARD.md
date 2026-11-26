@@ -20,6 +20,17 @@ This is a living reference (it evolves in place, never archived). It is written 
 relationships**, never literal pixels, so a new screen can follow it without copying an existing file
 — and so a guard can hold it (§9).
 
+> **A list or a table cell is not a dotted line** (owner, 2026-11-26: "Agreed with all 3. Go ahead").
+> - **Different facts get columns.**
+> - **A list of like things gets a count**, with the names underneath.
+> - **Anything more belongs in the opened row.**
+> - **A dot ("·") is allowed only in a quiet caption, with two items at most.**
+>
+> Several things in one font, joined by dots, fits any number of things into one slot without deciding
+> which matters. Decide it in the drawing: a drawing that joins a cell with dots is not ready to show.
+> The build holds new code to it (`npm run check:dot-joins`, §9): a new dotted line states its reason.
+> Lines that predate the rule are recorded, not approved.
+
 ---
 
 ## 1. What this standard covers
@@ -196,13 +207,19 @@ folds with its section). **One closing answer per table**; a row that merely res
 deleted, not styled quieter (QA §132/§142). A footnote stack under the table, in caption type, holds
 the basis, the caveats and the doors — never a sentence inside a money column.
 
+- **A heading may span the columns that answer one question** (owner, Venue library, 2026-11-26): "Booked this
+  season" over Teams · House league · Tournaments — a `colgroup` heading, centred, with its own hairline; the
+  headings outside it sit on the foot of the two-row head. It is the way to give facts their own columns without
+  repeating the shared words in each heading.
 - **A footnote sits 0.75rem below the table** (owner, 2026-10-26: the Email families note touched its
   table card). The club kit's `ck.hint` is margin-less on purpose, so a note that follows a table, list
   or card composes it with **`ck.tableNote`** (`${ck.hint} ${ck.tableNote}`), which carries the gap.
   Never hand-roll a per-screen margin for it, and never lean on the screen's parent for the gap.
 
 - **A band row may carry a total IN ITS WORDS** (owner, Club Tier Stage 3a Ask 5d, 2026-09-30):
-  "Overdue · 2 · $900.00", "Waiting on you · 3 · $555.00". The band is still a label — the figure
+  "Overdue · 2 · $900.00", "Waiting on you · 3 · $555.00". ⚠ Ruled 2026-11-26, not yet drawn or built: the
+  heading reads "Overdue (2)" with the total set apart from it (the dotted-line rule above §1). Draw it before
+  building it. The band is still a label — the figure
   is part of its sentence, never a figure column inside the band, and never a second closing row.
   Use it when the band answers "how much is waiting in this group", which a closing row cannot
   (bands with different questions do not sum to one answer). Shared with the tournament redesign,
@@ -315,7 +332,8 @@ the basis, the caveats and the doors — never a sentence inside a money column.
     is tapped, with no line and no chevron. At a desk it changes nothing. It is a table-level option
     of the one component (`phoneRowWindows`), never markup beside it; New allocation's rows keep
     opening in place.
-  - **A fact has a column, not a place in a dotted line** (owner, Close a place, 2026-11-26). A row
+  - **A fact has a column, not a place in a dotted line** (owner, Close a place, 2026-11-26; every
+    table and list now holds this, see the rule above §1). A row
     that must say two things about one subject puts the second quietly **under** the first (`underName`
     under the name; a second line in a cell), and such a row reads from its top. A group heading with
     no cells of its own runs across the whole table, never squeezed into the lead column.
@@ -492,6 +510,7 @@ hierarchy's answer to a three-level tree and stays a documented exception (K-02)
 ## 6. How to build a new table (the checklist a new screen follows)
 
 1. Name each row's **role** (§2) before writing a class.
+   Then give each fact its column: no cell is a dotted line (the rule above §1).
 2. Pick the **density by content** (§3.1); state it once on the table. In the coach portal a
    caption class that renders a second line inside a cell **composes `.rowCaption`** — that one
    marker is what the density rule reads, so a new caption is comfortable the moment it composes it.
@@ -543,6 +562,7 @@ Prefer extending a gate that exists; assert **relationships and role membership*
 | `tests/unit/money-hierarchy-type-scale.test.ts` → generalise into **`table-recipe-guard.test.ts`** | parse every `.module.css` rule whose selector names a table part; assert every `font-size` on a th/td/row class is a `--type-*` token (or `--money-*` on the money grid, or a `table-exception: K-nn` comment on the line); every hairline/frame colour is `--home-line`/`--home-line-strong`/`--border-2`; **every `var(--x)` names a token that is defined** (this alone would have caught F-04) | a rule outranked by the cascade into another legal value; anything the sweep never renders |
 | `check:layout` | (a) a **`control-width`** rule at touch widths: an icon-only control (no text) is ≥ `--tap-min` wide — the finding the prompt required; (b) a **`type-ladder`** rule at 1440: every visible `th`/`td` font-size is a ladder value — membership, not pixels; (c) sweep entries for the report **views** the default URL never shows (Months, By activity, By period) via a `storage` hook on the screen entry, which is how this review reached them | the inside of a closed fold; a control hidden behind a view the entry does not address |
 | **row lists** (§3.10 — BUILT 2026-09-16, session B1; broken on purpose once and reported by name) | (a) `table-recipe-guard.test.ts` scans the `rowList*` selector family as it scans table parts — ladder membership on every `font-size`, hairline/frame colours from the line tokens, every named token defined; (b) `check:layout` `type-ladder` reads `[data-row-list] [data-row-list-row]` text as it reads `td`; (c) a new `check:layout` rule **`list-ground`**: at ≥ 641 the first painted ancestor behind every `[data-row-list-row]` computes to the card token, and at ≤ 640 the row's own ground is the card wash with no painted slab between it and `main` — **the probe reads the ancestor**, which is the rule F-24 needed and did not have | a list that never composes the component (the register's human gate; `check:css-selectors` deletes the old row classes the day their last caller goes) |
+| **dot joins** (`scripts/check-dot-joins.mjs`, in `verify:changed`, 2026-11-26) | every line of code in `app/`, `components/` and `lib/` with a separator dot is either recorded as predating the rule or carries `dot-join-ok: <reason>`; a reworded or copied one counts as new, a moved one does not | whether the reason is a good one; a join through a separator defined elsewhere |
 | `check:css-selectors` | no change; it already deletes dead recipes | a live recipe that is wrong |
 | **the register** | human gate: a review comment that cites a register id, or adds one, is the only way a table may differ | nothing — but only if reviewers use it |
 
