@@ -73,6 +73,8 @@ type RepRow = {
   is_scrimmage: boolean | null; starts_at: string; ends_at: string | null; status: string; location: string | null;
   location_address: string | null; field_number: string | null; org_venue_id: string | null; org_venue_facility_id: string | null;
   source_tournament_game_id: string | null; club_schedule_slot_id: string | null;
+  /** The part of the field (mig 541): the rule reads it, so side A beside side B is no clash on the calendar either. */
+  section_mask: number | null;
 };
 type TryoutRow = {
   id: string; team_id: string; starts_at: string; ends_at: string | null; status: string; label: string | null;
@@ -82,6 +84,7 @@ type TryoutRow = {
 type LeagueGameRow = {
   id: string; season_id: string; division_id: string; home_team_id: string; away_team_id: string; scheduled_at: string;
   ends_at: string | null; status: string; location: string | null; org_venue_id: string | null; org_venue_facility_id: string | null;
+  section_mask: number | null;
 };
 type LeaguePracticeRow = Omit<LeagueGameRow, 'home_team_id' | 'away_team_id' | 'division_id'> & { team_id: string; division_id: string | null };
 type GameRow = {
@@ -144,7 +147,7 @@ export async function readClubCalendar(reader: CalendarReader, from: string, to:
   // ── The reads (every one scoped by the club's org_id) ──
   const [repRows, tryoutRows, gameRows, practiceRows, tournaments, libVenues, libFacilities] = await Promise.all([
     fetchAll<RepRow>((a, b) => supabaseAdmin.from('rep_team_events')
-      .select('id, team_id, event_type, name, opponent, home_away, is_scrimmage, starts_at, ends_at, status, location, location_address, field_number, org_venue_id, org_venue_facility_id, source_tournament_game_id, club_schedule_slot_id')
+      .select('id, team_id, event_type, name, opponent, home_away, is_scrimmage, starts_at, ends_at, status, location, location_address, field_number, org_venue_id, org_venue_facility_id, section_mask, source_tournament_game_id, club_schedule_slot_id')
       .eq('org_id', orgId).neq('event_type', 'external_tournament')
       .gte('starts_at', padFrom).lt('starts_at', padTo).order('id').range(a, b)),
     fetchAll<TryoutRow>((a, b) => supabaseAdmin.from('rep_tryout_sessions')
@@ -152,11 +155,11 @@ export async function readClubCalendar(reader: CalendarReader, from: string, to:
       .eq('org_id', orgId)
       .gte('starts_at', padFrom).lt('starts_at', padTo).order('id').range(a, b)),
     fetchAll<LeagueGameRow>((a, b) => supabaseAdmin.from('league_games')
-      .select('id, season_id, division_id, home_team_id, away_team_id, scheduled_at, ends_at, status, location, org_venue_id, org_venue_facility_id')
+      .select('id, season_id, division_id, home_team_id, away_team_id, scheduled_at, ends_at, status, location, org_venue_id, org_venue_facility_id, section_mask')
       .eq('org_id', orgId)
       .gte('scheduled_at', padFrom).lt('scheduled_at', padTo).order('id').range(a, b)),
     fetchAll<LeaguePracticeRow>((a, b) => supabaseAdmin.from('league_practices')
-      .select('id, season_id, division_id, team_id, scheduled_at, ends_at, status, location, org_venue_id, org_venue_facility_id')
+      .select('id, season_id, division_id, team_id, scheduled_at, ends_at, status, location, org_venue_id, org_venue_facility_id, section_mask')
       .eq('org_id', orgId)
       .gte('scheduled_at', padFrom).lt('scheduled_at', padTo).order('id').range(a, b)),
     fetchAll<TournamentRow>((a, b) => supabaseAdmin

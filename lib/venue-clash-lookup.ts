@@ -257,7 +257,9 @@ async function readClubPool(orgId: string, fromMs: number, toMs: number): Promis
   // bookings, and a page cut off at the cap would drop clashes without a word.
   const [repRows, tryoutRows, gameRows, practiceRows, diamonds, facilities] = await Promise.all([
     fetchAll<RepRow>((a, b) => supabaseAdmin.from('rep_team_events')
-      .select('id, team_id, event_type, starts_at, ends_at, status, org_venue_id, org_venue_facility_id, source_tournament_game_id, club_schedule_slot_id')
+      // `section_mask` on every booking table that has one (mig 541): the part of the field, so side A and side B at
+      // one time are not a clash. Tryout days and tournament games book whole fields (no column; they read 0).
+      .select('id, team_id, event_type, starts_at, ends_at, status, org_venue_id, org_venue_facility_id, section_mask, source_tournament_game_id, club_schedule_slot_id')
       .eq('org_id', orgId).not('org_venue_id', 'is', null)
       .neq('status', 'cancelled')
       .gte('starts_at', fromIso).lte('starts_at', toIso)
@@ -269,12 +271,12 @@ async function readClubPool(orgId: string, fromMs: number, toMs: number): Promis
       .gte('starts_at', fromIso).lte('starts_at', toIso)
       .order('id').range(a, b)),
     fetchAll<LeagueRow>((a, b) => supabaseAdmin.from('league_games')
-      .select('id, season_id, scheduled_at, ends_at, status, org_venue_id, org_venue_facility_id')
+      .select('id, season_id, scheduled_at, ends_at, status, org_venue_id, org_venue_facility_id, section_mask')
       .eq('org_id', orgId).not('org_venue_id', 'is', null)
       .gte('scheduled_at', fromIso).lte('scheduled_at', toIso)
       .order('id').range(a, b)),
     fetchAll<LeagueRow>((a, b) => supabaseAdmin.from('league_practices')
-      .select('id, season_id, scheduled_at, ends_at, status, org_venue_id, org_venue_facility_id, club_schedule_slot_id')
+      .select('id, season_id, scheduled_at, ends_at, status, org_venue_id, org_venue_facility_id, section_mask, club_schedule_slot_id')
       .eq('org_id', orgId).not('org_venue_id', 'is', null)
       .gte('scheduled_at', fromIso).lte('scheduled_at', toIso)
       .order('id').range(a, b)),
@@ -466,11 +468,11 @@ export function clashReportForLeagueRows(
 /** A house-league booking as the rule reads it — the window's live check builds its proposed ones the same way. */
 export function bookingOfLeagueRow(row: {
   id: string; scheduledAt: string | null; endsAt?: string | null; status?: string | null;
-  orgVenueId?: string | null; orgVenueFacilityId?: string | null;
+  orgVenueId?: string | null; orgVenueFacilityId?: string | null; sectionMask?: number | null;
 }, kind: 'game' | 'practice', seasonName: string): ClubBooking | null {
   return leagueBooking({
     id: row.id, kind, scheduled_at: row.scheduledAt, ends_at: row.endsAt ?? null, status: row.status ?? 'scheduled',
-    org_venue_id: row.orgVenueId ?? null, org_venue_facility_id: row.orgVenueFacilityId ?? null,
+    org_venue_id: row.orgVenueId ?? null, org_venue_facility_id: row.orgVenueFacilityId ?? null, section_mask: row.sectionMask ?? 0,
   }, { season: seasonName });
 }
 
@@ -555,10 +557,13 @@ export function clashesForSavedRepEvents(orgId: string, teamName: string, saved:
 export function clashesForSavedClubPractices(orgId: string, saved: readonly {
   id: string; team_id: string; teamName: string; starts_at: string; ends_at: string | null; org_venue_id: string | null;
   org_venue_facility_id: string | null; location: string | null; field_number: string | null; club_schedule_slot_id: string | null;
+  /** The slot's part (mig 541); absent reads the whole field (Send writes it from Session 2C). */
+  section_mask?: number | null;
 }[]): Promise<SavedChecks> {
   return checksFor(orgId, saved.map(r => repEventBooking({
     id: r.id, team_id: r.team_id, event_type: 'practice', starts_at: r.starts_at, ends_at: r.ends_at, status: 'scheduled',
     org_venue_id: r.org_venue_id, org_venue_facility_id: r.org_venue_facility_id, club_schedule_slot_id: r.club_schedule_slot_id,
+    section_mask: r.section_mask ?? 0,
   }, { team: r.teamName, venue: r.location, facility: r.field_number })));
 }
 

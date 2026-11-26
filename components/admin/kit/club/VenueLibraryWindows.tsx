@@ -30,6 +30,12 @@
  *     have a full pinned row above the footer?" — no: a rare door alone in a pinned row, the one the reader can't
  *     predict from what they see (booked → there, unbooked → the body's end). `RecordAction`, Delete's shape uncoloured.
  *   · An ARCHIVED venue reads, with Bring back; it has no pencil. Bring it back to change it.
+ *
+ * Club schedules Stage 2 (mig 541; round 2 drawing, tab 2; round 1 Ask 4 B, round 2 Ask 7 A): each facility row in the form
+ * gains a SPLIT select after its kind — "Not split" / "Two sides" / "Four quarters", saving as you go. While a booking still
+ * to come names one of a field's parts its select is locked and ONE line under the Facilities heading says which fields and
+ * why; whole-field bookings never lock it. Choosing a split changes nothing already booked. On a phone the select takes a
+ * line of its own under the row. The read card names a split field's parts under its name ("Four quarters, A to D").
  */
 import { useCallback, useRef, useState } from 'react';
 import { Archive, ArchiveRestore, ChevronRight, Plus, X } from 'lucide-react';
@@ -43,8 +49,10 @@ import { jsonInit, moneyFetch, refusalText } from '@/lib/money-fetch';
 import { FACILITY_TYPES, FACILITY_TYPE_LABELS } from '@/lib/types';
 import {
   NO_USAGE, VENUE_LIBRARY_WORDS as W, archiveQuestion, bookingsEmailProblem, deleteQuestion, duplicateFacilityName,
-  seasonUseWords, tournamentUseWords, type LibraryVenue, type VenueUsage,
+  seasonUseWords, splitLockedLine, tournamentUseWords, type LibraryVenue, type VenueUsage,
 } from '@/lib/venue-library';
+import { SPLIT_CHOICES, sectionsOf, splitReadWords, type FieldSections } from '@/lib/field-parts';
+import split from './VenueSplit.module.css';
 import { formatTimeRange, pluralize } from '@/lib/utils';
 import { formatEventDateRange } from '@/lib/timezone';
 import { PERMIT_WORDS as PW, facilityListWords, weekdaysShort } from '@/lib/permit-words';
@@ -54,7 +62,7 @@ import own from './VenueLibrary.module.css';
 // The club's record windows read their fields one way — quiet labels in plain case (the Payees window's list).
 import fy from './money/FiscalYear.module.css';
 
-type FacilityDraft = { key: string; id: string | null; name: string; facilityType: string };
+type FacilityDraft = { key: string; id: string | null; name: string; facilityType: string; sections: FieldSections };
 type VenueDraft = { name: string; address: string; notes: string; bookingsEmail: string; facilities: FacilityDraft[] };
 
 let nextKey = 0;
@@ -64,7 +72,7 @@ function draftOf(v: LibraryVenue): VenueDraft {
   return {
     name: v.name, address: v.address ?? '', notes: v.notes ?? '', bookingsEmail: v.bookingsEmail ?? '',
     facilities: [...v.facilities].sort((a, b) => a.displayOrder - b.displayOrder)
-      .map(f => ({ key: f.id, id: f.id, name: f.name, facilityType: f.facilityType })),
+      .map(f => ({ key: f.id, id: f.id, name: f.name, facilityType: f.facilityType, sections: sectionsOf(f.sections) })),
   };
 }
 
@@ -99,25 +107,38 @@ function VenuePermits({ permits, onOpen }: { permits: readonly VenuePermitRow[];
   );
 }
 
-/** One facility row in a form: its name, its kind, then "In use" (a booking holds it) or its ✕. */
-function FacilityFields({ idPrefix, rows, onChange, inUse }: {
+/**
+ * One facility row in a form: its name, its kind, its split, then "In use" (a booking holds it) or its ✕. A split a booked
+ * part holds is locked, and the one line above the rows says why (`splitLockedLine`).
+ */
+function FacilityFields({ idPrefix, rows, onChange, inUse, splitLocked = () => false }: {
   idPrefix: string;
   rows: FacilityDraft[];
   onChange: (rows: FacilityDraft[]) => void;
   /** A facility a booking holds — renamed, never removed. */
   inUse: (f: FacilityDraft) => boolean;
+  /** A booking still to come names one of its parts — its split stays as it is (round 2 Ask 7 A). */
+  splitLocked?: (f: FacilityDraft) => boolean;
 }) {
   const set = (key: string, patch: Partial<FacilityDraft>) => onChange(rows.map(r => (r.key === key ? { ...r, ...patch } : r)));
+  const lockedLine = splitLockedLine(rows.filter(splitLocked).map(f => ({ name: f.name.trim() || 'A facility', sections: f.sections })));
+  const lineId = `${idPrefix}-split-locked`;
   return (
     <>
+      {lockedLine && <p id={lineId} className={split.lockedLine}>{lockedLine}</p>}
       {rows.map((f, i) => (
-        <div key={f.key} className={own.facEdit}>
+        <div key={f.key} className={`${own.facEdit} ${split.facEditSplit}`}>
           <input className={ck.input} aria-label={`Facility ${i + 1} name`} value={f.name} maxLength={60}
             placeholder="For example: Diamond 1" id={`${idPrefix}-fac-${i}`}
             onChange={e => set(f.key, { name: e.target.value })} />
           <select className={ck.select} aria-label={`Facility ${i + 1} kind`} value={f.facilityType}
             onChange={e => set(f.key, { facilityType: e.target.value })}>
             {FACILITY_TYPES.map(t => <option key={t} value={t}>{FACILITY_TYPE_LABELS[t]}</option>)}
+          </select>
+          <select className={`${ck.select} ${split.splitSelect}`} aria-label={`Facility ${i + 1} split`} value={f.sections}
+            disabled={splitLocked(f)} aria-describedby={splitLocked(f) ? lineId : undefined}
+            onChange={e => set(f.key, { sections: sectionsOf(e.target.value) })}>
+            {SPLIT_CHOICES.map(c => <option key={c.value} value={c.value}>{c.label}</option>)}
           </select>
           {inUse(f)
             ? <span className={own.inUse}>{W.inUse}</span>
@@ -130,7 +151,7 @@ function FacilityFields({ idPrefix, rows, onChange, inUse }: {
         </div>
       ))}
       <button type="button" className={`btn btn-outline ${own.addFacility}`}
-        onClick={() => onChange([...rows, { key: newKey(), id: null, name: '', facilityType: rows[rows.length - 1]?.facilityType ?? 'other' }])}>
+        onClick={() => onChange([...rows, { key: newKey(), id: null, name: '', facilityType: rows[rows.length - 1]?.facilityType ?? 'other', sections: 1 }])}>
         <Plus size={14} aria-hidden /> Add a facility
       </button>
     </>
@@ -198,7 +219,7 @@ export function VenueWindow({ q, venue, usage, permits = [], onOpenPermit, canSa
       data: {
         name: draft.name.trim(), address: draft.address.trim() || null, notes: draft.notes.trim() || null,
         bookingsEmail: draft.bookingsEmail.trim() || null,
-        facilities: draft.facilities.map(f => ({ id: f.id ?? savedIds.current.get(f.key) ?? null, key: f.key, name: f.name.trim(), facilityType: f.facilityType })),
+        facilities: draft.facilities.map(f => ({ id: f.id ?? savedIds.current.get(f.key) ?? null, key: f.key, name: f.name.trim(), facilityType: f.facilityType, sections: f.sections })),
       },
     };
     // org-slug-ok: `q` is the page's "orgSlug=…" query, passed in as a prop
@@ -273,7 +294,8 @@ export function VenueWindow({ q, venue, usage, permits = [], onOpenPermit, canSa
           </label>
           <h3 className={own.sectionHead}>{W.facilitiesHeading}</h3>
           <FacilityFields idPrefix="venue" rows={draft.facilities} onChange={rows => change({ ...draft, facilities: rows })}
-            inUse={f => !!usageOf(f.id)?.anyBooking} />
+            inUse={f => !!usageOf(f.id)?.anyBooking}
+            splitLocked={f => !!f.id && !!venue.facilities.find(s => s.id === f.id)?.partsBooked} />
         </>
       ) : (
         <>
@@ -290,10 +312,14 @@ export function VenueWindow({ q, venue, usage, permits = [], onOpenPermit, canSa
           {facilities.length === 0 ? <p className={own.quiet}>{W.noFacilities}</p> : (
             <div className={own.facRows}>
               {facilities.map(f => {
+                // Upcoming counts the field and its parts together: a part is booked on the field's own row.
                 const n = usageOf(f.id)?.upcoming ?? 0;
+                const parts = splitReadWords(sectionsOf(f.sections));
                 return (
                   <div key={f.id} className={own.facRow}>
-                    <span>{f.name}</span>
+                    {parts
+                      ? <span className={split.facName}>{f.name}<span className={split.facParts}>{parts}</span></span>
+                      : <span>{f.name}</span>}
                     <span className={own.facKind}>{kindWord(f.facilityType)}</span>
                     <span className={own.facUpcoming}>{n ? `${n} upcoming` : 'Nothing upcoming'}</span>
                   </div>
@@ -341,7 +367,7 @@ export function AddVenueWindow({ q, onClose, onAdded }: { q: string; onClose: ()
         action: 'save-venue',
         data: {
           name: draft.name.trim(), address: draft.address.trim() || null, notes: draft.notes.trim() || null,
-          facilities: draft.facilities.filter(f => f.name.trim()).map(f => ({ name: f.name.trim(), facilityType: f.facilityType })),
+          facilities: draft.facilities.filter(f => f.name.trim()).map(f => ({ name: f.name.trim(), facilityType: f.facilityType, sections: f.sections })),
         },
       }));
       if (!r.ok || !r.data.venue) { setError(refusalText(r.data, 'The venue couldn’t be added. Please try again.')); return; }

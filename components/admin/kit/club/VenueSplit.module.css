@@ -1,0 +1,25 @@
+/* A FIELD'S SPLIT in the Venue library window (Club schedules Stage 2, mig 541; round 2 drawing, tab 2). Its own module
+   beside VenueLibrary.module.css, which keeps the facility row's base grid: this only adds the split's column, its phone
+   line, the locked line under the Facilities heading and the read card's second line. */
+
+/* The form row gains a column after the kind: name (narrows to about 240 px), kind, split, then "In use" or its ✕. Doubled
+   so it wins over the base row's grid whichever stylesheet loads first. */
+.facEditSplit.facEditSplit { grid-template-columns: minmax(0, 1fr) 8rem 9rem 4.5rem; }
+
+/* One line, once for every locked field, under the Facilities heading. */
+.lockedLine {
+  margin: -0.1rem 0 0.5rem;
+  font-size: var(--type-support);
+  color: var(--text-secondary);
+}
+
+/* The read card: a split field's name carries its parts on a quiet second line. */
+.facName { display: flex; flex-direction: column; min-width: 0; }
+.facParts { font-size: var(--type-support); color: var(--text-tertiary); }
+
+/* On a phone the window is a sheet and the row has no room for a second select: the split takes a full-width line under
+   its facility's row, at the portal's tap floor. */
+@media (max-width: 640px) {
+  .facEditSplit.facEditSplit { grid-template-columns: minmax(0, 1fr) 7.5rem 3rem; }
+  .facEditSplit .splitSelect { grid-column: 1 / -1; grid-row: 2; min-height: var(--tap-min, 44px); }
+}

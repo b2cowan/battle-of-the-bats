@@ -1,12 +1,12 @@
 {
   "generated": "2026-11-26",
-  "total": 169,
+  "total": 184,
   "counts": {
     "tables": 4,
-    "columns": 88,
-    "indexes": 22,
+    "columns": 94,
+    "indexes": 25,
     "constraints": 30,
-    "rls": 25
+    "rls": 31
   },
   "items": [
     {
@@ -16,6 +16,10 @@
     {
       "key": "check:changed:online_payments.online_payments_flow_shape_chk",
       "sig": "(((flow = 'tournament_team'::text) AND (season_id IS NULL) AND (signup_key IS NULL) AND (sponsor_deal_id IS NULL) AND (sponsor_fee_tax IS NULL) AND (sponsor_invoice IS NULL)) OR ((flow = 'league_signup'::text) AND (tournament_id IS NULL) AND (team_id IS NULL) AND (signup_key IS NOT NULL) AND ((char_length(signup_key) >= 1) AND (char_length(signup_key) <= 64)) AND (scope = 'full'::text) AND (sponsor_deal_id IS NULL) AND (sponsor_fee_tax IS NULL) AND (sponsor_invoice IS NULL)) OR ((flow = 'sponsorship'::text) AND (tournament_id IS NULL) AND (team_id IS NULL) AND (season_id IS NULL) AND (signup_key IS NULL) AND (scope = 'full'::text) AND (rail = 'card'::text) AND ((sponsor_fee_tax IS NULL) OR ((sponsor_fee_tax >= (0)::numeric) AND (fee_payer = 'family'::text))) AND ((sponsor_invoice IS NULL) OR (jsonb_typeof(sponsor_invoice) = 'object'::text)))) :: (((flow = 'tournament_team'::text) AND (season_id IS NULL) AND (signup_key IS NULL)) OR ((flow = 'league_signup'::text) AND (tournament_id IS NULL) AND (team_id IS NULL) AND (signup_key IS NOT NULL) AND ((char_length(signup_key) >= 1) AND (char_length(signup_key) <= 64)) AND (scope = 'full'::text)))"
+    },
+    {
+      "key": "check:only-dev:club_schedule_slots.club_schedule_slots_section_mask_valid",
+      "sig": ""
     },
     {
       "key": "check:only-dev:club_sponsor_deal_payments.club_sponsor_deal_payments_card",
@@ -58,6 +62,14 @@
       "sig": ""
     },
     {
+      "key": "check:only-dev:league_games.league_games_section_mask_valid",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:league_practices.league_practices_section_mask_valid",
+      "sig": ""
+    },
+    {
       "key": "check:only-dev:org_place_closures.org_place_closures_all_has_no_name",
       "sig": ""
     },
@@ -90,6 +102,14 @@
       "sig": ""
     },
     {
+      "key": "check:only-dev:org_time_block_facilities.org_time_block_facilities_section_mask_valid",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:org_venue_facilities.org_venue_facilities_sections_valid",
+      "sig": ""
+    },
+    {
       "key": "check:only-dev:organization_previews.organization_previews_claimer_needs_claim",
       "sig": ""
     },
@@ -107,6 +127,14 @@
     },
     {
       "key": "check:only-dev:organizations.organizations_preview_has_no_stripe",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:rep_team_events.rep_team_events_section_mask_valid",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:club_schedule_slots.section_mask",
       "sig": ""
     },
     {
@@ -258,6 +286,14 @@
       "sig": ""
     },
     {
+      "key": "column:only-dev:league_games.section_mask",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:league_practices.section_mask",
+      "sig": ""
+    },
+    {
       "key": "column:only-dev:league_rainouts.closure_id",
       "sig": ""
     },
@@ -351,6 +387,14 @@
     },
     {
       "key": "column:only-dev:org_place_closures.verb",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:org_time_block_facilities.section_mask",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:org_venue_facilities.sections",
       "sig": ""
     },
     {
@@ -459,6 +503,10 @@
     },
     {
       "key": "column:only-dev:rep_event_closure_marks.team_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_team_events.section_mask",
       "sig": ""
     },
     {
@@ -582,6 +630,14 @@
       "sig": ""
     },
     {
+      "key": "index:changed:org_time_block_facilities_pkey",
+      "sig": "CREATE UNIQUE INDEX org_time_block_facilities_pkey ON public.org_time_block_facilities USING btree (block_id, facility_id, section_mask) :: CREATE UNIQUE INDEX org_time_block_facilities_pkey ON public.org_time_block_facilities USING btree (block_id, facility_id)"
+    },
+    {
+      "key": "index:only-dev:club_schedule_slots_family_place_overlap",
+      "sig": ""
+    },
+    {
       "key": "index:only-dev:club_sponsor_deal_payments_online_uniq",
       "sig": ""
     },
@@ -667,6 +723,10 @@
     },
     {
       "key": "index:only-dev:rep_event_closure_marks_team_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-prod:club_schedule_slots_family_place_start",
       "sig": ""
     },
     {

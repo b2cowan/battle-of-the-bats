@@ -44,6 +44,7 @@
  * own field on every check and every writer's reply (`permits`), with its own quiet line (`lib/permit-words.ts`).
  */
 import { DEFAULT_BOOKING_MINUTES } from './booking-length.ts';
+import { maskOf, partsOverlap } from './field-parts.ts';
 import { zonedWallClockToUtc } from './timezone.ts';
 
 const MIN = 60_000;
@@ -82,6 +83,11 @@ export interface ClubBooking {
   venueId: string | null;
   /** The facility at that venue (`org_venue_facilities.id`); null = not set ("busy then"). */
   facilityId: string | null;
+  /**
+   * Which part of the facility (mig 541, `lib/field-parts.ts`): quarter units, 0 = the whole field. Absent reads 0, so a
+   * constructor not yet given the column over-reports (two sides read as a clash), never misses one.
+   */
+  sectionMask?: number;
   /** The club's names, for the words (the rule never reads them). */
   venueName: string | null;
   facilityName: string | null;
@@ -124,8 +130,9 @@ function windowOf(startIso: string | null | undefined, endIso: string | null | u
   return { startMs, endMs };
 }
 
-function placed(venueId: string | null | undefined, facilityId: string | null | undefined) {
-  return { venueId: venueId || null, facilityId: venueId ? (facilityId || null) : null };
+function placed(venueId: string | null | undefined, facilityId: string | null | undefined, sectionMask?: number | null) {
+  const facility = venueId ? (facilityId || null) : null;
+  return { venueId: venueId || null, facilityId: facility, sectionMask: facility ? maskOf(sectionMask) : 0 };
 }
 
 const REP_KIND: Record<string, ClashBookingKind | null> = {
@@ -141,7 +148,7 @@ const REP_KIND: Record<string, ClashBookingKind | null> = {
 export function repEventBooking(row: {
   id: string; team_id: string; event_type: string; starts_at: string | null; ends_at?: string | null;
   status?: string | null; org_venue_id?: string | null; org_venue_facility_id?: string | null;
-  source_tournament_game_id?: string | null; club_schedule_slot_id?: string | null;
+  source_tournament_game_id?: string | null; club_schedule_slot_id?: string | null; section_mask?: number | null;
 }, names: { team: string; venue?: string | null; facility?: string | null }): ClubBooking | null {
   const kind = REP_KIND[row.event_type === 'scrimmage' ? 'league_game' : row.event_type] ?? null;
   if (!kind || row.status === 'cancelled') return null;
@@ -149,7 +156,7 @@ export function repEventBooking(row: {
   if (!w) return null;
   return {
     key: `rep_event:${row.id}`, program: 'rep', owner: `team:${row.team_id}`, ownerName: names.team, kind,
-    ...w, ...placed(row.org_venue_id, row.org_venue_facility_id),
+    ...w, ...placed(row.org_venue_id, row.org_venue_facility_id, row.section_mask),
     venueName: names.venue ?? null, facilityName: names.facility ?? null,
     mirrorOf: row.source_tournament_game_id ? `tournament_game:${row.source_tournament_game_id}` : null,
     clubSlotOf: row.club_schedule_slot_id ?? null,
@@ -178,13 +185,14 @@ export function tryoutSessionBooking(row: {
 export function leagueBooking(row: {
   id: string; kind: 'game' | 'practice'; scheduled_at: string | null; ends_at?: string | null; status?: string | null;
   org_venue_id?: string | null; org_venue_facility_id?: string | null; club_schedule_slot_id?: string | null;
+  section_mask?: number | null;
 }, names: { season: string; venue?: string | null; facility?: string | null }): ClubBooking | null {
   if (row.status === 'cancelled' || row.status === 'postponed') return null;
   const w = windowOf(row.scheduled_at, row.ends_at);
   if (!w) return null;
   return {
     key: `league_${row.kind}:${row.id}`, program: 'league', owner: 'league', ownerName: names.season, kind: row.kind,
-    ...w, ...placed(row.org_venue_id, row.org_venue_facility_id),
+    ...w, ...placed(row.org_venue_id, row.org_venue_facility_id, row.section_mask),
     venueName: names.venue ?? null, facilityName: names.facility ?? null,
     // A practice handed out from house league's club time (Stage 11b): its own slot never clashes with it.
     clubSlotOf: row.club_schedule_slot_id ?? null,
@@ -266,12 +274,16 @@ export function findClubClashes(proposed: ClubBooking, others: readonly ClubBook
   return out.sort((a, b) => (a.kind === b.kind ? a.other.startMs - b.other.startMs : a.kind === 'booked_by' ? -1 : 1));
 }
 
-/** THE rule for one pair: `booked_by`, `busy_then`, or null (not compared, no overlap, or two different facilities). */
+/**
+ * THE rule for one pair: `booked_by`, `busy_then`, or null (not compared, no overlap, two different facilities, or two
+ * parts of one field on different ground — side A beside side B, Club schedules Stage 2).
+ */
 function clashKindOf(p: ClubBooking, o: ClubBooking): ClashKind | null {
   if (!comparable(p, o) || !windowsOverlap(p, o)) return null;
   if (p.facilityId && o.facilityId) {
-    // Two different diamonds in one park are not a clash.
-    return p.facilityId === o.facilityId ? 'booked_by' : null;
+    // Two different diamonds in one park are not a clash; nor two parts of one field that share no ground. The whole
+    // field meets each of its parts (`partsOverlap`, the one overlap rule: no reader writes its own).
+    return p.facilityId === o.facilityId && partsOverlap(p.sectionMask, o.sectionMask) ? 'booked_by' : null;
   }
   return 'busy_then';
 }

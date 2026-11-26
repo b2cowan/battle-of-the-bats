@@ -116,6 +116,16 @@ describe('venue-identity — surface comparison', () => {
     ), false);
   });
 
+  it('parts of one field (mig 541): the whole meets each part; side A and side B do not meet; no mask reads whole', () => {
+    const at = (m?: number) => ({ venueFacilityId: 'f1', venueId: 'v1', sectionMask: m });
+    assert.equal(sourcesShareSurface(at(3), at(12)), false, 'side A beside side B');
+    assert.equal(sourcesShareSurface(at(0), at(12)), true, 'the whole field beside side B');
+    assert.equal(sourcesShareSurface(at(1), at(3)), true, 'quarter A beside quarters A–B');
+    assert.equal(sourcesShareSurface(at(4), at(3)), false, 'quarter C beside quarters A–B');
+    assert.equal(sourcesShareSurface(at(), at(3)), true, 'a caller that passes no part reads the whole field (safe)');
+    assert.equal(sourcesShareSurface({ venueFacilityId: 'f2', venueId: 'v1', sectionMask: 3 }, at(3)), false, 'side A of two fields');
+  });
+
   it('matches mixed granularity: a surface-pinned game vs a venue-only game at that venue', () => {
     // The blind spot both engines shared — these used to pass each other unseen.
     assert.equal(sourcesShareSurface(

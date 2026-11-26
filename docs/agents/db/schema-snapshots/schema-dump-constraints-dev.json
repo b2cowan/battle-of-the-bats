@@ -7030,6 +7030,16 @@
     "update_rule": null
   },
   {
+    "table_name": "org_time_block_facilities",
+    "constraint_name": "org_time_block_facilities_pkey",
+    "constraint_type": "PRIMARY KEY",
+    "column_name": "section_mask",
+    "foreign_table": null,
+    "foreign_column": null,
+    "delete_rule": null,
+    "update_rule": null
+  },
+  {
     "table_name": "org_time_blocks",
     "constraint_name": "org_time_blocks_from_permit_id_fkey",
     "constraint_type": "FOREIGN KEY",

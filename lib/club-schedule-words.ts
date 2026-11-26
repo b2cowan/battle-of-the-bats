@@ -117,6 +117,8 @@ export const SCHEDULE_REFUSALS = {
   overLine: (left: number) => `The budget line has ${fmt(left)} left to allocate. Raise the line, bill a part of the cost, or bill from another line.`,
   noTeamsMatch: 'Nothing on that list can be sent any more. Reload the preview.',
   placeGone: 'A venue or facility in this schedule isn’t in the Venue library any more. Reload and pick it again.',
+  /** A part the field's split no longer offers, or a part on a permit's time (mig 541's triggers). Working words. */
+  partGone: 'A part of a field in this schedule isn’t one its field offers any more. Reload and pick it again.',
   teamGone: 'A team in this schedule isn’t the club’s any more. Reload the page.',
   scheduleValue: 'A figure in this schedule is out of range. Check its dates, times and settings.',
   permitGone: 'That permit isn’t in the Venue library any more.',

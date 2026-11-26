@@ -4,8 +4,9 @@ import { supabaseAdmin } from '@/lib/supabase-admin';
 import { withObservability, captureAndJson } from '@/lib/observability';
 import { hasOrgVenueLibrary } from '@/lib/plan-features';
 import { FACILITY_TYPES, type FacilityType } from '@/lib/types';
-import { canSaveVenueLibrary, canReadVenueLibrary, duplicateFacilityName, VENUE_LIBRARY_WORDS } from '@/lib/venue-library';
-import { carryWordsForward, facilitiesBooked, readVenueUsage, venueIsBooked } from '@/lib/venue-library-server';
+import { canSaveVenueLibrary, canReadVenueLibrary, duplicateFacilityName, splitLockedRefusal, VENUE_LIBRARY_WORDS } from '@/lib/venue-library';
+import { carryWordsForward, facilitiesBooked, facilitiesWithPartsBooked, readVenueUsage, venueIsBooked } from '@/lib/venue-library-server';
+import { sectionsOf, type FieldSections } from '@/lib/field-parts';
 import { readVenuePermits } from '@/lib/permit-server';
 import { bookingsEmailProblem } from '@/lib/venue-library';
 import { tournamentToday } from '@/lib/timezone';
@@ -34,6 +35,11 @@ import { tournamentToday } from '@/lib/timezone';
 // never comes here), and a venue keeps its BOOKINGS CONTACT (`bookings_email`, optional, validated; Stage 11a's send
 // uses it). A facility a permit's block names is renamed, never removed — the same rule as a booked one.
 //
+// Club schedules Stage 2 (mig 541, round 1 Ask 4 B, round 2 Ask 7 A): a field carries its SPLIT — not split, two sides, four
+// quarters (`sections` 1 / 2 / 4) — on every write, and the library read says which fields have a booking still to come on
+// one of their parts (`partsBooked`). Such a field's split is locked: a stale page's change is refused here, in words,
+// before the database's own trigger would refuse it (`split_locked`, caught below as the same words).
+//
 // ⚖ THE SAVE RULE (Ask 9) is checked on EVERY write, once, here: the owner, an admin, a league admin, or anyone granted
 // the tournament permission (`canSaveVenueLibrary`). Everyone else reads. A refusal says why, in words and a code, and
 // the page shows it in the window — never a save that silently does nothing (D02). Since mig 321 this route is the
@@ -43,6 +49,7 @@ import { tournamentToday } from '@/lib/timezone';
 type VenueRow = { id: string; org_id: string; name: string; address: string | null; notes: string | null; is_active: boolean; bookings_email: string | null };
 type FacilityRow = {
   id: string; org_venue_id: string; org_id: string; name: string; facility_type: string; display_order: number; notes: string | null;
+  sections: number;
 };
 
 function mapOrgVenue(v: VenueRow, facilities: FacilityRow[]) {
@@ -67,6 +74,7 @@ function mapOrgFacility(f: FacilityRow) {
     facilityType: f.facility_type,
     displayOrder: f.display_order,
     notes:        f.notes ?? null,
+    sections:     sectionsOf(f.sections),
   };
 }
 
@@ -89,6 +97,14 @@ async function readVenues(orgId: string, which: { withArchived: boolean; venueId
     for (const f of (facData ?? []) as FacilityRow[]) (facilityByVenue[f.org_venue_id] ??= []).push(f);
   }
   return ((venues ?? []) as VenueRow[]).map(v => mapOrgVenue(v, facilityByVenue[v.id] ?? []));
+}
+
+/** The library's read (and a write's answer): each split field says whether a part is booked, so its split is locked. */
+async function withPartsBooked<V extends { facilities: { id: string; sections: FieldSections }[] }>(venues: V[]): Promise<V[]> {
+  const split = venues.flatMap(v => v.facilities.filter(f => f.sections !== 1).map(f => f.id));
+  if (!split.length) return venues;
+  const booked = await facilitiesWithPartsBooked(split);
+  return venues.map(v => ({ ...v, facilities: v.facilities.map(f => ({ ...f, partsBooked: booked.has(f.id) })) }));
 }
 
 // ---------------------------------------------------------------------------
@@ -118,14 +134,17 @@ export const GET = withObservability(async (req: Request) => {
     // holding time there — reads only for those who schedule, run tournaments or handle money (`canReadVenueLibrary`).
     if (!canReadVenueLibrary(ctx, ctx.org)) return forbidden();
     const venues = await readVenues(ctx.org.id, { withArchived: true });
-    const [usage, permits] = await Promise.all([
+    const [split, usage, permits] = await Promise.all([
+      // Which split fields have a part booked: their split select is locked (mig 541). A failure fails the read, as usage's
+      // does — the page never offers a split change it would refuse.
+      withPartsBooked(venues),
       readVenueUsage(ctx.org.id, venues.map(v => ({ id: v.id, facilityIds: (v.facilities ?? []).map(f => f.id) }))),
       // The permits that hold time at each venue are the window's quiet section: a failed read leaves it empty and the
       // library stands (never a page that won't load over a permit).
       readVenuePermits(ctx.org.id, venues.map(v => v.id), tournamentToday())
         .catch(e => { console.error('[venues] the permits read failed (the library stands):', e); return {}; }),
     ]);
-    return NextResponse.json({ venues, usage, permits, canSave: canSaveVenueLibrary(ctx.role, ctx.capabilities) });
+    return NextResponse.json({ venues: split, usage, permits, canSave: canSaveVenueLibrary(ctx.role, ctx.capabilities) });
   } catch (err) {
     return captureAndJson(err, { error: VENUE_LIBRARY_WORDS.loadFailed, code: 'load_failed' }, 500);
   }
@@ -135,7 +154,7 @@ export const GET = withObservability(async (req: Request) => {
 // POST
 // ---------------------------------------------------------------------------
 
-type FacilityDraft = { id?: string | null; key?: string; name?: unknown; facilityType?: unknown };
+type FacilityDraft = { id?: string | null; key?: string; name?: unknown; facilityType?: unknown; sections?: unknown };
 
 const text = (v: unknown): string | null => (typeof v === 'string' ? v.trim() || null : null);
 const kindOf = (v: unknown): FacilityType => (FACILITY_TYPES.includes(v as FacilityType) ? (v as FacilityType) : 'other');
@@ -162,8 +181,8 @@ export const POST = withObservability(async (req: Request) => {
       const name = text(data?.name);
       if (!name) return venueRefusal(400, 'name_required', 'Give the venue a name.');
       const facilities = (Array.isArray(data?.facilities) ? data.facilities as FacilityDraft[] : [])
-        .map(f => ({ name: text(f.name), facilityType: kindOf(f.facilityType) }))
-        .filter((f): f is { name: string; facilityType: FacilityType } => !!f.name);
+        .map(f => ({ name: text(f.name), facilityType: kindOf(f.facilityType), sections: sectionsOf(f.sections) }))
+        .filter((f): f is { name: string; facilityType: FacilityType; sections: FieldSections } => !!f.name);
       const twice = duplicateFacilityName(facilities.map(f => f.name));
       if (twice) return venueRefusal(400, 'facility_name_taken', `Two facilities can’t both be called “${twice}”.`);
       const bookingsEmail = text(data?.bookingsEmail);
@@ -175,7 +194,7 @@ export const POST = withObservability(async (req: Request) => {
       if (error) throw error;
       if (facilities.length) {
         const { error: fErr } = await supabaseAdmin.from('org_venue_facilities').insert(facilities.map((f, i) => ({
-          org_venue_id: venue.id, org_id: orgId, name: f.name, facility_type: f.facilityType, display_order: i,
+          org_venue_id: venue.id, org_id: orgId, name: f.name, facility_type: f.facilityType, display_order: i, sections: f.sections,
         })));
         if (fErr) {
           // The venue alone would be a half-added record: take it back and say so.
@@ -208,18 +227,23 @@ export const POST = withObservability(async (req: Request) => {
       const drafts = Array.isArray(data?.facilities) ? data.facilities as FacilityDraft[] : null;
 
       const { data: storedFacs, error: sfErr } = await supabaseAdmin
-        .from('org_venue_facilities').select('id, name, facility_type, display_order').eq('org_venue_id', id).eq('org_id', orgId);
+        .from('org_venue_facilities').select('id, name, facility_type, display_order, sections').eq('org_venue_id', id).eq('org_id', orgId);
       if (sfErr) throw sfErr;
-      const stored = new Map((storedFacs ?? []).map(f => [f.id as string, f as { id: string; name: string; facility_type: string; display_order: number }]));
+      const stored = new Map((storedFacs ?? []).map(f => [f.id as string, f as { id: string; name: string; facility_type: string; display_order: number; sections: number }]));
 
       // Validate the whole draft before writing any of it, so a refused save changes nothing.
       let renamedFacilityIds: string[] = [];
-      let plan: { keep: { id: string; name: string; kind: FacilityType; order: number }[]; add: { key: string; name: string; kind: FacilityType; order: number }[]; remove: string[] } | null = null;
+      type Kept = { id: string; name: string; kind: FacilityType; order: number; sections: FieldSections };
+      let plan: { keep: Kept[]; add: { key: string; name: string; kind: FacilityType; order: number; sections: FieldSections }[]; remove: string[] } | null = null;
       if (drafts) {
-        const rows = drafts.map((f, order) => ({
-          id: typeof f.id === 'string' && f.id ? f.id : null, key: typeof f.key === 'string' ? f.key : '',
-          name: text(f.name), kind: kindOf(f.facilityType), order,
-        }));
+        const rows = drafts.map((f, order) => {
+          const fid = typeof f.id === 'string' && f.id ? f.id : null;
+          // Absent from an older page's save, or not one of 1 / 2 / 4 = keep the stored split (never unsplit by a save that
+          // didn't send a real choice; /review 2026-11-25).
+          const sent = f.sections === 1 || f.sections === 2 || f.sections === 4 ? f.sections : null;
+          const sections = sent ?? (fid && stored.has(fid) ? sectionsOf(stored.get(fid)!.sections) : 1);
+          return { id: fid, key: typeof f.key === 'string' ? f.key : '', name: text(f.name), kind: kindOf(f.facilityType), order, sections };
+        });
         if (rows.some(r => r.id && !stored.has(r.id))) return notInLibrary();
         const ids = rows.flatMap(r => (r.id ? [r.id] : []));
         if (new Set(ids).size !== ids.length) return venueRefusal(400, 'facility_twice', 'A facility is listed twice. Reload the page.');
@@ -255,10 +279,21 @@ export const POST = withObservability(async (req: Request) => {
             return venueRefusal(409, 'facility_in_schedule', `${stored.get(slotted[0].facility_id as string)?.name ?? 'That facility'} is in one of the club’s schedules, so it can be renamed but not removed.`);
           }
         }
+        // ⚖ A split is locked while a booking still to come names one of its parts (round 2 Ask 7 A; any change, not only
+        // lowering). The window locks the select; this is the race, said in the window's own line.
+        const resplit = rows.filter(r => r.id && sectionsOf(stored.get(r.id)!.sections) !== r.sections).map(r => r.id!);
+        if (resplit.length) {
+          const locked = await facilitiesWithPartsBooked(resplit);
+          const first = resplit.find(fid => locked.has(fid));
+          if (first) {
+            const s = stored.get(first)!;
+            return venueRefusal(409, 'split_locked', splitLockedRefusal(s.name, sectionsOf(s.sections)));
+          }
+        }
         plan = {
-          keep: rows.filter(r => r.id).map(r => ({ id: r.id!, name: r.name!, kind: r.kind, order: r.order })),
+          keep: rows.filter(r => r.id).map(r => ({ id: r.id!, name: r.name!, kind: r.kind, order: r.order, sections: r.sections })),
           // A new row with no name yet is still being typed: it waits for its name (the form holds nothing on it).
-          add: rows.filter(r => !r.id && r.name).map(r => ({ key: r.key, name: r.name!, kind: r.kind, order: r.order })),
+          add: rows.filter(r => !r.id && r.name).map(r => ({ key: r.key, name: r.name!, kind: r.kind, order: r.order, sections: r.sections })),
           remove,
         };
         renamedFacilityIds = plan.keep.filter(k => stored.get(k.id)!.name !== k.name).map(k => k.id);
@@ -281,14 +316,16 @@ export const POST = withObservability(async (req: Request) => {
         // name (unique within the venue, checked above).
         const changed = plan.keep.filter(k => {
           const s = stored.get(k.id)!;
-          return s.name !== k.name || s.facility_type !== k.kind || s.display_order !== k.order;
+          return s.name !== k.name || s.facility_type !== k.kind || s.display_order !== k.order || sectionsOf(s.sections) !== k.sections;
         });
+        // `sections` only when it changed: the split lock's trigger fires on any write of the column.
+        const resplitPatch = (k: Kept) => (sectionsOf(stored.get(k.id)!.sections) !== k.sections ? { sections: k.sections } : {});
         const updates = await Promise.all(changed.map(k => supabaseAdmin.from('org_venue_facilities')
-          .update({ name: k.name, facility_type: k.kind, display_order: k.order }).eq('id', k.id).eq('org_id', orgId)));
+          .update({ name: k.name, facility_type: k.kind, display_order: k.order, ...resplitPatch(k) }).eq('id', k.id).eq('org_id', orgId)));
         for (const u of updates) if (u.error) throw u.error;
         if (plan.add.length) {
           const { data: rows, error } = await supabaseAdmin.from('org_venue_facilities').insert(plan.add.map(a => ({
-            org_venue_id: id, org_id: orgId, name: a.name, facility_type: a.kind, display_order: a.order,
+            org_venue_id: id, org_id: orgId, name: a.name, facility_type: a.kind, display_order: a.order, sections: a.sections,
           }))).select('id, name');
           if (error) throw error;
           const idByName = new Map(((rows ?? []) as { id: string; name: string }[]).map(r => [r.name, r.id]));
@@ -301,7 +338,7 @@ export const POST = withObservability(async (req: Request) => {
         .update({ name, address, notes, ...(bookingsEmail !== undefined ? { bookings_email: bookingsEmail } : {}), updated_at: new Date().toISOString() })
         .eq('id', id).eq('org_id', orgId);
       if (uErr) throw uErr;
-      const [venue] = await readVenues(orgId, { withArchived: true, venueId: id });
+      const [venue] = await withPartsBooked(await readVenues(orgId, { withArchived: true, venueId: id }));
       return NextResponse.json({ success: true, venue, created, carried });
     }
 
@@ -351,6 +388,10 @@ export const POST = withObservability(async (req: Request) => {
 
     return NextResponse.json({ error: 'Unsupported action.' }, { status: 400 });
   } catch (err) {
+    // The split lock's trigger (mig 541): a part was booked between the check above and the write. The same words.
+    if (/\bsplit_locked\b/.test((err as { message?: string } | null)?.message ?? '')) {
+      return venueRefusal(409, 'split_locked', 'A part of that field was just booked, so its split stays as it is. Reload the page.');
+    }
     // A supabase-js error is a plain object, not an `Error`, so every database failure used to come back as "Unknown
     // server error" with the cause thrown away. Record the real one; tell the person what happened in words.
     return captureAndJson(err, { error: 'We couldn’t save that just now. Try again.', code: 'save_failed' }, 500);

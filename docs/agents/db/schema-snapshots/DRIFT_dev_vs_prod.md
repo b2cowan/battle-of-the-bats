@@ -2,15 +2,15 @@
 
 **Generated:** 2026-11-26 by `scripts/refresh-db-snapshots.mjs` (structure only — no business data).
 
-**⚠️ 169 divergence(s)** across dev/prod.
+**⚠️ 184 divergence(s)** across dev/prod.
 
 | Dimension | Only in DEV | Only in PROD | Changed |
 |---|---|---|---|
 | Tables | 4 | 0 | — |
-| Columns | 88 | 0 | 0 |
-| Indexes | 22 | 0 | 0 |
+| Columns | 94 | 0 | 0 |
+| Indexes | 23 | 1 | 1 |
 | Constraints | 30 | 0 | — |
-| RLS / CHECK | 23 | 0 | 0 (RLS state) |
+| RLS / CHECK | 29 | 0 | 0 (RLS state) |
 
 ## Tables
 ### Only in DEV (4)
@@ -23,7 +23,8 @@
 _none_
 
 ## Columns
-### Only in DEV (88)
+### Only in DEV (94)
+- `club_schedule_slots.section_mask`
 - `club_sponsor_deal_payments.card_brand`
 - `club_sponsor_deal_payments.card_last4`
 - `club_sponsor_deal_payments.dispute_lost_at`
@@ -61,6 +62,8 @@ _none_
 - `club_sponsor_deal_refunds.whole`
 - `club_sponsor_deals.card_fee`
 - `club_sponsor_deals.card_fee_tax`
+- `league_games.section_mask`
+- `league_practices.section_mask`
 - `league_rainouts.closure_id`
 - `league_rainouts.org_venue_id`
 - `online_payments.sponsor_deal_id`
@@ -85,6 +88,8 @@ _none_
 - `org_place_closures.scope`
 - `org_place_closures.shows_from`
 - `org_place_closures.verb`
+- `org_time_block_facilities.section_mask`
+- `org_venue_facilities.sections`
 - `organization_previews.claimed_at`
 - `organization_previews.claimed_by`
 - `organization_previews.created_at`
@@ -112,6 +117,7 @@ _none_
 - `rep_event_closure_marks.org_id`
 - `rep_event_closure_marks.reopen_told_at`
 - `rep_event_closure_marks.team_id`
+- `rep_team_events.section_mask`
 
 ### Only in PROD (0)
 _none_
@@ -120,7 +126,8 @@ _none_
 _none_
 
 ## Indexes
-### Only in DEV (22)
+### Only in DEV (23)
+- `club_schedule_slots_family_place_overlap`
 - `club_sponsor_deal_payments_online_uniq`
 - `club_sponsor_deal_refunds_credit_uniq`
 - `club_sponsor_deal_refunds_deal_idx`
@@ -144,11 +151,13 @@ _none_
 - `rep_event_closure_marks_pkey`
 - `rep_event_closure_marks_team_idx`
 
-### Only in PROD (0)
-_none_
+### Only in PROD (1)
+- `club_schedule_slots_family_place_start`
 
-### Definition changed (0)
-_none_
+### Definition changed (1)
+- `org_time_block_facilities_pkey`
+  - dev: `CREATE UNIQUE INDEX org_time_block_facilities_pkey ON public.org_time_block_facilities USING btree (block_id, facility_id, section_mask)`
+  - prod: `CREATE UNIQUE INDEX org_time_block_facilities_pkey ON public.org_time_block_facilities USING btree (block_id, facility_id)`
 
 ## Constraints (PK / UNIQUE / FK)
 ### Only in DEV (30)
@@ -190,7 +199,8 @@ _none_
 ### RLS state differs (0)
 _none_
 
-### CHECK only in DEV (23)
+### CHECK only in DEV (29)
+- `club_schedule_slots.club_schedule_slots_section_mask_valid`
 - `club_sponsor_deal_payments.club_sponsor_deal_payments_card`
 - `club_sponsor_deal_refunds.club_sponsor_deal_refunds_amount_check`
 - `club_sponsor_deal_refunds.club_sponsor_deal_refunds_check`
@@ -201,6 +211,8 @@ _none_
 - `club_sponsor_deal_refunds.club_sponsor_deal_refunds_status_check`
 - `club_sponsor_deal_refunds.club_sponsor_deal_refunds_succeeded`
 - `club_sponsor_deals.club_sponsor_deals_card_fee`
+- `league_games.league_games_section_mask_valid`
+- `league_practices.league_practices_section_mask_valid`
 - `org_place_closures.org_place_closures_all_has_no_name`
 - `org_place_closures.org_place_closures_days`
 - `org_place_closures.org_place_closures_diamond_named`
@@ -209,11 +221,14 @@ _none_
 - `org_place_closures.org_place_closures_scope_check`
 - `org_place_closures.org_place_closures_shows`
 - `org_place_closures.org_place_closures_verb_check`
+- `org_time_block_facilities.org_time_block_facilities_section_mask_valid`
+- `org_venue_facilities.org_venue_facilities_sections_valid`
 - `organization_previews.organization_previews_claimer_needs_claim`
 - `organization_previews.organization_previews_logo_source_is_web`
 - `organization_previews.organization_previews_province_code_shape`
 - `organization_previews.organization_previews_removed_or_claimed`
 - `organizations.organizations_preview_has_no_stripe`
+- `rep_team_events.rep_team_events_section_mask_valid`
 
 ### CHECK only in PROD (0)
 _none_

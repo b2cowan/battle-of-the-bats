@@ -131,10 +131,15 @@ export function floorRefusal(e: unknown): Response | null {
   if (/\bslot_team\b/.test(msg)) return refusal(409, 'team_gone', R.teamGone);
   if (/\bslot_both\b/.test(msg)) return refusal(409, 'slot_both', R.slotBoth);
   if (/\bchanged:/.test(msg)) return refusal(409, 'changed', R.changed);
+  // A field's part its split doesn't offer, a part on a permit's block, or one ground named twice in a row (mig 541).
+  if (/\bpart_illegal\b|\bpart_on_permit\b|\bpart_overlap\b/.test(msg)) return refusal(409, 'part_gone', R.partGone);
   const code = (e as { code?: string } | null)?.code;
-  // Two saves racing on one family (mig 491's uniques): the same part label the same day, or one place held at one start.
-  // Someone else's save got there first — the schedule "changed since you opened it" (a reload shows it), never a 500.
-  if (code === '23505' && /club_schedules_part_label_once|club_schedule_slots_family_place_start/.test(msg)) return refusal(409, 'changed', R.changed);
+  // Two saves racing on one family (mig 491's part-label unique): the same part label the same day. Someone else's save
+  // got there first — the schedule "changed since you opened it" (a reload shows it), never a 500.
+  if (code === '23505' && /club_schedules_part_label_once/.test(msg)) return refusal(409, 'changed', R.changed);
+  // The place floor (mig 541, an EXCLUSION constraint since the equal-start unique went): two live slots of one family
+  // on overlapping ground at overlapping times. It raises 23P01, never 23505; the same "changed" answer.
+  if (code === '23P01' && /club_schedule_slots_family_place_overlap/.test(msg)) return refusal(409, 'changed', R.changed);
   if (code === '23514' || code === '22003' || code === '22P02' || code === '23502') return refusal(400, 'schedule_value', R.scheduleValue);
   return null;
 }

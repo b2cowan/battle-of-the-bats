@@ -1,6 +1,8 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
+import { readFileSync } from 'node:fs';
 import {
+  findClashPairs,
   findClubClashes,
   findClubClashesFor,
   repEventBooking,
@@ -89,6 +91,35 @@ describe('the rule — same venue, same facility, overlapping time (hub table ro
     assert.deepEqual(findClubClashes(d3, [aa14]), []);
     const at8 = rep({ id: 'e13c', team: 't13', start: '2026-11-03 20:00', end: '2026-11-03 22:00' });
     assert.deepEqual(findClubClashes(at8, [aa14]), []);
+  });
+
+  it('parts of one field (mig 541): side A beside side B is no clash; the whole field or an overlapping part is', () => {
+    const on = (id: string, team: string, mask: number) => repEventBooking({
+      id, team_id: team, event_type: 'practice', starts_at: at('2026-11-03 18:00'), ends_at: at('2026-11-03 19:30'),
+      status: 'scheduled', org_venue_id: LIONS, org_venue_facility_id: D2, section_mask: mask,
+    }, { team, venue: 'Lions Park', facility: 'Diamond 2' })!;
+    const league = (mask: number | undefined) => leagueBooking({
+      id: `g${mask}`, kind: 'game', scheduled_at: at('2026-11-03 18:30'), ends_at: at('2026-11-03 20:00'), status: 'scheduled',
+      org_venue_id: LIONS, org_venue_facility_id: D2, section_mask: mask,
+    }, { season: '2026 Fall House League' })!;
+    assert.deepEqual(findClubClashes(on('a', 'tA', 3), [on('b', 'tB', 12)]), [], 'side A beside side B');
+    assert.equal(findClubClashes(on('a', 'tA', 3), [on('b', 'tB', 0)])[0]?.kind, 'booked_by', 'side A beside the whole field');
+    assert.equal(findClubClashes(on('a', 'tA', 1), [on('b', 'tB', 3)])[0]?.kind, 'booked_by', 'quarter A beside quarters A–B');
+    assert.deepEqual(findClubClashes(on('a', 'tA', 4), [on('b', 'tB', 3)]), [], 'quarter C beside quarters A–B');
+    // Across programs, the same rule: a house-league game on side B beside a rep practice on side A.
+    assert.deepEqual(findClubClashes(on('a', 'tA', 3), [league(12)]), []);
+    assert.equal(findClubClashes(on('a', 'tA', 3), [league(undefined)])[0]?.kind, 'booked_by', 'a row read without its part is the whole field');
+    // The pairs reader (the club calendar) is the same rule.
+    assert.equal(findClashPairs([on('a', 'tA', 3), on('b', 'tB', 12), on('c', 'tC', 0)]).length, 2, 'the whole field meets each side; the sides do not meet');
+  });
+
+  it('every booking table with a part has it on the pool read (a missed select reads whole, which over-reports)', () => {
+    const src = readFileSync(new URL('../../lib/venue-clash-lookup.ts', import.meta.url), 'utf8');
+    for (const table of ['rep_team_events', 'league_games', 'league_practices']) {
+      const at = src.indexOf(`from('${table}')`, src.indexOf('async function readClubPool'));
+      assert.ok(at > 0, table);
+      assert.match(src.slice(at, src.indexOf('.range(a, b)', at)), /section_mask/, `${table} selects section_mask`);
+    }
   });
 });
 

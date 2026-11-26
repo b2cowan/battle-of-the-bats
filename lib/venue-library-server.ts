@@ -198,6 +198,23 @@ export async function facilitiesBooked(orgId: string, facilityIds: readonly stri
 }
 
 /**
+ * Which of these fields have a booking STILL TO COME on one of their parts (Club schedules Stage 2, round 2 Ask 7 A; owner
+ * 2026-11-25: past bookings never lock). The database's own question (`org_venue_facility_parts_booked`, mig 541), so the
+ * window's locked select, the route's refusal and the trigger can never disagree. Ask only about split fields: a field not
+ * split has no part to book.
+ */
+export async function facilitiesWithPartsBooked(facilityIds: readonly string[]): Promise<Set<string>> {
+  const answers = await Promise.all([...new Set(facilityIds)].map(id =>
+    supabaseAdmin.rpc('org_venue_facility_parts_booked', { p_facility: id }).then(r => ({ id, r }))));
+  const out = new Set<string>();
+  for (const { id, r } of answers) {
+    if (r.error) throw r.error;
+    if (r.data === true) out.add(id);
+  }
+  return out;
+}
+
+/**
  * Carry the library's words forward onto the UPCOMING bookings that link the venue (see the header), given the venue's
  * FINAL words — the names this save will write. ⚠ The route calls it BEFORE it writes the library's own rows (/review 6b):
  * written after them, a failure in between left the library renamed and the bookings not, and the retry — seeing no change

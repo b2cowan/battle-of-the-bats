@@ -1066,8 +1066,8 @@
   },
   {
     "tablename": "club_schedule_slots",
-    "indexname": "club_schedule_slots_family_place_start",
-    "indexdef": "CREATE UNIQUE INDEX club_schedule_slots_family_place_start ON public.club_schedule_slots USING btree (family_id, org_venue_id, COALESCE(facility_id, '00000000-0000-0000-0000-000000000000'::uuid), starts_at)"
+    "indexname": "club_schedule_slots_family_place_overlap",
+    "indexdef": "CREATE INDEX club_schedule_slots_family_place_overlap ON public.club_schedule_slots USING gist (family_id, org_venue_id, COALESCE(facility_id, '00000000-0000-0000-0000-000000000000'::uuid), section_range(section_mask), tstzrange(starts_at, ends_at, '[)'::text)) WHERE (removed_at IS NULL)"
   },
   {
     "tablename": "club_schedule_slots",
@@ -3457,7 +3457,7 @@
   {
     "tablename": "org_time_block_facilities",
     "indexname": "org_time_block_facilities_pkey",
-    "indexdef": "CREATE UNIQUE INDEX org_time_block_facilities_pkey ON public.org_time_block_facilities USING btree (block_id, facility_id)"
+    "indexdef": "CREATE UNIQUE INDEX org_time_block_facilities_pkey ON public.org_time_block_facilities USING btree (block_id, facility_id, section_mask)"
   },
   {
     "tablename": "org_time_blocks",

@@ -5213,6 +5213,15 @@
         "column_default": null
       },
       {
+        "table_name": "club_schedule_slots",
+        "pos": 18,
+        "column_name": "section_mask",
+        "data_type": "smallint",
+        "udt_name": "int2",
+        "is_nullable": "NO",
+        "column_default": "0"
+      },
+      {
         "table_name": "club_schedules",
         "pos": 1,
         "column_name": "id",
@@ -11882,6 +11891,15 @@
         "column_default": null
       },
       {
+        "table_name": "league_games",
+        "pos": 20,
+        "column_name": "section_mask",
+        "data_type": "smallint",
+        "udt_name": "int2",
+        "is_nullable": "NO",
+        "column_default": "0"
+      },
+      {
         "table_name": "league_notification_log",
         "pos": 1,
         "column_name": "id",
@@ -12546,6 +12564,15 @@
         "udt_name": "uuid",
         "is_nullable": "YES",
         "column_default": null
+      },
+      {
+        "table_name": "league_practices",
+        "pos": 17,
+        "column_name": "section_mask",
+        "data_type": "smallint",
+        "udt_name": "int2",
+        "is_nullable": "NO",
+        "column_default": "0"
       },
       {
         "table_name": "league_rainouts",
@@ -18443,6 +18470,15 @@
         "column_default": null
       },
       {
+        "table_name": "org_time_block_facilities",
+        "pos": 4,
+        "column_name": "section_mask",
+        "data_type": "smallint",
+        "udt_name": "int2",
+        "is_nullable": "NO",
+        "column_default": "0"
+      },
+      {
         "table_name": "org_time_blocks",
         "pos": 1,
         "column_name": "id",
@@ -18720,6 +18756,15 @@
         "udt_name": "timestamptz",
         "is_nullable": "NO",
         "column_default": "now()"
+      },
+      {
+        "table_name": "org_venue_facilities",
+        "pos": 9,
+        "column_name": "sections",
+        "data_type": "smallint",
+        "udt_name": "int2",
+        "is_nullable": "NO",
+        "column_default": "1"
       },
       {
         "table_name": "org_venues",
@@ -28548,6 +28593,15 @@
         "udt_name": "uuid",
         "is_nullable": "YES",
         "column_default": null
+      },
+      {
+        "table_name": "rep_team_events",
+        "pos": 45,
+        "column_name": "section_mask",
+        "data_type": "smallint",
+        "udt_name": "int2",
+        "is_nullable": "NO",
+        "column_default": "0"
       },
       {
         "table_name": "rep_team_expense_tags",
@@ -43133,8 +43187,8 @@
       },
       {
         "tablename": "club_schedule_slots",
-        "indexname": "club_schedule_slots_family_place_start",
-        "indexdef": "CREATE UNIQUE INDEX club_schedule_slots_family_place_start ON public.club_schedule_slots USING btree (family_id, org_venue_id, COALESCE(facility_id, '00000000-0000-0000-0000-000000000000'::uuid), starts_at)"
+        "indexname": "club_schedule_slots_family_place_overlap",
+        "indexdef": "CREATE INDEX club_schedule_slots_family_place_overlap ON public.club_schedule_slots USING gist (family_id, org_venue_id, COALESCE(facility_id, '00000000-0000-0000-0000-000000000000'::uuid), section_range(section_mask), tstzrange(starts_at, ends_at, '[)'::text)) WHERE (removed_at IS NULL)"
       },
       {
         "tablename": "club_schedule_slots",
@@ -45524,7 +45578,7 @@
       {
         "tablename": "org_time_block_facilities",
         "indexname": "org_time_block_facilities_pkey",
-        "indexdef": "CREATE UNIQUE INDEX org_time_block_facilities_pkey ON public.org_time_block_facilities USING btree (block_id, facility_id)"
+        "indexdef": "CREATE UNIQUE INDEX org_time_block_facilities_pkey ON public.org_time_block_facilities USING btree (block_id, facility_id, section_mask)"
       },
       {
         "tablename": "org_time_blocks",
@@ -50129,6 +50183,12 @@
       {
         "kind": "CHECK",
         "table_name": "club_schedule_slots",
+        "detail": "club_schedule_slots_section_mask_valid",
+        "check_clause": "((section_mask = ANY (ARRAY[0, 1, 2, 3, 4, 8, 12])) AND ((section_mask = 0) OR (facility_id IS NOT NULL)))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "club_schedule_slots",
         "detail": "club_schedule_slots_window",
         "check_clause": "((ends_at > starts_at) AND (ends_at <= (starts_at + '24:00:00'::interval)))"
       },
@@ -51671,6 +51731,12 @@
       {
         "kind": "CHECK",
         "table_name": "league_games",
+        "detail": "league_games_section_mask_valid",
+        "check_clause": "((section_mask = ANY (ARRAY[0, 1, 2, 3, 4, 8, 12])) AND ((section_mask = 0) OR (org_venue_facility_id IS NOT NULL)))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "league_games",
         "detail": "league_games_status_check",
         "check_clause": "(status = ANY (ARRAY['scheduled'::text, 'completed'::text, 'cancelled'::text, 'postponed'::text]))"
       },
@@ -51811,6 +51877,12 @@
         "table_name": "league_practice_time",
         "detail": "ENABLED",
         "check_clause": null
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "league_practices",
+        "detail": "league_practices_section_mask_valid",
+        "check_clause": "((section_mask = ANY (ARRAY[0, 1, 2, 3, 4, 8, 12])) AND ((section_mask = 0) OR (org_venue_facility_id IS NOT NULL)))"
       },
       {
         "kind": "CHECK",
@@ -52995,6 +53067,12 @@
         "check_clause": null
       },
       {
+        "kind": "CHECK",
+        "table_name": "org_time_block_facilities",
+        "detail": "org_time_block_facilities_section_mask_valid",
+        "check_clause": "(section_mask = ANY (ARRAY[0, 1, 2, 3, 4, 8, 12]))"
+      },
+      {
         "kind": "RLS",
         "table_name": "org_time_block_facilities",
         "detail": "ENABLED",
@@ -53065,6 +53143,12 @@
         "table_name": "org_venue_facilities",
         "detail": "org_venue_facilities_facility_type_check",
         "check_clause": "(facility_type = ANY (ARRAY['diamond'::text, 'field'::text, 'court'::text, 'rink'::text, 'gym'::text, 'other'::text]))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "org_venue_facilities",
+        "detail": "org_venue_facilities_sections_valid",
+        "check_clause": "(sections = ANY (ARRAY[1, 2, 4]))"
       },
       {
         "kind": "RLS",
@@ -55123,6 +55207,12 @@
         "table_name": "rep_team_events",
         "detail": "rep_team_events_scrimmage_is_a_game_check",
         "check_clause": "((NOT is_scrimmage) OR (event_type = 'league_game'::text))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "rep_team_events",
+        "detail": "rep_team_events_section_mask_valid",
+        "check_clause": "((section_mask = ANY (ARRAY[0, 1, 2, 3, 4, 8, 12])) AND ((section_mask = 0) OR (org_venue_facility_id IS NOT NULL)))"
       },
       {
         "kind": "CHECK",

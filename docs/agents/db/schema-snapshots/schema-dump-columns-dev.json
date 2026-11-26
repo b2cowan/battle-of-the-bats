@@ -5211,6 +5211,15 @@
     "ordinal_position": 17
   },
   {
+    "table_name": "club_schedule_slots",
+    "column_name": "section_mask",
+    "data_type": "smallint",
+    "udt_name": "int2",
+    "is_nullable": "NO",
+    "column_default": "0",
+    "ordinal_position": 18
+  },
+  {
     "table_name": "club_schedules",
     "column_name": "id",
     "data_type": "uuid",
@@ -11880,6 +11889,15 @@
     "ordinal_position": 19
   },
   {
+    "table_name": "league_games",
+    "column_name": "section_mask",
+    "data_type": "smallint",
+    "udt_name": "int2",
+    "is_nullable": "NO",
+    "column_default": "0",
+    "ordinal_position": 20
+  },
+  {
     "table_name": "league_notification_log",
     "column_name": "id",
     "data_type": "uuid",
@@ -12544,6 +12562,15 @@
     "is_nullable": "YES",
     "column_default": null,
     "ordinal_position": 16
+  },
+  {
+    "table_name": "league_practices",
+    "column_name": "section_mask",
+    "data_type": "smallint",
+    "udt_name": "int2",
+    "is_nullable": "NO",
+    "column_default": "0",
+    "ordinal_position": 17
   },
   {
     "table_name": "league_rainouts",
@@ -18441,6 +18468,15 @@
     "ordinal_position": 3
   },
   {
+    "table_name": "org_time_block_facilities",
+    "column_name": "section_mask",
+    "data_type": "smallint",
+    "udt_name": "int2",
+    "is_nullable": "NO",
+    "column_default": "0",
+    "ordinal_position": 4
+  },
+  {
     "table_name": "org_time_blocks",
     "column_name": "id",
     "data_type": "uuid",
@@ -18718,6 +18754,15 @@
     "is_nullable": "NO",
     "column_default": "now()",
     "ordinal_position": 8
+  },
+  {
+    "table_name": "org_venue_facilities",
+    "column_name": "sections",
+    "data_type": "smallint",
+    "udt_name": "int2",
+    "is_nullable": "NO",
+    "column_default": "1",
+    "ordinal_position": 9
   },
   {
     "table_name": "org_venues",
@@ -28546,6 +28591,15 @@
     "is_nullable": "YES",
     "column_default": null,
     "ordinal_position": 44
+  },
+  {
+    "table_name": "rep_team_events",
+    "column_name": "section_mask",
+    "data_type": "smallint",
+    "udt_name": "int2",
+    "is_nullable": "NO",
+    "column_default": "0",
+    "ordinal_position": 45
   },
   {
     "table_name": "rep_team_expense_tags",

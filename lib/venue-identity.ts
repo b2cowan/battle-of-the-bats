@@ -34,6 +34,8 @@
  *   caller rather than guessed at.
  */
 
+import { maskOf, partsOverlap } from './field-parts.ts';
+
 // ---------------------------------------------------------------------------
 // Input
 // ---------------------------------------------------------------------------
@@ -53,6 +55,11 @@ export interface VenuePlacementSource {
   scheduleFacilityLaneLabel?: string | null;
   /** Free-text display string typed by an organizer. */
   location?: string | null;
+  /**
+   * The part of the surface (mig 541, `lib/field-parts.ts`; house league's rows on club time). Absent = the whole
+   * surface, so a caller not yet passing it over-reports (two sides read as one), never misses a clash.
+   */
+  sectionMask?: number | null;
 }
 
 /**
@@ -71,6 +78,8 @@ export interface VenuePlacement {
   laneKey: string | null;
   /** Normalized typed text — set only for `kind === 'text'`. */
   textKey: string | null;
+  /** Set only for `kind === 'facility'`: the part, quarter units, 0 / absent = the whole surface. */
+  sectionMask?: number;
 }
 
 const UNPLACED: VenuePlacement = {
@@ -148,7 +157,7 @@ export function resolveVenuePlacement(source: VenuePlacementSource | null | unde
   const venueId = source.venueId || null;
 
   if (source.venueFacilityId) {
-    return { kind: 'facility', facilityId: source.venueFacilityId, venueId, laneKey: null, textKey: null };
+    return { kind: 'facility', facilityId: source.venueFacilityId, venueId, laneKey: null, textKey: null, sectionMask: maskOf(source.sectionMask) };
   }
   if (venueId) {
     return { kind: 'venue', facilityId: null, venueId, laneKey: null, textKey: null };
@@ -209,8 +218,9 @@ export function placementsShareSurface(a: VenuePlacement, b: VenuePlacement): bo
 
   if (aStructured && bStructured) {
     // Both pin a specific surface → only the same surface clashes. Two different diamonds in
-    // one park are not a conflict.
-    if (a.facilityId && b.facilityId) return a.facilityId === b.facilityId;
+    // one park are not a conflict; nor two parts of one field that share no ground (side A beside
+    // side B, Club schedules Stage 2). The whole field meets each part (`partsOverlap`, the one rule).
+    if (a.facilityId && b.facilityId) return a.facilityId === b.facilityId && partsOverlap(a.sectionMask, b.sectionMask);
     // Mixed granularity → fall back to the level both sides share.
     if (a.venueId && b.venueId) return a.venueId === b.venueId;
     return false;

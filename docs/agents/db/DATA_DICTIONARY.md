@@ -1790,6 +1790,9 @@ the studio and mirrored to the platform audit log.
 <!-- dict:col:org_venue_facilities.notes -->
 **`name`** (NOT NULL) / **`facility_type`** (default `'other'`) / **`display_order`** / **`notes`** — copied to `venue_facilities.*` on import. ⚠ **A facility rename reaches the upcoming bookings that link it** (6b): rep events / tryout days `.field_number`, house league's `location`; past ones keep their words. **No archive of its own** (decided 6b from the data): a facility any booking holds is never removed (the route refuses), one nothing books can be deleted.
 
+<!-- dict:col:org_venue_facilities.sections -->
+**`sections`** (smallint, NOT NULL, default 1; **mig 541**, Club schedules Stage 2, round 1 Ask 4 B) — how the field splits: **1 = not split, 2 = two sides, 4 = four quarters** (CHECK `org_venue_facilities_sections_valid`; thirds cannot be written in quarters). The field stays ONE row: pickers, permits, tournament copies and every count are untouched; a booking names its part with `section_mask` on the five booking tables. Legal masks per split: 1 → {0}; 2 → {0, 3, 12}; 4 → {0, 1, 2, 4, 8, 3, 12} (`section_mask_legal`). ⚖ **The split lock** (round 2 Ask 7 A; owner 2026-11-25: bookings still to come only): trigger `org_venue_facilities_split_lock` refuses ANY change of `sections` while `org_venue_facility_parts_booked(id)` — a live slot not yet ended, a schedule not yet over, an uncancelled rep event or house-league row not yet ended names a non-zero mask on it. Past bookings never lock; their part reads in quarter words if the split later changes. The library route (`app/api/admin/org/venues/route.ts`) asks the same function first and refuses in words (`split_locked`). Written only by that route.
+
 ### The time the club holds: `org_permits` + `org_time_blocks` + `org_time_block_facilities` + `org_permit_facility_shares` + `org_time_dates_off`
 <!-- dict:table:org_permits -->
 <!-- dict:table:org_time_blocks -->
@@ -1896,6 +1899,9 @@ the studio and mirrored to the platform audit log.
 <!-- dict:col:org_time_block_facilities.facility_id -->
 <!-- dict:col:org_time_block_facilities.org_id -->
 **`block_id`** (FK → `org_time_blocks.id` ON DELETE CASCADE) / **`facility_id`** (FK → `org_venue_facilities.id` ON DELETE **NO ACTION** — the floor under "held by a permit") / **`org_id`** — PK (block, facility). The facilities a block covers ("Fields 1–6", Ask 21); the trigger refuses a facility not at the block's venue. ⚖ **NO ROWS = EVERY facility at the venue**, read at the time; a venue with no facilities is the one place the block holds.
+
+<!-- dict:col:org_time_block_facilities.section_mask -->
+**`section_mask`** (smallint, NOT NULL, default 0; **mig 541**, Club schedules Stage 2) — on a SCHEDULE's row of time, the part of the field it holds (quarter units: 1 = quarter A, 2 = B, 4 = C, 8 = D, 3 = A–B, 12 = C–D, **0 = the whole field** (never 15); words come from (mask, the field's `sections`) at read time via `lib/field-parts.ts`, nothing stored holds a word). **Part of the primary key** since mig 541: (block_id, facility_id, section_mask) — one row per ticked part, so a block can now return two rows for one facility (readers that build `facilityIds` from the rows de-duplicate once parts are written, Session 2B). Always 0 on a permit's block (trigger `org_time_block_facilities_part_check`: `part_on_permit`; and no two overlapping masks of one field in one block, `part_overlap`). CHECK `org_time_block_facilities_section_mask_valid`; legality trigger `org_time_block_facilities_section_mask_check`.
 
 **`org_permit_facility_shares` fields:**
 
@@ -2014,7 +2020,7 @@ the studio and mirrored to the platform audit log.
 <!-- dict:col:club_schedule_slots.id -->
 <!-- dict:col:club_schedule_slots.created_at -->
 <!-- dict:col:club_schedule_slots.updated_at -->
-**`id`** / **`created_at`** / **`updated_at`** — boilerplate. ⚠ A slot KEEPS its id while its place and start stay (`club_schedule_save` matches by `(schedule, venue, facility, starts_at)` — unique index `club_schedule_slots_place_start`, re-keyed to the FAMILY by mig 491 as `club_schedule_slots_family_place_start` on `(family_id, venue, facility, starts_at)`), so a final schedule's practices keep their link through a regenerate.
+**`id`** / **`created_at`** / **`updated_at`** — boilerplate. ⚠ A slot KEEPS its id while its place and start stay (`club_schedule_save` matches by `(schedule, venue, facility, starts_at)` — unique index `club_schedule_slots_place_start`, re-keyed to the FAMILY by mig 491 as `club_schedule_slots_family_place_start` on `(family_id, venue, facility, starts_at)`, and since mig 541 the exclusion constraint `club_schedule_slots_family_place_overlap` — see `section_mask`; the save's own lookup still matches by the equal start), so a final schedule's practices keep their link through a regenerate.
 
 <!-- dict:col:club_schedule_slots.org_id -->
 <!-- dict:col:club_schedule_slots.schedule_id -->
@@ -2029,6 +2035,9 @@ the studio and mirrored to the platform audit log.
 <!-- dict:col:club_schedule_slots.org_venue_id -->
 <!-- dict:col:club_schedule_slots.facility_id -->
 **`org_venue_id`** (FK → `org_venues.id`, NO ACTION, NOT NULL) / **`facility_id`** (FK → `org_venue_facilities.id`, NO ACTION, nullable — null = the venue itself, a venue with no facilities) — the place; the trigger refuses a facility not at the venue.
+
+<!-- dict:col:club_schedule_slots.section_mask -->
+**`section_mask`** (smallint, NOT NULL, default 0; **mig 541**, Club schedules Stage 2) — the ground the slot holds (quarter units: 1 = quarter A, 2 = B, 4 = C, 8 = D, 3 = A–B, 12 = C–D, **0 = the whole field** (never 15); words come from (mask, the field's `sections`) at read time via `lib/field-parts.ts`, nothing stored holds a word). ⚖ **The place floor is `club_schedule_slots_family_place_overlap`** (mig 541; it replaced the equal-start unique `club_schedule_slots_family_place_start`): an EXCLUSION constraint — one family, one venue, one facility, overlapping `section_range(section_mask)`, overlapping `[starts_at, ends_at)` — over LIVE rows only (`removed_at IS NULL`: a final schedule keeps a moved slot's old row until Send the changes), `DEFERRABLE INITIALLY DEFERRED` (the save lands a moved slot before it removes the old one). Raises 23P01, said as "changed" by `floorRefusal`. CHECK `club_schedule_slots_section_mask_valid`; trigger `club_schedule_slots_section_mask_check` (legal for the field's `sections`, `part_illegal`).
 
 <!-- dict:col:club_schedule_slots.starts_at -->
 <!-- dict:col:club_schedule_slots.ends_at -->
@@ -3366,6 +3375,9 @@ copy `carriedEntryFields` only). NULL on a returning child's live entry with a v
 <!-- dict:col:rep_team_events.org_venue_id -->
 <!-- dict:col:rep_team_events.org_venue_facility_id -->
 **`org_venue_id`** (FK → `org_venues.id` ON DELETE SET NULL, nullable) / **`org_venue_facility_id`** (FK → `org_venue_facilities.id` ON DELETE SET NULL, nullable) — **mig 319, Club Tier Stage 6a**: the **club's venue and facility** this event is booked at, when the coach picked one of the club's venues in the Venue field (a club with a Venue library only — `hasOrgVenueLibrary` and at least one venue). The same two links a house-league game holds (`league_games`), with the **same delete behaviour**: deleting a library venue nulls both and leaves the event's words (Stage 6b's Archive is what protects a venue in use, S6-08). ⚠ **A LINK BESIDE THE COPY**: `location` / `location_address` / `field_number` still carry the venue's name, address and facility name, so the schedule, the family calendar, the Maps link and every export read unchanged. ⚠ Never both a club venue and a `place_id` (a club venue is not a coach's place): the writers clear one when they set the other (`lib/rep-event-where.ts`), and the CHECK `rep_team_events_place_or_club_venue` (`place_id IS NULL OR org_venue_id IS NULL`) refuses the pair outright. The facility is always one of the venue's own, and the venue the event's own org's (route-enforced through `lib/venue-clash-lookup.ts` `resolveClubVenueSelection`, the house-league resolver's rule — no CHECK, because SET NULL fires per key in no promised order). **The clash check compares ONLY linked bookings** (a coach's own place or typed words never compare — Ask 3). A mirrored game (`source_tournament_game_id`) never carries one: the tournament game is the booking (S6-06). Partial indexes `rep_team_events_org_venue_idx`, `rep_team_events_org_venue_facility_idx` and the lookup's `rep_team_events_club_booking_idx (org_id, starts_at) WHERE org_venue_id IS NOT NULL`. _Writes:_ events POST (one and a weekly series), PATCH (one and a series edit — S6-05 fixed in the same change), the import (a row whose location names a club venue). _Reads:_ the schedule read (the field), the clash lookup.
+
+<!-- dict:col:rep_team_events.section_mask -->
+**`section_mask`** (smallint, NOT NULL, default 0; **mig 541**, Club schedules Stage 2) — the part of `org_venue_facility_id` the event is on (quarter units: 1 = quarter A, 2 = B, 4 = C, 8 = D, 3 = A–B, 12 = C–D, **0 = the whole field** (never 15); words come from (mask, the field's `sections`) at read time via `lib/field-parts.ts`, nothing stored holds a word). Written by Send the changes from the event's club slot, beside the field (Session 2C); a coach's own events book whole fields (0). The clash pool reads it (`lib/venue-clash-lookup.ts`): side A and side B at one time are not a clash. CHECK `rep_team_events_section_mask_valid`; trigger `rep_team_events_section_mask_check` (legal for the field's split; the ON DELETE SET NULL of the field clears the part with it).
 
 <!-- dict:col:rep_team_events.field_number -->
 **`field_number`** (text, nullable; mig 160) — game-day detail: the diamond/field label *within* the `location` (e.g. "Diamond 2"). Free text — the event's copy. When the event is on a club venue's facility (`org_venue_facility_id`, mig 319) it carries that facility's name. Appended to the location label in the detail + the ICS `LOCATION`. Tier-2 game-day field.
@@ -8801,6 +8813,9 @@ Sent and By).
 <!-- dict:col:league_games.org_venue_facility_id -->
 **`org_venue_facility_id`** (FK → `org_venue_facilities.id` ON DELETE **SET NULL**, nullable; index `idx_league_games_org_venue_facility`; mig 229, on production) — the specific surface; must belong to `org_venue_id` (server-enforced, no DB constraint). Preferred granularity for clash detection via `lib/venue-identity.ts`.
 
+<!-- dict:col:league_games.section_mask -->
+**`section_mask`** (smallint, NOT NULL, default 0; **mig 541**, Club schedules Stage 2) — the part of `org_venue_facility_id` the game is on (quarter units: 1 = quarter A, 2 = B, 4 = C, 8 = D, 3 = A–B, 12 = C–D, **0 = the whole field** (never 15); words come from (mask, the field's `sections`) at read time via `lib/field-parts.ts`, nothing stored holds a word). Copied from its club slot (through `league_slot_uses`) by the generator on club time (Session 2E); a hand edit that changes the field writes 0. CHECK `league_games_section_mask_valid`; trigger `league_games_section_mask_check`. ⚠ `league_games_record_change` (mig 539) does not yet read it: a move from side A to side B would not count as news (Session 2E, /dba 2026-11-25).
+
 <!-- dict:col:league_games.ends_at -->
 **`ends_at`** (timestamptz, nullable; mig 229, on production) — optional game end, making game windows comparable with practices in the one-booking-pool clash check; the league conflict engine falls back to a 90-minute default when null ([lib/league-schedule-conflict.ts](../../../lib/league-schedule-conflict.ts)).
 
@@ -9083,6 +9098,9 @@ See `org_children` for the rules (confirm joins, undo splits, live name edits wr
 
 <!-- dict:col:league_practices.org_venue_facility_id -->
 **`org_venue_facility_id`** (FK → `org_venue_facilities.id` ON DELETE **SET NULL**, nullable; index `idx_league_practices_org_venue_facility`; mig 229, on production) — the specific surface; must belong to `org_venue_id` (server-enforced).
+
+<!-- dict:col:league_practices.section_mask -->
+**`section_mask`** (smallint, NOT NULL, default 0; **mig 541**, Club schedules Stage 2) — the part of `org_venue_facility_id` the practice is on (quarter units: 1 = quarter A, 2 = B, 4 = C, 8 = D, 3 = A–B, 12 = C–D, **0 = the whole field** (never 15); words come from (mask, the field's `sections`) at read time via `lib/field-parts.ts`, nothing stored holds a word). Copied from its club slot beside the field when Practice time hands club time out (Session 2E); house league never splits a field itself, so a hand edit that changes the field writes 0. CHECK `league_practices_section_mask_valid` (a stored mask, and none without a field); trigger `league_practices_section_mask_check` (legal for the field's `sections`; a cleared field clears its part).
 
 <!-- dict:col:league_practices.notes -->
 **`notes`** (text, nullable) — free-text admin notes.

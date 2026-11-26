@@ -86,11 +86,16 @@ describe('the routes make a part, and never write the schedule it is added to (s
     assert.match(parent, /wholeFamily\(orgId, parentId\)/);
     assert.match(functionBody(server, 'partTimeRefusal'), /time\.startsOn < today/);
   });
-  it('two saves racing on one family say "changed since you opened it", never a 500 (mig 491’s uniques)', () => {
+  it('two saves racing on one family say "changed since you opened it", never a 500 (mig 491’s unique, mig 541’s floor)', () => {
     const floor = functionBody(server, 'floorRefusal');
-    assert.match(floor, /23505/);
-    assert.match(floor, /club_schedules_part_label_once\|club_schedule_slots_family_place_start/);
-    assert.match(floor, /refusal\(409, 'changed', R\.changed\)/);
+    assert.match(floor, /code === '23505' && \/club_schedules_part_label_once\/\.test\(msg\)\) return refusal\(409, 'changed', R\.changed\)/);
+    // The place floor is an exclusion constraint since mig 541: 23P01, by its own name, the same answer.
+    assert.match(floor, /code === '23P01' && \/club_schedule_slots_family_place_overlap\/\.test\(msg\)\) return refusal\(409, 'changed', R\.changed\)/);
+    assert.ok(!floor.includes('family_place_start'), 'the equal-start index is gone (mig 541)');
+    // A part the field no longer offers is said in words, before the 23514 catch-all reads it as a bad figure.
+    assert.ok(floor.indexOf('part_illegal') > -1 && floor.indexOf('part_illegal') < floor.indexOf("'23514'"));
+    const mig = readSource('supabase/migrations/541_a_field_splits_into_parts.sql');
+    assert.match(mig, /add constraint club_schedule_slots_family_place_overlap\s+exclude using gist/);
   });
   it('today’s Add time internals are gone: no add_time action, no addTimeRequest, no addedTime, no add keep', () => {
     assert.ok(!one.includes("'add_time'"));

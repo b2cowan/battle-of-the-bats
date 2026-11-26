@@ -347,6 +347,45 @@ Migration first. Drawn together with Stage 3.
       house-league games and practices on club time, Ask 1 A; a split locked while any part is booked, Ask 7 A),
       recorded in §5 (2026-11-25): a four-bit mask in quarter units, 0 = whole; the place floor becomes an exclusion
       constraint; the same five tables. Proposed; the migration session builds on it (Finding #55).
+- [ ] **The build, five sessions (2026-11-25):** [SCHEDULE_PARTS_STAGE2_BUILD_PROMPT.md](SCHEDULE_PARTS_STAGE2_BUILD_PROMPT.md).
+      2A the database, the shared part helpers, every clash check and the venue list's split · 2B New schedule, the
+      slots, shares, the grid and the bill · 2C Send, the coaches portal, the calendar and the PDF · 2D other schedules
+      and the permit's Used figure · 2E house league, then the stage's close (words, help, review, walk) and Stage 3's
+      prompt. The checklist items below are built across them.
+  - [x] **2A built 2026-11-25** (mig 541, applied to DEV 2026-11-25; prod waits for the promote — `MANUAL_PROD_STEPS.json`).
+        Re-count first: dev 0 overlapping same-place pairs among 1,516 slots and 0 slot-made rows off their slot's field
+        (385 rep events, 7 practices, 64 games); prod 0 of each. `/dba` pass on the text: apply as-is, one clause taken
+        (`FOR SHARE` on the legality read, so a split change racing a booking waits for it). Proof
+        `scripts/schedule-parts-floor-check.sql`, rolled back, 17 of 17. Built: `lib/field-parts.ts` (legal masks,
+        `partsOverlap`, `partFactor`, the words; pure, imports nothing); the 23P01 mapping and `partGone` words in
+        `floorRefusal`; the clash rules `clashKindOf` and `placementsShareSurface` compare (field, part) through
+        `partsOverlap`; the clash pool selects `section_mask` on rep events and house-league games and practices; the
+        Venue library's split select, its locked line and the read card's "Four quarters, A to D"; the route refuses a
+        locked split in words first. **Four things the code decided, said out loud in the session:**
+        (1) the floor ignores removed slots (`WHERE removed_at IS NULL`): `club_schedule_save` keeps a moved slot's old row
+        on a FINAL schedule until Send the changes, so counting it would refuse every overlapping move until the club sent;
+        (2) it is `DEFERRABLE INITIALLY DEFERRED`, not IMMEDIATE-and-deferred-in-the-save: the save inserts a moved slot
+        before it removes the old one and extends `ends_at` row by row, and every writer is one RPC = one transaction, so no
+        function body was copied; (3) no new `ends_at > starts_at` CHECK — `club_schedule_slots_window` already holds it
+        (the §5 note read the snapshot wrong); (4) **owner ruling 2026-11-25 (asked in the session, "Upcoming only"): the
+        split lock counts only bookings still to come** (a live slot not yet ended, a schedule not yet over, an uncancelled
+        event, practice or game not yet ended). A past part never locks the field for good; if the split later changes, the
+        past booking reads in quarter words ("quarters A–B"). The locked line says "bookings", not the drawing's
+        "practices", because a house-league game on club time can hold a part too (for `/marketing`).
+        **Owed to later sessions (from `/dba` and the build):** 2B — readers that build `facilityIds` from a block's rows
+        de-duplicate once a block names parts (`lib/club-schedule-server.ts:272`, `:1142`, `lib/permit-lookup.ts:170`,
+        the venues route's held check), and `club_schedule_save`'s match-by-start lookup (mig 494 `:155-159`) must add the
+        mask; 2C — the coach live-check body and `clashesForSavedRepEvents` carry the part once a coach's screens show
+        one (they read 0 today, which over-reports); 2E — `league_games_record_change` (mig 539) compares the field but
+        not `section_mask`, so a game moved from side A to side B would not count as news to families, and the
+        house-league callers of `placementsShareSurface` pass the part (`lib/league-schedule-conflict.ts`
+        `toPlacementSource` and `LeagueBooking`, and the routes that build `bookingOfLeagueRow` rows). From `/review`
+        (2026-11-25, all Low, accepted for now): the library read asks the lock once per split field (a set-returning
+        function if a club ever splits many); a page open since another admin changed a split writes its old split back on
+        an unrelated save (last write wins, as names do; the lock stops it once a part is booked); after a refused
+        `split_locked` save the window keeps the new choice with the refusal's words (could reset the row). `/review` also
+        taught the club calendar's three reads the part (it was in area D). Close a place needed nothing: a field-level
+        closure compares the field only, which covers every part (start condition 3).
 - [ ] Reported by `/design`, not this project's to fix: the shipped "Give it to" menu inside a cell of the "Open slots and
       short teams" window has no row on `docs/agents/design/TABLE_EXCEPTION_REGISTER.md` (it was ruled for that window;
       a register row should say it is not a precedent).
@@ -354,9 +393,9 @@ Migration first. Drawn together with Stage 3.
   needs "a side unticks its whole field and the reverse", and new box words ("Field 1 in two sides, Field 2 side A") in
   the field-list words; the notice pill needs a held, wrapping face for the R7 notice (its error face already has one);
   the PDF needs a side-aware column key and no price word on a side's heading (`weightWords` would print "· half").
-- [ ] The migration on the ruled shape (§5's columns and floor; a `/dba` pass on the migration itself); **update `docs/agents/db/DATA_DICTIONARY.md` and run
-      `npm run refresh:snapshots` (dev + prod) in the same unit of work** (`npm run check:dictionary`).
-- [ ] Venue list: split a field into parts (`VenueLibraryWindows.tsx`).
+- [x] The migration on the ruled shape (§5's columns and floor; a `/dba` pass on the migration itself); **update `docs/agents/db/DATA_DICTIONARY.md` and run
+      `npm run refresh:snapshots` (dev + prod) in the same unit of work** (`npm run check:dictionary`). Mig 541, Session 2A.
+- [x] Venue list: split a field into parts (`VenueLibraryWindows.tsx`). Session 2A.
 - [ ] Permits: a permit holds a whole field or a part; "Half cost" stays for case C. Decide in the drawing how a part's
       price relates to the field's (`lib/permit-time.ts` `shareOf`, `lib/permit-words.ts`).
 - [ ] The builder: `cutSlots` cuts a part as its own slot; `slotRoom`, sharing and value balancing read a part
@@ -815,6 +854,9 @@ Migration only if Stage 4's record needs it.
       (its primary key becomes (block, facility, section_mask)); and the split lock: an update of `sections` is refused
       while any of the five tables names a non-zero mask on that field (round 2 Ask 7 A: any change, not only lowering),
       in the route and in a trigger on `org_venue_facilities`.
+    - **As built (mig 541, Session 2A, 2026-11-25):** the floor is over live rows only (`WHERE removed_at IS NULL`) and
+      `DEFERRABLE INITIALLY DEFERRED`; the split lock counts bookings still to come only (owner ruling 2026-11-25); the
+      `ends_at > starts_at` CHECK already existed (`club_schedule_slots_window`). Reasons in Stage 2's 2A line.
     - **Build notes for the migration session.** (1) An exclusion clash raises SQLSTATE `23P01`, not `23505`:
       `lib/club-schedule-server.ts:137` maps only the unique violation to the "changed" refusal, so it must learn the new
       code and constraint name, or a clash shows as a server error. (2) An exclusion constraint checks each row as it is

@@ -21,6 +21,7 @@ import { hasCapability } from './roles.ts';
 import { canMoveClubMoney } from './member-access.ts';
 import type { EntitlementOrg } from './module-entitlements.ts';
 import { joinWithAnd, pluralize } from './utils.ts';
+import type { FieldSections } from './field-parts.ts';
 import type { OrgRole } from './types';
 
 /** THE save rule (Ask 9) — the route checks it on every write, the page reads it to hide Add venue and the pencil. */
@@ -64,7 +65,35 @@ export function canReadVenueLibrary(
 }
 
 /** A venue as the library's route returns it (`?library=1`). */
-export interface LibraryFacility { id: string; name: string; facilityType: string; displayOrder: number }
+export interface LibraryFacility {
+  id: string; name: string; facilityType: string; displayOrder: number;
+  /** How the field splits (Club schedules Stage 2, mig 541): 1, 2 or 4. Absent (an older read) = not split. */
+  sections?: FieldSections;
+  /** The library read only: a booking still to come names one of its parts, so its split is locked (round 2 Ask 7 A). */
+  partsBooked?: boolean;
+}
+
+/**
+ * The one line under the Facilities heading while any split is locked (round 2 Ask 7 A, the drawing's tab 2): which
+ * fields and why, once for all of them. Working words (the drawing says "practices"; a house-league game on club time can
+ * hold a part too, so the line says "bookings"). Null when nothing is locked.
+ */
+export function splitLockedLine(fields: readonly { name: string; sections: FieldSections }[]): string | null {
+  const locked = fields.filter(f => f.sections !== 1);
+  if (!locked.length) return null;
+  if (locked.length === 1) {
+    const f = locked[0];
+    return f.sections === 4
+      ? `${f.name} has bookings on its quarters, so it stays in four quarters.`
+      : `${f.name} has bookings on its sides, so it stays in two sides.`;
+  }
+  return `${joinWithAnd(locked.map(f => f.name))} have bookings on their parts, so each stays split as it is.`;
+}
+
+/** The route's refusal when a stale page changes a locked split (the same sentence as the line). */
+export function splitLockedRefusal(name: string, sections: FieldSections): string {
+  return splitLockedLine([{ name, sections }]) ?? `${name}’s split can’t change while a part is booked.`;
+}
 export interface LibraryVenue {
   id: string;
   name: string;
