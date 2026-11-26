@@ -183,8 +183,8 @@ export default function ChangesToSendWindow({ division, api, orgQuery, titleOf, 
       {error && <p className={repKit.formError} role="alert">{error}</p>}
       {lv.level !== 'email' && (tray?.rainouts ?? []).map(rain => (
         <Callout key={rain.id} tone="olive"
-          action={<button type="button" className="btn btn-outline" disabled={busy} onClick={() => setAskBack(rain)}>{RW.back(rain.games)}</button>}>
-          {RW.banner(rain.day, rain.games, rain.verb)}
+          action={rain.closure ? undefined : <button type="button" className="btn btn-outline" disabled={busy} onClick={() => setAskBack(rain)}>{RW.back(rain.games)}</button>}>
+          {rain.closure ? RW.bannerClosure(rain.day, rain.games, rain.verb) : RW.banner(rain.day, rain.games, rain.verb)}
         </Callout>
       ))}
       {lv.level === 'email' ? (

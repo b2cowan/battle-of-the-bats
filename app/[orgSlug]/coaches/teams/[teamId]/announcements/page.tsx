@@ -58,7 +58,7 @@ export default function TeamAnnouncementsPage({
         <CoachNotGranted
           icon={<Mail size={20} aria-hidden />}
           section="Emailing families"
-          what="One email to every family at once — a rain-out, a time change, what to bring on Saturday — logged with who received it."
+          what="One email to every family at once — a rainout, a time change, what to bring on Saturday — logged with who received it."
           blocker="Ask your head coach to turn on sending announcements for you."
         />
       </div>
@@ -83,7 +83,7 @@ export default function TeamAnnouncementsPage({
       {/* What this screen is for — kept, and kept HERE: it is the editor's own framing line, the
           first thing read by a coach about to send to every family at once. */}
       <p className={styles.bodyNote} style={{ margin: '0 0 1rem' }}>
-        One email to every family at once — a rain-out, a time change, what to bring on Saturday.
+        One email to every family at once — a rainout, a time change, what to bring on Saturday.
         It goes to the guardian emails already on your roster, so there&apos;s no second list to keep,
         and every send is logged with who received it.
       </p>

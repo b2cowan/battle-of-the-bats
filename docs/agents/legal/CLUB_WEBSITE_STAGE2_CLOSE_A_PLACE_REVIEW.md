@@ -33,3 +33,21 @@ Nothing built. Code facts above are read from the files cited.
 
 ## Lawyer's eye needed?
 No for the design as drawn. Same two narrow points as the coach group email (representatives, an unlinked brand foot).
+
+## Shipped words, Session 2B (2026-11-25, read from the code; statute not re-fetched)
+Read: `lib/place-closure-mail-words.ts`, `lib/place-closure-mail.ts`, `lib/email-kinds.ts:109`, `tests/unit/place-closure-window.test.ts` (K10 block), `lib/place-closure-window-server.ts:150-211`.
+
+**Holds, with one defect.**
+- Skeleton held: From "{Club} via FieldLogicHQ" (`MAIL.from`), who sent it with role and club, reason line from the person's own seat, reply line, removal line, plain-text foot. No anchor is written anywhere, every word is escaped, the test pins no link and no unsubscribe, and there is no admin free text (the press takes none). Privacy §12 (club-to-coach mail: no unsubscribe, says who and why, reply to be taken off) is kept exactly.
+- "No head coach" line, "You get it because you coach {Team} and it has no head coach on file.": acceptable. It is true (the others are head_coach-excluded active staff, i.e. assistants), and it states the real reason. One email per person, only to those with an address.
+- Families: unchanged. `sendAfterPress` calls `sendRainout` (`place-closure-window-server.ts:177`), which runs `sendChangesAndTell` then `sendFamilyServiceBatch` (`league-rainout-send.ts:29`, `league-schedule-mail.ts:316`). No new family sender.
+- K16: `previewSentences` and `CLOSE_WORDS` carry place names and days only; no free-text field exists in the press.
+
+**Defect, nameless sender.** When the pressing admin has no display name, `renderCoachClosureEmail` falls to club mode (`place-closure-mail-words.ts:79`) and the email says "Reply to this email to reach {Club}", but the Reply-To is that admin's own address (`place-closure-mail.ts:41`). The line promises the club; the reply goes to one person who is not named. Also, with no admin address the reply goes to the platform sender and the line is false. The group email blocks this (`SAY.needName`, `SAY.noSenderAddress`); the press does not.
+- Fix A (preferred): refuse the press's coach email path with the group email's `SAY.needName` / `SAY.noSenderAddress` wording before any send.
+- Fix B (words): in the nameless case use "Reply to this email to reach the {ROLE_EMAIL_LABEL[role]} at {Club} who sent it." and "Not right for you? Reply and tell them."; send no reply line when there is no address.
+- Test gap: the K10 block never renders `sender.name: null`.
+
+Minor: `CLOSE_WORDS.repNote` and `repCountPhone` (`place-closure-window.ts:242-243`) say "Its head coach is emailed"; with no head coach the assistants are. Suggest "Its head coach, or its other coaches when it has none, is emailed."
+
+Lawyer's eye: no, beyond the two narrow points already listed above.

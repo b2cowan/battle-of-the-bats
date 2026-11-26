@@ -99,3 +99,14 @@
   .facRow { grid-template-columns: minmax(0, 1fr) auto; }
   .facKind { display: none; }
 }
+
+/* CLOSE A PLACE (Club Website Stage 2, K11): a closure showing on the site, one row at the top of the library — an amber
+   edge, the place, its days and who closed it, and Reopen (full width on its own line on a phone). */
+.closedRow {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 0.6rem 0.9rem; margin: 0 0 0.9rem; padding: 0.75rem 0.9rem;
+  border: 1px solid var(--home-line); border-left: 3px solid var(--warning); border-radius: 8px; background: var(--card-bg);
+}
+.closedBody { flex: 1 1 18rem; min-width: 0; display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.25rem 0.5rem; }
+.closedBody strong { font-weight: 650; }
+.closedLine { flex-basis: 100%; font-size: var(--type-support); color: var(--text-secondary); }
+@media (max-width: 639px) { .closedReopen { flex-basis: 100%; } }

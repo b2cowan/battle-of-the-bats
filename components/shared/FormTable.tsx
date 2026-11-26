@@ -112,6 +112,10 @@ export interface FormTableGroup {
   cells?: Record<string, ReactNode>;
   /** On a phone: the band's figure at its end. */
   phoneFigure?: ReactNode;
+  /** On a phone: the group FOLDS to its band (a chevron at its end opens its rows) — for a group nobody has to decide on
+   *  (Close a place, Club Website Stage 2: the window is one and a half screens instead of two). A desk ignores it: every
+   *  group stays open. `label` is the chevron's accessible name. */
+  fold?: { open: boolean; onToggle: () => void; label: string };
 }
 
 export default function FormTable({ ariaLabel, leadLabel, expandLabel = 'Open', columns, rows: tableRows, groups, closing, phoneRowWindows = false, allIn = false }: {
@@ -224,8 +228,15 @@ export default function FormTable({ ariaLabel, leadLabel, expandLabel = 'Open', 
       <div key={`g-${g.key}`} className={styles.groupBand}>
         {groupTick(g)}
         {g.phoneFigure != null && <span className={styles.figure}>{g.phoneFigure}</span>}
+        {g.fold && (
+          <button type="button" className={styles.fold} aria-expanded={g.fold.open} aria-label={g.fold.label} onClick={g.fold.onToggle}>
+            <ChevronDown size={16} aria-hidden className={g.fold.open ? styles.foldOpen : undefined} />
+          </button>
+        )}
       </div>
     );
+    /** A row under a folded heading is not drawn (its heading still is). */
+    const folded = (r: Row) => { const g = r.group ? groupOf.get(r.group) : undefined; return !!g?.fold && !g.fold.open; };
     // THE FORM TABLE'S ONE FULL-SCREEN ROW (`phoneRowWindows`, see the header): every box in one 48px column; a
     // ticked row's box unticks it and the rest of the row is the door to its window; an unticked row (and a heading)
     // is one label that ticks wherever it is tapped. In an `allIn` table there is no box: the row is the one door.
@@ -276,7 +287,7 @@ export default function FormTable({ ariaLabel, leadLabel, expandLabel = 'Open', 
           const g = headsBefore.get(r.key);
           return [
             g ? (phoneRowWindows ? boxGroup(g) : groupBand(g)) : null,
-            phoneRowWindows ? boxRecord(r) : record(r),
+            phoneRowWindows ? boxRecord(r) : folded(r) ? null : record(r),
           ];
         })}
         {closing.note != null && (

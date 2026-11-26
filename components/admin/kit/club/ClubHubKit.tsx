@@ -38,6 +38,9 @@ import { useOrg } from '@/lib/org-context';
 import { hasCapability, hasBillingAccess } from '@/lib/roles';
 import { hasModuleEntitlement, isClubPlan } from '@/lib/module-entitlements';
 import { usePageTitle } from '@/lib/usePageTitle';
+import { hasOrgVenueLibrary } from '@/lib/plan-features';
+import { CLOSE_WORDS as CW, canClosePlace, type StaffClosure } from '@/lib/place-closure-window';
+import { closedPlaceName } from '@/lib/place-closures';
 import { usePlanGating } from '@/lib/use-plan-gating';
 import { closedProgramPlansSentence } from '@/lib/plan-config';
 import { joinWithAnd, pluralize, possessive } from '@/lib/utils';
@@ -197,6 +200,20 @@ export default function ClubHubKit() {
     return () => { stale = true; };
   }, [slug, wantsAttention]);
 
+  // Close a place (Club Website Stage 2): the closures showing now, for the people who close and reopen (K1), on the places
+  // gate (K14). The Overview's line while one shows; its door ("Close a place") beside This morning's heading.
+  const closesPlaces = !!currentOrg && hasOrgVenueLibrary(currentOrg.planId) && canClosePlace(userRole);
+  const [closures, setClosures] = useState<StaffClosure[]>([]);
+  useEffect(() => {
+    if (!slug || !closesPlaces) return;
+    let stale = false;
+    fetch(`/api/admin/org/place-closures?orgSlug=${encodeURIComponent(slug)}`, { cache: 'no-store' })
+      .then(r => (r.ok ? r.json() : null))
+      .then(d => { if (!stale && d) setClosures((d as { closures?: StaffClosure[] }).closures ?? []); })
+      .catch(() => {});
+    return () => { stale = true; };
+  }, [slug, closesPlaces]);
+
   // The owner's setup progress, while it is unfinished (a Club's checklist — A11). A club ADMIN reads the same list, read-only,
   // as "Still to do" (Stage 13b, A2); the owner's "Setup: n of 5" line is theirs alone.
   const [checklist, setChecklist] = useState<Checklist | null>(null);
@@ -289,8 +306,18 @@ export default function ClubHubKit() {
       sub: TIME_HANDOFF_WORDS.card.sub(asks.seasons, asks.door.kind === 'permits'), href: timeAskHref(base, door),
     });
   }
+  // "Places closed" (Club Website Stage 2): only while a closure shows on the site; its door is the Venue library, where
+  // each closure's Reopen lives.
+  if (closures.length > 0) {
+    extraCards.push({
+      key: 'places-closed', label: CW.overviewLabel, n: closures.length,
+      sub: CW.overviewSub([...new Set(closures.map(c => closedPlaceName(c) ?? CW.everyPlace))]), href: `${base}/org/venues`,
+    });
+  }
   const anythingWaits = briefCards.some(c => (brief?.counts[c.key] ?? 0) > 0) || extraCards.length > 0;
-  const hasBriefSection = briefCards.length > 0 || extraCards.length > 0 || status === 'error' || (status === 'loading' && !brief);
+  // Close a place's door lives in this section's head, so the section shows for everyone who closes a place (a house league
+  // admin, a League Plus club with no rep teams), even when nothing else waits.
+  const hasBriefSection = briefCards.length > 0 || extraCards.length > 0 || closesPlaces || status === 'error' || (status === 'loading' && !brief);
 
   // ── Your programs ────────────────────────────────────────────────────────────────────────────
   const teams = brief?.teams;
@@ -377,6 +404,7 @@ export default function ClubHubKit() {
         <section className={ck.section} aria-labelledby="hub-brief">
           <div className={ck.sectionHead}>
             <span id="hub-brief" className={kit.eye}>This morning</span>
+            {closesPlaces && <Link className={ck.link} href={`${base}/org/venues?close=1`}>{CW.door}</Link>}
           </div>
           {status === 'error' && !brief ? (
             <div className={`${ck.notice} ${ck.noticeWarn}`} role="status">

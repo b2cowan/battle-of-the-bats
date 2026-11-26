@@ -288,7 +288,7 @@ export default function RepAnnouncementEditor({ orgSlug, teamId, canEditRoster =
         {announcements.length === 0 ? (
           <p className={styles.logNote}>
             No announcements sent yet. Every one you send is kept here with who received it and
-            whether it landed — so you can prove the rain-out notice went out, and reuse the wording
+            whether it landed — so you can prove the rainout notice went out, and reuse the wording
             next time by copying it.
           </p>
         ) : (

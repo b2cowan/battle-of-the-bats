@@ -8,6 +8,24 @@
 
 ---
 
+### 2026-11-25 — "Close a place" is on League Plus, Club and Club · Association through the Venue library's places gate, replaces the house league Rainout everywhere, and is no upgrade lever (Decided; Club website Stage 2, ask K14)
+**Status:** **Decided** (owner, 2026-11-25, "Agree with all recommendations": K14, option A, within the K1–K17 rulings, all A).
+**Decision:**
+1. **Close a place is on League Plus, Club and Club · Association**, through the existing places gate, the Venue library's gate (`hasOrgVenueLibrary`). **No new feature key, no price change.**
+2. **It replaces the house league Rainout everywhere.** The Rainout's old gate was `bulk_reschedule` (Tournament Plus on paper). Tournament Plus has no house league, so that gate already meant League Plus and up: **nobody loses anything.**
+3. **The rep mark and the rep coach email appear only where rep teams exist**, which is the Club bands.
+4. **Not an upgrade lever** between League Plus and Club (2026-10-08, 2026-10-11, 2026-11-02).
+**Rationale:** the places gate is the one gate every place-shaped feature already rides (venues, permits, the club calendar). Source: `CLUB_WEBSITE_ENHANCEMENTS_PLAN.md` §7 (K1–K17) and `CLUB_WEBSITE_STAGE2_BUILD_PROMPT.md` ("K14 is a gate change").
+**Affects:** gates (the house league Rainout's server check moves from `bulk_reschedule` to the places gate when Close a place replaces it); `PLAN_PRICING_FACTS.md` (the 2026-11-02 house league game day line, trued the same day). The tournament's own Rain delay keeps `bulk_reschedule` (Tournament Plus), unchanged. `lib/plan-config.ts` and `lib/plan-features.ts` need no edit for the plan set (no key, no price).
+**Handoff:**
+```
+HANDOFF → /billing
+- Stage 2B: Close a place's server routes check `hasOrgVenueLibrary`; the Rainout's `bulk_reschedule` check goes away with the Rainout. No new key.
+HANDOFF → /marketing
+- Nothing to sell: never present Close a place as a League Plus → Club reason. Lock lines, if any, name "League Plus and Club" like every other gate line.
+```
+**Supersedes:** the Rainout-gate part of "House League 9e (standings, coach scores, rainout) carries no gate of its own" (2026-11-02), point 3 only (the Rainout reusing `bulk_reschedule`). Its standings and coach-score rulings, and its "never an upgrade lever" rule, stand.
+
 ### 2026-11-25 — Both public demos are RETIRED: no more no-login "See it live" sandboxes; proof before buying is the screenshots and walkthroughs, and a prospect sees the product with us (Decided)
 **Status:** **Decided** (owner, 2026-11-25: asked "can we just get rid of them?", was shown the trade-off and the one partial
 option worth arguing for (keep the coach demo alone as Club's shop window), and ruled *"Remove both, run /strategy to log it"*).

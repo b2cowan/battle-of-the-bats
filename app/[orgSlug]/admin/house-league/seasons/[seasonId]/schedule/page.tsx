@@ -37,9 +37,9 @@ import PublishScheduleWindow from '@/components/admin/kit/club/league/schedule/P
 import SchedulePublishLine, { SchedulePublishTag, showPublishButton, type SchedulePublishing } from '@/components/admin/kit/club/league/schedule/SchedulePublishLine';
 import { CHANGES_TO_SEND_WORDS, SCHEDULE_PUBLISH_WORDS } from '@/lib/league-schedule-words';
 import ChangesToSendWindow from '@/components/admin/kit/club/league/schedule/ChangesToSendWindow';
-import RainoutWindow from '@/components/admin/kit/club/league/schedule/RainoutWindow';
+import ClosePlaceWindow from '@/components/admin/kit/club/places/ClosePlaceWindow';
 import { RAIN_WORDS } from '@/lib/league-rainout';
-import { hasPlanFeature } from '@/lib/plan-features';
+import { hasOrgVenueLibrary } from '@/lib/plan-features';
 import cts from '@/components/admin/kit/club/league/schedule/ChangesToSend.module.css';
 import type { ChangeKind, GameSnapshot } from '@/lib/league-game-changes';
 import LeagueHealthWindow from '@/components/admin/kit/club/league/schedule/LeagueHealthWindow';
@@ -1258,10 +1258,11 @@ export default function SchedulePage() {
   const canPublish = showPublishButton({ canRun: canManage, published: !!divPublishing, teamsPublished: divTeamsPublished, games: divLiveGames });
   // Changes to send (f2): the header's button once a published division has a change waiting, its count the amber pill.
   const divHeld = canManage && divPublishing ? divPublishing.held : 0;
-  // Rainout (9e-2): whoever runs the live season, once a division is published; the plan check is the server's too
-  // (9e·15: every paid house-league plan has it). The window says when no day has a game left.
+  // Rainout (9e-2; since Club Website Stage 2, K15, it opens Close a place): whoever runs the live season, once a division
+  // is published; the places gate is the server's too (K14: League Plus, Club, Club · Association).
   const canRainout = canManage && scheduleRead === 'ok' && Object.keys(publishing).length > 0
-    && !!currentOrg && hasPlanFeature(currentOrg.planId, 'bulk_reschedule');
+    // K14 (Club Website Stage 2): the Rainout opens Close a place, on the places gate (League Plus, Club, Club · Association).
+    && !!currentOrg && hasOrgVenueLibrary(currentOrg.planId);
   /** A place as a Changes to send row says it: the facility alone when it has one ("Diamond 2"), else the venue or the text. */
   const placeWords = (snap: GameSnapshot) => {
     const v = snap.venueId ? venues.find(x => x.id === snap.venueId) : null;
@@ -1515,17 +1516,16 @@ export default function SchedulePage() {
         />
       )}
 
-      {/* Rainout (9e-2): a day's games across divisions, postponed or cancelled in one press. */}
+      {/* Rainout (K15, Club Website Stage 2): the button stays, named "Rainout", and opens Close a place on this season's
+          places that day — every program there in one press (house league postponed, rep marked, tournaments handed to
+          their Rain delay). Today's one-season window is retired with it (K14: it replaces the Rainout everywhere). */}
       {rainOpen && (
-        <RainoutWindow
-          seasonName={season?.name ?? ''}
-          /* org-slug-ok: the window adds `orgQuery` (below) to every call it makes */
-          api={`/api/admin/house-league/seasons/${seasonId}/schedule`}
-          orgQuery={orgQuery}
-          teamName={id => teamName.get(id) ?? ''}
-          schedulesHref={buildsSchedules ? `/${orgSlug}/admin/schedules` : null}
-          onChanged={() => { void reload(); }}
-          onNotice={setNotice}
+        <ClosePlaceWindow
+          orgSlug={orgSlug}
+          eyebrow={season?.name ?? ''}
+          season={season ? { id: season.id, name: season.name } : null}
+          venueLibraryHref={`/${orgSlug}/admin/org/venues`}
+          onClosed={() => { void reload(); }}
           onOpenChanges={divisionId => { if (divisionId) setSelectedDivId(divisionId); setChangesOpen(true); }}
           onNewDates={divisionId => {
             setSelectedDivId(divisionId);

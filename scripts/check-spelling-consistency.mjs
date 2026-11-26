@@ -158,6 +158,15 @@ const ENFORCED_PATTERNS = [
     pattern: /\bCanceled\b/g,
     right: '"Cancelled" — the one spelling a person reads (the stored value `canceled` is unchanged)',
   },
+  /* ⚖ "RAINOUT", ONE WORD, EVERYWHERE (owner, Club Website Stage 2 K15, 2026-11-25 — the ruling AGENCY_RULES asks for before
+     this gate widens). "rain-out" and "rain out" are the other spellings; "rained out" is a different word (a verb) and
+     stays. A shape, not the word list: the list matches without case and would hit the identifiers (`rainoutId`,
+     `league_rainouts`). A help article's hidden search synonym keeps "rain out" with `spelling-ok`, as `canceled` does. */
+  {
+    id: 'rainout-one-word',
+    pattern: /\b[Rr]ain[- ]outs?\b/g,
+    right: '"Rainout" (a rainout, rainouts) — one word everywhere a person reads it; "rained out" is a different word',
+  },
   /* ⚖ "e-transfer" IN A SENTENCE, "E-transfer" AT THE START OF A LABEL OR SENTENCE (owner, sponsorships round 2 ask 6,
      2026-11-22): the two other spellings are gone, the stored method name included. CASE-sensitive, so a shape (the word
      list above matches without case, and it could not tell the spellings apart). Identifiers carry no hyphen. Where a

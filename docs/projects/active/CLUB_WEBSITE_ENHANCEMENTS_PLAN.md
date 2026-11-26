@@ -313,6 +313,9 @@ prompt → the build → `/simplify`, `/review`, `/legal` or `/accounting` where
   see, then the close.)*
   *(Session 2A built 2026-11-25: migration 539 (applied to dev at the owner's word), the press, Reopen, "Link both" not
   news, the reads; /review run and applied. Progress 2026-11-25 "Stage 2 Session 2A". Next: 2B.)*
+  *(Session 2B built 2026-11-25: the window, the result, Reopen, the rep coach email, the Rain delay hand-off, the places
+  gate, the Rainout button opening it, "Rainout" one word; /billing, /strategy, /legal heard; /review run and applied.
+  Progress 2026-11-25 "Stage 2 Session 2B". Commit at the owner's word. Next: 2C.)*
 - [ ] **Stage 3 — The site's face (idea 7; F4).** `/legal` and the consent question first. Before news, so a news post
   is built with its photo from the start. *(Club events, E9: the one photo question is this stage's; camps ask it in
   the same words. P1–P5 ruled 2026-11-25: optional, blank = No; one Yes names the website and the club's own social
@@ -1304,6 +1307,55 @@ the demos follow the product and are curated with `/demos`, never as a build ste
   Diamond 2") — how every linked game reads today; and a tournament diamond links to a place, never one diamond, so a
   one-diamond closure lists the tournament by its place. **For 2B:** make a press key per window open; the route maps
   refusals to words and validates ids.
+- 2026-11-25 — **Stage 2 Session 2B built (the window, the result and Reopen; families' pages unchanged until 2C).** Start
+  conditions held (2A committed `7d8c0d984` and reviewed; Milton's answers still "not in yet"; **club events still not in
+  code**, so the window's events group is not built and E7 rides with whichever of club events and this lands second, as
+  E6 and E10 do). **Landed:** `lib/place-closure-window.ts` (pure: K1's `canClosePlace` / `seesEveryProgram`, the ticks,
+  the counts — the Rainout's arithmetic, one email per family per division —, "Link both"'s targets, the strip preview,
+  every word as `CLOSE_WORDS`), `lib/place-closure-window-server.ts` (the frame, the window's read over 2A's
+  `placeClosureSource` with names, families as team sets and each rep team's reach; a house league admin gets rep as ids
+  and times only; the sends after the press per season through the Rainout's own `sendRainout`; the rep coach email with
+  its marks CLAIMED first; the Venue library's closed rows; Reopen's emails, claimed on `reopen_told_at`),
+  `lib/place-closure-mail-words.ts` + `lib/place-closure-mail.ts` (K10, /legal's skeleton on the shipped group-email lines,
+  kind `place_closure_coach`, From "{Club} via FieldLogicHQ", reply-to the pressing admin; no address → not sent, said in
+  the result), routes `app/api/admin/org/place-closures/` (GET frame / read / a season's places; POST the press, then the
+  sends) and `[closureId]` (Reopen), `components/admin/kit/club/places/ClosePlaceWindow.tsx` + `ReopenPlaceWindow.tsx`;
+  doors: the Venue library's toolbar, the closed row at its top with Reopen, "Closed today" on the place's row, the
+  Overview's "Close a place" beside This morning (`?close=1`) and a "Places closed" card while one shows, and the house
+  league schedule's Rainout button (K15, on that season's places on the window's days, opening on its next day with games
+  as the Rainout did). The Rain delay opens on the closure's day with the place's diamonds picked and one amber line (K13;
+  `?day=&diamonds=&closed=`, the first open of the visit only). The shared `FormTable` gained an optional phone `fold`.
+  **K5's evidence (the prompt's "say which"):** a held Rainout can still exist — every one made by the old window with
+  "Email the families now" unticked, and a closure division whose send failed. So **Put all back is KEPT for an old held
+  Rainout and RETIRED for a closure's** (the banner retries the send, says "A closed place on …", and the route refuses
+  `back` for a closure record). **The one-season Rainout window and its press route are retired** (nothing opens them;
+  its server read went with them). **K14:** the places gate on every route (404 below League Plus), the held Rainout's
+  route moved onto it too (/billing: one gate, not an accident of the plan ladder); `/strategy` logged the decision in
+  `BUSINESS_DECISIONS.md` and trued `PLAN_PRICING_FACTS.md:128`; no key, no price, `plan-config.ts` untouched. **K15:**
+  `check:spelling` rule `rainout-one-word` (`\b[Rr]ain[- ]outs?\b`); the six coach strings changed; the help's hidden
+  search synonyms keep "rain out" with `spelling-ok`, as `canceled` does. **/legal (shipped words):** holds; applied: an
+  admin with no name on file → "Reply to this email to reach the admin at {Club} who sent it." / "Not right for you? Reply
+  and tell them." (never "reach {Club}": the reply reaches the admin); the rep row says who is really emailed (its head
+  coach, its coaches when it has none, or nobody). **/review (four lenses) applied:** a house league admin's press answer
+  carried rep team names (now counts only, server side), their rep games are re-checked on the server against what the
+  window offers; a retried press with a CHANGED selection after a lost answer would have replayed the first (the key now
+  follows what is pressed); coach and Reopen emails claimed before sending (no double email on a retry); one season's
+  failed send no longer hides the others ("Some house league emails didn't go"); Reopen's "still need new dates" counts
+  postponed games only; the Rainout door followed TODAY's places after the Day changed (now the window's days); "Link
+  both" counted a draft division's game; a re-read after a refusal kept a game ticked that had since started (K6); the
+  Overview's door vanished for a house league admin and a League Plus club without rep teams; the "past" refusal ran
+  before the replay check; the window promised "its coaches are emailed" for staff with no address. **Accepted,
+  recorded:** an opponent typed like a web address may be auto-linked by a mail app (the email writes no link);
+  a crafted `closed=` link can word the Rain delay's amber line (admin-only, escaped); a replay by another admin of the
+  same club runs the owed sends with their reply-to; multi-day closures say "that day" for the tournament and practice
+  counts and open the Rain delay on the first day. **Proof:** typecheck clean; 169 unit tests across the closure, Rainout
+  and guard suites (new: `place-closure-window.test.ts`, `place-closure-window-route.test.ts`); `check:spelling` green;
+  focused lint warnings only. The full suite's other failures are other sessions' files (named in the hand-off).
+  `check:layout --changed` widened to the whole product (shared files) and does not run on the dev server: **skipped**,
+  owed at the release sweep. **For 2C:** the help still describes the old Rainout window ("Email the families now", "Put
+  all back") in `lib/help-content/house-league.tsx` (the Rainout article and its "by mistake" FAQ) — 2C's `/docs` pass;
+  the old window's pure plan (`rainDays`, `rainList`, `rainSummary`, …) is now used only by its tests — 2C's `/simplify`.
+  **For the owner (named, not ruled):** see §9's no-places item.
 
 ## 8. Census questions for Stage 0 (answer from code, not from this plan)
 
@@ -1414,9 +1466,21 @@ Answered 2026-11-24 (Stage 0 Part 1); evidence in the Progress block.
 - [ ] **The drawing's tab 8 word list says "Rep · {team}" where plan §10 and the code say "Rep" / "Rep · away"
   (2026-11-25).** The plan wins (the team line already names the team, G5); the drawing's list is stale on that one line.
 
-- [ ] **`PLAN_PRICING_FACTS.md:128` still says the Rainout is "not built" and must not be advertised (found by
+- [x] **`PLAN_PRICING_FACTS.md:128` still says the Rainout is "not built" and must not be advertised (found by
   `/strategy`, Stage 2 drawing, 2026-11-25).** It ships today (the routes gate on `bulk_reschedule`). To `/strategy`;
-  K14's ruling corrects it in the same unit if Close a place replaces the Rainout.
+  K14's ruling corrects it in the same unit if Close a place replaces the Rainout. *(Trued by `/strategy` in Session 2B,
+  2026-11-25, with the decision logged in `BUSINESS_DECISIONS.md`.)*
+- [ ] **A club with no places: the Rainout button now opens "Your club has no places yet" (found building Session 2B,
+  2026-11-25; an OWNER CALL, named, not ruled).** K8 (a club with no places opens the Venue library) and K15 (the Rainout
+  button opens Close a place) together mean a house league whose games carry only typed places — every club on
+  production today has no places — can no longer call off a rainy day from the schedule until it adds its places. Today's
+  Rainout does it with typed places. An owner or admin can still close "All our fields" (it needs no place) once the club
+  has one place; a house league admin cannot (K1/K15). Built as ruled. Options for the owner: (A) as built; (B) the
+  no-places state also offers "All our fields" to an owner or admin; (C) B, and a house league admin may close every
+  place from the Rainout button only. Pre-customer, so the reach today is the demos and any trial club.
+- [ ] **The old Rainout's help is stale until 2C's `/docs` pass (Session 2B, 2026-11-25).** `lib/help-content/house-league.tsx`'s
+  Rainout article and its "I pressed Rainout by mistake" FAQ still describe "Email the families now" and "Put all back".
+  2C rewrites them to point at the new "Close a place" topic (build prompt 2C step 6).
 
 ## 10. Words for /marketing
 
@@ -1458,6 +1522,31 @@ Answered 2026-11-24 (Stage 0 Part 1); evidence in the Progress block.
   no coach to email, so let the team know yourself." Kept: "Close a place", "Not now" (shipped in 8 files), "Reopen",
   "Place closed", "Closed", "Closed today", "All our fields are closed today." **"Rainout"** one word (6 coach strings
   to change at build). The Reopen line to the coach is a full coach email (same sender, reason and reply lines).
+- [ ] **Stage 2 (build, Session 2B, 2026-11-25): words the drawing did not word, for 2C's `/marketing` pass** (all in
+  `CLOSE_WORDS`, `lib/place-closure-window.ts`, and `COACH_MAIL`, `lib/place-closure-mail-words.ts`): the refusals
+  ("Some games changed while the window was open. Nothing was changed. Look again.", "That day has passed…", the draft,
+  finished and not-found lines, "The closure didn't reach us. Check your connection, then press again: it closes once,
+  however many times you press."); "Link it to …" / "Link all N to …" and, once chosen, "N are linked to Lions Park when you
+  close. Families aren't told." with "Don't link them"; "Closing…"; "Close all our fields"; "Rep · N games · marked for its
+  coach" and "It is marked for its coach when you close." (a house league admin's count); the rep row for a team with no
+  head coach ("Marked, not moved. Its coaches are emailed (it has no head coach on file) and set the new date.") or no
+  coach ("… It has no coach to email, so let the team know yourself."); "N practices at Lions Park that day aren't
+  changed here."; the result's "Those families were already emailed. Nothing more was sent.", "Some house league emails
+  didn't go: their changes are waiting in Changes to send.", "The {Team}'s coaches weren't emailed, so let the team know
+  yourself.", "{Tournament} plays today." + "… If it plays at Lions Park, open its Rain delay.", "This closure was already
+  made. Nothing more was sent."; Reopen's "N rep games lose their marks…", "N coaches were emailed."; the Venue library's
+  row line for several days ("Sat, Nov 28 to Sun, Nov 29 · closed 7:10 a.m. by Dana Reyes · 4 postponed"); the Overview's
+  **"Places closed"** card with "Lions Park · reopen from the Venue library" (the drawing names this line, never words
+  it); the banner "A closed place on Sat, Nov 28: 4 games postponed, waiting to be sent." and the refusal "These games are
+  from a closed place, so they can't be put back. Send them, or give each a new date."; the Rain delay's "{Club} closed
+  Lions Park on Sat, Nov 28. Its diamonds are picked below."; the coach email for two games ("Your 2 games there need new
+  dates: … Give each a new date, or cancel it."), with no head coach ("You get it because you coach {Team} and it has no
+  head coach on file."), with a nameless admin ("Reply to this email to reach the admin at {Club} who sent it." / "Not
+  right for you? Reply and tell them.", /legal), and Reopen's subject "{Place} reopened: {Team} game wasn't moved".
+  Drawn words changed at build: the multi-day site preview reads "… at once, until the end of Sun, Nov 29." (the drawing's
+  "It comes down by itself at midnight Sunday."); the computer table keeps the Rainout's "Time and place" column (the
+  tournament and events rows the drawing dropped it for sit outside the table); a multi-day closure lists its games with
+  their day in one group per program (the drawing groups by day).
 
 ## 11. Architectural decisions
 

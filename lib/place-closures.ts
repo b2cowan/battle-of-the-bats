@@ -41,6 +41,8 @@ export interface ClosedPlace {
   facilityId: string | null;
   /** The place's name (null for `all`). */
   name: string | null;
+  /** The diamond's name, for a one-diamond closure (the window's words; the matching never reads it). */
+  facilityName?: string | null;
 }
 
 /** Where a game is, as the matching reads it. `typed` is its typed place (a rep game's: `repTypedText`). */
@@ -154,4 +156,36 @@ export function stripClosureOf(row: {
 /** Showing now: from the press (K3) to the end of Until, and not reopened. No job ends one: this is the whole rule. */
 export function isClosureShowing(c: { showsFrom: string; endsAt: string; reopenedAt: string | null }, nowMs: number): boolean {
   return !c.reopenedAt && Date.parse(c.showsFrom) <= nowMs && nowMs < Date.parse(c.endsAt);
+}
+
+// ── The place's words, and the strip's sentence (Session 2B; the strip itself is 2C) ───────────────────────────────
+
+/** "Lions Park" · "Diamond 2 at Lions Park" · null for every place. The one name of a closed place in every sentence. */
+export function closedPlaceName(c: { scope: ClosureScope; placeName: string | null; facilityName: string | null }): string | null {
+  if (c.scope === 'all') return null;
+  return c.scope === 'diamond' && c.facilityName ? `${c.facilityName} at ${c.placeName ?? ''}` : c.placeName;
+}
+
+/** A club day, YYYY-MM-DD, one day later (pure: the calendar, no zone). */
+function nextDay(day: string): string {
+  const d = new Date(`${day}T12:00:00Z`);
+  d.setUTCDate(d.getUTCDate() + 1);
+  return d.toISOString().slice(0, 10);
+}
+
+/**
+ * THE STRIP'S SENTENCE (K3, K16; the drawing's tab 4 and words list), in the club's day: "Lions Park is closed today.",
+ * "Lions Park is closed tomorrow (Sat, Nov 28).", "Lions Park is closed through Sun, Nov 29.", "Diamond 2 at Lions Park is
+ * closed today.", "All our fields are closed today." Fixed words over place words and days only. `say` formats a club
+ * day ("Sat, Nov 28"): passed in, so this file stays free of the zone module.
+ */
+export function stripSentence(c: StripClosure, today: string, say: (day: string) => string): string {
+  const name = closedPlaceName(c);
+  const subject = name ? `${name} is` : 'All our fields are';
+  const oneDay = c.firstDay === c.lastDay;
+  let when: string;
+  if (c.firstDay <= today) when = oneDay || c.lastDay <= today ? 'closed today' : `closed through ${say(c.lastDay)}`;
+  else if (c.firstDay === nextDay(today)) when = oneDay ? `closed tomorrow (${say(c.firstDay)})` : `closed from tomorrow (${say(c.firstDay)}) through ${say(c.lastDay)}`;
+  else when = oneDay ? `closed on ${say(c.firstDay)}` : `closed from ${say(c.firstDay)} through ${say(c.lastDay)}`;
+  return `${subject} ${when}.`;
 }

@@ -11,6 +11,7 @@ import { findOrderProblems, orderLengthsOf, orderProblemsById } from '@/lib/game
 import { hasPlayoffs as resolveHasPlayoffs, hasRoundRobin as resolveHasRoundRobin } from '@/lib/tournament-phase';
 import { useTournament } from '@/lib/tournament-context';
 import { formatShortWeekdayDate, tournamentToday } from '@/lib/timezone';
+import { CLOSE_WORDS } from '@/lib/place-closure-window';
 import { useOrg } from '@/lib/org-context';
 import { usePageTitle } from '@/lib/usePageTitle';
 import { hasPlanFeature, hasOrgVenueLibrary, requiresTournamentPlusCopy } from '@/lib/plan-features';
@@ -262,6 +263,17 @@ export default function AdminSchedulePage() {
   // to move (or a completed event) it opens nothing; the board hides the door in both cases anyway.
   const searchParams = useSearchParams();
   const toolParam = searchParams.get('tool');
+  // Close a place's door (Club Website Stage 2, K13): `&day=` and `&diamonds=` open the Rain delay on that day with the closed
+  // place's diamonds picked; `&closed=` names the place for its one amber line.
+  const rainOpening = useMemo(() => {
+    const day = searchParams.get('day');
+    if (toolParam !== 'rain-delay' || !day || !/^\d{4}-\d{2}-\d{2}$/.test(day)) return null;
+    const diamondIds = (searchParams.get('diamonds') ?? '').split(',').filter(Boolean);
+    const closed = searchParams.get('closed');
+    return { day, diamondIds, line: diamondIds.length && closed && currentOrg ? CLOSE_WORDS.rainDelayLine(currentOrg.name, closed, day, tournamentToday()) : null };
+  }, [toolParam, searchParams, currentOrg]);
+  // The closure's opening is the FIRST Rain delay of the visit only; opened again from the toolbar it opens as today.
+  const [rainOpeningSpent, setRainOpeningSpent] = useState(false);
   const toolOpenedRef = useRef(false);
   useEffect(() => {
     // …and after the org is known, so the plan check reads the real plan, not "no org yet".
@@ -1898,9 +1910,10 @@ export default function AdminSchedulePage() {
           getVenueKey={getGameVenueKey}
           getVenueLabel={getGameVenueDisplay}
           canPushFans={currentOrg?.planId ? hasPlanFeature(currentOrg.planId, 'fan_score_alerts') : false}
-          onClose={() => setShowShiftDay(false)}
+          onClose={() => { setShowShiftDay(false); setRainOpeningSpent(true); }}
           onApplied={() => { void reloadGames(); }}
-          onFinished={rainDelayDone}
+          onFinished={d => { setRainOpeningSpent(true); rainDelayDone(d); }}
+          opening={rainOpeningSpent ? null : rainOpening}
         />
       )}
 

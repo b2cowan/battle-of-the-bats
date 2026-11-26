@@ -2008,7 +2008,7 @@ const orgHelp: HelpPageContent = {
         'social links', 'instagram', 'facebook', 'website link', 'saved as', 'that isn’t a web address', 'look', 'colours',
         'who to contact', 'contacts', 'role address', 'registrar', 'documents and policies', 'code of conduct', 'policies',
         'questions families ask', 'faq', 'about page', 'contacts and documents', 'club notice', 'field closure',
-        'fields closed', 'rain out', 'post notice', 'end now', 'mentions 2025', 'still true', 'past year',
+        'fields closed', 'rain out', 'post notice', 'end now', 'mentions 2025', 'still true', 'past year', // spelling-ok: a search synonym ("Rainout" is the one spelling, K15)
         'coaches on team pages', 'who is listed as a coach', 'coach names', 'list coaches on team pages', 'coaches choose', 'head coaches always', 'head and assistant coaches always', 'no coach names', 'listed', 'not listed', 'list them',
         'game day', 'games today', 'today', 'live now', 'later today', 'latest results', 'not being played today', 'scores on the home page', 'rep team games', 'rep teams show their games', 'why isn’t my rep team on the home page',
       ],
@@ -2204,7 +2204,7 @@ const orgHelp: HelpPageContent = {
           question: 'How do I tell families the fields are closed tonight?',
           popular: true,
           answerText: 'In Public site, press Post a notice at the top. Write the notice, add more detail if you like, choose when it ends (tonight, tomorrow night, or a date and time) and press Post notice. It shows at the top of every public page and every team page until it ends, or until you press End now.',
-          keywords: ['field closure', 'fields closed', 'rain out', 'cancelled tonight', 'club notice', 'post notice', 'announcement'],
+          keywords: ['field closure', 'fields closed', 'rain out', 'cancelled tonight', 'club notice', 'post notice', 'announcement'], // spelling-ok: a search synonym ("Rainout" is the one spelling, K15)
           answer: (
             <>
               <p>In <strong>Public site</strong>, press <strong>Post a notice</strong> at the top. Write the notice, add more detail if you like, choose when it <strong>Ends</strong> (tonight, tomorrow night, or a date and time) and press <strong>Post notice</strong>.</p>

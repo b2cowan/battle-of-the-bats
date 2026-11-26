@@ -75,7 +75,11 @@ export interface RainSendDivision {
 }
 
 /** A held rainout Put all back would still restore: the banner at the top of Changes to send. */
-export interface WaitingRainout { id: string; day: string; verb: RainVerb; games: number; divisionIds: string[] }
+export interface WaitingRainout {
+  id: string; day: string; verb: RainVerb; games: number; divisionIds: string[];
+  /** A closed place's record (Club Website Stage 2): its banner retries the send and offers no Put all back. */
+  closure?: boolean;
+}
 
 const dayOf = (g: { scheduledAt: string }) => orgDayKey(g.scheduledAt);
 const publishedIds = (src: RainSource) => new Set(src.divisions.filter(d => d.published).map(d => d.id));
@@ -295,6 +299,11 @@ export const RAIN_WORDS = {
   backDone: (n: number) => `${gamesWord(n)} put back. Nothing was sent.`,
   backRefused: 'A game changed since, so nothing was put back. You can undo them one at a time in Changes to send.',
   backGone: 'These changes were already sent, so they can’t be put back.',
+  /** A closed place's games (Club Website Stage 2, K5): the site already says it is closed, so they go out, never back. */
+  backClosure: 'These games are from a closed place, so they can’t be put back. Send them, or give each a new date.',
+  /** The banner's line for a closed place whose send failed. */
+  bannerClosure: (day: string, n: number, verb: RainVerb) =>
+    `A closed place on ${formatShortWeekdayDate(day)}: ${gamesWord(n)} ${verb}, waiting to be sent.`,
 };
 
 /** The line's limit (9e·14), the press's and the database's. */

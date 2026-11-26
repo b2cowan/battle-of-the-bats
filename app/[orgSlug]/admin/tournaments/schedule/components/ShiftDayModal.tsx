@@ -73,6 +73,9 @@ interface ShiftDayModalProps {
   onApplied: () => void;
   /** Posted or skipped: the window closes, and the page says what changed, with Undo. */
   onFinished: (done: RainDelayDone) => void;
+  /** Opened from a closed place (Club Website Stage 2, K13): the day it opens on, the diamonds (tournament diamond ids) it
+   *  opens with picked, and the one amber line saying why. Absent: as today (its first day, every filter on all). */
+  opening?: { day: string; diamondIds: string[]; line: string | null } | null;
 }
 
 function weekdayName(dateStr: string): string {
@@ -97,7 +100,7 @@ function buildAnnouncementDraft(shifted: number, cancelled: number, shiftMinutes
 
 export default function ShiftDayModal({
   tournament, orgSlug, planId, games, teams, divisions, venues, fieldNoun, getVenueKey, getVenueLabel, canPushFans,
-  onClose, onApplied, onFinished,
+  onClose, onApplied, onFinished, opening,
 }: ShiftDayModalProps) {
   const today = tournamentToday();
   const orgQuery = orgSlug ? `?orgSlug=${encodeURIComponent(orgSlug)}` : '';
@@ -114,9 +117,17 @@ export default function ShiftDayModal({
     return m;
   }, [games, today]);
   const availableDays = useMemo(() => [...gamesByDay.keys()].sort(), [gamesByDay]);
-  const [selectedDay, setSelectedDay] = useState<string>(availableDays[0] ?? today);
+  const [selectedDay, setSelectedDay] = useState<string>(
+    opening && availableDays.includes(opening.day) ? opening.day : availableDays[0] ?? today);
   const [divisionFilter, setDivisionFilter] = useState('all');
   const [venueFilter, setVenueFilter] = useState('all');
+  // K13: a closed place's diamonds, picked together (the Field filter otherwise takes one). Any other pick, or another day,
+  // lets them go.
+  const [picked, setPicked] = useState<Set<string> | null>(() => {
+    const ids = (opening?.diamondIds ?? []).filter(id => venues.some(v => v.id === id));
+    return ids.length && opening && availableDays.includes(opening.day) ? new Set(ids) : null;
+  });
+  const pickedLabel = picked ? [...picked].map(id => venues.find(v => v.id === id)?.name).filter(Boolean).join(', ') : '';
   const dayGames = useMemo(() => gamesByDay.get(selectedDay) ?? [], [gamesByDay, selectedDay]);
   const divisionName = (id?: string) => divisions.find(d => d.id === id)?.name ?? '';
   const divisionOptions = useMemo(
@@ -134,10 +145,11 @@ export default function ShiftDayModal({
   }, [dayGames, getVenueKey, getVenueLabel]);
   // Every game the filters show moves, unless its row says Cancel game (the drawing: no picking box per row).
   const visibleGames = dayGames.filter(g =>
-    (divisionFilter === 'all' || g.divisionId === divisionFilter) && (venueFilter === 'all' || getVenueKey(g) === venueFilter));
+    (divisionFilter === 'all' || g.divisionId === divisionFilter)
+    && (picked ? !!g.venueId && picked.has(g.venueId) : venueFilter === 'all' || getVenueKey(g) === venueFilter));
 
   const [cancelling, setCancelling] = useState<Set<string>>(() => new Set());
-  const changeDay = (day: string) => { setSelectedDay(day); setDivisionFilter('all'); setVenueFilter('all'); setCancelling(new Set()); };
+  const changeDay = (day: string) => { setSelectedDay(day); setDivisionFilter('all'); setVenueFilter('all'); setPicked(null); setCancelling(new Set()); };
 
   // The shift: a dropdown (22 August, as drawn) — 30 minutes · 1 hour · 2 hours · Another amount.
   const [shiftChoice, setShiftChoice] = useState<string>('60');
@@ -310,6 +322,7 @@ export default function ShiftDayModal({
     <>
       {/* STORM MODE'S PLACE (S5, A42): its own project, not designed — the place is kept, and it says nothing. */}
       <div className={rd.stormPlace} data-reserved="storm-mode" />
+      {picked && opening?.line && <Callout tone="warn" icon={<AlertTriangle size={16} aria-hidden />}>{opening.line}</Callout>}
       {availableDays.length > 1 && (
         <label className={ck.field}>
           <span className={ck.label}>{RW.day}</span>
@@ -318,7 +331,7 @@ export default function ShiftDayModal({
           </select>
         </label>
       )}
-      {(divisionOptions.length > 1 || venueOptions.length > 1) && (
+      {(divisionOptions.length > 1 || venueOptions.length > 1 || picked) && (
         <div className={rd.pair}>
           {divisionOptions.length > 1 && (
             <label className={ck.field}>
@@ -329,10 +342,11 @@ export default function ShiftDayModal({
               </select>
             </label>
           )}
-          {venueOptions.length > 1 && (
+          {(venueOptions.length > 1 || picked) && (
             <label className={ck.field}>
               <span className={ck.label}>{RW.field(fieldNoun)}</span>
-              <select className={ck.select} value={venueFilter} onChange={e => { setVenueFilter(e.target.value); setCancelling(new Set()); }}>
+              <select className={ck.select} value={picked ? '__picked' : venueFilter} onChange={e => { setPicked(null); setVenueFilter(e.target.value === '__picked' ? 'all' : e.target.value); setCancelling(new Set()); }}>
+                {picked && <option value="__picked">{pickedLabel}</option>}
                 <option value="all">{RW.allFields(fieldNoun)}</option>
                 {venueOptions.map(v => <option key={v.key} value={v.key}>{v.label}</option>)}
               </select>

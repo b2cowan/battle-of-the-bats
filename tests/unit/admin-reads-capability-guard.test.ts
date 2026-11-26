@@ -71,7 +71,7 @@ const OPEN_TO_EVERY_MEMBER: Record<string, string> = {
 const REFUSERS = String.raw`(?:requireCapability|adminTournamentListView|houseLeagueRefusal|requireFamiliesAccess|resolveClubMoney|resolveClubTeam`
   + String.raw`|resolveScheduler|publicSiteEditor|clubLookEditor|requirePlatform\w*)\(`;
 const PREDICATES = String.raw`(?:canOpenModule|hasCapability|canGate|canScore|canMoveClubMoney|canOpenRepMoney|canSeePayouts`
-  + String.raw`|canConnectPayouts|canRefundOnline|canSaveVenueLibrary|calendarPrograms)\(`;
+  + String.raw`|canConnectPayouts|canRefundOnline|canSaveVenueLibrary|calendarPrograms|canClosePlace)\(`;
 const GATE = new RegExp([
   String.raw`\b${REFUSERS}`,
   // `return canGate(…)` is a file's own predicate helper (`canCheckIn`), refused where the handler negates it.

@@ -105,6 +105,8 @@ export const EMAIL_KINDS = {
   club_schedule_coach:                  { klass: 'team', label: 'Club schedule' },
   // 11b Part 5: Send the changes tells a house-league team's coaches when the club moved or cancelled its practices.
   club_schedule_league_coach:           { klass: 'team', label: 'Club schedule, house league' },
+  // Club Website Stage 2 (K10, K11): a closed place's rep game, to the team's head coach (or its other coaches); Reopen's line.
+  place_closure_coach:                  { klass: 'team', label: 'Place closed' },
   club_guardian_email_ask:              { klass: 'team', label: 'Guardian email request' },
   family_email_coach_copy:              { klass: 'team', label: 'Copy of a family email' },
   // Club Communications Stage 1: the club's email to its coaches and its board (colleague mail), and the club-inbox copy (R4).

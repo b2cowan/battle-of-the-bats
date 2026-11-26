@@ -20,6 +20,10 @@
  * ⚖ WHO SAVES (Ask 9): the owner, an admin, a league admin, and anyone granted the tournament permission. Everyone else
  * who can open Organization READS it — no Add venue, no pencil, no Archive or Delete. A refused save says why in the
  * window (the route's words), never silently.
+ * ⚖ CLOSE A PLACE (Club Website Stage 2, K1, K11): the toolbar's "Close a place" is one of the window's three doors (the
+ * Overview's and the house league Rainout button are the others; `?close=1` opens it on arrival). A closure showing on the
+ * site sits at the top as one row — the place, its days, who closed it and when, and Reopen — and its place's row wears
+ * "Closed today". One row per closure; one that ended by itself at Until is gone. Owner, admin, house league admin only.
  * ⚠ A FAILED LOAD says so, with Try again — never an empty library (S6-09: "No venues in your library yet" over a failed
  * read invited the club to add its venues twice).
  */
@@ -30,6 +34,10 @@ import { useOrg } from '@/lib/org-context';
 import { usePageTitle } from '@/lib/usePageTitle';
 import { useIsPhone } from '@/lib/hooks/useIsPhone';
 import { hasOrgVenueLibrary } from '@/lib/plan-features';
+import { CLOSE_WORDS as CW, canClosePlace, type StaffClosure } from '@/lib/place-closure-window';
+import { tournamentToday } from '@/lib/timezone';
+import ClosePlaceWindow from '@/components/admin/kit/club/places/ClosePlaceWindow';
+import ReopenPlaceWindow from '@/components/admin/kit/club/places/ReopenPlaceWindow';
 import { jsonInit, moneyFetch, refusalText } from '@/lib/money-fetch';
 // ⚖ Inside Organization (Club Tier Stage 13i, A5) the place names this tab, so only its actions remain (TabPageHeader).
 import { TabPageHeader } from '@/components/admin/kit/club/PlaceFrame';
@@ -59,7 +67,7 @@ const facilitiesWords = (v: LibraryVenue) =>
   [...v.facilities].sort((a, b) => a.displayOrder - b.displayOrder).map(f => f.name).join(' · ');
 
 export default function VenueLibraryPage() {
-  const { currentOrg, loading: orgLoading } = useOrg();
+  const { currentOrg, loading: orgLoading, userRole } = useOrg();
   usePageTitle('Venue library');
   const isPhone = useIsPhone();
   const router = useRouter();
@@ -82,6 +90,28 @@ export default function VenueLibraryPage() {
   /** Why Bring back didn't go through — said beside its button, in the window. */
   const [actionError, setActionError] = useState('');
   const [restoring, setRestoring] = useState(false);
+  // Close a place (Club Website Stage 2): the closures showing now, and the two windows.
+  const canClose = canClosePlace(userRole);
+  const [closures, setClosures] = useState<StaffClosure[]>([]);
+  const [closing, setClosing] = useState<{ venueId: string | null } | null>(null);
+  const [reopening, setReopening] = useState<StaffClosure | null>(null);
+  const loadClosures = useCallback(async () => {
+    if (!slug || !planAllowed || !canClose) return;
+    // org-slug-ok: `q` is built from the org context's slug above
+    const r = await fetch(`/api/admin/org/place-closures?${q}`, { cache: 'no-store' }).catch(() => null);
+    const d = r?.ok ? await r.json().catch(() => null) : null;
+    setClosures(((d as { closures?: StaffClosure[] } | null)?.closures) ?? []);
+  }, [slug, planAllowed, canClose, q]);
+  useDeferredLoad(!orgLoading && !!slug && canClose, loadClosures);
+  // The Overview's door lands here with `?close=1` and opens the window once.
+  const closeAsked = search.get('close') === '1';
+  useEffect(() => {
+    if (closeAsked && canClose && planAllowed) setClosing({ venueId: null });
+  }, [closeAsked, canClose, planAllowed]);
+  const today = tournamentToday();
+  const closedToday = useMemo(() => new Set(closures.filter(c => c.firstDay <= today).flatMap(c => (c.venueId ? [c.venueId] : []))), [closures, today]);
+  const everyClosedToday = closures.some(c => c.scope === 'all' && c.firstDay <= today);
+  const isClosedToday = (id: string) => everyClosedToday || closedToday.has(id);
 
   const beginRead = useLatestRead();
   const load = useCallback(async () => {
@@ -117,11 +147,18 @@ export default function VenueLibraryPage() {
       eyebrow="Organization"
       title="Venue library"
       inlineActions
-      actions={planAllowed && canSave ? (
-        <button type="button" className={`btn btn-lime${isPhone ? ` ${ck.iconOnlyPhone}` : ''}`} onClick={() => { setSaid(null); setAsking('add'); }}
-          aria-label="Add venue" id="org-venue-add-btn">
-          <Plus size={15} aria-hidden /><span className={ck.btnWord}>Add venue</span>
-        </button>
+      actions={planAllowed && (canSave || canClose) ? (
+        <>
+          {canClose && (
+            <button type="button" className="btn btn-outline" onClick={() => { setSaid(null); setClosing({ venueId: null }); }}>{CW.door}</button>
+          )}
+          {canSave && (
+            <button type="button" className={`btn btn-lime${isPhone ? ` ${ck.iconOnlyPhone}` : ''}`} onClick={() => { setSaid(null); setAsking('add'); }}
+              aria-label="Add venue" id="org-venue-add-btn">
+              <Plus size={15} aria-hidden /><span className={ck.btnWord}>Add venue</span>
+            </button>
+          )}
+        </>
       ) : undefined}
     />
   );
@@ -173,6 +210,7 @@ export default function VenueLibraryPage() {
                 <tr key={v.id} className={repKit.rowOpens} onClick={() => { if (window.getSelection()?.toString()) return; openFromPage({ kind: 'venue', id: v.id }); }}>
                   <td>
                     <button type="button" className={`${repKit.nameButton} ${repKit.nameLink}`} onClick={e => { e.stopPropagation(); openFromPage({ kind: 'venue', id: v.id }); }}>{v.name}</button>
+                    {isClosedToday(v.id) && <> <span className={`${repKit.chip} ${repKit.chipWarn}`}>{CW.closedToday}</span></>}
                     {v.address && <span className={repKit.cellSub}>{v.address}</span>}
                   </td>
                   <td className={facilities ? undefined : repKit.dim}>{facilities || W.noFacilities}</td>
@@ -190,7 +228,7 @@ export default function VenueLibraryPage() {
             const booked = read?.usage[v.id] ? bookedBySummary(read.usage[v.id]) : null;
             return (
               <ClubRow key={v.id} as="button" aria-haspopup="dialog" onClick={() => openFromPage({ kind: 'venue', id: v.id })} title={v.name}
-                caption={[facilitiesWords(v) || W.noFacilities, booked ?? W.nothingBooked].join(' · ')} chevron />
+                caption={<>{isClosedToday(v.id) && <><span className={`${repKit.chip} ${repKit.chipWarn}`}>{CW.closedToday}</span> </>}{[facilitiesWords(v) || W.noFacilities, booked ?? W.nothingBooked].join(' · ')}</>} chevron />
             );
           })}
         </ClubRowList></ClubRowFrame>
@@ -208,6 +246,17 @@ export default function VenueLibraryPage() {
       <CoachListToolbar>
         <p className={kit.toolbarLede}>{W.lede}</p>
       </CoachListToolbar>
+
+      {closures.map(c => (
+        <div key={c.id} className={own.closedRow}>
+          <div className={own.closedBody}>
+            <span className={`${repKit.chip} ${repKit.chipWarn}`}>{CW.closed}</span>
+            <strong>{CW.rowName(c)}</strong>
+            <span className={own.closedLine}>{CW.rowLine(c)}</span>
+          </div>
+          <button type="button" className={`btn btn-outline ${own.closedReopen}`} onClick={() => setReopening(c)}>{CW.reopen}</button>
+        </div>
+      ))}
 
       {failed ? (
         <LoadFailed title={W.loadFailed} onRetry={() => void load()} />
@@ -288,6 +337,20 @@ export default function VenueLibraryPage() {
           venues: [...r.venues, v].sort((a, b) => a.name.localeCompare(b.name, 'en-CA', { numeric: true })),
           usage: { ...r.usage, [v.id]: NO_USAGE },
         }))} />
+      )}
+      {closing && (
+        <ClosePlaceWindow
+          orgSlug={slug}
+          eyebrow={CW.eyebrow}
+          initialVenueId={closing.venueId}
+          venueLibraryHref={`/${slug}/admin/org/venues`}
+          onOpenVenueLibrary={canSave ? () => setAsking('add') : undefined}
+          onClosed={() => { void loadClosures(); }}
+          onClose={() => { setClosing(null); if (closeAsked) router.replace(`/${slug}/admin/org/venues`); }}
+        />
+      )}
+      {reopening && (
+        <ReopenPlaceWindow orgSlug={slug} closure={reopening} onReopened={() => { void loadClosures(); }} onClose={() => setReopening(null)} />
       )}
       {said && <NoticePill key={said} message={said} onDone={() => setSaid(null)} />}
     </div>

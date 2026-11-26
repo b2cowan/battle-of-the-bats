@@ -238,15 +238,16 @@ export async function placeClosureSource(orgId: string, input: {
   } else {
     // As the press: every entry a place of the club, each place once (a whole place, or one diamond of it).
     if (input.places.some(p => !p.venueId) || new Set(input.places.map(p => p.venueId)).size !== input.places.length) return null;
-    const { data, error } = await supabaseAdmin.from('org_venues').select('id, name, org_venue_facilities(id)')
+    const { data, error } = await supabaseAdmin.from('org_venues').select('id, name, org_venue_facilities(id, name)')
       .eq('org_id', orgId).in('id', input.places.map(p => p.venueId!));
     if (error) throw error;
-    const byId = new Map(((data ?? []) as { id: string; name: string; org_venue_facilities: { id: string }[] | null }[]).map(v => [v.id, v]));
+    const byId = new Map(((data ?? []) as { id: string; name: string; org_venue_facilities: { id: string; name: string }[] | null }[]).map(v => [v.id, v]));
     const resolved: ClosedPlace[] = [];
     for (const p of input.places) {
       const v = byId.get(p.venueId!);
       if (!v || (p.facilityId && !(v.org_venue_facilities ?? []).some(f => f.id === p.facilityId))) return null;
-      resolved.push({ scope: p.facilityId ? 'diamond' : 'place', venueId: v.id, facilityId: p.facilityId, name: v.name });
+      const facilityName = p.facilityId ? (v.org_venue_facilities ?? []).find(f => f.id === p.facilityId)?.name ?? null : null;
+      resolved.push({ scope: p.facilityId ? 'diamond' : 'place', venueId: v.id, facilityId: p.facilityId, name: v.name, facilityName });
     }
     places = resolved;
   }

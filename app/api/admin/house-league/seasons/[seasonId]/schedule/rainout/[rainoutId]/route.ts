@@ -4,7 +4,7 @@ import { houseLeagueRefusal } from '@/lib/house-league-gate';
 import { getLeagueSeasonById } from '@/lib/db';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { withObservability } from '@/lib/observability';
-import { hasPlanFeature } from '@/lib/plan-features';
+import { hasOrgVenueLibrary } from '@/lib/plan-features';
 import { isUuid } from '@/lib/utils';
 import { RAIN_WORDS as W } from '@/lib/league-rainout';
 import { rainoutOf } from '@/lib/league-rainout-server';
@@ -31,7 +31,8 @@ export const POST = withObservability(async (req: Request,
   if (!season) return NextResponse.json({ error: 'Season not found' }, { status: 404 });
   const refused = houseLeagueRefusal(ctx, 'run', season);
   if (refused) return refused;
-  if (!hasPlanFeature(ctx!.org.planId, 'bulk_reschedule')) return NextResponse.json({ error: 'Not found' }, { status: 404 });
+  // K14 (Club Website Stage 2): the Rainout's people, on the places gate — the one gate Close a place and its records share.
+  if (!hasOrgVenueLibrary(ctx!.org.planId)) return NextResponse.json({ error: 'Not found' }, { status: 404 });
 
   const body = await req.json().catch(() => null);
   const action = body?.action;
@@ -39,6 +40,9 @@ export const POST = withObservability(async (req: Request,
 
   const rainout = await rainoutOf(ctx!.org.id, seasonId, rainoutId);
   if (!rainout) return NextResponse.json({ error: 'Rainout not found' }, { status: 404 });
+
+  // A closed place's record never goes back (Club Website Stage 2, K5): the site already says the place is closed.
+  if (action === 'back' && rainout.closure_id) return NextResponse.json({ error: W.backClosure, code: 'closure' }, { status: 409 });
 
   if (action === 'back') {
     const { data, error } = await supabaseAdmin.rpc('league_rainout_put_back', {

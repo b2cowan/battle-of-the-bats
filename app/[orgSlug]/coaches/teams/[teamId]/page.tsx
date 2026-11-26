@@ -1019,7 +1019,7 @@ export default function TeamOverviewPage({
       key: 'announcements',
       label: 'Tell your families',
       detail: 'First announcement sent',
-      desc: 'Email families reaches every guardian on your roster at once — the season dates, the first practice, a rain-out.',
+      desc: 'Email families reaches every guardian on your roster at once — the season dates, the first practice, a rainout.',
       action: 'Write one',
       href: `${base}/announcements`,
       complete: milestones?.hasSentAnnouncement === true,

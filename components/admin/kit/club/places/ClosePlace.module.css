@@ -1,0 +1,65 @@
+/* CLOSE A PLACE (Club Website Stage 2, Session 2B): the window's own pieces. Everything else is the kit's (ClubKit,
+   SendParts, FormTable, Statement, ScreenParts, ViewSwitch). Tokens only. No motion. */
+
+/* The body spaces only its paragraphs, so each block carries the lede's 0.75rem step (the Rainout's rule). */
+.block { margin: 0 0 0.75rem; }
+
+/* Day and Until: stacked on a phone, side by side at a desk. */
+.days { display: grid; grid-template-columns: 1fr; gap: 0 0.75rem; }
+@media (min-width: 640px) { .days { grid-template-columns: 1fr 1fr; } }
+
+/* The site's preview: the statement's box with an amber edge (what families will read on the site). */
+.site {
+  margin: 0 0 0.9rem; padding: 0.75rem 0.9rem;
+  border: 1px solid var(--home-line); border-left: 3px solid var(--warning); border-radius: 8px;
+  background: var(--card-bg); font-size: var(--type-body); line-height: 1.5; color: var(--text-primary);
+}
+
+/* A row's second line (a typed place, "Started at …", the rep note). */
+.sub { display: block; font-size: var(--type-support); color: var(--text-secondary); line-height: 1.4; }
+.sub b { color: var(--text-primary); font-weight: 650; }
+
+/* The typed group's foot: the link, then its one quiet line. */
+.linkFoot { margin: 0.5rem 0 0.75rem; font-size: var(--type-support); color: var(--text-secondary); line-height: 1.45; }
+.linkFoot button {
+  display: inline-flex; align-items: center; min-height: var(--tap-min, 44px); padding: 0; margin-right: 0.4rem;
+  border: 0; background: none; color: var(--home-olive); font: inherit; font-weight: 700; text-decoration: underline; cursor: pointer;
+}
+
+/* "Not changed here": the rows nothing here moves (no tick). */
+.others { margin: 0 0 0.75rem; border: 1px solid var(--home-line); border-radius: 8px; background: var(--card-bg); }
+.othersHead {
+  display: flex; align-items: center; gap: 0.5rem; width: 100%; min-height: var(--tap-min, 44px); padding: 0 0.75rem;
+  border: 0; background: var(--home-paper); border-radius: 8px 8px 0 0; font: inherit; text-align: left; color: var(--text-primary); cursor: default;
+}
+button.othersHead { cursor: pointer; }
+.othersHead b { font-weight: 650; }
+.othersHead span { flex: 1; font-size: var(--type-support); color: var(--text-tertiary); }
+.othersHead svg { flex: none; color: var(--text-secondary); }
+.othersOpen { transform: rotate(180deg); }
+.otherRow { display: flex; gap: 0.75rem; align-items: baseline; padding: 0.6rem 0.75rem; border-top: 1px solid var(--home-line); }
+.otherRow > div { flex: 1; min-width: 0; }
+.otherRow strong { display: block; font-weight: 650; }
+.otherDoor { flex: none; font-size: var(--type-support); color: var(--text-tertiary); }
+.otherGroup { padding: 0.45rem 0.75rem 0; border-top: 1px solid var(--home-line); font-size: var(--type-support); color: var(--text-tertiary); }
+
+/* The practices' line. */
+.practices { margin: 0 0 0.75rem; font-size: var(--type-support); line-height: 1.45; color: var(--text-secondary); }
+
+/* The line for the email: a link until tapped (phone), then the field; the counter under the hint. */
+.lineOpen {
+  display: inline-flex; align-items: center; min-height: var(--tap-min, 44px); padding: 0; border: 0; background: none;
+  color: var(--home-olive); font: inherit; font-weight: 700; text-decoration: underline; cursor: pointer;
+}
+.lineStack { display: flex; flex-direction: column; gap: 0.3rem; }
+.counter { margin: 0; font-size: var(--type-support); color: var(--text-tertiary); }
+
+/* The empty states (nothing scheduled; no places). */
+.empty { margin: 0 0 0.9rem; padding: 0.9rem; border: 1px dashed var(--home-line); border-radius: 8px; line-height: 1.5; color: var(--text-secondary); }
+.empty b { display: block; color: var(--text-primary); }
+
+/* The result's rows: a notice with its button under the words. */
+.resultRow { display: flex; flex-direction: column; gap: 0.5rem; }
+.resultRow .btn { align-self: flex-start; }
+.typedList { margin: 0.35rem 0 0; padding-left: 1.1rem; font-size: var(--type-support); color: var(--text-secondary); }
+.para { margin: 0 0 0.75rem; line-height: 1.5; color: var(--text-secondary); }
