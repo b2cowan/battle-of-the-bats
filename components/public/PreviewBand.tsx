@@ -1,4 +1,6 @@
+import Link from 'next/link';
 import { previewBandText } from '@/lib/preview-org';
+import { CLAIM_WORDS, claimPath } from '@/lib/preview-claim';
 import styles from './PreviewBand.module.css';
 
 /**
@@ -9,12 +11,13 @@ import styles from './PreviewBand.module.css';
  * repeats it (`ClubFrameClub.previewFoot`). The club's own notice slot is not used: that slot is the club's, and it does
  * not reach tournament pages. The words are /legal's (lib/preview-org.ts).
  *
- * "Claim it" joins the band with the claim page itself (Session P3): a button with nowhere to go is not drawn.
+ * "Claim it" (Session P3, tab 6.1) opens our own code page. Anyone may tap it; only the code on the room card claims.
  */
-export default function PreviewBand({ clubName }: { clubName: string }) {
+export default function PreviewBand({ clubName, slug }: { clubName: string; slug: string }) {
   return (
     <aside className={styles.band} aria-label="About this preview" data-preview-band="">
       <p className={styles.words}>{previewBandText(clubName)}</p>
+      <Link href={claimPath(slug)} className={styles.claim}>{CLAIM_WORDS.bandAction}</Link>
     </aside>
   );
 }

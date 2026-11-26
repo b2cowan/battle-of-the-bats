@@ -2,28 +2,30 @@
 
 **Generated:** 2026-11-26 by `scripts/refresh-db-snapshots.mjs` (structure only — no business data).
 
-**⚠️ 184 divergence(s)** across dev/prod.
+**⚠️ 215 divergence(s)** across dev/prod.
 
 | Dimension | Only in DEV | Only in PROD | Changed |
 |---|---|---|---|
-| Tables | 4 | 0 | — |
-| Columns | 94 | 0 | 0 |
-| Indexes | 23 | 1 | 1 |
-| Constraints | 30 | 0 | — |
-| RLS / CHECK | 29 | 0 | 0 (RLS state) |
+| Tables | 6 | 0 | — |
+| Columns | 109 | 0 | 0 |
+| Indexes | 28 | 1 | 1 |
+| Constraints | 33 | 0 | — |
+| RLS / CHECK | 35 | 0 | 0 (RLS state) |
 
 ## Tables
-### Only in DEV (4)
+### Only in DEV (6)
 - `club_sponsor_deal_refunds`
 - `org_place_closures`
 - `organization_previews`
+- `preview_claim_records`
+- `preview_claim_tries`
 - `rep_event_closure_marks`
 
 ### Only in PROD (0)
 _none_
 
 ## Columns
-### Only in DEV (94)
+### Only in DEV (109)
 - `club_schedule_slots.section_mask`
 - `club_sponsor_deal_payments.card_brand`
 - `club_sponsor_deal_payments.card_last4`
@@ -90,6 +92,7 @@ _none_
 - `org_place_closures.verb`
 - `org_time_block_facilities.section_mask`
 - `org_venue_facilities.sections`
+- `organization_previews.claim_code`
 - `organization_previews.claimed_at`
 - `organization_previews.claimed_by`
 - `organization_previews.created_at`
@@ -104,6 +107,20 @@ _none_
 - `organization_previews.sport`
 - `organization_previews.updated_at`
 - `organizations.is_preview`
+- `preview_claim_records.at`
+- `preview_claim_records.box_text`
+- `preview_claim_records.claim_code`
+- `preview_claim_records.id`
+- `preview_claim_records.kind`
+- `preview_claim_records.org_id`
+- `preview_claim_records.org_name`
+- `preview_claim_records.start_plan`
+- `preview_claim_records.user_email`
+- `preview_claim_records.user_id`
+- `preview_claim_tries.id`
+- `preview_claim_tries.org_id`
+- `preview_claim_tries.tried_at`
+- `preview_claim_tries.visitor_key`
 - `rep_event_closure_marks.closure_id`
 - `rep_event_closure_marks.coach_emailed_at`
 - `rep_event_closure_marks.created_at`
@@ -126,7 +143,7 @@ _none_
 _none_
 
 ## Indexes
-### Only in DEV (23)
+### Only in DEV (28)
 - `club_schedule_slots_family_place_overlap`
 - `club_sponsor_deal_payments_online_uniq`
 - `club_sponsor_deal_refunds_credit_uniq`
@@ -145,6 +162,11 @@ _none_
 - `org_place_closures_venue_idx`
 - `organization_previews_org_slug_idx`
 - `organization_previews_pkey`
+- `preview_claim_records_org_idx`
+- `preview_claim_records_pkey`
+- `preview_claim_tries_org_idx`
+- `preview_claim_tries_pkey`
+- `preview_claim_tries_visitor_idx`
 - `rep_event_closure_marks_event_idx`
 - `rep_event_closure_marks_once`
 - `rep_event_closure_marks_org_id_idx`
@@ -160,7 +182,7 @@ _none_
   - prod: `CREATE UNIQUE INDEX org_time_block_facilities_pkey ON public.org_time_block_facilities USING btree (block_id, facility_id)`
 
 ## Constraints (PK / UNIQUE / FK)
-### Only in DEV (30)
+### Only in DEV (33)
 - `club_sponsor_deal_payments.club_sponsor_deal_payments_fee_cost_entry_id_fkey`
 - `club_sponsor_deal_payments.club_sponsor_deal_payments_fee_income_entry_id_fkey`
 - `club_sponsor_deal_payments.club_sponsor_deal_payments_online_payment_id_fkey`
@@ -185,6 +207,9 @@ _none_
 - `organization_previews.organization_previews_claimed_by_fkey`
 - `organization_previews.organization_previews_made_by_fkey`
 - `organization_previews.organization_previews_pkey`
+- `preview_claim_records.preview_claim_records_pkey`
+- `preview_claim_records.preview_claim_records_user_id_fkey`
+- `preview_claim_tries.preview_claim_tries_pkey`
 - `rep_event_closure_marks.rep_event_closure_marks_closure_id_fkey`
 - `rep_event_closure_marks.rep_event_closure_marks_event_id_fkey`
 - `rep_event_closure_marks.rep_event_closure_marks_once`
@@ -199,7 +224,7 @@ _none_
 ### RLS state differs (0)
 _none_
 
-### CHECK only in DEV (29)
+### CHECK only in DEV (35)
 - `club_schedule_slots.club_schedule_slots_section_mask_valid`
 - `club_sponsor_deal_payments.club_sponsor_deal_payments_card`
 - `club_sponsor_deal_refunds.club_sponsor_deal_refunds_amount_check`
@@ -223,11 +248,17 @@ _none_
 - `org_place_closures.org_place_closures_verb_check`
 - `org_time_block_facilities.org_time_block_facilities_section_mask_valid`
 - `org_venue_facilities.org_venue_facilities_sections_valid`
+- `organization_previews.organization_previews_claim_code_shape`
 - `organization_previews.organization_previews_claimer_needs_claim`
+- `organization_previews.organization_previews_code_only_while_open`
 - `organization_previews.organization_previews_logo_source_is_web`
 - `organization_previews.organization_previews_province_code_shape`
 - `organization_previews.organization_previews_removed_or_claimed`
 - `organizations.organizations_preview_has_no_stripe`
+- `preview_claim_records.preview_claim_records_claim_shape`
+- `preview_claim_records.preview_claim_records_kind_check`
+- `preview_claim_records.preview_claim_records_undo_shape`
+- `preview_claim_tries.preview_claim_tries_visitor_key_check`
 - `rep_team_events.rep_team_events_section_mask_valid`
 
 ### CHECK only in PROD (0)

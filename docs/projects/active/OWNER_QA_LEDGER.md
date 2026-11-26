@@ -28933,3 +28933,16 @@ Committed 2026-11-25 as two commits (owner: "commit the sweep and the data chang
 
 **✅ PASSED 2026-11-25, 38 of 38** (owner paste-back; A 12/12, B 7/7, C 19/19; no notes came back). No owner calls in this walk. The code was committed before the walk (`be50fa63a`, `3727be364`).
 <!-- /§570 -->
+
+## §571 · Club website · Track P · Session P3 · The room and the claim — **the owner takes a preview into the meeting with its code and a live score, and a club claims it into a real Club trial with the sample cleared**
+<!-- §571 -->
+**Walk published 2026-11-25.** [Interactive walk](https://claude.ai/artifact/4VxedNNBxzvLdKUToKKtV9) (walks A–C, 47 steps; no owner calls, T5, T7–T10, T14–T16 ruled 2026-11-25) · [repository HTML](CLUB_WEBSITE_TRACK_P_P3_WALK.html). Migration 540 on dev (owner’s word, 2026-11-25). Plan: `CLUB_WEBSITE_ENHANCEMENTS_PLAN.md` §6 Track P and Progress (“Track P Session P3”).
+
+**Where:** `http://localhost:3000`, Platform admin › Growth › Prospect clubs, the preview at `/oakridge-minor-softball`, its tournament `/oakridge-minor-softball/sample-indoor-classic`, and the claim page `/start/claim/oakridge-minor-softball`. **Sign in:** the owner `fieldlogichq@gmail.com` (own password); the claimer `oakridge.president@dev.local` / `UATPassword2026!` in a private window (a prepared account that runs no club); nobody for the tournament and the forwarded link. Stripe test card `4242 4242 4242 4242`.
+
+**Walks:** A into the room: the room window, the card, the live game at the meeting time and its score, Mark final, Change the meeting (19; includes opening the tournament at meeting time to see the game show as live, the step §568 could not make) · B the claim and its undo: wrong codes and the rest, the account step, the claim step, the masked claimant, Undo (16) · C a real claim through checkout to Set up your club, a forwarded link after the claim, Remove now and “This preview has ended” (12).
+
+**Left out (pinned by tests or probes):** the pass lapsing after 24 hours; two claims at once from one account; an account that already runs a club; a claim that did not finish; a claimed club deleted later; the room card with a long web address; the email of a new account (the dev confirm email goes to a test address).
+
+**After the walk:** Oakridge stays on dev as a claimed club on a Stripe test trial; cancel the trial, then Delete it from Clubs & portals.
+<!-- /§571 -->

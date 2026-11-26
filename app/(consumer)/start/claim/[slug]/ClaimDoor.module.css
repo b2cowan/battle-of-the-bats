@@ -1,0 +1,127 @@
+/* The claim's door pages (Club Website Track P, Session P3; drawing tab 6): Start a club's start column and its kit
+   (components/auth/AccountForm.module.css). Only the club's mark, the two lists, the code field and the tick are new. */
+
+.identity {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+  min-width: 0;
+}
+.identityText {
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+  min-width: 0;
+}
+.identityText strong {
+  font-family: var(--font-sans);
+  font-size: var(--type-heading);
+  font-weight: 700;
+  color: var(--home-ink);
+  overflow-wrap: anywhere;
+}
+.logo {
+  width: 48px;
+  height: 48px;
+  object-fit: contain;
+  border-radius: 10px;
+  background: var(--home-card);
+  border: 1px solid var(--home-field-edge);
+  flex-shrink: 0;
+}
+.tile {
+  width: 48px;
+  height: 48px;
+  border-radius: 10px;
+  border: 2px solid transparent;
+  background: var(--home-ink);
+  color: var(--white-fixed);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-sans);
+  font-weight: 700;
+  font-size: 1rem;
+  flex-shrink: 0;
+}
+
+/* The code field: monospace, bold, letter-spaced, so "7K4 PQ2" reads as it is printed on the card. */
+.code {
+  font-family: var(--font-mono, ui-monospace, SFMono-Regular, Menlo, monospace);
+  font-weight: 700;
+  font-size: 1.25rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+/* The claim step's white card: the club, then Stays and Cleared side by side. */
+.card {
+  background: var(--home-card);
+  border: 1px solid var(--home-field-edge);
+  border-radius: 12px;
+  padding: 1rem;
+}
+.card .identity { margin-bottom: 0.875rem; }
+.lists {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+.listHead {
+  margin: 0 0 0.375rem;
+  font-family: var(--font-sans);
+  font-size: var(--type-caption, 0.75rem);
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--home-ink-soft);
+}
+.list {
+  margin: 0;
+  padding-left: 1.1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  font-family: var(--font-sans);
+  font-size: var(--type-body);
+  line-height: 1.4;
+  color: var(--home-ink);
+}
+/* "Cleared" is grey: it is about to be gone (tab 6.3's note). */
+.cleared { color: var(--home-dim); }
+
+/* /legal's paragraph: who made the preview, and that the club is theirs from here. */
+.publisher {
+  margin: 0;
+  font-family: var(--font-sans);
+  font-size: var(--type-body);
+  line-height: 1.5;
+  color: var(--home-ink-soft);
+}
+
+.tick {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.625rem;
+  min-height: 44px;
+  font-family: var(--font-sans);
+  font-size: var(--type-body);
+  line-height: 1.45;
+  color: var(--home-ink);
+  cursor: pointer;
+}
+.tick input {
+  width: 20px;
+  height: 20px;
+  margin-top: 1px;
+  flex-shrink: 0;
+  accent-color: var(--home-olive);
+}
+
+/* "Terms" inside the authority tick: a link in a sentence, so no tap-row height of its own. */
+.termsLink { color: var(--home-olive); font-weight: 600; text-decoration: underline; text-underline-offset: 2px; }
+
+@media (max-width: 360px) {
+  .lists { grid-template-columns: 1fr; }
+}

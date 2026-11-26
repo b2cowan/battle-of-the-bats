@@ -1,0 +1,177 @@
+/* The room window (Club Website Track P, Session P3; drawing tab 4A): on the owner's phone in the meeting. Controls are
+   the console's own (console.module.css, the house .btn classes); this file only lays the window out. */
+
+.body {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.codeRow {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+.qr {
+  width: 110px;
+  height: 110px;
+  flex-shrink: 0;
+  border-radius: 6px;
+  background: var(--white-fixed); /* a QR code is black on white whatever the theme, or phones cannot read it */
+}
+.codeText {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+.code {
+  font-family: var(--font-data);
+  font-weight: 700;
+  font-size: var(--type-title); /* type-ok: code */
+  letter-spacing: 0.12em;
+  color: var(--text-primary);
+}
+
+.buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.buttons :global(.btn) { min-height: 44px; }
+
+/* The live game: a bordered group with its uppercase head band. */
+.group {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  overflow: hidden;
+}
+.groupHead {
+  margin: 0;
+  padding: 8px 12px;
+  background: var(--home-fill);
+  border-bottom: 1px solid var(--border);
+  font-size: var(--type-support);
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+}
+.groupBody {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px;
+}
+.liveLine { color: var(--home-olive); font-weight: 600; }
+.scores {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.scoreRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 44px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+.scoreRow > span { min-width: 0; overflow-wrap: anywhere; }
+.score {
+  width: 64px !important;
+  flex-shrink: 0;
+  text-align: center;
+  font-weight: 700;
+  font-size: var(--type-title);
+  appearance: textfield;
+  -moz-appearance: textfield;
+}
+.score::-webkit-outer-spin-button,
+.score::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+
+.actionsEnd {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+}
+.actionsEnd :global(.btn) { min-height: 44px; }
+
+.email {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.tickRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+.tickRow select { width: auto; min-height: 44px; }
+
+.meeting {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.meetingLine {
+  margin: 0;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+.meetingEdit {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* The rare door ends the body (the room window's lone Remove now, /design 2026-11-25). */
+.rare {
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+}
+.rare :global(.btn) { min-height: 44px; }
+
+/* Show the QR code full screen: the phone becomes the code for the table. Tap anywhere to close. */
+.full {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  padding: 24px;
+  border: 0;
+  background: var(--white-fixed); /* a QR code is black on white whatever the theme */
+  color: black;
+  font-family: inherit;
+  cursor: pointer;
+}
+.full img {
+  width: min(88vw, 70vh);
+  height: auto;
+}
+.fullCode {
+  font-family: var(--font-data);
+  font-weight: 700;
+  font-size: var(--type-display); /* type-ok: code */
+  letter-spacing: 0.14em;
+  overflow-wrap: anywhere;
+}
+.fullAddress { font-size: var(--type-heading); overflow-wrap: anywhere; }
+.fullHint { font-size: var(--type-support); opacity: 0.6; }
+
+/* A door inside the window (the address, Change, Let them try again, Open in Clubs & portals): a 44 px tap on a phone. */
+.doorTap { display: inline-flex; align-items: center; min-height: var(--tap-min, 44px); }
+
+/* The consent tick is read before it is ticked: body size, primary ink. */
+.consent { font-size: var(--type-body); color: var(--text-primary); line-height: 1.4; }

@@ -85,3 +85,17 @@
 @media (max-width: 640px) {
   .change { min-height: var(--tap-min, 44px); display: inline-flex; align-items: center; }
 }
+
+/* Session P3: the row's name opens its window (a button, worn as the console's name link). */
+.nameButton {
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+}
+@media (min-width: 641px) and (max-width: 768px) {
+  .nameButton { display: inline-flex; align-items: center; min-height: var(--tap-min, 44px); }
+}

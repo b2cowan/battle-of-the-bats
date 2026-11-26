@@ -59,7 +59,7 @@ const FIELD_ORDER: MakeField[] = ['name', 'slug', 'sport', 'province', 'logo', '
 
 export default function MakeClubWindow({ onClose, onMade }: {
   onClose: () => void;
-  onMade: (made: { name: string; slug: string }) => void;
+  onMade: (made: { name: string; slug: string; orgId: string }) => void;
 }) {
   const [name, setName] = useState('');
   const [slug, setSlug] = useState('');
@@ -131,7 +131,7 @@ export default function MakeClubWindow({ onClose, onMade }: {
     try {
       const res = await fetch('/api/platform-admin/prospect-clubs', { method: 'POST', body });
       const json = await res.json().catch(() => ({}));
-      if (res.ok && json.slug) { onMade({ name: name.trim(), slug: json.slug }); return; }
+      if (res.ok && json.slug) { onMade({ name: name.trim(), slug: json.slug, orgId: json.orgId }); return; }
       if (res.status === 400 && json.fieldErrors) {
         const fe = json.fieldErrors as MakeErrors;
         if (fe.slug) setSlugOpen(true);

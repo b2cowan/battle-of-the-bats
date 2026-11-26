@@ -171,6 +171,8 @@ export type ProspectRow = {
   removal: { date: string; left: string | null } | null;
   /** "Claimed Nov 2" on a claimed row. */
   claimed: string | null;
+  /** "Nov 2", the claimed row's day beside its plan line (tab 2: "Nov 2 · Club, on trial"). */
+  claimedDay: string | null;
   madeBy: string;
 };
 
@@ -218,6 +220,7 @@ export function prospectRow(r: PreviewRecord, viewerId: string | null, now: Date
       : state === 'removed' ? { date: formatShortWeekdayDate(orgDayKey(r.removedAt)), left: null }
       : { date: formatShortWeekdayDate(removeDay), left: left <= 0 ? 'Due for removal' : left === 1 ? '1 day left' : `${left} days left` },
     claimed: r.claimedAt ? `Claimed ${shortDate(orgDayKey(r.claimedAt))}` : null,
+    claimedDay: r.claimedAt ? shortDate(orgDayKey(r.claimedAt)) : null,
     // "You" while only the owner makes one (T2); the column stays so a second maker shows the day T2 changes.
     madeBy: r.madeBy && r.madeBy === viewerId ? 'You' : 'Someone else',
   };

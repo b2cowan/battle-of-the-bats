@@ -3,6 +3,7 @@ import { getAuthContextWithRole, unauthorized, forbidden } from '@/lib/api-auth'
 import { planCarriesModule } from '@/lib/module-entitlements';
 import { computeClubChecklist } from '@/lib/club-checklist';
 import { withObservability, captureAndJson } from '@/lib/observability';
+import { isClaimedPreview } from '@/lib/preview-claim-server';
 
 /**
  * GET /api/admin/org/club-checklist — the club's setup checklist (A11, Stage 1 specimen 10), computed
@@ -28,7 +29,9 @@ export const GET = withObservability(async (req: Request) => {
     return NextResponse.json({ error: 'This checklist is for clubs.', code: 'not_a_club' }, { status: 404 });
   }
   try {
-    return NextResponse.json(await computeClubChecklist(ctx.org));
+    // Track P (Session P3, tab 6.5): a club that came from a claimed preview reads one line at the top saying what stayed.
+    const [checklist, claimedFromPreview] = await Promise.all([computeClubChecklist(ctx.org), isClaimedPreview(ctx.org.id)]);
+    return NextResponse.json({ ...checklist, claimedFromPreview });
   } catch (error) {
     return captureAndJson(error, { error: 'We couldn’t read the setup checklist. Try again.' }, 500);
   }

@@ -1,0 +1,502 @@
+<title>Track P · Session P3 walk</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: one reading column; a walk index of cards, one walk open at a time; steps as Do / You should see rows with a tick. */
+:root {
+  --bg: #f4f6f5; --surface: #ffffff; --ink: #18211d; --muted: #5b6862; --line: #d5ddd9;
+  --accent: #1f6b4f; --accent-soft: #e2efe9; --warn: #9a5b00; --warn-soft: #fbefd9; --bad: #a3322b; --bad-soft: #f8e3e1;
+  --font-body: "Instrument Sans", "Segoe UI", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, "Cascadia Mono", Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #121715; --surface: #1a211e; --ink: #e5ece8; --muted: #9aa8a1; --line: #2e3833;
+  --accent: #6fcca4; --accent-soft: #1f3a2f; --warn: #f0b75c; --warn-soft: #3a2c14; --bad: #f08a80; --bad-soft: #3d1f1c; color-scheme: dark; } }
+:root[data-theme="dark"] {
+  --bg: #121715; --surface: #1a211e; --ink: #e5ece8; --muted: #9aa8a1; --line: #2e3833;
+  --accent: #6fcca4; --accent-soft: #1f3a2f; --warn: #f0b75c; --warn-soft: #3a2c14; --bad: #f08a80; --bad-soft: #3d1f1c; color-scheme: dark; }
+body { background: var(--bg); color: var(--ink); font: 15px/1.55 var(--font-body); padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 24px 64px; }
+.wrap { max-width: 860px; margin: 0 auto; display: grid; gap: 20px; }
+h1 { font-size: 30px; line-height: 1.15; margin: 0; text-wrap: balance; letter-spacing: -0.01em; }
+h2 { font-size: 19px; margin: 0; text-wrap: balance; }
+h3 { font-size: 13px; margin: 0; text-transform: uppercase; letter-spacing: 0.07em; color: var(--muted); font-weight: 600; }
+p { margin: 0; max-width: 68ch; }
+.eyebrow { font: 600 12px/1 var(--font-mono); letter-spacing: 0.08em; text-transform: uppercase; color: var(--accent); }
+.lead { color: var(--muted); }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 18px; display: grid; gap: 12px; min-width: 0; }
+.signin { border-color: var(--accent); }
+.kv { display: grid; grid-template-columns: max-content 1fr; gap: 6px 16px; }
+.kv dt { color: var(--muted); }
+.kv dd { margin: 0; min-width: 0; overflow-wrap: anywhere; }
+code, .mono { font-family: var(--font-mono); font-size: 0.92em; }
+a { color: var(--accent); }
+pre { margin: 6px 0 0; padding: 10px 12px; background: var(--bg); border: 1px solid var(--line); border-radius: 8px; font: 12px/1.5 var(--font-mono); white-space: pre-wrap; overflow-wrap: anywhere; }
+.amt { font-family: var(--font-mono); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.note { background: var(--warn-soft); border-radius: 8px; padding: 10px 12px; }
+ul.plain { margin: 0; padding-left: 18px; display: grid; gap: 4px; }
+.index { display: grid; gap: 8px; }
+.wcard { display: grid; grid-template-columns: 1fr auto; gap: 4px 12px; align-items: center; text-align: left; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; font: inherit; color: inherit; cursor: pointer; }
+.wcard[aria-expanded="true"] { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent) inset; }
+.wcard:focus-visible, button:focus-visible, textarea:focus-visible, input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.wcard .t { font-weight: 600; }
+.wcard .j { grid-column: 1; color: var(--muted); font-size: 14px; }
+.chip { grid-row: 1 / span 2; grid-column: 2; font: 600 12px/1 var(--font-body); padding: 6px 9px; border-radius: 999px; background: var(--bg); color: var(--muted); border: 1px solid var(--line); white-space: nowrap; }
+.chip.prog { color: var(--accent); border-color: var(--accent); }
+.chip.pass { background: var(--accent-soft); color: var(--accent); border-color: transparent; }
+.chip.issue { background: var(--bad-soft); color: var(--bad); border-color: transparent; }
+.chip.call, .chip.thin { background: var(--warn-soft); color: var(--warn); border-color: transparent; }
+.walk { display: grid; gap: 14px; }
+.meta { display: grid; gap: 10px; }
+.meta div { display: grid; gap: 2px; }
+.steps { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+.step { display: grid; grid-template-columns: 28px 1fr; gap: 10px; padding: 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); }
+.step.done { border-color: var(--accent); background: var(--accent-soft); }
+.step.stop { border-style: dashed; border-color: var(--warn); }
+.step input[type="checkbox"] { width: 20px; height: 20px; margin: 2px 0 0; accent-color: var(--accent); }
+.step .body { display: grid; gap: 6px; min-width: 0; }
+.step .who { font: 600 11px/1 var(--font-mono); text-transform: uppercase; letter-spacing: 0.07em; color: var(--warn); }
+.step .lab { font-weight: 600; font-size: 12px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); }
+.opts { display: grid; gap: 6px; }
+.opts label { display: flex; gap: 8px; align-items: flex-start; }
+.verdict { display: flex; flex-wrap: wrap; gap: 8px; }
+.verdict button, .btn { font: 600 14px/1 var(--font-body); padding: 10px 14px; border-radius: 8px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); cursor: pointer; }
+.verdict button.on[data-v="pass"] { background: var(--accent); color: var(--surface); border-color: var(--accent); }
+.verdict button.on[data-v="issue"] { background: var(--bad); color: var(--surface); border-color: var(--bad); }
+.verdict button.on[data-v="call"] { background: var(--warn); color: var(--surface); border-color: var(--warn); }
+textarea { width: 100%; box-sizing: border-box; min-height: 80px; font: 14px/1.5 var(--font-body); padding: 10px; border-radius: 8px; border: 1px solid var(--line); background: var(--bg); color: var(--ink); }
+.out { font: 13px/1.5 var(--font-mono); white-space: pre-wrap; }
+.row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.progress { font-weight: 600; }
+@media (max-width: 520px) { .kv { grid-template-columns: 1fr; } .kv dt { margin-top: 6px; } h1 { font-size: 25px; } }
+@media (prefers-reduced-motion: no-preference) { .step { transition: background-color 0.15s, border-color 0.15s; } }
+</style>
+
+<div class="wrap">
+  <header class="card" style="gap:8px">
+    <span class="eyebrow">Club Website · Track P · Session P3</span>
+    <h1>The room and the claim</h1>
+    <p class="lead">You take a preview into a meeting with its code and a live score, a club claims it, you undo a claim, the club claims it for real and starts its trial, and you remove a preview from the room window.</p>
+    <p class="lead">Three walks, 47 steps, in order. Written Nov 25, 2026. Everything runs on this computer’s dev site. No email reaches anyone.</p>
+    <p class="progress" id="progress">Checked 0 of 0</p>
+  </header>
+
+  <section class="card signin" aria-labelledby="signin-h">
+    <h2 id="signin-h">Sign in as</h2>
+    <dl class="kv">
+      <dt>Where</dt><dd><code>http://localhost:3000</code> on this computer, with the dev server running. <b>Not the staging site.</b></dd>
+      <dt>You, the owner</dt><dd><code>fieldlogichq@gmail.com</code> · your own password, at <code>/platform-admin/login</code>. Every walk.</dd>
+      <dt>The claimer</dt><dd><code>oakridge.president@dev.local</code> · password <code>UATPassword2026!</code>, in a <b>private window</b>. Walks B and C. A prepared account that runs no club.</dd>
+      <dt>A visitor</dt><dd>Nobody signs in: a <b>private window</b> (walk A’s tournament, walk C’s forwarded link).</dd>
+      <dt>Stripe test card</dt><dd><code>4242 4242 4242 4242</code>, any future date, any CVC (walk C, step 5; Stripe’s test mode, nothing is charged).</dd>
+    </dl>
+    <p class="lead">Dev-only sign-ins. Keep this page private.</p>
+  </section>
+
+  <section class="card" aria-labelledby="before-h">
+    <h2 id="before-h">Before you start</h2>
+    <p class="note"><b>These are owed to the building session, not to you.</b> If one is not true, stop and tell me.</p>
+    <ul class="plain">
+      <li>The database change for the room and the claim is on dev (your word, Nov 25).</li>
+      <li>The dev server is serving the finished code: the building session fetched the new pages and doors from it on Nov 25 (a signed-in claim through to the plan step, and an undo).</li>
+      <li>No open preview is named Oakridge Minor Softball or Pinecrest Softball (the last walk removed Oakridge).</li>
+      <li>Walk A’s live game starts at the meeting time you pick in step 1. Pick about five minutes ahead; steps 2 to 11 fit before it.</li>
+    </ul>
+  </section>
+
+  <section class="card" aria-labelledby="after-h">
+    <h2 id="after-h">After the walks</h2>
+    <p class="lead">Oakridge stays on dev as a claimed club on a Stripe test trial. To clear it, cancel its trial from its Plan &amp; billing, then Delete it from Clubs &amp; portals (Delete refuses a running subscription).</p>
+  </section>
+
+  <section aria-labelledby="index-h" style="display:grid;gap:10px">
+    <h2 id="index-h">The walks</h2>
+    <div class="index" id="index"></div>
+  </section>
+
+  <section id="walkHost"></section>
+
+  <section class="card" aria-labelledby="sum-h">
+    <h2 id="sum-h">Paste-back (all walks)</h2>
+    <div class="row">
+      <button class="btn" type="button" id="copyAll">Copy the summary</button>
+      <button class="btn" type="button" id="reset">Clear my ticks</button>
+      <span class="lead" id="copied" aria-live="polite"></span>
+    </div>
+    <div class="card out" id="out" tabindex="0"></div>
+  </section>
+</div>
+
+<script>
+(function () {
+  "use strict";
+  var KEY = "track-p-p3-walk-v1";
+  var PAGE = "Club Website · Track P · Session P3";
+  var WALKS = [
+ {
+  "id": "A",
+  "title": "Into the room",
+  "job": "Platform admin · your window, plus a private window",
+  "forText": "You take a preview into a meeting on your phone: the code to scan, the printed card, and a game that is live at the meeting time, scored by you.",
+  "passes": "The room window opens when the club is made; the card prints; the tournament’s first game shows Live now at the meeting time; your score reaches the other window within 30 seconds; a failed save keeps your numbers; Mark final asks first; moving the meeting moves the game and the removal date.",
+  "notIn": "Scanning the QR with a real phone (this computer’s localhost is not reachable from a phone). The one email (Session P4; it cannot send until we have a mailing address).",
+  "who": "You as the owner, <code>fieldlogichq@gmail.com</code>, your own password. A <b>private window</b> with nobody signed in for steps 11, 12, 15, 16 and 18.",
+  "where": "Platform admin › Growth › Prospect clubs, and <code>http://localhost:3000/oakridge-minor-softball/sample-indoor-classic</code>.",
+  "steps": [
+   {
+    "stop": true,
+    "d": "Open <b>Prospect clubs</b>, press <b>Make a club for a meeting</b>, fill it as in the last walk (Club name <code>Oakridge Minor Softball</code>, Softball, Ontario, logo <code>public\\icons\\fl-512.png</code>, source <code>https://oakridgeminorsoftball.ca</code>, line <code>Softball for Oakridge kids</code>), set Meeting to <b>today, about five minutes from now</b>, and press <b>Make the club</b>.",
+    "s": "The window closes, the green “preview is ready” line shows, and a new window opens titled <b>Oakridge Minor Softball</b>: the room window. <b>Stop if it says “Nothing was made.”</b>"
+   },
+   {
+    "d": "Read the top of the room window.",
+    "s": "A QR code on the left. Beside it “Claim code” and a six-character code in two threes (like <code>7K4 PQ2</code>) with no 0, O, 1 or I, and the link <code>fieldlogichq.ca/oakridge-minor-softball</code>. <b>Write the code down</b>: walk B needs it."
+   },
+   {
+    "d": "Press <b>Copy link</b>.",
+    "s": "“Link copied” shows under the buttons, then goes away by itself."
+   },
+   {
+    "d": "Press <b>Show the QR code full screen</b>.",
+    "s": "The whole screen turns white with a large QR code, the code, the address and “Tap anywhere to close”."
+   },
+   {
+    "d": "Press <b>Escape</b>.",
+    "s": "The full-screen code closes and the room window is still open."
+   },
+   {
+    "d": "Press <b>Room card (PDF)</b> and open the file it downloads.",
+    "s": "A half-letter page: a band in the club’s colours with the logo, the name and “Softball for Oakridge kids”; the QR code on the left; “A site for your club, already built”, “Scan to open it on your phone.”, “TO CLAIM IT, TAP CLAIM IT AND ENTER”, the code and the address on the right; at the foot “Prepared by FieldLogicHQ for Oakridge Minor Softball. Not their site yet. Removed on {meeting day plus 30} unless the club claims it.”"
+   },
+   {
+    "d": "Read the live game box.",
+    "s": "“THE LIVE GAME · SAMPLE INDOOR CLASSIC”, then “U11 · {the meeting time} · Starts at the meeting”, <b>Brindlewood Foxes</b> and <b>Marrowvale Mavericks</b> with an empty score box each, Mark final and Save score."
+   },
+   {
+    "d": "Before the meeting time, type <code>1</code> and <code>0</code> and press <b>Save score</b>.",
+    "s": "In red: “The game hasn’t started yet. It starts at the meeting time.” Your 1 and 0 are still in the boxes."
+   },
+   {
+    "d": "Under <b>Email the link</b>, type your own address, tick the box, and press <b>Send</b>.",
+    "s": "In red: “This email can’t go yet. Every email like it must carry our mailing address, and ours isn’t set.” Nothing is sent."
+   },
+   {
+    "d": "Read the Meeting line and the line under it.",
+    "s": "“{today} at {the time} · Change”, then “Removed on {today plus 30, with the year}, 30 days after the meeting, unless the club claims it.”, then a red <b>Remove now</b> at the bottom."
+   },
+   {
+    "d": "In a <b>private window</b> open <code>http://localhost:3000/oakridge-minor-softball/sample-indoor-classic</code>.",
+    "s": "The dark band is at the top. Today’s first game, Brindlewood Foxes and Marrowvale Mavericks, is listed at the meeting time and is <b>not</b> live yet."
+   },
+   {
+    "stop": true,
+    "d": "Once the meeting time has passed, reload the private window.",
+    "s": "The first game shows <b>Live now</b>. (This is the check the last walk could not make.) <b>Stop if it does not.</b>"
+   },
+   {
+    "d": "Look at the room window (no reload).",
+    "s": "Within 30 seconds the game line reads “U11 · {time} · <b>Live now</b>” in green."
+   },
+   {
+    "d": "Type <code>2</code> and <code>1</code> and press <b>Save score</b>.",
+    "s": "“Saved” shows beside the buttons, then goes."
+   },
+   {
+    "d": "In the private window, tap the live game.",
+    "s": "The game page reads <b>Live now</b> with 2 and 1."
+   },
+   {
+    "d": "In the room window type <code>3</code> and <code>1</code> and press <b>Save score</b>, then watch the private window without touching it.",
+    "s": "Within 30 seconds the game page shows 3 and 1."
+   },
+   {
+    "d": "In your window open DevTools › Network › set it to <b>Offline</b>, type <code>4</code> and <code>1</code>, and press <b>Save score</b>.",
+    "s": "In red: “Not saved. Check your signal and save again”. Your 4 and 1 stay in the boxes. Set Network back to <b>No throttling</b>."
+   },
+   {
+    "d": "Press <b>Save score</b> again, then <b>Mark final</b>.",
+    "s": "A small window asks “Mark the game final at 4–1?” with “The score can’t be changed in the room after this…”, Keep it live and Mark final. Press <b>Mark final</b>: the game line reads <b>Final</b>, the boxes are locked and the buttons are gone. The private window shows the game final, 4–1, within 30 seconds."
+   },
+   {
+    "d": "Press <b>Change</b> on the Meeting line, set it to <b>tomorrow at 7:00 p.m.</b>, and press <b>Move the meeting</b>.",
+    "s": "The Meeting line reads tomorrow at 7:00 p.m., the removal date moves one day later, and the live game box is back to “Starts at the meeting” with empty boxes."
+   }
+  ]
+ },
+ {
+  "id": "B",
+  "title": "The claim, and undoing it",
+  "job": "A visitor in a private window · then you",
+  "forText": "Someone at the club taps Claim it, enters the code from the card, signs in, and claims the club. You check who claimed it and undo it, as you would for a wrong person.",
+  "passes": "The code is asked first; wrong codes are refused and five rest the door until you let them try again; the claim clears the sample and lands on today’s plan step; Prospect clubs shows the claimant masked; Undo puts the preview back.",
+  "notIn": "Making a new account by email (on this dev site the confirm email goes to a test address nobody receives, so the claimer signs in with a prepared account). Checkout (walk C).",
+  "who": "The claimer: <code>oakridge.president@dev.local</code> · <code>UATPassword2026!</code> (a prepared account that runs no club), in the <b>private window</b>. You in your normal window.",
+  "where": "<code>http://localhost:3000/oakridge-minor-softball</code>, its Claim it, and Prospect clubs.",
+  "steps": [
+   {
+    "stop": true,
+    "d": "In the <b>private window</b> open <code>http://localhost:3000/oakridge-minor-softball</code>.",
+    "s": "The dark band reads “Prepared by FieldLogicHQ for Oakridge Minor Softball. Not their site yet.” with a light <b>Claim it</b> button on its right."
+   },
+   {
+    "d": "Press <b>Claim it</b>.",
+    "s": "Our own page (the FieldLogicHQ bar, warm paper): the club’s logo, name and address; <b>Claim your club</b>; “For the club’s board. Enter the code from the card we left with your club. Then make your account and choose a plan.”; an empty Claim code box; Continue; “Lost the card from the meeting? Ask whoever met with us, or write to support@fieldlogichq.ca.”; “← Back to Oakridge Minor Softball”."
+   },
+   {
+    "d": "Type <code>AAAAAA</code> and press <b>Continue</b>.",
+    "s": "In red under the box: “That code doesn’t match Oakridge Minor Softball. Check the card, or write to support@fieldlogichq.ca.”"
+   },
+   {
+    "d": "Try four more wrong codes: <code>AAAAAB</code>, <code>AAAAAC</code>, <code>AAAAAD</code>, <code>AAAAAE</code>.",
+    "s": "After the fifth the box goes and a red notice reads “Too many tries. Try again in an hour, or write to support@fieldlogichq.ca.”"
+   },
+   {
+    "d": "In your window close and reopen Oakridge’s room window from Prospect clubs.",
+    "s": "A red line: “The claim door is resting after five wrong codes. <b>Let them try again</b>”."
+   },
+   {
+    "d": "Press <b>Let them try again</b>.",
+    "s": "The red line goes."
+   },
+   {
+    "d": "Reload the private window.",
+    "s": "The code page is back, with its box."
+   },
+   {
+    "d": "Type the code from walk A step 2 in <b>lowercase, without the space</b>, and press <b>Continue</b>.",
+    "s": "Start a club’s own account step, retitled: <b>Claim Oakridge Minor Softball</b>, “Make your account, claim the club, then choose Club or Club · Association.”, the steps Account · Club · Plan, the name, email and password fields, today’s Terms tick, Create account, and the “Available to organizations in Canada, outside Québec for now…” line."
+   },
+   {
+    "d": "Press <b>Sign in</b> (under the form) and sign in as <code>oakridge.president@dev.local</code> · <code>UATPassword2026!</code>. If a Terms window opens, tick it and agree.",
+    "s": "Back on the claim: ✓ Account · 2 Club · 3 Plan, “Your email is confirmed.”, a white card with <b>Stays</b> (the name and web address, the logo and colours, the sport, the line about the club) and <b>Cleared</b> in grey, the owner line, /legal’s paragraph “FieldLogicHQ made and published this preview…”, the tick “I’m allowed to claim this club for Oakridge Minor Softball and to agree to the Terms on its behalf.” with Terms underlined, and <b>Claim the club and clear the sample</b>."
+   },
+   {
+    "d": "Press <b>Claim the club and clear the sample</b> without ticking.",
+    "s": "In red: “Tick the box to say you’re allowed to claim the club.” Nothing changes."
+   },
+   {
+    "stop": true,
+    "d": "Tick the box and press <b>Claim the club and clear the sample</b>.",
+    "s": "Today’s plan step, unchanged: “How many teams will have a Premium Coaches Portal?” with Club and Club · Association, each with its 90-day trial line. <b>Stop if it says the claim didn’t finish.</b> Do not start a trial yet."
+   },
+   {
+    "d": "In your window reload <b>Prospect clubs</b>.",
+    "s": "The count reads <b>0 open · 1 claimed · …</b>. Oakridge shows <b>Claimed</b>, “{today} · No plan yet” and “by o•••@d•••.local”."
+   },
+   {
+    "d": "Open <b>Clubs &amp; portals</b> and search <code>Oakridge</code>.",
+    "s": "Oakridge Minor Softball is listed now, like any club."
+   },
+   {
+    "d": "Back on Prospect clubs, press <b>Oakridge Minor Softball</b>.",
+    "s": "A window: “Claimed {date} by o•••@d•••.local”, “No plan yet”, “Open in Clubs &amp; portals ›”, and a red <b>Undo the claim</b> at the bottom."
+   },
+   {
+    "d": "Press <b>Undo the claim</b>, then <b>Undo the claim</b> in the window that asks.",
+    "s": "“The claim is undone. The preview is back, with a new code.” The list reads <b>1 open · 0 claimed</b>."
+   },
+   {
+    "d": "In the private window open <code>http://localhost:3000/oakridge-minor-softball</code>.",
+    "s": "The band and the sample are back: Sample House League, the four rep teams, Sample Indoor Classic."
+   }
+  ]
+ },
+ {
+  "id": "C",
+  "title": "A real claim, the landing, a forwarded link, Remove now",
+  "job": "The claimer, then a stranger, then you",
+  "forText": "The club claims it for real and starts its trial through today’s checkout, lands on Set up your club, and the preview is gone. A board member forwarded the link sees it is claimed. You remove a preview from the room window.",
+  "passes": "Checkout is today’s; the club lands on Set up your club with the one line saying what stayed; its site has no band and no sample; Undo is no longer offered; the forwarded link says it is claimed; Remove now removes a preview and its link says it has ended.",
+  "notIn": "The ended page on the club’s own address and the automatic removal (Session P4). An account that already runs a club, a claim that did not finish, and a club deleted after its claim: built and pinned by the build check.",
+  "who": "The claimer as in walk B (still signed in, private window). Then a second private window, signed out. You in your normal window.",
+  "where": "The claim page, Stripe’s test checkout, Set up your club, Prospect clubs.",
+  "steps": [
+   {
+    "d": "In your window open Oakridge’s room window.",
+    "s": "A new claim code, not the one from walk A. Write it down."
+   },
+   {
+    "d": "In the private window press <b>Claim it</b>, type the new code, and press <b>Continue</b>.",
+    "s": "Straight to the claim step (signed in, so no account step)."
+   },
+   {
+    "d": "Tick the box and press <b>Claim the club and clear the sample</b>.",
+    "s": "The plan step, as in walk B."
+   },
+   {
+    "d": "Press <b>Start your Club trial</b>, fill a billing address in Toronto, and press <b>Continue to checkout</b>.",
+    "s": "Stripe’s test checkout for the Club plan with the 90-day trial."
+   },
+   {
+    "stop": true,
+    "d": "Pay with <code>4242 4242 4242 4242</code>, any future date, any CVC.",
+    "s": "“Setting up your club”, then <b>Set up your club</b> with a green line at the top: “Oakridge Minor Softball is yours. Its name, logo and colours stayed; the sample teams, games and sponsors are gone, so your site shows only what you add.” <b>Stop if it does not land here.</b>"
+   },
+   {
+    "d": "Read the step <b>Put your club online</b>.",
+    "s": "It is not ticked and reads “Still needed: a contact email” (on purpose: the step needs both a tagline and a contact email)."
+   },
+   {
+    "d": "Open <code>http://localhost:3000/oakridge-minor-softball</code>.",
+    "s": "No dark band, no sample season, teams, tournament or sponsors. The club’s name, logo and “Softball for Oakridge kids.”"
+   },
+   {
+    "d": "In your window open <b>Prospect clubs</b> and press <b>Oakridge Minor Softball</b>.",
+    "s": "The row reads “{today} · Club, on trial” and “by o•••@d•••.local”. The window has no Undo; it says “Undo isn’t possible now: the club has started using FieldLogicHQ…”"
+   },
+   {
+    "d": "In a <b>new private window</b> (signed out) open <code>http://localhost:3000/start/claim/oakridge-minor-softball</code>.",
+    "s": "“Oakridge Minor Softball is claimed”, “This club has already been claimed. If you’re with the club and didn’t claim it, write to support@fieldlogichq.ca.”, and <b>Open the club’s site</b>."
+   },
+   {
+    "d": "In your window make a second club, <code>Pinecrest Softball</code> (same logo, source <code>https://pinecrestsoftball.ca</code>, Softball, Ontario, the meeting tomorrow at 7:00 p.m.).",
+    "s": "Its room window opens."
+   },
+   {
+    "d": "Press <b>Remove now</b>, type <code>pinecrest-softball</code>, and press <b>Remove the preview</b>.",
+    "s": "The ask reads “Remove Pinecrest Softball?” with “Type <code>pinecrest-softball</code> to confirm *”; the button wakes only once it matches. The window closes and Pinecrest shows <b>Removed</b> in the list."
+   },
+   {
+    "d": "In the signed-out private window open <code>http://localhost:3000/start/claim/pinecrest-softball</code>.",
+    "s": "“This preview has ended” and “It was removed on {today}. Write to support@fieldlogichq.ca and we can make a new one.”"
+   }
+  ]
+ }
+];
+  var state = { ticks: {}, verdict: {}, notes: {}, choice: {}, open: "A" };
+  try { var raw = localStorage.getItem(KEY); if (raw) { var got = JSON.parse(raw); state.ticks = got.ticks || {}; state.verdict = got.verdict || {}; state.notes = got.notes || {}; state.choice = got.choice || {}; state.open = got.open || "A"; } } catch (e) {}
+  function save() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} }
+  function el(tag, cls, html) { var n = document.createElement(tag); if (cls) n.className = cls; if (html != null) n.innerHTML = html; return n; }
+  function plain(html) { var d = document.createElement("div"); d.innerHTML = html; return d.textContent.replace(/\s+/g, " ").trim(); }
+  // A step added after the walk was published carries its own label ("7a"), so every other step keeps its number, and a
+  // tick already saved against it stays on the right step.
+  function num(w, i) { if (w.steps[i].n) return w.steps[i].n; var k = 0; for (var j = 0; j <= i; j++) if (!w.steps[j].n) k++; return String(k); }
+  function sid(w, i) { return w.id + "." + num(w, i); }
+  function counts(w) { var n = 0; w.steps.forEach(function (s, i) { if (state.ticks[sid(w, i)]) n++; }); return { done: n, all: w.steps.length }; }
+  var VWORD = { pass: "Passed", issue: "Issue", call: "Needs a call" };
+  function chipOf(w) {
+    var c = counts(w), v = state.verdict[w.id];
+    if (v === "pass" && c.done < c.all) return ["thin", "Passed · only " + c.done + " of " + c.all + " ticked"];
+    if (v) return [v, VWORD[v] + " · " + c.done + " of " + c.all];
+    if (c.done) return ["prog", "In progress · " + c.done + " of " + c.all];
+    return ["", "Not started · " + c.all + " steps"];
+  }
+
+  var index = document.getElementById("index"), host = document.getElementById("walkHost");
+  var cards = {};
+  WALKS.forEach(function (w, wi) {
+    var b = el("button", "wcard");
+    b.type = "button"; b.id = "card-" + w.id; b.setAttribute("aria-controls", "walk-" + w.id);
+    b.appendChild(el("span", "t", "Walk " + w.id + " · " + w.title));
+    b.appendChild(el("span", "j", w.job));
+    var chip = el("span", "chip"); b.appendChild(chip);
+    b.addEventListener("click", function () { state.open = w.id; save(); render(); document.getElementById("walk-" + w.id).scrollIntoView({ block: "start" }); });
+    index.appendChild(b);
+    cards[w.id] = { b: b, chip: chip };
+  });
+
+  function render() {
+    host.innerHTML = "";
+    WALKS.forEach(function (w, wi) {
+      var open = state.open === w.id;
+      cards[w.id].b.setAttribute("aria-expanded", open ? "true" : "false");
+      var ch = chipOf(w); cards[w.id].chip.className = "chip " + ch[0]; cards[w.id].chip.textContent = ch[1];
+      if (!open) return;
+      var sec = el("section", "card walk"); sec.id = "walk-" + w.id;
+      sec.appendChild(el("span", "eyebrow", "Walk " + w.id + " of " + WALKS.length + " · " + w.job));
+      sec.appendChild(el("h2", null, w.title));
+      var meta = el("div", "meta");
+      [["What this walk is for", w.forText], ["It passes when", w.passes], ["Not in this walk", w.notIn], ["Sign in as", w.who], ["Where and on what", w.where]].forEach(function (m) {
+        var d = el("div"); d.appendChild(el("h3", null, m[0])); d.appendChild(el("p", null, m[1])); meta.appendChild(d);
+      });
+      sec.appendChild(meta);
+      var ol = el("ol", "steps");
+      w.steps.forEach(function (s, i) {
+        var id = sid(w, i);
+        var li = el("li", "step" + (s.stop ? " stop" : "") + (state.ticks[id] ? " done" : ""));
+        var cb = el("input"); cb.type = "checkbox"; cb.id = "cb-" + id; cb.checked = !!state.ticks[id];
+        cb.setAttribute("aria-label", "Step " + num(w, i) + " done");
+        cb.addEventListener("change", function () { state.ticks[id] = cb.checked; save(); li.className = "step" + (s.stop ? " stop" : "") + (cb.checked ? " done" : ""); refresh(); });
+        li.appendChild(cb);
+        var body = el("div", "body");
+        if (s.stop || s.who) body.appendChild(el("span", "who", (s.stop ? "Stop check" : "") + (s.stop && s.who ? " · " : "") + (s.who || "")));
+        body.appendChild(el("span", "lab", num(w, i) + " · Do"));
+        body.appendChild(el("p", null, s.d));
+        body.appendChild(el("span", "lab", "You should see"));
+        body.appendChild(el("p", null, s.s));
+        li.appendChild(body);
+        ol.appendChild(li);
+      });
+      sec.appendChild(ol);
+      sec.appendChild(el("h3", null, "Your verdict on this walk"));
+      var vs = el("div", "verdict");
+      [["pass", "Pass"], ["issue", "Issue"], ["call", "Needs a call"]].forEach(function (v) {
+        var btn = el("button", state.verdict[w.id] === v[0] ? "on" : "", v[1]); btn.type = "button"; btn.setAttribute("data-v", v[0]);
+        btn.setAttribute("aria-pressed", state.verdict[w.id] === v[0] ? "true" : "false");
+        btn.addEventListener("click", function () { state.verdict[w.id] = state.verdict[w.id] === v[0] ? "" : v[0]; save(); render(); });
+        vs.appendChild(btn);
+      });
+      sec.appendChild(vs);
+      var lab = el("label", null, "<h3>Notes</h3>"); lab.setAttribute("for", "notes-" + w.id);
+      sec.appendChild(lab);
+      var ta = el("textarea"); ta.id = "notes-" + w.id; ta.value = state.notes[w.id] || "";
+      ta.placeholder = "What you saw, a word you would change, a question for me";
+      ta.addEventListener("input", function () { state.notes[w.id] = ta.value; save(); refresh(); });
+      sec.appendChild(ta);
+      var row = el("div", "row");
+      var cp = el("button", "btn", "Copy this walk’s summary"); cp.type = "button";
+      var msg = el("span", "lead"); msg.setAttribute("aria-live", "polite");
+      var out = el("div", "card out"); out.tabIndex = 0; out.textContent = walkSummary(w);
+      cp.addEventListener("click", function () { copy(walkSummary(w), out, msg); });
+      row.appendChild(cp);
+      if (wi + 1 < WALKS.length) {
+        var nx = el("button", "btn", "Next: walk " + WALKS[wi + 1].id); nx.type = "button";
+        nx.addEventListener("click", function () { state.open = WALKS[wi + 1].id; save(); render(); document.getElementById("walk-" + WALKS[wi + 1].id).scrollIntoView({ block: "start" }); });
+        row.appendChild(nx);
+      }
+      row.appendChild(msg);
+      sec.appendChild(row);
+      sec.appendChild(out);
+      sec._out = out; sec._w = w;
+      host.appendChild(sec);
+    });
+    refresh();
+  }
+
+  function walkSummary(w) {
+    var c = counts(w), v = state.verdict[w.id];
+    var lines = [w.id + " " + w.title + " · " + (v ? VWORD[v].toUpperCase() : "NO VERDICT") + " · " + c.done + " of " + c.all + " ticked"];
+    w.steps.forEach(function (s, i) { lines.push("  " + (state.ticks[sid(w, i)] ? "[x] " : "[ ] ") + num(w, i) + ". " + plain(s.d)); });
+    var n = (state.notes[w.id] || "").trim();
+    if (n) lines.push("  Notes: " + n.replace(/\n+/g, " / "));
+    return lines.join("\n");
+  }
+  function allSummary() {
+    var total = 0, done = 0;
+    WALKS.forEach(function (w) { var c = counts(w); total += c.all; done += c.done; });
+    return [PAGE, "Checked " + done + " of " + total, ""].concat(WALKS.map(walkSummary)).join("\n");
+  }
+  function refresh() {
+    var total = 0, done = 0;
+    WALKS.forEach(function (w) { var c = counts(w); total += c.all; done += c.done; var ch = chipOf(w); cards[w.id].chip.className = "chip " + ch[0]; cards[w.id].chip.textContent = ch[1]; });
+    document.getElementById("progress").textContent = "Checked " + done + " of " + total;
+    document.getElementById("out").textContent = allSummary();
+    var sec = host.querySelector(".walk"); if (sec && sec._out) sec._out.textContent = walkSummary(sec._w);
+  }
+  function copy(text, node, msg) {
+    function pick() { try { var r = document.createRange(); r.selectNodeContents(node); var s = window.getSelection(); s.removeAllRanges(); s.addRange(r); msg.textContent = "Selected: press Ctrl+C to copy."; } catch (e) {} }
+    try { navigator.clipboard.writeText(text).then(function () { msg.textContent = "Copied."; }, pick); } catch (e) { pick(); }
+  }
+  document.getElementById("copyAll").addEventListener("click", function () { copy(allSummary(), document.getElementById("out"), document.getElementById("copied")); });
+  var armed = false;
+  document.getElementById("reset").addEventListener("click", function () {
+    var b = document.getElementById("reset");
+    if (!armed) { armed = true; b.textContent = "Press again to clear every tick and note"; return; }
+    armed = false; b.textContent = "Clear my ticks";
+    state = { ticks: {}, verdict: {}, notes: {}, choice: {}, open: "A" }; save();
+    render();
+  });
+  render();
+})();
+</script>

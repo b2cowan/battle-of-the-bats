@@ -20,6 +20,10 @@ export const START_DOOR_NEXT_PATHS: readonly string[] = [
   '/start/team',
 ];
 
+/** The claim of a preview club (Club Website Track P, Session P3): `/start/claim/{club}`, open to every signed-in person
+ *  like the doors above, and reached with no workspace by definition (the claim is what makes one). */
+const CLAIM_DOOR = /^\/start\/claim\/[a-z0-9-]{1,100}$/;
+
 /** A recovery destination wins over any `next`: a suspended member is shown why, not sent on to a start door. */
 const RECOVERY_DESTINATIONS = new Set(['/auth/suspended', '/auth/login']);
 
@@ -28,7 +32,7 @@ export function startDoorNext(next: string | null | undefined): string | null {
   const safe = safeNextPath(next ?? null, null);
   if (!safe) return null;
   const pathname = safe.split(/[?#]/)[0].replace(/\/+$/, '') || '/';
-  return START_DOOR_NEXT_PATHS.includes(pathname) ? safe : null;
+  return START_DOOR_NEXT_PATHS.includes(pathname) || CLAIM_DOOR.test(pathname) ? safe : null;
 }
 
 /**

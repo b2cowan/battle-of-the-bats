@@ -96,7 +96,7 @@ describe('preview clubs: no file of its own leaves the site (rule 2)', () => {
 
 describe('preview clubs: every page says so (rule 3)', () => {
   it('the band is in the frame every club page shares, so a deep link carries it', () => {
-    assert.match(readCode('app/[orgSlug]/layout.tsx'), /org\.isPreview && <PreviewBand clubName=\{org\.name\} \/>/);
+    assert.match(readCode('app/[orgSlug]/layout.tsx'), /org\.isPreview && <PreviewBand clubName=\{org\.name\} slug=\{org\.slug\} \/>/);
   });
   it('the footer repeats it with the removal route, on pages with and without the club frame', () => {
     assert.match(readCode('lib/club-frame-data.ts'), /previewFoot: org\.isPreview \? previewFootText\(org\.name\) : null/);

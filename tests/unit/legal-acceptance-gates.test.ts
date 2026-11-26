@@ -77,6 +77,7 @@ const GATED: Record<string, string> = {
   'app/api/billing/create-checkout/route.ts': 'checkout and the dev mock (which writes a plan without Stripe)',
   'app/api/billing/create-team-checkout/route.ts': 'the Coaches Portal checkout and its dev-mock provisioning',
   'app/api/billing/move/route.ts': 'a move between plans (POST only)',
+  'app/api/start/claim/route.ts': 'the claim of a preview club — makes its owner (Club Website Track P, /legal 2026-11-25 finding 1)',
 };
 /** Writes that must never come before the check. */
 const WRITES = [

@@ -1,12 +1,12 @@
 {
   "generated": "2026-11-26",
-  "total": 184,
+  "total": 215,
   "counts": {
-    "tables": 4,
-    "columns": 94,
-    "indexes": 25,
-    "constraints": 30,
-    "rls": 31
+    "tables": 6,
+    "columns": 109,
+    "indexes": 30,
+    "constraints": 33,
+    "rls": 37
   },
   "items": [
     {
@@ -110,7 +110,15 @@
       "sig": ""
     },
     {
+      "key": "check:only-dev:organization_previews.organization_previews_claim_code_shape",
+      "sig": ""
+    },
+    {
       "key": "check:only-dev:organization_previews.organization_previews_claimer_needs_claim",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:organization_previews.organization_previews_code_only_while_open",
       "sig": ""
     },
     {
@@ -127,6 +135,22 @@
     },
     {
       "key": "check:only-dev:organizations.organizations_preview_has_no_stripe",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:preview_claim_records.preview_claim_records_claim_shape",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:preview_claim_records.preview_claim_records_kind_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:preview_claim_records.preview_claim_records_undo_shape",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:preview_claim_tries.preview_claim_tries_visitor_key_check",
       "sig": ""
     },
     {
@@ -398,6 +422,10 @@
       "sig": ""
     },
     {
+      "key": "column:only-dev:organization_previews.claim_code",
+      "sig": ""
+    },
+    {
       "key": "column:only-dev:organization_previews.claimed_at",
       "sig": ""
     },
@@ -451,6 +479,62 @@
     },
     {
       "key": "column:only-dev:organizations.is_preview",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:preview_claim_records.at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:preview_claim_records.box_text",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:preview_claim_records.claim_code",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:preview_claim_records.id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:preview_claim_records.kind",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:preview_claim_records.org_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:preview_claim_records.org_name",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:preview_claim_records.start_plan",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:preview_claim_records.user_email",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:preview_claim_records.user_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:preview_claim_tries.id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:preview_claim_tries.org_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:preview_claim_tries.tried_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:preview_claim_tries.visitor_key",
       "sig": ""
     },
     {
@@ -606,6 +690,18 @@
       "sig": ""
     },
     {
+      "key": "constraint:only-dev:preview_claim_records.preview_claim_records_pkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:preview_claim_records.preview_claim_records_user_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:preview_claim_tries.preview_claim_tries_pkey",
+      "sig": ""
+    },
+    {
       "key": "constraint:only-dev:rep_event_closure_marks.rep_event_closure_marks_closure_id_fkey",
       "sig": ""
     },
@@ -706,6 +802,26 @@
       "sig": ""
     },
     {
+      "key": "index:only-dev:preview_claim_records_org_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:preview_claim_records_pkey",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:preview_claim_tries_org_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:preview_claim_tries_pkey",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:preview_claim_tries_visitor_idx",
+      "sig": ""
+    },
+    {
       "key": "index:only-dev:rep_event_closure_marks_event_idx",
       "sig": ""
     },
@@ -739,6 +855,14 @@
     },
     {
       "key": "table:only-dev:organization_previews",
+      "sig": ""
+    },
+    {
+      "key": "table:only-dev:preview_claim_records",
+      "sig": ""
+    },
+    {
+      "key": "table:only-dev:preview_claim_tries",
       "sig": ""
     },
     {

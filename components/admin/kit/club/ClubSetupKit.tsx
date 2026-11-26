@@ -28,6 +28,7 @@ import ck from './ClubKit.module.css';
 import styles from './ClubSetup.module.css';
 import LoadingState from '@/components/shared/LoadingState';
 import { STEP_COPY } from '@/lib/club-setup-words';
+import { CLAIM_WORDS } from '@/lib/preview-claim';
 
 type Step = { key: 'board' | 'teams' | 'coaches' | 'public' | 'budget'; done: boolean; href: string; detail: Record<string, unknown> };
 type Checklist = {
@@ -37,6 +38,8 @@ type Checklist = {
   allDone: boolean;
   families: { available: boolean; href: string };
   optional: { houseLeague: { runs: boolean; href: string }; tournaments: { hosts: boolean; href: string } };
+  /** Track P (Session P3): the club came from a claimed preview, so the top line says what stayed. */
+  claimedFromPreview?: boolean;
 };
 
 /** The fact line under a step — from its own detail, never a guess. */
@@ -137,6 +140,13 @@ export default function ClubSetupKit() {
         <LoadingState label="Loading the setup steps…" />
       ) : (
         <>
+          {data.claimedFromPreview && !data.allDone && (
+            // Tab 6.5: what the claim kept and that the sample is gone. Until every step is done, like the checklist itself.
+            <div className={`${ck.notice} ${ck.noticeGood}`} role="status">
+              <Check size={15} aria-hidden />
+              <div className={ck.noticeBody}>{CLAIM_WORDS.landed(currentOrg.name)}</div>
+            </div>
+          )}
           <ol className={styles.steps}>
             {data.steps.map(step => {
               number += 1;

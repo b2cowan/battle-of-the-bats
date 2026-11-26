@@ -4080,6 +4080,31 @@
     "indexdef": "CREATE UNIQUE INDEX pools_pkey ON public.pools USING btree (id)"
   },
   {
+    "tablename": "preview_claim_records",
+    "indexname": "preview_claim_records_org_idx",
+    "indexdef": "CREATE INDEX preview_claim_records_org_idx ON public.preview_claim_records USING btree (org_id, at DESC)"
+  },
+  {
+    "tablename": "preview_claim_records",
+    "indexname": "preview_claim_records_pkey",
+    "indexdef": "CREATE UNIQUE INDEX preview_claim_records_pkey ON public.preview_claim_records USING btree (id)"
+  },
+  {
+    "tablename": "preview_claim_tries",
+    "indexname": "preview_claim_tries_org_idx",
+    "indexdef": "CREATE INDEX preview_claim_tries_org_idx ON public.preview_claim_tries USING btree (org_id, tried_at DESC)"
+  },
+  {
+    "tablename": "preview_claim_tries",
+    "indexname": "preview_claim_tries_pkey",
+    "indexdef": "CREATE UNIQUE INDEX preview_claim_tries_pkey ON public.preview_claim_tries USING btree (id)"
+  },
+  {
+    "tablename": "preview_claim_tries",
+    "indexname": "preview_claim_tries_visitor_idx",
+    "indexdef": "CREATE INDEX preview_claim_tries_visitor_idx ON public.preview_claim_tries USING btree (visitor_key, tried_at DESC)"
+  },
+  {
     "tablename": "push_subscriptions",
     "indexname": "push_subscriptions_endpoint_key",
     "indexdef": "CREATE UNIQUE INDEX push_subscriptions_endpoint_key ON public.push_subscriptions USING btree (endpoint)"

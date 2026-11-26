@@ -211,7 +211,7 @@ export default async function OrgLayout({
         {/* A preview club (Club Website Track P, Session P2): the band above the club's own bar on EVERY page under the
             club, tournament pages included, because this layout wraps them all. Session P2 owns this line; Stage 1
             owns the home. */}
-        {org.isPreview && <PreviewBand clubName={org.name} />}
+        {org.isPreview && <PreviewBand clubName={org.name} slug={org.slug} />}
         {/* Club Tier Stage 4a — the club's "not found" (app/[orgSlug]/not-found.tsx) receives no params, so this
             layout hands it the club: its name, and whether its public site is open (the switch on, not cancelled).
             ⚠ This layout still refuses ONLY a club that does not exist: tournament pages stay up when the site is off

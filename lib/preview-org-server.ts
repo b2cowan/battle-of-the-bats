@@ -15,8 +15,9 @@ import { supabaseAdmin } from './supabase-admin';
  * is claimed sends its welcome and invites (/review 2026-11-25: a remembered "yes" would have refused them for a
  * minute, and refused mail is dropped, not queued). A remembered "no" is safe because a club is a preview from the
  * moment it is made (P2 inserts it with the marker set, in one step: it is never a customer first), and the one way a
- * "no" can turn into a "yes" is a claim undone (T15), which the database refuses while anyone is in the club (mig 535,
- * PV001), so there is nobody to mail in that minute.
+ * "no" can turn into a "yes" is a claim undone (T15, mig 540): the undo takes every member out first and refuses once a
+ * Stripe customer exists, so the only exposure is the claimant's own address, for up to a minute on another server
+ * instance (/billing 2026-11-25; the instance that served the undo forgets at once, `forgetPreviewOrgId`).
  */
 
 const CACHE_MS = 60_000;
@@ -46,6 +47,11 @@ export async function openPreviewOrgIds(): Promise<string[]> {
   const { data, error } = await supabaseAdmin.from('organizations').select('id').eq('is_preview', true);
   if (error) throw new Error(`[preview-org] could not list the previews: ${error.message}`);
   return ((data ?? []) as { id: string }[]).map(r => r.id);
+}
+
+/** Forget one club's remembered "not a preview" (a claim was just undone, so it is a preview again). */
+export function forgetPreviewOrgId(orgId: string): void {
+  byId.delete(orgId);
 }
 
 /** Test-only: forget every remembered answer. */

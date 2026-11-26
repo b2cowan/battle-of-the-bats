@@ -150,9 +150,15 @@ export default function StartDoorForm({ door, viewer, initialName = '', confirme
     : <StartAccountStep door={door} pricing={pricing} />;
 }
 
+/** The claim of a preview club (Club Website Track P, Session P3; drawing tab 6.2): Start a club's account step, unchanged
+ *  but for its heading, its sub line and where its email returns (the claim page, carrying the pass). No remembered door:
+ *  the account is account-only until the claim seats it. */
+export type ClaimAccount = { title: string; sub: string; next: string };
+
 /** Step 1: first name, last name, email, password, under the door's own heading, with the pricing page's plan when there was one (A6). */
-function StartAccountStep({ door, pricing }: { door: FormDoor; pricing: StartPricing | null }) {
-  const copy = DOOR_COPY[door];
+export function StartAccountStep({ door, pricing, claim }: { door: FormDoor; pricing: StartPricing | null; claim?: ClaimAccount }) {
+  const base = DOOR_COPY[door];
+  const copy = claim ? { ...base, title: claim.title, sub: claim.sub, pick: undefined, nextStep: 'claiming the club' } : base;
   const router = useRouter();
   // Verify every sign-up (owner 2026-10-16): the address the link went to, while this card says "check your email".
   const [verifyEmail, setVerifyEmail] = useState<string | null>(null);
@@ -169,7 +175,7 @@ function StartAccountStep({ door, pricing }: { door: FormDoor; pricing: StartPri
   const [loading, setLoading] = useState(false);
   // The Terms box (step 6.3, §20 (1)): nothing while the legal pages are off.
   const terms = useTermsTick();
-  const nextStep = stepHref(door, pricing);
+  const nextStep = claim ? claim.next : stepHref(door, pricing);
   // Only a pick this door can sell is named (F08): the plan step would drop any other. A pick implies the door's `pick`.
   const shownPick = copy.pick?.of(pricing) ?? null;
   const setField: Record<keyof AccountValues, (value: string) => void> = {
@@ -198,9 +204,8 @@ function StartAccountStep({ door, pricing }: { door: FormDoor; pricing: StartPri
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           email: emailNorm, password, firstName: firstName.trim(), lastName: lastName.trim(),
-          // The account remembers its door; the server points the link at that door's step 2.
-          startDoor: copy.account,
-          ...(pricing ? startPricingParams(pricing) : {}),
+          // The account remembers its door; the server points the link at that door's step 2. A claim names its own page.
+          ...(claim ? { next: claim.next } : { startDoor: copy.account, ...(pricing ? startPricingParams(pricing) : {}) }),
           ...terms.fields,
         }),
       });
@@ -277,7 +282,7 @@ function StartAccountStep({ door, pricing }: { door: FormDoor; pricing: StartPri
           email={verifyEmail}
           lead={<>Your account is almost ready. Open the link we sent to confirm your email. It brings you straight to {copy.nextStep}.</>}
           after={<>Open it on any phone or computer.</>}
-          resendNext={startDoorLinkPath(copy.account)}
+          resendNext={claim ? claim.next : startDoorLinkPath(copy.account)}
           onChangeEmail={() => { setVerifyEmail(null); setChangingEmail(true); }}
           signInHref={`/auth/login?next=${encodeURIComponent(nextStep)}&email=${encodeURIComponent(verifyEmail)}`}
         />

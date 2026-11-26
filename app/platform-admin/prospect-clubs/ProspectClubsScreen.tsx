@@ -4,8 +4,8 @@
  * at 640 px (the global `table-cards` recipe, as Clubs & portals), each card one tap target at least 60 px tall; the
  * state pill on the name line. Count left; Search and Make a club for a meeting right (/design).
  *
- * Where a row goes: an open preview opens the club's own site in a new tab (the room window is Session P3's, and the row
- * will open it then); a claimed one opens its record in Clubs & portals; a removed one has nowhere to go.
+ * Where a row goes (Session P3): an open preview opens its room window (tab 4); a claimed one opens its claim window
+ * (who claimed, the plan, Undo the claim, the way into Clubs & portals); a removed one has nowhere to go.
  */
 import { useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
@@ -16,6 +16,11 @@ import { MAKE_WORDS, OPEN_PREVIEW_CAP, prospectCountLine, prospectCounts, type P
 import kit from '../console.module.css';
 import styles from './prospect-clubs.module.css';
 import MakeClubWindow from './MakeClubWindow';
+import RoomWindow from './RoomWindow';
+import ClaimedWindow from './ClaimedWindow';
+
+/** A claimed row's facts (tab 2): its plan line ("Club, on trial") and the claimant's masked email (T15). */
+export type ClaimedFacts = { plan: string; claimant: string | null; planStarted: boolean };
 
 const STATE_LABEL: Record<ProspectRow['state'], string> = { open: 'Preview', claimed: 'Claimed', removed: 'Removed' };
 
@@ -25,11 +30,14 @@ function rowHref(r: ProspectRow): string | null {
   return null;
 }
 
-export default function ProspectClubsScreen({ rows }: { rows: ProspectRow[] }) {
+export default function ProspectClubsScreen({ rows, claimed = {} }: { rows: ProspectRow[]; claimed?: Record<string, ClaimedFacts> }) {
   const router = useRouter();
   const [q, setQ] = useState('');
   const [making, setMaking] = useState(false);
-  const [made, setMade] = useState<{ name: string; slug: string } | null>(null);
+  const [made, setMade] = useState<{ name: string; slug: string; orgId: string } | null>(null);
+  // Tab 3: when the club is ready, its room window opens (Session P3), with the link, the QR and the code.
+  const [room, setRoom] = useState<{ orgId: string; name: string } | null>(null);
+  const [opened, setOpened] = useState<ProspectRow | null>(null);
   const open = prospectCounts(rows).open;
   const shown = useMemo(() => {
     const t = q.trim().toLowerCase();
@@ -90,43 +98,56 @@ export default function ProspectClubsScreen({ rows }: { rows: ProspectRow[] }) {
                 {shown.length === 0 && (
                   <tr><td colSpan={6} className={kit.empty}>No prospect club matches “{q.trim()}”.</td></tr>
                 )}
-                {shown.map(r => <Row key={r.orgId} r={r} onOpen={href => r.state === 'claimed' ? router.push(href) : window.open(href, '_blank', 'noopener')} />)}
+                {shown.map(r => <Row key={r.orgId} r={r} facts={claimed[r.orgId] ?? null} onOpen={() => setOpened(r)} />)}
               </tbody>
             </table>
           </div>
         </div>
       )}
 
+      {opened?.state === 'open' && (
+        <RoomWindow orgId={opened.orgId} name={opened.name} onClose={() => setOpened(null)} onChanged={() => router.refresh()} />
+      )}
+      {room && !opened && (
+        <RoomWindow orgId={room.orgId} name={room.name} onClose={() => setRoom(null)} onChanged={() => router.refresh()} />
+      )}
+      {opened?.state === 'claimed' && (
+        <ClaimedWindow row={opened} facts={claimed[opened.orgId] ?? null} onClose={() => setOpened(null)}
+          onUndone={() => router.refresh()} />
+      )}
+
       {making && (open >= OPEN_PREVIEW_CAP
         ? <CapWindow onClose={() => setMaking(false)} />
         : <MakeClubWindow onClose={() => setMaking(false)}
-            onMade={m => { setMaking(false); setMade(m); router.refresh(); }} />)}
+            onMade={m => { setMaking(false); setMade(m); setRoom({ orgId: m.orgId, name: m.name }); router.refresh(); }} />)}
     </div>
   );
 }
 
-function Row({ r, onOpen }: { r: ProspectRow; onOpen: (href: string) => void }) {
+function Row({ r, facts, onOpen }: { r: ProspectRow; facts: ClaimedFacts | null; onOpen: () => void }) {
   const href = rowHref(r);
   const pill = <span className={`${kit.chip} ${r.state === 'open' ? styles.pillOpen : r.state === 'claimed' ? kit.chipOk : kit.chipQuiet}`}>{STATE_LABEL[r.state]}</span>;
+  // The name opens the row's window; a claimed row's line under it goes straight into Clubs & portals (tab 2).
   const name = href
-    ? r.state === 'open'
-      ? <a href={href} target="_blank" rel="noopener noreferrer" className={kit.nameLink}>{r.name}</a>
-      : <Link href={href} className={kit.nameLink}>{r.name}</Link>
+    ? <button type="button" className={`${kit.nameLink} ${styles.nameButton}`} onClick={onOpen}>{r.name}</button>
     : <span className={styles.plainName}>{r.name}</span>;
+  const planLine = r.claimedDay ? `${r.claimedDay} · ${facts?.plan ?? 'No plan yet'}` : null;
   return (
     <tr className={`${href ? kit.clickableRow : ''} ${styles.row} ${r.state === 'removed' ? styles.removed : ''}`}
       onClick={e => {
         if (!href || (e.target as HTMLElement).closest('a, button, input')) return;
         if ((window.getSelection()?.toString() ?? '').length > 0) return;
-        onOpen(href);
+        onOpen();
       }}>
       <td className="table-cards-title">
         <span className={styles.nameLine}>{name}<span className={styles.phonePill}>{pill}</span></span>
-        <span className={kit.sub}>{r.state === 'claimed' ? 'Open in Clubs & portals' : `fieldlogichq.ca/${r.slug}`}</span>
+        {r.state === 'claimed' && href
+          ? <Link href={href} className={`${kit.sub} ${kit.door} ${styles.deskOnly}`}>Open in Clubs & portals</Link>
+          : <span className={kit.sub}>{`fieldlogichq.ca/${r.slug}`}</span>}
         {/* The phone card's one line for a finished row (drawing tab 2): the State column is gone there. */}
         {r.state !== 'open' && (
           <span className={`${kit.sub} ${styles.phoneOnly}`}>
-            {r.state === 'claimed' ? r.claimed : r.removal ? `Removed ${r.removal.date}` : 'Removed'}
+            {r.state === 'claimed' ? `Claimed ${planLine}` : r.removal ? `Removed ${r.removal.date}` : 'Removed'}
           </span>
         )}
       </td>
@@ -137,7 +158,11 @@ function Row({ r, onOpen }: { r: ProspectRow; onOpen: (href: string) => void }) 
         {r.removal ? <>{r.removal.date}{r.removal.left && <span className={kit.sub}>{r.removal.left}</span>}</> : 'None'}
       </td>
       <td data-label="Made by">{r.madeBy}</td>
-      <td data-label="State" className={styles.stateCell}>{pill}{r.claimed && <span className={kit.sub}>{r.claimed}</span>}</td>
+      <td data-label="State" className={styles.stateCell}>
+        {pill}
+        {planLine && <span className={kit.sub}>{planLine}</span>}
+        {facts?.claimant && <span className={kit.sub}>by {facts.claimant}</span>}
+      </td>
       <td className={kit.rowDoor} aria-hidden>{href ? '›' : ''}</td>
     </tr>
   );

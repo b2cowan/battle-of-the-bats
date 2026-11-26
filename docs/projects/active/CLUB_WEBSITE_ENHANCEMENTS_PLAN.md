@@ -1356,6 +1356,52 @@ the demos follow the product and are curated with `/demos`, never as a build ste
   all back") in `lib/help-content/house-league.tsx` (the Rainout article and its "by mistake" FAQ) — 2C's `/docs` pass;
   the old window's pure plan (`rainDays`, `rainList`, `rainSummary`, …) is now used only by its tests — 2C's `/simplify`.
   **For the owner (named, not ruled):** see §9's no-places item.
+- 2026-11-25 — **Track P Session P3 built: the room and the claim (T5, T7–T10, T14–T16; drawing tabs 4, 6, 8). Walk
+  published; nothing committed at writing.** Start condition held (P2 committed `74a7365c3`, walk closed `98cc31e3c`).
+  **Migration 540** (`organization_previews.claim_code`, `preview_claim_tries`, the append-only `preview_claim_records`,
+  the sample as reusable steps, and the room's and the claim's one-step functions, refusals PV020–PV027; see
+  DATA_DICTIONARY) **applied to dev 2026-11-25 at the owner's word** ("Apply 540 to dev now"), re-applied after /legal and
+  /review; production on the steps list, ORDER after 535 and 536. `/db` reviewed the shape before apply (one must-fix: the
+  undo's "nothing added" check became a fail-closed scan of every club-owned table; lock order, guards on the sample steps,
+  an advisory lock on the code door, the code only while open, all applied). **Who owns the shared frame:** P3 changed only
+  the band line in `app/[orgSlug]/layout.tsx` (the band gains Claim it); the home stays Stage 1's.
+  **What was built:** the room window (`app/platform-admin/prospect-clubs/RoomWindow.tsx`; opens from an open row and right
+  after Make): QR (medium correction, wide quiet border) and the code, Copy link, full screen, the room card PDF (half
+  letter, `lib/preview-room-card.ts`), New code, Let them try again after five wrong codes; the live game's score and Mark
+  final (asks first) through `save_preview_score` (a save writes `submitted`, live by the clock; final `completed`); the
+  save-failure line keeping the numbers; Change the meeting (the whole sample made again on the new day, the removal date
+  with it); Email the link shown and refused while the mailing address is blank (nothing stored); Remove now through
+  platform admin's own Delete. The claim (`app/(consumer)/start/claim/[slug]/`, `app/api/start/claim/…`): the code page
+  first (our look), a 24-hour pass bound to the club and its current code carrying the claim through Start a club's own
+  account step (its Terms tick unchanged) and its confirm email, the claim step (Stays/Cleared, /legal's paragraph, the
+  authority tick), every failure frame; the claim route holds every Start a club rule (Terms first, one club, invitation,
+  portal, Club on sale) and the one database step clears the sample, the marker and the tries, seats the owner, records the
+  plan they came for (`club`), restamps `organizations.created_at` to the claim (T10 in every count) and keeps the paragraph
+  with the tick in the record. Then today's plan step, trial and checkout, unchanged (probed: Club and Club · Association,
+  90 days). Set up your club shows the "is yours" line for a claimed club. Prospect clubs: the claimed row's "{day} · Club, on
+  trial" and the masked claimant; its window offers Undo the claim (T15) until a plan or checkout. One help line on Start a
+  club (`recipe-set-up-your-club-t-next`). **Build calls, said to the owner:** Remove now types back the web address, as
+  Delete does (the drawing said the name); Undo is narrower than "until a plan starts" (no checkout, no rename, nobody else,
+  nothing added); step 4 of the checklist is not drawn ticked (its done rule needs a contact email); a forwarded link's code
+  page keeps "For the club's board"; the room card sits outside the export engine's check (an owner-only staff card).
+  **Reviews, all applied:** `/legal` (the record keeps the paragraph, the prune on every visit, the email help, "Not now"
+  24 hours, the card's headline "A site for your club, already built", Terms linked in the tick, no fixed visitor salt;
+  appended to its Track P review); `/billing` (no must-fix; T9 word for word, `/accounting` not needed; the claim forgets
+  the start door; Undo hidden once checkout started; the cache forgets an undone club); `/design` (six must-fix: tokens in
+  the room styles, the shared date field, the window closable while loading, the red code error, the card's long address
+  and fitted logo; the card's type to the drawn sizes and centred, 44 px doors, the full-screen close hint, notices that
+  clear); `/review` (no high; two medium: a claimer whose answer was lost goes on to the plan step instead of "already
+  claimed", and one account cannot claim two clubs at once, PV027); `/docs` (the one line). **Proof:** typecheck clean (the
+  one error is another session's test); 243 tests across the P3/P2/P1 guards, the Terms census and gates, sign-in
+  destinations, the console colour guard and the window-foot guard; `check:spelling`, `check:dictionary` green; a
+  rolled-back SQL probe of every function; page fetches (band, code page, codes, account step, forged pass, ended); a
+  signed-in claim through the real routes (Terms first, the plan offer, the undo). **Accepted, recorded:** anyone can rest
+  a club's door for an hour with five wrong codes (T7 as ruled; Let them try again is the remedy); an undo keeps the
+  claimant's edits to the site words and logo. **Owed to P4:** the ended page on the club's own address (90 days), the one
+  email and its consent record (and /legal's tick wording and roles for it), the removal. **⚠ Before the first real preview
+  on production, P4's removal must be live there, or the owner removes each one by hand (Prospect clubs › the room window ›
+  Remove now).** Walk: [CLUB_WEBSITE_TRACK_P_P3_WALK.html](CLUB_WEBSITE_TRACK_P_P3_WALK.html),
+  https://claude.ai/artifact/4VxedNNBxzvLdKUToKKtV9, Owner QA Ledger §571 (3 walks, 47 steps).
 
 ## 8. Census questions for Stage 0 (answer from code, not from this plan)
 
