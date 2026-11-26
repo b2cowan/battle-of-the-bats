@@ -11,7 +11,7 @@ import {
   editorSectionRows,
   reorderedSections,
 } from '../../lib/club-site-sections.ts';
-import { cleanSiteList, parsePublicSitePatch } from '../../lib/public-site-patch.ts';
+import { checkListRow, cleanSiteList, parsePublicSitePatch } from '../../lib/public-site-patch.ts';
 import { orgSectionsFor } from '../../lib/org-public-sections.ts';
 import { clubAboutPageShows, documentBands } from '../../lib/club-about.ts';
 import { colourWord, lookWords } from '../../lib/colour-words.ts';
@@ -405,6 +405,16 @@ describe('the /review fixes (2026-10-21)', () => {
     ]);
     assert.deepEqual(cleaned.map(d => d.id), ['ok']);
     assert.deepEqual(cleanSiteList('contacts', 'nope'), []);
+  });
+  it('the list window asks the same check before it sends', () => {
+    assert.equal(checkListRow('contacts', {}), 'Add the role or name first.');
+    assert.equal(checkListRow('contacts', { role: 'Registrar', email: 'registrar@club.ca' }), null);
+  });
+  it('a stored list is read only up to its cap, and a row with no id is given its own', () => {
+    const rows = Array.from({ length: 11 }, (_, i) => ({ question: `Q${i}?`, answer: 'a' }));
+    const cleaned = cleanSiteList('questions', rows);
+    assert.equal(cleaned.length, 10);
+    assert.equal(new Set(cleaned.map(r => r.id)).size, 10);
   });
   it('a row id is kept only when short and not a repeat', () => {
     const r = parsePublicSitePatch({ questions: [

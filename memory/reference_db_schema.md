@@ -1,12 +1,12 @@
 ---
 name: reference_db_schema
-description: Complete public schema table+column list — auto-generated 2026-11-24 from live fieldlogichq-dev Supabase project.
+description: Complete public schema table+column list — auto-generated 2026-11-26 from live fieldlogichq-dev Supabase project.
 metadata:
   node_type: memory
   type: reference
 ---
 
-# DB Schema Reference — 2026-11-24
+# DB Schema Reference — 2026-11-26
 
 **Auto-generated** from live `fieldlogichq-dev` project (ref `npgnrxaitgbtbtvvykto`) via Management API.
 Run `node scripts/refresh-db-schema.mjs` to refresh after applying migrations.
@@ -607,7 +607,7 @@ id (uuid), organization_id (uuid) → organizations.id NOT NULL, user_id (uuid) 
 - Indexes: organization_members_invited_email_idx, organization_members_organization_id_user_id_key
 
 ### organizations
-id (uuid), name NOT NULL, slug NOT NULL, logo_url, plan_id, stripe_customer_id, stripe_subscription_id, subscription_status, tournament_limit (integer), is_public (boolean), created_at, theme_preset, theme_primary, theme_accent, hero_banner_url, theme_font, theme_card_style, require_score_finalization (boolean), onboarding_completed_at, enabled_addons (jsonb), internal_notes, billing_suspended_at, billing_suspension_reason, subscription_period, current_period_end, rep_team_subscription_item_id, pdf_settings (jsonb), account_kind, team_workspace_status, is_discoverable (boolean), email_marketing_opt_out (boolean), email_opt_out_at, team_limit (integer), privacy_policy_url, coach_settings (jsonb), club_book_sharing_enabled (boolean), fiscal_first_month, birthday_cutoffs (jsonb), coach_names_policy, subscription_amount_cents (integer), subscription_currency, tournament_look_policy, logo_aspect, two_step_board_required_since, two_step_coaches_required_since, two_step_prompt_closed_at, is_test_organization (boolean), renewal_reminded_for, start_plan
+id (uuid), name NOT NULL, slug NOT NULL, logo_url, plan_id, stripe_customer_id, stripe_subscription_id, subscription_status, tournament_limit (integer), is_public (boolean), created_at, theme_preset, theme_primary, theme_accent, hero_banner_url, theme_font, theme_card_style, require_score_finalization (boolean), onboarding_completed_at, enabled_addons (jsonb), internal_notes, billing_suspended_at, billing_suspension_reason, subscription_period, current_period_end, rep_team_subscription_item_id, pdf_settings (jsonb), account_kind, team_workspace_status, is_discoverable (boolean), email_marketing_opt_out (boolean), email_opt_out_at, team_limit (integer), privacy_policy_url, coach_settings (jsonb), club_book_sharing_enabled (boolean), fiscal_first_month, birthday_cutoffs (jsonb), coach_names_policy, subscription_amount_cents (integer), subscription_currency, tournament_look_policy, logo_aspect, two_step_board_required_since, two_step_coaches_required_since, two_step_prompt_closed_at, is_test_organization (boolean), renewal_reminded_for, start_plan, is_preview (boolean)
 - Indexes: idx_organizations_email_opt_out, organizations_slug_key
 
 ## Module: Platform Admin
@@ -1170,6 +1170,10 @@ id (uuid), org_id (uuid) → organizations.id NOT NULL, permit_id (uuid) → org
 org_id (uuid) → organizations.id NOT NULL, card_on_file_at, card_on_file_brand, card_on_file_last4, created_at, updated_at
 - Indexes: idx_org_billing_facts_no_card
 
+### organization_previews
+org_id (uuid) NOT NULL, org_slug NOT NULL, org_name NOT NULL, meeting_at NOT NULL, made_by (uuid), logo_source_url NOT NULL, claimed_at, claimed_by (uuid), removed_at, created_at, updated_at, sport, province_code
+- Indexes: organization_previews_org_slug_idx
+
 ### payments_terms_agreements
 id (uuid), org_id (uuid) NOT NULL, org_name NOT NULL, user_id (uuid), user_email NOT NULL, terms_version NOT NULL, box_text NOT NULL, action NOT NULL, agreed_at
 - Indexes: payments_terms_agreements_org_idx
@@ -1251,7 +1255,7 @@ user_id (uuid) NOT NULL, theme, created_at, updated_at, coach_tour_dismissed_at,
 
 ## Tables by count
 
-Total: **308 tables** across 10 modules.
+Total: **309 tables** across 10 modules.
 
 - Tournament: 17 tables
 - League: 25 tables
@@ -1262,4 +1266,4 @@ Total: **308 tables** across 10 modules.
 - Organization / Platform Core: 8 tables
 - Platform Admin: 30 tables
 - CRM / Leads: 6 tables
-- Other: 126 tables
+- Other: 127 tables

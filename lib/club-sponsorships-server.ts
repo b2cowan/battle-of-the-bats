@@ -14,7 +14,7 @@ import { tournamentToday, ORG_TIME_ZONE } from './timezone';
 import {
   EMPTY_SETTINGS, homeStrip, placeShowing,
   type ClubSponsor, type PackageInput, type SponsorInput, type SponsorPlace, type SponsorPlaceKind, type SponsorshipPackage,
-  type PlaceTargets, type SponsorshipSettings,
+  type PlaceTargets, type SponsorshipSettings, type PublicSponsor,
 } from './club-sponsorships';
 import type { OrgPlan } from './types';
 
@@ -267,7 +267,6 @@ export async function saveSettings(orgId: string, userId: string, next: Sponsors
 // ── The public pages ───────────────────────────────────────────────────────────────────────────────
 
 /** What a public page shows of a sponsor: the name, the logo, the link. Nothing else ever leaves the server. */
-export interface PublicSponsor { id: string; name: string; logoUrl?: string; link?: string }
 const publicOf = (s: ClubSponsor): PublicSponsor => ({ id: s.id, name: s.name, ...(s.logoUrl ? { logoUrl: s.logoUrl } : {}), ...(s.link ? { link: s.link } : {}) });
 
 /**

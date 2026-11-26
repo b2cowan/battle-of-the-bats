@@ -2,17 +2,17 @@ import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import { readFileSync, readdirSync, statSync } from 'node:fs';
 import { join } from 'node:path';
-import { LIST_MAX } from '../../lib/public-site-patch.ts';
 import { PUBLIC_SITE_WORDS as W } from '../../lib/public-site-words.ts';
 import { ORG_LOGO_BUCKET } from '../../lib/org-image-limits.ts';
+import { between, readCode } from './_source-code.ts';
 
 /**
  * ══════════════════════════════════════════════════════════════════════════════════════════════
  * THE CLUB'S SPONSORS — THE WIRING (Club Tier Stage 4d). The rules are tested in club-stage4d.test.ts; this pins where
  * they are used, so a refactor cannot quietly drop one:
- *   · the database cap and the code's cap are one number; the logo bucket is the one the club logos use;
- *   · the logo route is the Public site editor's (owner or admin), opens the file, and deletes only the club's own;
- *   · the "has it ended" filter is the PUBLIC pages' loaders' — never the shared read the editor uses;
+ *   · the old list column is read by nothing, and is dropped by a held migration; the logo bucket is the club logos';
+ *   · the logo route is Sponsorships', opens the file, and deletes only the club's own;
+ *   · the "has it ended" filter is the PUBLIC pages' loaders' — never the place's own read;
  *   · the strip is on the HOME only, the section on the About page only — never the frame, the footer or another page;
  *   · sponsors are not a home section, and do not count toward "N of 4 ready", and do not open the About page;
  *   · the club's thank-you wears none of the coach money book's words.
@@ -35,20 +35,23 @@ function walk(dir: string, out: string[] = []): string[] {
   return out;
 }
 
-describe('the database and the code agree', () => {
-  it('the CHECK in mig 353 is the code\'s cap, and the column is NOT NULL with an empty-list default', () => {
-    const sql = read('supabase/migrations/353_the_clubs_sponsors.sql');
-    assert.match(sql, new RegExp(`jsonb_array_length\\(sponsors\\) <= ${LIST_MAX.sponsors}\\)`));
-    assert.match(sql, /sponsors jsonb NOT NULL DEFAULT '\[\]'::jsonb/);
+describe('the old list column is retired (Board Ready Stage 6 Part 4b)', () => {
+  it('nothing reads or writes org_public_site_content.sponsors: no mapper, no column map, no patch field', () => {
+    const db = read('lib/db.ts');
+    const site = db.slice(db.indexOf('export async function getOrgPublicSiteContent'), db.indexOf('export async function upsertOrgPublicSiteContent'));
+    assert.doesNotMatch(site, /sponsor/i);
+    assert.doesNotMatch(code('lib/public-site-patch.ts'), /sponsor/i);
+    assert.doesNotMatch(code('app/api/admin/public-site/route.ts'), /sponsor/i);
+  });
+  it('the drop is written, and recorded for the release (a dropped column is invisible to check:migrations)', () => {
+    assert.match(read('supabase/migrations/538_the_old_sponsor_list_column_is_gone.sql'), /DROP COLUMN IF EXISTS sponsors/);
+    assert.match(read('supabase/migrations/MANUAL_PROD_STEPS.json'), /"538_the_old_sponsor_list_column_is_gone\.sql"/);
   });
   it('the logo bucket is the one public bucket every org logo lives in, named once', () => {
     assert.equal(ORG_LOGO_BUCKET, 'org-logos');
     assert.match(code('lib/org-logo-storage.ts'), /export \{ ORG_LOGO_BUCKET \}/, 'the storage module re-exports the one name');
     assert.match(code('lib/sponsor-logo.ts'), /import \{ ORG_LOGO_BUCKET \} from '\.\/org-image-limits'/);
     assert.doesNotMatch(code('lib/sponsor-logo.ts'), /'org-logos'/);
-  });
-  it('the data dictionary names the column', () => {
-    assert.match(read('docs/agents/db/DATA_DICTIONARY.md'), /dict:col:org_public_site_content\.sponsors/);
   });
 });
 
@@ -77,50 +80,38 @@ describe('the logo route is Sponsorships\', opens the file and deletes only the 
     assert.match(route, /if \(error\) return NextResponse\.json\(\{ error: W\.saveFailed \}, \{ status: 500 \}\)/);
     assert.match(route, /status: 409/);
   });
-  it('a sponsors save never stores a logo whose file is gone (a stale tab), and the upload refuses an oversized body early', () => {
-    assert.match(code('app/api/admin/public-site/route.ts'), /parsed\.patch\.sponsors = await withoutMissingLogos\(r\.ctx\.org\.id, parsed\.patch\.sponsors\)/);
+  it('the upload refuses an oversized body early, and a sponsor save keeps only a logo this club uploaded', () => {
     assert.match(code(ROUTE), /get\('content-length'\)\) > ORG_LOGO_MAX_BYTES/);
-  });
-  it('a save or read that names no club never keeps a logo (fails closed); only the editor\'s own pre-send check may', () => {
-    const patchSrc = code('lib/public-site-patch.ts');
-    assert.match(patchSrc, /ctx\.orgId \? isOwnSponsorLogo\(logoUrl, ctx\.orgId, ctx\.supabaseOrigin\) : !!ctx\.clientCheck/);
-    assert.match(patchSrc, /ROW\[kind\]\(row, \{ clientCheck: true \}\)/);
-  });
-  it('the editor deletes a file only AFTER the list that stopped using it was saved', () => {
-    const rec = code('app/[orgSlug]/admin/public-site/SiteListRecord.tsx');
-    const write = rec.slice(rec.indexOf('const write = useCallback'), rec.indexOf('const { saving, dirty'));
-    assert.ok(write.indexOf('await onSave(values)') < write.indexOf('await sweep('), 'sweep follows the save');
-    const create = rec.slice(rec.indexOf('async function create()'), rec.indexOf('// ── Remove: asks first'));
-    assert.ok(create.indexOf('await onSave(values)') < create.indexOf('await sweep('));
-    const remove = rec.slice(rec.indexOf('async function doRemove()'), rec.indexOf('const fieldsForm'));
-    assert.ok(remove.indexOf('await onRemove()') < remove.indexOf('await discardAll('));
+    // The refusal itself, not the name: a check whose answer is ignored keeps nobody's logo out.
+    assert.match(code('app/api/admin/sponsorships/sponsors/route.ts'),
+      /if \(v\.logoUrl && !isOwnSponsorLogo\(v\.logoUrl, org\.id\)\) return refused\(/);
+    assert.match(code('app/api/admin/sponsorships/sponsors/[sponsorId]/route.ts'),
+      /if \(v\.logoUrl && v\.logoUrl !== current\.logoUrl && !isOwnSponsorLogo\(v\.logoUrl, org\.id\)\) return refused\(/);
   });
 });
 
 describe('the ended filter belongs to the public pages\' loaders', () => {
   // ⚖ Board Ready Stage 6 (asks 1, 11): the one sponsor list moved to Sponsorships' own tables. The pages' loader is
   // `publicSponsorsFor` (the filter by the club's day, the home strip's 20); the place's own read keeps every sponsor.
-  it('the home\'s loader and the About page filter; the place\'s read and the editor do not', () => {
+  it('the home\'s loader and the About page filter; the place\'s read does not', () => {
     assert.match(code('lib/club-home-data.ts'), /publicSponsorsFor\(org\.id, org\.planId\)/);
     assert.match(code('lib/club-home-data.ts'), /sponsors: \(await sponsorList\)\.home/);
     assert.match(code('app/[orgSlug]/about/page.tsx'), /publicSponsorsFor\(org\.id, org\.planId\)[\s\S]*\.about/);
     const server = code('lib/club-sponsorships-server.ts');
     const place = server.slice(server.indexOf('export async function readSponsors'), server.indexOf('export async function readSponsor('));
     assert.doesNotMatch(place, /placeShowing|homeStrip/, 'the Sponsors tab must see an ended sponsor');
-    const pub = server.slice(server.indexOf('export async function publicSponsorsFor'));
+    const pub = between(readCode('lib/club-sponsorships-server.ts'), 'function publicSponsorsFor(', '\n}\n');
     assert.match(pub, /homeStrip\(list, today\)/);
-    assert.match(pub, /placeShowing\(/);
-    const db = read('lib/db.ts');
-    // Code only: the read's own comment names the filter it must NOT apply.
-    const fn = db.slice(db.indexOf('export async function getOrgPublicSiteContent'), db.indexOf('/** Each editable field')).replace(/\/\/.*$/gm, '');
-    assert.match(fn, /cleanSiteList\('sponsors'/);
-    assert.doesNotMatch(fn, /sponsorsShowing/, 'the editor reads this too and must see an ended sponsor');
-    assert.doesNotMatch(code(EDITOR), /sponsorsShowing/);
+    assert.match(pub, /const about = list\.filter\([^;]*placeShowing\(p, today\)/, 'the About page\'s own filter');
   });
-  it('the day check is the club\'s calendar day, not an instant', () => {
-    const lib = code('lib/club-sponsors.ts');
-    assert.match(lib, /tournamentToday\(now, timeZone\)/);
-    assert.doesNotMatch(lib, /club-notice|noticeEndsAt/, 'the notice\'s instant clock is not reused');
+  it('the day check is the club\'s calendar day, not an instant — on each public loader', () => {
+    const server = readCode('lib/club-sponsorships-server.ts');
+    for (const loader of ['publicSponsorsFor', 'divisionSponsorsFor']) {
+      const body = between(server, `function ${loader}(`, '\n}\n', loader);
+      assert.match(body, /tournamentToday\(now, ORG_TIME_ZONE\)/, loader);
+      assert.match(body, /placeShowing\(/, `${loader}: an ended sponsor leaves`);
+    }
+    assert.doesNotMatch(code('lib/club-sponsorships.ts'), /club-notice|noticeEndsAt/, 'the notice\'s instant clock is not reused');
   });
 });
 
@@ -195,22 +186,26 @@ describe('sponsors are not a section, not "ready", and not a reason for the Abou
   });
 });
 
-describe('the editor window follows the portal\'s record rules', () => {
-  const rec = code('app/[orgSlug]/admin/public-site/SiteListRecord.tsx');
-  it('only a required field carries the star (no "(optional)" tags anywhere in the sponsor words)', () => {
-    assert.match(rec, /!f\.optional && <span className=\{repKit\.req\}/);
-    for (const [k, v] of Object.entries(W)) if (/sponsor|lastDay|logo/i.test(k) && typeof v === 'string') assert.doesNotMatch(v, /optional/i, k);
+describe('the list window follows the portal\'s record rules', () => {
+  it('only a required field carries the star', () => {
+    assert.match(code('app/[orgSlug]/admin/public-site/SiteListRecord.tsx'), /!f\.optional && <span className=\{repKit\.req\}/);
   });
-  it('a new sponsor asks (Save); cancelling throws the files made for it away', () => {
-    assert.match(rec, /const cancel = \(\) => \{ void discardAll\(\); onClose\(\); \};/);
-    assert.match(rec, /onClick=\{cancel\} disabled=\{busy\}>\{W\.cancel\}/);
-    assert.match(rec, /disabled=\{busy \|\| uploading\}/, 'Save waits for an upload');
+  it('asks the route\'s own row check, and holds a save while it refuses', () => {
+    const rec = code('app/[orgSlug]/admin/public-site/SiteListRecord.tsx');
+    assert.match(rec, /const mistake = checkListRow\(list\.kind, values\);/);
+    assert.match(rec, /blocked: editing && !creating \? mistake : null/);
   });
-  it('the logo box takes only JPG, PNG and WebP and shows the server\'s own refusal', () => {
+});
+
+describe('the logo box', () => {
+  it('takes only JPG, PNG and WebP and shows the server\'s own refusal', () => {
     const f = code('app/[orgSlug]/admin/public-site/SponsorLogoField.tsx');
     assert.match(f, /ORG_IMAGE_TYPES\.join\(','\)/);
     assert.match(f, /role="alert"/);
     assert.doesNotMatch(f, /dangerouslySetInnerHTML/);
+  });
+  it('no "(optional)" tag in the sponsor words', () => {
+    for (const [k, v] of Object.entries(W)) if (/sponsor|logo/i.test(k) && typeof v === 'string') assert.doesNotMatch(v, /optional/i, k);
   });
 });
 
@@ -218,7 +213,7 @@ describe('the club\'s thank-you wears none of the coach money book\'s words', ()
   it('no sponsorship, invoice, paid, amount, arrival, partner, supporter, tier or expired in the sponsor words', () => {
     const banned = /sponsorship|invoice|\bpaid\b|amount|arrival|partner|supporter|backer|\btier\b|expired/i;
     for (const [k, v] of Object.entries(W)) {
-      if (!/sponsor|lastDay|logo|noLogo/i.test(k) || typeof v !== 'string') continue;
+      if (!/sponsor|logo/i.test(k) || typeof v !== 'string') continue;
       assert.doesNotMatch(v, banned, k);
     }
   });

@@ -1,13 +1,14 @@
 'use client';
 /**
  * A SPONSOR'S LOGO BOX (Club Tier Stage 4d; drawing https://claude.ai/artifact/CAKV9xcGQoW4zudF5TvGcE, words
- * CLUB_TIER_STAGE4D_COPY.md §B). The one new control in the list window. The box is the shape families see (160 by 72, the
- * logo scaled to fit and never cropped), so what the editor shows is what the strip shows. A file is uploaded the moment it
- * is chosen — the server opens it and re-saves a small PNG (lib/sponsor-logo-image.ts) — and this reports the address the
- * server made. A refused file is never kept: the red line stays until a good file is chosen or the window closes.
+ * CLUB_TIER_STAGE4D_COPY.md §B). Drawn by the sponsor window in Sponsorships (the list moved there, Board Ready Stage 6).
+ * The box is the shape families see (160 by 72, the logo scaled to fit and never cropped), so what the window shows is
+ * what the strip shows. A file is uploaded the moment it is chosen — the server opens it and re-saves a small PNG
+ * (lib/sponsor-logo-image.ts) — and this reports the address the server made. A refused file is never kept: the red line
+ * stays until a good file is chosen or the window closes.
  *
- * It does not save the sponsor and does not delete files: the window around it owns both (SiteListRecord), because a file
- * may only be thrown away AFTER the list that stopped using it has been saved.
+ * It does not save the sponsor and does not delete files: the window around it owns both, because a file may only be
+ * thrown away AFTER the sponsor that stopped using it has been saved.
  */
 import { useRef, useState } from 'react';
 import { Upload } from 'lucide-react';

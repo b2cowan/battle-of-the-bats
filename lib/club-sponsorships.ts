@@ -5,14 +5,13 @@
  * Rulings (owner 2026-11-22, plan BOARD_READY_PLAN.md §5 Stage 6):
  *   · ask 1 — ONE record: a business is kept once and has PLACES (a kind, which one, a last day). A paid deal whose package
  *     has the logo switch on IS a place (Part 2); a typed place is set on the Sponsors tab.
- *   · ask 5 — a place shows through its last day (inclusive, the club's day: the shipped `sponsorEnded`), then leaves.
+ *   · ask 5 — a place shows through its last day (inclusive, the club's day: `placeShowing`), then leaves.
  *   · ask 6 — a package names its kind of place; each deal picks which one.
  *   · ask 7 — an open offer holds its place: a package is Full when every place is paid, invoiced or offered.
  *   · ask 11 — 20 is the home strip's limit only; the list holds up to 100.
  *   · owner 2026-11-22 (Part 1's question): a TEAM place shows on the About page only — there is no public team page.
  *   · ask 9 — the GST/HST number is checked for its form (9 digits, RT, 4 digits).
  */
-import { sponsorEnded } from './club-sponsors';
 import { checkEmail, checkLink } from './site-field-checks';
 import { isCalendarDate } from './timezone';
 import { SPONSORSHIPS_WORDS as W } from './club-sponsorships-words';
@@ -43,6 +42,9 @@ export interface SponsorPlace {
   source: 'typed' | 'deal';
   dealId: string | null;
 }
+
+/** What a public page shows of a sponsor: the name, the logo, the link. Nothing else ever leaves the server. */
+export interface PublicSponsor { id: string; name: string; logoUrl?: string; link?: string }
 
 export interface ClubSponsor {
   id: string;
@@ -98,8 +100,11 @@ type Ok<T> = { ok: true; value: T } | { ok: false; error: string };
 
 // ── When a sponsor shows ────────────────────────────────────────────────────────────────────────────
 
-/** A place shows through its last day (the club's calendar day). */
-export const placeShowing = (p: Pick<SponsorPlace, 'endsOn'>, today: string): boolean => !sponsorEnded({ endsOn: p.endsOn ?? undefined }, today);
+/**
+ * A place shows through its last day: a whole DAY, inclusive, so it is there at 11:59 p.m. and gone at midnight. `today`
+ * is the club's calendar day (YYYY-MM-DD, `tournamentToday`); a place with no last day never lapses.
+ */
+export const placeShowing = (p: Pick<SponsorPlace, 'endsOn'>, today: string): boolean => !p.endsOn || today <= p.endsOn;
 
 /** A sponsor is "Showing" when one of its places shows; with no place at all it shows nowhere. */
 export const sponsorShowing = (s: Pick<ClubSponsor, 'places'>, today: string): boolean => s.places.some(p => placeShowing(p, today));

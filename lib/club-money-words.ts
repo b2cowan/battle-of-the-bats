@@ -401,8 +401,8 @@ export const ON_REQUEST_WORD = 'On request';
 export const TEAM_SUPPORT_ITEM_WORD = 'Paid to teams on request';
 /** A club ledger line filed to no budget word — every line typed before 3b, until someone files it. */
 export const NOT_FILED_WORD = 'Not filed';
-/** Months: what a tournament's or the house league's book moved on its own (Ask 5), and the GST/HST collected and remitted
- *  (Part 3a; one row, owner call 2 at walk §562). */
+/** Months: the GST/HST collected and remitted (Part 3a; one row, owner call 2 at walk §562). The name's "other books" is
+ *  from when a tournament's or house league's book also rode here; every book the club owns now files on the Statement. */
 export const OTHER_BOOKS_WORD = 'The club’s other books and GST/HST';
 /** A team's cash, read from the coaches' own books and never the club's (D1, Ask 4e). */
 export const HELD_BY_THE_TEAM_WORD = 'Held by the team';

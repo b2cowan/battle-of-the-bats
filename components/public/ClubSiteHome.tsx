@@ -5,7 +5,7 @@ import LeagueSeasonRows, { type PublicLeagueSeason } from './LeagueSeasonRows';
 import { ClubSponsorStrip } from './ClubSponsors';
 import { siteEdit } from '@/lib/site-edit-marks';
 import { orgLinks } from '@/lib/org-links';
-import type { SiteSponsor } from '@/lib/types';
+import type { PublicSponsor } from '@/lib/club-sponsorships';
 import kit from './ClubKit.module.css';
 import parts from './PublicParts.module.css';
 import PublicPage from './PublicPage';
@@ -83,7 +83,7 @@ export interface ClubSiteHomeProps {
   /** The About page, when it says more than the about text (a contact, a document or a question). */
   aboutPageHref: string | null;
   /** The sponsors a family may see now (Stage 4d): the strip at the foot of the home, absent when there are none. */
-  sponsors: SiteSponsor[];
+  sponsors: PublicSponsor[];
   showFollow: boolean;
   /** The club's order and show/hide (Stage 4c-1) and what its plan carries. */
   sectionPrefs: SectionPrefs;

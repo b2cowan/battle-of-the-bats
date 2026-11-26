@@ -1824,6 +1824,28 @@ in the card-network sentence); Privacy §5 (who sent an offer is kept with its r
   Walk §569 published: https://claude.ai/artifact/Lnmcr3g9BvxYPspTSgxKpe (30 steps, one casing call).
   - **Walk §569 PASSED 2026-11-25, 30 of 30** (owner paste-back; A 9, B 8, C 6, D 7; no notes). The casing call (every
     method lowercase in a sentence, or only e-transfer) came back not answered: not ruled; the build stands as walked.
+- **Part 4b step 3, the old sponsor list column and the help read: committed on dev 2026-11-25** (owner 2026-11-25: "Commit and write the walk").
+  - **Column:** nothing reads or writes `org_public_site_content.sponsors` any more: the mapper, the type, the patch
+    check, the route, the Public site editor's unused sponsor window and its words and styles are gone, with
+    `lib/club-sponsors.ts` and `lib/sponsor-logo-storage.ts` (the last-day rule is now `placeShowing` itself). The logo
+    box stays: the sponsor window in Sponsorships draws it. Nothing a person sees changes.
+  - **Drop written and HELD:** mig 538, applied to neither database; `MANUAL_PROD_STEPS.json` `held`. It goes on dev and
+    production together after the release that carries this code is serving, then the dictionary entry leaves and the
+    snapshots are refreshed. Counts that day (counts only): production 0 public-site rows; dev 6 rows, 2 with an old list.
+  - **Help read:** the whole `club-sponsorships` article checked against the code and corrected (refunds, voids, withdraw,
+    the delivery checklist, disputes and bounced refunds, the notifications, the contact-email fallback, the books, search
+    words); Budget vs. Actual now names GST/HST collected and remitted. The Public site editor article needed no change.
+  - **Review (2026-11-25):** high-risk, four lenses, then the fixed parts again. Applied: the help's overstated cases
+    (a card page open, the payment window, bounced refunds, disputes, the refund email, the logo, the offer email), the
+    budget Months row, two weakened guards and three dropped checks, a note in mig 538 that mig 525 cannot be re-run
+    after it, and the snapshots (watermark #538).
+  - **Checks:** type check clean; spelling and dictionary pass; the full suite (18,968 tests) fails 42, all in files it
+    does not touch.
+  - **Found, not built:** on an emailed deal that is invoiced or paid, **Send the link again** asks "A new link goes to the
+    business by email", but nothing is emailed (the new link is made and shown to the club). A card **inquiry** raises the
+    sponsor's dispute notification ("the bank is disputing … don't refund") while **Refund** stays offered, because an
+    inquiry never blocks one. Not re-checked: the public pages trust a stored logo and link, and the sponsor name, link
+    and date rules and the home page's 20 have no test.
 - ~~The per-deal "Charge HST" switch carries no words telling a club WHEN to turn it on.~~ **Added 2026-11-22 (owner: "add
   the hint")**, words checked against CRA RC4081 then set in brand voice (`docs/agents/accounting/BOARD_READY_STAGE6_SPONSOR_PAYMENT_FEE_REVIEW.md`
   addendum): the switch's hint reads **"13% for an Ontario address, added to the amount. A sponsorship that shows a name or
@@ -1836,31 +1858,32 @@ in the card-network sentence); Privacy §5 (who sent an offer is kept with its r
   gate) on the CASL sender question, the two-year clock and a passed-on fee under Québec law.
 - Unblocked by this ruling (§7b item 2): the public tournament pages' sponsors drawing can start.
 
-- [ ] Club **sponsorship packages**: name, price, what's included (a list of deliverables: logo on the site, field banner, jersey
+- [x] Club **sponsorship packages**: name, price, what's included (a list of deliverables: logo on the site, field banner, jersey
   crest, named division), how many are available, and an optional sponsorship document (PDF) to send.
-- [ ] **Sponsors and deals:** a deal is a sponsor + a package + what it's attached to (the club · a house-league division ·
+- [x] **Sponsors and deals:** a deal is a sponsor + a package + what it's attached to (the club · a house-league division ·
   a house-league team · a club event · a tournament) + an amount. States: Offered · Form received · Invoiced · Paid ·
-  Delivered.
-- [ ] **The sponsor link:** a page the business opens without an account. It shows the package, the club's sponsorship form (Stage 4),
+  Delivered. (Built without the club-event place, which joins with Stage 5; owner 2026-11-20.)
+- [x] **The sponsor link:** a page the business opens without an account. It shows the package, the club's sponsorship form (Stage 4),
   a logo upload, then pay by card (Stripe Connect direct charge, the club is the merchant) or "we'll send a cheque / e-transfer" (recorded by the club).
   A business is not a family, so the 2026-10-31 family-links rule doesn't apply. The tournament team pay link is the
   precedent. `/legal` checks it.
-- [ ] **Club invoice** PDF and receipt. The coach invoice's no-tax ruling (R2) was about teams. A club may be a GST/HST
+- [x] **Club invoice** PDF and receipt. The coach invoice's no-tax ruling (R2) was about teams. A club may be a GST/HST
   registrant, and a sponsorship with advertising is not a donation. The tax shape researched in §9 needs the owner's
   acceptance before this is drawn (Q8).
-- [ ] **Delivery checklist:** what they got, ticked as each item is delivered.
-- [ ] The paid deal feeds the **one sponsor list** (ruled 2026-10-27), so the logo shows where the deal says.
-- [ ] Money lands in the club books as sponsorship income. Renewal next season: "Offer again" from last year's deals.
-- [ ] Team sponsorships in the Coaches Portal stay the team's (2026-11-06 ruling). They are not merged or moved.
-- [ ] **Who pays the card fee** (ruled 2026-11-22, ask 3, `BUSINESS_DECISIONS.md`): a second club-wide choice on the Payouts
+- [x] **Delivery checklist:** what they got, ticked as each item is delivered.
+- [x] The paid deal feeds the **one sponsor list** (ruled 2026-10-27), so the logo shows where the deal says.
+- [x] Money lands in the club books as sponsorship income. Renewal next season: "Offer again" from last year's deals.
+- [x] Team sponsorships in the Coaches Portal stay the team's (2026-11-06 ruling). They are not merged or moved.
+- [x] **Who pays the card fee** (ruled 2026-11-22, ask 3, `BUSINESS_DECISIONS.md`): a second club-wide choice on the Payouts
   card, separate from the registration one: "The club pays it" (default; the sponsor pays the invoice to the cent, the fee is
   a Payment processing cost) or "The sponsor pays it" (the fee shows as its own line on the invoice and the pay page before
   paying, with the club's GST/HST on it). ~~Owed to the build: whether that line is grossed up.~~ **Answered by the code
   (round 2 finding F13, 2026-11-22):** no gross-up is needed. `onlineFee()` works the fee out on the amount owed, never on
   the charge, and the club receives the charge less that fee; Stripe's extra cents on the larger charge come out of
   FieldLogicHQ's application fee. On the drawing's deal the club receives $1,135.34 and keeps $1,000.00 after $135.34 HST.
-- [ ] Live card payment waits on Club Tier Stage 12's production switch; everything else can ship first.
-- [ ] Migration first; dictionary + snapshots.
+- [x] Card payment is built (Part 3b). It reaches production with the release that carries migrations 530–534, which go
+  on production first; online payments are already switched on there.
+- [x] Migration first; dictionary + snapshots.
 
 ### Stage 7 — Camps and clinics (item 6)
 - [ ] A camp or clinic is a club event (Stage 5) with sessions, a capacity, a price, a waitlist and a sign-up form (Stage 4).
