@@ -287,7 +287,7 @@ describe('Part 2: the desk, the footer and the admin preview', () => {
   it('the footer, the rail\'s place in the desk grid and the credit in the footer, on every page', () => {
     assert.equal((layout.match(/<TournamentFooter\b/g) ?? []).length, 1);
     assert.doesNotMatch(layout, /<BuiltOnCredit|import BuiltOnCredit/, 'the paid credit lives in the footer only (Stage 8 Part 3d removed the old in-flow one)');
-    assert.match(layout, /const showBuiltOnCredit = !isFreeTournamentPlan && !isDemoOrgSlug\(orgSlug\);/, 'the credit rules do not change');
+    assert.match(layout, /const showBuiltOnCredit = \(!isFreeTournamentPlan \|\| org\.isPreview === true\) && !isDemoOrgSlug\(orgSlug\);/, 'the credit: paid plans, and a preview club, which wears no badge');
     // Stage 7: the rail goes through the focused-page gate (public-focused-page.test.ts); one mount, frame facts passed.
     assert.match(layout, /\{unlessFocused\(<TournamentSideRail hiddenPages=\{navHiddenPages\} hasBracket=\{hasPublicBracket\}\s+frameContent=\{frameContent\} \/>\)\}/);
     // The rail's old `.shell` (it padded the page past a fixed dark rail) went with it in Stage 8 Part 4a: the grid places it.

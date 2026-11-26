@@ -281,8 +281,9 @@ export default async function TournamentLayout({
   const frameBand = publicFrameBand(org, tournament, todayISO, registration?.state === 'open');
   // Who runs it — ONE answer for the desk band and the footer, from the same door as the rail's crumb (Part 2).
   const frameHost = publicFrameHost(org.name, tournament.name, orgHomeHref);
-  // The paid plan's credit (WI-10), never the demo's. It sits in the footer; a free event keeps its badge.
-  const showBuiltOnCredit = !isFreeTournamentPlan && !isDemoOrgSlug(orgSlug);
+  // The paid plan's credit (WI-10), never the demo's. It sits in the footer; a free event keeps its badge. A preview
+  // club wears no badge, so it carries the credit, as its club pages do (Track P, owner 2026-11-26).
+  const showBuiltOnCredit = (!isFreeTournamentPlan || org.isPreview === true) && !isDemoOrgSlug(orgSlug);
   const fanAlertsEnabled = hasPlanFeature(org.planId, 'fan_score_alerts');
 
   // Stage 7 (Ask 6): the focused page (the team pay page, lib/public-focused-page.ts) wears none of the event's chrome.

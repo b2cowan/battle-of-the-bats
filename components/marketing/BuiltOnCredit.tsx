@@ -21,7 +21,8 @@ import styles from './tournament-growth.module.css';
  *    modes rather than importing ours.
  *
  * NOT rendered on free-plan events: those keep the richer PoweredByBadge + acquisition banner,
- * and stacking this under them would say the same thing twice. Callers gate on the plan.
+ * and stacking this under them would say the same thing twice. Callers gate on the plan. (A preview
+ * club wears neither of those, so it carries this line whatever its plan.)
  */
 export default function BuiltOnCredit({ className }: {
   /** Replaces the colophon's own styling, for a host that sets the credit in its own type and colour — the club's
