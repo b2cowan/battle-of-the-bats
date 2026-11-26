@@ -18,6 +18,7 @@ import { FIELDLOGICHQ_SELLER_MAILING_ADDRESS } from '../../lib/fieldlogichq-cont
  *      the club.
  *   3. Every removal writes the removal record, which holds no person.
  *   4. The day rules: due on the removal day; Today's "Removed tomorrow" and "Removal overdue".
+ *   5. The nightly job: a scheduled route with a receipt, scheduled once, in its own migration.
  *   6. The one email: /legal's words, refused without a mailing address (and the address is blank today), never the code,
  *      the consent record before the send, one per preview, an officer's role only.
  *   7. The unsubscribe follows the address and every FieldLogicHQ promotional send honours it, fail-closed.
@@ -25,6 +26,7 @@ import { FIELDLOGICHQ_SELLER_MAILING_ADDRESS } from '../../lib/fieldlogichq-cont
 
 const sql = (src: string) => src.replace(/--.*$/gm, '');
 const MIG547 = sql(read('supabase/migrations/547_a_preview_is_removed_on_day_30.sql'));
+const MIG548 = sql(read('supabase/migrations/548_a_preview_is_removed_nightly.sql'));
 const fnBody = (src: string, name: string) => {
   const at = src.indexOf(`FUNCTION public.${name}(`);
   assert.ok(at >= 0, `${name} is defined`);
@@ -176,6 +178,20 @@ describe('4. the day rules', () => {
     const today = code('app/platform-admin/page.tsx');
     assert.match(today, /const owner = isPlatformOwner\(auth\);/);
     assert.match(today, /owner \? readRemovalQueueCounts\(\) : Promise\.resolve\(undefined\)/);
+  });
+});
+
+describe('5. the nightly job (owner 2026-11-26)', () => {
+  it('is a scheduled route that takes its receipt, and a by-hand run needs run_jobs', () => {
+    const route = code('app/api/platform-admin/preview-removal-nightly/route.ts');
+    assert.match(route, /await scheduledCall\(req\);\s*if \(refused\) return refused;/);
+    assert.match(route, /requirePlatformPower\('run_jobs'\)/);
+    assert.match(route, /'preview_removal_tick'/);
+  });
+  it('is scheduled once, in its own migration, and 547 schedules nothing', () => {
+    assert.match(MIG548, /cron\.schedule\(\s*'preview-removal-nightly',\s*'5 8 \* \* \*',/);
+    assert.match(MIG548, /app_cron_http_tick\('preview_removal_tick', '\/api\/platform-admin\/preview-removal-nightly'\)/);
+    assert.doesNotMatch(MIG547, /cron\./);
   });
 });
 
