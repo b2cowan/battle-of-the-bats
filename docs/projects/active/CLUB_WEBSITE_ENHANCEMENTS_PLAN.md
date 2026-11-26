@@ -320,6 +320,8 @@ prompt → the build → `/simplify`, `/review`, `/legal` or `/accounting` where
   top of the public house league schedule for a week, the help, the walk's day; /simplify, /review, /docs, /marketing,
   /design, /legal run and applied. Walk §573 published. Progress 2026-11-26 "Stage 2 Session 2C". Commit at the
   owner's word; the stage closes when the walk passes and the owner says so.)*
+  *(**Walk §573 passed 2026-11-26, 34 of 34.** 2C committed `016a939fc`. The stage stays unticked until the owner says
+  so; the follow-up, Session 2D, is committed (`c3f999420`) and walked (§577, 45 of 45).)*
 - [ ] **Stage 3 — The site's face (idea 7; F4).** `/legal` and the consent question first. Before news, so a news post
   is built with its photo from the start. *(Club events, E9: the one photo question is this stage's; camps ask it in
   the same words. P1–P5 ruled 2026-11-25: optional, blank = No; one Yes names the website and the club's own social
@@ -595,7 +597,7 @@ the demos follow the product and are curated with `/demos`, never as a build ste
   - [x] **D1, RULED 2026-11-26: A** (owner: "D1 A, add it to the prompt"): a ticked game with no diamond recorded, when
     two or more of that park's diamonds close, keeps its mark until every one is reopened, and the words name the park.
     (B was: the first diamond owns it, as today.)
-  - [ ] **Session 2D BUILT and committed 2026-11-26; walk §577 is the owner's.** The owner said yes to the
+  - [x] **Session 2D BUILT and committed 2026-11-26; walk §577 passed the same day, 45 of 45.** The owner said yes to the
     recommendation the build session put before code ("yes to the recommendation, go ahead"): D1 by **marking every
     matching closure** (mig 549: one mark row per closure the game is at; nothing written at Reopen), and the surfaces
     the drawing did not show: the result "2 diamonds at Lions Park closed" and "Reopen them"; Reopen counts only the marks
@@ -610,7 +612,9 @@ the demos follow the product and are curated with `/demos`, never as a build ste
     parks). **⚠ Open for the owner (raised before code, not decided):** two SEPARATE presses on two diamonds of one park
     behave differently from one press — the second lists the no-diamond game again, unticked, and covers it only if
     ticked again (its coach then gets a second email); left unticked, reopening the first diamond clears the mark and
-    tells the coach, though the other is still closed.
+    tells the coach, though the other is still closed. **RULED 2026-11-26** (owner: "i agree with the
+    recommendations"), as recommended: two separate presses behave as one press does. The game stays marked until both
+    diamonds reopen, with no second email. Not built.
     **Close-out, 2026-11-26** (owner: "give me the prompt for simplify, review, design, publish the walk then commit"):
     **/simplify** applied (one title in the phone drawer, one home for the 10-entry limit, the window's reads no longer
     load the closed rows, dead helpers removed). **/review** (high-risk, five readers) applied: only the admin's own
@@ -627,6 +631,16 @@ the demos follow the product and are curated with `/demos`, never as a build ste
     never had a caller and can be deleted in a later tidy-up; the house league band heading in the window wraps (older).
     **Walk §577** published (five walks, 45 steps; the seed's new `--places-walk`):
     https://claude.ai/artifact/NSxAyvXrBcjaDXcsNxNSXr.
+    **Window polish, 2026-11-26** (owner, from the running window: "let's just make the modal the same height", then
+    "go ahead and build it" on the row suggestion): at a desk the window holds one height while it is filled in; each
+    game's row now has **Game · Time · Place** columns (division under the teams, the day and "Started" under the time,
+    the diamond under the park) in place of the drawing's one dotted line (note 6 and tab 2); a group heading runs
+    across the table, which closes the wrapping band heading above. Then "Tick it to call it off mid-game." came
+    off a started game's row (owner: "the \"started\" is enough to know it is mid game"). **/simplify and /review run
+    and applied 2026-11-26** (owner: "go ahead with simplify, review and commit"): top-aligned rows are the table's own
+    setting; under "All our fields" a game at a hand-typed place shows what was typed, where Place was blank; the help's
+    search words lost the removed sentence. Left as built: on a phone the park name is not bold and the typed line and
+    "who is emailed" note are one ink step fainter than before.
 - [x] **Stage 1 (game day on the club home) — 11 asks G1–G11, RULED 2026-11-25: all eleven A, as recommended, no
   notes** (owner paste-back: G1 A · G2 A · G3 A · G4 A · G5 A · G6 A · G7 A · G8 A · G9 A · G10 A · G11 A). G6 is A,
   not D: no "Updated" time line. Drawn 2026-11-25. Page:
@@ -1585,6 +1599,15 @@ the demos follow the product and are curated with `/demos`, never as a build ste
   card-payment yes/no now asks the door whether the organization is canceled (the one behaviour change), and the guard
   reads CRLF files correctly. **Carried to the release:** 547 → the code → 548 on production before the first real
   preview; the Privacy prospect sentence published, then the mailing address set, before the email can send.
+- 2026-11-26 — **Close a place walked: 34 of 34 (§573; A 15, B 7, C 5, D 7; no notes).** The house league admin's and
+  the president's window, what families see on a computer and a phone, the coach's new date, and Reopen. B1–B3 and the
+  opening note were reworded the same day (two teams are called Ospreys). Stage 2 is not ticked: that waits on the
+  owner's word; Session 2D (several places in one press, committed `c3f999420`) has its own walk, §577, still to be done.
+- 2026-11-26 — **Several places in one press walked: 45 of 45 (§577; A 9, B 8, C 10, D 8, E 10; no notes).** Choosing
+  places on a computer and in the phone drawers, two of three diamonds with a rep game that has no diamond, Reopen one
+  diamond then the other, and two parks from the house league schedule. The call on two separate presses (§7, Session
+  2D) and §9's no-places call were both ruled later the same day, as recommended; neither is built. Stage 2 is not
+  ticked: that waits on the owner's word.
 
 ## 8. Census questions for Stage 0 (answer from code, not from this plan)
 
@@ -1707,6 +1730,10 @@ Answered 2026-11-24 (Stage 0 Part 1); evidence in the Progress block.
   has one place; a house league admin cannot (K1/K15). Built as ruled. Options for the owner: (A) as built; (B) the
   no-places state also offers "All our fields" to an owner or admin; (C) B, and a house league admin may close every
   place from the Rainout button only. Pre-customer, so the reach today is the demos and any trial club.
+  **RULED 2026-11-26** (owner: "i agree with the recommendations"), as recommended: the no-places window offers **"All
+  our fields"**, settled before the release. Not built. The recommendation did not say who gets it, so B against C
+  (whether a house league admin may use it from that button) is still to be asked. Settle with the same build (found by
+  /review, 2026-11-26): at a desk this window opens at the form's one height and then shrinks to the small card.
 - [x] **The old Rainout's help is stale until 2C's `/docs` pass (Session 2B, 2026-11-25).** `lib/help-content/house-league.tsx`'s
   Rainout article and its "I pressed Rainout by mistake" FAQ still describe "Email the families now" and "Put all back".
   2C rewrites them to point at the new "Close a place" topic (build prompt 2C step 6). *(Done in 2C, 2026-11-26: both

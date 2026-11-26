@@ -28962,7 +28962,7 @@ Committed 2026-11-25 as two commits (owner: "commit the sweep and the data chang
 
 ## §573 · Club website · Stage 2 · Session 2C · Close a place, what families and coaches see — **while a place is closed, a strip at the top of every club page says so (never a tournament's) and goes by itself at the end of the day; the rep game there reads "Place closed" for families and "Needs a new date" for its coach until the coach moves it or the place reopens; the public house league schedule puts "Needs a new date" first for a week; the help explains it all**
 <!-- §573 -->
-**Walk published 2026-11-26** (A1–A2 reworded the same day: the house league button is now **Close a place**, owner 2026-11-26). [Interactive walk](https://claude.ai/artifact/NST9fVpaqJ7n9TGoUVsJ4v) (walks A–D, 34 steps; no owner calls in the walk; §9's no-places call stays open) · [repository HTML](CLUB_WEBSITE_STAGE2_WALK.html). Built on dev, no new migration (539 is 2A's). Plan: `CLUB_WEBSITE_ENHANCEMENTS_PLAN.md` §6 Stage 2 and Progress 2026-11-26 "Stage 2 Session 2C"; the walk covers 2B's window, result and Reopen too.
+**Walk published 2026-11-26** (A1–A2 reworded the same day: the house league button is now **Close a place**, owner 2026-11-26; B2 corrected the same day: a closed rep game sits under **Not being played today**, not Later today, as K9 built and tests it). [Interactive walk](https://claude.ai/artifact/NST9fVpaqJ7n9TGoUVsJ4v) (walks A–D, 34 steps; no owner calls in the walk; §9's no-places call stays open) · [repository HTML](CLUB_WEBSITE_STAGE2_WALK.html). Built on dev, no new migration (539 is 2A's). Plan: `CLUB_WEBSITE_ENHANCEMENTS_PLAN.md` §6 Stage 2 and Progress 2026-11-26 "Stage 2 Session 2C"; the walk covers 2B's window, result and Reopen too.
 
 **Where:** `http://localhost:3000`, club **Kestrel Bay** (`/kestrel-bay`). **Sign in:** house league admin `league@kestrel-bay.example.test`, club president `president@kestrel-bay.example.test`, the U13 Ospreys' head coach `rep.coach@kestrel-bay.example.test`, password `UATPassword2026!`; a private window for every public page.
 
@@ -28971,6 +28971,8 @@ Committed 2026-11-25 as two commits (owner: "commit the sweep and the data chang
 **Walks:** A close Lions Park, the house league admin's view then the president's (15) · B what families see, computer then phone (7) · C the coach gives the game a new date (5) · D Reopen, the site and the help (7).
 
 **Left out (pinned by tests):** the family app's mark (no made-up family follows the Ospreys), the coach's emails (made-up addresses), "And N more places are closed." and two places at once, a closure for a later day, Cancel them, Link it, a failed send.
+
+**✅ PASSED 2026-11-26, 34 of 34** (owner paste-back; A 15/15, B 7/7, C 5/5, D 7/7; no notes came back). No owner calls in this walk. The code was committed before the walk (`016a939fc`, `542a92437`). B1–B3 and the walk's opening note were reworded the same day to tell the U13 Ospreys (rep) from the U11 Ospreys (house league) and to name the section the rep game sits under. Closing several places in one press (Session 2D) is not covered here and gets its own walk.
 <!-- /§573 -->
 
 ## §574 · Retire the public demos · Step 3 · The demo code is gone — **signing in and out, two-step set-up and the phone menu work as before, and an old demo address still lands on pricing**
@@ -29027,4 +29029,6 @@ Committed 2026-11-26, ahead of the walk (owner: "simplify and commit"): `d3d1bcc
 **Walks:** A choosing places on a computer, nothing pressed (9) · B the phone drawers, nothing pressed (8) · C two of three diamonds with a rep game that has no diamond (10) · D reopen one diamond, then the other (8) · E two of three parks from the house league schedule (10).
 
 **Left out (pinned by tests):** the coach emails’ words (made-up addresses), two Reopens at the same moment and Reopen pressed twice, the 10-place limit and the search box (they need more than eight parks), Cancel them, Link it, pressing All our fields.
+
+**✅ PASSED 2026-11-26, 45 of 45** (owner paste-back; A 9/9, B 8/8, C 10/10, D 8/8, E 10/10; no notes came back). The open call shown outside the count (two separate presses on two diamonds of one park) was ruled later the same day, as recommended: behave as one press does, with no second email. Not built.
 <!-- /§577 -->
