@@ -277,9 +277,12 @@ describe('the delete route removes the files after the club, and records it', ()
   });
 
   it('the purge checks no other row still names a legacy key before removing it, and reports a lookup that failed', () => {
-    assert.match(code, /legacyKeysNoRowNames\(legacyResourceKeys, orgId\)/);
-    assert.match(code, /legacyResourceKeys: free/);
-    assert.match(code, /if \(unread\.length\) \{\s*result\.failed\.push\(/);
+    // The step lives in one file, shared with the preview removal (Club Website Track P, Session P4).
+    assert.match(code, /import \{ purgeOrgFiles \} from '@\/lib\/org-files-purge-server'/);
+    const step = readCode('lib/org-files-purge-server.ts');
+    assert.match(step, /legacyKeysNoRowNames\(legacyResourceKeys, orgId\)/);
+    assert.match(step, /legacyResourceKeys: free/);
+    assert.match(step, /if \(unread\.length\) \{\s*result\.failed\.push\(/);
   });
 
   it('the legacy keys are on the delete_organization row, written before any change (a cut-off purge can be retried)', () => {

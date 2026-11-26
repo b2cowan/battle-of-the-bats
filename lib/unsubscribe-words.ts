@@ -19,5 +19,8 @@ export const UNSUBSCRIBE_WORDS = {
   /** One family address in one club ("Email families" footer). `email` arrives masked (maskEmail). */
   guardian: (club: string, email: string) => `Press the button to stop emails like the one you received from ${club} to ${email}.`,
   // Board Ready Stage 6 (mig 526): a club's sponsorship offers only. DRAFT for the /marketing pass.
+  // Track P Session P4 (/legal finding 3; owner 2026-11-26): the address alone, from the preview email. It stops every
+  // promotional email we send to it; what is not promotional (a receipt, a sign-in link) is not ours to stop here.
+  address: (email: string) => `Press the button to stop every promotional email from FieldLogicHQ to ${email}. Receipts and sign-in emails for an account you hold with us still come.`,
   sponsor: (club: string, email: string) => `Press the button to stop sponsorship offers from ${club} to ${email}. Invoices and receipts for a sponsorship you have already agreed to still come.`,
 } as const;

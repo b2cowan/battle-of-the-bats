@@ -105,7 +105,9 @@ describe('2 · tournament pages never ask it (the switch does not gate them, 202
     const code = readCode(`${ORG}/layout.tsx`);
     assert.doesNotMatch(code, /requirePublicClubPage|resolvePublicClub\(|publicClubRefusal\(/);
     assert.equal((code.match(/notFound\(\)/g) ?? []).length, 1);
-    assert.match(code, /if \(!org\) notFound\(\)/);
+    // Track P Session P4 (T12): a missing club may first be a removed preview's "This preview has ended" (90 days); the only
+    // refusal is still a club that does not exist.
+    assert.match(code, /if \(!org\) \{\s*const ended = await readEndedPreview\(orgSlug\);\s*if \(ended\) return <PreviewEnded ended=\{ended\} \/>;\s*notFound\(\);\s*\}/);
   });
 });
 

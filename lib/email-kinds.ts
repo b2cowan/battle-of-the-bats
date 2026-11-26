@@ -83,6 +83,9 @@ export const EMAIL_KINDS = {
   // ── account: feedback ──────────────────────────────────────────────────────
   feedback_receipt:                     { klass: 'account', label: 'Feedback received' },
   feedback_reply:                       { klass: 'account', label: 'Reply to their feedback', story: true },
+  // ── account: a prospect we met (Club Website Track P, Session P4, T13): the one email with a preview's link. Logged, so
+  // the send is on our own record beside the consent record (CASL s. 13); orgId null (a preview never sends, T1).
+  preview_link:                         { klass: 'account', label: 'A preview’s link, after a meeting' },
   // ── registration: a tournament's email to a registered team ───────────────
   tournament_registration_confirmation: { klass: 'registration', label: 'Tournament registration received' },
   tournament_registration_waitlist:     { klass: 'registration', label: 'Tournament waitlist' },

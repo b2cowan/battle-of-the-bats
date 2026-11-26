@@ -9,6 +9,7 @@
  * query string when the body has none, so the same address answers a mail client's one-click POST: every unsubscribe footer's
  * mail carries `List-Unsubscribe` / `List-Unsubscribe-Post` pointing here (`oneClickUnsubscribeHeaders`).
  *
+ *   address             → that ADDRESS gets no more promotional email from FieldLogicHQ (the preview email, Track P P4)
  *   user                → that PERSON opts out (coach campaigns); never the org the email was attributed to
  *   org + guardian      → that family address opts out of that club's emails; never the whole organization
  *   org                 → the organization's marketing opt-out
@@ -20,7 +21,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase-admin';
-import { verifyUnsubscribeToken, verifyUserUnsubscribeToken, verifyGuardianUnsubscribeToken, verifySponsorUnsubscribeToken } from '@/lib/unsubscribe-token';
+import { verifyUnsubscribeToken, verifyUserUnsubscribeToken, verifyGuardianUnsubscribeToken, verifySponsorUnsubscribeToken, verifyAddressUnsubscribeToken } from '@/lib/unsubscribe-token';
 import { withObservability } from '@/lib/observability/with-observability';
 
 export const runtime = 'nodejs';
@@ -51,7 +52,23 @@ export const POST = withObservability(async (request: NextRequest) => {
   const userId = field('user');
   const guardianEmail = field('guardian').trim().toLowerCase();
   const sponsorEmail = field('sponsor').trim().toLowerCase();
+  const address = field('address').trim().toLowerCase();
   const token = field('token');
+
+  // ── An ADDRESS: no more promotional email from FieldLogicHQ (Track P Session P4, mig 547) ────────────────────────
+  // First: an address link carries no org, so it can never fall through to the org branch. Keyed to the address alone so it
+  // outlives the deleted preview; a repeat press finds it already written.
+  if (address) {
+    if (!token || !verifyAddressUnsubscribeToken(address, token)) return go('?error=invalid');
+    const { error } = await supabaseAdmin
+      .from('email_address_stops')
+      .upsert({ email: address, source: 'preview_link' }, { onConflict: 'email', ignoreDuplicates: true });
+    if (error) {
+      console.error('[unsubscribe] address stop error:', error.code, error.message);
+      return go('?error=db');
+    }
+    return go();
+  }
 
   // ── Per-USER opt-out (coach campaigns) — record the person's own choice ────────
   if (userId) {

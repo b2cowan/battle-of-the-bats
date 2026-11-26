@@ -24,13 +24,13 @@ import styles from './room.module.css';
 
 type Save = 'idle' | 'saving' | 'saved' | 'failed';
 
-async function post(orgId: string, body: Record<string, unknown>): Promise<{ ok: boolean; error?: string; kind?: string }> {
+async function post(orgId: string, body: Record<string, unknown>): Promise<{ ok: boolean; error?: string; kind?: string; message?: string }> {
   try {
     const res = await fetch(`/api/platform-admin/prospect-clubs/${orgId}`, {
       method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body),
     });
-    const data = await res.json().catch(() => ({})) as { error?: string; kind?: string };
-    return { ok: res.ok, error: data.error, kind: data.kind };
+    const data = await res.json().catch(() => ({})) as { error?: string; kind?: string; message?: string };
+    return { ok: res.ok, error: data.error, kind: data.kind, message: data.message };
   } catch {
     return { ok: false, kind: 'network' };
   }
@@ -179,7 +179,7 @@ export default function RoomWindow({ orgId, name, onClose, onChanged }: {
             <LiveGame key={room.meetingAt} orgId={orgId} room={room} onSaved={refresh} />
 
             {/* ── Email the link (T13: refused while our mailing address is blank) ── */}
-            <EmailTheLink canEmail={room.canEmail} />
+            <EmailTheLink orgId={orgId} canEmail={room.canEmail} sent={room.emailSent} />
 
             {/* ── The removal date and its rare door ── */}
             <div className={styles.end}>
@@ -303,40 +303,63 @@ function LiveGame({ orgId, room, onSaved }: { orgId: string; room: RoomView; onS
   );
 }
 
-function EmailTheLink({ canEmail }: { canEmail: boolean }) {
+function EmailTheLink({ orgId, canEmail, sent }: { orgId: string; canEmail: boolean; sent: RoomView['emailSent'] }) {
   const [address, setAddress] = useState('');
-  const [role, setRole] = useState<string>(ROOM_WORDS.roles[0]);
+  // No role is picked for them: the consent rests on the role they hold (/legal), so the window asks rather than assumes.
+  const [role, setRole] = useState<string>('');
   const [ticked, setTicked] = useState(false);
-  const [refused, setRefused] = useState(false);
+  const [error, setError] = useState('');
+  const [done, setDone] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+
+  async function send() {
+    setError('');
+    setBusy(true);
+    // T13: while our mailing address is blank the server refuses first and keeps nothing; the window shows its answer.
+    const r = await post(orgId, { action: 'email', to: address, role, ticked });
+    setBusy(false);
+    if (r.ok) { setDone(r.message ?? ROOM_WORDS.sendDone(address)); return; }
+    setError(r.kind === 'network' || !r.error ? (canEmail ? ROOM_WORDS.sendFailed : ROOM_WORDS.sendRefused) : r.error);
+  }
+
   return (
     <section className={styles.group} aria-label={ROOM_WORDS.emailLabel}>
       <h3 className={styles.groupHead}>{ROOM_WORDS.emailLabel}</h3>
       <div className={styles.groupBody}>
-        <div className={styles.emailFields}>
-          <label className={kit.fieldGroup}>
-            <span className={kit.label}>{ROOM_WORDS.emailAddress}</span>
-            <input type="email" className={kit.field} value={address} onChange={e => setAddress(e.target.value)} autoComplete="off"
-              placeholder="name@club.ca" />
-          </label>
-          <label className={kit.fieldGroup}>
-            <span className={kit.label}>{ROOM_WORDS.emailRole}</span>
-            <select className={kit.select} value={role} onChange={e => setRole(e.target.value)}>
-              {ROOM_WORDS.roles.map(r => <option key={r} value={r}>{r}</option>)}
-            </select>
-          </label>
-        </div>
-        <label className={`${kit.check} ${styles.consent}`}>
-          <input type="checkbox" checked={ticked} onChange={e => setTicked(e.target.checked)} />
-          {ROOM_WORDS.emailTick}
-        </label>
-        {/* T13: built and tested in Session P4; until then, and until our mailing address exists, nothing is sent. */}
-        {refused && <p className={kit.fieldError} role="alert">{canEmail ? ROOM_WORDS.sendNotYet : ROOM_WORDS.sendRefused}</p>}
-        <div className={styles.sendRow}>
-          <p className={kit.hint}>{ROOM_WORDS.emailHelp}</p>
-          <button type="button" className="btn btn-secondary" onClick={() => setRefused(true)} disabled={!address.trim() || !ticked}>
-            {ROOM_WORDS.send}
-          </button>
-        </div>
+        {/* A send's result wears the kit's good notice; the standing "already went" line is a state, a hint (/design). */}
+        {done ? (
+          <p className={`${kit.notice} ${kit.noticeGood}`} role="status">{done}</p>
+        ) : sent ? (
+          <p className={kit.hint}>{ROOM_WORDS.sentAlready(sent.to, sent.on)}</p>
+        ) : (
+          <>
+            <div className={styles.emailFields}>
+              <label className={kit.fieldGroup}>
+                <span className={kit.label}>{ROOM_WORDS.emailAddress}</span>
+                <input type="email" className={kit.field} value={address} onChange={e => setAddress(e.target.value)} autoComplete="off"
+                  placeholder="name@club.ca" />
+              </label>
+              <label className={kit.fieldGroup}>
+                <span className={kit.label}>{ROOM_WORDS.emailRole}</span>
+                <select className={kit.select} value={role} onChange={e => setRole(e.target.value)}>
+                  <option value="" disabled>{ROOM_WORDS.rolePick}</option>
+                  {ROOM_WORDS.roles.map(r => <option key={r.key} value={r.key}>{r.label}</option>)}
+                </select>
+              </label>
+            </div>
+            <label className={`${kit.check} ${styles.consent}`}>
+              <input type="checkbox" checked={ticked} onChange={e => setTicked(e.target.checked)} />
+              {ROOM_WORDS.emailTick}
+            </label>
+            {error && <p className={kit.fieldError} role="alert">{error}</p>}
+            <div className={styles.sendRow}>
+              <p className={kit.hint}>{ROOM_WORDS.emailHelp}</p>
+              <button type="button" className="btn btn-secondary" onClick={() => void send()} disabled={busy || !address.trim() || !role || !ticked}>
+                {busy ? ROOM_WORDS.saving : ROOM_WORDS.send}
+              </button>
+            </div>
+          </>
+        )}
       </div>
     </section>
   );

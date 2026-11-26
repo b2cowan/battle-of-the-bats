@@ -9,6 +9,7 @@ import { useLegalLinks } from '@/components/legal/LegalLinksProvider';
 import { CLUB_START_STEPS } from '@/lib/start-door';
 import { CLAIM_WORDS, formatClaimCode, isClaimCodeShape, normaliseClaimCode, previewAddress } from '@/lib/preview-claim';
 import type { ClaimClub } from '@/lib/preview-claim-server';
+import PreviewEnded from '@/components/public/PreviewEnded';
 import { StartAccountStep } from '../../StartDoorForm';
 import styles from './ClaimDoor.module.css';
 
@@ -90,7 +91,7 @@ export default function ClaimDoor({ slug, club, frame }: { slug: string; club: C
   }
   return (
     <StartColumn>
-      <StartHead title={CLAIM_WORDS.err.endedTitle} sub={CLAIM_WORDS.err.ended(frame.removedOn)} />
+      <PreviewEnded surface="inline" ended={{ name: club.name, removedOn: frame.removedOn }} />
     </StartColumn>
   );
 }

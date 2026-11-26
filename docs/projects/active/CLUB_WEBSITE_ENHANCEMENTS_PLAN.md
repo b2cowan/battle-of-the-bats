@@ -1450,6 +1450,60 @@ the demos follow the product and are curated with `/demos`, never as a build ste
   sample game go live at the meeting time, the check P2's walk missed. Committed `15da5e57a`, with the walk's two layout
   fixes `efb7df706` and `317704c69`. Track P's last session is P4 (the removal, the ended page, the one email); the
   nightly job still needs the owner's word in that session, and the email waits on the mailing address.
+- 2026-11-26 — **Track P Session P4 built: the removal, the ended page and the one email (T11–T13; drawing tab 7).
+  Nothing committed at writing.** Start condition held (P3 committed `15da5e57a`, walk passed §571). **Owner rulings in
+  the session (asked before building, as the prompt required):** the nightly removal job **yes** (shared automation; its
+  own commit, AGENCY_RULES 2026-09-26; T11 B's by-hand list NOT built); Today's **"Removal overdue (N)"** line yes (a
+  missed or refused removal shows until it is gone); the address stop honoured by **every** FieldLogicHQ promotional send
+  yes. **Migrations 547** (`remove_due_preview`, the removal record written by the removal stamp, `preview_email_consents`,
+  `email_address_stops`, `purge_preview_email_consents`) **and 548** (the `preview-removal-nightly` schedule, 08:05 UTC)
+  **applied to dev 2026-11-26 at the owner's word**; production on the steps list, ORDER 547 → the code → 548 (⚠ without
+  547 every promotional email is suppressed: the stop is read fail-closed). **Who owns the shared frame:** P4 changed only
+  the not-found branch of `app/[orgSlug]/layout.tsx` (and its metadata's): a missing club asks for a removed preview
+  first; the home and the band are untouched. **Built:** the removal (`lib/preview-removal-server.ts`): every unclaimed
+  preview past its day goes through ONE database step that takes the claim's own locks in the claim's order and re-checks
+  "a preview, unclaimed, not removed, due" before Delete's own pre-cascade list and the club (a build check holds the two
+  lists equal), then the stored files by Delete's same calls; files of previews removed in the last 7 days are cleared
+  again; nothing emails the club. The route `app/api/platform-admin/preview-removal-nightly` (receipt-carrying, `run_jobs`
+  by hand). **The removal record** is written by the removal stamp itself, so Remove now and Delete write it too (how:
+  `day_30` | `removed_now`); no person. **The ended page** (`components/public/PreviewEnded.tsx`, our system-screen family)
+  on the club's address and every page under it, and the claim page, /legal rec. 7's words, for 90 days, then the ordinary
+  not-found; never the meeting, maker or logo; a live club always wins. **Today:** owner-only Growth rows "Removed
+  tomorrow" and "Removal overdue". **The one email:** `lib/preview-link-email.ts` (/legal rec. 5 word for word; cannot be
+  built without a mailing address) and its send (refuses on the address FIRST, keeping nothing; an officer's role, none
+  pre-picked, no "Other"; not before the meeting day; the address stop; the consent record before the send; one per
+  preview; our own mail); the room window's Email the link now posts and shows the one email once it has gone. **The
+  unsubscribe** follows the address (its own token family and table), and `sendMarketingEmail` reads it fail-closed.
+  **Build calls, said to the owner:** the removal runs early on the removal day (3:05 a.m. Toronto in winter), so a
+  Tue, Dec 8 meeting comes down on Thu, Jan 7, the day every surface names; an undone claim past day 30 is removed that
+  night (T11 as ruled); the deep tournament address of an ended preview keeps the tab title "Tournament" (the page itself
+  is right). **Reviews, all applied:** `/db` before apply (no must-fix: one lock order with claim/undo/move; the only
+  NO ACTION key into organizations is the facilities, whose own children go first); `/legal` (recs 5 and 7 and finding 4
+  met; a build check that every sender of our unsubscribe link reads the stop; no Privacy/Terms change now, **the
+  Privacy prospect sentence must be PUBLISHED before the mailing address is set**; appended to its Track P review);
+  `/design` (the 404's own broken-link tile, the help as its quieter note line, the claim page's ended frame on the same
+  system screen inline, its tab title, the send result as the kit's good notice); `/marketing` (the before-the-meeting
+  line, `removeBody` in the ended page's nouns with the 90 days from its one constant, the two Today clear labels; spelling
+  green); `/docs` (one sentence on Start a club's claim line; Prospect clubs stays owner-only with no help);
+  `/review`, four lenses, high-risk (7 fixed: a consent row stranded by a request that died, a key reused after a
+  refusal, an unset mail service using up the one email, the send allowed before the meeting's start, the claim page
+  "ended" over a club that took the address, a silent recurring refusal now alerts, the ended read cached per request;
+  2 refuted; accepted: a 200 with noindex, the small table's index, the domain release before the re-check (a preview
+  has none), the sent-email log's 90 days of the address for staff, Remove now's record naming "platform-admin" beside
+  Delete's own row, "stays up until" the removal day). **Proof:** typecheck clean in scope (the one error file is another session's test); the P4 guard (28) with
+  the P1–P3 guards, the receipt, unsubscribe, email-kind and help suites; `check:dictionary` green; `.probe/p4-prove.mjs`
+  on dev 18/18 (only the due preview removed with its sample and logo; the record; the ended page; the not-due one, a
+  claimed club and a real club refused by the step itself; a second run removes nothing; the key without a receipt runs
+  nothing; a by-hand delete writes `removed_now`); `.probe/p4-unsub-prove.mjs` 7/7. **Found, Track P's own from P3 (not
+  in P4's lines, a small follow-up):** the grants guard fails on mig 540's `preview_claim_tries` (no UPDATE grant, by
+  design); `club-share-census` (the room window's copy link reads `window.location.origin`, not the club's public origin);
+  `legal-links-surfaces-guard` (the claim page's refused frame opts `StartFoot` into the legal line outside the census);
+  `plan-reader-door-guard` (`lib/preview-claim-server.ts` reads a plan raw). **⚠ Before the first real
+  preview on production,** 547 + the code + 548 must be live there, or the owner removes each one by hand. **The email
+  stays refused until the mailing address is set, and the Privacy prospect sentence (/legal's P4 review) must be
+  PUBLISHED before that.** Walk: [CLUB_WEBSITE_TRACK_P_P4_WALK.html](CLUB_WEBSITE_TRACK_P_P4_WALK.html),
+  https://claude.ai/artifact/FEDVf85o1pc1j81gBQgzJB, Owner QA Ledger §575 (3 walks, 33 steps; the helper
+  `.probe/p4-walk.mjs`, dev only, makes a preview due and runs the removal by hand).
 
 ## 8. Census questions for Stage 0 (answer from code, not from this plan)
 

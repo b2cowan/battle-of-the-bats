@@ -3,6 +3,7 @@
  * /unsubscribe?user=<userId>&token=<token>                    — per-person opt-out (coach campaigns)
  * /unsubscribe?org=<orgId>&guardian=<email>&token=<token>     — per-family opt-out ("Email families")
  * /unsubscribe?org=<orgId>&sponsor=<email>&token=<token>      — one club's sponsorship offers to one address (Board Ready Stage 6)
+ * /unsubscribe?address=<email>&token=<token>                  — every FieldLogicHQ promotional email to one address (Track P P4)
  *
  * Where the unsubscribe link in an email lands (CASL). A short confirm page with ONE button.
  * ⚠ THIS PAGE WRITES NOTHING. Mail scanners prefetch links, so a plain visit must never opt anyone out (sweep 3, finding 7):
@@ -22,10 +23,10 @@ import SystemScreen, { SystemAction } from '@/components/shared/SystemScreen';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { UNSUBSCRIBE_WORDS as WORDS } from '@/lib/unsubscribe-words';
 import { maskEmail } from '@/lib/family-invitation-rules';
-import { verifyUnsubscribeToken, verifyUserUnsubscribeToken, verifyGuardianUnsubscribeToken, verifySponsorUnsubscribeToken } from '@/lib/unsubscribe-token';
+import { verifyUnsubscribeToken, verifyUserUnsubscribeToken, verifyGuardianUnsubscribeToken, verifySponsorUnsubscribeToken, verifyAddressUnsubscribeToken } from '@/lib/unsubscribe-token';
 
 interface Props {
-  searchParams: Promise<{ org?: string | string[]; user?: string | string[]; guardian?: string | string[]; sponsor?: string | string[]; token?: string | string[] }>;
+  searchParams: Promise<{ org?: string | string[]; user?: string | string[]; guardian?: string | string[]; sponsor?: string | string[]; address?: string | string[]; token?: string | string[] }>;
 }
 
 const one = (v: string | string[] | undefined) => (Array.isArray(v) ? v[0] : v) ?? '';
@@ -37,9 +38,19 @@ type View =
   | { state: 'db' };
 
 // Cached per request on primitives: the metadata and the page both ask, and the reads are paid once.
-const viewOf = cache(async (orgId: string, userId: string, guardianRaw: string, sponsorRaw: string, token: string): Promise<View> => {
+const viewOf = cache(async (orgId: string, userId: string, guardianRaw: string, sponsorRaw: string, addressRaw: string, token: string): Promise<View> => {
   const guardian = guardianRaw.trim().toLowerCase();
   const sponsor = sponsorRaw.trim().toLowerCase();
+  const address = addressRaw.trim().toLowerCase();
+
+  // An address, from the preview email (Track P Session P4, mig 547): first, as it carries no org. The confirm page shows the
+  // address masked, because the email is meant to be forwarded (/legal finding 3): the reader sees which address it stops.
+  if (address) {
+    if (!token || !verifyAddressUnsubscribeToken(address, token)) return { state: 'invalid' };
+    const { data, error } = await supabaseAdmin.from('email_address_stops').select('email').eq('email', address).maybeSingle();
+    if (error) return { state: 'db' };
+    return data ? { state: 'done' } : { state: 'confirm', sentence: WORDS.address(maskEmail(address)), fields: { address, token } };
+  }
 
   if (userId) {
     if (!token || !verifyUserUnsubscribeToken(userId, token)) return { state: 'invalid' };
@@ -80,7 +91,7 @@ const viewOf = cache(async (orgId: string, userId: string, guardianRaw: string, 
 
 const viewOfParams = async (searchParams: Props['searchParams']) => {
   const sp = await searchParams;
-  return viewOf(one(sp.org), one(sp.user), one(sp.guardian), one(sp.sponsor), one(sp.token));
+  return viewOf(one(sp.org), one(sp.user), one(sp.guardian), one(sp.sponsor), one(sp.address), one(sp.token));
 };
 
 // The tab says what the page says. (The root title template adds the brand.)

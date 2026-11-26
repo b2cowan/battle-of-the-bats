@@ -20,6 +20,9 @@ import { getCoachStartHref } from '@/lib/start-menu';
 import { bareHost, isOwnHost } from '@/lib/own-hosts';
 import { requestHost } from '@/lib/request-host';
 import { previewBandText, previewTitle } from '@/lib/preview-org';
+import { readEndedPreview } from '@/lib/preview-ended-server';
+import { ENDED_WORDS } from '@/lib/preview-ended';
+import PreviewEnded from '@/components/public/PreviewEnded';
 
 // Pre-load all font options at module level (next/font requirement).
 // Each uses a unique CSS variable so they don't conflict with the root layout fonts.
@@ -55,7 +58,11 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { orgSlug } = await params;
   const org = await getClubBySlug(orgSlug);
-  if (!org) return {};
+  if (!org) {
+    // A removed preview's old link (Track P Session P4, T12): titled as ended and kept out of search, for its 90 days.
+    const ended = await readEndedPreview(orgSlug);
+    return ended ? { title: { absolute: ENDED_WORDS.pageTitle(ended.name) }, robots: { index: false, follow: false, nocache: true } } : {};
+  }
   // The club describes itself in its own words (End state 8; S4-02: never FieldLogicHQ's sales line). Tournament pages
   // set their own description, so this reaches the club's pages.
   const siteContent = isPublicClubSiteOpen(org) && hasModuleEntitlement(org, 'module_public_site')
@@ -105,7 +112,14 @@ export default async function OrgLayout({
 }) {
   const { orgSlug } = await params;
   const org = await getClubBySlug(orgSlug);
-  if (!org) notFound();
+  if (!org) {
+    // Track P Session P4 (T12): a removed preview's address — and every page under it — says "This preview has ended" for
+    // 90 days after the removal, then the ordinary not-found. Asked only when no club holds the address, so a live club
+    // always wins. Nothing under the frame is drawn: the club is gone.
+    const ended = await readEndedPreview(orgSlug);
+    if (ended) return <PreviewEnded ended={ended} />;
+    notFound();
+  }
 
   const theme = resolveTheme(org.themePreset, org.themePrimary, org.themeAccent);
   // Club Tier Stage 4b-1 (End state 9): the club's colour as the four roles its light site needs, derived from the colour

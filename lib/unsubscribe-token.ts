@@ -225,3 +225,30 @@ export function buildSponsorUnsubscribeUrl(orgId: string, email: string): string
   if (!token) return null;
   return `${base}/unsubscribe?org=${encodeURIComponent(orgId)}&sponsor=${encodeURIComponent(normalized)}&token=${encodeURIComponent(token)}`;
 }
+
+// ── An ADDRESS, from every FieldLogicHQ promotional email (Club Website Track P, Session P4; /legal Track P review §3) ─────
+// The one email to the person met about a preview carries this link. It is keyed to the normalized address alone (no club:
+// the preview is deleted 30 days after the meeting and the stop must outlive it, CASL s. 11(2)) with its own HMAC suffix,
+// so it is never interchangeable with an org's, a user's, a guardian's or a sponsor's token. It writes
+// `email_address_stops` (mig 547), which every FieldLogicHQ promotional send reads (owner 2026-11-26).
+
+function addressKey(email: string): string {
+  return `${email.trim().toLowerCase()}:unsubscribe-address`;
+}
+
+export function generateAddressUnsubscribeToken(email: string): string | null {
+  return sign(addressKey(email));
+}
+
+export function verifyAddressUnsubscribeToken(email: string, token: string): boolean {
+  if (!email || !token) return false;
+  return sameToken(generateAddressUnsubscribeToken(email), token);
+}
+
+export function buildAddressUnsubscribeUrl(email: string): string | null {
+  const base = process.env.NEXT_PUBLIC_APP_URL ?? 'https://www.fieldlogichq.ca';
+  const normalized = email.trim().toLowerCase();
+  const token = generateAddressUnsubscribeToken(normalized);
+  if (!token) return null;
+  return `${base}/unsubscribe?address=${encodeURIComponent(normalized)}&token=${encodeURIComponent(token)}`;
+}

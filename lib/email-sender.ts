@@ -22,6 +22,7 @@ import { FIELDLOGICHQ_CONTACT_EMAIL } from '@/lib/fieldlogichq-contact';
 import { buildUnsubscribeUrl, buildUserUnsubscribeUrl, oneClickUnsubscribeHeaders } from '@/lib/unsubscribe-token';
 import { isDemoOrgId } from '@/lib/demo-org-server';
 import { isPreviewOrgId } from '@/lib/preview-org-server';
+import { isAddressStopped } from '@/lib/email-address-stops';
 import { insertAtWarmCardEnd, warmUnsubscribeFooterHtml } from '@/lib/email-envelope-warm';
 import { isUndeliverableAddress } from '@/lib/email-undeliverable';
 
@@ -139,6 +140,9 @@ export async function sendMarketingEmail(opts: SendEmailOptions): Promise<SendRe
       if (orgErr) console.error('[email-sender] Opt-out check error:', orgErr);
       optedOut = org?.email_marketing_opt_out === true;
     }
+    // Track P Session P4 (owner 2026-11-26): an address that pressed "no more email from FieldLogicHQ" in the preview email
+    // gets no promotional email from us at all, whoever it is sent for. Fail-closed (isAddressStopped).
+    if (!optedOut) optedOut = await isAddressStopped(toEmail);
 
     if (optedOut) {
       await logSend({

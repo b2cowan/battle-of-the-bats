@@ -6,6 +6,9 @@ import { getPreviousPlatformAdminVisit } from '@/lib/platform-admin-visits';
 import { getWaitingSnapshot, WAITING_GROUP_LABELS, WAITING_GROUPS, type WaitingQueue } from '@/lib/platform-waiting';
 import { consoleDay, consoleClock } from '@/lib/console-dates';
 import { readCheapLines } from '@/lib/platform-status';
+import { isPlatformOwner } from '@/lib/platform-owner';
+import { readRemovalQueueCounts } from '@/lib/preview-removal-server';
+import { REMOVAL_QUEUE_WORDS } from '@/lib/preview-removal';
 import { summarize } from '@/lib/platform-status-lines';
 import AdminPageHeader from '@/components/admin/AdminPageHeader';
 import LinkRow from './LinkRow';
@@ -32,14 +35,29 @@ function plural(n: number, one: string, many = `${one}s`) {
   return `${n} ${n === 1 ? one : many}`;
 }
 
+/** The owner's two Growth rows for previews (Track P Session P4): removed tomorrow (drawn, tab 7) and overdue (owner 2026-11-26). */
+function previewRemovalQueues(counts: { tomorrow: number; overdue: number } | null): WaitingQueue[] {
+  const href = '/platform-admin/prospect-clubs';
+  const row = (key: 'tomorrow' | 'overdue', count: number): WaitingQueue => ({
+    key: `preview_removal_${key}`, group: 'growth', ...REMOVAL_QUEUE_WORDS[key], count, href, entry: 'overview',
+    ...(counts === null ? { notRead: true } : {}),
+  });
+  return [row('overdue', counts?.overdue ?? 0), row('tomorrow', counts?.tomorrow ?? 0)];
+}
+
 export default async function TodayPage() {
   const auth = await requirePlatformAreaView('overview');
   const previous = auth.user.email ? await getPreviousPlatformAdminVisit(auth.user.email) : null;
   const seesStatus = canViewPlatformArea(auth.role, 'status');
-  const [{ queues, stats }, cheapLines] = await Promise.all([
+  // Track P Session P4 (owner 2026-11-26): Prospect clubs is the owner's alone (T2), so its two rows are added here for the
+  // owner only, never a role's queue; they carry no menu count.
+  const owner = isPlatformOwner(auth);
+  const [{ queues: roleQueues, stats }, cheapLines, removals] = await Promise.all([
     getWaitingSnapshot(auth.role, previous?.visited_at ?? null),
     seesStatus ? readCheapLines() : Promise.resolve([]),
+    owner ? readRemovalQueueCounts() : Promise.resolve(undefined),
   ]);
+  const queues = removals === undefined ? roleQueues : [...roleQueues, ...previewRemovalQueues(removals)];
   const health = summarize(cheapLines);
 
   const groups = WAITING_GROUPS

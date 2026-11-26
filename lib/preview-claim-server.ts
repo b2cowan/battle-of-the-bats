@@ -2,11 +2,13 @@ import 'server-only';
 import { supabaseAdmin } from './supabase-admin';
 import { captureError } from './observability';
 import { writePlatformAuditLog } from './platform-audit';
-import { FIELDLOGICHQ_SELLER_MAILING_ADDRESS } from './fieldlogichq-contact';
 import { planLabel } from './platform-labels';
 import { forgetPreviewOrgId } from './preview-org-server';
 import { utcToZonedInputs } from './timezone';
 import { isClaimCodeShape, normaliseClaimCode, type ClaimDoorState } from './preview-claim';
+import { previewDayLabel } from './preview-ended';
+import { readEndedPreview } from './preview-ended-server';
+import { previewLinkRefusedForAddress, readSentLink, type SentLink } from './preview-link-email-server';
 import { claimPassMatches, claimVisitorKey, claimVisitorKeyFromIp, signClaimPass } from './preview-claim-pass';
 
 export { claimVisitorKey, claimVisitorKeyFromIp };
@@ -58,21 +60,15 @@ async function clubOf(orgId: string, fallback: { name: string; slug: string }): 
   };
 }
 
-function removedOnLabel(iso: string | null | undefined): string | null {
-  if (!iso) return null;
-  const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) return null;
-  return new Intl.DateTimeFormat('en-CA', {
-    weekday: 'short', month: 'short', day: 'numeric', year: 'numeric', timeZone: 'America/Toronto',
-  }).format(d).replace(/\./g, '');
-}
-
 /** Which frame the code page shows. Throws when it cannot read (the page says the door can't be opened). */
 export async function readClaimDoor(slug: string, visitor: string): Promise<ClaimDoor> {
   const a = await door(slug, null, visitor);
   if (a.state === 'missing' || !a.org_id) return { state: 'missing' };
+  // Session P4 (T12): a removal says "ended" for 90 days, then the address is an ordinary not-found; and never once a
+  // club holds the address again (the ended page's own rule, /review 2026-11-26).
+  if (a.state === 'removed' && !(await readEndedPreview(slug))) return { state: 'missing' };
   const club = await clubOf(a.org_id, { name: a.name ?? slug, slug });
-  return { state: a.state as Exclude<ClaimDoorState, 'missing'>, club, removedOn: removedOnLabel(a.removed_at) };
+  return { state: a.state as Exclude<ClaimDoorState, 'missing'>, club, removedOn: previewDayLabel(a.removed_at) };
 }
 
 export type CodeCheck =
@@ -89,7 +85,9 @@ export async function checkClaimCode(slug: string, typed: string, visitor: strin
     if (!pass) throw new Error('[preview-claim] no pass secret (PAY_LINK_SECRET)');
     return { ok: true, orgId: a.org_id, pass };
   }
-  if (a.state === 'removed') return { ok: false, state: 'removed', removedOn: removedOnLabel(a.removed_at) };
+  if (a.state === 'removed') {
+    return (await readEndedPreview(slug)) ? { ok: false, state: 'removed', removedOn: previewDayLabel(a.removed_at) } : { ok: false, state: 'missing' };
+  }
   if (a.state === 'wrong' || a.state === 'resting' || a.state === 'claimed' || a.state === 'missing') return { ok: false, state: a.state };
   return { ok: false, state: 'missing' };
 }
@@ -169,6 +167,8 @@ export type RoomView = {
   game: RoomGame | null;
   /** T13: false until FieldLogicHQ has a mailing address; the window refuses Send and says why. */
   canEmail: boolean;
+  /** Session P4: the one email, once it has gone (the address masked, the day); the window shows it in place of the form. */
+  emailSent: SentLink | null;
 };
 
 /** Everything the room window shows for one OPEN preview; null when it is claimed, removed or gone. */
@@ -186,9 +186,12 @@ export async function readRoom(orgId: string): Promise<RoomView | null> {
   if (!r || r.claimed_at || r.removed_at || !o?.is_preview) return null;
 
   const hourAgo = new Date(Date.now() - 3600_000).toISOString();
-  const { count } = await supabaseAdmin
-    .from('preview_claim_tries').select('id', { count: 'exact', head: true })
-    .eq('org_id', orgId).gt('tried_at', hourAgo);
+  const [{ count }, game, emailSent] = await Promise.all([
+    supabaseAdmin.from('preview_claim_tries').select('id', { count: 'exact', head: true })
+      .eq('org_id', orgId).gt('tried_at', hourAgo),
+    readLiveGame(orgId),
+    readSentLink(orgId),
+  ]);
 
   const zoned = utcToZonedInputs(r.meeting_at);
   return {
@@ -203,8 +206,9 @@ export async function readRoom(orgId: string): Promise<RoomView | null> {
     meetingInput: `${zoned.date}T${zoned.time}`,
     code: r.claim_code,
     resting: (count ?? 0) >= 5,
-    game: await readLiveGame(orgId),
-    canEmail: FIELDLOGICHQ_SELLER_MAILING_ADDRESS.trim() !== '',
+    game,
+    canEmail: !previewLinkRefusedForAddress(),
+    emailSent,
   };
 }
 

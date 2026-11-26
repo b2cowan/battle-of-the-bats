@@ -1,3 +1,5 @@
+import { readEndedPreview } from '@/lib/preview-ended-server';
+import { ENDED_WORDS } from '@/lib/preview-ended';
 import type { Metadata } from 'next';
 import { headers } from 'next/headers';
 import { notFound, redirect } from 'next/navigation';
@@ -18,6 +20,11 @@ const first = (value: Param) => (Array.isArray(value) ? value[0] : value);
 /** Our own door page, never indexed (a preview is unlisted; its claim page names the prospect). */
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;
+  // A removed preview's claim page says it has ended (Session P4, /design): its tab and link preview say so too.
+  let key = slug;
+  try { key = decodeURIComponent(slug); } catch { /* a malformed address: the page itself is not found */ }
+  const ended = await readEndedPreview(key);
+  if (ended) return { title: { absolute: ENDED_WORDS.pageTitle(ended.name) }, robots: { index: false, follow: false } };
   return { title: `Claim ${slug}`, robots: { index: false, follow: false } };
 }
 

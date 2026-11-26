@@ -6,6 +6,7 @@
  * matter (mig 540: the code, the wrong tries, the claim in one step, the undo); the server half is
  * `lib/preview-claim-server.ts`. What a preview IS lives in `lib/preview-org.ts`.
  */
+import { ENDED_SHOWN_DAYS } from './preview-ended';
 
 /** T7 + tab 4: no 0, O, 1 or I, so it reads aloud without mistakes. Mig 540's CHECK is the same set. */
 export const CLAIM_CODE_ALPHABET = '23456789ABCDEFGHJKLMNPQRSTUVWXYZ';
@@ -96,10 +97,7 @@ export const CLAIM_WORDS = {
     useDifferentEmail: 'Use a different email',
     didNotFinish: `The claim didn’t finish, and nothing changed: the preview is as it was. Try again. If it happens twice, write to ${CLAIM_SUPPORT}.`,
     tryAgain: 'Try again',
-    endedTitle: 'This preview has ended',
-    ended: (removedOn: string | null) => removedOn
-      ? `It was removed on ${removedOn}. Write to ${CLAIM_SUPPORT} and we can make a new one.`
-      : `It was removed. Write to ${CLAIM_SUPPORT} and we can make a new one.`,
+    // The ended frame reads lib/preview-ended.ts's ENDED_WORDS (Session P4): one set of words for the club's address and here.
     claimedTitle: (club: string) => `${club} is claimed`,
     claimed: `This club has already been claimed. If you’re with the club and didn’t claim it, write to ${CLAIM_SUPPORT}.`,
     openSite: 'Open the club’s site',
@@ -111,6 +109,20 @@ export const CLAIM_WORDS = {
   landed: (club: string) =>
     `${club} is yours. Its name, logo and colours stayed; the sample teams, games and sponsors are gone, so your site shows only what you add.`,
 } as const;
+
+/** The roles the one email's consent can rest on (/legal: an officer's role, CASL s. 10(9)(c)); keys match mig 547's check. */
+export const PREVIEW_EMAIL_ROLES = [
+  { key: 'president', label: 'President' },
+  { key: 'vice_president', label: 'Vice-president' },
+  { key: 'secretary', label: 'Secretary' },
+  { key: 'treasurer', label: 'Treasurer' },
+  { key: 'registrar', label: 'Registrar' },
+  { key: 'board_member', label: 'Board member' },
+] as const;
+export type PreviewEmailRole = (typeof PREVIEW_EMAIL_ROLES)[number]['key'];
+export function isPreviewEmailRole(v: unknown): v is PreviewEmailRole {
+  return PREVIEW_EMAIL_ROLES.some(r => r.key === v);
+}
 
 // ── The room window's words (tab 4) ───────────────────────────────────────────────────────────────────────────────────
 export const ROOM_WORDS = {
@@ -144,15 +156,24 @@ export const ROOM_WORDS = {
   emailLabel: 'Email the link',
   emailAddress: 'Email address',
   emailRole: 'Their role',
-  emailTick: 'They gave me this address at the meeting and asked for the link.',
-  /** /legal P3 review item 3: P3 keeps nothing; Session P4 says what its consent record keeps. */
-  emailHelp: 'One email, to the person you met. It never carries the code. Nothing is kept yet.',
+  /** /legal P3 review, for P4: the tick says they AGREED to the one email (the consent the record proves). */
+  emailTick: 'They gave me this address at the meeting and agreed to one email with the link.',
+  /** Session P4: what the consent record keeps (the drawing's tab 4 words). Never their name. */
+  emailHelp: 'One email, to the person you met. It never carries the code. The date, role and send are kept as the consent record; their name is not.',
   send: 'Send',
   /** T13: the send is refused until FieldLogicHQ has a mailing address (the owner's 2026-11-17 ruling). */
   sendRefused: 'This email can’t go yet. Every email like it must carry our mailing address, and ours isn’t set.',
-  /** The mailing address is set but the email itself is Session P4's. */
-  sendNotYet: 'This email isn’t built yet, so nothing was sent.',
-  roles: ['President', 'Vice-president', 'Secretary', 'Treasurer', 'Registrar', 'Board member', 'Other'],
+  /** Session P4: the send's other answers. Each one keeps nothing. */
+  sendDone: (email: string) => `Sent to ${email}. The consent record is kept for three years.`,
+  sentAlready: (email: string, day: string) => `The link went to ${email} on ${day}. One email per preview.`,
+  sentAlreadyBare: 'The link has already gone for this preview. One email per preview.',
+  sendStopped: 'That address asked for no more email from FieldLogicHQ, so nothing was sent.',
+  sendBeforeMeeting: 'The email can go once the meeting has started and they’ve given you the address. Nothing was sent.',
+  sendBadAddress: 'Enter the email address they gave you.',
+  sendFailed: 'The email didn’t go, and nothing was kept. Try again.',
+  /** /legal P3 review, for P4: implied consent rests on an officer's role, so there is no "Other" (an empty choice can't send). */
+  roles: PREVIEW_EMAIL_ROLES,
+  rolePick: 'Pick their role',
   meeting: 'Meeting',
   change: 'Change',
   changeTitle: 'Change the meeting',
@@ -161,7 +182,8 @@ export const ROOM_WORDS = {
   removal: (date: string) => `Removed on ${date}, 30 days after the meeting, unless the club claims it.`,
   removeNow: 'Remove now',
   removeTitle: (club: string) => `Remove ${club}?`,
-  removeBody: 'Its pages, logo and sample are deleted, and its link no longer opens the site. The preview’s record stays in the list as Removed.',
+  /** /legal P3 review, for P4: the old link shows "This preview has ended" for 90 days, so it doesn't just "stop working". */
+  removeBody: `Its pages, images and sample information are deleted. For ${ENDED_SHOWN_DAYS} days its link says the preview has ended. The preview stays in the list as Removed.`,
   removeConfirm: 'Remove the preview',
   removeReason: 'Removed from Prospect clubs',
   failed: 'That didn’t save. Try again.',

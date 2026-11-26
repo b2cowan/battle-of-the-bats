@@ -467,7 +467,7 @@ write time on `card_on_file_last4` so a swap cannot clear the new card). _Read b
 **Purpose:** the **record of a preview club** (mig 535, Club Website Track P, owner ruling T1 2026-11-25): one row per preview ever made, carrying what `organizations.is_preview` stands for (the meeting, who made it, the logo's source, the claim). **Kept after a claim** (Prospect clubs keeps one row; "Came from a preview") **and after a removal** (the list's Removed count and the 90-day "This preview has ended" page, T12). Written by Session P2’s one creation step and Session P3’s room and claim (mig 540).
 
 **Gotchas (read first):**
-1. ⚠⚠ **`org_id` HAS NO FOREIGN KEY, ON PURPOSE.** The record outlives the club (the mig 451 pattern), so the club's slug and name are copied in. A removed club stamps `removed_at` on its unclaimed row by the `organization_previews_mark_removed` trigger (AFTER DELETE on `organizations`), so the nightly removal and platform admin's Delete both leave it. **Since mig 540** the stamp also clears `claim_code`, and no longer checks `is_preview` (an unclaimed, unremoved record already means a marked club).
+1. ⚠⚠ **`org_id` HAS NO FOREIGN KEY, ON PURPOSE.** The record outlives the club (the mig 451 pattern), so the club's slug and name are copied in. A removed club stamps `removed_at` on its unclaimed row by the `organization_previews_mark_removed` trigger (AFTER DELETE on `organizations`), so the nightly removal and platform admin's Delete both leave it. **Since mig 540** the stamp also clears `claim_code`, and no longer checks `is_preview` (an unclaimed, unremoved record already means a marked club). **Since mig 547** it also writes the removal record (`preview_removed` in `platform_audit_log`, below), and the removed record is what the old link's "This preview has ended" page reads for 90 days (`lib/preview-ended-server.ts`: the newest removed, never-claimed row for the slug, only when no club holds the address).
 2. ⚠ **It drives `organizations.is_preview` by trigger** (`organization_previews_keep_marker`, BEFORE INSERT OR UPDATE OF `claimed_at`). Deleting a row by hand does NOT clear the marker: the unsafe direction is a preview that stops being one. **T3 is held by the database:** the trigger refuses the marker becoming true (a row made, or a claim undone) for a club with any `organization_members` (`PV001 preview_org_has_people`; `organizations_preview_has_no_people` holds the same on `organizations.is_preview` itself, however it is written), a row naming a club that does not exist (`PV002 preview_org_missing`), and a row moved to another club (`PV004 preview_org_is_fixed`); it locks the club’s row first, so nobody can join between the check and the write; `organization_members_not_in_a_preview` (BEFORE INSERT OR UPDATE OF `organization_id` on `organization_members`) refuses anyone joining an open preview (`PV003 preview_org_takes_no_people`), so the claim (P3) must clear the marker BEFORE it seats the owner, and an undo (T15) must take the claimant out first; and `organizations_preview_has_no_stripe` (CHECK on `organizations`) keeps a preview with no Stripe customer or subscription. **The claim and the undo (mig 540) keep that order:** `claim_preview_club` locks the club’s row, then the record’s (a removal’s order, so the two cannot deadlock), clears the sample while the marker is still set, sets `claimed_at`, then seats the owner; `undo_preview_claim` takes the claimant out, then clears `claimed_at`.
 3. **The removal date is not stored:** it is the meeting's day + 30 days (T11), so moving the meeting moves it. The plan a claimer came for is read live from the club, never copied here. The claim code is `claim_code` (mig 540).
 4. **RLS enabled, no policies: service role only.**
@@ -517,6 +517,11 @@ write time on `card_on_file_last4` so a swap cannot clear the new card). _Read b
 - `move_preview_meeting(org, meeting_at)` — Change the meeting: `PV014` outside the next 60 days; the whole sample made again on the new day (its live game at the new time; the removal date moves with `meeting_at`).
 - `save_preview_score(org, home, away, final)` — the one write staff make in a preview (T5): the tournament's first game; a save writes `submitted` (live by the clock, and its score afterwards), Mark final `completed`. `PV024` no game · `PV025` already final · `PV026` not started. A direct write: no score-submission columns, no notices.
 
+**The removal on day 30 — mig 547** (Track P Session P4, owner ruling T11; the nightly call is mig 548, owner's go 2026-11-26):
+- `remove_due_preview(org, actor)` — **the ONLY step that removes a preview by itself**, called by the nightly removal (`lib/preview-removal-server.ts`). Takes the claim's locks in the claim's order (the `organizations` row, then this record), then refuses, before any delete: `PV030` not a preview (no record, or `is_preview` false) · `PV031` claimed · `PV032` already removed (or the club is gone) · `PV033` not yet due (the meeting's day in America/Toronto + 30 is after today there — the same rule as `lib/prospect-clubs.ts removalDay`). Then Delete's own pre-cascade list (`club_schedules`, `org_time_blocks`, `org_venue_facilities`, `billing_retained_records`, `billing_retention_intents`; `tests/unit/preview-club-p4-guard.test.ts` holds it equal to `app/api/platform-admin/orgs/[id]/delete/route.ts`) and the club, in one transaction. The stored files are the caller's, after.
+- **The removal record:** since mig 547 the `organization_previews_mark_removed` stamp also writes ONE `platform_audit_log` row, action `preview_removed`, whenever it stamps (every removal: day 30, Remove now, platform admin's Delete): `old_value` the slug, `new_value` `{orgId, name, slug, madeBy (the staff email), meetingAt, logoSource, madeAt, removedAt, how: day_30 | removed_now}`, actor the run's (`fieldlogichq.preview_removed_by`, set by `remove_due_preview`), else `platform-admin` (Delete writes its own `delete_organization` row with the staff email). **No person, no sample rows, no files** (/legal finding 4). The ended page reads this table's `org_name` and `removed_at`, never the audit row.
+- `purge_preview_email_consents()` — deletes `preview_email_consents` three years after the send (or the record's making, for a send that never landed); called by the nightly removal.
+
 ---
 ## `preview_claim_tries`
 <!-- dict:table:preview_claim_tries -->
@@ -548,6 +553,39 @@ write time on `card_on_file_last4` so a swap cannot clear the new card). _Read b
 <!-- dict:col:preview_claim_records.start_plan -->
 <!-- dict:col:preview_claim_records.at -->
 **`id`** (bigint identity PK) · **`kind`** (`claim` | `undo`) · **`org_id`** (uuid, no FK) · **`org_name`** (text, the club's name then) · **`user_id`** (uuid FK → `auth.users` ON DELETE SET NULL: the claimer, or for an undo the staff member) · **`user_email`** (text, the claimer's email as text, so the record survives the account; required on a claim, NULL on an undo) · **`box_text`** (the exact authority sentence ticked) · **`claim_code`** (the code used) · **`start_plan`** (`club` | `club_large`, the plan they came for) · **`at`** (timestamptz). CHECKs: a claim carries email, sentence, code and plan; an undo carries none of them. Prospect clubs shows the latest claim's email **masked** (T15).
+
+---
+## `preview_email_consents`
+<!-- dict:table:preview_email_consents -->
+
+**Purpose:** the one email's consent record (mig 547, Track P Session P4, T13; /legal finding 3: CASL s. 13 puts the proof of consent on us). Written by the room window's Email the link (`lib/preview-link-email-server.ts`) **before** the email is sent; `sent_at` stamped after. A send that surely failed (or threw, or found no mail service) deletes its row; one with no clear answer keeps it (it may have gone); an unsent row older than 10 minutes was left by a request that died and is cleared at the next Send. Each attempt's mail-service key is `preview-link:{org}:{row id}`. The send is refused before the meeting's start time. **One per preview** (`UNIQUE (org_id)`): the second send is refused. **Never the person's name.** Deleted three years after the send by `purge_preview_email_consents` (the nightly removal). RLS on, service role only.
+
+**Gotchas:** no FK on `org_id` (it outlives the preview, which is deleted 30 days after the meeting). Nothing is written while `FIELDLOGICHQ_SELLER_MAILING_ADDRESS` is blank: the send refuses first.
+
+<!-- dict:col:preview_email_consents.id -->
+<!-- dict:col:preview_email_consents.org_id -->
+<!-- dict:col:preview_email_consents.org_name -->
+<!-- dict:col:preview_email_consents.email -->
+<!-- dict:col:preview_email_consents.role -->
+<!-- dict:col:preview_email_consents.given_on -->
+<!-- dict:col:preview_email_consents.given_how -->
+<!-- dict:col:preview_email_consents.recorded_by -->
+<!-- dict:col:preview_email_consents.sent_at -->
+<!-- dict:col:preview_email_consents.created_at -->
+**`id`** (bigint identity PK) · **`org_id`** (uuid, no FK) · **`org_name`** (text, the club's name then) · **`email`** (text, lower-case and trimmed: the address they gave) · **`role`** (`president` | `vice_president` | `secretary` | `treasurer` | `registrar` | `board_member` — an officer's role, which implied consent s. 10(9)(c) rests on; there is no "Other"; the labels are `PREVIEW_EMAIL_ROLES` in `lib/preview-claim.ts`) · **`given_on`** (date, the meeting day: the address was given at the meeting; the send is refused before it) · **`given_how`** (`in_person` only) · **`recorded_by`** (text, the staff member's email) · **`sent_at`** (timestamptz, NULL until the send answered) · **`created_at`**.
+
+---
+## `email_address_stops`
+<!-- dict:table:email_address_stops -->
+
+**Purpose:** "no more promotional email from FieldLogicHQ" for an **address** (mig 547, Track P Session P4; /legal finding 3; owner 2026-11-26: every FieldLogicHQ promotional send honours it). Written only by the unsubscribe in the one preview email (`/unsubscribe?address=…`, its own token family in `lib/unsubscribe-token.ts`, `app/api/unsubscribe/route.ts` → upsert, insert-only). Read by `isAddressStopped` (`lib/email-address-stops.ts`, **fail-closed**: a stop that cannot be read counts as stopped) in the preview email's send and in `sendMarketingEmail` (`lib/email-sender.ts`). Receipts, sign-in and account emails are not promotional and are not stopped here. RLS on, service role only.
+
+**Gotchas:** keyed to the address alone, on purpose: the preview it came from is deleted, and the email is meant to be forwarded (the confirm page shows the address masked). Kept as the address only, for as long as we send any promotional email.
+
+<!-- dict:col:email_address_stops.email -->
+<!-- dict:col:email_address_stops.source -->
+<!-- dict:col:email_address_stops.stopped_at -->
+**`email`** (text PK, lower-case and trimmed) · **`source`** (`preview_link`: the email it came from) · **`stopped_at`** (timestamptz, default now()).
 
 ---
 ## `billing_locations`

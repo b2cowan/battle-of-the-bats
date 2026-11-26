@@ -28972,3 +28972,16 @@ Committed 2026-11-25 as two commits (owner: "commit the sweep and the data chang
 
 **Left out (pinned by tests):** the family app's mark (no made-up family follows the Ospreys), the coach's emails (made-up addresses), "And N more places are closed." and two places at once, a closure for a later day, Cancel them, Link it, a failed send.
 <!-- /§573 -->
+
+## §575 · Club website · Track P · Session P4 · The removal, the ended page and the one email — **a preview nobody claims removes itself 30 days after the meeting and says "This preview has ended" for 90 days; Today warns the day before and says so if it is late; the one email is built but stays refused until we have a mailing address; its unsubscribe follows the address**
+<!-- §575 -->
+**Walk published 2026-11-26.** [Interactive walk](https://claude.ai/artifact/FEDVf85o1pc1j81gBQgzJB) (walks A–C, 33 steps; no owner calls in the count; T11–T13 ruled 2026-11-25; the nightly job, the overdue line and the stop on every promotional send ruled in the session 2026-11-26) · [repository HTML](CLUB_WEBSITE_TRACK_P_P4_WALK.html). Migrations 547 and 548 on dev (owner's word, 2026-11-26). Plan: `CLUB_WEBSITE_ENHANCEMENTS_PLAN.md` §6 Track P and Progress ("Track P Session P4").
+
+**Where:** `http://localhost:3000`, Platform admin › Today and Growth › Prospect clubs, `/maple-grove-minor-softball`, `/birch-hollow-softball`, the claim page `/start/claim/maple-grove-minor-softball`, and the unsubscribe link the helper prints. **Sign in:** the owner `fieldlogichq@gmail.com` (own password); a private window with nobody signed in for the ended and unsubscribe pages. **A terminal** in the project folder runs `node .probe/p4-walk.mjs` (dev only: `tomorrow`, `due`, `run`, `age`, `unsublink`, `unsubclear`) to move a meeting back, run the nightly removal by hand with the scheduler's key and receipt, age a removal past 90 days, and print the email's unsubscribe link.
+
+**Walks:** A it removes itself, and says so: Today's two rows, one run, the ended page on the address, a page under it and the claim page, then not-found after 90 days (18) · B Email the link stays refused (officer roles only, none pre-picked; the tick; the refusal keeps nothing) and Remove now's words and its ended page (9) · C the unsubscribe follows the address: masked, one press, done on return, a tampered link refused (6).
+
+**Left out (pinned by tests or probes):** a real send (needs our mailing address; the words are held word for word by `preview-club-p4-guard.test.ts`); the scheduler calling at 08:05 UTC (scheduled on dev, job 23; the run is the same call); the removal step refusing a claimed and a real club (`.probe/p4-prove.mjs`, 18/18); a second run removing nothing; the record's contents; a send that dies part-way; a promotional send to a stopped address.
+
+**After the walk:** nothing to tidy; both previews stay in Prospect clubs as Removed, by design.
+<!-- /§575 -->
