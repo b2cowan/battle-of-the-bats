@@ -16,7 +16,8 @@ export interface CoachMailTeam {
   teamName: string;
   reach: RepReach;
   to: { name: string | null; email: string }[];
-  games: (CoachMailGame & { markId: string })[];
+  /** One entry per GAME: a game marked by two closures of one press (D1) is listed once, with both marks. */
+  games: (CoachMailGame & { markIds: string[] })[];
 }
 
 const firstName = (name: string | null) => (name ?? '').trim().split(/\s+/)[0] || null;
@@ -49,7 +50,7 @@ export async function sendClosureCoachEmails(p: {
         console.error('[place-closure] a coach email was refused by the transport (team', t.teamId, ')');
       }
     }
-    out.push({ teamId: t.teamId, sent: any, markIds: any ? t.games.map(g => g.markId) : [] });
+    out.push({ teamId: t.teamId, sent: any, markIds: any ? t.games.flatMap(g => g.markIds) : [] });
   }
   return out;
 }

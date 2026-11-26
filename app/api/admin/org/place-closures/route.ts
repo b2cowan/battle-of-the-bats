@@ -9,14 +9,15 @@ import { isUuid } from '@/lib/utils';
 import { rainLine } from '@/lib/league-rainout';
 import { CLOSURE_MAX_EXTRA_DAYS } from '@/lib/place-closures';
 import { pressPlaceClosure } from '@/lib/place-closures-server';
-import { CLOSE_LINE_MAX, CLOSE_WORDS as W, canClosePlace, seesEveryProgram } from '@/lib/place-closure-window';
+import { CLOSE_LINE_MAX, CLOSE_MAX_ENTRIES, CLOSE_WORDS as W, canClosePlace, seesEveryProgram } from '@/lib/place-closure-window';
 import { closeFrame, closeSource, seasonNextDay, seasonPlacesOn, sendAfterPress, showingClosures } from '@/lib/place-closure-window-server';
 
 // The press sends inside the request: one send per division of every season, then the rep coaches.
 export const maxDuration = 120;
 
-/** At most, as the press's own limits (mig 539): 10 places, 500 house league games, 200 rep games, 500 links. */
-const MAX = { places: 10, league: 500, rep: 200, links: 500 };
+/** At most, as the press's own limits (mig 549): 10 entries (a park or a diamond), 500 house league games, 200 rep games,
+ *  500 links. */
+const MAX = { places: CLOSE_MAX_ENTRIES, league: 500, rep: 200, links: 500 };
 
 /**
  * CLOSE A PLACE (Club Website Stage 2, Session 2B; rulings K1–K17; mig 539).
@@ -59,7 +60,10 @@ export const GET = withObservability(async (req: Request) => {
   if (g.refused) return g.refused;
   const { ctx } = g;
   const q = new URL(req.url).searchParams;
-  const [frame, showing] = await Promise.all([closeFrame(ctx.org, ctx.role), showingClosures(ctx.org.id)]);
+  // The window's own reads (a season's places, a day's games) never use the closures, and run on every tick: only the
+  // pages' bare read pays for them.
+  const windowRead = q.has('seasonId') || q.has('day') || q.has('first');
+  const [frame, showing] = await Promise.all([closeFrame(ctx.org, ctx.role), windowRead ? [] : showingClosures(ctx.org.id)]);
   // K1: a house league admin reads a closure's rep marks as a count, never a team's name.
   const closures = seesEveryProgram(ctx.role) ? showing : showing.map(c => ({ ...c, markTeamNames: [], markTeams: c.markTeams.map((_, i) => String(i)) }));
 

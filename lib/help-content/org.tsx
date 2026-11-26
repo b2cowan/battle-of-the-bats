@@ -1830,16 +1830,16 @@ const orgHelp: HelpPageContent = {
     {
       id: 'close-a-place',
       heading: 'Close a place — when a park or a diamond is closed',
-      summary: 'Close a park, one diamond or all your fields for a day or a few days: your site says so at once, house league games are postponed or cancelled and families emailed, rep games are marked for their coaches, and Reopen takes the strip off your site.',
+      summary: 'Close one or more parks, some of a park’s diamonds or all your fields for a day or a few days: your site says so at once, house league games are postponed or cancelled and families emailed, rep games are marked for their coaches, and Reopen takes the strip off your site.',
       keywords: [
         'close a place', 'closed place', 'place closed', 'close a park', 'close a diamond', 'close a field', 'field closed', 'fields closed',
         'park closed', 'diamond closed', 'all our fields', 'flooded', 'wet fields', 'rain', 'rainout', 'rain out', 'weather', 'call off games', // spelling-ok: a search synonym ("Rainout" is the one spelling, K15)
         'reopen', 'reopen a place', 'closed by mistake', 'needs a new date', 'marked for the coach', 'rep game marked', 'strip on the site',
         'closed today', 'closed tomorrow', 'tell families the field is closed', 'places closed', 'rain delay', 'typed place', 'link both',
       ],
-      searchText: 'close a place venue library toolbar overview button at the top house league schedule button pick a place one diamond all diamonds all our fields owner admin only day until the end of that day up to two weeks what happens to house league games postpone them cancel them needs a new date struck through what is at that place that day tick untick game started tick it to call it off mid-game draft division not listed a line for the families email 120 characters not shown on your site nothing changes until you press the button close lions park and email 58 families your site says lions park is closed today closed tomorrow closed through at once until the end of the day goes by itself top of every club page not on tournament pages house league families emailed one email per family per division coaches get a copy does not count toward today’s limit public schedule needs a new date at the top for a week rep games marked not moved place closed waits for a new date team page club home family app head coach emailed coaches emailed no head coach on file no coach to email let the team know yourself mark clears when the coach moves or cancels the game played anyway shows its score tournament not changed here open its rain delay diamonds picked practices not changed typed by hand place typed by hand link both link it so they match next time families are not told some emails didn’t go changes to send emails can’t be taken back give them new dates reopen keep it closed reopen and email coaches your site stops saying it’s closed postponed games stay under needs a new date league admin rep games as a count league plus club',
+      searchText: 'close a place venue library toolbar overview button at the top house league schedule button places tick several parks choose places places chosen remove a park several diamonds two of three diamonds close 2 diamonds close both up to 10 parks or diamonds in one press one email per family done no diamond recorded stays marked until the last reopens all diamonds all our fields owner admin only day until the end of that day up to two weeks what happens to house league games postpone them cancel them needs a new date struck through what is at that place that day tick untick game started tick it to call it off mid-game draft division not listed a line for the families email 120 characters not shown on your site nothing changes until you press the button close lions park and email 58 families your site says lions park is closed today closed tomorrow closed through at once until the end of the day goes by itself top of every club page not on tournament pages house league families emailed one email per family per division coaches get a copy does not count toward today’s limit public schedule needs a new date at the top for a week rep games marked not moved place closed waits for a new date team page club home family app head coach emailed coaches emailed no head coach on file no coach to email let the team know yourself mark clears when the coach moves or cancels the game played anyway shows its score tournament not changed here open its rain delay diamonds picked practices not changed typed by hand place typed by hand link both link it so they match next time families are not told some emails didn’t go changes to send emails can’t be taken back give them new dates reopen keep it closed reopen and email coaches your site stops saying it’s closed postponed games stay under needs a new date league admin rep games as a count league plus club',
       content: (
-        <p><strong>Close a place</strong> tells your site, your house league families and your rep coaches that a park, one diamond or all your fields are closed, in one press: your public site says so at once, the day&rsquo;s house league games are postponed or cancelled and their families emailed, and rep games there are marked for their coaches. It comes with League Plus and Club, for the owner, admins and league admins.</p>
+        <p><strong>Close a place</strong> tells your site, your house league families and your rep coaches that one or more parks, some of a park&rsquo;s diamonds or all your fields are closed, in one press: your public site says so at once, the day&rsquo;s house league games are postponed or cancelled and their families emailed, and rep games there are marked for their coaches. It comes with League Plus and Club, for the owner, admins and league admins.</p>
       ),
       subtopics: [
         {
@@ -1847,15 +1847,18 @@ const orgHelp: HelpPageContent = {
           title: 'Closing a place',
           content: (
             <>
-              <p>Open <strong>Close a place</strong> from the Venue library&rsquo;s toolbar, from the top of the Overview, or from a house league season&rsquo;s Schedule page, which opens it on that season&rsquo;s places on its next day with games.</p>
+              <p>Open <strong>Close a place</strong> from the Venue library&rsquo;s toolbar, from the top of the Overview, or from a house league season&rsquo;s Schedule page, which opens it on that season&rsquo;s next day with games, with the parks it uses that day already chosen. From the Venue library or the Overview nothing is chosen until you choose.</p>
               <ol>
-                <li>Pick the <strong>Place</strong>: one park with <strong>All diamonds</strong>, or one of its <strong>Diamonds</strong>. <strong>All our fields</strong> is the owner&rsquo;s and admins&rsquo; choice.</li>
                 <li>Pick the <strong>Day</strong> and <strong>Until</strong>: one day, or up to two weeks.</li>
+                <li>Tick the parks in <strong>Places</strong>. Each one you tick gets a row underneath; press its <strong>&#x2715;</strong> to take it off. From a season&rsquo;s schedule, that season&rsquo;s parks that day are listed first.</li>
+                <li>On a park&rsquo;s row, its diamond list says <strong>All diamonds</strong>. To close only some, tick them, for example <strong>2 of 3 diamonds</strong>. Ticking every diamond is the whole park again.</li>
+                <li><strong>All our fields</strong>, the last choice in Places, closes every park at once (the owner&rsquo;s and admins&rsquo; choice). It stands in for the parks you ticked; take it off and they come back.</li>
                 <li>Choose <strong>Postpone them</strong> or <strong>Cancel them</strong> for the house league games.</li>
-                <li>Read <strong>What&rsquo;s at Lions Park that day</strong> and untick any game that is still being played.</li>
+                <li>Read <strong>What&rsquo;s at Lions Park that day</strong> and untick any game that is still being played. With two or more parks chosen, each game names its park. Your ticks stay when you add or take off a park.</li>
                 <li>Add a line for the families&rsquo; email if you want one (120 characters at most; it isn&rsquo;t shown on your site).</li>
-                <li>Press the button. It says what it does, for example <strong>Close Lions Park and email 58 families</strong>. Nothing changes until you press it.</li>
+                <li>Press the button. It says what it does, for example <strong>Close Lions Park and email 58 families</strong>, <strong>Close 2 diamonds</strong> or <strong>Close both</strong>. Nothing changes until you press it.</li>
               </ol>
+              <p>One press closes up to 10 parks or diamonds. A family with games at two of them gets one email for the two, not one each (one per division, when it has children in two). To close more, the owner or an admin uses All our fields. On a phone, Places and a park&rsquo;s diamonds open a list from the bottom of the screen; press <strong>Done</strong> when you have ticked them.</p>
               <HelpNote variant="warning" title="Emails can’t be taken back">There is no hold and no undo for the emails. To change a postponed game afterwards, give it a new date; its families are told again.</HelpNote>
             </>
           ),
@@ -1865,12 +1868,13 @@ const orgHelp: HelpPageContent = {
           title: 'What changes, program by program',
           content: (
             <HelpDefs>
-              <HelpDef term="Your site">From the moment you press, a strip across the top of every club page says, for example, <em>Lions Park is closed today.</em> or <em>Lions Park is closed tomorrow (Sat, Nov 28).</em> It goes by itself at the end of the last day. A tournament&rsquo;s pages don&rsquo;t show it.</HelpDef>
+              <HelpDef term="Your site">From the moment you press, a strip across the top of every club page says, for example, <em>Lions Park is closed today.</em> or <em>Lions Park is closed tomorrow (Sat, Nov 28).</em>, a line for each park or diamond closed (past four, three and how many more). It goes by itself at the end of the last day. A tournament&rsquo;s pages don&rsquo;t show it.</HelpDef>
               <HelpDef term="House league">The ticked games are postponed (they wait under <strong>Needs a new date</strong>) or cancelled (struck through). Each family gets one email per division, the teams&rsquo; coaches get a copy, and it doesn&rsquo;t count toward the day&rsquo;s email limit. For a week after postponements are sent, the public schedule shows Needs a new date at the top.</HelpDef>
               <HelpDef term="Rep teams">Their games aren&rsquo;t moved. Each is marked <strong>Place closed</strong> in the family app and, when the team&rsquo;s schedule is set to Public, on its team page and the club&rsquo;s home page, and the team&rsquo;s head coach is emailed to set a new date (its coaches, when it has no head coach on file). The mark goes when the coach moves or cancels the game, or when you reopen. A game played anyway shows its score.</HelpDef>
               <HelpDef term="Tournaments">Not changed here. After you close, <strong>Open its Rain delay</strong> opens the tournament&rsquo;s own Rain delay with the closed place&rsquo;s diamonds picked.</HelpDef>
               <HelpDef term="Practices">Named in the window, never changed.</HelpDef>
               <HelpDef term="A place typed by hand">A game whose place was typed, not picked from the Venue library, is listed unticked under <strong>Place typed by hand</strong>. Tick it to call it off too. <strong>Link both to Lions Park</strong> links those games to the library&rsquo;s place so they match next time; families aren&rsquo;t told.</HelpDef>
+              <HelpDef term="No diamond recorded">When you close some of a park&rsquo;s diamonds, a game at that park with no diamond recorded is listed unticked under <strong>No diamond recorded</strong>, since it may be on one of them. Tick it to call it off too. A rep game like this, with two or more of the park&rsquo;s diamonds closed, reads <em>2 diamonds at Lions Park closed</em> and keeps its mark until the last of them is reopened.</HelpDef>
             </HelpDefs>
           ),
         },
@@ -1879,10 +1883,10 @@ const orgHelp: HelpPageContent = {
           title: 'Reopening a place',
           content: (
             <>
-              <p>While a place is closed, it has a <strong>Closed</strong> row at the top of the Venue library, and the Overview shows a <strong>Places closed</strong> card. Press <strong>Reopen</strong> on the row.</p>
+              <p>While a place is closed, it has a <strong>Closed</strong> row at the top of the Venue library (a row for each diamond you closed, each reopened on its own), and the Overview shows a <strong>Places closed</strong> card that counts parks. Press <strong>Reopen</strong> on the row.</p>
               <ul>
                 <li>Your site stops saying it&rsquo;s closed, at once.</li>
-                <li>Rep games lose their marks, and their coaches get one line: the place reopened and the game wasn&rsquo;t moved.</li>
+                <li>Rep games lose their marks, and their coaches get one line: the place reopened and the game wasn&rsquo;t moved. A game with no diamond recorded that another closed diamond still holds keeps its mark; the window says so, and its coach is told when the last one reopens.</li>
                 <li>House league games stay as they are. Postponed games stay under Needs a new date: give each a new date from the schedule, and its families are told again.</li>
               </ul>
             </>

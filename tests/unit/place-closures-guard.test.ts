@@ -13,11 +13,20 @@ const MIG = readFileSync(join(ROOT, 'supabase/migrations/539_a_closed_place_clos
 const SERVER = readFileSync(join(ROOT, 'lib/place-closures-server.ts'), 'utf8');
 const PURE = readFileSync(join(ROOT, 'lib/place-closures.ts'), 'utf8');
 
+const MIG_DIR = join(ROOT, 'supabase/migrations');
+const MIGS = readdirSync(MIG_DIR).filter(n => n.endsWith('.sql')).sort();
+const bodyIn = (sql: string, name: string) =>
+  new RegExp(`CREATE OR REPLACE FUNCTION public\\.${name}\\([\\s\\S]*?\\$\\$([\\s\\S]*?)\\$\\$;`).exec(sql)?.[1] ?? null;
+/** The function's NEWEST definition (mig 549 replaced the press; a later migration that replaces it again is read here). */
 const fnBody = (name: string) => {
-  const m = new RegExp(`CREATE OR REPLACE FUNCTION public\\.${name}\\([\\s\\S]*?\\$\\$([\\s\\S]*?)\\$\\$;`).exec(MIG);
-  assert.ok(m, `${name} is defined in mig 539`);
-  return m![1];
+  for (const n of [...MIGS].reverse()) {
+    const body = bodyIn(readFileSync(join(MIG_DIR, n), 'utf8'), name);
+    if (body) return body;
+  }
+  assert.fail(`${name} is defined in a migration`);
 };
+/** The migrations that define the press (539, then 549's replacement): the only ones that may turn the quiet link on. */
+const PRESS_MIGS = MIGS.filter(n => bodyIn(readFileSync(join(MIG_DIR, n), 'utf8'), 'org_place_closure_press'));
 
 function sources(dir: string, out: string[] = []): string[] {
   for (const name of readdirSync(dir)) {
@@ -69,6 +78,18 @@ describe('the press is one step, all or nothing', () => {
     assert.match(press, /ev\.source_tournament_game_id IS NOT NULL/);
   });
 
+  it('M8 · several diamonds of one place in one press: each (place, diamond) once, never a whole place beside its diamond', () => {
+    assert.match(press, /count\(DISTINCT \(pl->>'v'\) \|\| ':' \|\| coalesce\(pl->>'f', ''\)\) FROM jsonb_array_elements\(v_places\) pl\) <> v_np/);
+    assert.match(press, /WHERE wp->>'f' IS NULL AND dp->>'f' IS NOT NULL\) THEN\s+RETURN QUERY SELECT 'invalid'/);
+    assert.doesNotMatch(press, /count\(DISTINCT pl->>'v'\)/, "mig 539's one-entry-per-place rule is gone");
+  });
+
+  it('D1 · a rep game is marked by every closure of the press it is at; a house league game belongs to the first', () => {
+    assert.match(press, /JOIN org_place_closures c ON c\.press_key = p_press_key\s+AND place_closure_match\(/);
+    assert.match(press, /FROM jsonb_array_elements\(v_mark_pairs\) x JOIN rep_team_events ev/);
+    assert.match(press, /ORDER BY c\.press_seq LIMIT 1\) m\s+WHERE g\.id = ANY \(v_league\);/, 'the Rainout record is still the first closure');
+  });
+
   it('Reopen moves no game (K11 A): it only stamps the closure', () => {
     const reopen = fnBody('org_place_closure_reopen');
     assert.doesNotMatch(reopen, /league_games|rep_team_events|games\b/);
@@ -91,9 +112,10 @@ describe('"Link both" is not news (K7)', () => {
     const others = sources(join(ROOT, 'app')).concat(sources(join(ROOT, 'lib')), sources(join(ROOT, 'scripts')))
       .filter(p => readFileSync(p, 'utf8').includes('quiet_link') && !p.endsWith('league-game-changes.ts'));
     assert.deepEqual(others, []);
-    const migs = readdirSync(join(ROOT, 'supabase/migrations')).filter(n => n.endsWith('.sql') && !n.startsWith('539_'))
-      .filter(n => readFileSync(join(ROOT, 'supabase/migrations', n), 'utf8').includes("'league.quiet_link'"));
+    const migs = MIGS.filter(n => !PRESS_MIGS.includes(n))
+      .filter(n => readFileSync(join(MIG_DIR, n), 'utf8').includes("'league.quiet_link'"));
     assert.deepEqual(migs, []);
+    assert.ok(PRESS_MIGS.includes('539_a_closed_place_closes_for_every_program.sql'));
   });
 
   it('the send reads the quiet link from the held rows themselves (no second read that could fail or disagree)', () => {
@@ -114,7 +136,7 @@ describe('one matching rule in two languages', () => {
   });
 
   it('a rep game\'s typed text is read the same way by the press and the window', () => {
-    assert.equal((MIG.match(/concat_ws\(' · ', ev\.location, tp\.name\)/g) ?? []).length, 3, 'checked, linked, assigned: the same text');
+    assert.equal((fnBody('org_place_closure_press').match(/concat_ws\(' · ', ev\.location, tp\.name\)/g) ?? []).length, 3, 'checked, linked, marked: the same text');
     assert.match(PURE, /parts\.join\(' · '\)/);
   });
 });

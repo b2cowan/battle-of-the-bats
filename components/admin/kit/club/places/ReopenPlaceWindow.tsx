@@ -15,7 +15,7 @@ import { CLOSE_WORDS as W, type StaffClosure } from '@/lib/place-closure-window'
 import { closedPlaceName } from '@/lib/place-closures';
 import s from './ClosePlace.module.css';
 
-export type ReopenClosure = Pick<StaffClosure, 'id' | 'scope' | 'placeName' | 'facilityName' | 'firstDay' | 'leagueCalledOff' | 'seasonIds' | 'marks' | 'markTeams' | 'markTeamNames'>;
+export type ReopenClosure = Pick<StaffClosure, 'id' | 'scope' | 'placeName' | 'facilityName' | 'firstDay' | 'leagueCalledOff' | 'seasonIds' | 'marks' | 'markTeams' | 'markTeamNames' | 'marksKept' | 'keptWhile' | 'marksSeveral'>;
 
 export default function ReopenPlaceWindow({ orgSlug, closure, onReopened, onClose }: {
   orgSlug: string;
@@ -27,7 +27,9 @@ export default function ReopenPlaceWindow({ orgSlug, closure, onReopened, onClos
   const [error, setError] = useState<string | null>(null);
   const [done, setDone] = useState<{ coaches: number; stillWaiting: number; seasonIds: string[] } | null>(null);
   const place = closedPlaceName(closure) ?? W.everyPlace;
+  // The coaches Reopen will really email: the teams of the marks that come off (a kept one's coach isn't told yet, D1).
   const coaches = closure.markTeams.length;
+  const dropping = closure.marks - closure.marksKept;
 
   async function reopen() {
     setBusy(true); setError(null);
@@ -76,7 +78,11 @@ export default function ReopenPlaceWindow({ orgSlug, closure, onReopened, onClos
       )}>
       {error && <p className={repKit.formError} role="alert">{error}</p>}
       <p className={s.para}>{W.reopenSite}</p>
-      {closure.marks > 0 && <p className={s.para}>{W.reopenMarks(closure.marks, closure.markTeamNames.length === 1 ? closure.markTeamNames[0] : null, place)}</p>}
+      {/* D1: the last of a park's diamonds over a game quotes the coach's line as it will be sent (/legal). */}
+      {dropping > 0 && <p className={s.para}>{W.reopenMarks(dropping, closure.markTeamNames.length === 1 ? closure.markTeamNames[0] : null,
+        closure.marksSeveral && closure.placeName ? `the diamonds at ${closure.placeName}` : place)}</p>}
+      {/* D1: a game another closure still marks keeps its mark, and its coach is told when the last one reopens. */}
+      {closure.marksKept > 0 && <p className={s.para}>{W.reopenKept(closure.marksKept, closure.keptWhile)}</p>}
       {closure.leagueCalledOff > 0 && <p className={s.para}><b>{W.reopenStill(closure.leagueCalledOff)}</b>{W.reopenStillRest}</p>}
     </KitDialog>
   );

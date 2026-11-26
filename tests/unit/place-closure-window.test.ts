@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import {
-  CLOSE_WORDS as W, canClosePlace, closeSummary, defaultTicks, linkTargets, placeWord, placesWord, previewSentences, seesEveryProgram,
+  CLOSE_WORDS as W, canClosePlace, closeSummary, defaultTicks, linkTargets, placesWord, previewSentences, seesEveryProgram,
   type CloseLeagueGame, type CloseRepGame, type CloseSource,
 } from '../../lib/place-closure-window.ts';
 import { stripSentence, type ClosedPlace } from '../../lib/place-closures.ts';
@@ -20,11 +20,11 @@ const DAY = '2026-11-28';
 
 const lg = (id: string, o: Partial<CloseLeagueGame> = {}): CloseLeagueGame => ({
   id, seasonId: 's1', divisionId: 'u11', published: true, homeTeamId: `${id}h`, awayTeamId: `${id}a`, home: 'Foxes', away: 'Ospreys',
-  scheduledAt: '2026-11-28T14:00:00Z', field: 'Diamond 1', typed: null, linkedToPlace: true, place: 0, match: 'linked', started: false,
+  scheduledAt: '2026-11-28T14:00:00Z', field: 'Diamond 1', venueId: 'lions', typed: null, linkedToPlace: true, place: 0, match: 'linked', started: false,
   seen: '2026-11-20T00:00:00Z', ...o,
 });
 const rp = (id: string, o: Partial<CloseRepGame> = {}): CloseRepGame => ({
-  id, teamId: 'ospreys', teamName: 'U13 Ospreys', opponent: 'Marlow Heights', startsAt: '2026-11-28T17:30:00Z', field: 'Diamond 1',
+  id, teamId: 'ospreys', teamName: 'U13 Ospreys', opponent: 'Marlow Heights', startsAt: '2026-11-28T17:30:00Z', field: 'Diamond 1', venueId: 'lions',
   typed: null, linkedToPlace: true, place: 0, match: 'linked', started: false, seen: '2026-11-20T00:00:00Z', ...o,
 });
 const source = (o: Partial<CloseSource> = {}): CloseSource => ({
@@ -124,7 +124,7 @@ describe('the drawing\'s words (tab 2)', () => {
     assert.equal(W.noPlacesTitle, 'Your club has no places yet.');
     assert.equal(W.footPhone, 'Nothing changes until you press.');
     assert.equal(W.notNow, 'Not now');
-    assert.equal(W.seasonPlaces(2, true), 'This season’s places today (2)');
+    assert.equal(W.bandSeason(true), 'This season’s places today');
   });
   it('the site\'s preview carries the strip\'s fixed sentence (K16) and never the admin\'s line', () => {
     const w = W.site(previewSentences([lions], DAY, DAY, DAY), DAY);
@@ -168,8 +168,8 @@ describe('the result and Reopen (tab 3)', () => {
     assert.equal(W.rainDelayLine('Kestrel Bay', 'Lions Park', DAY, DAY), 'Kestrel Bay closed Lions Park today. Its diamonds are picked below.');
   });
   it('the place\'s words', () => {
-    assert.equal(placeWord(d2), 'Diamond 2 at Lions Park');
-    assert.equal(placeWord(every), 'all our fields');
+    assert.equal(placesWord([d2]), 'Diamond 2 at Lions Park');
+    assert.equal(placesWord([every]), 'all our fields');
     assert.equal(placesWord([lions, harbour]), 'Lions Park and Harbourview Park');
   });
 });

@@ -29002,3 +29002,16 @@ Committed 2026-11-26, ahead of the walk (owner: "simplify and commit"): `d3d1bcc
 
 **✅ PASSED 2026-11-26, 33 of 33** (owner paste-back; A 18/18, B 9/9, C 6/6; no notes came back). No owner calls in this walk.
 <!-- /§575 -->
+
+## §577 · Club website · Stage 2 · Session 2D · Several places in one press — **one press closes several parks, or any set of a park’s diamonds; a rep game with no diamond recorded stays marked until the last of them reopens, and its coach is told once**
+<!-- §577 -->
+**Walk published 2026-11-26.** [Interactive walk](https://claude.ai/artifact/NSxAyvXrBcjaDXcsNxNSXr) (walks A–E, 45 steps; one open call shown outside the count) · [repository HTML](CLUB_WEBSITE_STAGE2_PLACES_WALK.html). Migration 549 on dev (owner’s word, 2026-11-26). Plan: `CLUB_WEBSITE_ENHANCEMENTS_PLAN.md` §7 (M1–M8, D1, “Session 2D”). Before the walk: /simplify, /review and /design run, their fixes applied. It supersedes §573’s single “Place” control (walk A2–A3 and A6 there describe the window as it was).
+
+**Where:** `http://localhost:3000`, club **Kestrel Bay** (`/kestrel-bay`). **Sign in:** club president `president@kestrel-bay.example.test`, house league admin `league@kestrel-bay.example.test`, the U13 Ospreys’ head coach `rep.coach@kestrel-bay.example.test`, password `UATPassword2026!`; a private window for the public page.
+
+**Data:** `node --env-file=.env.local scripts/seed-on-sale-pictures-extras.mjs --places-walk` (between 6:00 a.m. and 5:30 p.m., walk within an hour; it clears any earlier closure). It is §573’s day plus Lions Park Diamond 3 with a house league game, and a later game on Harbourview Park Diamond 2.
+
+**Walks:** A choosing places on a computer, nothing pressed (9) · B the phone drawers, nothing pressed (8) · C two of three diamonds with a rep game that has no diamond (10) · D reopen one diamond, then the other (8) · E two of three parks from the house league schedule (10).
+
+**Left out (pinned by tests):** the coach emails’ words (made-up addresses), two Reopens at the same moment and Reopen pressed twice, the 10-place limit and the search box (they need more than eight parks), Cancel them, Link it, pressing All our fields.
+<!-- /§577 -->

@@ -971,7 +971,7 @@ const houseLeagueHelp: HelpPageContent = {
             <>
               <p><strong>Close a place</strong> sits at the top of the Schedule page, beside Changes to send, for owners, admins and league admins once a live season has a published division. It comes with League Plus and Club. It opens on this season&apos;s places on its next day with games: the club&apos;s site says the place is closed, and the day&apos;s games are postponed or cancelled with their families told, in one press. The registrar, the treasurer and coaches don&apos;t see it. The club&apos;s guide, <a href="../help/org#close-a-place">Close a place</a>, covers the whole window.</p>
               <ol>
-                <li>Press <strong>Close a place</strong>, and check the <strong>Place</strong> and the <strong>Day</strong>.</li>
+                <li>Press <strong>Close a place</strong>, and check the <strong>Day</strong> and the <strong>Places</strong>: the season&apos;s parks that day are already chosen. Take off any that are open with its <strong>&#x2715;</strong>, or tick only some of a park&apos;s diamonds on its row.</li>
                 <li>Choose <strong>Postpone them</strong> or <strong>Cancel them</strong>.</li>
                 <li>Untick any game that is still being played. A game in a draft division isn&apos;t listed.</li>
                 <li>Add a line for the families&apos; email if you want one (120 characters at most).</li>

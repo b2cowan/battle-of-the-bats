@@ -1,0 +1,529 @@
+<title>Several places walk</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: one reading column; a walk index of cards, one walk open at a time; steps as Do / You should see rows with a tick. */
+:root {
+  --bg: #f4f6f5; --surface: #ffffff; --ink: #18211d; --muted: #5b6862; --line: #d5ddd9;
+  --accent: #1f6b4f; --accent-soft: #e2efe9; --warn: #9a5b00; --warn-soft: #fbefd9; --bad: #a3322b; --bad-soft: #f8e3e1;
+  --font-body: "Instrument Sans", "Segoe UI", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, "Cascadia Mono", Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #121715; --surface: #1a211e; --ink: #e5ece8; --muted: #9aa8a1; --line: #2e3833;
+  --accent: #6fcca4; --accent-soft: #1f3a2f; --warn: #f0b75c; --warn-soft: #3a2c14; --bad: #f08a80; --bad-soft: #3d1f1c; color-scheme: dark; } }
+:root[data-theme="dark"] {
+  --bg: #121715; --surface: #1a211e; --ink: #e5ece8; --muted: #9aa8a1; --line: #2e3833;
+  --accent: #6fcca4; --accent-soft: #1f3a2f; --warn: #f0b75c; --warn-soft: #3a2c14; --bad: #f08a80; --bad-soft: #3d1f1c; color-scheme: dark; }
+body { background: var(--bg); color: var(--ink); font: 15px/1.55 var(--font-body); padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 24px 64px; }
+.wrap { max-width: 860px; margin: 0 auto; display: grid; gap: 20px; }
+h1 { font-size: 30px; line-height: 1.15; margin: 0; text-wrap: balance; letter-spacing: -0.01em; }
+h2 { font-size: 19px; margin: 0; text-wrap: balance; }
+h3 { font-size: 13px; margin: 0; text-transform: uppercase; letter-spacing: 0.07em; color: var(--muted); font-weight: 600; }
+p { margin: 0; max-width: 68ch; }
+.eyebrow { font: 600 12px/1 var(--font-mono); letter-spacing: 0.08em; text-transform: uppercase; color: var(--accent); }
+.lead { color: var(--muted); }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 18px; display: grid; gap: 12px; min-width: 0; }
+.signin { border-color: var(--accent); }
+.kv { display: grid; grid-template-columns: max-content 1fr; gap: 6px 16px; }
+.kv dt { color: var(--muted); }
+.kv dd { margin: 0; min-width: 0; overflow-wrap: anywhere; }
+code, .mono { font-family: var(--font-mono); font-size: 0.92em; }
+a { color: var(--accent); }
+pre { margin: 6px 0 0; padding: 10px 12px; background: var(--bg); border: 1px solid var(--line); border-radius: 8px; font: 12px/1.5 var(--font-mono); white-space: pre-wrap; overflow-wrap: anywhere; }
+.amt { font-family: var(--font-mono); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.note { background: var(--warn-soft); border-radius: 8px; padding: 10px 12px; }
+ul.plain { margin: 0; padding-left: 18px; display: grid; gap: 4px; }
+.index { display: grid; gap: 8px; }
+.wcard { display: grid; grid-template-columns: 1fr auto; gap: 4px 12px; align-items: center; text-align: left; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; font: inherit; color: inherit; cursor: pointer; }
+.wcard[aria-expanded="true"] { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent) inset; }
+.wcard:focus-visible, button:focus-visible, textarea:focus-visible, input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.wcard .t { font-weight: 600; }
+.wcard .j { grid-column: 1; color: var(--muted); font-size: 14px; }
+.chip { grid-row: 1 / span 2; grid-column: 2; font: 600 12px/1 var(--font-body); padding: 6px 9px; border-radius: 999px; background: var(--bg); color: var(--muted); border: 1px solid var(--line); white-space: nowrap; }
+.chip.prog { color: var(--accent); border-color: var(--accent); }
+.chip.pass { background: var(--accent-soft); color: var(--accent); border-color: transparent; }
+.chip.issue { background: var(--bad-soft); color: var(--bad); border-color: transparent; }
+.chip.call, .chip.thin { background: var(--warn-soft); color: var(--warn); border-color: transparent; }
+.walk { display: grid; gap: 14px; }
+.meta { display: grid; gap: 10px; }
+.meta div { display: grid; gap: 2px; }
+.steps { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+.step { display: grid; grid-template-columns: 28px 1fr; gap: 10px; padding: 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); }
+.step.done { border-color: var(--accent); background: var(--accent-soft); }
+.step.stop { border-style: dashed; border-color: var(--warn); }
+.step input[type="checkbox"] { width: 20px; height: 20px; margin: 2px 0 0; accent-color: var(--accent); }
+.step .body { display: grid; gap: 6px; min-width: 0; }
+.step .who { font: 600 11px/1 var(--font-mono); text-transform: uppercase; letter-spacing: 0.07em; color: var(--warn); }
+.step .lab { font-weight: 600; font-size: 12px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); }
+.opts { display: grid; gap: 6px; }
+.opts label { display: flex; gap: 8px; align-items: flex-start; }
+.verdict { display: flex; flex-wrap: wrap; gap: 8px; }
+.verdict button, .btn { font: 600 14px/1 var(--font-body); padding: 10px 14px; border-radius: 8px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); cursor: pointer; }
+.verdict button.on[data-v="pass"] { background: var(--accent); color: var(--surface); border-color: var(--accent); }
+.verdict button.on[data-v="issue"] { background: var(--bad); color: var(--surface); border-color: var(--bad); }
+.verdict button.on[data-v="call"] { background: var(--warn); color: var(--surface); border-color: var(--warn); }
+textarea { width: 100%; box-sizing: border-box; min-height: 80px; font: 14px/1.5 var(--font-body); padding: 10px; border-radius: 8px; border: 1px solid var(--line); background: var(--bg); color: var(--ink); }
+.out { font: 13px/1.5 var(--font-mono); white-space: pre-wrap; }
+.row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.progress { font-weight: 600; }
+@media (max-width: 520px) { .kv { grid-template-columns: 1fr; } .kv dt { margin-top: 6px; } h1 { font-size: 25px; } }
+@media (prefers-reduced-motion: no-preference) { .step { transition: background-color 0.15s, border-color 0.15s; } }
+</style>
+
+<div class="wrap">
+  <header class="card" style="gap:8px">
+    <span class="eyebrow">Club Website · Stage 2 · Session 2D</span>
+    <h1>Close several places in one press</h1>
+    <p class="lead">A club admin can now close several parks, or several diamonds of one park, in one press. This walk chooses places, tries the phone drawers, closes two of Lions Park’s three diamonds with a rep game that has no diamond recorded, reopens them one at a time, then closes two of three parks from the house league schedule.</p>
+    <p class="lead">Five walks, 45 steps, <b>in order</b>. Written Nov 26, 2026. Everything runs on Kestrel Bay on this computer. The emails go only to made-up addresses that can never receive mail.</p>
+    <p class="progress" id="progress">Checked 0 of 0</p>
+  </header>
+
+  <section class="card signin" aria-labelledby="signin-h">
+    <h2 id="signin-h">Sign in as</h2>
+    <dl class="kv">
+      <dt>Where</dt><dd><code>http://localhost:3000/auth/login</code> on this computer, with the dev server running. <b>Not the staging site.</b></dd>
+      <dt>Club president</dt><dd><code>president@kestrel-bay.example.test</code> · password <code>UATPassword2026!</code> (Morgan Ashby, the owner). Walks A, B, C and D.</dd>
+      <dt>House league admin</dt><dd><code>league@kestrel-bay.example.test</code> · password <code>UATPassword2026!</code> (Priya Raman). Walk E.</dd>
+      <dt>Rep coach</dt><dd><code>rep.coach@kestrel-bay.example.test</code> · password <code>UATPassword2026!</code> (Nadia Kowalczyk, head coach of the U13 Ospreys). Walks C and D.</dd>
+      <dt>A visitor</dt><dd>Nobody signs in. Use a <b>private window</b> for the public page in walk D.</dd>
+    </dl>
+    <p class="lead">Dev-only sign-ins. Keep this page private.</p>
+  </section>
+
+  <section class="card" aria-labelledby="before-h">
+    <h2 id="before-h">Before you start</h2>
+    <p class="note"><b>Make the day first, between 6:00 a.m. and 5:30 p.m.</b> Ask me, or run this yourself. It also clears any earlier closure, so it is how you start the walk again:<pre>node --env-file=.env.local scripts/seed-on-sale-pictures-extras.mjs --places-walk</pre></p>
+    <ul class="plain">
+      <li><b>Lions Park</b> now has three diamonds. Later today it has house league games on Diamond 1, 2 and 3, one whose place was typed by hand as “Lions Park — Diamond 2”, the <b>U13 Ospreys v Marlow Heights</b> rep game, and one Fall Classic game. Harbourview Park has later games too.</li>
+      <li><b>Walk within an hour of making the day.</b> One Harbourview game starts about 90 minutes after it; once a game has started it is listed unticked and the counts differ.</li>
+      <li>Two teams are called Ospreys. The <b>U13 Ospreys</b> are the rep team. The U11 Ospreys are a house league team.</li>
+      <li>If a page never loads, tell me.</li>
+    </ul>
+  </section>
+
+  <section aria-labelledby="index-h" style="display:grid;gap:10px">
+    <h2 id="index-h">The walks</h2>
+    <div class="index" id="index"></div>
+  </section>
+
+  <section id="walkHost"></section>
+
+  <section class="card" aria-labelledby="call-h">
+    <h2 id="call-h">One open call for you (not part of the walk)</h2>
+    <p>In <b>one press</b>, a game with no diamond recorded stays marked until the last diamond reopens. In <b>two separate presses</b> it differs: the second window lists the game again, unticked, and covers it only if you tick it (its coach then gets a second email). Left unticked, reopening the first diamond clears the mark and tells the coach, although the other diamond is still closed. Nothing was changed about this. It is on your board.</p>
+  </section>
+
+  <section class="card" aria-labelledby="sum-h">
+    <h2 id="sum-h">Paste-back (all walks)</h2>
+    <div class="row">
+      <button class="btn" type="button" id="copyAll">Copy the summary</button>
+      <button class="btn" type="button" id="reset">Clear my ticks</button>
+      <span class="lead" id="copied" aria-live="polite"></span>
+    </div>
+    <div class="card out" id="out" tabindex="0"></div>
+  </section>
+</div>
+
+
+<script>
+(function () {
+  "use strict";
+  var KEY = "club-website-stage2-places-walk-v1";
+  var PAGE = "Club Website Stage 2 · Several places in one press";
+  var WALKS = [
+ {
+  "id": "A",
+  "title": "Choosing places",
+  "job": "Kestrel Bay president · computer width · nothing is pressed",
+  "forText": "The admin chooses exactly the places to close. Nothing chosen means nothing is closed, never everything.",
+  "passes": "Every line below reads as written, the whole list is visible when it opens, and nothing is closed.",
+  "notIn": "The search box and the 10-place limit (they need more than eight parks; tests hold them).",
+  "who": "president@kestrel-bay.example.test, password UATPassword2026!.",
+  "where": "http://localhost:3000/kestrel-bay/admin/org/venues, a full-width window.",
+  "steps": [
+   {
+    "stop": true,
+    "d": "Sign in as <code>president@kestrel-bay.example.test</code>, open <b>Organization › Venue library</b> and press <b>Close a place</b>.",
+    "s": "<b>Day</b> and <b>Until</b> sit at the top, then <b>Places</b> reading <b>Choose places</b>, then <b>Choose a place to see what’s on it.</b> No games, and the <b>Close a place</b> button at the foot is greyed. <b>Stop if you see a single “Place” dropdown</b>: the old window is still loaded."
+   },
+   {
+    "d": "Press <b>Places</b>.",
+    "s": "The whole list under the field, none of it cut off: the five parks with tick boxes, a line, then <b>All our fields</b>."
+   },
+   {
+    "d": "Tick <b>Harbourview Park</b>.",
+    "s": "The field reads <b>1 place chosen</b>."
+   },
+   {
+    "d": "Tick <b>Lions Park</b>, then click the window’s title.",
+    "s": "The list closes. <b>2 places chosen</b>, with a row for each park: its name, <b>All diamonds</b> and a ✕. Below, <b>What’s at Harbourview Park and Lions Park that day</b>, each game naming its park, and the button reads <b>Close both and email …</b>."
+   },
+   {
+    "d": "Press <b>All diamonds</b> on the Lions Park row.",
+    "s": "<b>All diamonds</b> ticked, then <b>Diamond 1</b>, <b>Diamond 2</b> and <b>Diamond 3</b> unticked. Click the title to close it."
+   },
+   {
+    "d": "Press <b>Places</b> and tick <b>All our fields</b>, then click the title.",
+    "s": "The field reads <b>All our fields</b>, the two rows become one row reading <b>All our fields</b>, and the button reads <b>Close all our fields and email …</b>."
+   },
+   {
+    "d": "Press the ✕ on the <b>All our fields</b> row.",
+    "s": "Harbourview Park and Lions Park come back, <b>2 places chosen</b>."
+   },
+   {
+    "d": "Press the ✕ on the <b>Harbourview Park</b> row.",
+    "s": "<b>1 place chosen</b>. The heading reads <b>What’s at Lions Park that day</b>, and the games name their diamond without the park."
+   },
+   {
+    "d": "Press <b>Not now</b>.",
+    "s": "The window closes. No Closed row in the Venue library."
+   }
+  ]
+ },
+ {
+  "id": "B",
+  "title": "The phone drawers",
+  "job": "Kestrel Bay president · phone width · nothing is pressed",
+  "forText": "On a phone, places and diamonds are ticked in a drawer from the bottom with large rows and Done.",
+  "passes": "Both drawers open from the bottom, Done and a tap above them close them without closing the window, and nothing scrolls sideways.",
+  "notIn": "Closing from a phone (walk C does the press on a computer).",
+  "who": "The president, still signed in.",
+  "where": "The Venue library. Press F12, then Ctrl+Shift+M, pick a phone about 390 wide, and reload.",
+  "steps": [
+   {
+    "d": "Press <b>Close a place</b>.",
+    "s": "The window fills the screen, <b>Places</b> reads <b>Choose places</b> and the button is greyed."
+   },
+   {
+    "d": "Tap <b>Places</b>.",
+    "s": "A drawer from the bottom titled <b>Places</b> (once, not twice), large rows, <b>All our fields</b> under a line, and <b>Done</b>."
+   },
+   {
+    "d": "Tick <b>Harbourview Park</b> and <b>Lions Park</b>, then tap <b>Done</b>.",
+    "s": "The drawer closes. <b>2 places chosen</b> and a row for each park."
+   },
+   {
+    "d": "Tap <b>All diamonds</b> on the Lions Park row.",
+    "s": "A drawer titled <b>Lions Park</b> with <b>All diamonds</b> and <b>Diamond 1</b> to <b>3</b>, and <b>Done</b>."
+   },
+   {
+    "d": "Tick <b>Diamond 1</b> and <b>Diamond 2</b>, then tap <b>Done</b>.",
+    "s": "The row reads <b>2 of 3 diamonds</b>."
+   },
+   {
+    "d": "Scroll to the games.",
+    "s": "Under each game’s name, its time, <b>park</b>, diamond and division. Nothing scrolls sideways."
+   },
+   {
+    "d": "Tap <b>Places</b>, then tap the dimmed area above the drawer.",
+    "s": "Only the drawer closes. The window stays."
+   },
+   {
+    "d": "Tap the back arrow at the top of the window.",
+    "s": "The window closes and nothing is closed. Close the phone view (Ctrl+Shift+M, F12)."
+   }
+  ]
+ },
+ {
+  "id": "C",
+  "title": "Two of three diamonds, one game with no diamond",
+  "job": "Rep coach, then president · computer width",
+  "forText": "Two of Lions Park’s diamonds close in one press and the third diamond’s game stays on. A game at the park with no diamond recorded may be on either, so it is the admin’s tick.",
+  "passes": "One press, two diamonds, the Diamond 3 game untouched, and the words say “2 diamonds at Lions Park”.",
+  "notIn": "The emails’ wording (made-up addresses; reviewed and held by tests), Cancel them, and Link it.",
+  "who": "rep.coach@kestrel-bay.example.test, then president@kestrel-bay.example.test. Password UATPassword2026!.",
+  "where": "The Coaches Portal, then Organization › Venue library.",
+  "steps": [
+   {
+    "stop": true,
+    "who": "Rep coach",
+    "d": "Sign in as <code>rep.coach@kestrel-bay.example.test</code>, open <b>U13 Ospreys › Schedule</b> and press the <b>Marlow Heights</b> game at <b>Lions Park</b>, then <b>Edit</b>.",
+    "s": "The edit form with Lions Park and <b>Diamond 1</b>. <b>Stop if there is no such game</b>: the day wasn’t made."
+   },
+   {
+    "d": "Set <b>Diamond</b> to <b>Not set</b> and save the way you normally would.",
+    "s": "The game saves at Lions Park with no diamond."
+   },
+   {
+    "who": "Club president",
+    "d": "Sign out, sign in as <code>president@kestrel-bay.example.test</code>, open <b>Organization › Venue library</b>, press <b>Close a place</b> and tick <b>Lions Park</b>.",
+    "s": "<b>What’s at Lions Park that day</b>: the three house league games on its diamonds ticked, and the Ospreys game ticked under <b>Rep</b>."
+   },
+   {
+    "d": "On the Lions Park row, tick <b>Diamond 1</b> and <b>Diamond 2</b>, then click the title.",
+    "s": "<b>2 of 3 diamonds</b>. The heading reads <b>What’s at 2 diamonds at Lions Park that day</b> and the <b>Diamond 3</b> game (Ospreys vs Foxes) is gone from the list."
+   },
+   {
+    "d": "Look at the group under the ticked games.",
+    "s": "<b>Typed place or no diamond</b>, <b>may be 2 diamonds at Lions Park · 2 games</b>, both unticked. Mariners vs Ospreys shows <b>Typed: “Lions Park — Diamond 2”</b>; the U13 Ospreys game shows <b>no “Typed” line</b>."
+   },
+   {
+    "d": "Tick the <b>U13 Ospreys</b> game and read down to the button.",
+    "s": "The summary says the Ospreys’ head coach is emailed. Your site says <b>“Diamond 1 at Lions Park is closed today.”</b> and <b>“Diamond 2 at Lions Park is closed today.”</b> The button reads <b>Close 2 diamonds and email …</b>."
+   },
+   {
+    "stop": true,
+    "d": "Press that button.",
+    "s": "<b>2 diamonds at Lions Park closed</b>; <b>2 house league games postponed.</b>; <b>1 rep game marked.</b> with its head coach emailed; <b>1 game with a typed place wasn’t changed.</b>; the Fall Classic’s game at 2 diamonds at Lions Park isn’t moved yet; and <b>Reopen them from the Venue library.</b> <b>Stop if it shows a refusal.</b>"
+   },
+   {
+    "d": "Press <b>Open its Rain delay</b>.",
+    "s": "An amber line: <b>Kestrel Bay Softball Association closed 2 diamonds at Lions Park today. Its diamonds are picked below.</b> Press nothing in it."
+   },
+   {
+    "d": "Open <b>Organization › Venue library</b>.",
+    "s": "Two Closed rows, <b>Lions Park · Diamond 1</b> and <b>Lions Park · Diamond 2</b>, each ending <b>1 postponed, 1 rep game marked</b>, each with <b>Reopen</b>."
+   },
+   {
+    "d": "Open the <b>Overview</b>.",
+    "s": "<b>Places closed</b> shows <b>1</b>: <b>2 diamonds at Lions Park · reopen from the Venue library</b>."
+   }
+  ]
+ },
+ {
+  "id": "D",
+  "title": "Reopen one diamond, then the other",
+  "job": "A visitor, the rep coach and the president · computer width",
+  "forText": "The Ospreys game stays marked until the last of the two diamonds reopens, and its coach is told once.",
+  "passes": "Reopening Diamond 1 emails nobody and keeps the mark; reopening Diamond 2 clears it and emails the coach.",
+  "notIn": "Two admins reopening at the same moment and Reopen pressed twice (tests hold both: one email).",
+  "who": "president@kestrel-bay.example.test and rep.coach@kestrel-bay.example.test. Password UATPassword2026!.",
+  "where": "A private window for step 1; two browser profiles or sign out between the others.",
+  "steps": [
+   {
+    "who": "A visitor",
+    "d": "In a <b>private window</b>, open <a href=\"http://localhost:3000/kestrel-bay\" target=\"_blank\">the club home</a> and find the rep game under <b>Not being played today</b>.",
+    "s": "A strip with a line for <b>Diamond 1</b> and one for <b>Diamond 2</b>. The rep game has a <b>Place closed</b> pill and <b>2 diamonds at Lions Park closed · waits for a new date</b>."
+   },
+   {
+    "who": "Rep coach",
+    "d": "Sign in as the rep coach and press that game on <b>U13 Ospreys › Schedule</b>.",
+    "s": "The amber note: <b>2 diamonds at Lions Park closed on</b> today’s date. Don’t edit it."
+   },
+   {
+    "who": "Club president",
+    "d": "Sign in as the president, open the <b>Venue library</b> and press <b>Reopen</b> on <b>Lions Park · Diamond 1</b>.",
+    "s": "<b>Reopen Diamond 1 at Lions Park?</b> with <b>1 rep game stays marked while Diamond 2 at Lions Park is still closed. Its coach is told when that reopens.</b> The button reads <b>Reopen</b>, with no coach to email."
+   },
+   {
+    "d": "Press <b>Reopen</b>.",
+    "s": "<b>Diamond 1 at Lions Park reopened</b>, <b>1 game still needs a new date.</b> and nothing about a coach."
+   },
+   {
+    "who": "Rep coach",
+    "d": "Open the game again on the coach’s schedule.",
+    "s": "Still marked, and the note now names <b>Diamond 2 at Lions Park</b>."
+   },
+   {
+    "who": "Club president",
+    "d": "Press <b>Reopen</b> on <b>Lions Park · Diamond 2</b>.",
+    "s": "The question says the Ospreys’ game loses its mark and its coach gets one line: <b>the diamonds at Lions Park reopened</b>, the game wasn’t moved. The button reads <b>Reopen and email 1 coach</b>."
+   },
+   {
+    "d": "Press <b>Reopen and email 1 coach</b>.",
+    "s": "<b>Diamond 2 at Lions Park reopened</b> and the Ospreys’ coach was emailed."
+   },
+   {
+    "who": "Rep coach",
+    "d": "Reload the coach’s schedule.",
+    "s": "No <b>Needs a new date</b> chip on the game."
+   }
+  ]
+ },
+ {
+  "id": "E",
+  "title": "Two of three parks, from the house league schedule",
+  "job": "House league admin, then the president · computer width",
+  "forText": "The season’s parks that day arrive already chosen. The admin takes off the one that is open and closes the rest in one press.",
+  "passes": "The ticks you set survive a change of places, one press closes two parks, and families are emailed once per division, not once per park.",
+  "notIn": "The family inboxes themselves (made-up addresses).",
+  "who": "league@kestrel-bay.example.test, then president@kestrel-bay.example.test. Password UATPassword2026!.",
+  "where": "House league › 2026 House League › Schedule.",
+  "steps": [
+   {
+    "stop": true,
+    "who": "House league admin",
+    "d": "Sign in as <code>league@kestrel-bay.example.test</code>, open <b>House league › 2026 House League › Schedule</b> and press <b>Close a place</b>.",
+    "s": "<b>3 places chosen</b> with rows for <b>Alder Fields</b>, <b>Harbourview Park</b> and <b>Lions Park</b>, and each game naming its park. <b>Stop if the places are not already chosen.</b>"
+   },
+   {
+    "d": "Press <b>Places</b>.",
+    "s": "<b>This season’s places today</b> first, then <b>Other places</b>. No <b>All our fields</b>. Click the title to close it."
+   },
+   {
+    "d": "Untick the game <b>Ravens vs Tides</b> (Harbourview Park, Diamond 2).",
+    "s": "It is unticked, and the house league heading’s box shows some, not all."
+   },
+   {
+    "d": "Press the ✕ on <b>Alder Fields</b>.",
+    "s": "<b>2 places chosen</b>, Alder’s games gone, <b>Ravens vs Tides still unticked</b>, and the button reads <b>Close both and email …</b>."
+   },
+   {
+    "d": "Press <b>Places</b>, tick <b>Northshore Park</b>, then click the title.",
+    "s": "<b>3 places chosen</b>. <b>Ravens vs Tides</b> is still unticked."
+   },
+   {
+    "d": "Press the ✕ on <b>Northshore Park</b>.",
+    "s": "<b>2 places chosen</b>. <b>Ravens vs Tides</b> is still unticked."
+   },
+   {
+    "d": "Tick <b>Ravens vs Tides</b> again.",
+    "s": "It is ticked."
+   },
+   {
+    "stop": true,
+    "d": "Press <b>Close both and email …</b>.",
+    "s": "<b>Harbourview Park and Lions Park closed</b>. The house league line gives one send per <b>division</b> (U11, U15), not one per park. A rep game is marked, with no team name. <b>Stop if it shows a refusal.</b>"
+   },
+   {
+    "who": "Club president",
+    "d": "Sign in as the president and open the <b>Overview</b>.",
+    "s": "<b>Places closed</b> shows <b>2</b>: <b>Harbourview Park and Lions Park · reopen from the Venue library</b>."
+   },
+   {
+    "d": "On the <b>Venue library</b>, press <b>Reopen</b> on both Closed rows.",
+    "s": "Both rows go. The postponed games stay under “Needs a new date”."
+   }
+  ]
+ }
+];
+  var state = { ticks: {}, verdict: {}, notes: {}, choice: {}, open: "A" };
+  try { var raw = localStorage.getItem(KEY); if (raw) { var got = JSON.parse(raw); state.ticks = got.ticks || {}; state.verdict = got.verdict || {}; state.notes = got.notes || {}; state.choice = got.choice || {}; state.open = got.open || "A"; } } catch (e) {}
+  function save() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} }
+  function el(tag, cls, html) { var n = document.createElement(tag); if (cls) n.className = cls; if (html != null) n.innerHTML = html; return n; }
+  function plain(html) { var d = document.createElement("div"); d.innerHTML = html; return d.textContent.replace(/\s+/g, " ").trim(); }
+  // A step added after the walk was published carries its own label ("7a"), so every other step keeps its number, and a
+  // tick already saved against it stays on the right step.
+  function num(w, i) { if (w.steps[i].n) return w.steps[i].n; var k = 0; for (var j = 0; j <= i; j++) if (!w.steps[j].n) k++; return String(k); }
+  function sid(w, i) { return w.id + "." + num(w, i); }
+  function counts(w) { var n = 0; w.steps.forEach(function (s, i) { if (state.ticks[sid(w, i)]) n++; }); return { done: n, all: w.steps.length }; }
+  var VWORD = { pass: "Passed", issue: "Issue", call: "Needs a call" };
+  function chipOf(w) {
+    var c = counts(w), v = state.verdict[w.id];
+    if (v === "pass" && c.done < c.all) return ["thin", "Passed · only " + c.done + " of " + c.all + " ticked"];
+    if (v) return [v, VWORD[v] + " · " + c.done + " of " + c.all];
+    if (c.done) return ["prog", "In progress · " + c.done + " of " + c.all];
+    return ["", "Not started · " + c.all + " steps"];
+  }
+
+  var index = document.getElementById("index"), host = document.getElementById("walkHost");
+  var cards = {};
+  WALKS.forEach(function (w, wi) {
+    var b = el("button", "wcard");
+    b.type = "button"; b.id = "card-" + w.id; b.setAttribute("aria-controls", "walk-" + w.id);
+    b.appendChild(el("span", "t", "Walk " + w.id + " · " + w.title));
+    b.appendChild(el("span", "j", w.job));
+    var chip = el("span", "chip"); b.appendChild(chip);
+    b.addEventListener("click", function () { state.open = w.id; save(); render(); document.getElementById("walk-" + w.id).scrollIntoView({ block: "start" }); });
+    index.appendChild(b);
+    cards[w.id] = { b: b, chip: chip };
+  });
+
+  function render() {
+    host.innerHTML = "";
+    WALKS.forEach(function (w, wi) {
+      var open = state.open === w.id;
+      cards[w.id].b.setAttribute("aria-expanded", open ? "true" : "false");
+      var ch = chipOf(w); cards[w.id].chip.className = "chip " + ch[0]; cards[w.id].chip.textContent = ch[1];
+      if (!open) return;
+      var sec = el("section", "card walk"); sec.id = "walk-" + w.id;
+      sec.appendChild(el("span", "eyebrow", "Walk " + w.id + " of " + WALKS.length + " · " + w.job));
+      sec.appendChild(el("h2", null, w.title));
+      var meta = el("div", "meta");
+      [["What this walk is for", w.forText], ["It passes when", w.passes], ["Not in this walk", w.notIn], ["Sign in as", w.who], ["Where and on what", w.where]].forEach(function (m) {
+        var d = el("div"); d.appendChild(el("h3", null, m[0])); d.appendChild(el("p", null, m[1])); meta.appendChild(d);
+      });
+      sec.appendChild(meta);
+      var ol = el("ol", "steps");
+      w.steps.forEach(function (s, i) {
+        var id = sid(w, i);
+        var li = el("li", "step" + (s.stop ? " stop" : "") + (state.ticks[id] ? " done" : ""));
+        var cb = el("input"); cb.type = "checkbox"; cb.id = "cb-" + id; cb.checked = !!state.ticks[id];
+        cb.setAttribute("aria-label", "Step " + num(w, i) + " done");
+        cb.addEventListener("change", function () { state.ticks[id] = cb.checked; save(); li.className = "step" + (s.stop ? " stop" : "") + (cb.checked ? " done" : ""); refresh(); });
+        li.appendChild(cb);
+        var body = el("div", "body");
+        if (s.stop || s.who) body.appendChild(el("span", "who", (s.stop ? "Stop check" : "") + (s.stop && s.who ? " · " : "") + (s.who || "")));
+        body.appendChild(el("span", "lab", num(w, i) + " · Do"));
+        body.appendChild(el("p", null, s.d));
+        body.appendChild(el("span", "lab", "You should see"));
+        body.appendChild(el("p", null, s.s));
+        li.appendChild(body);
+        ol.appendChild(li);
+      });
+      sec.appendChild(ol);
+      sec.appendChild(el("h3", null, "Your verdict on this walk"));
+      var vs = el("div", "verdict");
+      [["pass", "Pass"], ["issue", "Issue"], ["call", "Needs a call"]].forEach(function (v) {
+        var btn = el("button", state.verdict[w.id] === v[0] ? "on" : "", v[1]); btn.type = "button"; btn.setAttribute("data-v", v[0]);
+        btn.setAttribute("aria-pressed", state.verdict[w.id] === v[0] ? "true" : "false");
+        btn.addEventListener("click", function () { state.verdict[w.id] = state.verdict[w.id] === v[0] ? "" : v[0]; save(); render(); });
+        vs.appendChild(btn);
+      });
+      sec.appendChild(vs);
+      var lab = el("label", null, "<h3>Notes</h3>"); lab.setAttribute("for", "notes-" + w.id);
+      sec.appendChild(lab);
+      var ta = el("textarea"); ta.id = "notes-" + w.id; ta.value = state.notes[w.id] || "";
+      ta.placeholder = "What you saw, a word you would change, a question for me";
+      ta.addEventListener("input", function () { state.notes[w.id] = ta.value; save(); refresh(); });
+      sec.appendChild(ta);
+      var row = el("div", "row");
+      var cp = el("button", "btn", "Copy this walk’s summary"); cp.type = "button";
+      var msg = el("span", "lead"); msg.setAttribute("aria-live", "polite");
+      var out = el("div", "card out"); out.tabIndex = 0; out.textContent = walkSummary(w);
+      cp.addEventListener("click", function () { copy(walkSummary(w), out, msg); });
+      row.appendChild(cp);
+      if (wi + 1 < WALKS.length) {
+        var nx = el("button", "btn", "Next: walk " + WALKS[wi + 1].id); nx.type = "button";
+        nx.addEventListener("click", function () { state.open = WALKS[wi + 1].id; save(); render(); document.getElementById("walk-" + WALKS[wi + 1].id).scrollIntoView({ block: "start" }); });
+        row.appendChild(nx);
+      }
+      row.appendChild(msg);
+      sec.appendChild(row);
+      sec.appendChild(out);
+      sec._out = out; sec._w = w;
+      host.appendChild(sec);
+    });
+    refresh();
+  }
+
+  function walkSummary(w) {
+    var c = counts(w), v = state.verdict[w.id];
+    var lines = [w.id + " " + w.title + " · " + (v ? VWORD[v].toUpperCase() : "NO VERDICT") + " · " + c.done + " of " + c.all + " ticked"];
+    w.steps.forEach(function (s, i) { lines.push("  " + (state.ticks[sid(w, i)] ? "[x] " : "[ ] ") + num(w, i) + ". " + plain(s.d)); });
+    var n = (state.notes[w.id] || "").trim();
+    if (n) lines.push("  Notes: " + n.replace(/\n+/g, " / "));
+    return lines.join("\n");
+  }
+  function allSummary() {
+    var total = 0, done = 0;
+    WALKS.forEach(function (w) { var c = counts(w); total += c.all; done += c.done; });
+    return [PAGE, "Checked " + done + " of " + total, ""].concat(WALKS.map(walkSummary)).join("\n");
+  }
+  function refresh() {
+    var total = 0, done = 0;
+    WALKS.forEach(function (w) { var c = counts(w); total += c.all; done += c.done; var ch = chipOf(w); cards[w.id].chip.className = "chip " + ch[0]; cards[w.id].chip.textContent = ch[1]; });
+    document.getElementById("progress").textContent = "Checked " + done + " of " + total;
+    document.getElementById("out").textContent = allSummary();
+    var sec = host.querySelector(".walk"); if (sec && sec._out) sec._out.textContent = walkSummary(sec._w);
+  }
+  function copy(text, node, msg) {
+    function pick() { try { var r = document.createRange(); r.selectNodeContents(node); var s = window.getSelection(); s.removeAllRanges(); s.addRange(r); msg.textContent = "Selected: press Ctrl+C to copy."; } catch (e) {} }
+    try { navigator.clipboard.writeText(text).then(function () { msg.textContent = "Copied."; }, pick); } catch (e) { pick(); }
+  }
+  document.getElementById("copyAll").addEventListener("click", function () { copy(allSummary(), document.getElementById("out"), document.getElementById("copied")); });
+  var armed = false;
+  document.getElementById("reset").addEventListener("click", function () {
+    var b = document.getElementById("reset");
+    if (!armed) { armed = true; b.textContent = "Press again to clear every tick and note"; return; }
+    armed = false; b.textContent = "Clear my ticks";
+    state = { ticks: {}, verdict: {}, notes: {}, choice: {}, open: "A" }; save();
+    render();
+  });
+  render();
+})();
+</script>

@@ -265,7 +265,7 @@ export default function AdminSchedulePage() {
     if (toolParam !== 'rain-delay' || !day || !/^\d{4}-\d{2}-\d{2}$/.test(day)) return null;
     const diamondIds = (searchParams.get('diamonds') ?? '').split(',').filter(Boolean);
     const closed = searchParams.get('closed');
-    return { day, diamondIds, line: diamondIds.length && closed && currentOrg ? CLOSE_WORDS.rainDelayLine(currentOrg.name, closed, day, tournamentToday()) : null };
+    return { day, diamondIds, line: diamondIds.length && closed && currentOrg ? CLOSE_WORDS.rainDelayLine(currentOrg.name, closed, day, tournamentToday(), searchParams.get('several') === '1') : null };
   }, [toolParam, searchParams, currentOrg]);
   // The closure's opening is the FIRST Rain delay of the visit only; opened again from the toolbar it opens as today.
   const [rainOpeningSpent, setRainOpeningSpent] = useState(false);

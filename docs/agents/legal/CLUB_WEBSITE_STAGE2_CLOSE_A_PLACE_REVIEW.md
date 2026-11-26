@@ -51,3 +51,10 @@ Read: `lib/place-closure-mail-words.ts`, `lib/place-closure-mail.ts`, `lib/email
 Minor: `CLOSE_WORDS.repNote` and `repCountPhone` (`place-closure-window.ts:242-243`) say "Its head coach is emailed"; with no head coach the assistants are. Suggest "Its head coach, or its other coaches when it has none, is emailed."
 
 Lawyer's eye: no, beyond the two narrow points already listed above.
+
+## Session 2D, D1 (several diamonds of one park) — 2026-11-26 (read from `git diff HEAD` of `lib/place-closure-mail-words.ts` and `place-closure-window.ts`; statute not re-fetched)
+- **K10 skeleton and CASL: pass.** The diff touches only the place words and "is/are". Sender line, reason line, reply and removal lines, foot, no link, no free text, From "{Club} via FieldLogicHQ" and the admin Reply-To are unchanged. No new commercial content. Position unchanged: not a CEM (s.1(2)); the earlier nameless-sender defect is not touched by this change.
+- **Reopen wording: pass with change.** "{Club} reopened Lions Park" says the park was closed, but the club closed only some diamonds (and another press may still hold a diamond closed, or a third diamond may never have closed). It is a small accuracy overstatement, not a CASL issue. Replace with count-free words: subject "Diamonds at Lions Park reopened: {Team} game wasn’t moved"; body "{Club} reopened the diamonds at Lions Park that were closed. Your game on {day} at {time} wasn’t moved. Keep it or move it." (plural games: "Your games on … weren’t moved. Keep them or move them."). A count ("2 diamonds") is avoided because later presses can change it.
+- **K16: pass.** The public/family mark "2 diamonds at Lions Park closed · waits for a new date" carries place words and a day only: no reason, person, team or child.
+- **Accuracy note, not law:** a game with no diamond recorded may be on the diamond that stayed open; "needs a new date" is stated as fact. Acceptable because the email says it is only marked and nothing was moved (owner ruling D1).
+- Lawyer's eye: no new points.

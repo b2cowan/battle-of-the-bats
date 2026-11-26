@@ -11152,3 +11152,11 @@ Newest entries first. All decisions here are binding in future sessions unless e
 ### 2026-11-25 — Coaches portal dialog-footer buttons are 44px on a phone and a tablet
 **Decision (owner):** Dialog-footer buttons in the coaches portal are 44px at 768px and below. The shared window already gives this; the older sheets that draw their own footer are brought to it as their own small fix, after the coming release, measured first.
 **Applies to:** coaches portal dialog and sheet footers.
+
+---
+
+### 2026-11-26 — A FORM FIELD THAT TAKES SEVERAL TICKS: A PANEL AT A DESK, A DRAWER ON A PHONE; EMPTY MEANS NONE (owner, Close a place asks M1 and M7, ruled A — the drawing CLUB_WEBSITE_STAGE2_PLACES_DRAWINGS.html, https://claude.ai/artifact/6DBZd4dZaLwLMBnJA4TYps)
+**Decision (owner):** A form field that takes several choices (Close a place's Places, and a chosen park's diamonds) is a field face with a tick list under it at a desk, and on a phone a drawer from the bottom with 48px rows and **Done**. Ticks apply as they are made; Done, a tap outside or Escape closes it. Each chosen item gets a row under the field with its ✕. **Nothing ticked means nothing chosen** — the opposite of the report filter's `MultiSelectDropdown`, where empty means All, which is why it is its own component (`components/admin/kit/club/places/TickPicker.tsx`), wearing the filter family's panel and rows and the portal's `SheetFrame overWindow` on a phone.
+**Answers:** the 2026-10-18 entry's open question for a multi-pick field on a phone, for this window. A later multi-pick FORM field reuses `TickPicker`, not the filter.
+**In a short window (design pass, 2026-11-26):** a floating list is cut off at the window's foot, so while the window has nothing listed under the field, the open list takes its own room and the window grows to it.
+**Applies to:** admin form fields that pick several things; not toolbar filters.

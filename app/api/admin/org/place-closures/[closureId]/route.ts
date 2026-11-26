@@ -6,7 +6,7 @@ import { resolveCoachUserIdentities } from '@/lib/db';
 import { isUuid } from '@/lib/utils';
 import { reopenPlaceClosure } from '@/lib/place-closures-server';
 import { canClosePlace } from '@/lib/place-closure-window';
-import { reopenCoachEmails, showingClosures, standingMarksOf } from '@/lib/place-closure-window-server';
+import { reopenCoachEmails, reopenTold, showingClosures } from '@/lib/place-closure-window-server';
 
 /**
  * REOPEN A PLACE (Club Website Stage 2, K11 A; mig 539's `org_place_closure_reopen`).
@@ -25,19 +25,21 @@ export const POST = withObservability(async (req: Request, { params }: { params:
   const body = await req.json().catch(() => null) as { action?: unknown } | null;
   if (body?.action !== 'reopen') return NextResponse.json({ error: 'The request was not understood' }, { status: 400 });
 
-  // What Reopen will say, read BEFORE it stamps: the games still waiting (only postponed ones wait for a date), and the
-  // marks the coach hasn't moved or cancelled (by the game, so a retried Reopen still finds the ones not yet told).
+  // The games still waiting, read BEFORE the stamp (a reopened closure no longer shows): only postponed ones wait for a date.
   const showing = (await showingClosures(ctx.org.id)).find(c => c.id === closureId) ?? null;
-  const standing = await standingMarksOf(ctx.org.id, [closureId]);
   const stillWaiting = showing?.verb === 'postponed' ? showing.leagueCalledOff : 0;
 
   const r = await reopenPlaceClosure(ctx.org.id, closureId, ctx.user.id);
   if (r.refusal === 'not_found') return NextResponse.json({ error: 'Closure not found' }, { status: 404 });
 
+  // Whom to tell, read AFTER the stamp (`reopenTold` says why): the marks the coach hasn't moved or cancelled and hasn't
+  // been told about (by the game, so a retried Reopen still finds them) — less any game another closure still closes (D1:
+  // it stays marked, and its coach is told when the last one reopens).
+  const told = await reopenTold(ctx.org.id, closureId);
   const me = (await resolveCoachUserIdentities(ctx.org.id, [ctx.user.id])).get(ctx.user.id);
   const mail = await reopenCoachEmails({
-    org: ctx.org, actor: { id: ctx.user.id, email: ctx.user.email ?? null, role: ctx.role, name: me?.displayName ?? null },
-    closureId, standing,
+    ...told, org: ctx.org, actor: { id: ctx.user.id, email: ctx.user.email ?? null, role: ctx.role, name: me?.displayName ?? null },
+    closureId,
   });
   return NextResponse.json({
     reopenedAt: r.reopenedAt, already: r.already, coaches: mail.teams, stillWaiting, seasonIds: showing?.seasonIds ?? [],

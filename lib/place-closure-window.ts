@@ -4,7 +4,8 @@ import { CLUB_EMAIL_CAP } from './families-words';
 import { teamsHearing } from './league-game-changes';
 import { LEAGUE_RUNNER_ROLES } from './house-league-access';
 import { RAIN_LINE_MAX, shortDivision } from './league-rainout';
-import { CLOSURE_MAX_EXTRA_DAYS, closedPlaceName, stripSentence, type ClosedPlace, type ClosureVerb, type PlaceMatch } from './place-closures';
+import { CLOSURE_MAX_EXTRA_DAYS, closedPlaceName, diamondsAt, isAre, stripSentence, type ClosedPlace, type ClosureVerb, type PlaceMatch } from './place-closures';
+import { closureMoreSentence, stripLinesShown } from './club-notice';
 import type { OrgRole } from './types';
 
 /**
@@ -54,6 +55,8 @@ export interface CloseLeagueGame {
   homeTeamId: string; awayTeamId: string; home: string; away: string; scheduledAt: string;
   /** Its diamond's name (a game on the place), or null. */
   field: string | null;
+  /** The club place it is on (by id), or null — a row names it when two or more parks are chosen (note 6). */
+  venueId: string | null;
   typed: string | null; linkedToPlace: boolean;
   place: number; match: PlaceMatch; started: boolean; seen: string;
 }
@@ -61,7 +64,7 @@ export interface CloseRepGame {
   id: string; teamId: string;
   /** Empty when the person can't see rep (K1: a count, no names). */
   teamName: string; opponent: string | null; startsAt: string;
-  field: string | null; typed: string | null; linkedToPlace: boolean;
+  field: string | null; venueId: string | null; typed: string | null; linkedToPlace: boolean;
   place: number; match: PlaceMatch; started: boolean; seen: string;
 }
 export interface CloseTournament {
@@ -101,6 +104,13 @@ export interface StaffClosure {
   marks: number;
   markTeams: string[];
   markTeamNames: string[];
+  /** D1: of `marks`, the games another closure still marks (they keep the mark at Reopen; no coach is told yet), and the
+   *  places still holding them, said by park ("Diamond 1 at Lions Park"). */
+  marksKept: number;
+  keptWhile: string[];
+  /** D1: every mark that comes off is the last of two or more diamonds of this park over its game, so the coach's line
+   *  says "the diamonds at Lions Park" (/legal), as the window's question does. */
+  marksSeveral: boolean;
 }
 
 // ── The plan ───────────────────────────────────────────────────────────────────────────────────────────────────────
@@ -110,6 +120,24 @@ export function defaultTicks(src: CloseSource): Set<string> {
   const out = new Set<string>();
   for (const g of src.league) if (g.match === 'linked' && !g.started && g.published) out.add(g.id);
   for (const g of src.rep) if (g.match === 'linked' && !g.started) out.add(g.id);
+  return out;
+}
+
+/**
+ * The ticks after a new read (Session 2D: the admin's ticks survive a change of places, diamonds or days). `chosen` holds
+ * ONLY what the admin ticked or unticked themselves, with whether the game had started when they did. Every other game
+ * gets the opening tick for how it stands NOW (`defaultTicks`): the window's own tick is never carried, so a game that
+ * becomes a "maybe" (a whole park narrowed to one diamond) is unticked again (K7), and one that becomes definitely at the
+ * place is ticked. A tick set before the game STARTED is dropped once it has (K6: never called off mid-game unless ticked
+ * as started).
+ */
+export function carryTicks(src: CloseSource, chosen: ReadonlyMap<string, { ticked: boolean; started: boolean }>): Set<string> {
+  const fresh = defaultTicks(src);
+  const out = new Set<string>();
+  for (const g of [...src.league, ...src.rep]) {
+    const was = chosen.get(g.id);
+    if (was ? was.ticked && !(g.started && !was.started) : fresh.has(g.id)) out.add(g.id);
+  }
   return out;
 }
 
@@ -175,14 +203,104 @@ export function untilDays(first: string, addDays: (d: string, n: number) => stri
   return Array.from({ length: CLOSURE_MAX_EXTRA_DAYS + 1 }, (_, i) => addDays(first, i));
 }
 
-/** The strip each closed place will put up (the window's preview), in the club's day. */
+/** The strip each closed place will put up (the window's preview), in the club's day — a line per closure, shortened past
+ *  four lines exactly as the public strip is (`stripLinesShown`: three, then "And N more places are closed."). */
 export function previewSentences(places: readonly ClosedPlace[], firstDay: string, lastDay: string, today: string): string[] {
-  return places.map(p => stripSentence({
+  return stripLinesShown(places.map(p => stripSentence({
     scope: p.scope, placeName: p.name, facilityName: p.scope === 'diamond' ? p.facilityName ?? null : null, firstDay, lastDay,
-  }, today, formatShortWeekdayDate));
+  }, today, formatShortWeekdayDate)), rest => closureMoreSentence(rest.length));
+}
+
+// ── The Places field's rules (Session 2D, M1–M8; the drawing's notes 2, 5, 10, 11) ─────────────────────────────────
+
+/** A chosen park: the whole park (`diamonds` empty, "All diamonds"), or these of its diamonds, in the park's order. */
+export interface PlacePick { venueId: string; diamonds: string[] }
+
+/** The press's limit (mig 539): 10 entries, a whole park one, each chosen diamond one (M6, note 10). */
+export const CLOSE_MAX_ENTRIES = 10;
+
+/** How many closure entries the picks make. */
+export const pickCount = (picks: readonly PlacePick[]) => picks.reduce((n, p) => n + Math.max(1, p.diamonds.length), 0);
+
+/** The press's entries, in the window's order (that order decides which closure claims a game). Every place = one
+ *  entry with no place; nothing chosen = none. */
+export function pickEntries(picks: readonly PlacePick[], all: boolean): { venueId: string | null; facilityId: string | null }[] {
+  if (all) return [{ venueId: null, facilityId: null }];
+  return picks.flatMap((p): { venueId: string; facilityId: string | null }[] =>
+    (p.diamonds.length ? p.diamonds.map(f => ({ venueId: p.venueId, facilityId: f })) : [{ venueId: p.venueId, facilityId: null }]));
+}
+/** The window's read parameter: `all`, or `venueId[:facilityId]` comma separated; null when nothing is chosen. */
+export function pickParam(picks: readonly PlacePick[], all: boolean): string | null {
+  const entries = pickEntries(picks, all);
+  if (!entries.length) return null;
+  return entries.map(e => (e.venueId ? (e.facilityId ? `${e.venueId}:${e.facilityId}` : e.venueId) : 'all')).join(',');
+}
+
+/**
+ * A tick in a park's diamond field (note 11). `''` is "All diamonds": ticking it clears the picks; unticking it does
+ * nothing (one tick always stays). A diamond ticked from "All diamonds" is that diamond alone; ticking every diamond
+ * collapses to "All diamonds" (sent as one whole-park entry, so a game with no diamond reads as at the park); the last
+ * ticked diamond can't be unticked (the park's ✕ removes it).
+ */
+export function toggleDiamond(pick: PlacePick, id: string, on: boolean, order: readonly string[]): PlacePick {
+  if (id === '') return on ? { ...pick, diamonds: [] } : pick;
+  if (on) {
+    if (pick.diamonds.includes(id)) return pick;
+    const next = order.filter(f => f === id || pick.diamonds.includes(f));
+    return { ...pick, diamonds: next.length >= order.length ? [] : next };
+  }
+  if (!pick.diamonds.includes(id) || pick.diamonds.length === 1) return pick;
+  return { ...pick, diamonds: pick.diamonds.filter(f => f !== id) };
+}
+
+/** At the limit, a tick that would ADD an entry is off: an unticked park, or a diamond beyond the first of a park whose
+ *  diamonds are picked (ticking the last one, which collapses to the whole park, stays on). */
+export function diamondTickOff(pick: PlacePick, id: string, order: readonly string[], count: number): boolean {
+  if (count < CLOSE_MAX_ENTRIES || id === '' || !pick.diamonds.length || pick.diamonds.includes(id)) return false;
+  return pick.diamonds.length + 1 < order.length;
+}
+
+// ── The chosen places, said by park (Session 2D, M8) ───────────────────────────────────────────────────────────────
+
+/** One park as chosen: the whole park, or some of its diamonds (in the window's order); or every place. */
+export interface PlaceGroup { scope: 'all' | 'place' | 'diamonds'; venueId: string | null; name: string | null; diamonds: string[] }
+
+/** The closures grouped by their park, in the order first named (the press's entries per diamond say one park). */
+export function placeGroups(places: readonly ClosedPlace[]): PlaceGroup[] {
+  const out: PlaceGroup[] = [];
+  for (const p of places) {
+    if (p.scope === 'all') { out.push({ scope: 'all', venueId: null, name: null, diamonds: [] }); continue; }
+    // A park met again (several diamonds of it; or, on the Overview, closures from separate presses): a whole park wins,
+    // and a diamond is named once.
+    const g = p.venueId ? out.find(x => x.scope !== 'all' && x.venueId === p.venueId) : undefined;
+    if (g) {
+      if (p.scope === 'place') { g.scope = 'place'; g.diamonds = []; }
+      else if (g.scope === 'diamonds' && !g.diamonds.includes(p.facilityName ?? '')) g.diamonds.push(p.facilityName ?? '');
+      continue;
+    }
+    out.push({ scope: p.scope === 'diamond' ? 'diamonds' : 'place', venueId: p.venueId, name: p.name, diamonds: p.scope === 'diamond' ? [p.facilityName ?? ''] : [] });
+  }
+  return out;
+}
+
+/** "Lions Park" · "Diamond 2 at Lions Park" · "2 diamonds at Lions Park" · "all our fields". */
+export function groupWord(g: PlaceGroup): string {
+  if (g.scope === 'all') return 'all our fields';
+  if (g.scope === 'place') return g.name ?? '';
+  return g.diamonds.length === 1
+    ? closedPlaceName({ scope: 'diamond', placeName: g.name, facilityName: g.diamonds[0] }) ?? ''
+    : diamondsAt(g.diamonds.length, g.name);
+}
+
+/** The park's name when the choice is exactly one park (whole or some of its diamonds), else null. */
+function onePark(places: readonly ClosedPlace[]): string | null {
+  const groups = placeGroups(places);
+  return groups.length === 1 && groups[0].scope !== 'all' ? groups[0].name ?? '' : null;
 }
 
 // ── The words ──────────────────────────────────────────────────────────────────────────────────────────────────────
+
+const EVERY_PLACE = 'All our fields';
 
 const gamesWord = (n: number) => pluralize(n, 'game');
 const families = (n: number) => pluralize(n, 'family', 'families');
@@ -192,27 +310,40 @@ const teamsCoaches = (teams: number) => `The ${possessive(pluralize(teams, 'team
 export const closeClock = (iso: string) => formatTime(utcToZonedInputs(iso).time);
 const q = (s: string) => `“${s}”`;
 
-/** The place's name in a sentence: "Lions Park", "Diamond 2 at Lions Park", "all our fields". */
-export function placeWord(p: ClosedPlace): string {
-  return closedPlaceName({ scope: p.scope, placeName: p.name, facilityName: p.facilityName ?? null }) ?? 'all our fields';
-}
-/** "Lions Park" · "Lions Park and Harbourview Park" · "those places" (three or more). */
+/** By park: "Lions Park" · "2 diamonds at Lions Park" · "Harbourview Park and 2 diamonds at Lions Park" · "those places"
+ *  (three parks or more). */
 export function placesWord(places: readonly ClosedPlace[]): string {
-  if (places.length === 1) return placeWord(places[0]);
-  return places.length === 2 ? joinWithAnd(places.map(placeWord)) : 'those places';
+  const groups = placeGroups(places);
+  if (groups.length === 1) return groupWord(groups[0]);
+  return groups.length === 2 ? joinWithAnd(groups.map(groupWord)) : 'those places';
 }
+/** "Link both" sets a park, never a diamond: its words say the park (one park), else "their places". */
+const linkTo = (places: readonly ClosedPlace[]) => onePark(places) ?? 'their places';
 const cap = (s: string) => (s ? s[0].toUpperCase() + s.slice(1) : s);
 
 export const CLOSE_WORDS = {
   title: 'Close a place',
   door: 'Close a place',
   eyebrow: 'Venue library',
-  place: 'Place',
-  everyPlace: 'All our fields',
-  /** K15: the house league schedule button's pick. "This season’s places today (2)". */
-  seasonPlaces: (n: number, isToday: boolean) => `This season’s places ${isToday ? 'today' : 'that day'} (${n})`,
+  everyPlace: EVERY_PLACE,
+  // The Places field (Session 2D, M1–M7; the drawing CLUB_WEBSITE_STAGE2_PLACES_DRAWINGS.html).
+  places: 'Places',
+  /** The collapsed field: it counts parks. */
+  chosen: (parks: number, all: boolean) => (all ? EVERY_PLACE : parks === 0 ? 'Choose places' : parks === 1 ? '1 place chosen' : `${parks} places chosen`),
+  /** K15 / M2: the season's parks on the window's day, listed first and chosen. */
+  bandSeason: (isToday: boolean) => `This season’s places ${isToday ? 'today' : 'that day'}`,
+  bandOther: 'Other places',
+  find: 'Find a place',
+  /** M6: the press's limit of 10 entries (a whole park is one, each chosen diamond is one). */
+  limit: (canAll: boolean) => `Up to ${CLOSE_MAX_ENTRIES} parks or diamonds in one press.${canAll ? ` To close every one, tick ${q(EVERY_PLACE)}.` : ''}`,
+  remove: (name: string) => `Remove ${name}`,
+  chooseFirst: 'Choose a place to see what’s on it.',
   allDiamonds: 'All diamonds',
   diamonds: 'Diamonds',
+  /** The row's diamond field: "All diamonds" · "Diamond 2" · "2 of 3 diamonds". */
+  diamondsValue: (chosen: readonly string[], of: number) => (chosen.length === 0 || chosen.length === of ? 'All diamonds'
+    : chosen.length === 1 ? chosen[0] : `${chosen.length} of ${of} diamonds`),
+  diamondsLabel: (park: string, value: string) => `Diamonds at ${park}: ${value}`,
   day: 'Day',
   /** "Today · Sat, Nov 28" · "Sun, Nov 29". */
   dayValue: (day: string, today: string) => `${day === today ? 'Today · ' : ''}${formatShortWeekdayDate(day)}`,
@@ -254,19 +385,21 @@ export const CLOSE_WORDS = {
     `${games === 1 ? '1 rep game' : `${games} rep games`} at ${placesWord(places)} that day`,
   repHiddenSub: 'It is marked for its coach when you close.',
   repHiddenSubMany: 'They are marked for their coaches when you close.',
-  typed: 'Place typed by hand',
+  /** The unticked "maybe" group: a place typed by hand, a game at the park with no diamond recorded, or both. */
+  typed: (kind: TypedKind) => (kind === 'noDiamond' ? 'No diamond recorded' : kind === 'mixed' ? 'Typed place or no diamond' : 'Place typed by hand'),
   /** "may be Lions Park · 2 games". */
   typedCount: (places: readonly ClosedPlace[], games: number) => `may be ${placesWord(places)} · ${gamesWord(games)}`,
   typedLine: (text: string) => `Typed: ${q(text)}`,
-  /** K7: "Link both to Lions Park" · "Link all 5 ticked to Lions Park" · "Link all 3 to Lions Park". */
+  /** K7: "Link both to Lions Park" · "Link all 5 ticked to Lions Park" · "Link all 3 to Lions Park" — always the park (a
+   *  link sets the park, never a diamond). */
   linkLabel: (n: number, anyTicked: boolean, places: readonly ClosedPlace[]) => {
-    const to = places.length === 1 ? placeWord(places[0]) : 'their places';
+    const to = linkTo(places);
     return anyTicked ? `Link all ${n} ticked to ${to}` : n === 2 ? `Link both to ${to}` : n === 1 ? `Link it to ${to}` : `Link all ${n} to ${to}`;
   },
   linkHelp: 'So they match next time. Families aren’t told: the game is where it was.',
   /** Build words: the link is chosen and happens at the press. */
   linkOn: (n: number, places: readonly ClosedPlace[]) =>
-    `${n === 1 ? 'It is' : `${n} are`} linked to ${places.length === 1 ? placeWord(places[0]) : 'their places'} when you close. Families aren’t told.`,
+    `${n === 1 ? 'It is' : `${n} are`} linked to ${linkTo(places)} when you close. Families aren’t told.`,
   linkUndo: 'Don’t link',
   started: (iso: string) => `Started at ${closeClock(iso)}`,
   startedTick: 'Tick it to call it off mid-game.',
@@ -276,8 +409,10 @@ export const CLOSE_WORDS = {
   tournamentSub: 'moved in its own Rain delay',
   tournamentSubNoDoor: 'its director moves them',
   /** "4 games on Lions Park’s diamonds today". */
-  tournamentAt: (n: number, places: readonly ClosedPlace[], isToday: boolean) =>
-    `${gamesWord(n)} on ${places.length === 1 && places[0].scope !== 'all' ? possessive(places[0].name ?? '') : 'those places’'} diamonds ${isToday ? 'today' : 'that day'}`,
+  tournamentAt: (n: number, places: readonly ClosedPlace[], isToday: boolean) => {
+    const park = onePark(places);
+    return `${gamesWord(n)} on ${park != null ? possessive(park) : 'those places’'} diamonds ${isToday ? 'today' : 'that day'}`;
+  },
   tournamentAtAll: (n: number, isToday: boolean) => `${gamesWord(n)} ${isToday ? 'today' : 'that day'}`,
   tournamentUnlinked: (isToday: boolean) =>
     `Plays ${isToday ? 'today' : 'that day'}. Its diamonds aren’t linked to your places, so its games aren’t counted here.`,
@@ -329,10 +464,14 @@ export const CLOSE_WORDS = {
   foot: 'Nothing changes until you press the button.',
   footPhone: 'Nothing changes until you press.',
   notNow: 'Not now',
-  /** "Close Lions Park, email 58" · "Close Lions Park and email 58 families" · "Close Pinecrest Park". */
+  /** "Close Lions Park, email 58" · "Close Lions Park and email 58 families" · "Close Pinecrest Park" · "Close 2 diamonds"
+   *  (one park, several diamonds) · "Close both" · "Close 3 places" — it counts parks (note 14). */
   go: (places: readonly ClosedPlace[], emails: number, phone: boolean) => {
-    const what = places.length === 1 ? (places[0].scope === 'all' ? 'all our fields' : (places[0].scope === 'diamond' ? places[0].facilityName ?? placeWord(places[0]) : places[0].name ?? ''))
-      : places.length === 2 ? 'both' : `${places.length} places`;
+    const groups = placeGroups(places);
+    const one = groups[0];
+    const what = groups.length !== 1 ? (groups.length === 2 ? 'both' : `${groups.length} places`)
+      : one.scope === 'all' ? 'all our fields' : one.scope === 'place' ? one.name ?? ''
+      : one.diamonds.length === 1 ? one.diamonds[0] : `${one.diamonds.length} diamonds`;
     const verb = `Close ${what}`;
     if (emails <= 0) return verb;
     return phone ? `${verb}, email ${emails}` : `${verb} and email ${families(emails)}`;
@@ -374,7 +513,10 @@ export const CLOSE_WORDS = {
   /** "1 rep game marked. The U13 Ospreys’ head coach was emailed." */
   doneRep: (games: number, teams: readonly { name: string; reach: RepReach; sent: boolean }[]) =>
     [`${games === 1 ? '1 rep game' : `${games} rep games`} marked.`, ...teams.map(repDoneLine)].join(' '),
-  doneTyped: (n: number) => `${n === 1 ? '1 game with a typed place wasn’t changed.' : `${n} games with a typed place weren’t changed.`}`,
+  doneTyped: (n: number, kind: TypedKind = 'typed') => {
+    const what = kind === 'noDiamond' ? 'no diamond recorded' : kind === 'mixed' ? 'a typed place or no diamond' : 'a typed place';
+    return n === 1 ? `1 game with ${what} wasn’t changed.` : `${n} games with ${what} weren’t changed.`;
+  },
   doneTypedRest: (places: readonly ClosedPlace[]) => ` They may be at ${placesWord(places)}, and they still show as scheduled.`,
   seeTyped: (n: number) => (n === 1 ? 'See the game' : `See the ${n} games`),
   /** "Kestrel Bay Winter Classic: its 4 games at Lions Park aren’t moved yet." */
@@ -388,11 +530,21 @@ export const CLOSE_WORDS = {
   openRainDelay: 'Open its Rain delay',
   /** The Rain delay's amber line, opened from a closure (K13): "Kestrel Bay Softball Association closed Lions Park today.
    *  Its diamonds are picked below." */
-  rainDelayLine: (club: string, place: string, day: string, today: string) =>
-    `${club} closed ${place} ${day === today ? 'today' : `on ${formatShortWeekdayDate(day)}`}. Its diamonds are picked below.`,
-  /** "Your site says “Lions Park is closed today.” until the end of Sat, Nov 28. Reopen it from the Venue library." */
-  doneSite: (sentences: readonly string[], lastDay: string) =>
-    `Your site says ${joinWithAnd(sentences.map(q))} until the end of ${formatShortWeekdayDate(lastDay)}. Reopen it from the Venue library.`,
+  rainDelayLine: (club: string, place: string, day: string, today: string, several = false) =>
+    `${club} closed ${place} ${day === today ? 'today' : `on ${formatShortWeekdayDate(day)}`}. ${several ? 'Their' : 'Its'} diamonds are picked below.`,
+  /** What the Rain delay's line calls the closed places, and whether it says "Their": one park or two by name, three or
+   *  more by count (the line has no list under it for "those places" to point at). */
+  rainDelayPlaces: (places: readonly ClosedPlace[]) => {
+    const groups = placeGroups(places);
+    return {
+      words: groups.length > 2 ? `${groups.length} places` : placesWord(places),
+      several: groups.length > 1 || groups[0]?.scope === 'all',
+    };
+  },
+  /** "Your site says “Lions Park is closed today.” until the end of Sat, Nov 28. Reopen it from the Venue library." ·
+   *  "… Reopen them from the Venue library." (two closures or more: each reopens on its own). */
+  doneSite: (sentences: readonly string[], lastDay: string, closures: number = 1) =>
+    `Your site says ${joinWithAnd(sentences.map(q))} until the end of ${formatShortWeekdayDate(lastDay)}. Reopen ${closures > 1 ? 'them' : 'it'} from the Venue library.`,
   doneNoUndo: (verb: ClosureVerb) => (verb === 'postponed'
     ? 'Emails can’t be taken back. To change a game, give it a new date; its families are told again.'
     : 'Emails can’t be taken back. To bring a game back, put it back on the schedule; its families are told again.'),
@@ -407,6 +559,16 @@ export const CLOSE_WORDS = {
   reopenMarks: (marks: number, oneTeam: string | null, place: string) => marks === 1
     ? `${oneTeam ? `The ${possessive(oneTeam)} game` : 'The rep game'} loses its mark, and its coach gets one line: ${place} reopened, the game wasn’t moved, keep it or move it.`
     : `${marks} rep games lose their marks, and their coaches get one line: ${place} reopened, the game wasn’t moved, keep it or move it.`,
+  /** D1: "1 rep game stays marked while Diamond 1 at Lions Park is still closed. Its coach is told when that reopens." */
+  reopenKept: (n: number, places: readonly string[]) => {
+    const said = places.map(p => (p === EVERY_PLACE ? 'all our fields' : p));
+    const many = said.length > 1;
+    const still = `${joinWithAnd(said)} ${many ? 'are' : isAre(said[0] ?? '')} still closed`;
+    const when = many ? 'those reopen' : 'that reopens';
+    return n === 1
+      ? `1 rep game stays marked while ${still}. Its coach is told when ${when}.`
+      : `${n} rep games stay marked while ${still}. Their coaches are told when ${when}.`;
+  },
   reopenStill: (n: number) => (n === 1 ? 'The 1 postponed game stays under “Needs a new date”.' : `The ${n} postponed games stay under “Needs a new date”.`),
   reopenStillRest: ' Their families were emailed, so give each a new date from the schedule and they’re told again.',
   reopenKeep: 'Keep it closed',
@@ -429,10 +591,24 @@ export const CLOSE_WORDS = {
     `closed ${closeClock(c.closedAt)}${c.closedBy ? ` by ${c.closedBy}` : ''}`,
     [c.leagueCalledOff ? `${c.leagueCalledOff} ${c.verb}` : null, c.marks ? `${c.marks === 1 ? '1 rep game' : `${c.marks} rep games`} marked` : null].filter(Boolean).join(', ') || null,
   ].filter(Boolean).join(' · '),
-  /** The Overview's line (build words; the drawing names it, it does not word it). */
+  /** The Overview's line (build words; the drawing names it, it does not word it). Counted by park (Session 2D: two
+   *  diamonds at one park are one place closed), each named as `groupWord`: "2 diamonds at Lions Park". */
   overviewLabel: 'Places closed',
   overviewSub: (names: readonly string[]) => `${joinWithAnd(names)} · reopen from the Venue library`,
 };
+
+/** The typed group's kind: typed by hand (no place id), on the place with no diamond recorded, or both. */
+export type TypedKind = 'typed' | 'noDiamond' | 'mixed';
+export function typedKind(games: readonly { linkedToPlace: boolean }[]): TypedKind {
+  const noDiamond = games.filter(g => g.linkedToPlace).length;
+  return noDiamond === 0 ? 'typed' : noDiamond === games.length ? 'noDiamond' : 'mixed';
+}
+
+/** The Overview's "Places closed": the closures showing, one per park (a whole park or any of its diamonds), named. */
+export function closedParks(closures: readonly Pick<StaffClosure, 'scope' | 'venueId' | 'placeName' | 'facilityName'>[]): string[] {
+  const groups = placeGroups(closures.map(c => ({ scope: c.scope, venueId: c.venueId, facilityId: null, name: c.placeName, facilityName: c.facilityName })));
+  return [...new Set(groups.map(g => (g.scope === 'all' ? EVERY_PLACE : groupWord(g))))];
+}
 
 function repDoneLine(t: { name: string; reach: RepReach; sent: boolean }): string {
   if (t.reach === 'none') return `The ${t.name} have no coach to email, so let the team know yourself.`;

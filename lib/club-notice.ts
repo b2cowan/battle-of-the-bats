@@ -108,6 +108,18 @@ export interface ClosureStrip {
 /** Past four lines the box keeps three and says how many more (the drawing: "a club rarely closes more than two or three"). */
 export const CLOSURE_STRIP_MAX_LINES = 4;
 
+/** The line that stands for the rest. */
+export const closureMoreSentence = (n: number) => `And ${n} more places are closed.`;
+
+/**
+ * The strip's one shortening rule, shared with the Close a place window's preview (Session 2D: the preview reads what
+ * families will see): up to four lines as they are; past four, the first three and one line made from the rest.
+ */
+export function stripLinesShown<T>(lines: readonly T[], more: (rest: T[]) => T): T[] {
+  if (lines.length <= CLOSURE_STRIP_MAX_LINES) return [...lines];
+  return [...lines.slice(0, CLOSURE_STRIP_MAX_LINES - 1), more(lines.slice(CLOSURE_STRIP_MAX_LINES - 1))];
+}
+
 /**
  * The strip families read above the club's own notice (K4: its own box; a closure never ends or replaces the notice):
  *   "Lions Park is closed today." / "Diamond 2 at Alder Fields is closed today."
@@ -129,16 +141,15 @@ export function closureStrip(closures: readonly StripClosure[], nowIso: string, 
     if (same) { if (Date.parse(c.endsAt) > Date.parse(same.endsAt)) same.endsAt = c.endsAt; }
     else lines.push({ sentence, endsAt: c.endsAt });
   }
-  if (lines.length > CLOSURE_STRIP_MAX_LINES) {
-    const rest = lines.splice(CLOSURE_STRIP_MAX_LINES - 1);
-    const lastEnd = rest.reduce((a, l) => (Date.parse(l.endsAt) > Date.parse(a) ? l.endsAt : a), rest[0].endsAt);
-    lines.push({ sentence: `And ${rest.length} more places are closed.`, endsAt: lastEnd });
-  }
+  const shown = stripLinesShown(lines, rest => ({
+    sentence: closureMoreSentence(rest.length),
+    endsAt: rest.reduce((a, l) => (Date.parse(l.endsAt) > Date.parse(a) ? l.endsAt : a), rest[0].endsAt),
+  }));
 
   const times = [...new Set(showing.map(c => postedWhen(c.showsFrom, today, timeZone)))];
   const posted = times.length <= 2 ? `Posted ${times.join(' and ')} by the club` : 'Posted by the club';
   const tonight = noticeEndsAt({ kind: 'tonight' }, nowIso, timeZone);
   const allTonight = !!tonight && showing.every(c => Date.parse(c.endsAt) === Date.parse(tonight));
-  const ends = !allTonight ? '' : lines.length === 1 ? ' · ends tonight' : lines.length === 2 ? ' · both end tonight' : ' · all end tonight';
-  return { lines, smallLine: `${posted}${ends}` };
+  const ends = !allTonight ? '' : shown.length === 1 ? ' · ends tonight' : shown.length === 2 ? ' · both end tonight' : ' · all end tonight';
+  return { lines: shown, smallLine: `${posted}${ends}` };
 }

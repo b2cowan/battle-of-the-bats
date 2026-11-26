@@ -5,7 +5,7 @@ import { getLeagueSeasons } from './db';
 import { addCalendarDays, formatShortWeekdayDate, orgDayKey, zonedWallClockToUtc } from './timezone';
 import { COACH_GAME_EVENT_TYPES } from './coach-tournament-games';
 import {
-  STRIP_CLOSURE_COLUMNS, firstClosureMatch, markPlaceWords, markStanding, repTypedText, stripClosureOf,
+  STRIP_CLOSURE_COLUMNS, firstClosureMatch, markPlaceOfAll, markStanding, placeEntriesValid, repTypedText, stripClosureOf,
   type ClosedPlace, type MarkWords, type ClosureScope, type ClosureVerb, type MarkedEventNow, type PlaceMatch, type RepMark, type StripClosure,
 } from './place-closures';
 
@@ -104,7 +104,7 @@ export async function closuresShowing(orgId: string, now: Date = new Date()): Pr
 /** A standing mark, with the words its surfaces say: the closed place and its first day. */
 export interface StandingMark {
   mark: RepMark;
-  closure: { id: string; scope: ClosureScope; placeName: string | null; facilityName: string | null; firstDay: string };
+  closure: { id: string; scope: ClosureScope; venueId: string | null; placeName: string | null; facilityName: string | null; firstDay: string };
 }
 
 /**
@@ -119,11 +119,11 @@ export async function standingRepMarks(orgId: string, eventIds: readonly string[
     id: string; closure_id: string; event_id: string; team_id: string; marked_starts_at: string;
     marked_org_venue_id: string | null; marked_facility_id: string | null; marked_place_id: string | null;
     marked_location: string | null; coach_emailed_at: string | null;
-    org_place_closures: { scope: ClosureScope; place_name: string | null; facility_name: string | null; first_day: string; reopened_at: string | null }
-      | { scope: ClosureScope; place_name: string | null; facility_name: string | null; first_day: string; reopened_at: string | null }[] | null;
+    org_place_closures: MarkClosureRow | MarkClosureRow[] | null;
   };
+  type MarkClosureRow = { scope: ClosureScope; org_venue_id: string | null; place_name: string | null; facility_name: string | null; first_day: string; reopened_at: string | null; created_at: string; press_seq: number };
   const rows = await fetchAllIn<Row>([...eventIds], (c, a, b) => supabaseAdmin.from('rep_event_closure_marks')
-    .select('id, closure_id, event_id, team_id, marked_starts_at, marked_org_venue_id, marked_facility_id, marked_place_id, marked_location, coach_emailed_at, org_place_closures!inner(scope, place_name, facility_name, first_day, reopened_at)')
+    .select('id, closure_id, event_id, team_id, marked_starts_at, marked_org_venue_id, marked_facility_id, marked_place_id, marked_location, coach_emailed_at, org_place_closures!inner(scope, org_venue_id, place_name, facility_name, first_day, reopened_at, created_at, press_seq)')
     .eq('org_id', orgId).in('event_id', c).is('org_place_closures.reopened_at', null).order('created_at').order('id').range(a, b));
   if (!rows.length) return out;
   const events = await fetchAllIn<{ id: string; starts_at: string; status: string; org_venue_id: string | null; org_venue_facility_id: string | null; place_id: string | null; location: string | null }>(
@@ -133,8 +133,15 @@ export async function standingRepMarks(orgId: string, eventIds: readonly string[
     id: e.id, startsAt: e.starts_at, status: e.status, venueId: e.org_venue_id, facilityId: e.org_venue_facility_id,
     placeId: e.place_id, location: e.location,
   }]));
-  for (const r of rows) {
-    const c = Array.isArray(r.org_place_closures) ? r.org_place_closures[0] : r.org_place_closures;
+  // A game's marks in the order PRESSED: one press's marks share their instant, so its own order (`press_seq`, the
+  // window's) breaks the tie — the same "first" the coach's email names.
+  const closureOfRow = (r: Row) => (Array.isArray(r.org_place_closures) ? r.org_place_closures[0] : r.org_place_closures);
+  const pressed = (a: Row, b: Row) => {
+    const x = closureOfRow(a); const y = closureOfRow(b);
+    return x && y ? x.created_at.localeCompare(y.created_at) || x.press_seq - y.press_seq : 0;
+  };
+  for (const r of [...rows].sort(pressed)) {
+    const c = closureOfRow(r);
     if (!c) continue;
     const mark: RepMark = {
       id: r.id, closureId: r.closure_id, eventId: r.event_id, teamId: r.team_id, markedStartsAt: r.marked_starts_at,
@@ -143,7 +150,7 @@ export async function standingRepMarks(orgId: string, eventIds: readonly string[
     };
     if (!markStanding(mark, now.get(r.event_id), { reopenedAt: c.reopened_at })) continue;
     const entry: StandingMark = {
-      mark, closure: { id: r.closure_id, scope: c.scope, placeName: c.place_name, facilityName: c.facility_name, firstDay: c.first_day },
+      mark, closure: { id: r.closure_id, scope: c.scope, venueId: c.org_venue_id, placeName: c.place_name, facilityName: c.facility_name, firstDay: c.first_day },
     };
     (out.get(r.event_id) ?? out.set(r.event_id, []).get(r.event_id)!).push(entry);
   }
@@ -152,7 +159,8 @@ export async function standingRepMarks(orgId: string, eventIds: readonly string[
 
 /**
  * The mark's words on each of these rep games (Session 2C, K9): `{ place, day }` per event id, for the games whose mark
- * still stands; the first mark pressed when two stand. ⚖ The same fence as `standingRepMarks`: ids the caller's own read
+ * still stands; the first mark pressed when two stand — except two or more diamonds of one park standing over one game
+ * (D1: "2 diamonds at Lions Park", `markPlaceOfAll`). ⚖ The same fence as `standingRepMarks`: ids the caller's own read
  * already decided may be shown. ⚠ A failed read is no mark, never a broken page (the strip's rule): a surface reads as it
  * did before the closure.
  */
@@ -163,7 +171,7 @@ export async function repMarkWords(orgId: string, eventIds: readonly string[]): 
   for (const [eventId, list] of marks) {
     const first = list[0];
     if (!first) continue;
-    out[eventId] = { place: markPlaceWords(first.closure), day: formatShortWeekdayDate(orgDayKey(first.mark.markedStartsAt)) };
+    out[eventId] = { place: markPlaceOfAll(list.map(x => x.closure)), day: formatShortWeekdayDate(orgDayKey(first.mark.markedStartsAt)) };
   }
   return out;
 }
@@ -251,11 +259,12 @@ export async function placeClosureSource(orgId: string, input: {
 
   // The places, as the press resolves them.
   let places: ClosedPlace[];
-  if (input.places.length === 1 && !input.places[0].venueId) {
+  // As the press (mig 549): every entry a place of the club, each place or diamond once, never a whole place beside its
+  // diamond — or every place alone.
+  if (!placeEntriesValid(input.places)) return null;
+  if (!input.places[0].venueId) {
     places = [{ scope: 'all', venueId: null, facilityId: null, name: null }];
   } else {
-    // As the press: every entry a place of the club, each place once (a whole place, or one diamond of it).
-    if (input.places.some(p => !p.venueId) || new Set(input.places.map(p => p.venueId)).size !== input.places.length) return null;
     const { data, error } = await supabaseAdmin.from('org_venues').select('id, name, org_venue_facilities(id, name)')
       .eq('org_id', orgId).in('id', input.places.map(p => p.venueId!));
     if (error) throw error;

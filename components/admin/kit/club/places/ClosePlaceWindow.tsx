@@ -11,31 +11,37 @@
  * Three buttons open it, all worded "Close a place" with the rain cloud (owner 2026-11-26): the Venue library's toolbar,
  * the Overview's first heading, and the house league schedule's (K15, `season`: it opens on that season's places that
  * day). A house league admin sees rep and tournaments as counts with no door (K1; the server leaves their names out).
+ *
+ * SEVERAL PLACES IN ONE PRESS (Session 2D, M1–M8, D1; the drawing CLUB_WEBSITE_STAGE2_PLACES_DRAWINGS.html): Day and
+ * Until first (M4: the day decides the season's parks), then a Places field that takes ticks (`TickPicker`; empty means
+ * NOTHING, never every park) and a row per chosen park with its own diamond ticks and ✕. From the schedule the season's
+ * parks that day start chosen and follow the day until the admin changes the choice (M2); from the Venue library or the
+ * Overview nothing is (M3). "All our fields" stands in for the parks and gives them back when removed (M5). The game
+ * ticks survive a change of places, diamonds or days (`carryTicks`).
  */
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
-import { AlertTriangle, CheckCircle2, ChevronDown } from 'lucide-react';
+import { AlertTriangle, CheckCircle2, ChevronDown, X } from 'lucide-react';
 import KitDialog, { DialogCancel } from '../KitDialog';
 import ck from '../ClubKit.module.css';
 import { repKit } from '../RepKit';
 import { SendRow, SendRows } from '../SendParts';
 import { Statement } from '../schedules/ScheduleParts';
 import FormTable, { type FormTableGroup, type FormTableRow } from '@/components/shared/FormTable';
-import { ViewSwitch } from '@/components/coaches/kit';
 import LoadingState from '@/components/shared/LoadingState';
 import { useIsPhone } from '@/lib/hooks/useIsPhone';
 import { addCalendarDays, orgDayKey } from '@/lib/timezone';
 import { teamsHearing } from '@/lib/league-game-changes';
 import {
-  CLOSE_LINE_MAX, CLOSE_WORDS as W, canLink, closeDays, closeSummary, defaultTicks, gameWhereLine, isTyped, linkTargets,
-  placesWord, previewSentences, untilDays,
-  type CloseFrame, type CloseSource, type RepReach,
+  CLOSE_LINE_MAX, CLOSE_MAX_ENTRIES, CLOSE_WORDS as W, canLink, carryTicks, closeDays, closeSummary, diamondTickOff,
+  gameWhereLine, isTyped, linkTargets, pickCount, pickParam, placeGroups, previewSentences, toggleDiamond,
+  typedKind, untilDays,
+  type CloseFrame, type CloseSource, type PlacePick, type RepReach,
 } from '@/lib/place-closure-window';
 import type { ClosureVerb } from '@/lib/place-closures';
 import { shortDivision, type RainSendDivision } from '@/lib/league-rainout';
+import TickPicker, { type TickBand, type TickOption } from './TickPicker';
 import s from './ClosePlace.module.css';
-
-type Pick = { kind: 'venue'; venueId: string } | { kind: 'all' } | { kind: 'season' };
 
 interface PressResult {
   closureIds: string[]; replay: boolean;
@@ -46,6 +52,25 @@ interface PressResult {
 const newKey = () => (typeof crypto !== 'undefined' && 'randomUUID' in crypto
   ? crypto.randomUUID()
   : 'xxxxxxxx-xxxx-4xxx-8xxx-xxxxxxxxxxxx'.replace(/x/g, () => Math.floor(Math.random() * 16).toString(16)));
+
+const wholePark = (venueId: string): PlacePick => ({ venueId, diamonds: [] });
+
+/** The "maybe" games in one list, league then rep, as the table and the result both name them (rep is absent for a house
+ *  league admin, K1). */
+function typedGames(source: CloseSource) {
+  const divName = new Map(source.seasons.flatMap(x => x.divisions.map(d => [d.id, d.name] as const)));
+  return [
+    ...source.league.filter(g => isTyped(g) && g.published).map(g => ({
+      id: g.id, at: g.scheduledAt, name: `${g.home} vs ${g.away}`,
+      tail: divName.has(g.divisionId) ? `House league · ${shortDivision(divName.get(g.divisionId)!)}` : 'House league',
+      typed: g.typed, started: g.started, venueId: g.venueId, linkedToPlace: g.linkedToPlace,
+    })),
+    ...(source.repHidden ? [] : source.rep.filter(isTyped)).map(g => ({
+      id: g.id, at: g.startsAt, name: g.opponent ? `${g.teamName} vs ${g.opponent}` : g.teamName, tail: 'Rep',
+      typed: g.typed, started: g.started, venueId: g.venueId, linkedToPlace: g.linkedToPlace,
+    })),
+  ];
+}
 
 export default function ClosePlaceWindow({ orgSlug, eyebrow, season, initialVenueId, venueLibraryHref, onOpenVenueLibrary, onClosed, onOpenChanges, onNewDates, onClose }: {
   orgSlug: string;
@@ -76,15 +101,20 @@ export default function ClosePlaceWindow({ orgSlug, eyebrow, season, initialVenu
   const [frame, setFrame] = useState<CloseFrame | null>(null);
   const [seasonPlaces, setSeasonPlaces] = useState<string[]>([]);
   const [loadFailed, setLoadFailed] = useState(false);
-  const [pick, setPick] = useState<Pick | null>(null);
-  const [diamond, setDiamond] = useState('');
+  /** The chosen parks, in the order chosen (the press's order), each whole or some of its diamonds; and "All our fields". */
+  const [picks, setPicks] = useState<PlacePick[]>([]);
+  const [all, setAll] = useState(false);
+  /** M2: the season's parks are chosen for the admin, and follow the day, until the admin changes the choice. */
+  const seasonDriven = useRef(true);
   const [firstDay, setFirstDay] = useState('');
   const [lastDay, setLastDay] = useState('');
   const [verb, setVerb] = useState<ClosureVerb>('postponed');
   const [source, setSource] = useState<CloseSource | null>(null);
   const [sourceFailed, setSourceFailed] = useState(false);
-  const [ticked, setTicked] = useState<Set<string>>(() => new Set());
-  const [link, setLink] = useState(false);
+  /** The ticks the ADMIN set, and whether the game had started when they did: all the window remembers of ticks. */
+  const [chosen, setChosen] = useState<ReadonlyMap<string, { ticked: boolean; started: boolean }>>(() => new Map());
+  /** "Link both" is chosen FOR these parks: a changed choice of parks never re-points it at other games. */
+  const [linkFor, setLinkFor] = useState<string | null>(null);
   const [open, setOpen] = useState<Set<string>>(() => new Set());
   const [othersOpen, setOthersOpen] = useState(false);
   const [lineShown, setLineShown] = useState(false);
@@ -93,6 +123,11 @@ export default function ClosePlaceWindow({ orgSlug, eyebrow, season, initialVenu
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<PressResult | null>(null);
   const [typedSeen, setTypedSeen] = useState(false);
+  /** The window's read again after a refusal (`press`); and a season's places for new days still on their way. */
+  const [reread, setReread] = useState(0);
+  const [seasonPending, setSeasonPending] = useState(false);
+  /** The days the season's places were last read for. */
+  const seasonDays = useRef<{ first: string; last: string } | null>(null);
 
   // The frame first: the club's places, its day, and (from a season's schedule) that season's places today.
   useEffect(() => {
@@ -115,41 +150,44 @@ export default function ClosePlaceWindow({ orgSlug, eyebrow, season, initialVenu
       }
       seasonDays.current = { first: day, last: day };
       setFrame(f); setSeasonPlaces(sp); setFirstDay(day); setLastDay(day);
+      // M2: from the schedule, the season's parks that day; M3: from the Venue library or the Overview, nothing — unless
+      // the door named a place.
       const start = initialVenueId && f.venues.some(v => v.id === initialVenueId) ? initialVenueId : null;
-      setPick(sp.length > 1 ? { kind: 'season' }
-        : sp.length === 1 ? { kind: 'venue', venueId: sp[0] }
-        : start ? { kind: 'venue', venueId: start }
-        : f.venues[0] ? { kind: 'venue', venueId: f.venues[0].id } : null);
+      setPicks(sp.length ? sp.map(wholePark) : start ? [wholePark(start)] : []);
     })();
     return () => { live = false; };
   }, [q, seasonId, initialVenueId]);
 
   // K15: the season's places follow the window's days (a closure set for Saturday closes Saturday's places, not today's).
-  const seasonDays = useRef<{ first: string; last: string } | null>(null);
+  // The CHOICE follows them only while the admin hasn't changed it (M2) — and then always, even to none: a day the season
+  // uses no place reads "Choose places", never the last day's parks under the new day (nothing is read while they are on
+  // their way). A failed read changes nothing.
   useEffect(() => {
     if (!seasonId || !firstDay || !seasonDays.current) return;
     const last = lastDay || firstDay;
-    if (seasonDays.current.first === firstDay && seasonDays.current.last === last) return;
-    seasonDays.current = { first: firstDay, last };
+    // Back on the days already read (a change undone before its answer came): nothing is on its way.
+    if (seasonDays.current.first === firstDay && seasonDays.current.last === last) { setSeasonPending(false); return; }
     let live = true;
+    setSeasonPending(seasonDriven.current);
     void fetch(`${api}?${q}&seasonId=${seasonId}&day=${firstDay}&dayLast=${last}`, { cache: 'no-store' }).catch(() => null)
       .then(r => (r?.ok ? r.json().catch(() => null) : null))
       .then(d => {
         if (!live) return;
-        const sp = ((d as { seasonPlaces?: string[] } | null)?.seasonPlaces ?? []);
-        setSeasonPlaces(sp);
-        // Only the season's own pick follows the days; a place the admin chose stays chosen.
-        setPick(prev => (prev?.kind !== 'season' ? prev
-          : sp.length > 1 ? prev : sp.length === 1 ? { kind: 'venue', venueId: sp[0] } : prev));
+        seasonDays.current = { first: firstDay, last };
+        const sp = (d as { seasonPlaces?: string[] } | null)?.seasonPlaces;
+        if (sp) {
+          setSeasonPlaces(sp);
+          if (seasonDriven.current) setPicks(sp.map(wholePark));
+        }
+        setSeasonPending(false);
       });
     return () => { live = false; };
   }, [seasonId, firstDay, lastDay, q]);
 
-  const venue = pick?.kind === 'venue' ? frame?.venues.find(v => v.id === pick.venueId) ?? null : null;
-  const placesParam = !pick ? null
-    : pick.kind === 'all' ? 'all'
-    : pick.kind === 'season' ? seasonPlaces.join(',')
-    : diamond ? `${pick.venueId}:${diamond}` : pick.venueId;
+  const count = pickCount(picks);
+  const placesParam = pickParam(picks, all);
+  const parksKey = all ? 'all' : picks.map(p => p.venueId).sort().join(',');
+  const link = linkFor !== null && linkFor === parksKey;
 
   const read = useCallback(async (): Promise<CloseSource | null> => {
     if (!placesParam || !firstDay) return null;
@@ -158,27 +196,33 @@ export default function ClosePlaceWindow({ orgSlug, eyebrow, season, initialVenu
     return (d as { source?: CloseSource } | null)?.source ?? null;
   }, [placesParam, firstDay, lastDay, q]);
 
-  // The window's read, again whenever the place, the diamond or the days change (the ticks reset to what's on the place).
+  // The window's read, again whenever the places, the diamonds or the days change, or after a refusal — one path, so a
+  // late answer to an earlier choice is always dropped. Nothing chosen reads nothing: no games, no button.
   useEffect(() => {
-    if (!placesParam || !firstDay) return;
+    if (!placesParam || !firstDay || seasonPending) { setSource(null); setSourceFailed(false); return; }
     let live = true;
     setSource(null); setSourceFailed(false);
     void read().then(src => {
       if (!live) return;
       if (!src) { setSourceFailed(true); return; }
-      setSource(src); setTicked(defaultTicks(src)); setLink(false);
+      setSource(src);
       // On a phone, only the groups that need a choice stay open: the typed group, and any holding a started game.
       setOpen(new Set(['typed', ...src.league.filter(g => g.started && g.match === 'linked').map(g => `s:${g.seasonId}`),
         ...(src.rep.some(g => g.started && g.match === 'linked') ? ['rep'] : [])]));
     });
     return () => { live = false; };
-  }, [read, placesParam, firstDay]);
+  }, [read, placesParam, firstDay, seasonPending, reread]);
 
-  const tick = useCallback((ids: readonly string[], on: boolean) => setTicked(prev => {
-    const next = new Set(prev);
-    for (const id of ids) { if (on) next.add(id); else next.delete(id); }
-    return next;
-  }), []);
+  // What is ticked is worked out, never stored: the admin's own choices over how each listed game stands NOW.
+  const ticked = useMemo(() => (source ? carryTicks(source, chosen) : new Set<string>()), [source, chosen]);
+  const tick = useCallback((ids: readonly string[], on: boolean) => {
+    const started = new Set([...(source?.league ?? []), ...(source?.rep ?? [])].filter(g => g.started).map(g => g.id));
+    setChosen(prev => {
+      const next = new Map(prev);
+      for (const id of ids) next.set(id, { ticked: on, started: started.has(id) });
+      return next;
+    });
+  }, [source]);
   const toggleOpen = useCallback((key: string) => setOpen(prev => {
     const next = new Set(prev);
     if (next.has(key)) next.delete(key); else next.add(key);
@@ -197,7 +241,15 @@ export default function ClosePlaceWindow({ orgSlug, eyebrow, season, initialVenu
     const groups: FormTableGroup[] = [];
     if (!source) return { rows, groups, drafts: [] as string[], typedCount: 0 };
     const divName = new Map(source.seasons.flatMap(x => x.divisions.map(d => [d.id, d.name] as const)));
-    const where = (iso: string, field: string | null, tail: string | null) => gameWhereLine(iso, field, tail, multiDay, orgDayKey);
+    // Note 6: with two or more parks chosen, or every place, each row names its park ("9:00 a.m. · Harbourview Park,
+    // Diamond 1 · U9"), the park in the row's ink.
+    const namePark = source.places[0]?.scope === 'all' || placeGroups(source.places).length > 1;
+    const venueName = new Map((frame?.venues ?? []).map(v => [v.id, v.name]));
+    const where = (iso: string, field: string | null, tail: string | null, venueId: string | null) => {
+      const park = namePark && venueId ? venueName.get(venueId) : undefined;
+      if (!park) return gameWhereLine(iso, field, tail, multiDay, orgDayKey);
+      return <>{gameWhereLine(iso, null, null, multiDay, orgDayKey)} · <span className={s.parkAt}><b className={s.park}>{park}</b>{field ? `, ${field}` : ''}</span>{tail ? ` · ${tail}` : ''}</>;
+    };
     let firstStarted = true;
     const startedLine = (iso: string) => {
       const note = firstStarted ? <> {W.startedTick}</> : null;
@@ -220,7 +272,7 @@ export default function ClosePlaceWindow({ orgSlug, eyebrow, season, initialVenu
       const key = `s:${season.id}`;
       for (const g of games) {
         const name = `${g.home} vs ${g.away}`;
-        const line = where(g.scheduledAt, g.field, divName.has(g.divisionId) ? shortDivision(divName.get(g.divisionId)!) : null);
+        const line = where(g.scheduledAt, g.field, divName.has(g.divisionId) ? shortDivision(divName.get(g.divisionId)!) : null, g.venueId);
         const extra = g.started ? startedLine(g.scheduledAt) : null;
         rows.push({
           key: g.id, group: key, name, ticked: ticked.has(g.id), onTick: on => tick([g.id], on), tickLabel: name,
@@ -235,7 +287,7 @@ export default function ClosePlaceWindow({ orgSlug, eyebrow, season, initialVenu
       if (games.length) {
         for (const g of games) {
           const name = g.opponent ? `${g.teamName} vs ${g.opponent}` : g.teamName;
-          const line = where(g.startsAt, g.field, null);
+          const line = where(g.startsAt, g.field, null, g.venueId);
           const extra = g.started ? startedLine(g.startsAt) : <span className={s.sub}>{W.repNote(source.repReach[g.teamId] ?? 'none')}</span>;
           rows.push({
             key: g.id, group: 'rep', name, ticked: ticked.has(g.id), onTick: on => tick([g.id], on), tickLabel: name,
@@ -246,24 +298,22 @@ export default function ClosePlaceWindow({ orgSlug, eyebrow, season, initialVenu
       }
     }
     // Typed by hand (K7): found by the place's name in the typed words, unticked.
-    const typedLeague = source.league.filter(g => isTyped(g) && g.published);
-    const typedRep = source.repHidden ? [] : source.rep.filter(isTyped);
-    const typed = [
-      ...typedLeague.map(g => ({ id: g.id, at: g.scheduledAt, name: `${g.home} vs ${g.away}`, tail: divName.has(g.divisionId) ? `House league · ${shortDivision(divName.get(g.divisionId)!)}` : 'House league', typed: g.typed, started: g.started })),
-      ...typedRep.map(g => ({ id: g.id, at: g.startsAt, name: g.opponent ? `${g.teamName} vs ${g.opponent}` : g.teamName, tail: 'Rep', typed: g.typed, started: g.started })),
-    ].sort((a, b) => a.at.localeCompare(b.at));
+    const typed = typedGames(source).sort((a, b) => a.at.localeCompare(b.at));
     for (const g of typed) {
-      const line = where(g.at, null, g.tail);
-      const extra = <>{g.typed && <span className={s.sub}>{W.typedLine(g.typed)}</span>}{g.started && startedLine(g.at)}</>;
+      const line = where(g.at, null, g.tail, g.venueId);
+      // "Typed" only for a place typed by hand: a game picked from the library with no diamond was never typed.
+      const extra = <>{!g.linkedToPlace && g.typed && <span className={s.sub}>{W.typedLine(g.typed)}</span>}{g.started && startedLine(g.at)}</>;
       rows.push({
         key: g.id, group: 'typed', name: g.name, ticked: ticked.has(g.id), onTick: on => tick([g.id], on), tickLabel: g.name,
         cells: { when: <>{line}{extra}</> }, phoneLine: <>{line}{extra}</>,
       });
     }
-    if (typed.length) group('typed', W.typed, W.typedCount(source.places, typed.length), typed.map(g => g.id), true);
+    // Its name says what it holds: a place typed by hand, a game at the park with no diamond recorded (a diamond closure's
+    // "maybe"), or both.
+    if (typed.length) group('typed', W.typed(typedKind(typed)), W.typedCount(source.places, typed.length), typed.map(g => g.id), true);
     const drafts = source.seasons.flatMap(x => x.divisions.filter(d => !d.published && source.league.some(g => g.divisionId === d.id)).map(d => d.name));
     return { rows, groups, drafts, typedCount: typed.length };
-  }, [source, ticked, tick, open, toggleOpen, multiDay, phone]);
+  }, [source, ticked, tick, open, toggleOpen, multiDay, phone, frame]);
 
   const typedLinkable = useMemo(() => (source ? [
     ...source.league.filter(g => isTyped(g) && g.published && canLink(g)),
@@ -280,7 +330,7 @@ export default function ClosePlaceWindow({ orgSlug, eyebrow, season, initialVenu
       places: source.places.map(p => ({ venueId: p.venueId, facilityId: p.facilityId })),
       league: source.league.filter(g => ticked.has(g.id) && g.published).map(g => ({ id: g.id, seen: g.seen })),
       rep: source.rep.filter(g => ticked.has(g.id)).map(g => ({ id: g.id, seen: g.seen })),
-      links: link && source.places[0]?.scope !== 'all' ? links : [],
+      links: link ? links : [],
     };
     const what = JSON.stringify({ ...body, pressKey: null });
     if (pressFor.current && pressFor.current !== what) pressKey.current = newKey();
@@ -291,23 +341,8 @@ export default function ClosePlaceWindow({ orgSlug, eyebrow, season, initialVenu
     setBusy(false);
     if (!res?.ok || !data) {
       setError(!res ? W.errNetwork : (data as { error?: string } | null)?.error ?? W.errChanged);
-      // Refused because something moved on: read again, keeping the ticks that still name a listed game — except a game
-      // that has STARTED since (K6: never called off mid-game unless ticked as started) — and ticking a game newly on the
-      // place, as the window opens.
-      if (res?.status === 409) {
-        const src = await read();
-        if (src) {
-          const before = new Map([...source.league, ...source.rep].map(g => [g.id, g.started]));
-          const now = [...src.league, ...src.rep];
-          const fresh = defaultTicks(src);
-          const keep = new Set(now.filter(g => {
-            if (!before.has(g.id)) return fresh.has(g.id);
-            if (g.started && !before.get(g.id)) return false;
-            return ticked.has(g.id);
-          }).map(g => g.id));
-          setSource(src); setTicked(keep);
-        }
-      }
+      // Refused because something moved on: read again (the admin's ticks kept, `carryTicks`).
+      if (res?.status === 409) setReread(n => n + 1);
       return;
     }
     onClosed?.();
@@ -323,14 +358,17 @@ export default function ClosePlaceWindow({ orgSlug, eyebrow, season, initialVenu
     const sentences = previewSentences(places, firstDay, lastDay || firstDay, frame?.today ?? firstDay);
     // The typed games left unticked: still "on" and maybe at the closed place (amber, so the strip and they never disagree
     // silently).
-    const typedLeftGames = [...source.league.filter(g => isTyped(g) && g.published && !ticked.has(g.id)).map(g => ({ id: g.id, name: `${g.home} vs ${g.away}` })),
-      ...(source.repHidden ? [] : source.rep.filter(g => isTyped(g) && !ticked.has(g.id)).map(g => ({ id: g.id, name: g.opponent ? `${g.teamName} vs ${g.opponent}` : g.teamName })))];
+    const typedLeftGames = typedGames(source).filter(g => !ticked.has(g.id));
     const seasonId = result.league.divisions[0]?.seasonId ?? source.seasons[0]?.id ?? null;
     const seasonHref = seasonId ? `/${orgSlug}/admin/house-league/seasons/${seasonId}/schedule` : null;
     const tournaments = source.tournaments;
     const rainDelayHref = (t: CloseSource['tournaments'][number]) => {
       const qs = new URLSearchParams({ tournamentId: t.id, tool: 'rain-delay', day: firstDay });
-      if (t.diamondIds.length) { qs.set('diamonds', t.diamondIds.join(',')); qs.set('closed', placesWord(places)); }
+      if (t.diamondIds.length) {
+        const said = W.rainDelayPlaces(places);
+        qs.set('diamonds', t.diamondIds.join(',')); qs.set('closed', said.words);
+        if (said.several) qs.set('several', '1');
+      }
       return `/${orgSlug}/admin/tournaments/schedule?${qs.toString()}`;
     };
     return (
@@ -370,7 +408,7 @@ export default function ClosePlaceWindow({ orgSlug, eyebrow, season, initialVenu
           <div className={`${ck.notice} ${ck.noticeWarn}`}>
             <AlertTriangle size={16} aria-hidden />
             <div className={`${ck.noticeBody} ${s.resultRow}`}>
-              <span><b>{W.doneTyped(typedLeftGames.length)}</b>{W.doneTypedRest(places)}</span>
+              <span><b>{W.doneTyped(typedLeftGames.length, typedKind(typedLeftGames))}</b>{W.doneTypedRest(places)}</span>
               {typedSeen
                 ? <ul className={s.typedList}>{typedLeftGames.map(g => <li key={g.id}>{g.name}</li>)}</ul>
                 : <button type="button" className="btn btn-outline" onClick={() => setTypedSeen(true)}>{W.seeTyped(typedLeftGames.length)}</button>}
@@ -388,7 +426,7 @@ export default function ClosePlaceWindow({ orgSlug, eyebrow, season, initialVenu
             </div>
           </div>
         ))}
-        <p className={s.para}>{W.doneSite(sentences, lastDay || firstDay)}</p>
+        <p className={s.para}>{W.doneSite(sentences, lastDay || firstDay, places.length)}</p>
         {result.league.games > 0 && <p className={s.para}>{W.doneNoUndo(result.league.verb)}</p>}
       </KitDialog>
     );
@@ -408,18 +446,82 @@ export default function ClosePlaceWindow({ orgSlug, eyebrow, season, initialVenu
   const days = frame ? closeDays(frame.today, addCalendarDays) : [];
   const untils = firstDay ? untilDays(firstDay, addCalendarDays) : [];
 
-  const placeValue = !pick ? '' : pick.kind === 'all' ? '__all' : pick.kind === 'season' ? '__season' : pick.venueId;
-  function choosePlace(v: string) {
-    setDiamond('');
-    setPick(v === '__all' ? { kind: 'all' } : v === '__season' ? { kind: 'season' } : { kind: 'venue', venueId: v });
-  }
   function chooseDay(d: string) {
     setFirstDay(d);
     if (!lastDay || lastDay < d || addCalendarDays(d, 13) < lastDay) setLastDay(d);
   }
-  const diamondViews = venue && venue.facilities.length > 1
-    ? [{ id: '', label: W.allDiamonds }, ...venue.facilities.map(f => ({ id: f.id, label: f.name }))]
-    : null;
+
+  // ── The Places field (M1–M7) and the chosen rows ──────────────────────────────────────────────────────────────────
+  const chosenIds = new Set(picks.map(p => p.venueId));
+  const atLimit = count >= CLOSE_MAX_ENTRIES;
+  const placeOption = (v: { id: string; name: string }): TickOption => ({
+    id: v.id, label: v.name, checked: all || chosenIds.has(v.id), disabled: all || (atLimit && !chosenIds.has(v.id)),
+  });
+  const byName = [...(frame?.venues ?? [])].sort((a, b) => a.name.localeCompare(b.name));
+  const seasonSet = new Set(seasonPlaces);
+  // M2 / note 3: with the season, its parks that day first (the club's order, the press's), then every other park.
+  const placeBands: TickBand[] = season && seasonPlaces.length
+    ? [
+      { key: 'season', label: W.bandSeason(isToday), options: (frame?.venues ?? []).filter(v => seasonSet.has(v.id)).map(placeOption) },
+      { key: 'other', label: W.bandOther, options: byName.filter(v => !seasonSet.has(v.id)).map(placeOption) },
+    ]
+    : [{ key: 'all', options: byName.map(placeOption) }];
+  function choosePlace(id: string, on: boolean) {
+    // "All our fields" stands in for the parks and gives them back (M5): it changes nothing about the parks themselves.
+    if (id === '__all') { setAll(on); return; }
+    seasonDriven.current = false;
+    setPicks(prev => (on ? (prev.some(p => p.venueId === id) ? prev : [...prev, wholePark(id)]) : prev.filter(p => p.venueId !== id)));
+  }
+  function chooseDiamond(venueId: string, id: string, on: boolean, order: readonly string[]) {
+    const pick = picks.find(p => p.venueId === venueId);
+    const next = pick ? toggleDiamond(pick, id, on, order) : null;
+    if (!next || next === pick || next.diamonds.join() === pick!.diamonds.join()) return;
+    seasonDriven.current = false;
+    setPicks(prev => prev.map(p => (p.venueId === venueId ? next : p)));
+  }
+  const placesField = frame && (
+    <div className={ck.field}>
+      <span className={ck.label}>{W.places}</span>
+      <TickPicker title={W.places} face={W.chosen(picks.length, all)} bands={placeBands} phone={phone} disabled={busy}
+        pinned={frame.canAll ? [{ id: '__all', label: W.everyPlace, checked: all }] : undefined}
+        foot={atLimit && !all ? W.limit(frame.canAll) : undefined}
+        search={frame.venues.length > 8 ? W.find : undefined}
+        onToggle={choosePlace} doneLabel={W.done} />
+    </div>
+  );
+  const pickRows = (all || picks.length > 0) && frame && (
+    <div className={s.picks}>
+      {all
+        ? (
+          <div className={s.pick}>
+            <span className={s.pickName}>{W.everyPlace}</span>
+            <button type="button" className={s.pickRemove} aria-label={W.remove(W.everyPlace)} disabled={busy}
+              onClick={() => choosePlace('__all', false)}><X size={16} aria-hidden /></button>
+          </div>
+        )
+        : picks.map(p => {
+          const v = frame.venues.find(x => x.id === p.venueId);
+          if (!v) return null;
+          const order = v.facilities.map(f => f.id);
+          const value = W.diamondsValue(v.facilities.filter(f => p.diamonds.includes(f.id)).map(f => f.name), v.facilities.length);
+          return (
+            <div key={p.venueId} className={s.pick}>
+              <span className={s.pickName}>{v.name}</span>
+              {v.facilities.length > 1 && (
+                <TickPicker compact title={v.name} face={value} faceLabel={W.diamondsLabel(v.name, value)} phone={phone} disabled={busy}
+                  bands={[{ key: 'd', options: [
+                    { id: '', label: W.allDiamonds, checked: p.diamonds.length === 0 },
+                    ...v.facilities.map(f => ({ id: f.id, label: f.name, checked: p.diamonds.includes(f.id), disabled: diamondTickOff(p, f.id, order, count) })),
+                  ] }]}
+                  onToggle={(id, on) => chooseDiamond(p.venueId, id, on, order)} doneLabel={W.done} />
+              )}
+              <button type="button" className={s.pickRemove} aria-label={W.remove(v.name)} disabled={busy}
+                onClick={() => choosePlace(p.venueId, false)}><X size={16} aria-hidden /></button>
+            </div>
+          );
+        })}
+    </div>
+  );
 
   if (noPlaces) {
     return (
@@ -444,39 +546,17 @@ export default function ClosePlaceWindow({ orgSlug, eyebrow, season, initialVenu
       footer={(
         <>
           <DialogCancel>{W.notNow}</DialogCancel>
-          {source && sum && (
-            <button type="button" className="btn btn-lime" disabled={busy} onClick={() => void press()}>
-              {busy ? W.sending : W.go(places, emails, phone)}
-            </button>
-          )}
+          {/* Nothing chosen: the button stands, off, in the window's own name (the drawing's tab 3). */}
+          <button type="button" className="btn btn-lime" disabled={busy || !source || !sum} onClick={() => void press()}>
+            {busy ? W.sending : source && sum ? W.go(places, emails, phone) : W.title}
+          </button>
         </>
       )}>
       {error && <p className={repKit.formError} role="alert">{error}</p>}
       {loadFailed && <p className={ck.hint} role="alert">{W.loadFailed}</p>}
       {!frame && !loadFailed && <LoadingState inline label={W.title} />}
-      {frame && pick && (<>
-        <label className={ck.field}>
-          <span className={ck.label}>{W.place}</span>
-          <select className={ck.select} value={placeValue} onChange={e => choosePlace(e.target.value)} disabled={busy}>
-            {season && seasonPlaces.length > 1 && <option value="__season">{W.seasonPlaces(seasonPlaces.length, isToday)}</option>}
-            {frame.venues.map(v => <option key={v.id} value={v.id}>{v.name}</option>)}
-            {frame.canAll && <option value="__all">{W.everyPlace}</option>}
-          </select>
-        </label>
-        {diamondViews && (
-          <div className={s.block}>
-            {diamondViews.length <= 3
-              ? <ViewSwitch views={diamondViews} value={diamond} onChange={setDiamond} label={W.diamonds} />
-              : (
-                <label className={ck.field}>
-                  <span className={repKit.srOnly}>{W.diamonds}</span>
-                  <select className={ck.select} value={diamond} onChange={e => setDiamond(e.target.value)} disabled={busy}>
-                    {diamondViews.map(v => <option key={v.id} value={v.id}>{v.label}</option>)}
-                  </select>
-                </label>
-              )}
-          </div>
-        )}
+      {frame && (<>
+        {/* M4: Day and Until first — the day decides which parks the season is using. */}
         <div className={s.days}>
           <label className={ck.field}>
             <span className={ck.label}>{W.day}</span>
@@ -491,9 +571,14 @@ export default function ClosePlaceWindow({ orgSlug, eyebrow, season, initialVenu
             </select>
           </label>
         </div>
+        <div className={!source || nothing ? s.room : undefined}>
+          {placesField}
+          {pickRows}
+        </div>
 
-        {sourceFailed && <p className={ck.hint} role="alert">{W.loadFailed}</p>}
-        {!source && !sourceFailed && <LoadingState inline label={W.title} />}
+        {!placesParam && <div className={s.empty}>{W.chooseFirst}</div>}
+        {placesParam && sourceFailed && <p className={ck.hint} role="alert">{W.loadFailed}</p>}
+        {placesParam && !source && !sourceFailed && <LoadingState inline label={W.title} />}
         {source && (<>
           {listedLeague > 0 && (<>
             <p className={repKit.factsLabel} id="close-what-label">{W.what}</p>
@@ -516,8 +601,8 @@ export default function ClosePlaceWindow({ orgSlug, eyebrow, season, initialVenu
           {typedCount > 0 && typedLinkable.length > 0 && places[0]?.scope !== 'all' && (
             <p className={s.linkFoot}>
               {link
-                ? <>{W.linkOn(links.length, places)} <button type="button" onClick={() => setLink(false)}>{W.linkUndo}</button></>
-                : <><button type="button" onClick={() => setLink(true)}>{W.linkLabel(linkCount, anyTypedTicked, places)}</button>{W.linkHelp}</>}
+                ? <>{W.linkOn(links.length, places)} <button type="button" onClick={() => setLinkFor(null)}>{W.linkUndo}</button></>
+                : <><button type="button" onClick={() => setLinkFor(parksKey)}>{W.linkLabel(linkCount, anyTypedTicked, places)}</button>{W.linkHelp}</>}
             </p>
           )}
           {drafts.map(name => <p key={name} className={ck.hint}>{W.draft(name)}</p>)}

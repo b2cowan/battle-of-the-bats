@@ -46,7 +46,7 @@ function harness(o: { plan?: string; role?: string; refusal?: string | null; rep
       closeSource: async () => ({ places: [], rep: [{ id: U(3) }] }),
       seasonPlacesOn: async () => [],
       showingClosures: async () => showing,
-      standingMarksOf: async () => [{ id: 'm' }],
+      reopenTold: async () => ({ standing: [{ id: 'm' }], severalDiamonds: new Set(), gameMarks: new Map() }),
       sendAfterPress: async (p: unknown) => { calls.sends.push(p); return { league: { verb: 'postponed', games: 0, teams: 0, divisions: [], unsent: false }, rep: { games: 1, teams: [{ teamId: 'ospreys-id', name: 'U13 Ospreys', reach: 'head', sent: true }] } }; },
       reopenCoachEmails: async (p: unknown) => { calls.reopenMail.push(p); return { teams: 1 }; },
     },

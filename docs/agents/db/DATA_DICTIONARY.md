@@ -8488,7 +8488,7 @@ The **intra-org recreational house-league** module (`league_*`) — sign-ups, di
 ## `org_place_closures`
 <!-- dict:table:org_place_closures -->
 
-**Purpose:** **Close a place** (Club Website Stage 2, rulings K1–K17, **mig 539**): one row per closed place per press — a whole place, one diamond of it, or every place the club has. The press postpones or cancels the house league games there (as Rainout rows, `league_rainouts.closure_id`), MARKS the rep games for their coaches (`rep_event_closure_marks`, never moved), and links the typed-in games the admin chose. The site's strip reads the rows showing now. RLS on, no policies, **service role only**. ⚠ **Written only by `org_place_closure_press`**; `reopened_*` stamped only by `org_place_closure_reopen`.
+**Purpose:** **Close a place** (Club Website Stage 2, rulings K1–K17, **mig 539**; M8, **mig 549**): one row per closed place per press — a whole place, one diamond of it, or every place the club has. Since mig 549 one press may close several diamonds of one place (a row each; never a whole place beside one of its diamonds, never one twice). The press postpones or cancels the house league games there (as Rainout rows, `league_rainouts.closure_id`), MARKS the rep games for their coaches (`rep_event_closure_marks`, never moved), and links the typed-in games the admin chose. The site's strip reads the rows showing now. RLS on, no policies, **service role only**. ⚠ **Written only by `org_place_closure_press`**; `reopened_*` stamped only by `org_place_closure_reopen`.
 
 **Gotchas (read first):**
 1. **One step, all or nothing.** `org_place_closure_press(org, actor, press_key, places, first_day, last_day, verb, line, league, rep, links)` holds the closed places (`FOR SHARE`, first), locks the division of every house league game it names in id order (the send's `league_schedule:` lock), then the game rows (rep rows only when they are games), then decides EVERY refusal before its first write: `invalid`, `past` (Day before the club's today), `not_found` (another club's game), `finished` (read after the locks), `draft` (a draft division or season), `changed` (names the games: moved, called off, scored, removed, edited since the window read them, or no longer at the place; a link must still be on, unscored and typed with the place's name). After the first write a failure raises and the call rolls back whole. It does NOT call `league_rainout_press` (which returns its refusals, so one season would be written when the next refused).
@@ -8504,7 +8504,7 @@ The **intra-org recreational house-league** module (`league_*`) — sign-ups, di
 
 <!-- dict:col:org_place_closures.press_key -->
 <!-- dict:col:org_place_closures.press_seq -->
-**`press_key`** (uuid NOT NULL) / **`press_seq`** (smallint 1–10) — the press, and the place's position in the window's order (two places closed together share a key). Unique together.
+**`press_key`** (uuid NOT NULL) / **`press_seq`** (smallint 1–10) — the press, and the entry's position in the window's order (two places, or two diamonds of one place since mig 549, closed together share a key). Unique together. The order decides which closure a house league game belongs to (its Rainout row): the first it is at.
 
 <!-- dict:col:org_place_closures.scope -->
 <!-- dict:col:org_place_closures.org_venue_id -->
@@ -8534,7 +8534,7 @@ The **intra-org recreational house-league** module (`league_*`) — sign-ups, di
 ## `rep_event_closure_marks`
 <!-- dict:table:rep_event_closure_marks -->
 
-**Purpose:** **The rep mark** (Club Website Stage 2, K9, **mig 539**): a rep game a closure marked for its coach — marked, not moved (Stage 0 A5). One row per closure per game (unique `(closure_id, event_id)`), so a second closure over the same game never clears the first's mark. RLS on, no policies, **service role only**. Written only by `org_place_closure_press`.
+**Purpose:** **The rep mark** (Club Website Stage 2, K9, **mig 539**): a rep game a closure marked for its coach — marked, not moved (Stage 0 A5). One row per closure per game (unique `(closure_id, event_id)`), so a second closure over the same game never clears the first's mark. **Since mig 549 (D1) one press marks a game once for EVERY closure of it the game is at** — a game at the park with no diamond recorded, two of its diamonds closed, has two rows and stays marked until the last of them reopens; it reads "2 diamonds at Lions Park" (`markPlaceOfAll`) and is one game in the coach's email (claimed by its first mark; `sendAfterPress`). RLS on, no policies, **service role only**. Written only by `org_place_closure_press`.
 
 **Gotchas (read first):**
 1. **"The coach moved it" is READ, never written.** A mark STANDS while its closure is not reopened and the game still has the time and every place field it had when marked and is not cancelled (`markStanding`, [lib/place-closures.ts](../../../lib/place-closures.ts)). A place deleted since sets the game's `org_venue_id` null (its FK), which reads as moved.

@@ -11,7 +11,8 @@
  *   is searched beside the game's own typed place (`repTypedText`), exactly as the press reads it. A team place is the
  *   coach's own words for a field, not the club's record of it, so it is "maybe" at most and never ticked for the admin.
  * ⚖ A REP MARK IS SPENT BY READING, never by writing (`markSpent`): the game no longer has the time or place it had when
- *   marked, or it was cancelled. It is DOWN when its closure is reopened. A second closure is its own mark.
+ *   marked, or it was cancelled. It is DOWN when its closure is reopened. A second closure is its own mark — and one press
+ *   marks a game once per closure it is at (mig 549, D1), so the game stays marked until the LAST of them reopens.
  * ⚖ THE STRIP CARRIES PLACE WORDS ONLY (K16): a closure's place, its diamond and its days. No count, no division, no
  *   person's or team's name, no admin line — `stripClosureOf` is the one door from a closure row to a public page.
  * ══════════════════════════════════════════════════════════════════════════════════════════════
@@ -61,6 +62,18 @@ export function placeClosureMatch(p: ClosedPlace, g: GamePlace): PlaceMatch | nu
     return g.facilityId ? null : 'maybe';
   }
   return placeNameInTyped(p.name, g.typed) ? 'maybe' : null;
+}
+
+/**
+ * The press's places rule (mig 549's, mirrored): every entry a place, each (place, diamond) once, and never a whole place
+ * beside one of its diamonds — or "every place" alone (no place named). M8: several diamonds of one place pass.
+ */
+export function placeEntriesValid(entries: readonly { venueId: string | null; facilityId: string | null }[]): boolean {
+  if (!entries.length) return false;
+  if (entries.some(e => !e.venueId)) return entries.length === 1 && !entries[0].facilityId;
+  if (new Set(entries.map(e => `${e.venueId}:${e.facilityId ?? ''}`)).size !== entries.length) return false;
+  const whole = new Set(entries.filter(e => !e.facilityId).map(e => e.venueId));
+  return !entries.some(e => e.facilityId && whole.has(e.venueId));
 }
 
 /** The first closed place (in the window's order) a game is at, and how — the press assigns each game the same way. */
@@ -155,6 +168,33 @@ export const MARK_WORDS = {
 /** The place words of a mark: the closed place, or "All our fields" when every place closed. */
 export function markPlaceWords(c: { scope: ClosureScope; placeName: string | null; facilityName: string | null }): string {
   return closedPlaceName(c) ?? 'All our fields';
+}
+
+/** "2 diamonds at Lions Park": several diamonds of one place, said once. */
+export const diamondsAt = (n: number, placeName: string | null) => `${n} diamonds at ${placeName ?? ''}`;
+/** The verb after a closed place's words: "2 diamonds at Lions Park" and "All our fields" are; one place is. */
+export const isAre = (placeWords: string) => (/^(\d+ diamonds at |all our fields$)/i.test(placeWords) ? 'are' : 'is');
+
+type MarkClosure = { scope: ClosureScope; venueId?: string | null; placeName: string | null; facilityName: string | null };
+
+/**
+ * D1 (owner 2026-11-26; mig 549): ONE game's standing marks, said as one place. A game at the park with no diamond recorded
+ * is marked by every diamond of that park closed over it; while two or more stand it reads "2 diamonds at Lions Park"
+ * (the park, never a single diamond). The widest closure wins: every place, then the whole park over its diamonds.
+ * Otherwise (two different parks) the first mark's place, as before.
+ */
+export function markPlaceOfAll(closures: readonly MarkClosure[]): string {
+  const first = closures[0];
+  if (!first || closures.some(c => c.scope === 'all')) return 'All our fields';
+  const samePark = (c: MarkClosure) => (first.venueId != null && c.venueId != null
+    ? c.venueId === first.venueId : c.placeName === first.placeName);
+  if (closures.every(samePark)) {
+    if (closures.some(c => c.scope === 'place')) return first.placeName ?? '';
+    // Two presses on the same diamond are one diamond: "2 diamonds" needs two DIFFERENT diamonds.
+    const diamonds = new Set(closures.map(c => c.facilityName)).size;
+    if (diamonds > 1) return diamondsAt(diamonds, first.placeName);
+  }
+  return markPlaceWords(first);
 }
 
 // ── The strip ──────────────────────────────────────────────────────────────────────────────────────────────────────

@@ -14,7 +14,7 @@
  *       Compare › Against last year fills. Entries go on the club's own General book; the house-league fees already on the season
  *       books (made by seed-prospect-demo.mjs) are budgeted against, not re-typed.
  *
- *   (e) ONLY with --closure-walk (Club Website Stage 2, Session 2C's walk): Lions Park (Diamonds 1 and 2) added to the club's
+ *   (e) ONLY with --closure-walk or --places-walk (Club Website Stage 2, Session 2C's walk): Lions Park (Diamonds 1 and 2) added to the club's
  *       places, and later today three house league games there (two on its diamonds, one typed by hand), the Ospreys' Public
  *       game there and one Fall Classic game on a Lions Park diamond. Without the switch the pictures are unchanged.
  *
@@ -485,8 +485,12 @@ ok(`${hlGames.length} house league games today in U11 and U15: a final, one past
 // removes the walk's closures (and their marks and Rainout records) and its house league games by fixed id; the rep game
 // and the Fall Classic's Lions Park diamond and game go with their team and tournament, which (a) and (b) remake each run.
 // The place stays (the prospect reset keeps places too), so a second run finds it. This is a walk task, not a demo step.
-const WALK_IDS = Array.from({ length: 3 }, (_, i) => `5a1e0000-0000-4000-8000-0000000e00${String(i + 1).padStart(2, '0')}`);
-const CLOSURE_WALK = process.argv.includes('--closure-walk');
+// --places-walk (Session 2D's walk, several places in one press) is the same day plus Lions Park's Diamond 3 with a house
+// league game on it (so two of three diamonds can close with a game left on), and a later game on Harbourview Park's
+// Diamond 2 (so a second park has one still to start through the walk). 2C's walk reads as before without it.
+const WALK_IDS = Array.from({ length: 5 }, (_, i) => `5a1e0000-0000-4000-8000-0000000e00${String(i + 1).padStart(2, '0')}`);
+const PLACES_WALK = process.argv.includes('--places-walk');
+const CLOSURE_WALK = PLACES_WALK || process.argv.includes('--closure-walk');
 if (CLOSURE_WALK) {
   head('(e) Close a place walk · Lions Park today');
   die('old walk rainouts', (await db.from('league_rainouts').delete().eq('org_id', ORG).not('closure_id', 'is', null)).error);
@@ -502,17 +506,21 @@ if (CLOSURE_WALK) {
   if (!lions) lions = await one('add Lions Park', db.from('org_venues').insert({ org_id: ORG, name: 'Lions Park', address: '40 Lions Park Rd, Kestrel Bay', notes: null, is_active: true }).select('id, name').single());
   const lionsFac = {};
   const haveFacs = await one('Lions Park diamonds', db.from('org_venue_facilities').select('id, name').eq('org_venue_id', lions.id));
-  for (const [i, name] of ['Diamond 1', 'Diamond 2'].entries()) {
+  for (const [i, name] of ['Diamond 1', 'Diamond 2', ...(PLACES_WALK ? ['Diamond 3'] : [])].entries()) {
     lionsFac[name] = haveFacs.find(f => f.name === name)?.id
       ?? (await one(`add Lions Park ${name}`, db.from('org_venue_facilities').insert({ org_venue_id: lions.id, org_id: ORG, name, facility_type: 'diamond', display_order: i }).select('id').single())).id;
   }
-  ok(`Lions Park (${lions.id}) with Diamond 1 and Diamond 2`);
+  ok(`Lions Park (${lions.id}) with ${Object.keys(lionsFac).join(', ')}`);
 
   // House league: two linked games and one typed by hand, in the published divisions, later today.
   const walkGames = [
     { div: 'U11', home: 'Lynx', away: 'Foxes', inMin: 240, at: { org_venue_id: lions.id, org_venue_facility_id: lionsFac['Diamond 1'], location: 'Lions Park · Diamond 1' } },
     { div: 'U15', home: 'Tides', away: 'Ravens', inMin: 240, at: { org_venue_id: lions.id, org_venue_facility_id: lionsFac['Diamond 2'], location: 'Lions Park · Diamond 2' } },
     { div: 'U11', home: 'Mariners', away: 'Ospreys', inMin: 300, at: { org_venue_id: null, org_venue_facility_id: null, location: 'Lions Park — Diamond 2' } },
+    ...(PLACES_WALK ? [
+      { div: 'U11', home: 'Ospreys', away: 'Foxes', inMin: 270, at: { org_venue_id: lions.id, org_venue_facility_id: lionsFac['Diamond 3'], location: 'Lions Park · Diamond 3' } },
+      { div: 'U15', home: 'Ravens', away: 'Tides', inMin: 285, at: diamond('Harbourview Park', 'Diamond 2') },
+    ] : []),
   ].map((g, i) => {
     const start = NOW.getTime() + g.inMin * MIN;
     return {
@@ -525,6 +533,7 @@ if (CLOSURE_WALK) {
   // As (d): invented games that stand for ones published with the schedule — remove the unsent "added" rows, never send.
   die('walk added changes', (await db.from('league_game_changes').delete().eq('org_id', ORG).in('game_id', WALK_IDS).is('sent_at', null)).error);
   ok('3 house league games at Lions Park later today: U11 and U15 on its diamonds, and one U11 typed "Lions Park — Diamond 2"');
+  if (PLACES_WALK) ok('and, for several places: a U11 game on Lions Park · Diamond 3 and a U15 game on Harbourview Park · Diamond 2 later today');
 
   // Rep: the Ospreys' Public game at Lions Park, after its away game ends.
   const repStart = NOW.getTime() + 330 * MIN;

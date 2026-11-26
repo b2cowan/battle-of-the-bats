@@ -575,6 +575,53 @@ the demos follow the product and are curated with `/demos`, never as a build ste
     underlined link beside This morning is now an outlined button at the right end of the page's first heading (The club
     today; This morning for those without that band), and it opens the window on the Overview. "Rainout" stays one word
     where it still appears (the older held Rainout's banner, help search words).
+- [x] **Stage 2 follow-up (close several places in one press) — 8 asks M1–M8, RULED 2026-11-26: all eight A** (owner:
+  "all A, go ahead and get the build prompt"). Raised by the owner on the built window ("should this not be multi select
+  for the parks?", then "did we cover the scenario if 2 out of 3 diamonds at a park are closed?"). Drawn 2026-11-26.
+  Page: [CLUB_WEBSITE_STAGE2_PLACES_DRAWINGS.html](CLUB_WEBSITE_STAGE2_PLACES_DRAWINGS.html),
+  https://claude.ai/artifact/6DBZd4dZaLwLMBnJA4TYps. Build prompt (Session 2D):
+  [CLUB_WEBSITE_STAGE2_PLACES_BUILD_PROMPT.md](CLUB_WEBSITE_STAGE2_PLACES_BUILD_PROMPT.md). Ruled A on each, in its
+  wording: **M1** a dropdown with ticks, and a row under it for each chosen park · **M2** from the schedule, the season's
+  parks already chosen, removed with ✕ · **M3** from the Venue library, nothing chosen · **M4** Day and Until above the
+  parks · **M5** All our fields replaces the parks with one line and locks the other ticks; removing it brings them back ·
+  **M6** the limit of 10 stays and the dropdown says so · **M7** on a phone, a bottom drawer with large rows and Done, for
+  places and diamonds · **M8** several diamonds at one park ticked and closed in one press (a small database change).
+  **M8 replaces K2's "two diamonds = two closures".**
+  - [x] **D1, RULED 2026-11-26: A** (owner: "D1 A, add it to the prompt"): a ticked game with no diamond recorded, when
+    two or more of that park's diamonds close, keeps its mark until every one is reopened, and the words name the park.
+    (B was: the first diamond owns it, as today.)
+  - [ ] **Session 2D BUILT and committed 2026-11-26; walk §577 is the owner's.** The owner said yes to the
+    recommendation the build session put before code ("yes to the recommendation, go ahead"): D1 by **marking every
+    matching closure** (mig 549: one mark row per closure the game is at; nothing written at Reopen), and the surfaces
+    the drawing did not show: the result "2 diamonds at Lions Park closed" and "Reopen them"; Reopen counts only the marks
+    that come off and adds "1 rep game stays marked while Diamond 1 at Lions Park is still closed…"; the Venue library
+    keeps a row per diamond; the Overview's **Places closed counts parks** ("2 diamonds at Lions Park"); Changes to send's
+    waiting banners unchanged; the Rain delay line and the rep email say the park ("2 diamonds at Lions Park"), the
+    email lists a D1 game once, and the last reopen says "the diamonds at Lions Park that were closed" reopened (/legal 2026-11-26, its words; passed otherwise). Mig 549 proved by a rolled-back dev dry
+    run (T1–T16, 35 of 35), then **applied to dev 2026-11-26** at the owner's word ("apply 549 to dev"), twice, read back,
+    35 of 35 on the applied schema; snapshots refreshed. Found in the build: the house league "Place closed" reason read
+    (`leagueClosureReasons`) has no caller, so D1's words have no house league surface to change. Two defects fixed with
+    it (an empty choice left the old games and an enabled button; a day the season uses no place left the old day's
+    parks). **⚠ Open for the owner (raised before code, not decided):** two SEPARATE presses on two diamonds of one park
+    behave differently from one press — the second lists the no-diamond game again, unticked, and covers it only if
+    ticked again (its coach then gets a second email); left unticked, reopening the first diamond clears the mark and
+    tells the coach, though the other is still closed.
+    **Close-out, 2026-11-26** (owner: "give me the prompt for simplify, review, design, publish the walk then commit"):
+    **/simplify** applied (one title in the phone drawer, one home for the 10-entry limit, the window's reads no longer
+    load the closed rows, dead helpers removed). **/review** (high-risk, five readers) applied: only the admin's own
+    ticks are remembered (the window's own tick had been carried, so narrowing a park left a "maybe" game ticked); one
+    cancellable re-read after a refusal; **Reopen now reads whom to tell after the stamp and claims a game's marks
+    together** (two diamonds reopened at once had told nobody; Reopen pressed again on an earlier diamond emailed twice),
+    pinned by `place-closure-reopen-told.test.ts`; a closure past its last day holds nothing; the Reopen window, the
+    Rain delay line (several parks: "Their diamonds") and the help's one-email sentence corrected. **/design** against the
+    drawing applied (the open Places list was cut off in the short window; a "Typed" line under a game picked from the
+    library). Mig 549 unchanged. Left, for the owner to know: a typed rep game naming two closed parks is marked by both
+    (changing it edits 549); a tournament's Rain delay picks every diamond linked to the park (older: diamonds link to a
+    park only); Close and Reopen check the role, not a person's module switches (older); a mixed Reopen email names the
+    one diamond (built so); past four lines the strip's "And N more places" counts diamonds; `leagueClosureReasons` has
+    never had a caller and can be deleted in a later tidy-up; the house league band heading in the window wraps (older).
+    **Walk §577** published (five walks, 45 steps; the seed's new `--places-walk`):
+    https://claude.ai/artifact/NSxAyvXrBcjaDXcsNxNSXr.
 - [x] **Stage 1 (game day on the club home) — 11 asks G1–G11, RULED 2026-11-25: all eleven A, as recommended, no
   notes** (owner paste-back: G1 A · G2 A · G3 A · G4 A · G5 A · G6 A · G7 A · G8 A · G9 A · G10 A · G11 A). G6 is A,
   not D: no "Updated" time line. Drawn 2026-11-25. Page:
@@ -1515,6 +1562,12 @@ the demos follow the product and are curated with `/demos`, never as a build ste
   in the shared waiting list; Delete’s record row and address release are still written twice; a preview’s files are
   cleared a second time in the run that removed it. The schema snapshots stay for the release (they carry other
   sessions’ migrations too).
+
+- 2026-11-26 — **Stage 2 follow-up drawn and ruled (nothing built).** The owner found that Close a place takes one park,
+  or all of the season's, so two of three needs two runs; then the same for two of three diamonds. Drawn in three
+  versions (an always-open tick list; the owner's dropdown with chosen rows; ticked diamonds), M1–M8 ruled all A (§7),
+  design check applied. Census from code for the build: the press and its window read both refuse the same park twice,
+  and one guard test reads the press from mig 539's file only. Session 2D's prompt written; D1 ruled A the same day.
 - 2026-11-26 — **Track P Session P4 closed: the walk passed 33 of 33 (§575; A 18, B 9, C 6; no notes).** Every session of
   Track P's build is committed, and the three with something to see (P2, P3, P4) are walked. Still owed before the first
   real preview on production: 547, the code and 548 live there. Before the email can send: the Privacy prospect

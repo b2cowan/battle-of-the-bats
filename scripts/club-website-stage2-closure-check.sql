@@ -8,7 +8,7 @@ BEGIN;
 CREATE TEMP TABLE r(t text, result text) ON COMMIT DROP;
 DO $$
 DECLARE
-  v_org uuid; v_s1 uuid; v_s2 uuid; v_v uuid; v_vname text; v_other uuid; v_f uuid;
+  v_org uuid; v_s1 uuid; v_s2 uuid; v_v uuid; v_vname text; v_other uuid; v_f uuid; v_v2 uuid; v_f1 uuid; v_f2 uuid;
   v_a uuid; v_c uuid; v_b uuid; v_d uuid; v_r uuid; v_r2 uuid;
   v_day date := (now() AT TIME ZONE 'America/Toronto')::date + 1;
   v_key uuid := gen_random_uuid(); v_key2 uuid := gen_random_uuid();
@@ -279,6 +279,40 @@ BEGIN
     AND place_closure_match('all', NULL, NULL, NULL, NULL, NULL, NULL) = 'linked'
     AND NOT place_name_in_typed('', 'Lions Park') AND NOT place_name_in_typed('Lions Park', '   ')
     AND place_name_in_typed('  Lions Park ', 'at lions park') THEN 'pass' ELSE 'a case differs' END;
+
+  -- T16 (mig 549, M8 and D1) several diamonds of one place in one press. A place with two diamonds or more: two of them
+  -- pass as two closures; the same diamond twice is refused; a rep game there with no diamond is marked by BOTH, and a
+  -- house league game there with no diamond belongs to the FIRST (one Rainout record, one email).
+  SELECT v.id INTO v_v2 FROM org_venues v WHERE v.org_id = v_org
+     AND (SELECT count(*) FROM org_venue_facilities f WHERE f.org_venue_id = v.id) >= 2 ORDER BY v.name LIMIT 1;
+  IF v_v2 IS NULL THEN INSERT INTO r VALUES ('T16 two diamonds of one place', 'setup: no place with two diamonds');
+  ELSE
+    SELECT f.id INTO v_f1 FROM org_venue_facilities f WHERE f.org_venue_id = v_v2 ORDER BY f.display_order, f.id LIMIT 1;
+    SELECT f.id INTO v_f2 FROM org_venue_facilities f WHERE f.org_venue_id = v_v2 AND f.id <> v_f1 ORDER BY f.display_order, f.id LIMIT 1;
+    SELECT p.refusal INTO v_x FROM org_place_closure_press(v_org, NULL, gen_random_uuid(),
+      jsonb_build_array(jsonb_build_object('venueId', v_v2, 'facilityId', v_f1), jsonb_build_object('venueId', v_v2, 'facilityId', v_f1)),
+      v_day, v_day, 'postponed', NULL, '[]', '[]', '[]') p;
+    INSERT INTO r SELECT 'T16a the same diamond twice', CASE WHEN v_x = 'invalid' THEN 'pass' ELSE coalesce(v_x, 'null') END;
+    UPDATE league_games SET status = 'scheduled', org_venue_id = v_v2, org_venue_facility_id = NULL, location = NULL WHERE id = v_a;
+    UPDATE rep_team_events SET org_venue_id = v_v2, org_venue_facility_id = NULL, place_id = NULL, location = NULL WHERE id = v_r;
+    DELETE FROM rep_event_closure_marks WHERE event_id = v_r;
+    DELETE FROM league_game_changes WHERE game_id = v_a AND sent_at IS NULL;
+    SELECT jsonb_agg(jsonb_build_object('id', g.id, 'seen', g.updated_at)) INTO v_league FROM league_games g WHERE g.id = v_a;
+    SELECT jsonb_agg(jsonb_build_object('id', e.id, 'seen', e.updated_at)) INTO v_rep FROM rep_team_events e WHERE e.id = v_r;
+    SELECT * INTO v_res FROM org_place_closure_press(v_org, NULL, gen_random_uuid(),
+      jsonb_build_array(jsonb_build_object('venueId', v_v2, 'facilityId', v_f1), jsonb_build_object('venueId', v_v2, 'facilityId', v_f2)),
+      v_day, v_day, 'postponed', NULL, v_league, v_rep, '[]') p;
+    INSERT INTO r SELECT 'T16b two diamonds of one place pass', CASE WHEN v_res.refusal IS NULL AND cardinality(v_res.closures) = 2
+      AND (SELECT count(*) FROM org_place_closures WHERE id = ANY (v_res.closures) AND scope = 'diamond' AND org_venue_id = v_v2) = 2 THEN 'pass'
+      ELSE format('%s %s', v_res.refusal, v_res.closures) END;
+    INSERT INTO r SELECT 'T16c D1: the rep game is marked by both', CASE WHEN
+      (SELECT count(*) FROM rep_event_closure_marks WHERE event_id = v_r AND closure_id = ANY (v_res.closures)) = 2 THEN 'pass'
+      ELSE format('%s marks', (SELECT count(*) FROM rep_event_closure_marks WHERE event_id = v_r AND closure_id = ANY (v_res.closures))) END;
+    INSERT INTO r SELECT 'T16d the house league game belongs to the first', CASE WHEN
+      (SELECT count(*) FROM league_rainouts WHERE v_a = ANY (game_ids) AND closure_id = ANY (v_res.closures)) = 1
+      AND (SELECT closure_id FROM league_rainouts WHERE v_a = ANY (game_ids) AND closure_id = ANY (v_res.closures)) = v_res.closures[1] THEN 'pass'
+      ELSE 'not one record on the first closure' END;
+  END IF;
 END $$;
 SELECT * FROM r ORDER BY t;
 ROLLBACK;

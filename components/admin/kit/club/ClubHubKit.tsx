@@ -39,8 +39,7 @@ import { hasCapability, hasBillingAccess } from '@/lib/roles';
 import { hasModuleEntitlement, isClubPlan } from '@/lib/module-entitlements';
 import { usePageTitle } from '@/lib/usePageTitle';
 import { hasOrgVenueLibrary } from '@/lib/plan-features';
-import { CLOSE_WORDS as CW, canClosePlace, type StaffClosure } from '@/lib/place-closure-window';
-import { closedPlaceName } from '@/lib/place-closures';
+import { CLOSE_WORDS as CW, canClosePlace, closedParks, type StaffClosure } from '@/lib/place-closure-window';
 import { usePlanGating } from '@/lib/use-plan-gating';
 import { closedProgramPlansSentence } from '@/lib/plan-config';
 import { joinWithAnd, pluralize, possessive } from '@/lib/utils';
@@ -314,10 +313,12 @@ export default function ClubHubKit() {
   }
   // "Places closed" (Club Website Stage 2): only while a closure shows on the site; its door is the Venue library, where
   // each closure's Reopen lives.
+  // Counted by park (Session 2D): two diamonds at one park are one place closed, "2 diamonds at Lions Park".
   if (closures.length > 0) {
+    const parks = closedParks(closures);
     extraCards.push({
-      key: 'places-closed', label: CW.overviewLabel, n: closures.length,
-      sub: CW.overviewSub([...new Set(closures.map(c => closedPlaceName(c) ?? CW.everyPlace))]), href: `${base}/org/venues`,
+      key: 'places-closed', label: CW.overviewLabel, n: parks.length,
+      sub: CW.overviewSub(parks), href: `${base}/org/venues`,
     });
   }
   const anythingWaits = briefCards.some(c => (brief?.counts[c.key] ?? 0) > 0) || extraCards.length > 0;

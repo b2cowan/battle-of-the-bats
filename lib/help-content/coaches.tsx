@@ -3483,7 +3483,7 @@ const coachesHelp: HelpPageContent = {
           title: 'When the club closes a field',
           content: (
             <>
-              <p>When your club closes one of its venues, or one diamond there, your games at it on those days aren&rsquo;t moved. They are marked, and you set the new date. The club emails the team&rsquo;s head coach, saying which place is closed and which games it holds. When the team has no head coach on file, every coach on the team gets it. Reply to it to reach the person at the club who closed the place.</p>
+              <p>When your club closes one of its venues, or some of its diamonds, your games at it on those days aren&rsquo;t moved. They are marked, and you set the new date. The club emails the team&rsquo;s head coach, saying which place is closed and which games it holds. When the team has no head coach on file, every coach on the team gets it. Reply to it to reach the person at the club who closed the place.</p>
               <ul>
                 <li><strong>On your schedule</strong>, the game shows <strong>Needs a new date</strong>. Open it and a note says, for example, <em>From Kestrel Bay Softball Association &middot; Lions Park closed on Sat, Nov 28. Give this game a new date with Edit, or cancel it.</em></li>
                 <li><strong>Families</strong> see the game marked <strong>Place closed</strong> in the family app and, when the team&rsquo;s schedule is set to Public, on the team&rsquo;s public page and the club&rsquo;s home page. A strip at the top of the club&rsquo;s site says the place is closed.</li>
