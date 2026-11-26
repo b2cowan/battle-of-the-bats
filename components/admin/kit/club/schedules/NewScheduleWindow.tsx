@@ -65,7 +65,7 @@ import {
   EMPTY_SETTINGS, figureOf as figureIn, groupsIn, newKey, positive, ruleApplies, ruleIsWhole, settingsDraftOf, settingsOf as settingsFromDraft, teamsIn, wholeWeekly,
   type DayOffRule, type FieldsRule, type SettingsDraft, type ShareRule, type WindowRule,
 } from '@/lib/club-schedule-form';
-import { PART_WORDS, SCHEDULE_REFUSALS as R, SCHEDULE_SCREEN_WORDS as W, sharingSentence, sharingWho } from '@/lib/club-schedule-words';
+import { PART_WORDS, SCHEDULE_REFUSALS as R, SCHEDULE_SCREEN_WORDS as W, rowPlacesWords, sharingSentence, sharingWho } from '@/lib/club-schedule-words';
 import { GAP_WORDS as GAPS, scheduleGaps, teamSubject, teamsWords } from '@/lib/club-schedule-gaps';
 import { bookedWords } from '@/lib/club-schedule-document';
 import { familyUseOf, partFromFor, partLabelFor, type PartRead } from '@/lib/club-schedule-family';
@@ -81,6 +81,7 @@ import {
 } from '@/lib/club-schedule-permit-rows';
 import { hoursNumber } from '@/lib/club-draft-bill';
 import type { DateOff, TimeBlock } from '@/lib/permit-time';
+import { fieldPartName, placesOfTicks, resolveTicks, sectionsOf, tickOptions, ticksOfPlaces, type FieldSections, type RowPlaces } from '@/lib/field-parts';
 import { Statement, Swatch } from './ScheduleParts';
 import sch from './Schedules.module.css';
 import FindTheTime, { draftDaysSaid, findFiltersFrom, findRowKey, useFreeTime, type FindFilters } from './FindTheTime';
@@ -93,7 +94,16 @@ import TimeInput from '@/components/shared/TimeInput';
 interface InputTeam { id: string; name: string; groupId: string | null; groupName: string | null; color: string | null; season: { id: string; name: string } | null; program?: string }
 /** House league's group in the table (Stage 11b): its own heading, after the rep teams' groups. */
 const PROGRAMS = '__programs__';
-interface InputPlace { venueId: string; venueName: string; facilities: { id: string; name: string }[] }
+/** `sections`: how the facility splits (Club schedules Stage 2; absent = not split) — its parts join the row's tick list. */
+interface InputPlace { venueId: string; venueName: string; facilities: { id: string; name: string; sections?: FieldSections }[] }
+/** A field named in parts (Stage 2): facility id → its parts (`section_mask`); a field not listed is named whole. */
+type PlaceParts = NonNullable<RowPlaces['parts']>;
+/** A place's parts kept to the fields it still names (a field dropped takes its parts with it), or nothing. */
+const partsWithin = (parts: Readonly<Record<string, readonly number[]>> | null | undefined, facilityIds: readonly string[]): PlaceParts | undefined => {
+  const out: PlaceParts = {};
+  for (const id of facilityIds) if (parts?.[id]?.length) out[id] = [...parts[id]];
+  return Object.keys(out).length ? out : undefined;
+};
 /** A permit as the Permits tick list reads it: its time, and its issuer for the option's second line (never its money). */
 interface InputPermit { id: string; name: string; issuer: string | null; startsOn: string; endsOn: string; blocks: TimeBlock[]; datesOff: DateOff[] }
 export interface NewInputs {
@@ -117,7 +127,7 @@ const offRows = (list: readonly { day: string; note: string | null; venueIds?: r
 interface HoursRow {
   key: string; weekdays: number[]; start: string; end: string;
   /** A permit's block on another venue or facilities than the form's (a town permit over several parks): kept as it was. */
-  place?: { venueId: string; facilityIds: string[] };
+  place?: { venueId: string; facilityIds: string[]; parts?: PlaceParts };
   /** A block's own dates inside the schedule's (stored, not offered on the form): kept, or the slots would run past them. */
   dates?: { fromDate: string | null; untilDate: string | null };
   /** The permit the row came from (a schedule on several permits, mig 487) — what prices it; absent for a typed row. */
@@ -146,6 +156,8 @@ interface Draft extends SettingsDraft {
   copyFrom: string;
   venueId: string;
   facilityIds: string[];
+  /** The Venue's fields named in parts, for rows with no place of their own (Club schedules Stage 2). */
+  facilityParts?: PlaceParts;
   startsOn: string;
   endsOn: string;
   rows: HoursRow[];
@@ -182,23 +194,30 @@ const emptyRow = (): HoursRow => ({ key: newKey('row'), weekdays: [], start: '',
 /** The time as the form holds it, from a set of blocks (a permit's, or a schedule's): the shared place on top, each
  *  block a row of hours — a block on another place keeps its own, and so does a block a permit gave (Settings…: it keeps
  *  its permit through a regenerate, mig 487). */
-function timeFromBlocks(blocks: readonly (TimeBlock & { permitId?: string | null })[], places: readonly InputPlace[], shift: (day: string) => string = d => d): Pick<Draft, 'venueId' | 'facilityIds' | 'rows'> {
+function timeFromBlocks(blocks: readonly (TimeBlock & { permitId?: string | null; parts?: Readonly<Record<string, readonly number[]>> | null })[], places: readonly InputPlace[], shift: (day: string) => string = d => d): Pick<Draft, 'venueId' | 'facilityIds' | 'facilityParts' | 'rows'> {
   const venueId = blocks[0]?.venueId ?? '';
   const venue = places.find(p => p.venueId === venueId);
   const every = (venue?.facilities ?? []).map(f => f.id);
   const facsOf = (b: TimeBlock) => facilitiesOf(b, places);
   const first = blocks[0] ? facsOf(blocks[0]) : every;
-  const same = (b: TimeBlock) => b.venueId === venueId && facsOf(b).slice().sort().join() === first.slice().sort().join();
+  // A row's parts (Stage 2) are part of its place: a row in parts is never "the same place" as one named whole.
+  const firstParts = blocks[0] ? partsWithin(blocks[0].parts, first) : undefined;
+  const same = (b: (typeof blocks)[number]) => b.venueId === venueId && facsOf(b).slice().sort().join() === first.slice().sort().join()
+    && JSON.stringify(partsWithin(b.parts, facsOf(b)) ?? {}) === JSON.stringify(firstParts ?? {});
   return {
     venueId,
     facilityIds: first,
+    facilityParts: firstParts,
     rows: blocks.length
-      ? blocks.map(b => ({
+      ? blocks.map(b => {
+        const parts = partsWithin(b.parts, facsOf(b));
+        return {
         key: newKey('row'), weekdays: [...b.weekdays], start: b.startTime.slice(0, 5), end: b.endTime.slice(0, 5),
-        ...(same(b) && !b.permitId ? {} : { place: { venueId: b.venueId, facilityIds: facsOf(b) } }),
+        ...(same(b) && !b.permitId ? {} : { place: { venueId: b.venueId, facilityIds: facsOf(b), ...(parts ? { parts } : {}) } }),
         ...(b.permitId ? { permitId: b.permitId } : {}),
         ...(b.fromDate || b.untilDate ? { dates: { fromDate: b.fromDate ? shift(b.fromDate) : null, untilDate: b.untilDate ? shift(b.untilDate) : null } } : {}),
-      }))
+        };
+      })
       : [emptyRow()],
   };
 }
@@ -230,7 +249,11 @@ const replacesTime = (d: Draft, rows: readonly HoursRow[]) => !d.permitIds.lengt
 /** The rows the admin typed, kept when more time comes in — each now names its place (the form's own venue, when it had none). */
 const typedRowsKept = (d: Draft, rows: readonly HoursRow[]): HoursRow[] =>
   rows.filter(r => r.weekdays.length || r.start || r.end)
-    .map(r => (r.place || !d.venueId ? r : { ...r, place: { venueId: d.venueId, facilityIds: [...d.facilityIds] } }));
+    .map(r => {
+      if (r.place || !d.venueId) return r;
+      const parts = partsWithin(d.facilityParts, d.facilityIds);
+      return { ...r, place: { venueId: d.venueId, facilityIds: [...d.facilityIds], ...(parts ? { parts } : {}) } };
+    });
 
 /** A "Facilities by group" rule keeps only the facilities the time now holds — the server refuses a rule naming another
  *  venue's (last year's schedule copied onto this year's permit somewhere else, or the Venue changed by hand). The rule
@@ -248,6 +271,8 @@ function fieldsInTime<D extends Pick<Draft, 'venueId' | 'rows' | 'fieldsBy'>>(d:
 interface DraftSlot {
   key: string; venueId: string; facilityId: string | null; startsAt: string; endsAt: string; day: string; weekday: number; week: string;
   startClock: string; endClock: string; prime: boolean; weight: number; heldBy: { ownerName: string; kind: string | null } | null; kept: boolean;
+  /** Its part of the field (Stage 2); absent: the whole field. */
+  sectionMask?: number;
 }
 interface DraftRead {
   strategy: string; label: string; round: number; score: number; lines: string[]; measures: DraftMeasure[];
@@ -471,6 +496,7 @@ export default function NewScheduleWindow({ q, orgSlug, orgName, startPermitId =
         ...d, permitIds: ids, rows, datesOff, startsOn, endsOn,
         venueId: moved ? placed.venueId : d.venueId,
         facilityIds: moved ? [...placed.facilityIds] : d.facilityIds,
+        facilityParts: moved ? partsWithin(placed.parts, placed.facilityIds) : d.facilityParts,
         name: d.name.trim() || !first ? d.name : first.name,
       }, inputs.places);
     });
@@ -521,6 +547,7 @@ export default function NewScheduleWindow({ q, orgSlug, orgName, startPermitId =
         ...d, permitIds: ids, rows, datesOff: [...(fresh ? [] : d.datesOff), ...offs],
         venueId: moved ? placed.venueId : d.venueId,
         facilityIds: moved ? [...placed.facilityIds] : d.facilityIds,
+        facilityParts: moved ? partsWithin(placed.parts, placed.facilityIds) : d.facilityParts,
         // Settings… holds the schedule's own dates as typed, but found time only ever WIDENS them (as ticking a permit does):
         // time found outside them would be cut to nothing, unsaid.
         startsOn: d.datesTyped.start ? (editing && isCalendarDate(d.startsOn) && lo < d.startsOn ? lo : d.startsOn) : widen && d.startsOn < lo ? d.startsOn : lo,
@@ -623,12 +650,24 @@ export default function NewScheduleWindow({ q, orgSlug, orgName, startPermitId =
     };
     const blocks = draft.rows.filter(rowDone).map(r => ({
       venueId: r.place?.venueId ?? draft.venueId, facilityIds: r.place?.facilityIds ?? facilityIds,
+      // A field ticked in parts (Club schedules Stage 2): the save writes a row per part; absent, every field whole. Kept to
+      // the row's fields below, after settling.
+      parts: r.place ? r.place.parts : draft.facilityParts,
       weekdays: r.weekdays, startTime: r.start, endTime: r.end,
       ...datesOf(r),
       permitId: r.permitId ?? null,
     }));
-    return several ? settleOverlaps(blocks, permitOrder, range) : { blocks, overlaps: [] };
-  }, [draft.rows, draft.venueId, draft.facilityIds, draft.startsOn, draft.endsOn, venue, permitOrder, partOf, permitById]);
+    const out = several ? settleOverlaps(blocks, permitOrder, range) : { blocks, overlaps: [] };
+    // Settling two permits' evenings can narrow a row's fields: its parts keep to the fields it still names, and a row with
+    // none sends no `parts` (the route refuses parts on a field the row doesn't name).
+    return {
+      ...out,
+      blocks: out.blocks.map(({ parts, ...b }) => {
+        const kept = partsWithin(parts, b.facilityIds);
+        return kept ? { ...b, parts: kept } : b;
+      }),
+    };
+  }, [draft.rows, draft.venueId, draft.facilityIds, draft.facilityParts, draft.startsOn, draft.endsOn, venue, permitOrder, partOf, permitById]);
   /** The places each permit holds, by venue (pick-fields, Stage 1): what a permit row's Facilities list offers, and what
    *  its card says is left off. */
   const permitHeld = useMemo(() => permitPlaces(inputs?.permits ?? [], new Map(places.map(p => [p.venueId, p.facilities.map(f => f.id)]))), [inputs, places]);
@@ -940,10 +979,16 @@ export default function NewScheduleWindow({ q, orgSlug, orgName, startPermitId =
     const byVenue = r.permitId ? permitHeld.get(r.permitId) : undefined;
     const units = byVenue ? byVenue.get(venueId) ?? [] : undefined;
     const every = (v?.facilities ?? []).filter(f => !units || units.includes(f.id));
-    const options = (v?.facilities ?? []).filter(f => every.includes(f) || ids.includes(f.id)).map(f => ({ id: f.id, label: f.name }));
-    const all = every.length > 0 && every.length === ids.length && every.every(f => ids.includes(f.id));
+    // A split field offers its parts in the same flat list (Club schedules Stage 2, round 2 tab 3): "Field 1 (whole)",
+    // "Field 1, quarters A–B" … A field not split keeps its plain name.
+    const fields = (v?.facilities ?? []).filter(f => every.includes(f) || ids.includes(f.id));
+    const options = tickOptions(fields.map(f => ({ id: f.id, name: f.name, sections: sectionsOf(f.sections) })));
+    const named = partsWithin(r.place ? r.place.parts : draft.facilityParts, ids);
+    const all = !named && every.length > 0 && every.length === ids.length && every.every(f => ids.includes(f.id));
     return {
-      venueId, venueName: v?.venueName ?? '', options, selected: all ? [] : ids.filter(id => options.some(o => o.id === id)),
+      venueId, venueName: v?.venueName ?? '', options,
+      selected: all ? [] : ticksOfPlaces({ facilityIds: ids, parts: named }).filter(id => options.some(o => o.id === id)),
+      order: fields.map(f => f.id), fields,
       everyIds: every.map(f => f.id), everyWords: facilityListWords(every.map(f => f.name)),
     };
   };
@@ -971,7 +1016,10 @@ export default function NewScheduleWindow({ q, orgSlug, orgName, startPermitId =
     const free = held.filter(f => !used.has(f));
     const row: HoursRow = {
       key: newKey('row'), weekdays: [...last.weekdays], start: last.start, end: last.end,
-      place: { venueId, facilityIds: free.length ? free : held.length ? held : [...(last.place?.facilityIds ?? [])] }, permitId,
+      place: free.length || held.length
+        ? { venueId, facilityIds: free.length ? free : held }
+        : { venueId, facilityIds: [...(last.place?.facilityIds ?? [])], ...(last.place?.parts ? { parts: { ...last.place.parts } } : {}) },
+      permitId,
       ...(last.permitDates ? { permitDates: { ...last.permitDates } } : p ? { permitDates: { fromDate: p.startsOn, untilDate: p.endsOn } } : {}),
       ...(last.dates ? { dates: { ...last.dates } } : {}),
     };
@@ -1006,9 +1054,13 @@ export default function NewScheduleWindow({ q, orgSlug, orgName, startPermitId =
         {at && (at.options.length ? (
           <PickField id={`ns-fac-${i}`} label={W.facilities} labelAside={at.venueName} options={at.options} selected={at.selected}
             everyLabel={r.permitId ? W.everyFacilityOnPermit : W.everyFacility} everyValue={at.everyWords}
+            valueWords={ticks => rowPlacesWords(at.fields, placesOfTicks(ticks, at.order))}
             onChange={ids => {
-              const order = at.options.map(o => o.id);
-              setRow(r.key, { place: { venueId: at.venueId, facilityIds: ids.length ? order.filter(id => ids.includes(id)) : at.everyIds.length ? at.everyIds : order } });
+              // A place and a place inside it are never both ticked: a part unticks its whole field, and the reverse.
+              const picked = ids.length ? placesOfTicks(resolveTicks(at.selected, ids), at.order) : null;
+              setRow(r.key, { place: picked
+                ? { venueId: at.venueId, ...picked }
+                : { venueId: at.venueId, facilityIds: at.everyIds.length ? at.everyIds : at.order } });
             }} />
         ) : (
           // A venue with no facilities listed: nothing to tick, so its name, as before.
@@ -1035,10 +1087,13 @@ export default function NewScheduleWindow({ q, orgSlug, orgName, startPermitId =
   };
   // A row added here is typed time (no permit) at the last row's place, its hours copied (drawing note: "a row typed here").
   const lastRow = draft.rows[draft.rows.length - 1];
+  const draftParts = partsWithin(draft.facilityParts, draft.facilityIds);
   const addHoursDoor = (
     <button type="button" className={sch.door} onClick={() => set({ rows: [...draft.rows, {
       key: newKey('row'), weekdays: [], start: lastRow?.start ?? '', end: lastRow?.end ?? '',
-      ...(cards && lastRow ? { place: lastRow.place ? { venueId: lastRow.place.venueId, facilityIds: [...lastRow.place.facilityIds] } : { venueId: draft.venueId, facilityIds: [...draft.facilityIds] } } : {}),
+      ...(cards && lastRow ? { place: lastRow.place
+        ? { venueId: lastRow.place.venueId, facilityIds: [...lastRow.place.facilityIds], ...(lastRow.place.parts ? { parts: { ...lastRow.place.parts } } : {}) }
+        : { venueId: draft.venueId, facilityIds: [...draft.facilityIds], ...(draftParts ? { parts: draftParts } : {}) } } : {}),
     }] })}>
       {/* Ask 4 A: beside the cards' own doors, this one says it is time with no permit. */}
       <Plus size={14} aria-hidden />{cards && permitOrder.length ? W.addHoursNoPermit : W.addHours}
@@ -1132,7 +1187,7 @@ export default function NewScheduleWindow({ q, orgSlug, orgName, startPermitId =
           <label className={ck.field} htmlFor="ns-venue">
             <span className={ck.label}>{W.venue}<span className={repKit.req} aria-hidden>*</span></span>
             <select id="ns-venue" className={ck.select} value={draft.venueId}
-              onChange={e => { const venueId = e.target.value; setDraft(d => fieldsInTime({ ...d, venueId, facilityIds: places.find(p => p.venueId === venueId)?.facilities.map(f => f.id) ?? [] }, places)); }}>
+              onChange={e => { const venueId = e.target.value; setDraft(d => fieldsInTime({ ...d, venueId, facilityIds: places.find(p => p.venueId === venueId)?.facilities.map(f => f.id) ?? [], facilityParts: undefined }, places)); }}>
               <option value="">{W.chooseVenue}</option>
               {places.map(p => <option key={p.venueId} value={p.venueId}>{p.venueName}</option>)}
             </select>
@@ -1142,21 +1197,30 @@ export default function NewScheduleWindow({ q, orgSlug, orgName, startPermitId =
               <span className={sch.labelLine}>
                 <span className={ck.label}>{W.facilities}</span>
                 <span className={sch.headDoors}>
-                  <button type="button" className={sch.door} onClick={() => set({ facilityIds: venue.facilities.map(f => f.id) })}>{W.all}</button>
+                  <button type="button" className={sch.door} onClick={() => set({ facilityIds: venue.facilities.map(f => f.id), facilityParts: undefined })}>{W.all}</button>
                   <span aria-hidden>·</span>
-                  <button type="button" className={sch.door} onClick={() => set({ facilityIds: [] })}>{W.none}</button>
+                  <button type="button" className={sch.door} onClick={() => set({ facilityIds: [], facilityParts: undefined })}>{W.none}</button>
                 </span>
               </span>
               <div className={sch.chips}>
-                {venue.facilities.map(f => {
-                  const on = draft.facilityIds.includes(f.id);
-                  return (
-                    <button key={f.id} type="button" className={sch.chip} aria-pressed={on}
-                      onClick={() => set({ facilityIds: on ? draft.facilityIds.filter(x => x !== f.id) : [...draft.facilityIds, f.id] })}>
-                      {on && <Check size={13} aria-hidden />}{f.name}
-                    </button>
-                  );
-                })}
+                {(() => {
+                  // A split field's parts are chips of their own, flat (Club schedules Stage 2, round 2 tab 3): ticking one
+                  // unticks the ground it overlaps.
+                  const order = venue.facilities.map(f => f.id);
+                  const ticks = ticksOfPlaces({ facilityIds: draft.facilityIds, parts: draftParts });
+                  return tickOptions(venue.facilities.map(f => ({ id: f.id, name: f.name, sections: sectionsOf(f.sections) }))).map(o => {
+                    const on = ticks.includes(o.id);
+                    return (
+                      <button key={o.id} type="button" className={sch.chip} aria-pressed={on}
+                        onClick={() => {
+                          const picked = placesOfTicks(on ? ticks.filter(x => x !== o.id) : resolveTicks(ticks, [...ticks, o.id]), order);
+                          set({ facilityIds: picked.facilityIds, facilityParts: picked.parts });
+                        }}>
+                        {on && <Check size={13} aria-hidden />}{o.label}
+                      </button>
+                    );
+                  });
+                })()}
               </div>
             </div>
           )}
@@ -1668,12 +1732,16 @@ export default function NewScheduleWindow({ q, orgSlug, orgName, startPermitId =
   const teamsInOrder = inputs?.teams ?? [];
   const colourOf = (id: string) => teamColour(teamsInOrder, id);
   const placeOf = useMemo(() => {
-    const out = new Map<string, string>();
+    const out = new Map<string, { name: string; sections: FieldSections }>();
     for (const p of places) {
-      out.set(placeKey(p.venueId, null), p.venueName);
-      for (const fac of p.facilities) out.set(placeKey(p.venueId, fac.id), fac.name);
+      out.set(placeKey(p.venueId, null), { name: p.venueName, sections: 1 });
+      for (const fac of p.facilities) out.set(placeKey(p.venueId, fac.id), { name: fac.name, sections: sectionsOf(fac.sections) });
     }
-    return (x: Pick<DraftSlot, 'venueId' | 'facilityId'>) => out.get(placeKey(x.venueId, x.facilityId)) ?? '';
+    // With its part (Stage 2, /review 2026-11-26): side A and side B at one start never read as two "Field 1" slots.
+    return (x: Pick<DraftSlot, 'venueId' | 'facilityId' | 'sectionMask'>) => {
+      const f = out.get(placeKey(x.venueId, x.facilityId));
+      return f ? fieldPartName(f.name, x.sectionMask, f.sections) : '';
+    };
   }, [places]);
   const measureClass = (m: DraftMeasure | undefined): 'good' | 'amber' | 'plain' => {
     if (!m) return 'plain';

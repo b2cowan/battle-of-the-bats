@@ -6,7 +6,7 @@ import { formatShortWeekdayDate, tournamentToday, utcToZonedInputs } from './tim
 import { weekdayOf } from './permit-time';
 import { isUuid } from './utils';
 import type { RepTeamEvent } from './types';
-import { slotPatterns } from './club-schedule-engine';
+import { slotPatterns, slotWeight } from './club-schedule-engine';
 import { keptRateOf, slotFigure, teamInstallments, type Installment, type PriceMode } from './club-schedule-bill';
 import { SCHEDULE_NOTICES, SCHEDULE_REFUSALS as R, patternLine, placeWords } from './club-schedule-words';
 import { billSlotsOf, computeBill, liveSlots, loadSchedule, readBillTerms, readClubTeams, schedulePrices, type ScheduleRow } from './club-schedule-server';
@@ -302,7 +302,7 @@ export async function practiceFigures(orgId: string, scheduleId: string, practic
   for (const p of practices) {
     const slot = slotById.get(p.club_schedule_slot_id);
     if (!slot) continue;
-    const startMs = Date.parse(slot.startsAt), endMs = Date.parse(slot.endsAt), weight = prices.weightOf(slot.facilityId, slot.permitId);
+    const startMs = Date.parse(slot.startsAt), endMs = Date.parse(slot.endsAt), weight = slotWeight(prices.weightOf, slot.facilityId, slot.sectionMask, slot.permitId);
     const scale = rateOf ? rateOf({ day: '', startMs, endMs, weight, teamIds: slot.teamIds, permitId: prices.priceKeyOf(slot.permitId ?? null) }) : null;
     const f = slotFigure({ startMs, endMs, weight, teams: slot.teamIds.length, scale });
     figures.push({ eventId: p.id, slotId: slot.id, startsAt: slot.startsAt, endsAt: slot.endsAt, pricedMinutes: Math.round(f.pricedMinutes * 10_000) / 10_000, cents: f.cents });

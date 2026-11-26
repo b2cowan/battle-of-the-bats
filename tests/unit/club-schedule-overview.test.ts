@@ -4,7 +4,7 @@ import { matchesScheduleTeamFilter, orderScheduleAsks, scheduleOverview } from '
 import type { ScheduleAsk, SlotView } from '../../lib/club-schedule-view.ts';
 
 const days = ['2026-10-04', '2026-10-11', '2026-10-18', '2026-10-25'];
-const places = [{ key: 'dome|f1', venueId: 'dome', facilityId: 'f1', name: 'Field 1', venueName: 'Lakeshore Dome' }];
+const places = [{ key: 'dome|f1', venueId: 'dome', facilityId: 'f1', name: 'Field 1', venueName: 'Lakeshore Dome', sectionMask: 0, fieldKey: 'dome|f1', sub: 'Lakeshore Dome', fullName: 'Field 1' }];
 const slot = (day: string, teamIds: string[], over: Partial<SlotView> = {}): SlotView => ({
   id: day, key: `dome|f1|${day}`, venueId: 'dome', facilityId: 'f1', startsAt: `${day}T12:00:00Z`, endsAt: `${day}T13:30:00Z`,
   day, weekday: 7, week: day, startClock: '08:00', endClock: '09:30', prime: false, weight: 1,

@@ -432,6 +432,9 @@ details.chGroup[open] .chToggle > span + span { display: inline; }
   font-size: var(--type-support); font-weight: 700; color: var(--text-primary); min-width: 0; overflow-wrap: anywhere;
 }
 .fc small { display: block; font-weight: 400; color: var(--text-tertiary); }
+/* A field's part (Stage 2): one step in under its field; a field used only in parts is a label across the row. */
+.fcPart { padding-left: 1.25rem; }
+.fcLabel { grid-column: 1 / -1; }
 .cc { display: flex; flex-direction: column; gap: 0.3rem; padding: 0.35rem; border-top: 1px solid var(--home-line); border-left: 1px solid var(--home-line); min-width: 0; }
 .ccNone { align-items: center; justify-content: center; color: var(--text-tertiary); font-size: var(--type-support); }
 

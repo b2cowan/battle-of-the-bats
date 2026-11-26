@@ -19,12 +19,15 @@ import { PART_WORDS, changeGroups, changeLine, type ChangeGroup, type TeamChange
 import { addCalendarDays, formatStoredDate } from './timezone';
 import type { ScheduleView, SlotView } from './club-schedule-server';
 import type { TeamResult } from './club-schedule-engine';
+import { samePlace } from './field-parts';
 
 /** A slot as the family check reads it: its place, its instants, its holders. */
 export interface FamilySlot {
   id: string;
   venueId: string;
   facilityId: string | null;
+  /** The field's part (Stage 2; 0 or absent = whole): side A and side B of one field are two places. */
+  sectionMask?: number | null;
   startMs: number;
   endMs: number;
   teamIds: readonly string[];
@@ -62,7 +65,8 @@ export function familyClashes(own: readonly FamilySlot[], others: readonly Famil
     for (let i = lo; i < theirs.length && theirs[i].s.startMs < mine.endMs; i++) {
       const { s, name } = theirs[i];
       if (!overlaps(mine, s)) continue;
-      if (placeWith == null && s.venueId === mine.venueId && (s.facilityId ?? null) === (mine.facilityId ?? null)) placeWith = name;
+      if (placeWith == null && s.venueId === mine.venueId
+        && ((s.facilityId == null && mine.facilityId == null) || samePlace(s, mine))) placeWith = name;
       for (const t of mineTeams) if (s.teamIds.includes(t) && !teams.some(x => x.teamId === t)) teams.push({ teamId: t, with: name });
     }
     if (placeWith != null || teams.length) out.set(mine.id, { placeWith, teams });
@@ -71,8 +75,8 @@ export function familyClashes(own: readonly FamilySlot[], others: readonly Famil
 }
 
 /** A page slot as the family check reads it. */
-const familySlotOf = (s: Pick<SlotView, 'id' | 'venueId' | 'facilityId' | 'startsAt' | 'endsAt' | 'teamIds'>): FamilySlot => ({
-  id: s.id, venueId: s.venueId, facilityId: s.facilityId, startMs: Date.parse(s.startsAt), endMs: Date.parse(s.endsAt), teamIds: s.teamIds,
+const familySlotOf = (s: Pick<SlotView, 'id' | 'venueId' | 'facilityId' | 'sectionMask' | 'startsAt' | 'endsAt' | 'teamIds'>): FamilySlot => ({
+  id: s.id, venueId: s.venueId, facilityId: s.facilityId, sectionMask: s.sectionMask, startMs: Date.parse(s.startsAt), endMs: Date.parse(s.endsAt), teamIds: s.teamIds,
 });
 
 /** An added part as the schedule's page reads it: its row's facts and its own view (its slots, teams, places, fairness). */

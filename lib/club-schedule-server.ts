@@ -17,7 +17,7 @@ import { readAmount } from './club-bill-split';
 import { clock, fieldPrices, overlappingBlocks, shareOf, type DateOff, type PlaceUnit } from './permit-time';
 import { permitPlaces, rowOffItsPermit, savedPermitPlaces } from './club-schedule-permit-rows';
 import {
-  ageOf, cutSlots, heldSlots, seatCounts, shareTargets, slotKeyOf, teamResults, teamTwice,
+  ageOf, cutSlots, heldSlots, seatCounts, shareTargets, slotKeyOf, slotWeight, teamResults, teamSlotSizes, teamTwice,
   type EngineInput, type EngineTeam, type PoolBooking, type ScheduleBlock, type ScheduleTime, type Slot, type TeamBooking, type TeamResult,
   type WeightOf,
 } from './club-schedule-engine';
@@ -33,6 +33,7 @@ import { clubDay, keptHandBacks, waitingAsksOfSchedule, type KeptHandBack } from
 import { scheduleMoney, type ScheduleMoney } from './club-money-reads';
 import { HOUSE_LEAGUE, isProgramHolder, storedHolders, teamsOnly } from './club-schedule-holders';
 import { engineSlotOf, pinnedSlots, slotsWithPinned, timeKeeping, type KeepChange, type Keeping } from './club-schedule-keep';
+import { isLegalMask, maskOf, partsOverlap, sortMasks, STORABLE_MASKS, WHOLE, type FieldSections } from './field-parts';
 
 /**
  * ══════════════════════════════════════════════════════════════════════════════════════════════
@@ -242,6 +243,8 @@ export interface StoredSlot {
   key: string;
   venueId: string;
   facilityId: string | null;
+  /** The field's part it stands on (Club schedules Stage 2, mig 541; 0 = the whole field). */
+  sectionMask: number;
   blockId: string | null;
   /** Its row's permit (`org_time_blocks.from_permit_id`, mig 487) — what prices it; null for a typed row. */
   permitId: string | null;
@@ -264,8 +267,8 @@ export interface LoadedSchedule {
 /** The schedule's own blocks (the one model of time), in its order, with their facilities. */
 async function readScheduleTime(orgId: string, scheduleId: string, row: Pick<ScheduleRow, 'starts_on' | 'ends_on'>): Promise<LoadedSchedule['time']> {
   const [blocks, offs] = await Promise.all([
-    fetchAll<{ id: string; org_venue_id: string; from_permit_id: string | null; weekdays: number[]; start_time: string; end_time: string; from_date: string | null; until_date: string | null; sort_order: number; org_time_block_facilities: { facility_id: string }[] | null }>((a, b) => supabaseAdmin
-      .from('org_time_blocks').select('id, org_venue_id, from_permit_id, weekdays, start_time, end_time, from_date, until_date, sort_order, org_time_block_facilities(facility_id)')
+    fetchAll<{ id: string; org_venue_id: string; from_permit_id: string | null; weekdays: number[]; start_time: string; end_time: string; from_date: string | null; until_date: string | null; sort_order: number; org_time_block_facilities: BlockFacilityRow[] | null }>((a, b) => supabaseAdmin
+      .from('org_time_blocks').select('id, org_venue_id, from_permit_id, weekdays, start_time, end_time, from_date, until_date, sort_order, org_time_block_facilities(facility_id, section_mask)')
       .eq('org_id', orgId).eq('schedule_id', scheduleId).order('sort_order').order('id').range(a, b)),
     // Each date off's parks (mig 488): none = All venues.
     fetchAll<{ day: string; note: string | null; org_time_date_off_venues: { org_venue_id: string }[] | null }>((a, b) => supabaseAdmin.from('org_time_dates_off')
@@ -274,13 +277,33 @@ async function readScheduleTime(orgId: string, scheduleId: string, row: Pick<Sch
   return {
     startsOn: row.starts_on, endsOn: row.ends_on,
     blocks: blocks.map((b): ScheduleBlock => ({
-      id: b.id, venueId: b.org_venue_id, permitId: b.from_permit_id, facilityIds: (b.org_time_block_facilities ?? []).map(f => f.facility_id),
+      id: b.id, venueId: b.org_venue_id, permitId: b.from_permit_id, ...blockPlaces(b.org_time_block_facilities),
       weekdays: [...(b.weekdays ?? [])].map(Number).sort((x, y) => x - y), startTime: clock(b.start_time), endTime: clock(b.end_time),
       fromDate: b.from_date, untilDate: b.until_date,
     })),
     blockIds: blocks.map(b => b.id),
     datesOff: offs.map((o): DateOff => ({ day: o.day, note: o.note, venueIds: (o.org_time_date_off_venues ?? []).map(v => v.org_venue_id).sort() })),
   };
+}
+
+/** A row of time's facility rows as stored (mig 541: one per field and part — primary key (block, facility, mask)). */
+type BlockFacilityRow = { facility_id: string; section_mask?: number | null };
+
+/**
+ * A ROW OF TIME'S PLACES, read once for every reader (Club schedules Stage 2): each field ONCE in `facilityIds` — a row
+ * that names Field 1's two sides holds two rows for Field 1, and a reader that listed them would count Field 1 twice —
+ * and, for a field named in parts, which (`parts`). A row naming only whole fields reads exactly as it always did.
+ */
+export function blockPlaces(rows: readonly BlockFacilityRow[] | null | undefined): { facilityIds: string[]; parts?: Record<string, number[]> } {
+  const facilityIds: string[] = [];
+  const parts: Record<string, number[]> = {};
+  for (const r of rows ?? []) {
+    if (!facilityIds.includes(r.facility_id)) facilityIds.push(r.facility_id);
+    const m = maskOf(r.section_mask);
+    if (m !== WHOLE) (parts[r.facility_id] ??= []).push(m);
+  }
+  for (const k of Object.keys(parts)) parts[k] = sortMasks(parts[k]);
+  return Object.keys(parts).length ? { facilityIds, parts } : { facilityIds };
 }
 
 /** A slot's program row as PostgREST embeds it (one-to-one on the slot: an object, or an array from an older client). */
@@ -303,8 +326,8 @@ export async function loadSchedule(orgId: string, scheduleId: string): Promise<L
   const row = data as ScheduleRow;
   const [time, slotRows] = await Promise.all([
     readScheduleTime(orgId, scheduleId, row),
-    fetchAll<{ id: string; org_venue_id: string; facility_id: string | null; block_id: string | null; starts_at: string; ends_at: string; locked: boolean; moved_by_hand: boolean; handed_back_at: string | null; handed_back_by: string | null; handed_back_team_id: string | null; removed_at: string | null; club_schedule_slot_teams: { team_id: string }[] | null; club_schedule_slot_programs: ProgramEmbed }>((a, b) => supabaseAdmin
-      .from('club_schedule_slots').select('id, org_venue_id, facility_id, block_id, starts_at, ends_at, locked, moved_by_hand, handed_back_at, handed_back_by, handed_back_team_id, removed_at, club_schedule_slot_teams(team_id), club_schedule_slot_programs(program)')
+    fetchAll<{ id: string; org_venue_id: string; facility_id: string | null; section_mask: number | null; block_id: string | null; starts_at: string; ends_at: string; locked: boolean; moved_by_hand: boolean; handed_back_at: string | null; handed_back_by: string | null; handed_back_team_id: string | null; removed_at: string | null; club_schedule_slot_teams: { team_id: string }[] | null; club_schedule_slot_programs: ProgramEmbed }>((a, b) => supabaseAdmin
+      .from('club_schedule_slots').select('id, org_venue_id, facility_id, section_mask, block_id, starts_at, ends_at, locked, moved_by_hand, handed_back_at, handed_back_by, handed_back_team_id, removed_at, club_schedule_slot_teams(team_id), club_schedule_slot_programs(program)')
       .eq('org_id', orgId).eq('schedule_id', scheduleId).order('starts_at').order('id').range(a, b)),
   ]);
   const read = readScheduleSettings(row.settings);
@@ -314,7 +337,8 @@ export async function loadSchedule(orgId: string, scheduleId: string): Promise<L
     settings: read.ok ? read.value : defaultSettings(),
     time,
     slots: slotRows.map((s): StoredSlot => ({
-      id: s.id, key: slotKeyOf(s.org_venue_id, s.facility_id, Date.parse(s.starts_at)), venueId: s.org_venue_id, facilityId: s.facility_id,
+      id: s.id, key: slotKeyOf(s.org_venue_id, s.facility_id, Date.parse(s.starts_at), s.section_mask), venueId: s.org_venue_id, facilityId: s.facility_id,
+      sectionMask: maskOf(s.section_mask),
       blockId: s.block_id, permitId: s.block_id ? permitOfBlock.get(s.block_id) ?? null : null,
       startsAt: s.starts_at, endsAt: s.ends_at, teamIds: holdersOf(s),
       locked: s.locked, movedByHand: s.moved_by_hand,
@@ -487,7 +511,7 @@ export async function engineContext(orgId: string, p: {
   const ownEvent = (slot: string | null | undefined) => !!slot && own.has(slot);
   const poolBookings: PoolBooking[] = pool.bookings
     .filter(b => !ownEvent(b.clubSlotOf))
-    .map(b => ({ key: b.key, venueId: b.venueId, facilityId: b.facilityId, startMs: b.startMs, endMs: b.endMs, ownerName: b.ownerName, kind: b.kind }));
+    .map(b => ({ key: b.key, venueId: b.venueId, facilityId: b.facilityId, sectionMask: b.sectionMask ?? WHOLE, startMs: b.startMs, endMs: b.endMs, ownerName: b.ownerName, kind: b.kind }));
   const teamBookings = new Map<string, TeamBooking[]>();
   const add = (teamId: string, startIso: string, endIso: string | null, isGame: boolean) => {
     const startMs = Date.parse(startIso);
@@ -515,6 +539,11 @@ export function checkTime(time: ScheduleTime, settings: ScheduleSettings, places
   for (const b of time.blocks) {
     if (!places.venueName.has(b.venueId)) return no('place_gone', 'A venue in this schedule isn’t in the Venue library any more.');
     if (b.facilityIds.some(f => !(places.byVenue.get(b.venueId) ?? []).includes(f))) return no('place_gone', 'A facility in this schedule isn’t at its venue any more.');
+    // A part the field's split no longer offers (the split changed under the form — Stage 2): said before the database's
+    // own refusal (`part_illegal`), in the same words.
+    for (const [f, masks] of Object.entries(b.parts ?? {})) {
+      if (!masks.every(m => isLegalMask(m, places.sectionsOf.get(f) ?? 1))) return no('part_gone', R.partGone);
+    }
   }
   if (overlappingBlocks({ blocks: time.blocks }, places.byVenue)) return no('overlapping_blocks', R.overlappingBlocks);
   const slots = cutSlots(time, { slotMinutes: settings.slotMinutes, changeoverMinutes: settings.changeoverMinutes, prime: settings.prime, venueFacilities: places.byVenue, weightOf });
@@ -533,11 +562,11 @@ function cutKeeping(time: ScheduleTime, settings: ScheduleSettings, places: Club
   const checked = checkTime(time, settings, places, weightOf);
   if (!checked.ok) return checked;
   const slots = keep
-    ? slotsWithPinned(checked.slots, { ...keep, pinned: keep.pinned.map(s => ({ ...s, weight: weightOf(s.facilityId, s.permitId ?? null) })) }, places.byVenue)
+    ? slotsWithPinned(checked.slots, { ...keep, pinned: keep.pinned.map(s => ({ ...s, weight: slotWeight(weightOf, s.facilityId, s.sectionMask, s.permitId) })) }, places.byVenue)
     : checked.slots;
   if (!family.length) return { ok: true, slots };
   const pinned = new Set(keep?.pinned.map(s => s.key) ?? []);
-  const held = familyClashes(slots.map(s => ({ id: s.key, venueId: s.venueId, facilityId: s.facilityId, startMs: s.startMs, endMs: s.endMs, teamIds: [] })), family);
+  const held = familyClashes(slots.map(s => ({ id: s.key, venueId: s.venueId, facilityId: s.facilityId, sectionMask: s.sectionMask, startMs: s.startMs, endMs: s.endMs, teamIds: [] })), family);
   const free = slots.filter(s => pinned.has(s.key) || !held.get(s.key)?.placeWith);
   // The time was given; the family holds all of it. Say that, not "give the schedule its time first".
   return free.length ? { ok: true, slots: free } : no('part_time_all_held', R.partTimeAllHeld);
@@ -556,28 +585,29 @@ export async function familyOthers(orgId: string, row: Pick<ScheduleRow, 'id' | 
 export const wholeFamily = (orgId: string, rootId: string): Promise<FamilyMember[]> => familyMembers(orgId, rootId, null);
 
 async function familyMembers(orgId: string, root: string, except: string | null): Promise<FamilyMember[]> {
-  // A slot taken off but not yet sent (`removed_at` set) still holds its PLACE until Send the changes lands: the database's
-  // place-and-start uniqueness (mig 491) counts it, so the cut must not offer it. It holds no TEAM (its teams go with it).
-  const slots = await fetchAll<{ id: string; schedule_id: string; org_venue_id: string; facility_id: string | null; starts_at: string; ends_at: string; removed_at: string | null; club_schedule_slot_teams: { team_id: string }[] | null; club_schedule_slot_programs: ProgramEmbed; club_schedules: { name: string; part_label: string | null } | null }>((a, b) => {
+  // A slot taken off but not yet sent (`removed_at` set) still holds its PLACE until Send the changes lands, so the cut must
+  // not offer it. (Mig 541's overlap floor ignores removed rows, so this is stricter than the database, deliberately: a
+  // taken-off slot comes back if the change is undone.) It holds no TEAM (its teams go with it).
+  const slots = await fetchAll<{ id: string; schedule_id: string; org_venue_id: string; facility_id: string | null; section_mask: number | null; starts_at: string; ends_at: string; removed_at: string | null; club_schedule_slot_teams: { team_id: string }[] | null; club_schedule_slot_programs: ProgramEmbed; club_schedules: { name: string; part_label: string | null } | null }>((a, b) => {
     const read = supabaseAdmin
       .from('club_schedule_slots')
-      .select('id, schedule_id, org_venue_id, facility_id, starts_at, ends_at, removed_at, club_schedule_slot_teams(team_id), club_schedule_slot_programs(program), club_schedules(name, part_label)')
+      .select('id, schedule_id, org_venue_id, facility_id, section_mask, starts_at, ends_at, removed_at, club_schedule_slot_teams(team_id), club_schedule_slot_programs(program), club_schedules(name, part_label)')
       .eq('org_id', orgId).eq('family_id', root);
     return (except ? read.neq('schedule_id', except) : read).order('id').range(a, b);
   });
   const members = new Map<string, FamilyMember & { slots: FamilySlot[] }>();
   for (const s of slots) {
     const m = members.get(s.schedule_id) ?? members.set(s.schedule_id, { id: s.schedule_id, name: s.club_schedules?.part_label ?? s.club_schedules?.name ?? '', slots: [] }).get(s.schedule_id)!;
-    m.slots.push({ id: s.id, venueId: s.org_venue_id, facilityId: s.facility_id, startMs: Date.parse(s.starts_at), endMs: Date.parse(s.ends_at), teamIds: s.removed_at ? [] : holdersOf(s) });
+    m.slots.push({ id: s.id, venueId: s.org_venue_id, facilityId: s.facility_id, sectionMask: maskOf(s.section_mask), startMs: Date.parse(s.starts_at), endMs: Date.parse(s.ends_at), teamIds: s.removed_at ? [] : holdersOf(s) });
   }
   return [...members.values()];
 }
 
 /** A team the rest of the family already gives that time to, among the slots and the teams a change asks for: its words
  *  ("14U AA already has a practice then, in Time added Nov 16."), or null. */
-export function familyTeamTwice(slots: readonly Pick<Slot, 'key' | 'venueId' | 'facilityId' | 'startMs' | 'endMs'>[], teamsOf: (key: string) => readonly string[], family: readonly FamilyMember[], nameOf: (teamId: string) => string): string | null {
+export function familyTeamTwice(slots: readonly Pick<Slot, 'key' | 'venueId' | 'facilityId' | 'sectionMask' | 'startMs' | 'endMs'>[], teamsOf: (key: string) => readonly string[], family: readonly FamilyMember[], nameOf: (teamId: string) => string): string | null {
   if (!family.length) return null;
-  const clash = familyClashes(slots.map(s => ({ id: s.key, venueId: s.venueId, facilityId: s.facilityId, startMs: s.startMs, endMs: s.endMs, teamIds: teamsOf(s.key) })), family);
+  const clash = familyClashes(slots.map(s => ({ id: s.key, venueId: s.venueId, facilityId: s.facilityId, sectionMask: s.sectionMask, startMs: s.startMs, endMs: s.endMs, teamIds: teamsOf(s.key) })), family);
   for (const c of clash.values()) if (c.teams.length) return PART_WORDS.teamTwiceInFamily(nameOf(c.teams[0].teamId), c.teams[0].with);
   return null;
 }
@@ -729,7 +759,10 @@ export function schedulePricing(row: Pick<ScheduleRow, 'bill_price_mode'>, price
 }
 
 export interface SlotView {
-  id: string; key: string; venueId: string; facilityId: string | null; startsAt: string; endsAt: string;
+  id: string; key: string; venueId: string; facilityId: string | null;
+  /** The field's part it stands on (Club schedules Stage 2; 0 or absent = the whole field). Its words come from the field's split. */
+  sectionMask?: number;
+  startsAt: string; endsAt: string;
   day: string; weekday: number; week: string; startClock: string; endClock: string; prime: boolean; weight: number;
   teamIds: string[]; locked: boolean; movedByHand: boolean;
   /** The permit that prices it (its row's, else the price permit; Session C) — the bill's key, never a price. */
@@ -862,7 +895,8 @@ export interface ScheduleView {
   time: { blocks: ScheduleBlock[]; datesOff: DateOff[] };
   /** Names of the parks a date off names that no row uses (not in `places`), so a printed note can still say them. */
   offParkNames: Record<string, string>;
-  places: { venueId: string; venueName: string; facilities: { id: string; name: string }[] }[];
+  /** Each facility with how it splits (Club schedules Stage 2: 1 not split, 2 two sides, 4 four quarters). */
+  places: { venueId: string; venueName: string; facilities: { id: string; name: string; sections?: FieldSections }[] }[];
   teams: { id: string; name: string; groupId: string | null; groupName: string | null; color: string | null; season: ClubTeam['season'] }[];
   slots: SlotView[];
   fairness: {
@@ -994,7 +1028,7 @@ export async function scheduleView(orgId: string, loaded: LoadedSchedule, canMon
   const kept = new Set(stored.filter(s => s.locked || s.movedByHand).map(s => s.key));
   const counts = seatCounts(slots, loaded.settings, held, kept);
   const seats = counts.capacity;
-  const targets = shareTargets(ticked, loaded.settings, counts);
+  const targets = shareTargets(ticked, loaded.settings, counts, { sizeOf: teamSlotSizes(slots, ticked, loaded.settings.rules) });
   const results = teamResults(slots, assignments, allTeams, targets);
   // Slots given to a team — a shared slot once (Stage 11c: "Handed out 250 of 300").
   const handedOut = stored.filter(s => s.teamIds.length > 0).length;
@@ -1013,7 +1047,7 @@ export async function scheduleView(orgId: string, loaded: LoadedSchedule, canMon
       .filter(v => !placeIds.includes(v) && ctx.places.venueName.has(v)).map(v => [v, ctx.places.venueName.get(v)!])),
     places: placeIds.map(v => ({
       venueId: v, venueName: ctx.places.venueName.get(v) ?? '',
-      facilities: (ctx.places.byVenue.get(v) ?? []).map(f => ({ id: f, name: ctx.places.facilityName.get(f) ?? '' })),
+      facilities: (ctx.places.byVenue.get(v) ?? []).map(f => ({ id: f, name: ctx.places.facilityName.get(f) ?? '', sections: ctx.places.sectionsOf.get(f) ?? 1 })),
     })),
     teams: allTeams.map(t => ({ id: t.id, name: t.name, groupId: t.groupId, groupName: t.groupName, color: t.color, season: t.season })),
     teamOrder: teams.map(t => t.id),
@@ -1021,7 +1055,7 @@ export async function scheduleView(orgId: string, loaded: LoadedSchedule, canMon
       const e = slots[i];
       const h = held.get(s.key);
       return {
-        id: s.id, key: s.key, venueId: s.venueId, facilityId: s.facilityId, startsAt: s.startsAt, endsAt: s.endsAt,
+        id: s.id, key: s.key, venueId: s.venueId, facilityId: s.facilityId, sectionMask: s.sectionMask, startsAt: s.startsAt, endsAt: s.endsAt,
         day: e.day, weekday: e.weekday, week: e.week, startClock: e.startClock, endClock: e.endClock, prime: e.prime, weight: e.weight,
         teamIds: s.teamIds, locked: s.locked, movedByHand: s.movedByHand, pricePermitId: billSlots[i].permitId ?? null, rowPermitId: s.permitId,
         handedBack: s.handedBack ? { at: s.handedBack.at, teamId: s.handedBack.teamId } : null,
@@ -1124,7 +1158,7 @@ export async function scheduleList(orgId: string): Promise<ScheduleListRow[]> {
   for (const x of all) if (x.part_of_schedule_id) (partsOf.get(x.part_of_schedule_id) ?? partsOf.set(x.part_of_schedule_id, []).get(x.part_of_schedule_id)!).push(x);
   const ids = all.map(r => r.id);
   const [blocks, slots, places] = await Promise.all([
-    fetchAllIn<{ schedule_id: string; org_venue_id: string; org_time_block_facilities: { facility_id: string }[] | null }>(ids, (c, a, b) => supabaseAdmin
+    fetchAllIn<{ schedule_id: string; org_venue_id: string; org_time_block_facilities: BlockFacilityRow[] | null }>(ids, (c, a, b) => supabaseAdmin
       .from('org_time_blocks').select('schedule_id, org_venue_id, org_time_block_facilities(facility_id)').eq('org_id', orgId).in('schedule_id', c).order('id').range(a, b)),
     fetchAllIn<{ schedule_id: string; club_schedule_slot_teams: { team_id: string }[] | null; club_schedule_slot_programs: ProgramEmbed }>(ids, (c, a, b) => supabaseAdmin
       .from('club_schedule_slots').select('schedule_id, club_schedule_slot_teams(team_id), club_schedule_slot_programs(program)').eq('org_id', orgId).in('schedule_id', c).is('removed_at', null).order('id').range(a, b)),
@@ -1144,7 +1178,8 @@ export async function scheduleList(orgId: string): Promise<ScheduleListRow[]> {
     const placeWords = blocks.filter(b => family.has(b.schedule_id)).map(b => {
       const venue = places.venueName.get(b.org_venue_id) ?? '';
       // In the venue's order and said as the page says it: "Lakeshore Dome · Fields 1–6" (/design, 2026-10-11).
-      const facilities = (b.org_time_block_facilities ?? []).map(f => places.facilityName.get(f.facility_id)).filter((x): x is string => !!x)
+      // Each field once: a row in parts holds a facility row per part (mig 541).
+      const facilities = blockPlaces(b.org_time_block_facilities).facilityIds.map(id => places.facilityName.get(id)).filter((x): x is string => !!x)
         .sort((x, y) => x.localeCompare(y, 'en-CA', { numeric: true }));
       return facilities.length ? `${venue} · ${facilities.length >= 3 ? facilityListWords(facilities) : facilities.join(', ')}` : venue;
     });
@@ -1167,6 +1202,8 @@ export function timePayload(time: ScheduleTime & { blockIds?: (string | null)[] 
     startsOn: time.startsOn, endsOn: time.endsOn,
     blocks: time.blocks.map((b, i) => ({
       id: time.blockIds?.[i] ?? null, venueId: b.venueId, facilityIds: b.facilityIds, weekdays: b.weekdays,
+      // A field named in parts (Stage 2, mig 544's save): one block-facility row per part; absent, the field whole.
+      ...(b.parts && Object.keys(b.parts).length ? { parts: b.parts } : {}),
       startTime: clock(b.startTime), endTime: clock(b.endTime), fromDate: b.fromDate, untilDate: b.untilDate,
       // Absent (a request that never said) keeps the row's permit in the save; null (a typed row) clears it.
       ...(b.permitId === undefined ? {} : { permitId: b.permitId }),
@@ -1184,7 +1221,7 @@ export function slotsPayload(slots: readonly Slot[], assignments: ReadonlyMap<st
     // House league goes as the slot's program, never as a team (Stage 11b; the floor refuses both, `slot_both`).
     const held = storedHolders(k && (k.locked || k.movedByHand) ? k.teamIds : [...(assignments.get(s.key) ?? [])]);
     return {
-      venueId: s.venueId, facilityId: s.facilityId, startsAt: new Date(s.startMs).toISOString(), endsAt: new Date(s.endMs).toISOString(),
+      venueId: s.venueId, facilityId: s.facilityId, sectionMask: maskOf(s.sectionMask), startsAt: new Date(s.startMs).toISOString(), endsAt: new Date(s.endMs).toISOString(),
       blockIndex: s.blockIndex,
       teamIds: held.teamIds, program: held.program,
       locked: k?.locked ?? false, movedByHand: k?.movedByHand ?? false,
@@ -1235,6 +1272,25 @@ export { refusal as schedulerRefusal };
 // ── A schedule's time, off a request ─────────────────────────────────────────────────────────────
 
 /**
+ * A row's parts off a request (Stage 2): absent or empty → undefined (every field whole); a shape the row can't hold →
+ * false. Whether the field's split offers each part is `checkTime`'s (it has the places).
+ */
+export function readPartsBody(raw: unknown, facilityIds: readonly string[]): Record<string, number[]> | undefined | false {
+  if (raw == null) return undefined;
+  if (typeof raw !== 'object' || Array.isArray(raw)) return false;
+  const out: Record<string, number[]> = {};
+  for (const [f, list] of Object.entries(raw as Record<string, unknown>)) {
+    if (!facilityIds.includes(f) || !Array.isArray(list)) return false;
+    if (!list.length) continue;
+    const masks = [...new Set(list)];
+    if (!masks.every(m => Number.isInteger(m) && m !== WHOLE && STORABLE_MASKS.includes(m as number))) return false;
+    for (let i = 0; i < masks.length; i++) for (let j = i + 1; j < masks.length; j++) if (partsOverlap(masks[i] as number, masks[j] as number)) return false;
+    out[f] = sortMasks(masks as number[]);
+  }
+  return Object.keys(out).length ? out : undefined;
+}
+
+/**
  * The time New schedule (or Settings…) sends: its dates, its rows of days and hours (blocks), its dates off. Every field
  * checked and every refusal a sentence. The facilities are checked against the club's places by `checkTime`.
  */
@@ -1255,11 +1311,15 @@ export function readTimeBody(body: Record<string, unknown>): { ok: true; time: S
     const fromDate = typeof raw.fromDate === 'string' && isCalendarDate(raw.fromDate) ? raw.fromDate : null;
     const untilDate = typeof raw.untilDate === 'string' && isCalendarDate(raw.untilDate) ? raw.untilDate : null;
     const id = isUuid(raw.id) ? raw.id : null;
+    // A field named in PARTS (Stage 2): `{ facilityId: [masks] }`, each a field of the row, each mask one a field can hold,
+    // never the whole field beside its part, never two parts over one piece of ground (mig 541's trigger refuses both too).
+    const parts = readPartsBody(raw.parts, facilityIds as string[]);
+    if (parts === false) return bad('Pick the facilities again.');
     // The permit the row came from (mig 487): none for a typed row; the route checks it is still the club's (`permitGone`).
     if (raw.permitId != null && raw.permitId !== '' && !isUuid(raw.permitId)) return bad('Pick the permits again.');
     // A request that leaves `permitId` out (a browser tab from before mig 487) stays undefined, so the save keeps what is stored.
     const permitId = raw.permitId === undefined ? undefined : isUuid(raw.permitId) ? raw.permitId : null;
-    blocks.push({ id: id ?? `new-${blocks.length}`, venueId, permitId, facilityIds: [...new Set(facilityIds as string[])], weekdays: [...new Set(weekdays as number[])].sort((a, b) => a - b), startTime: raw.startTime, endTime: raw.endTime, fromDate, untilDate });
+    blocks.push({ id: id ?? `new-${blocks.length}`, venueId, permitId, facilityIds: [...new Set(facilityIds as string[])], ...(parts ? { parts } : {}), weekdays: [...new Set(weekdays as number[])].sort((a, b) => a - b), startTime: raw.startTime, endTime: raw.endTime, fromDate, untilDate });
     blockIds.push(id);
   }
   const datesOff: DateOff[] = [];

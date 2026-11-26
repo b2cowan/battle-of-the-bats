@@ -29,7 +29,7 @@ import { formatStoredDate, isCalendarDate, tournamentToday } from '@/lib/timezon
 import { pluralize } from '@/lib/utils';
 import { closingRow, DEFAULT_PRICE_MODE, paymentPeriods, priceTheBill, pricedMinutes, pricedMinutesByPermit, teamInstallments, type BillSlot, type PaymentPlan, type PriceMode } from '@/lib/club-schedule-bill';
 import { PART_WORDS, SCHEDULE_REFUSALS as R, SCHEDULE_SCREEN_WORDS as W, closingRowLine, moneyCents as money } from '@/lib/club-schedule-words';
-import { NO_GROUP, isStale, pricingHourOf, viewBillSlots, type ScheduleView } from '@/lib/club-schedule-view';
+import { NO_GROUP, isStale, partKinds, pricingHourOf, viewBillSlots, type ScheduleView } from '@/lib/club-schedule-view';
 import { Statement } from './ScheduleParts';
 import sch from './Schedules.module.css';
 import DateInput from '@/components/shared/DateInput';
@@ -136,27 +136,31 @@ export default function BillWindow({ q, view, addedPart = null, nameOf, onSaved,
   // A team's time, in the drawing's words: "25 full-field slots · 37.5 h" / "25 full + 25 half · 56.3 h" / "50 shared
   // slots · 37.5 h" (Stage 11c: a slot it shares is its own kind — half a facility for the bill, whatever the field).
   const kinds = useMemo(() => {
-    const out = new Map<string, { full: number; half: number; shared: number; all: number }>();
+    const out = new Map<string, { full: number; half: number; quarter: number; shared: number; all: number }>();
     for (const s of view.slots) {
       for (const t of s.teamIds) {
-        const k = out.get(t) ?? out.set(t, { full: 0, half: 0, shared: 0, all: 0 }).get(t)!;
+        const k = out.get(t) ?? out.set(t, { full: 0, half: 0, quarter: 0, shared: 0, all: 0 }).get(t)!;
         k.all += 1;
         if (s.teamIds.length > 1) k.shared += 1;
         else if (Math.abs(s.weight - 1) < 0.0001) k.full += 1;
         else if (Math.abs(s.weight - 0.5) < 0.0001) k.half += 1;
+        // A quarter of a full field (Stage 2), by price as the rest: "10 quarter-field slots".
+        else if (Math.abs(s.weight - 0.25) < 0.0001) k.quarter += 1;
       }
     }
     return out;
   }, [view.slots]);
+  // A field's parts (Stage 2): "a half field or one side" when the time has a side or a half, "a quarter" when a quarter.
+  const partsUsed = useMemo(() => partKinds(view.slots), [view.slots]);
   const caption = (teamId: string, hours: number) => {
-    const k = kinds.get(teamId) ?? { full: 0, half: 0, shared: 0, all: 0 };
+    const k = kinds.get(teamId) ?? { full: 0, half: 0, quarter: 0, shared: 0, all: 0 };
     // More than one price: the team's hours by permit, so "why does 15U AA pay more?" is answered in the row.
     if (multi) {
       const parts = [...(byPermit.get(teamId) ?? [])].filter(([, m]) => m > 0)
         .map(([id, m]) => `${Math.round((m / 60) * 10) / 10} ${permitName.get(id) ?? W.billNoLineName}`);
       return W.billTeamByPermit(k.all, parts);
     }
-    return W.billTeamCaption(k.full, k.half, k.shared, k.all - k.full - k.half - k.shared, hours);
+    return W.billTeamCaption(k.full, k.half, k.quarter, k.shared, k.all - k.full - k.half - k.quarter - k.shared, hours);
   };
   const groupsOf = new Map<string, { name: string; teamIds: string[] }>();
   for (const r of rows) {
@@ -201,10 +205,11 @@ export default function BillWindow({ q, view, addedPart = null, nameOf, onSaved,
     firstDue: plan === 'dates' ? null : firstDue, dates: plan === 'dates' ? [...new Set(dates.filter(isCalendarDate))].sort() : null,
   });
 
-  const half = pricing?.fullHour != null && view.slots.some(s => Math.abs(s.weight - 0.5) < 0.0001) ? fmt(pricing.fullHour / 2) : null;
+  const half = pricing?.fullHour != null && (partsUsed.half || view.slots.some(s => Math.abs(s.weight - 0.5) < 0.0001)) ? fmt(pricing.fullHour / 2) : null;
+  const quarter = pricing?.fullHour != null && partsUsed.quarter ? fmt(pricing.fullHour / 4) : null;
   const splitHint = multi
     ? (part ? (mode === 'one_rate' ? W.billSplitPartOne : W.billSplitPartEach) : (mode === 'one_rate' ? W.billSplitHintOne : W.billSplitHintEach))
-    : pricing?.fullHour != null ? W.billSplitHint(fmt(pricing.fullHour), half) : W.billSplitHintPlain;
+    : pricing?.fullHour != null ? W.billSplitHint(fmt(pricing.fullHour), half, partsUsed.half, quarter) : W.billSplitHintPlain;
   /** The read-only view's terms (P9 B item 5): the rates kept, and a permit billed later at its own price. */
   const keptWords = (() => {
     const kept = existing?.kept ?? [];

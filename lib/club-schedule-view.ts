@@ -18,7 +18,8 @@ import { formatTime, formatTimeRange, joinWithAnd, pluralize, possessive } from 
 import { weekdayCount, weekdayOne, weekdaysShort } from './permit-words';
 import { moveLanding, type PrimeTime, type ScheduleSettings, type slotHolds } from './club-schedule-settings';
 import { teamColor } from './team-color';
-import type { Slot } from './club-schedule-engine';
+import { slotPosOf, type Slot } from './club-schedule-engine';
+import { fieldPartName, maskOf, maskProp, maskSuffix, partFactor, partLabel, sectionsOf, sortMasks, WHOLE } from './field-parts';
 import { priceTheBill, type BillSlot } from './club-schedule-bill';
 import { isProgramHolder } from './club-schedule-holders';
 import type { ScheduleAsk, ScheduleListRow, ScheduleView, SlotView } from './club-schedule-server';
@@ -48,30 +49,98 @@ export const pct = (part: number, whole: number) => (whole ? `${Math.round((part
 
 // ── The places ────────────────────────────────────────────────────────────────────────────────────
 
-/** A grid row: one facility (or a venue with none), in the venue's own order. */
-export interface PlaceRow { key: string; venueId: string; facilityId: string | null; name: string; venueName: string }
+/**
+ * A grid row: one facility (or a venue with none), in the venue's own order — or, under a split field, one of its parts
+ * (Club schedules Stage 2, round 1 Ask 8 B, round 2 tab 4): "Quarter A" with "Field 1 · Milton Sports Dome" under it,
+ * indented one step under its field. `key` is the row's own (its cells); `fieldKey` its field's (the Facility filter
+ * lists a field once and shows its parts with it). A field row of a field the schedule never uses whole is a label
+ * only (`labelOnly`): its parts are listed under it.
+ */
+export interface PlaceRow {
+  key: string; venueId: string; facilityId: string | null; name: string; venueName: string;
+  /** The part the row is (0: the facility's own row). */
+  sectionMask: number;
+  /** The field's row key — the same as `key` on the field's own row. */
+  fieldKey: string;
+  /** The row's second line: the venue, or for a part "Field 1 · Milton Sports Dome". */
+  sub: string;
+  /** The place said whole in a line: the facility's name, or for a part "Field 1 quarter A". */
+  fullName: string;
+  /** A field row with no whole-field slot: a label over its parts, no cells. */
+  labelOnly?: boolean;
+}
 
 export const placeKey = (venueId: string, facilityId: string | null) => `${venueId}|${facilityId ?? ''}`;
 
-/** The rows the grid draws: every place the schedule's slots stand on, in the venue's order. */
-export function placeRows(places: readonly SchedulePlace[], slots: readonly Pick<SlotView, 'venueId' | 'facilityId'>[]): PlaceRow[] {
+/** A grid row's key for a field's part (Stage 2): the field's own key for the whole field. */
+export const partRowKey = (venueId: string, facilityId: string | null, sectionMask: number | null | undefined) =>
+  `${placeKey(venueId, facilityId)}${facilityId ? maskSuffix(sectionMask) : ''}`;
+
+/** The row a slot is drawn on: its field's, or its part's under it. */
+export const slotRowKey = (s: Pick<SlotView, 'venueId' | 'facilityId' | 'sectionMask'>) => partRowKey(s.venueId, s.facilityId, s.sectionMask);
+
+/**
+ * The rows the grid draws: every place the schedule's slots stand on, in the venue's order — and under a split field,
+ * a row for each part its slots use, in the field's order (whole, A–B, C–D, A, B, C, D), up to six. A whole-field slot
+ * stays on the field's own row. A schedule with no part draws exactly the rows it always did.
+ */
+export function placeRows(places: readonly SchedulePlace[], slots: readonly Pick<SlotView, 'venueId' | 'facilityId' | 'sectionMask'>[]): PlaceRow[] {
   const used = new Set(slots.map(s => placeKey(s.venueId, s.facilityId)));
+  const whole = new Set(slots.filter(s => maskOf(s.sectionMask) === WHOLE).map(s => placeKey(s.venueId, s.facilityId)));
+  const partsOf = new Map<string, number[]>();
+  for (const s of slots) {
+    const m = maskOf(s.sectionMask);
+    if (m === WHOLE || !s.facilityId) continue;
+    const k = placeKey(s.venueId, s.facilityId);
+    const list = partsOf.get(k) ?? partsOf.set(k, []).get(k)!;
+    if (!list.includes(m)) list.push(m);
+  }
   const out: PlaceRow[] = [];
   for (const p of places) {
-    if (used.has(placeKey(p.venueId, null))) out.push({ key: placeKey(p.venueId, null), venueId: p.venueId, facilityId: null, name: p.venueName, venueName: p.venueName });
+    const venueKey = placeKey(p.venueId, null);
+    if (used.has(venueKey)) out.push({ key: venueKey, venueId: p.venueId, facilityId: null, name: p.venueName, venueName: p.venueName, sectionMask: WHOLE, fieldKey: venueKey, sub: p.venueName, fullName: p.venueName });
     for (const f of p.facilities) {
       const key = placeKey(p.venueId, f.id);
-      if (used.has(key)) out.push({ key, venueId: p.venueId, facilityId: f.id, name: f.name, venueName: p.venueName });
+      if (!used.has(key)) continue;
+      const parts = partsOf.get(key);
+      out.push({ key, venueId: p.venueId, facilityId: f.id, name: f.name, venueName: p.venueName, sectionMask: WHOLE, fieldKey: key, sub: p.venueName, fullName: f.name,
+        ...(parts && !whole.has(key) ? { labelOnly: true } : {}) });
+      const sections = sectionsOf(f.sections);
+      for (const m of sortMasks(parts ?? [])) {
+        out.push({
+          key: partRowKey(p.venueId, f.id, m), venueId: p.venueId, facilityId: f.id, venueName: p.venueName, sectionMask: m, fieldKey: key,
+          name: partLabel(m, sections) ?? f.name, sub: `${f.name} · ${p.venueName}`, fullName: fieldPartName(f.name, m, sections),
+        });
+      }
     }
   }
   return out;
 }
 
-/** "Lane 1", or the venue when the slot has no facility — a slot's place in a line. */
+/** "Lane 1", or the venue when the slot has no facility — a FIELD's name in a line (its part: `slotPlaceName`). */
 export function placeName(places: readonly SchedulePlace[], venueId: string, facilityId: string | null): string {
   const v = places.find(p => p.venueId === venueId);
   if (!facilityId) return v?.venueName ?? '';
   return v?.facilities.find(f => f.id === facilityId)?.name ?? '';
+}
+
+/** A SLOT's place in a line, with its part (Stage 2): "Field 1 side A", "Field 1 quarter C"; the field's name when whole. */
+export function slotPlaceName(places: readonly SchedulePlace[], s: Pick<SlotView, 'venueId' | 'facilityId' | 'sectionMask'>): string {
+  const name = placeName(places, s.venueId, s.facilityId);
+  if (!s.facilityId || maskOf(s.sectionMask) === WHOLE) return name;
+  const f = places.find(p => p.venueId === s.venueId)?.facilities.find(x => x.id === s.facilityId);
+  return fieldPartName(name, s.sectionMask, sectionsOf(f?.sections));
+}
+
+/** Whether the schedule's slots stand on a side or half (mask 3 or 12) and on a quarter — the Split hint's two words. */
+export function partKinds(slots: readonly Pick<SlotView, 'sectionMask'>[]): { half: boolean; quarter: boolean } {
+  let half = false, quarter = false;
+  for (const s of slots) {
+    const size = partFactor(s.sectionMask);
+    if (size === 0.5) half = true;
+    else if (size < 1) quarter = true;
+  }
+  return { half, quarter };
 }
 
 /**
@@ -176,10 +245,11 @@ export function openingDay(days: readonly string[], startsOn: string, endsOn: st
 /** A place's slots on a day, in clock order. */
 /** Every slot by its cell — a place's row and a day (`cellKey`) — each cell in clock order. Built once per read, never
  *  per cell: a grid draws rows × 7 cells over every slot the schedule holds. */
-export function slotsByCell<T extends Pick<SlotView, 'venueId' | 'facilityId' | 'day' | 'startsAt'>>(slots: readonly T[]): Map<string, T[]> {
+export function slotsByCell<T extends Pick<SlotView, 'venueId' | 'facilityId' | 'day' | 'startsAt'> & { sectionMask?: number }>(slots: readonly T[]): Map<string, T[]> {
   const out = new Map<string, T[]>();
   for (const s of slots) {
-    const key = cellKey(placeKey(s.venueId, s.facilityId), s.day);
+    // By the slot's row: its field's, or its part's (Stage 2).
+    const key = cellKey(slotRowKey(s), s.day);
     (out.get(key) ?? out.set(key, []).get(key)!).push(s);
   }
   for (const list of out.values()) list.sort((x, y) => x.startsAt.localeCompare(y.startsAt));
@@ -312,7 +382,9 @@ export function engineSlotsOf(slots: readonly SlotView[]): Slot[] {
   return slots.map(s => ({
     key: s.key, venueId: s.venueId, facilityId: s.facilityId, blockIndex: 0, day: s.day, weekday: s.weekday, week: s.week,
     startClock: s.startClock, endClock: s.endClock, startMs: Date.parse(s.startsAt), endMs: Date.parse(s.endsAt),
-    pos: `${s.weekday}|${s.startClock}|${s.venueId}|${s.facilityId ?? ''}`, prime: s.prime, weight: s.weight,
+    // Its part is in its place in the week (Stage 2): moving "every week" moves side A to side A, never to the field.
+    pos: slotPosOf(s.weekday, s.startClock, s.venueId, s.facilityId, s.sectionMask), prime: s.prime, weight: s.weight,
+    ...maskProp(s.sectionMask),
   }));
 }
 

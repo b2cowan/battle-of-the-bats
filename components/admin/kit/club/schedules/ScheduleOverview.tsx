@@ -26,7 +26,7 @@ export default function ScheduleOverview({ rows, days, slots, askedIds, nameOf, 
   const [allExceptions, setAllExceptions] = useState(false);
   const patterns = useMemo(() => scheduleOverview(rows, days, slots, askedIds), [rows, days, slots, askedIds]);
   const exceptions = patterns.flatMap(pattern => pattern.different.map(read => ({ pattern, read })))
-    .sort((a, b) => a.read.day.localeCompare(b.read.day) || a.pattern.place.name.localeCompare(b.pattern.place.name)
+    .sort((a, b) => a.read.day.localeCompare(b.read.day) || a.pattern.place.fullName.localeCompare(b.pattern.place.fullName)
       || a.pattern.startClock.localeCompare(b.pattern.startClock));
   const shown = allExceptions ? exceptions : exceptions.slice(0, FIRST_EXCEPTIONS);
 
@@ -50,7 +50,7 @@ export default function ScheduleOverview({ rows, days, slots, askedIds, nameOf, 
           {patterns.map(pattern => (
             <button key={pattern.key} type="button" className={sch.overviewPattern}
               onClick={() => onOpenGrid(pattern.place.key, pattern.usualDays[0] ?? days[0])}>
-              <span className={sch.overviewPlace}>{pattern.place.name}<small>{pattern.place.venueName}</small></span>
+              <span className={sch.overviewPlace}>{pattern.place.name}<small>{pattern.place.sub}</small></span>
               <span className={sch.overviewTime}>{slotTime(pattern.usual[0])}</span>
               <span className={sch.overviewWho}>{who(pattern.usual)}{marks(pattern.usual).length > 0 && <small>{marks(pattern.usual).join(' · ')}</small>}</span>
               <span className={`${sch.overviewCount}${pattern.different.length ? ` ${sch.overviewCountDifferent}` : ''}`}>{pattern.usualDays.length} of {days.length}</span>
@@ -68,7 +68,7 @@ export default function ScheduleOverview({ rows, days, slots, askedIds, nameOf, 
           {exceptions.length ? shown.map(({ pattern, read }) => (
             <button key={`${pattern.key}|${read.day}`} type="button" className={sch.overviewException}
               onClick={() => onOpenGrid(pattern.place.key, read.day)}>
-              <b>{formatShortWeekdayDate(read.day)} · {pattern.place.name}</b>
+              <b>{formatShortWeekdayDate(read.day)} · {pattern.place.fullName}</b>
               <span>{slotTime(pattern.usual[0])} · {who(read.slots)}</span>
               {marks(read.slots).length > 0 && <small>{marks(read.slots).join(' · ')}</small>}
             </button>

@@ -26,7 +26,7 @@ import { dayHeading } from '@/lib/calendar-recipe';
 import { SCHEDULE_SCREEN_WORDS as W } from '@/lib/club-schedule-words';
 import { HAND_BACK_WORDS as H } from '@/lib/club-hand-back-words';
 import { joinWithAnd } from '@/lib/utils';
-import { cellKey, dropVerdict, heldWords, placeKey, slotTime, slotsByCell, type DropKind, type PlaceRow, type ScheduleAsk, type ScheduleView, type SharingRead, type SlotView } from '@/lib/club-schedule-view';
+import { cellKey, dropVerdict, heldWords, slotPlaceName, slotRowKey, slotTime, slotsByCell, type DropKind, type PlaceRow, type ScheduleAsk, type ScheduleView, type SharingRead, type SlotView } from '@/lib/club-schedule-view';
 import sch from './Schedules.module.css';
 
 export interface GridDrop { from: SlotView; to: SlotView; teamId: string; at: { left: number; top: number } }
@@ -66,14 +66,17 @@ export default function ScheduleGrid({
   const byKey = useMemo(() => new Map(view.slots.map(s => [s.key, s])), [view.slots]);
   // Each cell's slots, found once per read — a drag re-renders every cell as the pointer crosses them.
   const byCell = useMemo(() => slotsByCell(view.slots), [view.slots]);
-  const placeOf = useMemo(() => {
-    const out = new Map<string, string>();
-    for (const p of view.places) {
-      out.set(placeKey(p.venueId, null), p.venueName);
-      for (const fac of p.facilities) out.set(placeKey(p.venueId, fac.id), fac.name);
+  // A slot's place with its part (Stage 2): "Field 1 side A" in the chip's name and the drop's tip.
+  // Named once per row, per read (a chip's name is read on every drag move).
+  const placeNames = useMemo(() => {
+    const named = new Map<string, string>();
+    for (const s of view.slots) {
+      const k = slotRowKey(s);
+      if (!named.has(k)) named.set(k, slotPlaceName(view.places, s));
     }
-    return (x: SlotView) => out.get(placeKey(x.venueId, x.facilityId)) ?? '';
-  }, [view.places]);
+    return named;
+  }, [view.places, view.slots]);
+  const placeOf = (x: SlotView) => placeNames.get(slotRowKey(x)) ?? slotPlaceName(view.places, x);
 
   const verdictFor = (fromKey: string, teamId: string, toKey: string) => {
     const from = byKey.get(fromKey), to = byKey.get(toKey);
@@ -148,9 +151,11 @@ function RowCells({ row, days, byCell, canDrag, dim, moved, asked, preview, drag
   dim: (s: SlotView) => boolean; moved: ReadonlySet<string>; asked: ReadonlyMap<string, ScheduleAsk>; preview: Preview | null; draggingKey: string | null;
   nameOf: (id: string) => string; colourOf: (id: string) => string; placeOf: (s: SlotView) => string; onOpen: (s: SlotView) => void;
 }) {
+  // A split field the schedule never uses whole: its row is a label over its parts, no cells (round 2 tab 4, note 2).
+  if (row.labelOnly) return <div className={`${sch.fc} ${sch.fcLabel}`} role="rowheader">{row.name}<small>{row.sub}</small></div>;
   return (
     <>
-      <div className={sch.fc} role="rowheader">{row.name}{row.facilityId && <small>{row.venueName}</small>}</div>
+      <div className={`${sch.fc}${row.sectionMask ? ` ${sch.fcPart}` : ''}`} role="rowheader">{row.name}{row.facilityId && <small>{row.sub}</small>}</div>
       {days.map(d => {
         const list = byCell.get(cellKey(row.key, d)) ?? [];
         if (!list.length) return <div key={d} className={`${sch.cc} ${sch.ccNone}`} role="gridcell">{W.noTime}</div>;

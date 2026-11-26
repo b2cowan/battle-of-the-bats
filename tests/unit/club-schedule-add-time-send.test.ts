@@ -59,7 +59,7 @@ const JUNE_ADDED = [slot('2027-06-03', KIN, 'kb', JUNE, ['t11']), slot('2027-06-
 const contextOf = (rows: { s: Slot; teams: string[] }[]) => ({
   orgId: 'org', orgName: 'Club', orgSlug: 'club', senderId: 'u', senderEmail: null, loaded: { row: { ends_on: '2027-06-30' } },
   teams: TEAMS.map(id => ({ id, name: id, groupId: null, groupName: null, color: null, groupOrder: 0, season: { id: `season-${id}`, name: '2027' } })),
-  places: { byVenue: new Map([[KIN, ['ka', 'kb']], [PRO, ['pa']]]), order: new Map(), venueName: new Map([[KIN, 'Kinsmen Park'], [PRO, 'Prospect Park']]), facilityName: new Map([['ka', 'Diamond A'], ['kb', 'Diamond B'], ['pa', 'Diamond 1']]) },
+  places: { byVenue: new Map([[KIN, ['ka', 'kb']], [PRO, ['pa']]]), order: new Map(), venueName: new Map([[KIN, 'Kinsmen Park'], [PRO, 'Prospect Park']]), facilityName: new Map([['ka', 'Diamond A'], ['kb', 'Diamond B'], ['pa', 'Diamond 1']]), sectionsOf: new Map() },
   slots: rows.map(r => r.s),
   assignments: new Map(rows.map(r => [r.s.key, r.teams])),
   slotIdOf: new Map(rows.map((r, i) => [r.s.key, `slot-${i}-${r.s.day}`])),

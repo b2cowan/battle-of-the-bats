@@ -42,14 +42,17 @@ import { addCalendarDays, mondayOfDay, zonedWallClockToUtc } from './timezone';
 import { blockDates, blockUnits, clock, weekdayOf, type DateOff, type TimeBlock, type VenueFacilities } from './permit-time';
 import { shareCents } from './club-bill-split';
 import { moveLanding, sharesAny, sharingPools, type PrimeTime, type ScheduleSettings, type SharingPool } from './club-schedule-settings';
+import { WHOLE, maskOf, maskProp, maskRank, maskSuffix, partFactor, partsOverlap, samePlace } from './field-parts';
 
 const MIN = 60_000;
 
 // ── 1. The slots ─────────────────────────────────────────────────────────────────────────────────
 
 /** A schedule's block: a block of time, and the permit it came from (`org_time_blocks.from_permit_id`, mig 487) — null or
- *  absent for time typed by hand or copied. A slot cut from it is priced by that permit (a schedule on several permits). */
-export type ScheduleBlock = TimeBlock & { permitId?: string | null };
+ *  absent for time typed by hand or copied. A slot cut from it is priced by that permit (a schedule on several permits).
+ *  `parts` (Club schedules Stage 2, mig 541): for a field the row names in PARTS, which (`section_mask`, quarter units —
+ *  lib/field-parts.ts); a field it doesn't list is named whole. `facilityIds` names each field once either way. */
+export type ScheduleBlock = TimeBlock & { permitId?: string | null; parts?: Readonly<Record<string, readonly number[]>> | null };
 
 /** A schedule's time: its own blocks and dates off (`org_time_blocks.schedule_id`, `org_time_dates_off.schedule_id`). */
 export interface ScheduleTime {
@@ -81,16 +84,46 @@ export interface Slot {
   /** Its place in a week — weekday, start, venue, facility — what "the same slot every week" means. */
   pos: string;
   prime: boolean;
-  /** What an hour of it is worth against a full field (its row's permit's share: 1 = Full, 0.5 = Half). */
+  /** What an hour of it is worth against a full field: its row's permit's share (1 = Full, 0.5 = Half) × how much of the
+   *  field its part holds (`slotWeight` — the one place it is worked out). */
   weight: number;
   /** The permit its row came from (null: typed by hand, priced by the schedule's fallback price permit). */
   permitId?: string | null;
+  /** The field's part it stands on (Club schedules Stage 2, `section_mask`, quarter units — lib/field-parts.ts). 0 or
+   *  absent: the whole field. A part holds one team, never shared (its weight is under 1). */
+  sectionMask?: number;
 }
 
-/** A facility's price share — on the permit a row came from (`permitId`), else the schedule's price permit. */
+/** A facility's price SHARE — on the permit a row came from (`permitId`), else the schedule's price permit. Never a slot's
+ *  weight by itself: a part's weight is `slotWeight`. */
 export type WeightOf = (facilityId: string | null, permitId?: string | null) => number;
 
-export const slotKeyOf = (venueId: string, facilityId: string | null, startMs: number) => `${venueId}|${facilityId ?? ''}|${startMs}`;
+/**
+ * THE ONE WEIGHT (Club schedules Stage 2, plan §5; round 1 Ask 3 A, round 2 Ask 3 A): the field's share on the row's permit
+ * × how much of the field the part holds (a side or a half ½, a quarter ¼; a quarter of a "Half cost" field ⅛). Every
+ * site that weighs a slot calls this — the cut, a stored slot rebuilt, a kept slot, the coach's card, the hand edit's
+ * room — and none writes its own arithmetic (`tests/unit/club-schedule-several-permits-guard.test.ts`).
+ */
+export const slotWeight = (shareOf: WeightOf, facilityId: string | null, sectionMask: number | null | undefined, permitId: string | null | undefined): number =>
+  shareOf(facilityId, permitId ?? null) * partFactor(sectionMask);
+
+/** A slot's place and start: venue · facility · start, and its part when it stands on one. A whole field's key is the
+ *  key it always had, so a schedule with no split field keys every slot exactly as before. */
+export const slotKeyOf = (venueId: string, facilityId: string | null, startMs: number, sectionMask: number | null | undefined = WHOLE) =>
+  `${venueId}|${facilityId ?? ''}|${startMs}${maskSuffix(sectionMask)}`;
+
+/** A slot's place in a week — weekday, start, venue, facility, and its part — what "the same slot every week" means. */
+export const slotPosOf = (weekday: number, startClock: string, venueId: string, facilityId: string | null, sectionMask: number | null | undefined = WHOLE) =>
+  `${weekday}|${startClock}|${venueId}|${facilityId ?? ''}${maskSuffix(sectionMask)}`;
+
+/** The cut's order, shared with the kept merge: by start, venue, the facility's place at its venue, then its part. */
+export const slotOrder = (order: ReadonlyMap<string, number>) =>
+  (a: Pick<Slot, 'startMs' | 'venueId' | 'facilityId' | 'sectionMask'>, b: Pick<Slot, 'startMs' | 'venueId' | 'facilityId' | 'sectionMask'>): number =>
+    a.startMs - b.startMs || a.venueId.localeCompare(b.venueId)
+    || (order.get(a.facilityId ?? '') ?? 0) - (order.get(b.facilityId ?? '') ?? 0) || maskRank(a.sectionMask) - maskRank(b.sectionMask);
+
+/** How much of its field a slot holds (1 whole, ½ a side, ¼ a quarter): what it counts toward a share (round 1 Ask 2 A). */
+export const slotSize = (s: Pick<Slot, 'sectionMask'>) => partFactor(s.sectionMask);
 
 const toMin = (t: string) => { const [h, m] = clock(t).split(':').map(Number); return h * 60 + m; };
 const fromMin = (m: number) => `${String(Math.floor(m / 60)).padStart(2, '0')}:${String(m % 60).padStart(2, '0')}`;
@@ -117,6 +150,15 @@ export function cutSlots(time: ScheduleTime, opts: {
   const order = new Map<string, number>();
   for (const list of opts.venueFacilities.values()) list.forEach((f, i) => order.set(f, i));
   const out = new Map<string, Slot>();
+  // The parts cut so far on each field (Stage 2): a part is never cut over ground another slot of the cut already holds
+  // at an overlapping time — two rows naming one field are refused before the cut (`overlappingBlocks`), so this only
+  // guards; the database's floor refuses it too, but a refusal there reads "changed" to the club, never a builder's
+  // sentence. Whole fields keep the key's own rule (one slot per place and start), exactly as before.
+  // Only a field some row names in parts is watched; every other place is cut exactly as before.
+  const split = new Set(time.blocks.flatMap(b => Object.entries(b.parts ?? {}).filter(([, m]) => m?.length).map(([f]) => `${b.venueId}|${f}`)));
+  // Keyed by field and day: two slots can only overlap on the same day, so each check reads one night's parts.
+  const partsOn = new Map<string, { startMs: number; endMs: number; mask: number }[]>();
+  const shareOf = opts.weightOf ?? (() => 1);
   time.blocks.forEach((block, blockIndex) => {
     const units = blockUnits(block, opts.venueFacilities);
     const s = toMin(block.startTime), e = toMin(block.endTime);
@@ -132,21 +174,32 @@ export function cutSlots(time: ScheduleTime, opts: {
         if (!startIso || !endIso) continue;
         const startMs = Date.parse(startIso), endMs = Date.parse(endIso);
         for (const unit of units) {
-          const key = slotKeyOf(block.venueId, unit, startMs);
-          if (out.has(key)) continue;
-          out.set(key, {
-            key, venueId: block.venueId, facilityId: unit, blockIndex, day, weekday, week, startClock, endClock,
-            startMs, endMs, pos: `${weekday}|${startClock}|${block.venueId}|${unit ?? ''}`,
-            prime: isPrimeSlot(opts.prime, weekday, startClock, endClock),
-            weight: opts.weightOf ? opts.weightOf(unit, block.permitId ?? null) : 1,
-            ...(block.permitId ? { permitId: block.permitId } : {}),
-          });
+          // A field the row names in parts is cut once per part (round 2 Ask 2 A); otherwise whole, as it always was.
+          const masks = unit ? block.parts?.[unit] : undefined;
+          for (const raw of masks?.length ? masks : [WHOLE]) {
+            const mask = maskOf(raw);
+            const key = slotKeyOf(block.venueId, unit, startMs, mask);
+            if (out.has(key)) continue;
+            if (split.size && split.has(`${block.venueId}|${unit ?? ''}`)) {
+              const ground = `${block.venueId}|${unit ?? ''}|${day}`;
+              const cut = partsOn.get(ground) ?? partsOn.set(ground, []).get(ground)!;
+              if (cut.some(x => x.startMs < endMs && startMs < x.endMs && partsOverlap(x.mask, mask))) continue;
+              cut.push({ startMs, endMs, mask });
+            }
+            out.set(key, {
+              key, venueId: block.venueId, facilityId: unit, blockIndex, day, weekday, week, startClock, endClock,
+              startMs, endMs, pos: slotPosOf(weekday, startClock, block.venueId, unit, mask),
+              prime: isPrimeSlot(opts.prime, weekday, startClock, endClock),
+              weight: slotWeight(shareOf, unit, mask, block.permitId ?? null),
+              ...(block.permitId ? { permitId: block.permitId } : {}),
+              ...maskProp(mask),
+            });
+          }
         }
       }
     }
   });
-  return [...out.values()].sort((a, b) => a.startMs - b.startMs || a.venueId.localeCompare(b.venueId)
-    || (order.get(a.facilityId ?? '') ?? 0) - (order.get(b.facilityId ?? '') ?? 0));
+  return [...out.values()].sort(slotOrder(order));
 }
 
 // ── 2. What the books already hold ────────────────────────────────────────────────────────────────
@@ -156,6 +209,8 @@ export interface PoolBooking {
   key: string;
   venueId: string | null;
   facilityId: string | null;
+  /** The part of its field it holds (Stage 2; 0 or absent: the whole field). */
+  sectionMask?: number | null;
   startMs: number;
   endMs: number;
   ownerName: string;
@@ -189,7 +244,7 @@ export function heldSlots(slots: readonly Slot[], bookings: readonly PoolBooking
       for (const i of bucket.get(`${s.venueId}|${d}`) ?? []) {
         if (hit !== -1 && i >= hit) break;
         const b = bookings[i];
-        if (b.startMs < s.endMs && s.startMs < b.endMs && (s.facilityId === null || (b.facilityId !== null && b.facilityId === s.facilityId))) { hit = i; break; }
+        if (b.startMs < s.endMs && s.startMs < b.endMs && (s.facilityId === null || samePlace(b, s))) { hit = i; break; }
       }
     }
     if (hit !== -1) out.set(s.key, bookings[hit]);
@@ -326,9 +381,22 @@ export function matchPool(need: ReadonlyMap<string, number>, atOnce: number, cou
   return { groups: [...groups.values()], alone };
 }
 
-export function shareTargets(teams: readonly EngineTeam[], settings: Pick<ScheduleSettings, 'split' | 'prime' | 'rules'>, seats: {
+export function shareTargets(teams: readonly EngineTeam[], settings: Pick<ScheduleSettings, 'split' | 'prime' | 'rules'>, counted: {
   capacity: number; primeCapacity: number; weeks: number;
-}): ShareTargets {
+  /** `seatCounts`' units (Stage 2: a part counts its size). Absent: the count. */
+  units?: number; primeUnits?: number;
+}, opts: {
+  /** A team's slot size (`teamSlotSize`): its practices are its units ÷ it — a team kept on quarters holds four practices
+   *  for each whole-field one (the Slots column). Absent: 1. */
+  sizeOf?: (teamId: string) => number;
+} = {}): ShareTargets {
+  // Under Evenly and By percentage the shares divide the time in UNITS (a part its size); a set number a week counts
+  // practices whatever their size.
+  const seats = { capacity: counted.units ?? counted.capacity, primeCapacity: counted.primeUnits ?? counted.primeCapacity, weeks: counted.weeks };
+  // With parts the shares are handed out in quarters (12.5% of 60 units is 7.5 each, never 8/8/7/7); without, whole slots.
+  const grain = counted.units != null && Math.abs(counted.units - counted.capacity) > 1e-9 ? 4 : 1;
+  const apportion = (total: number, ts: readonly EngineTeam[], w: (t: EngineTeam) => number, o?: Parameters<typeof apportionByGroup>[3]) =>
+    grain === 1 ? apportionByGroup(total, ts, w, o) : new Map([...apportionByGroup(Math.round(total * grain), ts, w, o)].map(([k, v]) => [k, v / grain]));
   const { method, values } = settings.split;
   const valueOf = (t: EngineTeam) => (method === 'even' ? 1 : values[t.id] ?? 0);
   const counts = method === 'weekly' ? 'practices' : 'units';
@@ -339,8 +407,8 @@ export function shareTargets(teams: readonly EngineTeam[], settings: Pick<Schedu
     slots = new Map(teams.map(t => [t.id, Math.min(valueOf(t), t.many ? Infinity : cap ?? Infinity) * seats.weeks]));
   } else {
     const percent = method === 'even' ? 100 : teams.reduce((s, t) => s + valueOf(t), 0);
-    const total = Math.min(seats.capacity, Math.round(seats.capacity * Math.min(percent, 100) / 100));
-    slots = apportionByGroup(total, teams, valueOf);
+    const total = Math.min(seats.capacity, Math.round(seats.capacity * grain * Math.min(percent, 100) / 100) / grain);
+    slots = apportion(total, teams, valueOf);
     // A weekly cap holds a share down (reported by `capWarnings`, never broken).
     if (settings.rules.maxPerWeek != null) {
       for (const t of teams) if (!t.many) slots.set(t.id, Math.min(slots.get(t.id)!, settings.rules.maxPerWeek * seats.weeks));
@@ -348,9 +416,10 @@ export function shareTargets(teams: readonly EngineTeam[], settings: Pick<Schedu
   }
   // What the shares come to once sharing is worked out: each rule's teams matched (a set number a week matches one
   // week and repeats it — its figure is a week's), everyone else alone.
-  const practices = new Map(teams.map(t => [t.id, slots.get(t.id)!]));
+  const sizeOf = (id: string) => (counts === 'units' ? opts.sizeOf?.(id) ?? 1 : 1);
+  const practices = new Map(teams.map(t => [t.id, Math.round(slots.get(t.id)! / sizeOf(t.id))]));
   let handedOut = 0;
-  for (const t of teams) if (!sharesAny(sharing, t.id)) handedOut += slots.get(t.id)!;
+  for (const t of teams) if (!sharesAny(sharing, t.id)) handedOut += practices.get(t.id)!;
   const order = tieOrder(teams);
   const weekly = method === 'weekly', times = weekly ? seats.weeks : 1;
   const teamById = new Map(teams.map(t => [t.id, t]));
@@ -366,11 +435,11 @@ export function shareTargets(teams: readonly EngineTeam[], settings: Pick<Schedu
   let primeTotal = 0;
   if (settings.prime && seats.primeCapacity > 0) {
     const percent = method === 'percentage' ? Math.min(100, teams.reduce((s, t) => s + valueOf(t), 0)) : 100;
-    primeTotal = Math.min(seats.primeCapacity, Math.round(seats.primeCapacity * percent / 100), handedOut);
+    primeTotal = Math.min(seats.primeCapacity, Math.round(seats.primeCapacity * grain * percent / 100) / grain, handedOut);
   }
   const prime = settings.prime?.share === 'even'
-    ? apportionByGroup(primeTotal, teams, () => 1, { flat: true, tieFewerFirst: slots })
-    : apportionByGroup(primeTotal, teams, valueOf, { tieFewerFirst: slots });
+    ? apportion(primeTotal, teams, () => 1, { flat: true, tieFewerFirst: slots })
+    : apportion(primeTotal, teams, valueOf, { tieFewerFirst: slots });
   for (const t of teams) prime.set(t.id, Math.min(prime.get(t.id)!, slots.get(t.id)!));
   return { slots, prime, counts, practices, capacity: seats.capacity, handedOut, primeCapacity: seats.primeCapacity, weeks: seats.weeks };
 }
@@ -595,7 +664,9 @@ export interface Draft {
 interface Seat { slot: Slot }
 
 /** What one place in the flow is: a team on its own, or a partner group of one sharing rule placed as one (Stage 11c). */
-interface Placer { id: string; teams: EngineTeam[]; quota: number; primeQuota: number }
+interface Placer { id: string; teams: EngineTeam[]; quota: number; primeQuota: number;
+  /** A team on its own: the units it is owed this week (Stage 2: its slots may be parts, so its quota alone can't say). */
+  units?: number }
 
 /** What the drafts are measured and placed against: each week's slots, the targets, the sharing rules' teams. */
 function prepare(input: EngineInput) {
@@ -618,13 +689,53 @@ function prepare(input: EngineInput) {
  *  many teams share it (Stage 11c). The one count the drafts, Generate's summary and the page share. */
 export function seatCounts(slots: readonly Slot[], settings: Pick<ScheduleSettings, 'rules'>, held: ReadonlyMap<string, PoolBooking>,
   kept: { has(key: string): boolean } = new Set<string>()): {
-  capacity: number; primeCapacity: number; weeks: number;
+  capacity: number; primeCapacity: number; weeks: number; units: number; primeUnits: number;
 } {
   const open = settings.rules.avoidBookings ? slots.filter(s => !held.has(s.key) || kept.has(s.key)) : slots;
+  const sum = (list: readonly Slot[]) => list.reduce((n, s) => n + slotSize(s), 0);
+  const prime = open.filter(s => s.prime);
   return {
     capacity: open.length,
-    primeCapacity: open.filter(s => s.prime).length,
+    primeCapacity: prime.length,
     weeks: new Set(open.map(s => s.week)).size,
+    // What the shares divide (Stage 2): a slot counts its size — a side ½, a quarter ¼ (round 1 Ask 2 A, round 2 Ask 3 A).
+    // Without a split field, the count itself.
+    units: sum(open),
+    primeUnits: sum(prime),
+  };
+}
+
+/**
+ * A TEAM'S SLOT SIZE (Stage 2): the biggest slot it may stand on — 1 when any whole field is open to it, ½ when
+ * "Facilities for a group" keeps it on sides, ¼ on quarters. What turns its share (units) into practices for the Slots
+ * column and a short team's "30 of 40 slots". Only the facility rule is read: days and hours change when, not how big.
+ */
+export function teamSlotSize(slots: readonly Slot[], team: Pick<EngineTeam, 'id' | 'groupId'>, rules: Pick<ScheduleSettings['rules'], 'fieldsBy'>): number {
+  const kept = new Map<string, { groups: Set<string>; teams: Set<string> }>();
+  for (const f of rules.fieldsBy) for (const fac of f.facilityIds) {
+    const k = kept.get(fac) ?? { groups: new Set<string>(), teams: new Set<string>() };
+    f.groupIds.forEach(g => k.groups.add(g)); f.teamIds.forEach(t => k.teams.add(t));
+    kept.set(fac, k);
+  }
+  let best = 0;
+  for (const s of slots) {
+    const k = s.facilityId ? kept.get(s.facilityId) : undefined;
+    if (k && !k.teams.has(team.id) && !(team.groupId && k.groups.has(team.groupId))) continue;
+    best = Math.max(best, slotSize(s));
+    if (best >= 1) return 1;
+  }
+  return best || 1;
+}
+
+/** `teamSlotSize` for every team, as `shareTargets`' `sizeOf`: 1 for all without a part in the time, each team read once. */
+export function teamSlotSizes(slots: readonly Slot[], teams: readonly Pick<EngineTeam, 'id' | 'groupId'>[], rules: Pick<ScheduleSettings['rules'], 'fieldsBy'>): (teamId: string) => number {
+  if (!slots.some(s => slotSize(s) < 1)) return () => 1;
+  const byId = new Map(teams.map(t => [t.id, t]));
+  const memo = new Map<string, number>();
+  return id => {
+    let n = memo.get(id);
+    if (n == null) memo.set(id, n = teamSlotSize(slots, byId.get(id) ?? { id, groupId: null }, rules));
+    return n;
   };
 }
 
@@ -814,8 +925,21 @@ export function makeDraft(input: EngineInput, strategy: DraftStrategy, round = 0
     const keep = fixed.get(s.key);
     if (keep?.length) assignments.set(s.key, [...keep].filter(t => teamById.has(t)));
   }
-  /** What a slot counts toward each of its teams' shares. */
-  const worth = (s: Slot) => (byUnits ? 1 / Math.max(1, (assignments.get(s.key) ?? []).length) : 1);
+  /** What a slot counts toward each of its teams' shares: its size (a side ½, a quarter ¼ — Stage 2) ÷ its teams. */
+  const worth = (s: Slot) => (byUnits ? slotSize(s) / Math.max(1, (assignments.get(s.key) ?? []).length) : 1);
+  /** The time has a part (Stage 2). Without one every step below runs exactly as it did. */
+  const anyParts = slots.some(s => slotSize(s) < 1);
+  /** The grain the shares are handed out in each week: one slot, or a quarter of one when the time has parts. */
+  const grain = anyParts ? 4 : 1;
+  /** The biggest slot of `seats` a team may have (1 without parts): how many slots its units come to. */
+  const biggest = (t: EngineTeam, seats: readonly Seat[]) => {
+    if (!anyParts) return 1;
+    let best = 0;
+    for (const x of seats) if (best < slotSize(x.slot) && (fixed.has(x.slot.key) || rules.eligible(t, x.slot))) best = slotSize(x.slot);
+    return best || 1;
+  };
+  /** The units a list of seats is (its count without parts). */
+  const unitsIn = (seats: readonly Seat[]) => (anyParts ? seats.reduce((n, x) => n + slotSize(x.slot), 0) : seats.length);
 
   /** A week's slots split into what the kept slots hold, team by team, and what is free. */
   const splitSeats = (seats: readonly Seat[]) => {
@@ -849,11 +973,14 @@ export function makeDraft(input: EngineInput, strategy: DraftStrategy, round = 0
       const deficits = new Map(teams.map(t => [t.id, ideal.get(t.id)! - have.get(t.id)!]));
       // Rounded UP: a team that shares may be owed half a facility (units), which a whole cap of 0 would never hand it.
       // And never more than it can place THIS week (fix-now 3), so a slot a team can't use goes to a team that can.
-      const caps = new Map(teams.map(t => [t.id, Math.min(Math.ceil(targets.slots.get(t.id)! - have.get(t.id)! - EPS),
-        t.many ? Infinity : Math.min(maxPerWeek, canPlace(t, seats)))]));
-      toHand = Math.max(0, Math.min(seats.length,
-        Math.round([...ideal.values()].reduce((a, b) => a + b, 0) - [...have.values()].reduce((a, b) => a + b, 0))));
-      const share = apportionDeficits(toHand, deficits, caps);
+      // With parts (Stage 2) the week is shared out in quarters: a team on a quarter is owed a quarter at a time, and a
+      // cap counted in practices holds it to that many slots of its size.
+      const caps = new Map(teams.map(t => [t.id, Math.min(Math.ceil((targets.slots.get(t.id)! - have.get(t.id)!) * grain - EPS),
+        t.many ? Infinity : Math.min(maxPerWeek, canPlace(t, seats)) * grain * biggest(t, seats))]));
+      toHand = Math.max(0, Math.min(unitsIn(seats),
+        Math.round(([...ideal.values()].reduce((a, b) => a + b, 0) - [...have.values()].reduce((a, b) => a + b, 0)) * grain) / grain));
+      const handed = apportionDeficits(Math.round(toHand * grain), new Map([...deficits].map(([k, v]) => [k, v * grain])), caps);
+      const share = new Map([...handed].map(([k, v]) => [k, v / grain]));
       // Never more than it is still owed — a half, for a team that shares (whole numbers without sharing: the same).
       for (const t of teams) need.set(t.id, Math.max(0, Math.min(share.get(t.id)!, targets.slots.get(t.id)! - have.get(t.id)!)));
     }
@@ -893,8 +1020,13 @@ export function makeDraft(input: EngineInput, strategy: DraftStrategy, round = 0
       if (done.has(t.id)) continue;
       if (!pooled(t.id)) {
         done.add(t.id);
-        const quota = Math.max(0, Math.round(need.get(t.id)!));
-        out.push({ id: t.id, teams: [t], quota, primeQuota: primeOf([t.id], quota, 1) });
+        // Its need is units; its quota is slots of the biggest size it may have this week (Stage 2 — 1 without parts), so
+        // it never takes more than it is owed. Landing on smaller ones leaves it under, which `topUp` places. Under "A set
+        // number a week" the need is PRACTICES whatever their size (`shareTargets`), so it is never divided. With parts
+        // the quota rounds DOWN (/review 2026-11-26: 0.75 owed on sides is one side, never two); without, as it always did.
+        const size = byUnits ? biggest(t, free) : 1;
+        const quota = Math.max(0, anyParts && byUnits ? Math.floor(need.get(t.id)! / size + EPS) : Math.round(need.get(t.id)! / size));
+        out.push({ id: t.id, teams: [t], quota, primeQuota: primeOf([t.id], quota, size), units: need.get(t.id)! });
         continue;
       }
       const pool = sharing.pools[sharing.poolOf.get(t.id)!];
@@ -1046,8 +1178,38 @@ export function makeDraft(input: EngineInput, strategy: DraftStrategy, round = 0
       }
       const alone = [...missed].map(([id, n]) => ({ id, teams: [teamById.get(id)!], quota: Math.floor(n + EPS), primeQuota: 0 })).filter(p => p.quota > 0);
       if (alone.length) run(free.filter(x => !out.has(x)), p => p.quota - (placed.get(p) ?? 0), alone);
+      if (anyParts && byUnits) topUp(out, taken, placed, run);
       lastPass(out, taken, placed, run);
       return out;
+    };
+
+    /**
+     * A TEAM THAT LANDED ON SMALLER SLOTS THAN ITS QUOTA ASSUMED (Stage 2): its quota was slots of the biggest size it
+     * could have, so a team placed on sides or quarters is still owed units. It takes the rest from what is left, in
+     * slots of the biggest size still open to it, a few rounds at most (sizes are 1, ½ and ¼). Only with parts and only
+     * under Evenly or By percentage; a schedule with no split field never reaches it.
+     */
+    const topUp = (out: Map<Seat, Placer>, taken: Map<string, Seat[]>, placed: Map<Placer, number>, run: (pool: readonly Seat[], capOf: (p: Placer) => number, among: readonly Placer[]) => void) => {
+      for (let round = 0; round < 3; round++) {
+        const got = new Map<string, number>();
+        for (const [seat, p] of out) if (p.teams.length === 1) got.set(p.teams[0].id, (got.get(p.teams[0].id) ?? 0) + slotSize(seat.slot));
+        const left = free.filter(x => !out.has(x));
+        if (!left.length) return;
+        const more: Placer[] = [];
+        for (const p of placers) {
+          if (p.teams.length !== 1 || p.units == null || p.teams[0].many) continue;
+          const t = p.teams[0];
+          const owed = p.units - (got.get(t.id) ?? 0);
+          const size = biggest(t, left);
+          // Never past its week's cap, which counts practices (/review 2026-11-26).
+          const quota = Math.min(maxPerWeek - (taken.get(t.id)?.length ?? 0), Math.floor(owed / size + EPS));
+          if (quota > 0) more.push({ id: t.id, teams: [t], quota, primeQuota: 0 });
+        }
+        if (!more.length) return;
+        const before = out.size;
+        run(left, p => p.quota - (placed.get(p) ?? 0), more);
+        if (out.size === before) return;
+      }
     };
 
     /**
@@ -1069,11 +1231,12 @@ export function makeDraft(input: EngineInput, strategy: DraftStrategy, round = 0
     const lastPass = (out: Map<Seat, Placer>, taken: Map<string, Seat[]>, placed: Map<Placer, number>, run: (pool: readonly Seat[], capOf: (p: Placer) => number, among: readonly Placer[]) => void) => {
       if (settings.split.method === 'weekly') return;
       const open = () => free.filter(x => !out.has(x) && !(settings.prime && x.slot.prime));
-      if (!open().length) return;
+      const openNow = open();
+      if (!openNow.length) return;
       // What each team holds this week so far, counted as its share counts.
       const week = new Map<string, number>();
       for (const [t, list] of kept) week.set(t, list.reduce((n, x) => n + worth(x.slot), 0));
-      for (const [, p] of out) for (const t of p.teams) week.set(t.id, (week.get(t.id) ?? 0) + (byUnits ? 1 / p.teams.length : 1));
+      for (const [seat, p] of out) for (const t of p.teams) week.set(t.id, (week.get(t.id) ?? 0) + (byUnits ? slotSize(seat.slot) / p.teams.length : 1));
       let budget = Math.floor(toHand - [...week.values()].reduce((a, b) => a + b, 0) + EPS);
       if (budget <= 0) return;
       // Each team's room: its season share left, its week's cap; its place in line: how far behind its pace it is.
@@ -1082,7 +1245,8 @@ export function makeDraft(input: EngineInput, strategy: DraftStrategy, round = 0
         if (t.many || pooled(t.id)) continue;
         const target = targets.slots.get(t.id) ?? 0;
         const has = (hv.get(t.id) ?? 0) + (week.get(t.id) ?? 0);
-        const quota = Math.min(maxPerWeek - (taken.get(t.id)?.length ?? 0), Math.floor(target - has + EPS));
+        // Slots of the biggest size still open to it (Stage 2; 1 without parts), never past what it is owed.
+        const quota = Math.min(maxPerWeek - (taken.get(t.id)?.length ?? 0), Math.floor((target - has) / biggest(t, openNow) + EPS));
         if (quota > 0) extra.push({ p: { id: t.id, teams: [t], quota, primeQuota: 0 }, behind: target * cum / Math.max(1, targets.capacity) - has });
       }
       extra.sort((x, y) => y.behind - x.behind);
@@ -1092,11 +1256,15 @@ export function makeDraft(input: EngineInput, strategy: DraftStrategy, round = 0
         for (const { p } of extra) {
           if (budget <= 0) return;
           if ((placed.get(p) ?? 0) >= Math.min(p.quota, round)) continue;
-          const seatsLeft = open();
-          if (!seatsLeft.length) return;
+          // With parts, only a seat the budget still covers (/review 2026-11-26: a whole field on a quarter's budget overspent).
+          const all = open();
+          if (!all.length) return;
+          const seatsLeft = anyParts ? all.filter(x => slotSize(x.slot) <= budget + EPS) : all;
+          if (!seatsLeft.length) continue;
           const before = placed.get(p) ?? 0;
           run(seatsLeft, q => Math.min(q.quota, round) - (placed.get(q) ?? 0), [p]);
-          budget -= (placed.get(p) ?? 0) - before;
+          // What it took, counted as the shares count (a part its size): `run` places only from `seatsLeft`, all open before it.
+          budget -= anyParts ? seatsLeft.reduce((n, x) => (out.get(x) === p ? n + slotSize(x.slot) : n), 0) : (placed.get(p) ?? 0) - before;
         }
       }
     };
@@ -1168,6 +1336,8 @@ export function makeDraft(input: EngineInput, strategy: DraftStrategy, round = 0
         outer: for (const sa of la) for (const sb of lb) {
           if (fixed.has(sa.slot.key) || fixed.has(sb.slot.key)) continue;
           if (sa.slot.startMs !== sb.slot.startMs || sa.slot.weight <= sb.slot.weight) continue;
+          // A part for a whole field (or a side for a quarter) would move a share, not just its value (Stage 2).
+          if (slotSize(sa.slot) !== slotSize(sb.slot)) continue;
           const move = (sa.slot.weight - sb.slot.weight) * (sa.slot.endMs - sa.slot.startMs) / MIN;
           if (Math.abs(gap - 2 * move) >= gap) continue;
           if (!rules.eligible(b, sa.slot) || !rules.eligible(a, sb.slot)) continue;
@@ -1212,15 +1382,15 @@ export function makeDraft(input: EngineInput, strategy: DraftStrategy, round = 0
     const typical = [...weeks].sort((a, b) => seatsByWeek.get(b)!.length - seatsByWeek.get(a)!.length || a.localeCompare(b))[0];
     const seats = seatsByWeek.get(typical)!;
     const zero = new Map(teams.map(t => [t.id, 0]));
-    for (const x of weekOf(seats, seats.length, seats.filter(y => y.slot.prime).length, zero, zero)) remember(memOf(x.placerId), x.slot, 2, keysOf.get(x.slot)!);
+    for (const x of weekOf(seats, unitsIn(seats), unitsIn(seats.filter(y => y.slot.prime)), zero, zero)) remember(memOf(x.placerId), x.slot, 2, keysOf.get(x.slot)!);
     memoryWeeks = 2;
   }
 
   let cumSeats = 0, cumPrime = 0;
   for (const week of weeks) {
     const seats = seatsByWeek.get(week)!;
-    cumSeats += seats.length;
-    cumPrime += seats.filter(x => x.slot.prime).length;
+    cumSeats += unitsIn(seats);
+    cumPrime += unitsIn(seats.filter(x => x.slot.prime));
     // Commit the week: who has each slot (a kept one as it stands), what it counts toward their shares, each placer's
     // memory, and the starts and facilities it held this week (Moved around asks "not the same as last week").
     const nowHeld = new Map<string, Set<string>>();
@@ -1349,6 +1519,8 @@ export function teamResults(
   const earlyOf = new Map<string, Set<string>>();
   for (const [day, set] of startsOf) { const list = [...set].sort(); earlyOf.set(day, new Set(list.slice(0, Math.floor(list.length / 2)))); }
   const dayCount = new Map<string, Map<number, number>>(), weeksOf = new Map<string, Set<string>>(), facsOf = new Map<string, Set<string>>();
+  /** Σ the sizes of each team's slots (Stage 2): a team on quarters reads its shortfall in quarters, not units. */
+  const sizes = new Map<string, number>();
   for (const s of slots) {
     const on = assignments.get(s.key) ?? [];
     for (const t of on) {
@@ -1356,7 +1528,8 @@ export function teamResults(
       if (!r) continue;
       const m = (s.endMs - s.startMs) / MIN;
       r.got++; r.minutes += m;
-      r.units += 1 / on.length;
+      r.units += slotSize(s) / on.length;
+      sizes.set(t, (sizes.get(t) ?? 0) + slotSize(s));
       if (on.length > 1) r.shared++;
       // The bill's own split (`pricedMinutes`): a shared slot's time is split among its teams.
       r.pricedMinutes += m * s.weight / on.length;
@@ -1370,7 +1543,10 @@ export function teamResults(
     }
   }
   for (const r of out.values()) {
-    r.short = targets?.counts === 'units' ? Math.max(0, Math.ceil(r.target - r.units - EPS)) : Math.max(0, r.target - r.got);
+    // Under units, what it is short of in ITS OWN slots (Stage 2): a team on quarters 2.5 units short is 10 quarter
+    // slots short ("30 of 40 slots", the drawing). A team on whole fields, shared or not, reads exactly as before.
+    const rate = r.got ? (sizes.get(r.teamId) ?? r.got) / r.got : 1;
+    r.short = targets?.counts === 'units' ? Math.max(0, Math.ceil((r.target - r.units) / rate - EPS)) : Math.max(0, r.target - r.got);
     r.facilities = facsOf.get(r.teamId)?.size ?? 0;
     const weeks = weeksOf.get(r.teamId)?.size ?? 0;
     // Its nights: the weekdays it has in at least half the weeks it plays.
@@ -1507,6 +1683,8 @@ export interface SlotPattern {
   endClock: string;
   venueId: string;
   facilityId: string | null;
+  /** Its field's part (Stage 2; absent: whole). */
+  sectionMask?: number;
   /** Its dates, in order. */
   days: string[];
 }
@@ -1520,7 +1698,7 @@ export function slotPatterns(slots: readonly Slot[], teamId: string, assignments
   for (const s of slots) {
     if (!(assignments.get(s.key) ?? []).includes(teamId)) continue;
     const k = s.pos;
-    const p = map.get(k) ?? { weekday: s.weekday, startClock: s.startClock, endClock: s.endClock, venueId: s.venueId, facilityId: s.facilityId, days: [] };
+    const p = map.get(k) ?? { weekday: s.weekday, startClock: s.startClock, endClock: s.endClock, venueId: s.venueId, facilityId: s.facilityId, ...(s.sectionMask ? { sectionMask: s.sectionMask } : {}), days: [] };
     p.days.push(s.day);
     map.set(k, p);
   }

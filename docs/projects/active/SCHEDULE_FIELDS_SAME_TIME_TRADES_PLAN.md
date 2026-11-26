@@ -386,6 +386,44 @@ Migration first. Drawn together with Stage 3.
         `split_locked` save the window keeps the new choice with the refusal's words (could reset the row). `/review` also
         taught the club calendar's three reads the part (it was in area D). Close a place needed nothing: a field-level
         closure compares the field only, which covers every part (start condition 3).
+  - [x] **2B built 2026-11-26** (mig 544, `club_schedule_save` re-made: a row's facility rows per (field, part), the slot
+        lookup and insert carry `section_mask`; `/dba` on the text: apply as-is, one nesting nit taken; rolled-back dry
+        run with `scripts/schedule-parts-save-check.sql`, 8 of 8; **applied to dev 2026-11-26** at the owner's word ("apply
+        544 to dev"), read back + the proof re-run on the applied function, 8 of 8; prod pending, ORDER after 541, before
+        the 2B promote — `MANUAL_PROD_STEPS.json`).
+        Built: `ScheduleBlock.parts` and `Slot.sectionMask`; `slotKeyOf`/`slotPosOf` carry the part (a whole field's key
+        is unchanged); `cutSlots` cuts one slot per ticked part and never two on overlapping ground; ONE weight,
+        `slotWeight(share, facility, mask, permit)`, at every weight site (the several-permits guard test now holds it);
+        the share counts a slot's size (`seatCounts.units`, quarters as the grain when the time has parts, a top-up for a
+        team that landed on smaller slots than its quota assumed, `balanceValue` never swaps two sizes); `heldSlots`,
+        `familyClashes`, `slotsWithPinned` and `blockHolds` compare the part; `blockPlaces` reads each field once
+        (`readScheduleTime`, `scheduleList`), `permit-lookup` de-duplicates; `readClubPlaces.sectionsOf`; New schedule's
+        tick list (`tickOptions`, `resolveTicks`, `rowPlacesWords`), the grid's part rows (`placeRows`, `slotPlaceName`),
+        the bill's "quarter-field slots" and the Split hint's "or one side" / "a quarter". Tests:
+        `club-schedule-parts` (16: both drawing pictures to the cent, the cut, the hand move, "no split = identical"),
+        `club-schedule-pick-parts`, `club-schedule-grid-parts`; every existing scheduler test unchanged.
+        **Said out loud in the session:** the drawing's quarters picture says today's four-way sharing reads "10 short";
+        the code says 3 (units, rounded up). A team on parts now reads its shortfall in its own slots ("30 of 40", as
+        drawn); sharing's figure is unchanged. The venues route's held check needed nothing (`limit(1)`: any row is held).
+        **`/simplify` + `/review` 2026-11-26 (before the commit):** one home each for the part order (`maskRank`), the
+        cut's order (`slotOrder`, shared with the kept merge), "same place?" (`samePlace` at every clash reader), the key
+        suffix and the optional part (`maskSuffix`, `maskProp`); `teamSlotSizes` once per read. Fixed: under "A set
+        number a week" a team on parts was handed its number ÷ its slot size (2× on sides, 4× on quarters — the number
+        counts practices; test added, proved failing on the old line); `topUp` now keeps the week's cap; the last pass
+        never spends past its budget on a part; with parts a quota rounds down (`topUp` fills); the drafts step names
+        the part ("Field 1 side A"). **Open, found by `/review`, parts only:** prime time under "A set number a week"
+        with parts mixes units and practices (`shareTargets` grain, `needsFor`'s prime block) — a design call; the
+        house-league reads of a club schedule (`league-club-schedule*`) and league-time counting (`league-time*`) don't
+        carry the part (2E); free time reads a part as the whole field busy; the schedule page's after-a-move span
+        matches on the field, not the part; the bill's Split hint names a side by size, not price, on a "Half cost"
+        field; two rows naming side A and side B at one time are refused (`overlappingBlocks`, by design today); the
+        save proof covers draft schedules only (a final whole→parts re-save is unproved).
+        **Owed to later sessions:** 2C — the coach's hand-back series key (`lib/club-schedule-coach.ts` `placeKey`) and the
+        PDF cell (`lib/club-schedule-document.ts:160`) carry the part; Send writes it on the practice. 2E —
+        `lib/club-schedule-league-plan.ts` `sig` carries the part. `/dba` advisory (an owner call, not built): the save's
+        slot lookup has no index on (schedule, venue, start), true before this build too; a separate small migration
+        `club_schedule_slots_schedule_idx` when wanted. For `/marketing` (2E): the sharing rule's "half facilities"
+        sentence names case C fields only; a part is never shared but is not called a half facility.
 - [ ] Reported by `/design`, not this project's to fix: the shipped "Give it to" menu inside a cell of the "Open slots and
       short teams" window has no row on `docs/agents/design/TABLE_EXCEPTION_REGISTER.md` (it was ruled for that window;
       a register row should say it is not a precedent).

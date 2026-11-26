@@ -142,6 +142,127 @@ export function splitReadWords(sections: FieldSections): string | null {
   return sections === 4 ? 'Four quarters, A to D' : sections === 2 ? 'Two sides, A and B' : null;
 }
 
+// ── The tick list (Session 2B, round 2 tab 3) ───────────────────────────────────────────────────────
+
+/** A field the tick list offers: its id, its name, how it splits. */
+export interface PickableField { id: string; name: string; sections: FieldSections }
+
+/** A tick's value: the field's own id for the whole field, "id:mask" for a part. */
+export const tickValue = (facilityId: string, mask: number): string => (maskOf(mask) === WHOLE ? facilityId : `${facilityId}:${mask}`);
+
+/** A tick's value read back: the field and the ground it names. */
+export function readTick(value: string): { facilityId: string; mask: number } {
+  const at = value.indexOf(':');
+  return at < 0 ? { facilityId: value, mask: WHOLE } : { facilityId: value.slice(0, at), mask: maskOf(Number(value.slice(at + 1))) };
+}
+
+/** The part as the tick list's option names it, capitalised for a row label: "Side A", "Quarter C", "Quarters A–B". */
+export function partLabel(mask: number, sections: FieldSections): string | null {
+  const w = partWords(mask, sections);
+  return w ? w[0].toUpperCase() + w.slice(1) : null;
+}
+
+/**
+ * The tick list's options for a venue's fields, in the venue's order (round 2 tab 3, "with halves"): a split field is
+ * "Field 1 (whole)" then each part ("Field 1, quarters A–B", "Field 1, quarter A" …), flat, no indent; a field not split
+ * keeps its plain name.
+ */
+export function tickOptions(fields: readonly PickableField[]): { id: string; label: string }[] {
+  return fields.flatMap(f => (f.sections === 1
+    ? [{ id: f.id, label: f.name }]
+    : legalMasks(f.sections).map(m => ({ id: tickValue(f.id, m), label: m === WHOLE ? `${f.name} (whole)` : fieldPartName(f.name, m, f.sections, ', ') }))));
+}
+
+/**
+ * A place and a place inside it are never both ticked: each value newly ticked (in `next`, not in `prev`) unticks every
+ * other tick on its field whose ground it overlaps — a quarter unticks the whole field and its half, a half unticks the
+ * whole field and its two quarters, the whole field unticks every part. The last one ticked wins.
+ */
+export function resolveTicks(prev: readonly string[], next: readonly string[]): string[] {
+  let out = [...next];
+  for (const v of next) {
+    if (prev.includes(v) || !out.includes(v)) continue;
+    const t = readTick(v);
+    out = out.filter(x => {
+      if (x === v) return true;
+      const o = readTick(x);
+      return o.facilityId !== t.facilityId || !partsOverlap(o.mask, t.mask);
+    });
+  }
+  return out;
+}
+
+/** A row's places as the schedule stores them: its fields (once each, in `order`) and, for a field ticked in parts, which. */
+export interface RowPlaces { facilityIds: string[]; parts?: Record<string, number[]> }
+
+/** Ticks → the row's places. A field with only its whole tick names no parts. */
+export function placesOfTicks(ticks: readonly string[], order: readonly string[]): RowPlaces {
+  const masks = new Map<string, number[]>();
+  for (const v of ticks) {
+    const t = readTick(v);
+    const list = masks.get(t.facilityId) ?? [];
+    if (!list.includes(t.mask)) list.push(t.mask);
+    masks.set(t.facilityId, list);
+  }
+  const facilityIds = order.filter(id => masks.has(id));
+  const parts: Record<string, number[]> = {};
+  for (const id of facilityIds) {
+    const list = masks.get(id)!;
+    if (list.some(m => m !== WHOLE)) parts[id] = sortMasks(list.filter(m => m !== WHOLE));
+  }
+  return Object.keys(parts).length ? { facilityIds, parts } : { facilityIds };
+}
+
+/** The row's places → its ticks. */
+export function ticksOfPlaces(p: RowPlaces): string[] {
+  return p.facilityIds.flatMap(id => (p.parts?.[id]?.length ? p.parts[id].map(m => tickValue(id, m)) : [id]));
+}
+
+/** The masks a row names on a field: its parts, else the whole field. */
+export const masksOn = (p: { parts?: Readonly<Record<string, readonly number[]>> | null }, facilityId: string): readonly number[] =>
+  p.parts?.[facilityId]?.length ? p.parts[facilityId] : [WHOLE];
+
+/** A mask's place in the order a field lists them: whole, A–B, C–D, A, B, C, D (the cut, the kept merge and the grid). */
+export const maskRank = (mask: number | null | undefined): number => LEGAL[4].indexOf(maskOf(mask));
+
+/** Masks in the order a field lists them: whole, A–B, C–D, A, B, C, D. */
+export function sortMasks(masks: readonly number[]): number[] {
+  return [...masks].sort((a, b) => maskRank(a) - maskRank(b));
+}
+
+/** "A", "B and C", "A–B, C and D" — `joinWithAnd` (lib/utils), copied: this module imports nothing (its test holds it). */
+function joinAnd(items: readonly string[]): string {
+  return items.length <= 1 ? items.join('') : `${items.slice(0, -1).join(', ')} and ${items[items.length - 1]}`;
+}
+
+/** A key's part suffix: nothing for the whole field (so a whole field keys exactly as before parts), else `sep` + mask. */
+export const maskSuffix = (mask: number | null | undefined, sep = '|'): string => {
+  const m = maskOf(mask);
+  return m === WHOLE ? '' : `${sep}${m}`;
+};
+
+/** A slot's optional part: no property for the whole field (so a whole-field slot is the object it was), else the mask. */
+export const maskProp = (mask: number | null | undefined): { sectionMask?: number } => {
+  const m = maskOf(mask);
+  return m === WHOLE ? {} : { sectionMask: m };
+};
+
+/**
+ * ONE FIELD's ticks in words, for the row's box: "Field 1 in four quarters" (every quarter), "Field 2 in two sides" (both
+ * sides), "Field 2 side A", "Field 1 quarters A–B, C and D", "Field 1 quarters A and C", "Field 1" (whole).
+ */
+export function fieldTicksWords(name: string, masks: readonly number[], sections: FieldSections): string {
+  const parts = sortMasks(masks.filter(m => m !== WHOLE));
+  if (!parts.length) return name;
+  if (sections === 2 && parts.length === 2 && parts.every(m => partFactor(m) === 0.5)) return splitFieldWords(name, 2);
+  if (sections === 4 && parts.length === 4 && parts.every(m => partFactor(m) === 0.25)) return splitFieldWords(name, 4);
+  if (parts.length === 1) return fieldPartName(name, parts[0], sections);
+  if (sections === 2) return `${name} ${joinAnd(parts.map(m => partWords(m, 2)!))}`;
+  // Low quarter first: A–B before C, C before D.
+  const byGround = [...parts].sort((a, b) => sectionRange(a)[0] - sectionRange(b)[0]);
+  return `${name} quarters ${joinAnd(byGround.map(letters))}`;
+}
+
 /** The database's `section_range` (mig 541), mirrored for the test: the mask as a run of quarters [lo, hi). */
 export function sectionRange(mask: number): [number, number] {
   switch (maskOf(mask)) {

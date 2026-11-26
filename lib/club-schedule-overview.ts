@@ -1,6 +1,6 @@
 /** A read-only summary of the dates already shown by the club schedule's grid. */
 import { utcToZonedInputs } from './timezone';
-import { placeKey, type PlaceRow, type ScheduleAsk, type SlotView } from './club-schedule-view';
+import { slotRowKey, type PlaceRow, type ScheduleAsk, type SlotView } from './club-schedule-view';
 import { SCHEDULE_SCREEN_WORDS as W } from './club-schedule-words';
 import { takenCountWords } from './permit-words';
 import { isProgramHolder } from './club-schedule-holders';
@@ -42,7 +42,8 @@ export function scheduleOverview(
   const byPlace = new Map<string, Map<string, Map<string, SlotView[]>>>();
   for (const slot of slots) {
     if (!visible.has(slot.day)) continue;
-    const place = placeKey(slot.venueId, slot.facilityId);
+    // By the slot's row: its field's, or its part's (Stage 2).
+    const place = slotRowKey(slot);
     const clock = JSON.stringify([slot.startClock, slot.endClock]);
     const clocks = byPlace.get(place) ?? byPlace.set(place, new Map()).get(place)!;
     const dates = clocks.get(clock) ?? clocks.set(clock, new Map()).get(clock)!;

@@ -22,6 +22,7 @@ import { orgDayKey, addCalendarDays } from './timezone';
 import { clock, permitAnswer, type PermitOutsideIds, type PermitTime, type TimeBlock, type VenueFacilities, type DateOff } from './permit-time';
 import type { PermitOutside } from './permit-words';
 import type { ClubBooking } from './venue-clash';
+import { sectionsOf, type FieldSections } from './field-parts';
 
 type BlockRow = {
   id: string; permit_id: string; org_venue_id: string; weekdays: number[]; start_time: string; end_time: string;
@@ -76,13 +77,15 @@ export interface ClubPlaces {
   order: Map<string, number>;
   venueName: Map<string, string>;
   facilityName: Map<string, string>;
+  /** How each facility splits (Club schedules Stage 2, mig 541: 1 not split, 2 two sides, 4 four quarters). */
+  sectionsOf: Map<string, FieldSections>;
 }
 export async function readClubPlaces(orgId: string): Promise<ClubPlaces> {
   const [venues, facilities] = await Promise.all([
     fetchAll<{ id: string; name: string }>((a, b) => supabaseAdmin.from('org_venues')
       .select('id, name').eq('org_id', orgId).order('id').range(a, b)),
-    fetchAll<{ id: string; org_venue_id: string; name: string; display_order: number }>((a, b) => supabaseAdmin
-      .from('org_venue_facilities').select('id, org_venue_id, name, display_order').eq('org_id', orgId).order('id').range(a, b)),
+    fetchAll<{ id: string; org_venue_id: string; name: string; display_order: number; sections: number | null }>((a, b) => supabaseAdmin
+      .from('org_venue_facilities').select('id, org_venue_id, name, display_order, sections').eq('org_id', orgId).order('id').range(a, b)),
   ]);
   const byVenue = new Map<string, string[]>();
   for (const f of [...facilities].sort((x, y) => x.display_order - y.display_order || x.name.localeCompare(y.name))) {
@@ -93,6 +96,7 @@ export async function readClubPlaces(orgId: string): Promise<ClubPlaces> {
     order: new Map(facilities.map(f => [f.id, f.display_order])),
     venueName: new Map(venues.map(v => [v.id, v.name])),
     facilityName: new Map(facilities.map(f => [f.id, f.name])),
+    sectionsOf: new Map(facilities.map(f => [f.id, sectionsOf(f.sections)])),
   };
 }
 
@@ -167,7 +171,9 @@ export async function readPermitTimes(orgId: string, opts: {
   for (const b of [...blocks].sort((x, y) => x.sort_order - y.sort_order)) {
     const block: TimeBlock = {
       id: b.id, venueId: b.org_venue_id,
-      facilityIds: (b.org_time_block_facilities ?? []).map(f => f.facility_id)
+      // Each field once (a permit's own block never names a part — mig 541's trigger — but a field listed twice would
+      // double its Held hours, so the read never trusts that).
+      facilityIds: [...new Set((b.org_time_block_facilities ?? []).map(f => f.facility_id))]
         .sort((x, y) => (places.order.get(x) ?? 0) - (places.order.get(y) ?? 0)),
       weekdays: [...(b.weekdays ?? [])].map(Number).sort((x, y) => x - y),
       startTime: clock(b.start_time), endTime: clock(b.end_time),

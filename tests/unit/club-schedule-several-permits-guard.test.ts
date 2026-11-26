@@ -59,10 +59,14 @@ describe('a schedule on several permits — no reader of a schedule\'s permit us
         assert.ok(args.length >= 3, `${f}: readPrices(${args.join(', ')}) prices one permit's way — pass the rows' permits`);
       }
     }
-    // A slot's weight is its row's permit's share: every weightOf call outside the engine names the permit.
+    // A slot's weight is its row's permit's share × its part (Club schedules Stage 2): outside the engine every slot is
+    // weighed by the ONE function, `slotWeight(prices.weightOf, facility, mask, permit)` — never the share read alone,
+    // which would price a side as the whole field.
     for (const f of CODE.filter(x => !/club-schedule-(engine|server)\.ts$/.test(x))) {
-      for (const args of callsOf(readCode(f), 'prices.weightOf')) {
-        assert.equal(args.length, 2, `${f}: prices.weightOf(${args.join(', ')}) weighs a slot without its row's permit`);
+      const code = readCode(f);
+      assert.equal(callsOf(code, 'prices.weightOf').length, 0, `${f}: prices.weightOf(…) weighs a slot without its part — call slotWeight`);
+      for (const args of callsOf(code, 'slotWeight')) {
+        assert.equal(args.length, 4, `${f}: slotWeight(${args.join(', ')}) must name the share, the facility, the part and the row's permit`);
       }
     }
     for (const f of ['lib/club-schedule-send.ts', 'lib/club-schedule-coach.ts']) {

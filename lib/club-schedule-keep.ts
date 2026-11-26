@@ -1,6 +1,7 @@
 import { addCalendarDays, mondayOfDay, utcToZonedInputs } from './timezone';
 import { clock, overlappingBlocks, weekdayOf } from './permit-time';
-import { isPrimeSlot, type ScheduleBlock, type ScheduleTime, type Slot, type WeightOf } from './club-schedule-engine';
+import { isPrimeSlot, slotOrder, slotPosOf, slotWeight, type ScheduleBlock, type ScheduleTime, type Slot, type WeightOf } from './club-schedule-engine';
+import { maskProp, masksOn, maskOf, samePlace, WHOLE } from './field-parts';
 import type { ScheduleSettings } from './club-schedule-settings';
 
 // ---------------------------------------------------------------------------
@@ -23,6 +24,8 @@ export interface KeepSlot {
   key: string;
   venueId: string;
   facilityId: string | null;
+  /** The field's part (Stage 2; 0 or absent = whole). */
+  sectionMask?: number;
   blockId: string | null;
   permitId: string | null;
   startsAt: string;
@@ -38,15 +41,17 @@ export type KeepChange =
   | { kind: 'take_off'; permitId: string };
 
 /** A slot as the engine reads it, rebuilt from what is stored (the bill, the send and a kept slot all read it so). */
-export function engineSlotOf(s: Pick<KeepSlot, 'key' | 'venueId' | 'facilityId' | 'startsAt' | 'endsAt'> & { permitId?: string | null }, blockIndex: number, settings: Pick<ScheduleSettings, 'prime'>, weightOf: WeightOf): Slot {
+export function engineSlotOf(s: Pick<KeepSlot, 'key' | 'venueId' | 'facilityId' | 'startsAt' | 'endsAt'> & { permitId?: string | null; sectionMask?: number | null }, blockIndex: number, settings: Pick<ScheduleSettings, 'prime'>, weightOf: WeightOf): Slot {
   const start = utcToZonedInputs(s.startsAt), end = utcToZonedInputs(s.endsAt);
   const weekday = weekdayOf(start.date);
+  const mask = maskOf(s.sectionMask);
   return {
     key: s.key, venueId: s.venueId, facilityId: s.facilityId, blockIndex, day: start.date, weekday, week: mondayOfDay(start.date),
     startClock: start.time, endClock: end.time, startMs: Date.parse(s.startsAt), endMs: Date.parse(s.endsAt),
-    pos: `${weekday}|${start.time}|${s.venueId}|${s.facilityId ?? ''}`,
-    prime: isPrimeSlot(settings.prime, weekday, start.time, end.time), weight: weightOf(s.facilityId, s.permitId ?? null),
+    pos: slotPosOf(weekday, start.time, s.venueId, s.facilityId, mask),
+    prime: isPrimeSlot(settings.prime, weekday, start.time, end.time), weight: slotWeight(weightOf, s.facilityId, mask, s.permitId),
     ...(s.permitId ? { permitId: s.permitId } : {}),
+    ...maskProp(mask),
   };
 }
 
@@ -73,6 +78,8 @@ export function pinnedSlots<S extends KeepSlot>(stored: readonly S[], change: Ke
 export function blockHolds(b: ScheduleBlock, s: Slot, range: { startsOn: string; endsOn: string }): boolean {
   if (b.venueId !== s.venueId) return false;
   if (b.facilityIds.length && (s.facilityId == null || !b.facilityIds.includes(s.facilityId))) return false;
+  // The row names this part of the field (Stage 2): a whole-field row never holds a part's slot, nor a side row the whole.
+  if (s.facilityId != null && !masksOn(b, s.facilityId).includes(maskOf(s.sectionMask))) return false;
   if (!b.weekdays.includes(s.weekday)) return false;
   if (clock(b.startTime) > s.startClock || s.endClock > clock(b.endTime)) return false;
   if (s.day < (b.fromDate ?? range.startsOn) || s.day > (b.untilDate ?? range.endsOn)) return false;
@@ -147,7 +154,9 @@ export function timeKeeping(
         const row: ScheduleBlock = was
           ? { ...was, untilDate: until }
           : {
-            id: `kept-${s.key}`, venueId: s.venueId, facilityIds: s.facilityId ? [s.facilityId] : [], weekdays: [slot.weekday],
+            id: `kept-${s.key}`, venueId: s.venueId, facilityIds: s.facilityId ? [s.facilityId] : [],
+            ...(s.facilityId && maskOf(s.sectionMask) !== WHOLE ? { parts: { [s.facilityId]: [maskOf(s.sectionMask)] } } : {}),
+            weekdays: [slot.weekday],
             startTime: slot.startClock, endTime: slot.endClock, fromDate: slot.day, untilDate: slot.day, permitId: s.permitId,
           };
         j = blocks.push(row) - 1;
@@ -194,17 +203,18 @@ export function timeKeeping(
  */
 export function slotsWithPinned(fresh: readonly Slot[], k: Pick<Keeping, 'pinned' | 'pastFrom' | 'freshBlocks'>, venueFacilities: ReadonlyMap<string, readonly string[]>): Slot[] {
   const keys = new Set(k.pinned.map(s => s.key));
-  const meets = (s: Slot) => k.pinned.some(p => p.venueId === s.venueId && (p.facilityId == null || s.facilityId == null || p.facilityId === s.facilityId)
+  // On its facility: the same field and overlapping ground (Stage 2 — a kept side A leaves side B free to cut).
+  const meets = (s: Slot) => k.pinned.some(p => p.venueId === s.venueId
+    && (p.facilityId == null || s.facilityId == null || samePlace(p, s))
     && p.startMs < s.endMs && s.startMs < p.endMs);
   const cut = fresh.filter(s => !keys.has(s.key)
     && (!k.pastFrom || s.day >= k.pastFrom)
     && (!k.freshBlocks || k.freshBlocks.has(s.blockIndex))
     && !meets(s));
-  // The cut's own order (`cutSlots`): by start, then venue, then the facility's place at its venue.
+  // The cut's own order (`cutSlots`): by start, then venue, then the facility's place at its venue, then its part.
   const order = new Map<string, number>();
   for (const list of venueFacilities.values()) list.forEach((f, i) => order.set(f, i));
-  return [...cut, ...k.pinned].sort((a, b) => a.startMs - b.startMs || a.venueId.localeCompare(b.venueId)
-    || (order.get(a.facilityId ?? '') ?? 0) - (order.get(b.facilityId ?? '') ?? 0));
+  return [...cut, ...k.pinned].sort(slotOrder(order));
 }
 
 /** The practices before today a change keeps on a sent schedule — kept slots with a team, before `pastFrom` (the

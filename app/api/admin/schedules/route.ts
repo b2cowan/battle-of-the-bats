@@ -76,7 +76,8 @@ export const GET = withObservability(async (req: Request) => {
     groups: groups.map(g => ({ id: g.id, name: g.name })),
     teams: teams.map(t => ({ id: t.id, name: t.name, groupId: t.groupId, groupName: t.groupName, color: t.color, season: t.season, program: t.program ?? null })),
     places: [...places.venueName].map(([venueId, venueName]) => ({
-      venueId, venueName, facilities: (places.byVenue.get(venueId) ?? []).map(id => ({ id, name: places.facilityName.get(id) ?? '' })),
+      // Each facility with how it splits (Club schedules Stage 2): the row's tick list offers a split field's parts.
+      venueId, venueName, facilities: (places.byVenue.get(venueId) ?? []).map(id => ({ id, name: places.facilityName.get(id) ?? '', sections: places.sectionsOf.get(id) ?? 1 })),
     })),
     // The Permits tick list: each permit's time and its issuer (the option's second line, "Town of Milton · Mar 2 – May
     // 29, 2027") — never its money (a permit's money reads to Accounting, never here — the bill reads its prices).

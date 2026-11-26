@@ -79,7 +79,7 @@ export function facilitiesOf(venues: readonly LibraryVenue[]): VenueFacilities {
 
 // ── The multi-pick field: a block's facilities, its days ────────────────────────────────────────────
 
-export function PickField({ id, label, required, options, selected, onChange, everyLabel, everyValue, labelAside, placeholder, disabled, inlineLabel }: {
+export function PickField({ id, label, required, options, selected, onChange, everyLabel, everyValue, labelAside, placeholder, disabled, inlineLabel, valueWords }: {
   id: string;
   label: string;
   /** Quieter words at the end of the label line, cut short with "…" when long (New schedule's permit row: its venue —
@@ -100,6 +100,9 @@ export function PickField({ id, label, required, options, selected, onChange, ev
   everyLabel?: string;
   placeholder?: string;
   disabled?: boolean;
+  /** What the box says for what is ticked, in place of the names listed (New schedule's row with a field in parts: "Field
+   *  1 in four quarters, Field 2 in two sides" — Club schedules Stage 2). Absent: the names, as always. */
+  valueWords?: (selected: readonly string[]) => string;
 }) {
   const [open, setOpen] = useState(false);
   const wrap = useRef<HTMLDivElement>(null);
@@ -108,7 +111,7 @@ export function PickField({ id, label, required, options, selected, onChange, ev
   useFieldMenu(open, wrap, menu, () => setOpen(false));
   const chosen = options.filter(o => selected.includes(o.id));
   const value = chosen.length
-    ? (everyLabel ? facilityListWords(chosen.map(o => o.label)) : chosen.map(o => o.label).join(', '))
+    ? (valueWords ? valueWords(chosen.map(o => o.id)) : everyLabel ? facilityListWords(chosen.map(o => o.label)) : chosen.map(o => o.label).join(', '))
     : everyLabel ? everyValue || everyLabel : '';
   const toggle = (oid: string) => onChange(selected.includes(oid) ? selected.filter(x => x !== oid) : [...selected, oid]);
   const labelSpan = <span className={inlineLabel ? `${ck.label} ${own.pickLabelHidden}` : ck.label} id={`${id}-label`}>{label}{required && <span className={repKit.req} aria-hidden>*</span>}</span>;

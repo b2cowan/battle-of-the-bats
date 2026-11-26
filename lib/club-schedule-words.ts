@@ -20,6 +20,8 @@ import type { ClosingRow, Installment, PriceMode } from './club-schedule-bill';
 import type { SendKind } from './club-schedule-send';
 import { HAND_BACK_WORDS, type CreditMove } from './club-hand-back-words';
 import { FACT_LABELS, factRow, noticeFacts } from './notification-facts';
+import { facilityListWords } from './permit-words';
+import { fieldTicksWords, masksOn, sectionsOf, WHOLE, type FieldSections } from './field-parts';
 
 /** Cents said as money — the schedule's one spelling, on every screen and in every email. */
 export const moneyCents = (cents: number) => fmt(cents / 100);
@@ -1317,7 +1319,10 @@ export const SCHEDULE_SCREEN_WORDS = {
   billAmount: 'Amount',
   billSplit: 'Split',
   billSplitTime: 'By the time each team got',
-  billSplitHint: (full: string, half: string | null) => `Each field at the permit’s price: a full field ${full} an hour${half ? `, a half field ${half}` : ''}`,
+  /** The Split hint. A field's part (Stage 2, round 2 tab 5) adds "or one side" when the time has a side or a half, and
+   *  "a quarter $20.00" only when it has a quarter; without parts it reads exactly as before. */
+  billSplitHint: (full: string, half: string | null, side = false, quarter: string | null = null) =>
+    `Each field at the permit’s price: a full field ${full} an hour${half ? `, a half field${side ? ' or one side' : ''} ${half}` : ''}${quarter ? `, a quarter ${quarter}` : ''}`,
   billSplitHintPlain: 'Each team’s share of the amount, by the hours it got',
   billPayments: 'Payments',
   billOne: 'One payment',
@@ -1336,11 +1341,13 @@ export const SCHEDULE_SCREEN_WORDS = {
     return `${payments} payments: the first due ${first}, then ${plan === 'monthly' ? 'every month' : 'every two months'}.`;
   },
   billAddDate: 'Add a date',
-  billTeamCaption: (full: number, half: number, shared: number, other: number, hours: number) => {
-    const parts = [full ? `${full} full` : '', half ? `${half} half` : '', shared ? `${shared} shared` : '', other ? `${other} more` : ''].filter(Boolean);
-    // One kind says it whole (specimen 2's bill, Stage 11c): "50 shared slots", "50 half-field slots".
+  /** A team's time on the bill, by price (round 1 kept it): full, half, quarter (Stage 2 — a quarter of a full field or a
+   *  side of a "Half cost" field both cost a quarter), shared, and "more" for any other price (an eighth). */
+  billTeamCaption: (full: number, half: number, quarter: number, shared: number, other: number, hours: number) => {
+    const parts = [full ? `${full} full` : '', half ? `${half} half` : '', quarter ? `${quarter} quarter` : '', shared ? `${shared} shared` : '', other ? `${other} more` : ''].filter(Boolean);
+    // One kind says it whole (specimen 2's bill, Stage 11c): "50 shared slots", "50 half-field slots", "10 quarter-field slots".
     const slots = parts.length > 1 ? parts.join(' + ')
-      : full ? `${full} full-field slots` : half ? `${half} half-field slots` : shared ? `${shared} shared slots` : parts.join('');
+      : full ? `${full} full-field slots` : half ? `${half} half-field slots` : quarter ? `${quarter} quarter-field slots` : shared ? `${shared} shared slots` : parts.join('');
     // Full-field hours, named (owner 2026-11-24): a bare "h" beside the tables' clock hours would read as the same figure.
     const h = Math.round(hours * 10) / 10;
     return `${slots} · ${h} full-field ${h === 1 ? 'hour' : 'hours'}`;
@@ -1643,3 +1650,28 @@ export const PART_WORDS = {
   /** A family send that is refused part-way: said after "Sent to …", with the refusal in the middle (it tells only what landed). */
   sentPartWay: (refusal: string) => `Only part of it went out. ${refusal} The rest is still waiting to be sent.`,
 } as const;
+
+/**
+ * [marketing] A ROW'S PLACES IN ITS FACILITIES BOX (Club schedules Stage 2, round 2 tab 3): with no field in parts, the
+ * words it always had ("Fields 1–6", "Field 1 and Field 2"); with parts, each field in the venue's order — whole fields
+ * run together as before, a split field in its own words — joined by commas: "Field 1 in four quarters, Field 2 in two
+ * sides", "Field 1 quarters A–B, C and D, Field 2 in two sides", "Field 1 in two sides, Field 2 side A". Working words.
+ */
+export function rowPlacesWords(
+  fields: readonly { id: string; name: string; sections?: FieldSections | number | null }[],
+  place: { facilityIds: readonly string[]; parts?: Readonly<Record<string, readonly number[]>> | null },
+): string {
+  const chosen = fields.filter(f => place.facilityIds.includes(f.id));
+  if (!chosen.some(f => place.parts?.[f.id]?.length)) return facilityListWords(chosen.map(f => f.name));
+  const out: string[] = [];
+  let run: string[] = [];
+  const flush = () => { if (run.length) out.push(facilityListWords(run)); run = []; };
+  for (const f of chosen) {
+    const masks = masksOn(place, f.id);
+    if (masks.length === 1 && masks[0] === WHOLE) { run.push(f.name); continue; }
+    flush();
+    out.push(fieldTicksWords(f.name, masks, sectionsOf(f.sections)));
+  }
+  flush();
+  return out.join(', ');
+}

@@ -1,7 +1,8 @@
 import { NextResponse } from 'next/server';
 import { withObservability } from '@/lib/observability';
 import { isUuid } from '@/lib/utils';
-import { generateDrafts, seatCounts, shareTargets, slotsTeamsCanHold, teamsCanHold } from '@/lib/club-schedule-engine';
+import { maskProp } from '@/lib/field-parts';
+import { generateDrafts, seatCounts, shareTargets, slotsTeamsCanHold, teamSlotSizes, teamsCanHold } from '@/lib/club-schedule-engine';
 import {
   buildEngineInput, familyOthers, hasPartOf, keepingFor, loadSchedule, partParent, partTimeRefusal, pricePermitOf, readRequestPrices, readScheduleRequest, repTeamsRefusal,
   resolveScheduler, schedulerRefusal, teamNamer,
@@ -71,7 +72,8 @@ export const POST = withObservability(async (req: Request) => {
   const nameOf = teamNamer(teams);
   const avoid = settings.rules.avoidBookings;
   const counts = seatCounts(input.slots, settings, input.held, input.fixed);
-  const targets = shareTargets(input.teams, settings, counts);
+  // A team kept on parts holds more practices for its share (Stage 2: a quarter counts ¼) — the Slots column says so.
+  const targets = shareTargets(input.teams, settings, counts, { sizeOf: teamSlotSizes(input.slots, input.teams, settings.rules) });
   const perWeek = new Map<string, number>();
   for (const s of input.slots) perWeek.set(s.week, (perWeek.get(s.week) ?? 0) + 1);
   // What the per-day setting lets the teams hold (Stage 13 fix-now 3): never more than the shares are handed, and said as
@@ -103,7 +105,8 @@ export const POST = withObservability(async (req: Request) => {
     }),
     handedOut, open: Math.max(0, counts.capacity - handedOut), dayLimit,
     // The half facilities a sharing rule never shares (the rule's sentence names them).
-    half: [...new Set(input.slots.filter(s => s.weight < 1 && s.facilityId).map(s => s.facilityId!))],
+    // Case C only ("Half cost" whole fields): a field's PART is never shared either, but it is not a half facility.
+    half: [...new Set(input.slots.filter(s => s.weight < 1 && s.facilityId && !s.sectionMask).map(s => s.facilityId!))],
     kept: [...input.fixed.keys()].filter(k => slotKeys.has(k)).length,
     notKept: [...input.fixed.keys()].filter(k => !slotKeys.has(k)).length,
     // A sent schedule's practices before today, which stay as they were sent (P10 A: the regenerate question counts them).
@@ -122,6 +125,8 @@ export const POST = withObservability(async (req: Request) => {
       day: s.day, weekday: s.weekday, week: s.week, startClock: s.startClock, endClock: s.endClock, prime: s.prime, weight: s.weight,
       heldBy: input.held.has(s.key) ? { ownerName: input.held.get(s.key)!.ownerName, kind: input.held.get(s.key)!.kind ?? null } : null,
       kept: input.fixed.has(s.key),
+      // Its part (Stage 2), so the drafts step names "Field 1 side A"; a whole-field slot reads exactly as before.
+      ...maskProp(s.sectionMask),
     })),
     drafts: drafts.map(d => ({
       strategy: d.strategy, label: W.strategy[d.strategy], round: d.round, score: d.score,

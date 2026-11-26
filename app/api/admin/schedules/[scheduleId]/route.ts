@@ -15,6 +15,7 @@ import { datesOffKeepingParks } from '@/lib/club-schedule-permit-rows';
 import { hasOrgVenueLibrary } from '@/lib/plan-features';
 import { tournamentToday } from '@/lib/timezone';
 import { DEFAULT_PRICE_MODE } from '@/lib/club-schedule-bill';
+import { slotWeight } from '@/lib/club-schedule-engine';
 import type { KeepChange } from '@/lib/club-schedule-keep';
 
 // ---------------------------------------------------------------------------
@@ -236,7 +237,7 @@ export const PATCH = withObservability(async (req: Request, { params }: Params) 
         const room = roomChecker(loaded.settings, teams);
         for (const x of edits) {
           const slot = bySlot.get(x.slotId)!;
-          const full = (x.teamIds?.length ?? 0) > 1 ? room(x.teamIds!, prices.weightOf(slot.facilityId, slot.permitId)) : null;
+          const full = (x.teamIds?.length ?? 0) > 1 ? room(x.teamIds!, slotWeight(prices.weightOf, slot.facilityId, slot.sectionMask, slot.permitId)) : null;
           if (full) return schedulerRefusal(409, 'slot_full', full);
         }
       }
