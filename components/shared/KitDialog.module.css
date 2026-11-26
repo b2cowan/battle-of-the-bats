@@ -63,6 +63,11 @@
 .form.medium { max-width: 40rem; }
 .form.wide { max-width: 50rem; }
 .form.xwide { max-width: 64rem; }
+/* `steady`: one height from open, the body scrolling inside it, for a form that refills as it is filled in. Above a
+   phone only — there a form is the whole screen already. */
+@media (min-width: 641px) {
+  .form.steady { height: min(52rem, calc(100dvh - 2.5rem)); }
+}
 
 /* A form in steps (Stage 5): the step bar under the head — one segment a step, the steps reached in olive. */
 .progress {

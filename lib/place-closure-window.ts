@@ -353,7 +353,8 @@ export const CLOSE_WORDS = {
   whatsAt: (places: readonly ClosedPlace[]) => `What’s at ${placesWord(places)} that day`,
   whatsAtDays: (places: readonly ClosedPlace[]) => `What’s at ${placesWord(places)}`,
   colGame: 'Game',
-  colWhen: 'Time and place',
+  colTime: 'Time',
+  colPlace: 'Place',
 
   // The groups (drawing tab 2).
   league: 'House league',
@@ -393,8 +394,8 @@ export const CLOSE_WORDS = {
   linkOn: (n: number, places: readonly ClosedPlace[]) =>
     `${n === 1 ? 'It is' : `${n} are`} linked to ${linkTo(places)} when you close. Families aren’t told.`,
   linkUndo: 'Don’t link',
-  started: (iso: string) => `Started at ${closeClock(iso)}`,
-  startedTick: 'Tick it to call it off mid-game.',
+  /** Under a game's time, which says when. */
+  started: 'Started',
   draft: (division: string) => `${division} is a draft, so none of its games are listed.`,
   notChanged: 'Not changed here',
   tournament: 'Tournament',
@@ -618,11 +619,6 @@ function repLines(s: CloseSummary): string[] {
   else if (reached.length > 1) out.push(`${reached.length} rep teams’ coaches are emailed about their games.`);
   for (const t of none) out.push(`The ${t.name || 'rep team'} have no coach to email.`);
   return out;
-}
-
-/** "Sat, Nov 28 · 9:00 a.m. · Diamond 1 · U11" (the day only when the closure runs past one day). */
-export function gameWhereLine(iso: string, field: string | null, tail: string | null, withDay: boolean, dayOf: (iso: string) => string): string {
-  return [withDay ? formatShortWeekdayDate(dayOf(iso)) : null, closeClock(iso), field, tail].filter(Boolean).join(' · ');
 }
 
 export type { ClosedPlace };

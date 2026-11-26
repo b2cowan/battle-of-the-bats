@@ -31,6 +31,10 @@
  *     The caller sorts the rows by group; a row's `group` names its heading;
  *   · a row may carry a quiet NOTE BESIDE ITS NAME (New allocation: the team's season) — a fact every row has, read
  *     without a column of its own; on a phone it belongs in `phoneLine`;
+ *   · a row may carry a quiet SECOND LINE UNDER ITS NAME (`underName`, Close a place — the game's division; owner
+ *     2026-11-26), in place of a note beside it; on a phone it belongs in `phoneLine`. A table whose cells run to two
+ *     lines is `stacked`: at a desk every row reads from its top, so the first line of every cell sits level;
+ *   · a group heading with NO cells of its own runs across the whole table, never squeezed into the lead column;
  *   · A FORM TABLE WHOSE ROWS ARE ALL IN CARRIES NO TICK (`allIn` — owner, the Divisions step's round 3, 2026-10-12; the
  *     table standard §3.6). Where a create form lists only records the person has added, the lead cell holds the name
  *     alone, every row shows its cells and its arrow, and the closing row sums every row. A row leaves from its own form
@@ -78,6 +82,8 @@ interface FormTableRowBase {
   group?: string;
   /** A quiet fact beside the name at a desk ("2027 Season"). */
   nameNote?: ReactNode;
+  /** At a desk, a quiet line under the name. A row carries this or `nameNote`, never both. */
+  underName?: ReactNode;
 }
 
 /** A row of a ticking table: in or out, by its own box. */
@@ -118,8 +124,10 @@ export interface FormTableGroup {
   fold?: { open: boolean; onToggle: () => void; label: string };
 }
 
-export default function FormTable({ ariaLabel, leadLabel, expandLabel = 'Open', columns, rows: tableRows, groups, closing, phoneRowWindows = false, allIn = false }: {
+export default function FormTable({ ariaLabel, leadLabel, expandLabel = 'Open', columns, rows: tableRows, groups, closing, phoneRowWindows = false, allIn = false, stacked = false }: {
   ariaLabel: string;
+  /** At a desk, rows read from their top — for a table whose cells run to two lines (see the header). */
+  stacked?: boolean;
   /** On a phone, a ticked row opens its OWN WINDOW (`phoneOpen`) instead of opening in place — the form table's one
    *  full-screen row, the New tournament window's Divisions step only (see the header; §3.6). */
   phoneRowWindows?: boolean;
@@ -175,11 +183,16 @@ export default function FormTable({ ariaLabel, leadLabel, expandLabel = 'Open', 
       onChange={() => g.onTick?.(g.state !== 'all')} />
   );
   // The lead cell: the box and the name, one label — or, in an `allIn` table, the name alone (and its note).
-  const tick = (r: Row, id: string, withNote = false) => {
-    const name = (
+  const tick = (r: Row, id: string, desk = false) => {
+    const name = desk && r.underName != null ? (
+      <span className={styles.nameStack}>
+        <span className={styles.name}>{r.name}</span>
+        <span className={styles.underName}>{r.underName}</span>
+      </span>
+    ) : (
       <>
         <span className={styles.name}>{r.name}</span>
-        {withNote && r.nameNote != null && <span className={styles.nameNote}>{r.nameNote}</span>}
+        {desk && r.nameNote != null && <span className={styles.nameNote}>{r.nameNote}</span>}
       </>
     );
     return allIn ? <span className={styles.leadName}>{name}</span> : (
@@ -319,12 +332,14 @@ export default function FormTable({ ariaLabel, leadLabel, expandLabel = 'Open', 
             return [
               g ? (
                 <tr key={`g-${g.key}`} className={styles.groupRow}>
-                  <th scope="rowgroup">{groupTick(g)}</th>
-                  {columns.map(c => <td key={c.key} className={c.numeric ? styles.num : undefined}>{g.cells?.[c.key]}</td>)}
-                  {anyExpand && <td />}
+                  <th scope="rowgroup" colSpan={g.cells ? 1 : span + 1}>{groupTick(g)}</th>
+                  {g.cells && (<>
+                    {columns.map(c => <td key={c.key} className={c.numeric ? styles.num : undefined}>{g.cells?.[c.key]}</td>)}
+                    {anyExpand && <td />}
+                  </>)}
                 </tr>
               ) : null,
-              <tr key={r.key} className={`${live(r) ? '' : styles.off}${formOpen(r) ? ` ${styles.rowOpen}` : ''}${r.group && groupOf.has(r.group) ? ` ${styles.inGroup}` : ''}${wash(r)}`}>
+              <tr key={r.key} className={`${live(r) ? '' : styles.off}${formOpen(r) ? ` ${styles.rowOpen}` : ''}${r.group && groupOf.has(r.group) ? ` ${styles.inGroup}` : ''}${stacked ? ` ${styles.stacked}` : ''}${wash(r)}`}>
                 <th scope="row">{tick(r, `ft-${r.key}`, true)}</th>
                 {live(r)
                   ? columns.map(c => <td key={c.key} className={c.numeric ? styles.num : undefined}>{r.cells[c.key]}</td>)

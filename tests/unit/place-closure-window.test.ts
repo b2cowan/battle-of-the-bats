@@ -117,7 +117,7 @@ describe('the drawing\'s words (tab 2)', () => {
     assert.match(W.repNote('none'), /no coach to email/);
     assert.equal(W.typedCount([lions], 2), 'may be Lions Park · 2 games');
     assert.equal(W.typedLine('Lions Park — Diamond 2'), 'Typed: “Lions Park — Diamond 2”');
-    assert.equal(W.started('2026-11-28T14:00:00Z'), 'Started at 9:00 a.m.');
+    assert.equal(W.started, 'Started');
     assert.equal(W.tournamentAt(4, [lions], true), '4 games on Lions Park’s diamonds today');
     assert.equal(W.tournamentUnlinked(true), 'Plays today. Its diamonds aren’t linked to your places, so its games aren’t counted here.');
     assert.equal(W.empty([{ ...lions, name: 'Pinecrest Park' }], DAY), 'Nothing is scheduled at Pinecrest Park on Sat, Nov 28. Closing it still tells families on your site.');

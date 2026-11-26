@@ -12,6 +12,10 @@
  * the Overview's first heading, and the house league schedule's (K15, `season`: it opens on that season's places that
  * day). A house league admin sees rep and tournaments as counts with no door (K1; the server leaves their names out).
  *
+ * A GAME'S ROW (owner 2026-11-26; it replaces the one dotted line of the drawing's note 6): one fact a place — the
+ * teams with the division under them, the time in its own column (the day and "Started" under it), the park in its own
+ * with the diamond under it. A phone, with no columns: the teams, then time and division, then park and diamond.
+ *
  * SEVERAL PLACES IN ONE PRESS (Session 2D, M1–M8, D1; the drawing CLUB_WEBSITE_STAGE2_PLACES_DRAWINGS.html): Day and
  * Until first (M4: the day decides the season's parks), then a Places field that takes ticks (`TickPicker`; empty means
  * NOTHING, never every park) and a row per chosen park with its own diamond ticks and ✕. From the schedule the season's
@@ -35,7 +39,7 @@ import { formatShortWeekdayDate, orgDayKey } from '@/lib/timezone';
 import { teamsHearing } from '@/lib/league-game-changes';
 import {
   CLOSE_LINE_MAX, CLOSE_MAX_ENTRIES, CLOSE_WORDS as W, canLink, carryTicks, closeSummary, diamondTickOff,
-  gameWhereLine, isTyped, lastCloseDay, linkTargets, pickCount, pickParam, placeGroups, previewSentences, toggleDiamond,
+  closeClock, isTyped, lastCloseDay, linkTargets, pickCount, pickParam, placeGroups, previewSentences, toggleDiamond,
   typedKind,
   type CloseFrame, type CloseSource, type PlacePick, type RepReach,
 } from '@/lib/place-closure-window';
@@ -242,20 +246,41 @@ export default function ClosePlaceWindow({ orgSlug, eyebrow, season, initialVenu
     const groups: FormTableGroup[] = [];
     if (!source) return { rows, groups, drafts: [] as string[], typedCount: 0 };
     const divName = new Map(source.seasons.flatMap(x => x.divisions.map(d => [d.id, d.name] as const)));
-    // Note 6: with two or more parks chosen, or every place, each row names its park ("9:00 a.m. · Harbourview Park,
-    // Diamond 1 · U9"), the park in the row's ink.
+    // Note 6: with two or more parks chosen, or every place, each row names its park; with one, the diamond alone (and
+    // the park where a game there has no diamond). A game with no library park (every place closed) shows its typed words.
     const namePark = source.places[0]?.scope === 'all' || placeGroups(source.places).length > 1;
     const venueName = new Map((frame?.venues ?? []).map(v => [v.id, v.name]));
-    const where = (iso: string, field: string | null, tail: string | null, venueId: string | null) => {
-      const park = namePark && venueId ? venueName.get(venueId) : undefined;
-      if (!park) return gameWhereLine(iso, field, tail, multiDay, orgDayKey);
-      return <>{gameWhereLine(iso, null, null, multiDay, orgDayKey)} · <span className={s.parkAt}><b className={s.park}>{park}</b>{field ? `, ${field}` : ''}</span>{tail ? ` · ${tail}` : ''}</>;
-    };
-    let firstStarted = true;
-    const startedLine = (iso: string) => {
-      const note = firstStarted ? <> {W.startedTick}</> : null;
-      firstStarted = false;
-      return <span className={s.sub}><b>{W.started(iso)}</b>{note}</span>;
+    /** One game, drawn for both widths: the desk's Time and Place cells and the line under the teams; the phone's lines
+     *  under them. `typed` is a hand-typed place's own words; `note` a rep game's "who is emailed". */
+    const gameRow = (g: { at: string; started: boolean; venueId: string | null; field: string | null; division: string | null; typed?: string | null; note?: string | null }) => {
+      const venue = g.venueId ? venueName.get(g.venueId) : undefined;
+      const park = namePark || !g.field ? venue : undefined;
+      const main = park ?? g.field;
+      const under = park ? g.field : null;
+      const day = multiDay ? formatShortWeekdayDate(orgDayKey(g.at)) : null;
+      const typed = g.typed ? W.typedLine(g.typed) : null;
+      return {
+        underName: g.division || g.note ? <>{g.division}{g.note && <span className={s.sub}>{g.note}</span>}</> : null,
+        cells: {
+          time: (
+            <>
+              <span className={s.time}>{closeClock(g.at)}</span>
+              {day && <span className={s.sub}>{day}</span>}
+              {g.started && <span className={s.sub}><b>{W.started}</b></span>}
+            </>
+          ),
+          place: <>{main}{under && <span className={s.sub}>{under}</span>}{typed && <span className={s.sub}>{typed}</span>}</>,
+        },
+        phoneLine: (
+          <>
+            <span className={s.line}>{[day, closeClock(g.at), g.division].filter(Boolean).join(' · ')}</span>
+            {main && <span className={s.line}>{park ? <><span className={s.park}>{park}</span>{under ? `, ${under}` : ''}</> : main}</span>}
+            {typed && <span className={s.line}>{typed}</span>}
+            {g.started && <span className={s.line}><b>{W.started}</b></span>}
+            {g.note && <span className={s.line}>{g.note}</span>}
+          </>
+        ),
+      };
     };
     const group = (key: string, label: string, count: string, ids: string[], fold: boolean) => {
       const n = ids.filter(id => ticked.has(id)).length;
@@ -273,11 +298,9 @@ export default function ClosePlaceWindow({ orgSlug, eyebrow, season, initialVenu
       const key = `s:${season.id}`;
       for (const g of games) {
         const name = `${g.home} vs ${g.away}`;
-        const line = where(g.scheduledAt, g.field, divName.has(g.divisionId) ? shortDivision(divName.get(g.divisionId)!) : null, g.venueId);
-        const extra = g.started ? startedLine(g.scheduledAt) : null;
         rows.push({
           key: g.id, group: key, name, ticked: ticked.has(g.id), onTick: on => tick([g.id], on), tickLabel: name,
-          cells: { when: <>{line}{extra}</> }, phoneLine: <>{line}{extra}</>,
+          ...gameRow({ at: g.scheduledAt, started: g.started, venueId: g.venueId, field: g.field, division: divName.has(g.divisionId) ? shortDivision(divName.get(g.divisionId)!) : null, typed: g.linkedToPlace ? null : g.typed }),
         });
       }
       group(key, W.league, W.leagueCount(season.name, games.length, teamsHearing(games).size), games.map(g => g.id), true);
@@ -288,11 +311,9 @@ export default function ClosePlaceWindow({ orgSlug, eyebrow, season, initialVenu
       if (games.length) {
         for (const g of games) {
           const name = g.opponent ? `${g.teamName} vs ${g.opponent}` : g.teamName;
-          const line = where(g.startsAt, g.field, null, g.venueId);
-          const extra = g.started ? startedLine(g.startsAt) : <span className={s.sub}>{W.repNote(source.repReach[g.teamId] ?? 'none')}</span>;
           rows.push({
             key: g.id, group: 'rep', name, ticked: ticked.has(g.id), onTick: on => tick([g.id], on), tickLabel: name,
-            cells: { when: <>{line}{extra}</> }, phoneLine: <>{line}{extra}</>,
+            ...gameRow({ at: g.startsAt, started: g.started, venueId: g.venueId, field: g.field, division: null, typed: g.linkedToPlace ? null : g.typed, note: g.started ? null : W.repNote(source.repReach[g.teamId] ?? 'none') }),
           });
         }
         group('rep', W.rep, phone ? W.repCountPhone(games.length, games.every(g => source.repReach[g.teamId] === 'head') ? 'head' : games.every(g => source.repReach[g.teamId] === 'none') ? 'none' : 'others') : W.repCount(games.length), games.map(g => g.id), true);
@@ -301,12 +322,10 @@ export default function ClosePlaceWindow({ orgSlug, eyebrow, season, initialVenu
     // Typed by hand (K7): found by the place's name in the typed words, unticked.
     const typed = typedGames(source).sort((a, b) => a.at.localeCompare(b.at));
     for (const g of typed) {
-      const line = where(g.at, null, g.tail, g.venueId);
       // "Typed" only for a place typed by hand: a game picked from the library with no diamond was never typed.
-      const extra = <>{!g.linkedToPlace && g.typed && <span className={s.sub}>{W.typedLine(g.typed)}</span>}{g.started && startedLine(g.at)}</>;
       rows.push({
         key: g.id, group: 'typed', name: g.name, ticked: ticked.has(g.id), onTick: on => tick([g.id], on), tickLabel: g.name,
-        cells: { when: <>{line}{extra}</> }, phoneLine: <>{line}{extra}</>,
+        ...gameRow({ at: g.at, started: g.started, venueId: g.venueId, field: null, division: g.tail, typed: g.linkedToPlace ? null : g.typed }),
       });
     }
     // Its name says what it holds: a place typed by hand, a game at the park with no diamond recorded (a diamond closure's
@@ -548,7 +567,7 @@ export default function ClosePlaceWindow({ orgSlug, eyebrow, season, initialVenu
   }
 
   return (
-    <KitDialog kind="form" size="medium" eyebrow={eyebrow} title={W.title} onClose={onClose} busy={busy}
+    <KitDialog kind="form" size="medium" steady eyebrow={eyebrow} title={W.title} onClose={onClose} busy={busy}
       dirty={!busy && (line.length > 0 || verb !== 'postponed' || link)}
       footerStart={source ? <span>{busy ? W.sending : phone ? W.footPhone : W.foot}</span> : undefined}
       footer={(
@@ -577,10 +596,8 @@ export default function ClosePlaceWindow({ orgSlug, eyebrow, season, initialVenu
               rangeStart={firstDay} required onChange={chooseLastDay} disabled={busy} />
           </label>
         </div>
-        <div className={!source || nothing ? s.room : undefined}>
-          {placesField}
-          {pickRows}
-        </div>
+        {placesField}
+        {pickRows}
 
         {!placesParam && <div className={s.empty}>{W.chooseFirst}</div>}
         {placesParam && sourceFailed && <p className={ck.hint} role="alert">{W.loadFailed}</p>}
@@ -600,8 +617,9 @@ export default function ClosePlaceWindow({ orgSlug, eyebrow, season, initialVenu
           {nothing && <div className={s.empty}>{W.empty(places, firstDay)}</div>}
           {rows.length > 0 && (
             <div className={s.block}>
-              <FormTable ariaLabel={W.whatsAt(places)} leadLabel={W.colGame} columns={[{ key: 'when', label: W.colWhen }]}
-                rows={rows} groups={groups} closing={{ label: total, cells: { when: '' }, phone: total }} />
+              <FormTable stacked ariaLabel={W.whatsAt(places)} leadLabel={W.colGame}
+                columns={[{ key: 'time', label: W.colTime, width: 112 }, { key: 'place', label: W.colPlace, width: '34%' }]}
+                rows={rows} groups={groups} closing={{ label: total, cells: {}, phone: total }} />
             </div>
           )}
           {typedCount > 0 && typedLinkable.length > 0 && places[0]?.scope !== 'all' && (

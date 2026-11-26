@@ -183,6 +183,7 @@ export default function KitDialog({
   address,
   busy = false,
   size,
+  steady = false,
   raised = false,
   followKeyboard = false,
   progress,
@@ -250,6 +251,10 @@ export default function KitDialog({
    *  a big table or two panes. `xwide` 1024: a pane of cards beside a long list (New schedule only). Nothing reacts to the window's own width, so a two-across form must say so. A phone
    *  fills the screen either way. */
   size?: 'medium' | 'wide' | 'xwide';
+  /** A form whose body empties and refills while it is being filled in (Close a place re-reads the day's games on every
+   *  tick) holds ONE height from open, so the window never resizes under the pointer (owner, 2026-11-26). A phone's
+   *  form fills the screen already. */
+  steady?: boolean;
   /** A form opened from INSIDE another form stands one layer above it (see the header; Stage 3d, Ask 7a). */
   raised?: boolean;
   /** A question with a field to type in (Sign in again): its layer follows the phone's VISIBLE area, so the card lifts
@@ -403,7 +408,7 @@ export default function KitDialog({
     >
       <div
         ref={panelRef}
-        className={`${styles.panel} ${kind === 'question' ? styles.question : styles.form}${size ? ` ${styles[size]}` : ''}${aside != null && kind === 'form' ? ` ${styles.withAside}` : ''}`}
+        className={`${styles.panel} ${kind === 'question' ? styles.question : styles.form}${size ? ` ${styles[size]}` : ''}${steady ? ` ${styles.steady}` : ''}${aside != null && kind === 'form' ? ` ${styles.withAside}` : ''}`}
         role="dialog"
         aria-modal="true"
         aria-labelledby={ariaLabel ? undefined : titleId}

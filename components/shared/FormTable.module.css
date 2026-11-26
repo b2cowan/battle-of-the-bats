@@ -75,6 +75,15 @@
 .name { font-weight: 650; overflow-wrap: anywhere; }
 /* A quiet fact beside the name (a team's season), read without a column of its own (Ask 11). */
 .nameNote { font-size: var(--type-support); font-weight: 400; color: var(--text-tertiary); white-space: nowrap; }
+/* A second line under the name (`underName`). */
+.nameStack { display: flex; flex-direction: column; min-width: 0; }
+.underName { font-size: var(--type-support); font-weight: 400; color: var(--text-tertiary); line-height: 1.4; }
+/* A `stacked` table's row reads from its top: every cell's first line level, the box beside the name rather than
+   between the two lines. */
+.table .stacked > th,
+.table .stacked > td { vertical-align: top; }
+.stacked .tickLabel { align-items: flex-start; }
+.stacked .tick { margin-top: 0.1rem; }
 
 /* A group heading (Ask 11): its own box for the whole group, the name in the heading's small capitals, its count,
    and cells of its own — on the paper ground, so a group reads as one block; its rows are set in under it. */

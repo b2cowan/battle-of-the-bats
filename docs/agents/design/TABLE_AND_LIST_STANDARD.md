@@ -315,6 +315,10 @@ the basis, the caveats and the doors — never a sentence inside a money column.
     is tapped, with no line and no chevron. At a desk it changes nothing. It is a table-level option
     of the one component (`phoneRowWindows`), never markup beside it; New allocation's rows keep
     opening in place.
+  - **A fact has a column, not a place in a dotted line** (owner, Close a place, 2026-11-26). A row
+    that must say two things about one subject puts the second quietly **under** the first (`underName`
+    under the name; a second line in a cell), and such a row reads from its top. A group heading with
+    no cells of its own runs across the whole table, never squeezed into the lead column.
   - **One shared component** (`components/shared/FormTable.tsx`), never a class copied per form;
     `club-stage3c-screens-guard` holds New allocation to it.
 

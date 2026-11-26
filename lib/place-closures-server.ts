@@ -211,7 +211,7 @@ export interface ClosureLeagueGame {
   venueId: string | null; facilityId: string | null; typed: string | null;
   /** Which closed place (index into `places`) and how (`maybe` = listed unticked, K7). */
   place: number; match: PlaceMatch;
-  /** Its start has passed (K6: listed unticked, "Started at 9:00 a.m."). */
+  /** Its start has passed (K6: listed unticked, "Started"). */
   started: boolean;
   seen: string;
 }
