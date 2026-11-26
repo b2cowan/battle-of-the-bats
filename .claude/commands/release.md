@@ -151,30 +151,16 @@ node scripts/check-manual-prod-migrations.mjs --promote
   or `held` with the reason if the divergence is deliberate. Re-run until it passes, or the user
   **explicitly confirms** shipping with the item still outstanding.
 
-⚠ **Some of these must travel WITH their code and must not be applied early.** Migration 273 is the
-standing example: it reschedules the demo sandbox's refresh job to nightly, and applying it before
-the matching code is deployed freezes the public demo mid-game. Apply that class *immediately after*
-the deploy lands, not before it. Each entry's `note` says which kind it is.
+⚠ **Some of these must travel WITH their code and must not be applied early.** Migration 273 was the
+standing example: it rescheduled a nightly job, and applying it before the matching code was deployed
+would have broken the surface that job served until the code caught up. Apply that class *immediately
+after* the deploy lands, not before it. Each entry's `note` says which kind it is.
 
-### 1d-1 — The live demos (master / promote targets only) — NOT a gate
+### 1d-1 — The live demos — RETIRED (2026-11-25)
 
-Both sandboxes are **fully public on production** and are the only surfaces where the product sells
-itself unattended. Their **dates** are kept right by the nightly scheduler; their **content** is
-rebuilt by the **master build itself** (`scripts/reseed-demos-if-stale.mjs`, last `build` step in
-`amplify.yml`): when a release changes the demo world — the seed scripts, anything they import, or
-the migration list — the build re-seeds that demo from exactly the commit it is deploying, and
-stamps the org (`platform_audit_log` · `demo_world_seeded`). A release that changes neither does
-nothing. Owner ruling 2026-09-13 (`DEMO_PROCESS_DECOUPLING_PLAN.md`): **a release never waits on a
-demo.**
-
-So there is nothing to run here. **Do not re-seed prod by hand before a promote** — a laptop seed
-from a working copy ahead of what is deployed has put an unreleased world on the public demo twice
-(release history, 2026-09-04). The morning-after check is Phase 2b step 4.
-
-**Fallback only** (the build printed that it could not reseed — e.g. the build image's Node cannot
-import `.ts`): once the promote is live and the working copy is at `origin/master`,
-`node --env-file=.env.production.local scripts/seed-demo-coach.mjs --allow-prod` (and the tournament
-seed likewise), then `npm run check:demos:prod`. Both seeds write the stamp themselves.
+Both public demos are retired (`BUSINESS_DECISIONS.md`, "2026-11-25 — Both public demos are RETIRED";
+`RETIRE_PUBLIC_DEMOS_PLAN.md`). The build no longer re-seeds them and a release no longer checks them.
+There is nothing to run here. Do not re-seed a demo, by hand or otherwise.
 
 ### 1d-2 — Deploy-only / native-dependency verification (master / promote targets only)
 
@@ -365,12 +351,7 @@ Amplify job):
    describe LIVE behaviour; update the framing.
 3. **Auto-memory `reference_prod_release_history`** — record the promote: new prod HEAD hash,
    Amplify job number + final status, migrations applied.
-4. **The live demos, the morning after** — `npm run check:demos:prod`. Its first lines say which
-   world stamp prod carries against this checkout's; a mismatch or a red assertion means the
-   build's reseed did not run — read the Amplify build log for the `reseed-demos-if-stale` step
-   and use §1d-1's fallback. Then, if the release changed a coach or tournament flow a prospect
-   walks, schedule the `/demos` shop-window pass (its own session, never this one).
-5. **Plan headers** — any plan whose work just shipped gets its status line updated
+4. **Plan headers** — any plan whose work just shipped gets its status line updated
    ("committed `<hash>`, on prod <date> job N"), and moves to archive if complete + verified.
 
 Status wording throughout: positives with an anchor ("on prod 2026-08-10, job 251") — never leave
@@ -395,8 +376,6 @@ git log origin/master..origin/dev --oneline
 If there are **no commits ahead**, report: "origin/dev and origin/master are already in sync — nothing to promote." and stop.
 
 **Migration drift gate (required):** before showing the summary, run `npm run check:migrations`. If prod is behind dev, **STOP** and report the missing tables/columns — the matching migration(s) must be applied to prod (`node scripts/apply-migration-api.mjs <file> --prod`; the snapshot hook refreshes the snapshots and reports back) before promoting, unless the user explicitly confirms the drift is intentional.
-
-**No live-demo gate.** The master build re-seeds the public demos itself when the release changes them (§1d-1); `npm run check:demos:prod` is the morning-after check in Phase 2b, never a reason to hold a promote.
 
 Show the promote summary:
 
