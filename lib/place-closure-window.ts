@@ -1,11 +1,14 @@
 import { joinWithAnd, pluralize, possessive, formatTime } from './utils';
-import { addCalendarDays, formatShortWeekdayDate, utcToZonedInputs } from './timezone';
+import { addCalendarDays, formatShortWeekdayDate, utcToZonedInputs, zonedWallClockToUtc } from './timezone';
 import { CLUB_EMAIL_CAP } from './families-words';
 import { teamsHearing } from './league-game-changes';
 import { LEAGUE_RUNNER_ROLES } from './house-league-access';
 import { RAIN_LINE_MAX, shortDivision } from './league-rainout';
-import { CLOSURE_MAX_EXTRA_DAYS, closedPlaceName, diamondsAt, isAre, stripSentence, type ClosedPlace, type ClosureVerb, type PlaceMatch } from './place-closures';
-import { closureMoreSentence, stripLinesShown } from './club-notice';
+import {
+  CLOSURE_MAX_EXTRA_DAYS, closedPlaceName, closureSaysAlready, coveringClosures, diamondsAt, isAre, stripSentence, toStripClosure,
+  type ClosedPlace, type ClosureVerb, type PlaceMatch,
+} from './place-closures';
+import { closureStrip, type ClosureStrip } from './club-notice';
 import type { OrgRole } from './types';
 
 /**
@@ -34,11 +37,24 @@ export function seesEveryProgram(role: OrgRole | null | undefined): boolean {
   return role === 'owner' || role === 'admin';
 }
 
+/**
+ * Every place at once ("All our fields"): an owner or an admin (K1); and (T1, owner 2026-11-26) a house league admin, but
+ * ONLY from a season's schedule in a club with no places — where "All our fields" is the only thing there is to close. The
+ * owner took this with its cost: that admin can then close fields for every program. Reopen's people are unchanged.
+ */
+export function mayCloseEveryPlace(role: OrgRole | null | undefined, at: { noPlaces: boolean; fromSeason: boolean }): boolean {
+  return seesEveryProgram(role) || (canClosePlace(role) && at.noPlaces && at.fromSeason);
+}
+
 export const CLOSE_LINE_MAX = RAIN_LINE_MAX;
 
 // ── What the window reads (`GET /api/admin/org/place-closures`) ────────────────────────────────────────────────────
 
-export interface CloseVenue { id: string; name: string; facilities: { id: string; name: string }[] }
+export interface CloseVenue {
+  id: string; name: string; facilities: { id: string; name: string }[];
+  /** Every facility it has is a diamond (and it has some): a whole-park row on the strip reads "all diamonds". */
+  allDiamonds: boolean;
+}
 
 /** The window's frame: the club's places, its day, and whether this person may close every place. */
 export interface CloseFrame {
@@ -96,6 +112,8 @@ export interface CloseSource {
 export interface StaffClosure {
   id: string; scope: ClosedPlace['scope']; venueId: string | null; placeName: string | null; facilityName: string | null;
   firstDay: string; lastDay: string; verb: ClosureVerb; closedAt: string; closedBy: string | null;
+  /** When the site started saying it, and the midnight it stops (the strip's own instants: the window's preview reads them). */
+  showsFrom: string; endsAt: string;
   /** House league games this closure called off that still read as it left them (the postponed ones wait for a date). */
   leagueCalledOff: number;
   /** Its house league seasons (the result's "Give them new dates" door). */
@@ -199,13 +217,55 @@ export function linkTargets(src: CloseSource, ticked: ReadonlySet<string>): { ki
  *  (mig 539's limit). */
 export const lastCloseDay = (from: string) => addCalendarDays(from, CLOSURE_MAX_EXTRA_DAYS);
 
-/** The strip each closed place will put up (the window's preview), in the club's day — a line per closure, shortened past
- *  four lines exactly as the public strip is (`stripLinesShown`: three, then "And N more places are closed."). */
-export function previewSentences(places: readonly ClosedPlace[], firstDay: string, lastDay: string, today: string): string[] {
-  return stripLinesShown(places.map(p => stripSentence({
-    scope: p.scope, placeName: p.name, facilityName: p.scope === 'diamond' ? p.facilityName ?? null : null, firstDay, lastDay,
-  }, today, formatShortWeekdayDate)), rest => closureMoreSentence(rest.length));
+/** Midnight after a club day: when a closure for that Until takes itself down (the press writes the same `ends_at`). */
+const endOfDay = (day: string) => zonedWallClockToUtc(addCalendarDays(day, 1), '00:00') ?? '';
+
+/** The window's preview (S1–S3, the summary drawing's tab 6). */
+export interface ClosePreview {
+  /** The strip exactly as it will read after the press: what already shows plus what is chosen. Null: nothing would. */
+  strip: ClosureStrip | null;
+  /** Every chosen place is already said by a wider closure, so the site won't change: the words that already say it
+   *  ("all our fields are closed today."). Null when the press changes the site. */
+  alreadySays: string | null;
+  /** Every day in the strip ends with the chosen Until, so "until the end of {day}" is true of all of it. */
+  sameEnd: boolean;
 }
+
+/**
+ * The strip the chosen places will put up, read with the closures already showing (S1: a wider one speaks for a narrower
+ * one; S2: by day and park; S3 folds in the box). Fixed words over place words and days only (K16): the admin's own words
+ * for the families' email are never an input here.
+ */
+export function closePreview(places: readonly ClosedPlace[], firstDay: string, lastDay: string,
+  showing: readonly Pick<StaffClosure, 'scope' | 'venueId' | 'placeName' | 'facilityName' | 'firstDay' | 'lastDay' | 'showsFrom' | 'endsAt'>[],
+  nowIso: string, diamondParks: ReadonlySet<string>): ClosePreview {
+  const endsAt = endOfDay(lastDay);
+  const chosen = places.map(p => toStripClosure({
+    scope: p.scope, venueId: p.venueId, placeName: p.name, facilityName: p.facilityName ?? null, firstDay, lastDay, showsFrom: nowIso, endsAt,
+  }, diamondParks));
+  const today = utcToZonedInputs(nowIso).date;
+  const live = showing.filter(c => Date.parse(c.endsAt) > Date.parse(nowIso)).map(c => toStripClosure(c, diamondParks));
+  // The widest closure already saying each chosen place (a wider one first, else the same place pressed again for those
+  // days); every one said already = the site won't change.
+  const by = chosen.map(n => coveringClosures(n, live, today)[0] ?? live.find(w => closureSaysAlready(w, n, today)) ?? null);
+  let alreadySays: string | null = null;
+  if (chosen.length && by.every(Boolean)) {
+    const said = [...new Set(by.filter(w => w !== null))];
+    alreadySays = said.length === 1
+      ? lowerEvery(stripSentence(said[0], today, formatShortWeekdayDate))
+      : 'their parks are closed for those days.';
+  }
+  const strip = closureStrip([...live, ...chosen], nowIso);
+  return { strip, alreadySays, sameEnd: !!strip && strip.groups.every(g => Date.parse(g.endsAt) === Date.parse(endsAt)) };
+}
+
+/** The result's last word on the closures: two or more reopen each on its own. */
+function doneReopen(closures: number = 1): string {
+  return `Reopen ${closures > 1 ? 'them' : 'it'} from the Venue library.`;
+}
+
+/** "All our fields are…" read inside a sentence: "all our fields are…". A place's own name keeps its capital. */
+const lowerEvery = (s: string) => (s.startsWith(EVERY_PLACE) ? `all our fields${s.slice(EVERY_PLACE.length)}` : s);
 
 // ── The Places field's rules (Session 2D, M1–M8; the drawing's notes 2, 5, 10, 11) ─────────────────────────────────
 
@@ -442,12 +502,14 @@ export const CLOSE_WORDS = {
     return [league, ...repLines(s)].filter(Boolean).join(' ');
   },
   sumCap: `Doesn’t count toward today’s ${CLUB_EMAIL_CAP}.`,
-  /** "Your site says “Lions Park is closed today.” at once, until the end of Sat, Nov 28." */
-  site: (sentences: readonly string[], lastDay: string) => ({
-    lead: 'Your site says ',
-    said: joinWithAnd(sentences.map(q)),
-    rest: ` at once, until the end of ${formatShortWeekdayDate(lastDay)}.`,
-  }),
+  /** Over the preview strip (S1–S3): "Your site shows this at once, until the end of Thu, Nov 26:" — the day only when
+   *  every row ends then; with other days in the strip, each row already says its own. */
+  siteShows: (sameEnd: boolean, lastDay: string) =>
+    `Your site shows this at once${sameEnd ? `, until the end of ${formatShortWeekdayDate(lastDay)}` : ''}:`,
+  /** The choice is already said by a wider closure (S1): "Your site won’t change. It already says all our fields are
+   *  closed today." The press stays: a diamond can stay shut after the rest reopen. */
+  unchanged: 'Your site won’t change.',
+  alreadySays: (said: string) => ` It already says ${said}`,
   lineOpen: 'Add a line for the families’ email',
   lineOpenHelp: 'It goes at the top of their email and the coaches’ copy. It isn’t shown on your site.',
   lineLabel: 'A line for the families’ email',
@@ -470,11 +532,15 @@ export const CLOSE_WORDS = {
     return phone ? `${verb}, email ${emails}` : `${verb} and email ${families(emails)}`;
   },
   sending: 'Closing…',
-  empty: (places: readonly ClosedPlace[], day: string) =>
-    `Nothing is scheduled at ${placesWord(places)} on ${formatShortWeekdayDate(day)}. Closing it still tells families on your site.`,
+  /** Nothing on the day. "Closing it still tells families on your site." only while it does (S1: not when a wider closure
+   *  already says it). */
+  empty: (places: readonly ClosedPlace[], day: string, sitesChanges = true) =>
+    `Nothing is scheduled at ${placesWord(places)} on ${formatShortWeekdayDate(day)}.${sitesChanges ? ' Closing it still tells families on your site.' : ''}`,
   noPlacesTitle: 'Your club has no places yet.',
   noPlacesBody: 'Add your parks and diamonds in the Venue library, then close one here. Your schedules can keep their typed places; a closure finds them by the place’s name.',
   noPlacesDoor: 'Open the Venue library',
+  /** T1 (owner 2026-11-26): the no-places window that offers "All our fields" says why there is nothing else to pick. */
+  noPlacesAll: 'Your club has no places yet. To close one park or diamond, add it in the Venue library.',
   loadFailed: 'The day’s games didn’t load. Close the window and try again.',
 
   // Refusals (build words).
@@ -534,10 +600,14 @@ export const CLOSE_WORDS = {
       several: groups.length > 1 || groups[0]?.scope === 'all',
     };
   },
-  /** "Your site says “Lions Park is closed today.” until the end of Sat, Nov 28. Reopen it from the Venue library." ·
-   *  "… Reopen them from the Venue library." (two closures or more: each reopens on its own). */
-  doneSite: (sentences: readonly string[], lastDay: string, closures: number = 1) =>
-    `Your site says ${joinWithAnd(sentences.map(q))} until the end of ${formatShortWeekdayDate(lastDay)}. Reopen ${closures > 1 ? 'them' : 'it'} from the Venue library.`,
+  /** The result over the strip it put up (S1–S3): "Your site shows this until the end of Sat, Nov 28:" · "Your site shows
+   *  this now:" (other days in it). */
+  doneShows: (sameEnd: boolean, lastDay: string) =>
+    (sameEnd ? `Your site shows this until the end of ${formatShortWeekdayDate(lastDay)}:` : 'Your site shows this now:'),
+  doneReopen,
+  /** S1: a wider closure already said it. "Your site didn’t change: it already says all our fields are closed today.
+   *  Reopen it from the Venue library." */
+  doneUnchanged: (said: string, closures: number = 1) => `Your site didn’t change: it already says ${said} ${doneReopen(closures)}`,
   doneNoUndo: (verb: ClosureVerb) => (verb === 'postponed'
     ? 'Emails can’t be taken back. To change a game, give it a new date; its families are told again.'
     : 'Emails can’t be taken back. To bring a game back, put it back on the schedule; its families are told again.'),

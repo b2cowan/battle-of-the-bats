@@ -29032,3 +29032,18 @@ Committed 2026-11-26, ahead of the walk (owner: "simplify and commit"): `d3d1bcc
 
 **✅ PASSED 2026-11-26, 45 of 45** (owner paste-back; A 9/9, B 8/8, C 10/10, D 8/8, E 10/10; no notes came back). The open call shown outside the count (two separate presses on two diamonds of one park) was ruled later the same day, as recommended: behave as one press does, with no second email. Not built.
 <!-- /§577 -->
+
+## §578 · Club website · Stage 2 · Closed places, summarized · Session A — **your site says a closure once: a wider closure speaks for a narrower one, one heading for the day with a row per park, past five rows “Show N more places”; the Close a place window shows that strip before you press, or “Your site won’t change.”; a club with no places can close all its fields**
+<!-- §578 -->
+**Walk published 2026-11-26.** [Interactive walk](https://claude.ai/artifact/75dUJv6ekaeV2ZH2YJLRtR) (walks A–E, 36 steps; two open calls shown outside the count) · [repository HTML](CLUB_WEBSITE_STAGE2_SUMMARY_A_WALK.html). No database change. Plan: `CLUB_WEBSITE_ENHANCEMENTS_PLAN.md` §7 (“Closed places, summarized”, S1–S3 and T1, “Session A”). Before the walk: /simplify, /review, /legal and /design run, their fixes applied. It supersedes the strip words in §573 (walk lines reading “Your site says …”) and §577 (C, “Your site says “Diamond 1 at Lions Park is closed today.” and …”).
+
+**Where:** `http://localhost:3000`, club **Kestrel Bay** (`/kestrel-bay`). **Sign in:** club president `president@kestrel-bay.example.test`, house league admin `league@kestrel-bay.example.test`, password `UATPassword2026!`; a private window for the public page.
+
+**Data:** `node --env-file=.env.local scripts/seed-prospect-demo.mjs --club=kestrel`, then `node --env-file=.env.local scripts/seed-on-sale-pictures-extras.mjs --places-walk` (between 6:00 a.m. and 5:30 p.m.; it clears any earlier closure; walk E runs it once more). No seeded club has no places, so walk E archives Kestrel’s five parks and brings them back at its end.
+
+**Walks:** A two diamonds, then all fields, then reopen all fields (10) · B many places and Show more, on two days (7) · C a different day kept, and the wider one reopened (4) · D on a phone (3) · E a club with no places, as president and as house league admin (12).
+
+**Left out (pinned by tests):** the Reopen windows’ words and the Venue library’s closed rows (Session B redraws both), a diamond closed longer than all fields, a press past ten places, the coach and family emails (§573, §577).
+
+**Open calls (outside the count):** 1. the season a house league admin names is checked to be the club’s own, not that it is still running; 2. a club whose places are all archived counts as having none.
+<!-- /§578 -->

@@ -1,13 +1,13 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import {
-  CLOSE_WORDS as W, carryTicks, closedParks, diamondTickOff, pickCount, pickEntries, pickParam, placesWord, previewSentences,
-  toggleDiamond, typedKind,
+  CLOSE_WORDS as W, carryTicks, closePreview, closedParks, diamondTickOff, mayCloseEveryPlace, pickCount, pickEntries, pickParam,
+  placesWord, toggleDiamond, typedKind,
   type CloseLeagueGame, type CloseRepGame, type CloseSource, type PlacePick,
 } from '../../lib/place-closure-window.ts';
-import { markPlaceOfAll, placeEntriesValid, type ClosedPlace } from '../../lib/place-closures.ts';
+import { markPlaceOfAll, placeEntriesValid, type ClosedPlace, type StripClosure } from '../../lib/place-closures.ts';
 import { COACH_MAIL } from '../../lib/place-closure-mail-words.ts';
-import { closureStrip } from '../../lib/club-notice.ts';
+import { stripShown, type ClosureStripGroup } from '../../lib/club-notice.ts';
 
 /**
  * Club Website Stage 2, Session 2D: several places in one press (rulings M1–M8 and D1, owner 2026-11-26; the drawing
@@ -102,18 +102,97 @@ describe('the words group by park (the drawing\'s tabs 1, 4 and 5; note 14)', ()
     assert.equal(W.tournamentAt(4, [harbour, d(1)], true), '4 games on those places’ diamonds today');
   });
   it('two closures read "Reopen them"; one reads "Reopen it"', () => {
-    assert.match(W.doneSite(['A.', 'B.'], DAY, 2), /Reopen them from the Venue library\.$/);
-    assert.match(W.doneSite(['A.'], DAY, 1), /Reopen it from the Venue library\.$/);
+    assert.equal(W.doneReopen(2), 'Reopen them from the Venue library.');
+    assert.equal(W.doneReopen(1), 'Reopen it from the Venue library.');
+    assert.match(W.doneUnchanged('all our fields are closed today.', 2), /Reopen them from the Venue library\.$/);
   });
-  it('note 12 · the preview shortens past four lines as the public strip does (three, then the rest)', () => {
-    const ten = Array.from({ length: 10 }, (_, i) => ({ ...harbour, venueId: `p${i}`, name: `Park ${i}` }));
-    const lines = previewSentences(ten, DAY, DAY, DAY);
-    assert.deepEqual(lines, ['Park 0 is closed today.', 'Park 1 is closed today.', 'Park 2 is closed today.', 'And 7 more places are closed.']);
-    assert.equal(previewSentences(ten.slice(0, 4), DAY, DAY, DAY).length, 4, 'four lines stay four');
-    // The strip itself is unchanged by the shared rule.
-    const strip = closureStrip(ten.map(p => ({ scope: 'place' as const, placeName: p.name, facilityName: null, firstDay: DAY, lastDay: DAY,
-      showsFrom: '2026-11-28T12:00:00Z', endsAt: '2026-11-29T05:00:00Z' })), '2026-11-28T13:00:00Z');
-    assert.deepEqual(strip?.lines.map(l => l.sentence), lines);
+  it('S3 · the preview is the public strip: ten diamonds at five parks are five rows, all shown', () => {
+    const NOW = '2026-11-28T13:00:00Z';
+    const ten = ['Alder Fields', 'Harbourview Park', 'Lions Park', 'Northshore Park', 'Pinecrest Park'].flatMap(name =>
+      [1, 2].map((n): ClosedPlace => ({ scope: 'diamond', venueId: name, facilityId: `${name}${n}`, name, facilityName: `Diamond ${n}` })));
+    const p = closePreview(ten, DAY, DAY, [], NOW, new Set());
+    const g = p.strip!.groups[0] as Extract<ClosureStripGroup, { rows: unknown }>;
+    assert.equal(g.heading, 'Closed today');
+    assert.deepEqual(g.rows.map(r => `${r.park}: ${r.what}`), [
+      'Alder Fields: Diamond 1 and Diamond 2', 'Harbourview Park: Diamond 1 and Diamond 2', 'Lions Park: Diamond 1 and Diamond 2',
+      'Northshore Park: Diamond 1 and Diamond 2', 'Pinecrest Park: Diamond 1 and Diamond 2',
+    ]);
+    assert.equal(stripShown(p.strip!.groups, false).fold, null, 'five rows: nothing folds');
+  });
+});
+
+describe('S1 · the Close a place window says what the site will really say (summary drawing tab 6)', () => {
+  const NOW = '2026-11-28T20:30:00Z'; // 3:30 p.m. in Toronto
+  const end = (day: string) => `${day === DAY ? '2026-11-29' : '2026-11-30'}T05:00:00.000Z`;
+  const up = (o: Partial<StripClosure>): StripClosure => ({
+    scope: 'all', venueId: null, placeName: null, facilityName: null, allDiamonds: false, firstDay: DAY, lastDay: DAY,
+    showsFrom: '2026-11-28T20:26:00Z', endsAt: end(DAY), ...o,
+  });
+  const d3: ClosedPlace = { ...d(3) };
+  it('already covered by all fields: "Your site won’t change. It already says all our fields are closed today."', () => {
+    const p = closePreview([d3], DAY, DAY, [up({})], NOW, new Set());
+    assert.equal(p.alreadySays, 'all our fields are closed today.');
+    assert.equal(`${W.unchanged}${W.alreadySays(p.alreadySays!)}`, 'Your site won’t change. It already says all our fields are closed today.');
+    assert.equal(W.empty([d3], DAY, false), 'Nothing is scheduled at Diamond 3 at Lions Park on Sat, Nov 28.', 'no false "still tells families"');
+    assert.equal(W.doneUnchanged(p.alreadySays!), 'Your site didn’t change: it already says all our fields are closed today. Reopen it from the Venue library.');
+  });
+  it('covered by a whole park: that closure\'s own sentence; by two parks: "their parks"', () => {
+    const lionsUp = up({ scope: 'place', venueId: 'lions', placeName: 'Lions Park', lastDay: '2026-11-29', endsAt: end('2026-11-29') });
+    assert.equal(closePreview([d3], DAY, DAY, [lionsUp], NOW, new Set()).alreadySays, 'Lions Park is closed through Sun, Nov 29.');
+    const harbourUp = up({ scope: 'place', venueId: 'harbour', placeName: 'Harbourview Park' });
+    const hd: ClosedPlace = { scope: 'diamond', venueId: 'harbour', facilityId: 'h1', name: 'Harbourview Park', facilityName: 'Diamond 1' };
+    assert.equal(closePreview([d3, hd], DAY, DAY, [lionsUp, harbourUp], NOW, new Set()).alreadySays, 'their parks are closed for those days.');
+  });
+  it('not covered when the choice runs longer: the strip after the press, and other days drop "until the end of"', () => {
+    const p = closePreview([d3], DAY, '2026-11-29', [up({})], NOW, new Set());
+    assert.equal(p.alreadySays, null);
+    assert.deepEqual(p.strip!.groups.map(g => ('sentence' in g ? g.sentence : g.heading)),
+      ['All our fields are closed today.', 'Diamond 3 at Lions Park is closed through Sun, Nov 29.']);
+    assert.equal(p.sameEnd, false);
+    assert.equal(W.siteShows(p.sameEnd, '2026-11-29'), 'Your site shows this at once:');
+    assert.equal(W.doneShows(p.sameEnd, '2026-11-29'), 'Your site shows this now:');
+    assert.equal(W.doneShows(true, DAY), 'Your site shows this until the end of Sat, Nov 28:');
+  });
+  it('partly covered: only the part the site will name; existing closures join the strip', () => {
+    const lionsUp = up({ scope: 'place', venueId: 'lions', placeName: 'Lions Park' });
+    const p = closePreview([d3, harbour], DAY, DAY, [lionsUp], NOW, new Set(['harbour']));
+    assert.equal(p.alreadySays, null);
+    const g = p.strip!.groups[0] as Extract<ClosureStripGroup, { rows: unknown }>;
+    assert.deepEqual(g.rows.map(r => (r.what ? `${r.park}: ${r.what}` : r.park)), ['Harbourview Park: all diamonds', 'Lions Park']);
+    assert.equal(p.sameEnd, true);
+    assert.equal(p.strip!.smallLine, 'Posted 3:26 p.m. and 3:30 p.m. by the club · both end tonight');
+  });
+  it('the same place pressed again for those days: the site won\'t change either; a longer press still changes it', () => {
+    const lionsUp = up({ scope: 'place', venueId: 'lions', placeName: 'Lions Park' });
+    assert.equal(closePreview([lions], DAY, DAY, [lionsUp], NOW, new Set()).alreadySays, 'Lions Park is closed today.');
+    assert.equal(closePreview([every], DAY, DAY, [up({})], NOW, new Set()).alreadySays, 'all our fields are closed today.');
+    const d3Up = up({ scope: 'diamond', venueId: 'lions', placeName: 'Lions Park', facilityName: 'Diamond 3' });
+    assert.equal(closePreview([d3], DAY, DAY, [d3Up], NOW, new Set()).alreadySays, 'Diamond 3 at Lions Park is closed today.');
+    assert.equal(closePreview([d(2)], DAY, DAY, [d3Up], NOW, new Set()).alreadySays, null, 'another diamond is not the same place');
+    assert.equal(closePreview([lions], DAY, '2026-11-29', [lionsUp], NOW, new Set()).alreadySays, null, 'a longer closure is news');
+  });
+  it('a closure already ended by its own clock is not in the preview', () => {
+    const gone = up({ scope: 'place', venueId: 'lions', placeName: 'Lions Park', endsAt: '2026-11-28T20:00:00Z' });
+    assert.equal(closePreview([d3], DAY, DAY, [gone], NOW, new Set()).alreadySays, null);
+  });
+  it('the Venue library\'s rows join the preview in the strip\'s shape: a whole park that is all diamonds reads so', () => {
+    const lionsUp = { scope: 'place' as const, venueId: 'lions', placeName: 'Lions Park', facilityName: 'x', firstDay: DAY, lastDay: DAY,
+      showsFrom: '2026-11-28T20:26:00Z', endsAt: end(DAY) };
+    const p = closePreview([harbour], DAY, DAY, [lionsUp], NOW, new Set(['lions']));
+    const g = p.strip!.groups[0] as Extract<ClosureStripGroup, { rows: unknown }>;
+    assert.deepEqual(g.rows.map(r => (r.what ? `${r.park}: ${r.what}` : r.park)), ['Harbourview Park', 'Lions Park: all diamonds']);
+  });
+});
+
+describe('T1 · a club with no places can close all its fields', () => {
+  it('owner and admin always; a house league admin only from a season in a club with no places', () => {
+    assert.equal(mayCloseEveryPlace('owner', { noPlaces: false, fromSeason: false }), true);
+    assert.equal(mayCloseEveryPlace('admin', { noPlaces: false, fromSeason: false }), true);
+    assert.equal(mayCloseEveryPlace('league_admin', { noPlaces: true, fromSeason: true }), true);
+    assert.equal(mayCloseEveryPlace('league_admin', { noPlaces: true, fromSeason: false }), false, 'from the Venue library or the Overview');
+    assert.equal(mayCloseEveryPlace('league_admin', { noPlaces: false, fromSeason: true }), false, 'K1 where places are listed');
+    assert.equal(mayCloseEveryPlace('coach', { noPlaces: true, fromSeason: true }), false);
+    assert.equal(W.noPlacesAll, 'Your club has no places yet. To close one park or diamond, add it in the Venue library.');
   });
   it('the Overview counts parks: two diamonds of one park are ONE place closed', () => {
     const c = (o: { scope: 'place' | 'diamond' | 'all'; venueId: string | null; placeName: string | null; facilityName: string | null }) => o;

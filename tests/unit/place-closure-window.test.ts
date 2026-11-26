@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import {
-  CLOSE_WORDS as W, canClosePlace, closeSummary, defaultTicks, linkTargets, placesWord, previewSentences, seesEveryProgram,
+  CLOSE_WORDS as W, canClosePlace, closePreview, closeSummary, defaultTicks, linkTargets, placesWord, seesEveryProgram,
   type CloseLeagueGame, type CloseRepGame, type CloseSource,
 } from '../../lib/place-closure-window.ts';
 import { stripSentence, type ClosedPlace } from '../../lib/place-closures.ts';
@@ -127,8 +127,11 @@ describe('the drawing\'s words (tab 2)', () => {
     assert.equal(W.bandSeason(true), 'This season’s places today');
   });
   it('the site\'s preview carries the strip\'s fixed sentence (K16) and never the admin\'s line', () => {
-    const w = W.site(previewSentences([lions], DAY, DAY, DAY), DAY);
-    assert.equal(`${w.lead}${w.said}${w.rest}`, 'Your site says “Lions Park is closed today.” at once, until the end of Sat, Nov 28.');
+    const p = closePreview([lions], DAY, DAY, [], '2026-11-28T13:00:00Z', new Set());
+    assert.deepEqual(p.strip?.groups.map(g => ('sentence' in g ? g.sentence : g.heading)), ['Lions Park is closed today.']);
+    assert.equal(p.alreadySays, null);
+    assert.equal(p.sameEnd, true);
+    assert.equal(W.siteShows(p.sameEnd, DAY), 'Your site shows this at once, until the end of Sat, Nov 28:');
     assert.equal(W.lineHint.includes('It isn’t shown on your site.'), true);
   });
 });

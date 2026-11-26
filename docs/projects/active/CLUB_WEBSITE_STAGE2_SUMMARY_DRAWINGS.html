@@ -1,0 +1,447 @@
+<meta name="claude:viewport-fit-sides" content="cover">
+<title>Closed places, summarized</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;650;700&family=Barlow+Condensed:wght@700&family=IBM+Plex+Mono:wght@700&display=swap">
+<style>
+/* Layout: sticky tabs and view row, one section at a time, true-size product frames on a neutral desk. */
+:root{
+  --pg:#eef0f2; --pg-card:#fff; --pg-ink:#1a1e24; --pg-soft:#566070; --pg-line:#d6dbe2; --pg-acc:#2f5bd3; --desk:#d9dde3; --pg-rec:#e7edfb;
+  /* product frames: the admin light theme and the club site's fixed light colours, identical in both page themes */
+  --card:#fff; --paper:#F8F4ED; --ink:#241E15; --sec:#4A4235; --ter:#615A54; --olive:#57651E;
+  --line:rgba(70,55,30,.12); --line2:rgba(70,55,30,.20); --warn:#835006; --lime:#D9F99D; --onlime:#0f1123;
+  --cg:#F6F5F2; --cc:#fff; --ct:#1F1B16; --cd:#6F675B; --cl:#E4E0D8; --cw:#8A5300; --club:#1F5E6B; --gold:#B7A24C; --onclub:#fff;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--pg:#14171c;--pg-card:#1d2128;--pg-ink:#e8ebf0;--pg-soft:#a3adbb;--pg-line:#323945;--pg-acc:#8aabff;--desk:#0d0f13;--pg-rec:#222d47;color-scheme:dark}}
+:root[data-theme="dark"]{--pg:#14171c;--pg-card:#1d2128;--pg-ink:#e8ebf0;--pg-soft:#a3adbb;--pg-line:#323945;--pg-acc:#8aabff;--desk:#0d0f13;--pg-rec:#222d47;color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--pg);color:var(--pg-ink);font:14px/1.55 Inter,system-ui,sans-serif;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);background:var(--pg);z-index:10}
+.wrap{max-width:2040px;margin:0 auto;padding-block:0 48px}
+header{padding-block:18px 8px}
+h1{font-size:20px;margin:0 0 4px;text-wrap:balance}
+header p{margin:0;color:var(--pg-soft);max-width:75ch}
+.bar{position:sticky;top:env(safe-area-inset-top,0px);background:var(--pg);z-index:9;padding-block:8px;border-bottom:1px solid var(--pg-line)}
+.tabs{display:flex;gap:4px;flex-wrap:wrap}
+.tabs button{font:600 13px Inter,sans-serif;padding:7px 11px;border-radius:7px;border:1px solid var(--pg-line);background:var(--pg-card);color:var(--pg-ink);cursor:pointer}
+.tabs button[aria-selected="true"]{background:var(--pg-acc);border-color:var(--pg-acc);color:var(--pg-card)}
+.viewrow{display:flex;flex-wrap:wrap;gap:6px 18px;align-items:center;margin-top:8px;font-size:12px;color:var(--pg-soft)}
+.viewrow>span{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.track{display:inline-flex;flex-wrap:wrap;gap:2px;padding:3px;border:1px solid var(--pg-line);border-radius:18px;background:var(--pg-card)}
+.track button{border:0;background:none;color:var(--pg-soft);font:600 12px Inter,sans-serif;padding:5px 11px;border-radius:999px;cursor:pointer}
+.track button[aria-pressed="true"]{background:var(--pg-rec);color:var(--pg-ink)}
+section{padding-top:16px}
+.say{max-width:75ch;margin:0 0 12px}
+.pair{display:flex;flex-wrap:wrap;gap:16px;align-items:flex-start}
+.spec{min-width:0;max-width:100%}
+.cap{font:700 11px 'IBM Plex Mono',monospace;letter-spacing:.07em;text-transform:uppercase;color:var(--pg-soft);margin:0 0 6px}
+.desk{background:var(--desk);border-radius:10px;padding:12px;overflow-x:auto;max-width:100%}
+button:focus-visible,input:focus-visible{outline:2px solid var(--olive);outline-offset:1px}
+
+/* ── public club site ── */
+.pub{width:900px;background:var(--cg);color:var(--ct);border-radius:10px;overflow:hidden;font:14px/1.45 Inter,sans-serif}
+.ph-head{background:var(--club);color:var(--onclub);border-bottom:2px solid var(--gold);display:flex;align-items:center;gap:24px;padding:12px 32px}
+.ph-head b{display:block;font:700 22px/1.15 'Barlow Condensed',sans-serif}
+.ph-head small{font-size:11px;font-weight:600}
+.ph-head nav{display:flex;gap:20px;font-weight:600}
+.ph-head nav span:first-child{border-bottom:2px solid var(--onclub);padding-bottom:4px}
+.ph-head .si{margin-left:auto;font-weight:600}
+.notice{margin:12px 0 4px;padding:0 24px}
+.ni{background:var(--cc);border:1px solid var(--cl);border-left:3px solid var(--cw);border-radius:0 8px 8px 0;padding:12px 14px;display:flex;flex-direction:column;gap:4px}
+.nl{margin:0;font:700 16px/1.25 Inter,sans-serif;color:var(--ct);overflow-wrap:anywhere}
+.nr{margin:0;font:400 15px/1.35 Inter,sans-serif;color:var(--ct)}
+.nr b{font-weight:650}
+.ng.grp+.ng,.ng+.ng.grp{margin-top:8px}
+.wb .prev p{margin:0}
+.wb .prev p.nl,.wb .prev p.nl b{color:var(--ct)}
+.ng{display:flex;flex-direction:column;gap:3px}
+.ns{margin:0;font-size:12px;color:var(--cd)}
+.more{align-self:flex-start;border:0;background:none;padding:0;min-height:28px;font:650 14px Inter,sans-serif;color:var(--club);text-decoration:underline;cursor:pointer}
+.cols{display:grid;grid-template-columns:1.35fr 1fr;gap:24px;padding:16px 24px 24px}
+.cols h4{margin:0 0 10px;font-size:15px}
+.cd{background:var(--cc);border:1px solid var(--cl);border-radius:8px;padding:12px 16px;margin-bottom:16px}
+.cd.open{border-left:3px solid var(--club)}
+.cd small{display:block;color:var(--cd)}
+.cols .today{font-weight:700}.cols .today span{font-weight:400;color:var(--cd);margin-left:6px}
+.edge{position:relative}
+.edge::before{content:"";position:absolute;left:0;right:0;top:580px;border-top:2px dashed #c0392b;pointer-events:none;z-index:2}
+.edge::after{content:"720px-tall screen shows to about here";position:absolute;right:4px;top:572px;background:#c0392b;color:#fff;border-radius:3px;padding:1px 6px;font:700 10px 'IBM Plex Mono',monospace;pointer-events:none;z-index:3}
+
+/* ── phones ── */
+.phone{width:402px;height:772px;border-radius:24px;border:6px solid #20242b;overflow:hidden;background:var(--cg);display:flex;flex-direction:column}
+.phone .scr{flex:1;overflow-y:auto}
+.phone .pub,.phone .adm{width:100%;border-radius:0;min-height:100%}
+.phone .ph-head{padding:12px 16px;gap:10px}
+.phone .ph-head nav{display:none}
+.phone .ph-head b{font-size:19px}
+.phone .notice{padding:0 16px}
+.phone .cols{grid-template-columns:1fr;gap:0;padding:16px}
+.phone .more{min-height:44px}
+
+/* ── admin ── */
+.adm{width:900px;background:var(--paper);color:var(--sec);border-radius:10px;overflow:hidden;font:14px/1.5 Inter,sans-serif}
+.at{background:var(--card);border-bottom:1px solid var(--line);padding:14px 32px;font:700 17px Inter,sans-serif;color:var(--ink)}
+.an{background:var(--card);border-bottom:1px solid var(--line);padding:0 32px;display:flex;gap:28px;overflow:hidden}
+.an span{padding:12px 0 10px;font-weight:600;white-space:nowrap}
+.an span.on{color:var(--olive);border-bottom:2px solid var(--olive)}
+.ab{padding:20px 40px 28px}
+.lede{display:flex;gap:16px;align-items:flex-start;justify-content:space-between;margin-bottom:16px}
+.lede p{margin:0;max-width:56ch;color:var(--ter)}
+.lede span{display:flex;gap:8px;flex:0 0 auto}
+.btn{font:650 14px/1.25 Inter,sans-serif;padding:.45rem .9rem;border-radius:6px;min-height:36px;border:1px solid var(--line2);background:var(--card);color:var(--sec);cursor:pointer}
+.btn.lime{background:var(--lime);color:var(--ink);border-color:var(--lime)}
+.btn:disabled{opacity:.5}
+.crow{display:flex;flex-wrap:wrap;align-items:center;gap:.6rem .9rem;margin:0 0 .9rem;padding:.75rem .9rem;border:1px solid var(--line);border-left:3px solid var(--warn);border-radius:8px;background:var(--card)}
+.cbody{flex:1 1 18rem;min-width:0;display:flex;flex-wrap:wrap;align-items:baseline;gap:.25rem .5rem}
+.cbody strong{font-weight:650;color:var(--ink);font-size:16px}
+.cline{flex-basis:100%;font-size:13px;color:var(--ter)}
+.chip{display:inline-block;font:700 10.5px 'IBM Plex Mono',monospace;letter-spacing:.06em;text-transform:uppercase;color:var(--warn);border:1px solid rgba(131,80,6,.35);background:rgba(131,80,6,.07);border-radius:999px;padding:1px 8px}
+.box{border:1px solid var(--line);border-left:3px solid var(--warn);border-radius:8px;background:var(--card);margin-bottom:.9rem}
+.bh{display:block;font:700 13px 'Barlow Condensed',sans-serif;letter-spacing:.05em;text-transform:uppercase;color:var(--sec);padding:.5rem .9rem;border-bottom:1px solid var(--line)}
+.br{display:flex;gap:.75rem;align-items:center;padding:.55rem .9rem;border-top:1px solid var(--line)}
+.bh+.br{border-top:0}
+.br div{flex:1;min-width:0}
+.br strong{display:block;font-weight:650;color:var(--ink)}
+.br small{display:block;font-size:13px;color:var(--ter)}
+.br.in{padding-left:2rem}
+.under{padding:.45rem .9rem .45rem 2rem;background:var(--paper);border-top:1px solid var(--line);font-size:13px;color:var(--sec)}
+.tf{border:1px solid var(--line);border-radius:8px;background:var(--card);overflow:hidden}
+.tr{display:grid;grid-template-columns:1.5fr 1.2fr 1.2fr 20px;gap:12px;align-items:center;padding:12px 18px;border-top:1px solid var(--line)}
+.tr:first-child{border-top:0}
+.tr.h{font:700 12px 'Barlow Condensed',sans-serif;letter-spacing:.05em;text-transform:uppercase;padding-block:10px}
+.tr b{color:var(--ink);font-weight:650;margin-right:6px}
+.tr small{display:block;color:var(--ter);font-size:13px}
+.phone .adm{background:var(--paper)}
+.phone .at{padding:12px 16px}.phone .an{padding:0 16px;gap:20px}.phone .ab{padding:14px 16px 24px}
+.phone .btn{min-height:44px}
+.phone .crow .btn{flex-basis:100%}
+.phone .lede{display:block}
+.phone .tr{display:block;padding:10px 14px}
+.phone .br{display:grid;grid-template-columns:1fr auto;column-gap:.75rem;align-items:center}
+.phone .br div{display:contents}
+.phone .br strong{grid-column:1;grid-row:1;align-self:end}
+.phone .br .btn{grid-column:2;grid-row:1}
+.phone .br small{grid-column:1/-1;grid-row:2;margin-top:.15rem}
+
+/* ── dialogs (specimens) ── */
+.win{width:520px;max-width:100%;background:var(--card);color:var(--sec);border:1px solid #CDD1BC;border-radius:12px;font:14px/1.5 Inter,sans-serif}
+.wh{padding:1.1rem 24px .4rem;font:700 16px/1.25 Inter,sans-serif;color:var(--ink)}
+.wb{padding:.6rem 24px 1rem}
+.wb p{margin:0 0 .65rem}
+.wb b{color:var(--ink)}
+.wf{display:flex;flex-wrap:wrap;justify-content:flex-end;gap:.5rem;padding:.85rem 24px;border-top:1px solid var(--line)}
+.ticks{border:1px solid var(--line);border-radius:8px;margin:0 0 .75rem}
+.ticks label{display:flex;gap:.65rem;align-items:center;min-height:44px;padding:.45rem .75rem;border-top:1px solid var(--line);cursor:pointer}
+.ticks label:first-child{border-top:0}
+.ticks span{color:var(--ink);display:block}
+.ticks small{display:block;color:var(--ter);font-size:12px}
+input[type=checkbox]{appearance:none;width:18px;height:18px;flex:0 0 18px;margin:0;position:relative;cursor:pointer;border:1.5px solid rgba(36,30,21,.5);border-radius:3px;background:rgba(36,30,21,.05)}
+input[type=checkbox]:checked{background:var(--lime);border-color:var(--onlime)}
+input[type=checkbox]:checked::after{content:"";position:absolute;left:5px;top:1px;width:5px;height:10px;border:solid var(--onlime);border-width:0 2px 2px 0;transform:rotate(45deg)}
+.warnbox{display:flex;gap:.55rem;border:1px solid rgba(131,80,6,.35);background:rgba(131,80,6,.07);border-radius:8px;padding:.65rem .8rem;margin-bottom:.65rem;color:var(--ink)}
+.site{padding:.75rem .9rem;border:1px solid var(--line);border-left:3px solid var(--warn);border-radius:8px;margin-bottom:.65rem}
+.prev{background:var(--cg);border-radius:8px;padding:.6rem;margin-top:.5rem}
+.prev .ni{padding:10px 12px}
+
+/* markers, differs, asks */
+.mk{display:inline-grid;place-items:center;width:19px;height:19px;border-radius:50%;border:0;background:#2f5bd3;color:#fff;font:700 11px Inter,sans-serif;cursor:pointer;margin-left:6px;vertical-align:middle;padding:0;text-transform:none}
+body.differs .same{opacity:.22}
+dialog{border:1px solid var(--pg-line);background:var(--pg-card);color:var(--pg-ink);border-radius:12px;max-width:min(440px,92vw);padding:18px}
+dialog::backdrop{background:rgba(0,0,0,.35)}
+dialog h3{margin:0 0 6px;font-size:15px}
+dialog button{font:600 13px Inter,sans-serif;padding:6px 14px;border-radius:7px;border:1px solid var(--pg-line);background:var(--pg);color:var(--pg-ink);cursor:pointer}
+.ask{background:var(--pg-card);border:1px solid var(--pg-line);border-radius:10px;padding:12px 14px;margin-bottom:10px;max-width:820px}
+.ask h3{margin:0 0 6px;font-size:14px}
+.ask ul{margin:0;padding:0;list-style:none;display:grid;gap:4px}
+.ask li{padding:5px 8px;border-radius:6px}
+.ask li.rec{background:var(--pg-rec)}
+</style>
+
+<div class="wrap">
+<header>
+  <h1>Closed places, summarized: the public site and the Venue library</h1>
+  <p>Ruled 2026-11-26 (all six A), not yet built. Switch the <b>Case</b> to see each situation. Names, counts and games are made-up examples. Blue numbers open an explanation.</p>
+</header>
+
+<div class="bar">
+  <div class="tabs" role="tablist" id="tabs"></div>
+  <div class="viewrow" id="viewrow">
+    <span id="caserow">Case <span class="track" id="cases"></span></span>
+    <span id="difrow">View <span class="track" id="dif"><button type="button" data-v="all" aria-pressed="true">Everything</button><button type="button" data-v="diff" aria-pressed="false">Show only what differs</button></span></span>
+  </div>
+</div>
+
+<section data-tab="site">
+  <p class="say" data-say></p>
+  <div class="pair">
+    <div class="spec"><p class="cap">Today · computer</p><div class="desk"><div id="site-old"></div></div></div>
+    <div class="spec"><p class="cap">Proposed · computer</p><div class="desk"><div id="site-new"></div></div></div>
+  </div>
+</section>
+
+<section data-tab="sitep" hidden>
+  <p class="say" data-say></p>
+  <div class="pair">
+    <div class="spec"><p class="cap">Today · 390px</p><div class="desk"><div class="phone"><div class="scr" id="sitep-old"></div></div></div></div>
+    <div class="spec"><p class="cap">Proposed · 390px</p><div class="desk"><div class="phone"><div class="scr" id="sitep-new"></div></div></div></div>
+  </div>
+</section>
+
+<section data-tab="lib" hidden>
+  <p class="say"><b>Every closure is still listed here</b>, because each one can be reopened. What changes is that they share one box, a park takes one row, and anything closed underneath “All our fields” sits under it and says what reopening would leave closed.</p>
+  <div class="pair">
+    <div class="spec"><p class="cap">Today · computer</p><div class="desk"><div id="lib-old"></div></div></div>
+    <div class="spec"><p class="cap">Proposed · computer</p><div class="desk"><div id="lib-new"></div></div></div>
+  </div>
+</section>
+
+<section data-tab="libp" hidden>
+  <p class="say"><b>The Venue library on a phone.</b> Today each closure is a card with a full-width Reopen. To judge the tap size, open this page on your phone.</p>
+  <div class="pair">
+    <div class="spec"><p class="cap">Today · 390px</p><div class="desk"><div class="phone"><div class="scr" id="libp-old"></div></div></div></div>
+    <div class="spec"><p class="cap">Proposed · 390px</p><div class="desk"><div class="phone"><div class="scr" id="libp-new"></div></div></div></div>
+  </div>
+</section>
+
+<section data-tab="reopen" hidden>
+  <p class="say"><b>Three Reopen windows.</b> The tick boxes work. Each starts from your test: Diamonds 1 and 2 at Lions Park, then all fields. The first row assumes all fields was never closed.</p>
+  <div class="pair" style="margin-bottom:18px">
+    <div class="spec"><p class="cap">Proposed · a park with two diamonds closed</p><div class="desk"><div id="r-park"></div></div></div>
+  </div>
+  <div class="pair" style="margin-bottom:18px">
+    <div class="spec"><p class="cap">Today · one diamond, while all fields are closed</p><div class="desk"><div id="r-one-old"></div></div></div>
+    <div class="spec"><p class="cap">Proposed · the same press</p><div class="desk"><div id="r-one"></div></div></div>
+  </div>
+  <div class="pair">
+    <div class="spec"><p class="cap">Today · all fields, with two diamonds closed on their own</p><div class="desk"><div id="r-all-old"></div></div></div>
+    <div class="spec"><p class="cap">Proposed · the same press · try the tick</p><div class="desk"><div id="r-all"></div></div></div>
+  </div>
+</section>
+
+<section data-tab="close" hidden>
+  <p class="say"><b>The Close a place window tells you what families will see</b>, so it has to follow the same rule as the site. Only the bottom of the window is drawn; the rest is unchanged.</p>
+  <div class="pair" style="margin-bottom:18px">
+    <div class="spec"><p class="cap">Today · closing 10 diamonds</p><div class="desk"><div id="c-old"></div></div></div>
+    <div class="spec"><p class="cap">Proposed · closing 10 diamonds</p><div class="desk"><div id="c-new"></div></div></div>
+  </div>
+  <div class="pair">
+    <div class="spec"><p class="cap">Today · closing Diamond 3 when all fields are already closed</p><div class="desk"><div id="c-cov-old"></div></div></div>
+    <div class="spec"><p class="cap">Proposed · the same</p><div class="desk"><div id="c-cov"></div></div></div>
+  </div>
+</section>
+
+<section data-tab="asks" hidden>
+  <p class="say">All six ruled A on 2026-11-26. The shaded choice is the ruled one. S1 and S2 replace the earlier ruling of one line per closed place (K4). S4 replaces one row per diamond in the Venue library.</p>
+  <div class="ask"><h3>S1 · A closure inside a bigger one, on your site</h3><ul>
+    <li class="rec">A · The bigger one speaks for it, for as long as it covers the same days. A diamond closed longer keeps its own line.</li>
+    <li>B · Every closure keeps its own line.</li></ul></div>
+  <div class="ask"><h3>S2 · Several closed places on your site</h3><ul>
+    <li class="rec">A · One heading for the day and one row per park. A single park stays one sentence.</li>
+    <li>B · One sentence per park, each in bold.</li>
+    <li>C · Leave it: one sentence per diamond.</li></ul></div>
+  <div class="ask"><h3>S3 · A long list on your site (try the “8 parks” case)</h3><ul>
+    <li class="rec">A · Up to five rows all show. Past five, four show and “Show 4 more places” opens the rest where it is.</li>
+    <li>B · Always show every row. Nothing to press, but a phone’s first screen fills up.</li>
+    <li>C · “And N more places are closed” with no way to see them, as today.</li></ul></div>
+  <div class="ask"><h3>S4 · The Venue library</h3><ul>
+    <li class="rec">A · One box, one row per park and dates.</li>
+    <li>B · One box, still one row per diamond.</li>
+    <li>C · Separate cards, as today.</li></ul></div>
+  <div class="ask"><h3>S5 · Reopening a park with several diamonds closed</h3><ul>
+    <li class="rec">A · One window with the diamonds ticked, one press, and each coach gets one email.</li>
+    <li>B · A Reopen for each diamond, as today. Needs the “row per diamond” choice in S4.</li></ul></div>
+  <div class="ask"><h3>S6 · Reopening all fields while some are also closed on their own</h3><ul>
+    <li class="rec">A · The window names them and offers one tick to reopen them too. It starts unticked.</li>
+    <li>B · The window names them. You reopen each yourself.</li>
+    <li>C · Reopening all fields reopens everything.</li></ul></div>
+  <p class="say">Fixed whatever you choose: Reopen never says your site has stopped saying a place is closed while it is still saying it, and a park with only some diamonds closed is no longer tagged “Closed today”. S5 and S6 are new behaviour and the larger part of the work; the combined coach email would get a legal wording check before it is built.</p>
+</section>
+</div>
+
+<dialog id="dlg"><h3 id="dt"></h3><p id="dp"></p><form method="dialog"><button>Close</button></form></dialog>
+
+<script>
+const NOTES={
+ 1:['Today: one line per closure','Your site prints one bold sentence for every closure and never notices that one includes another. Past four it keeps three and adds “And N more places are closed”, with nothing to press.'],
+ 2:['The bigger closure speaks','“All our fields” already includes both diamonds for the same day, so families read one line. The two diamond closures still exist. If you reopen all fields, their line comes back by itself.'],
+ 3:['One heading, one row per park','The day is said once. Each park takes one row with its diamonds named, or “all diamonds” for the whole park (the Venue library’s words). A place with no diamonds shows its name alone. Only the heading and park names are bold.'],
+ 4:['Different days stay separate','A closure is only folded into a bigger one when the bigger one lasts at least as long. Anything longer keeps its own line, so nobody thinks it reopens tonight.'],
+ 5:['Show more, in place','Past five rows the first four show and the rest open under them. Nothing is ever only counted. The button keeps working until midnight, like the rest of the strip.'],
+ 6:['The small line','Same wording as today. It now counts the lines families can actually see, so one visible line reads “ends tonight” instead of “all end tonight”.'],
+ 7:['Today: a card per closure','Ten diamonds make ten cards, and the venue list starts far below the screen.'],
+ 8:['One box','One row per park and dates. The line under it keeps today’s facts: the days, when and who, games postponed and rep games marked. Rows grouped from separate presses show both times.'],
+ 9:['Closed on their own','These sit under “All our fields” because reopening all fields leaves them closed. Each keeps its own Reopen.'],
+ 10:['The park tag tells the truth','Today a park with one diamond closed is tagged “Closed today”, the same as a fully closed park. Proposed: “2 diamonds closed today”.'],
+ 11:['Tick the diamonds','All start ticked. Untick one to keep it closed. The button and the lines under it follow your ticks.'],
+ 12:['Today’s false promise','All fields are still closed, so your site will go on saying so. The window says the opposite.'],
+ 13:['Say what really happens','This press only removes Diamond 1’s own closure. The button says that instead of “Reopen”. The result window after it would say the same.'],
+ 14:['Silent today','Reopening all fields leaves both diamonds closed, and today’s window doesn’t mention them.'],
+ 15:['Offer, don’t assume','A diamond closed on its own may be damaged for another reason, so the tick starts off. The preview line shows what your site will say next.'],
+ 16:['The preview matches the site','The window shows the same shortened shape families will get, including “Show more”.'],
+ 17:['Already covered','The closure can still be recorded, for a diamond that will stay shut after the rest reopen. The window says your site won’t change.']
+};
+const mk=n=>`<button type="button" class="mk" data-n="${n}" aria-label="Note ${n}">${n}</button>`;
+const andList=a=>a.length<2?a.join(''):a.slice(0,-1).join(', ')+' and '+a[a.length-1];
+const PARKS=['Alder Fields','Harbourview Park','Lions Park','Northshore Park','Pinecrest Park','Quarry Road','Riverside Park','Summit Park'];
+const DAY={0:'Thu, Nov 26',1:'Fri, Nov 27',3:'Sun, Nov 29'};
+/* a closure: park (null = all fields), diamond (0 = whole park), first/last day offset, time, postponed, marked */
+const C=(park,d=0,f=0,t=0,at='3:25 p.m.',pp=1,mm=0)=>({park,d,f,t,at,pp,mm});
+const CASES={
+ test:{label:'Your test',list:[C('Lions Park',1,0,0,'3:25 p.m.',1,1),C('Lions Park',2,0,0,'3:25 p.m.',1,1),C(null,0,0,0,'3:26 p.m.',4,2)],say:'<b>Your test:</b> two diamonds at Lions Park, then all fields. Today it is three bold lines. Proposed is one.'},
+ park:{label:'2 diamonds',list:[C('Lions Park',1,0,0,'3:25 p.m.',1,1),C('Lions Park',2,0,0,'3:25 p.m.',1,1)],say:'<b>Two diamonds at one park</b> become one sentence.'},
+ ten:{label:'10 diamonds',list:PARKS.slice(0,5).flatMap(p=>[C(p,1),C(p,2)]),say:'<b>Ten diamonds across five parks.</b> Today families see three, then “And 7 more” with no way to learn which. Proposed shows all ten in five rows.'},
+ long:{label:'8 parks',list:[C(PARKS[0]),C(PARKS[1],1),C(PARKS[1],3),C(PARKS[2],2),C(PARKS[3]),C(PARKS[4]),C(PARKS[5],1),C(PARKS[6]),C(PARKS[7])],say:'<b>Closures at eight parks.</b> Past five rows the rest fold away behind a button. Press it.'},
+ mixed:{label:'Mixed days',list:[C(null,0,0,0,'3:26 p.m.',4,2),C('Lions Park',2,0,3,'7:10 a.m.',3,1),C('Alder Fields',0,1,1,'3:30 p.m.',2,0)],say:'<b>All fields today, one diamond through Sunday, one park tomorrow.</b> Nothing longer or later is hidden by today’s closure.'}
+};
+let CUR='test';const OPEN={};
+const when=c=>c.f===0?(c.t===0?'closed today':`closed through ${DAY[c.t]}`):`closed tomorrow (${DAY[c.f]})`;
+const head=c=>{const w=when(c);return w[0].toUpperCase()+w.slice(1)};
+const subj=c=>!c.park?'All our fields':c.d?`Diamond ${c.d} at ${c.park}`:c.park;
+const sentence=c=>`${subj(c)} ${c.park?'is':'are'} ${when(c)}.`;
+const diaWords=ds=>andList(ds.map(d=>'Diamond '+d));
+const covers=(o,c)=>o!==c&&o.f<=c.f&&o.t>=c.t&&((!o.park&&!!c.park)||(o.park&&o.park===c.park&&!o.d&&!!c.d));
+function groupParks(list){const m=new Map();list.forEach(c=>{const k=[c.park,c.f,c.t].join('|');if(!m.has(k))m.set(k,{park:c.park,f:c.f,t:c.t,ds:[],items:[]});const g=m.get(k);g.items.push(c);if(c.d)g.ds.push(c.d)});return [...m.values()]}
+const endsWords=(vis,n)=>vis.every(c=>c.t===0)?(n===1?' · ends tonight':n===2?' · both end tonight':' · all end tonight'):'';
+const posted=vis=>{const t=[...new Set(vis.map(c=>c.at))];return t.length<3?`Posted ${t.join(' and ')} by the club`:'Posted by the club'};
+
+function stripOld(list){
+  let lines=list.map(sentence);
+  if(lines.length>4)lines=[...lines.slice(0,3),`And ${lines.length-3} more places are closed.`];
+  return `<div class="ni">${lines.map((l,i)=>`<p class="nl">${l}${i===0?mk(1):''}</p>`).join('')}<p class="ns same">${posted(list)}${endsWords(list,lines.length)}</p></div>`;
+}
+function stripNew(list,key,marks=true){
+  const M=n=>marks?mk(n):'';
+  const vis=list.filter(c=>!list.some(o=>covers(o,c)));
+  const hidden=vis.length<list.length;
+  const days=new Map();
+  groupParks(vis).sort((a,b)=>a.f-b.f||a.t-b.t||(!a.park?-1:!b.park?1:a.park.localeCompare(b.park))).forEach(g=>{const k=g.f+'|'+g.t;if(!days.has(k))days.set(k,[]);days.get(k).push(g)});
+  const total=groupParks(vis).length;
+  const fold=total>5&&!OPEN[key];let left=fold?4:total,body='',gi=0;
+  for(const gs of days.values()){
+    if(!left)break;
+    const show=gs.slice(0,left);left-=show.length;
+    if(gs.length===1){
+      const g=gs[0];
+      const s=g.ds.length>1?`${diaWords(g.ds)} at ${g.park} are ${when(g)}.`:sentence(g.items[0]);
+      body+=`<div class="ng"><p class="nl">${s}${gi===0&&hidden?M(2):''}${days.size>1&&gi===1?M(4):''}</p></div>`;
+    }else{
+      body+=`<div class="ng grp"><p class="nl">${head(gs[0])}${M(3)}</p>${show.map(g=>`<p class="nr"><b>${g.park}</b>${': '+(g.ds.length?diaWords(g.ds):'all diamonds')}</p>`).join('')}</div>`;
+    }
+    gi++;
+  }
+  if(total>5)body+=`<span><button type="button" class="more" data-more="${key}" aria-expanded="${!fold}">${fold?`Show ${total-4} more places`:'Show fewer'}</button>${M(5)}</span>`;
+  return `<div class="ni">${body}<p class="ns">${posted(vis)}${endsWords(vis,total)}${M(6)}</p></div>`;
+}
+function site(kind,phone,key){
+  const L=CASES[CUR].list;
+  return `<div class="pub"><div class="ph-head same"><span aria-hidden="true">◇</span><div><b>Kestrel Bay Softball Association</b><small>House league softball for Kestrel Bay, ages 6 to 15</small></div><nav><span>Home</span><span>Teams</span><span>House league</span><span>Tournaments</span></nav><span class="si">${phone?'☰':'Sign in'}</span></div>
+  <div class="notice">${kind==='old'?stripOld(L):stripNew(L,key)}</div>
+  <div class="cols same"><div><h4>Open now</h4><div class="cd open"><b>2026 House League</b><small>Sign up by Dec 25</small></div><p class="today">Today<span>Thu, Nov 26</span></p><div class="cd"><b>Otters vs Falcons</b><small>6:00 p.m. · U9 · Lions Park, Diamond 1</small></div></div><div><h4>About us</h4><div class="cd">Kestrel Bay Softball Association runs house league softball in five age groups, from U7 to U15, with Saturday-morning games and weeknight practices.</div></div></div></div>`;
+}
+
+/* ── Venue library ── */
+const dates=c=>c.f===c.t?DAY[c.f]:`${DAY[c.f]} to ${DAY[c.t]}`;
+const facts=(items)=>{const pp=items.reduce((n,c)=>n+c.pp,0),mm=items.reduce((n,c)=>n+c.mm,0);const x=[pp?`${pp} postponed`:null,mm?`${mm} rep ${mm===1?'game':'games'} marked`:null].filter(Boolean).join(', ');const t=[...new Set(items.map(c=>c.at))];return [dates(items[0]),`closed ${t.length<3?t.join(' and ')+' ':''}by Morgan Ashby`.replace('closed by','closed by'),x].filter(Boolean).join(' · ')};
+const rowName=g=>!g.park?'All our fields':g.ds.length?`${g.park} · ${diaWords(g.ds)}`:`${g.park} · all diamonds`;
+const reopenBtn=name=>`<button type="button" class="btn" aria-label="Reopen ${name}" data-go="reopen">Reopen</button>`;
+function libOld(L){return L.map((c,i)=>{const n=!c.park?'All our fields':c.d?`${c.park} · Diamond ${c.d}`:`${c.park} · all diamonds`;return `<div class="crow"><div class="cbody"><span class="chip">Closed</span><strong>${n}</strong>${i===0?mk(7):''}<span class="cline">${facts([c])}</span></div>${reopenBtn(n)}</div>`}).join('')}
+function libNew(L){
+  const gs=groupParks(L),all=gs.filter(g=>!g.park),rest=gs.filter(g=>g.park).sort((a,b)=>a.f-b.f||a.park.localeCompare(b.park));
+  const row=(g,cls)=>`<div class="br ${cls}"><div><strong>${rowName(g)}</strong><small>${facts(g.items)}</small></div>${reopenBtn(rowName(g))}</div>`;
+  return `<div class="box"><span class="bh">Closed places${mk(8)}</span>${all.map(g=>row(g,'')).join('')}${all.length&&rest.length?`<div class="under">Also closed on their own. These stay closed if you reopen all our fields.${mk(9)}</div>`:''}${rest.map(g=>row(g,all.length?'in':'')).join('')}</div>`;
+}
+function tag(park,L,old){
+  const now=L.filter(c=>c.f===0&&(!c.park||c.park===park));
+  if(!now.length)return '';
+  if(old||now.some(c=>!c.park||!c.d))return '<span class="chip">Closed today</span>';
+  const n=new Set(now.map(c=>c.d)).size;
+  return `<span class="chip">${n} ${n===1?'diamond':'diamonds'} closed today</span>${park===PARKS.find(p=>now[0].park===p)?mk(10):''}`;
+}
+function lib(kind,phone){
+  const L=CASES[CUR].list,old=kind==='old';
+  let marked=false;
+  const venues=PARKS.map((p,i)=>{let t=tag(p,L,old);if(marked)t=t.replace(/<button[^>]*>10<\/button>/,'');else if(t.includes('data-n="10"'))marked=true;
+    return phone?`<div class="tr"><b>${p}</b>${t}<small>Diamond 1 · Diamond 2 · Diamond 3</small></div>`
+    :`<div class="tr"><div><b>${p}</b>${t}<small>${10+i*12} Park Rd</small></div><span>Diamond 1 · Diamond 2 · Diamond 3</span><span class="same">house league · 1 tournament</span><span class="same">›</span></div>`}).join('');
+  const buttons=`<span class="same"><button type="button" class="btn">☁ Close a place</button> <button type="button" class="btn lime">+ Add venue</button></span>`;
+  return `<div class="adm ${phone?'':'edge'}"><div class="at same">Organization</div><div class="an same"><span>Members</span><span>Audit log</span><span>Settings</span><span class="on">Venue library</span><span>PDF settings</span></div>
+  <div class="ab"><div class="lede same">${phone?'':`<p>The club’s venues and their facilities. Teams, house league and tournaments book them from here, and two bookings on the same facility at the same time are flagged.</p>${buttons}`}</div>
+  ${old?libOld(L):libNew(L)}<div class="tf">${phone?'':'<div class="tr h same"><span>Venue</span><span>Facilities</span><span>Booked by this season</span><span></span></div>'}${venues}</div></div></div>`;
+}
+
+/* ── Reopen windows ── */
+const win=(title,body,foot)=>`<div class="win"><div class="wh">${title}</div><div class="wb">${body}</div><div class="wf">${foot}</div></div>`;
+const keep='<button type="button" class="btn">Keep it closed</button>';
+const go=(t,off)=>`<button type="button" class="btn lime" ${off?'disabled':''}>${t}</button>`;
+const R={park:[true,true],all:false};
+function drawReopen(){
+  const n=R.park.filter(Boolean).length;
+  const ticked=R.park.map((v,i)=>v?i+1:0).filter(Boolean),stay=[1,2].filter(d=>!ticked.includes(d));
+  document.getElementById('r-park').innerHTML=win(`Reopen diamonds at Lions Park?${mk(11)}`,
+    `<div class="ticks">${[0,1].map(i=>`<label><input type="checkbox" data-rp="${i}" ${R.park[i]?'checked':''}><span>Diamond ${i+1}<small>Thu, Nov 26 · closed 3:25 p.m. · 1 postponed, 1 rep game marked</small></span></label>`).join('')}</div>
+     ${!n?'<p>Tick a diamond to reopen it.</p>':`<p>Your site stops saying ${n===1?`Diamond ${ticked[0]} is`:'they’re'} closed, at once.${stay.length?` It still says <b>Diamond ${stay[0]} at Lions Park is closed today.</b>`:''}</p>
+     <p>${n===1?'1 rep game loses its mark':'2 rep games lose their marks'}. Each coach gets one email: the diamond reopened, the game wasn’t moved, keep it or move it.</p>
+     <p><b>${n===1?'The 1 postponed game stays':'The 2 postponed games stay'} under “Needs a new date”.</b> ${n===1?'Its families were':'Their families were'} emailed, so give ${n===1?'it':'each'} a new date from the schedule and they’re told again.</p>`}`,
+    keep+go(n?`Reopen ${n===1?'Diamond '+ticked[0]:'2 diamonds'} and email ${n} ${n===1?'coach':'coaches'}`:'Reopen',!n));
+  document.getElementById('r-all').innerHTML=win('Reopen all our fields?',
+    `<div class="warnbox"><span aria-hidden="true">⚠</span><span>Diamond 1 and Diamond 2 at Lions Park are also closed on their own.${mk(15)}</span></div>
+     <div class="ticks"><label><input type="checkbox" data-ra ${R.all?'checked':''}><span>Reopen those two diamonds as well</span></label></div>
+     <p>Your site will ${R.all?'stop saying anything is closed, at once.':'then say <b>Diamond 1 and Diamond 2 at Lions Park are closed today.</b>'}</p>
+     <p>${R.all?'2 rep games lose their marks. Each coach gets one email.':'2 rep games stay marked while Diamond 1 and Diamond 2 at Lions Park are still closed. Their coaches are told when those reopen.'}</p>
+     <p><b>The ${R.all?6:4} postponed games stay under “Needs a new date”.</b> Their families were emailed, so give each a new date from the schedule and they’re told again.</p>`,
+    keep+go(R.all?'Reopen everything and email 2 coaches':'Reopen all our fields'));
+}
+document.getElementById('r-one-old').innerHTML=win('Reopen Diamond 1 at Lions Park?',
+  `<p>Your site stops saying it’s closed, at once.${mk(12)}</p><p>1 rep game stays marked while all our fields are still closed. Its coach is told when that reopens.</p><p><b>The 1 postponed game stays under “Needs a new date”.</b> Their families were emailed, so give each a new date from the schedule and they’re told again.</p>`,keep+go('Reopen'));
+document.getElementById('r-one').innerHTML=win('Remove Diamond 1’s own closure?',
+  `<div class="warnbox"><span aria-hidden="true">⚠</span><span><b>It stays closed.</b> All our fields are closed today, so your site doesn’t change.${mk(13)}</span></div><p>Diamond 1 will then open when you reopen all our fields.</p><p>1 rep game stays marked while all our fields are still closed. Its coach is told when that reopens.</p>`,'<button type="button" class="btn">Not now</button>'+go('Remove its closure'));
+document.getElementById('r-all-old').innerHTML=win('Reopen all our fields?',
+  `<p>Your site stops saying it’s closed, at once.${mk(14)}</p><p>2 rep games stay marked while Diamond 1 at Lions Park and Diamond 2 at Lions Park are still closed. Their coaches are told when those reopen.</p><p><b>The 4 postponed games stay under “Needs a new date”.</b> Their families were emailed, so give each a new date from the schedule and they’re told again.</p>`,keep+go('Reopen'));
+
+function drawClose(){
+  const T=CASES.ten.list;
+  let q=T.map(sentence);q=[...q.slice(0,3),'And 7 more places are closed.'];
+  const bottom=(inner,btn)=>win('Close a place',inner,'<button type="button" class="btn">Not now</button>'+go(btn));
+  document.getElementById('c-old').innerHTML=bottom(`<div class="site">Your site says <b>${andList(q.map(s=>'“'+s+'”'))}</b> at once, until the end of Thu, Nov 26.</div>`,'Close 5 places');
+  document.getElementById('c-new').innerHTML=bottom(`<p>Your site shows this at once, until the end of Thu, Nov 26:${mk(16)}</p><div class="prev">${stripNew(T,'close',false)}</div>`,'Close 5 places');
+  document.getElementById('c-cov-old').innerHTML=bottom('<div class="site">Your site says <b>“Diamond 3 at Lions Park is closed today.”</b> at once, until the end of Thu, Nov 26.</div>','Close Diamond 3');
+  document.getElementById('c-cov').innerHTML=bottom(`<div class="site"><b>Your site won’t change.</b> It already says all our fields are closed today.${mk(17)}</div>`,'Close Diamond 3');
+}
+
+function drawCase(){
+  ['site','sitep'].forEach(k=>{document.querySelector(`[data-tab="${k}"] [data-say]`).innerHTML=CASES[CUR].say+(k==='sitep'?' To judge text size, open this page on your phone.':'')});
+  for(const k of ['old','new']){
+    document.getElementById('site-'+k).innerHTML=site(k,false,'d');
+    document.getElementById('sitep-'+k).innerHTML=site(k,true,'p');
+    document.getElementById('lib-'+k).innerHTML=lib(k,false);
+    document.getElementById('libp-'+k).innerHTML=lib(k,true);
+  }
+  cases.querySelectorAll('button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.c===CUR));
+}
+const TABS=[['site','1 · Your site'],['sitep','2 · Site on a phone'],['lib','3 · Venue library'],['libp','4 · Library on a phone'],['reopen','5 · Reopen'],['close','6 · Close window'],['asks','7 · Asks']];
+tabs.innerHTML=TABS.map(([k,l])=>`<button type="button" role="tab" data-t="${k}">${l}</button>`).join('');
+cases.innerHTML=Object.entries(CASES).map(([k,v])=>`<button type="button" data-c="${k}">${v.label}</button>`).join('');
+let differs=false;
+function show(k){
+  if(!TABS.some(t=>t[0]===k))k='site';
+  document.querySelectorAll('section').forEach(s=>s.hidden=s.dataset.tab!==k);
+  tabs.querySelectorAll('button').forEach(b=>b.setAttribute('aria-selected',b.dataset.t===k));
+  const cmp=['site','sitep','lib','libp'].includes(k);
+  viewrow.hidden=!cmp;document.body.classList.toggle('differs',cmp&&differs);
+}
+function goTab(k){show(k);try{history.replaceState(null,'','#'+k)}catch{}scrollTo(0,0)}
+document.addEventListener('click',e=>{
+  const m=e.target.closest('.mk');
+  if(m){e.preventDefault();e.stopPropagation();const [t,p]=NOTES[m.dataset.n];dt.textContent=m.dataset.n+' · '+t;dp.textContent=p;dlg.showModal();return}
+  const t=e.target.closest('[data-t]');if(t)return goTab(t.dataset.t);
+  const c=e.target.closest('[data-c]');if(c){CUR=c.dataset.c;for(const k in OPEN)delete OPEN[k];drawCase();return}
+  const v=e.target.closest('[data-v]');if(v){differs=v.dataset.v==='diff';dif.querySelectorAll('[data-v]').forEach(x=>x.setAttribute('aria-pressed',x===v));document.body.classList.toggle('differs',differs);return}
+  const mo=e.target.closest('[data-more]');if(mo){OPEN[mo.dataset.more]=!OPEN[mo.dataset.more];drawCase();drawClose();return}
+  if(e.target.closest('[data-go="reopen"]'))goTab('reopen');
+});
+document.addEventListener('change',e=>{
+  const t=e.target;
+  if(t.dataset.rp!==undefined){R.park[+t.dataset.rp]=t.checked;drawReopen()}
+  else if('ra' in t.dataset){R.all=t.checked;drawReopen()}
+});
+addEventListener('hashchange',()=>show(location.hash.slice(1)));
+drawCase();drawReopen();drawClose();show(location.hash.slice(1));
+</script>

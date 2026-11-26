@@ -641,6 +641,41 @@ the demos follow the product and are curated with `/demos`, never as a build ste
     setting; under "All our fields" a game at a hand-typed place shows what was typed, where Place was blank; the help's
     search words lost the removed sentence. Left as built: on a phone the park name is not bold and the typed line and
     "who is emailed" note are one ink step fainter than before.
+  - [ ] **Closed places, summarized — 6 asks S1–S6, RULED 2026-11-26: all six A** (owner: "I agree with your
+    recommendations, get me the build prompt"). Raised by the owner on the running site ("can the site warnings be
+    smarter and better at summarizing?", "same problem in the admin", "draw it up"). Build prompt:
+    [CLUB_WEBSITE_STAGE2_SUMMARY_BUILD_PROMPT.md](CLUB_WEBSITE_STAGE2_SUMMARY_BUILD_PROMPT.md). Page:
+    [CLUB_WEBSITE_STAGE2_SUMMARY_DRAWINGS.html](CLUB_WEBSITE_STAGE2_SUMMARY_DRAWINGS.html),
+    https://claude.ai/artifact/WAAu5RtuYUsZw95GGjBXoh (tab 7). **S1** a wider closure speaks for a narrower one on the
+    site · **S2** one day heading, a row per park · **S3** long lists open in place · **S4** one Venue library box, a
+    row per park and dates · **S5** reopen a park's diamonds in one press, one email per coach · **S6** reopening all
+    fields offers the ones closed on their own (A on each). S1/S2 replace **K4**'s line per place; S4
+    replaces 2D's row per diamond. S5/S6 are new server behaviour; any combined coach email goes to `/legal`
+    before the build. **Defects found, in the code and not pressed:** Reopen says "Your site stops saying it's closed"
+    (and then "no longer says") while another closure still shows it; reopening all fields never names closures that
+    stay; the Venue library tags a park "Closed today" when only a diamond is closed; "And N more places" counts
+    diamonds and has no way to see them.
+    **⚠ The same build also carries the two Close a place changes ruled 2026-11-26** (owner, to putting them in it:
+    "yes go for it"); the build prompt must include both: (1) **the no-places window offers "All our fields"** to owners
+    and admins, and to the house league admin from the schedule's button (§9, C), and opens without shrinking; (2) **two
+    separate presses on two diamonds of one park behave as one press** (the Session 2D item above): a game with no
+    diamond recorded stays marked until both reopen, with no second email to its coach.
+    - [ ] **Session A (S1–S3, T1) BUILT 2026-11-26, not committed** (owner: "Build it as written", on the gate's four
+      proposals). The club site: a wider closure (every place; a whole park over its diamonds, by the place id) speaks
+      for a narrower one with the same days; one day heading and a row per park ("Lions Park: Diamond 1 and Diamond 2",
+      "all diamonds" only when every facility is a diamond, else the name alone); past five rows four show and "Show N
+      more places" opens the rest; the small line counts what shows. The Close a place window previews the strip itself
+      (what shows plus the choice; "until the end of {day}" only when every row ends then) and says "Your site won’t
+      change. It already says …" when a wider closure, or the same place pressed again, already says it; the result
+      reads the same. T1: with no places, the window offers one unticked "All our fields" row to an owner or an admin,
+      and to a house league admin from a season's schedule; the server decides (the frame's offer and the press ask one
+      rule, which also checks the season is the club's own). The cover rule is one pure home for Session B. Help: the
+      close-a-place "Your site" entry, the All our fields step, the league-admin FAQ, search words. Design log S1–S6.
+      /simplify, /review (fixes: a failed "all diamonds" read no longer hides the strip; the same place pressed again
+      reads "won't change"), /legal (no MUST-FIX, review file updated), /design (one fix: the preview wears the club's
+      face) run. **Owner calls from /review:** the season a house league admin names is checked only to be the club's
+      own, not live; a club whose places are all archived counts as having none. Walk: Owner QA Ledger §578
+      (https://claude.ai/artifact/75dUJv6ekaeV2ZH2YJLRtR, 36 steps, `CLUB_WEBSITE_STAGE2_SUMMARY_A_WALK.html`).
 - [x] **Stage 1 (game day on the club home) — 11 asks G1–G11, RULED 2026-11-25: all eleven A, as recommended, no
   notes** (owner paste-back: G1 A · G2 A · G3 A · G4 A · G5 A · G6 A · G7 A · G8 A · G9 A · G10 A · G11 A). G6 is A,
   not D: no "Updated" time line. Drawn 2026-11-25. Page:
@@ -1731,9 +1766,11 @@ Answered 2026-11-24 (Stage 0 Part 1); evidence in the Progress block.
   no-places state also offers "All our fields" to an owner or admin; (C) B, and a house league admin may close every
   place from the Rainout button only. Pre-customer, so the reach today is the demos and any trial club.
   **RULED 2026-11-26** (owner: "i agree with the recommendations"), as recommended: the no-places window offers **"All
-  our fields"**, settled before the release. Not built. The recommendation did not say who gets it, so B against C
-  (whether a house league admin may use it from that button) is still to be asked. Settle with the same build (found by
-  /review, 2026-11-26): at a desk this window opens at the form's one height and then shrinks to the small card.
+  our fields"**, settled before the release. Not built. **Who may use it, RULED 2026-11-26: C** (owner: "go with your
+  recommendation"): owners and admins, and the house league admin too from the schedule's button. Put to the owner with
+  its cost: in a club with no places they could then close fields for every program, which they cannot where places are
+  listed. Built with the summary build (§7, "Closed places, summarized"). Settle with the same build (found by /review,
+  2026-11-26): at a desk this window opens at the form's one height and then shrinks to the small card.
 - [x] **The old Rainout's help is stale until 2C's `/docs` pass (Session 2B, 2026-11-25).** `lib/help-content/house-league.tsx`'s
   Rainout article and its "I pressed Rainout by mistake" FAQ still describe "Email the families now" and "Put all back".
   2C rewrites them to point at the new "Close a place" topic (build prompt 2C step 6). *(Done in 2C, 2026-11-26: both

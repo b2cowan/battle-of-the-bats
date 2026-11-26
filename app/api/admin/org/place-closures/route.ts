@@ -10,7 +10,9 @@ import { rainLine } from '@/lib/league-rainout';
 import { CLOSURE_MAX_EXTRA_DAYS } from '@/lib/place-closures';
 import { pressPlaceClosure } from '@/lib/place-closures-server';
 import { CLOSE_LINE_MAX, CLOSE_MAX_ENTRIES, CLOSE_WORDS as W, canClosePlace, seesEveryProgram } from '@/lib/place-closure-window';
-import { closeFrame, closeSource, seasonNextDay, seasonPlacesOn, sendAfterPress, showingClosures } from '@/lib/place-closure-window-server';
+import {
+  closeFrame, closeSource, mayCloseEveryPlaceHere, seasonNextDay, seasonPlacesOn, sendAfterPress, showingClosures,
+} from '@/lib/place-closure-window-server';
 
 // The press sends inside the request: one send per division of every season, then the rep coaches.
 export const maxDuration = 120;
@@ -27,7 +29,9 @@ const MAX = { places: CLOSE_MAX_ENTRIES, league: 500, rep: 200, links: 500 };
  *          that season's places that day (the house league schedule's button, K15).
  *   POST { pressKey, places, firstDay, lastDay, verb, line, league, rep, links } — the press (one database step, all or
  *          nothing), then the sends: the families per division (the Rainout's own send) and the rep coaches (K5, K10).
- * ⚖ K1: owner, admin, house league admin (`canClosePlace`). Every place at once only for an owner or an admin.
+ * ⚖ K1: owner, admin, house league admin (`canClosePlace`). Every place at once only for an owner or an admin — and (T1,
+ *   owner 2026-11-26) a house league admin from a season's schedule (`from` on the read, `seasonId` on the press) in a
+ *   club with no places.
  * ⚖ K14: the places gate (League Plus, Club, Club · Association), on the server. Where it fails these answer 404, never an
  *   upgrade sentence: the doors are absent there. The rep steps are refused where the club runs no rep teams.
  */
@@ -63,7 +67,11 @@ export const GET = withObservability(async (req: Request) => {
   // The window's own reads (a season's places, a day's games) never use the closures, and run on every tick: only the
   // pages' bare read pays for them.
   const windowRead = q.has('seasonId') || q.has('day') || q.has('first');
-  const [frame, showing] = await Promise.all([closeFrame(ctx.org, ctx.role), windowRead ? [] : showingClosures(ctx.org.id)]);
+  const [read, showing] = await Promise.all([closeFrame(ctx.org, ctx.role), windowRead ? [] : showingClosures(ctx.org.id)]);
+  // K1 + T1: whether "All our fields" is offered is the server's one rule — an owner or an admin; a house league admin from
+  // a season (`from`) in a club with no places. The window offers what this says and nothing more.
+  const canAll = await mayCloseEveryPlaceHere(ctx.org, ctx.role, read.venues.length, q.get('from'));
+  const frame = { ...read, canAll };
   // K1: a house league admin reads a closure's rep marks as a count, never a team's name.
   const closures = seesEveryProgram(ctx.role) ? showing : showing.map(c => ({ ...c, markTeamNames: [], markTeams: c.markTeams.map((_, i) => String(i)) }));
 
@@ -93,7 +101,8 @@ export const GET = withObservability(async (req: Request) => {
     const last = q.get('last') ?? first;
     const places = parsePlaces(q.get('places'));
     if (!places || !daysOk(first, last)) return bad();
-    if (places[0].venueId === null && !seesEveryProgram(ctx.role)) return forbidden();
+    // K1 + T1: every place at once only where the frame offers it.
+    if (places[0].venueId === null && !canAll) return forbidden();
     source = await closeSource(ctx.org, ctx.role, { places, firstDay: first, lastDay: last });
     if (!source) return NextResponse.json({ error: W.errNotFound }, { status: 404 });
   }
@@ -124,9 +133,13 @@ export const POST = withObservability(async (req: Request) => {
     return bad();
   }
   const everyProgram = seesEveryProgram(ctx.role);
-  // Every place at once is an owner's or an admin's (K1, K15); the rep steps only where the club runs rep teams (K14);
-  // a house league admin marks rep games on the place but never links one (the typed rep games aren't theirs to see, K1).
-  if (places.some(p => p.venueId == null) && !everyProgram) return forbidden();
+  // Every place at once is an owner's or an admin's (K1, K15), and a house league admin's only from a season in a club with
+  // no places (T1); the rep steps only where the club runs rep teams (K14); a house league admin marks rep games on the
+  // place but never links one (the typed rep games aren't theirs to see, K1).
+  if (places.some(p => p.venueId == null) && !everyProgram) {
+    const venues = (await closeFrame(ctx.org, ctx.role)).venues.length;
+    if (!(await mayCloseEveryPlaceHere(ctx.org, ctx.role, venues, body.seasonId))) return forbidden();
+  }
   if ((rep.length || links.some(l => l.kind === 'rep')) && !hasModuleEntitlement(ctx.org, 'module_rep_teams')) return bad();
   if (links.some(l => l.kind === 'rep') && !everyProgram) return forbidden();
   if ((league.length || links.some(l => l.kind === 'league')) && !hasModuleEntitlement(ctx.org, 'module_house_league')) return bad();

@@ -22,6 +22,14 @@
  * parks that day start chosen and follow the day until the admin changes the choice (M2); from the Venue library or the
  * Overview nothing is (M3). "All our fields" stands in for the parks and gives them back when removed (M5). The game
  * ticks survive a change of places, diamonds or days (`carryTicks`).
+ *
+ * WHAT THE SITE WILL SAY (S1–S3, owner 2026-11-26; the summary drawing's tab 6): the preview is the public strip itself
+ * (`closePreview`: the closures already showing, which the frame's read carries, plus the chosen places), and "Your site
+ * won't change." when a wider closure already says it. The result reads the same.
+ *
+ * NO PLACES YET (T1, owner 2026-11-26): an owner or an admin, and a house league admin from a season's schedule, get the
+ * window with one place to tick, "All our fields"; everyone else keeps the door to the Venue library. The server decides
+ * (`mayCloseEveryPlaceHere`).
  */
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
@@ -38,12 +46,16 @@ import { useIsPhone } from '@/lib/hooks/useIsPhone';
 import { formatShortWeekdayDate, orgDayKey } from '@/lib/timezone';
 import { teamsHearing } from '@/lib/league-game-changes';
 import {
-  CLOSE_LINE_MAX, CLOSE_MAX_ENTRIES, CLOSE_WORDS as W, canLink, carryTicks, closeSummary, diamondTickOff,
-  closeClock, isTyped, lastCloseDay, linkTargets, pickCount, pickParam, placeGroups, previewSentences, toggleDiamond,
+  CLOSE_LINE_MAX, CLOSE_MAX_ENTRIES, CLOSE_WORDS as W, canLink, carryTicks, closePreview, closeSummary, diamondTickOff,
+  closeClock, isTyped, lastCloseDay, linkTargets, pickCount, pickParam, placeGroups, toggleDiamond,
   typedKind,
-  type CloseFrame, type CloseSource, type PlacePick, type RepReach,
+  type ClosePreview, type CloseFrame, type CloseSource, type PlacePick, type RepReach, type StaffClosure,
 } from '@/lib/place-closure-window';
 import type { ClosureVerb } from '@/lib/place-closures';
+import { ClosureStripBox } from '@/components/public/ClubClosureStrip';
+import frameStyles from '@/components/public/ClubFrame.module.css';
+import { useOrg } from '@/lib/org-context';
+import { clubFace } from '@/lib/club-site';
 import { shortDivision, type RainSendDivision } from '@/lib/league-rainout';
 import TickPicker, { type TickBand, type TickOption } from './TickPicker';
 import s from './ClosePlace.module.css';
@@ -59,6 +71,23 @@ const newKey = () => (typeof crypto !== 'undefined' && 'randomUUID' in crypto
   : 'xxxxxxxx-xxxx-4xxx-8xxx-xxxxxxxxxxxx'.replace(/x/g, () => Math.floor(Math.random() * 16).toString(16)));
 
 const wholePark = (venueId: string): PlacePick => ({ venueId, diamonds: [] });
+
+/** What the site will say after the press, for the window and its result: the strip in its public shape (S1–S3), or "Your
+ *  site won't change." when a wider closure already says it. `lead` is the sentence over the strip. */
+function SitePreview({ preview, lead }: { preview: ClosePreview; lead: string }) {
+  // The club's own face, as its site wears it (the tryout preview's rule).
+  const face = clubFace(useOrg().currentOrg?.themeFont);
+  if (preview.alreadySays) return <div className={s.site}><b>{W.unchanged}</b>{W.alreadySays(preview.alreadySays)}</div>;
+  if (!preview.strip) return null;
+  return (
+    <>
+      <p className={s.siteLead}>{lead}</p>
+      <div className={`${frameStyles.tokens} ${s.preview}`} data-club-face={face}>
+        <ClosureStripBox groups={preview.strip.groups} smallLine={preview.strip.smallLine} />
+      </div>
+    </>
+  );
+}
 
 /** The "maybe" games in one list, league then rep, as the table and the result both name them (rep is absent for a house
  *  league admin, K1). */
@@ -104,6 +133,8 @@ export default function ClosePlaceWindow({ orgSlug, eyebrow, season, initialVenu
   const seasonId = season?.id ?? null;
 
   const [frame, setFrame] = useState<CloseFrame | null>(null);
+  /** The closures showing when the window opened (the frame's own read carries them): the preview reads them (S1). */
+  const [showingNow, setShowingNow] = useState<StaffClosure[]>([]);
   const [seasonPlaces, setSeasonPlaces] = useState<string[]>([]);
   const [loadFailed, setLoadFailed] = useState(false);
   /** The chosen parks, in the order chosen (the press's order), each whole or some of its diamonds; and "All our fields". */
@@ -138,11 +169,13 @@ export default function ClosePlaceWindow({ orgSlug, eyebrow, season, initialVenu
   useEffect(() => {
     let live = true;
     void (async () => {
-      const first = await fetch(`${api}?${q}`, { cache: 'no-store' }).catch(() => null);
+      // From a season's schedule the frame names the season (T1: the server decides whether "All our fields" is offered).
+      const first = await fetch(`${api}?${q}${seasonId ? `&from=${seasonId}` : ''}`, { cache: 'no-store' }).catch(() => null);
       const data = first?.ok ? await first.json().catch(() => null) : null;
       const f = (data as { frame?: CloseFrame } | null)?.frame;
       if (!live) return;
       if (!f) { setLoadFailed(true); return; }
+      setShowingNow((data as { closures?: StaffClosure[] }).closures ?? []);
       let sp: string[] = [];
       let day = f.today;
       if (seasonId) {
@@ -194,12 +227,14 @@ export default function ClosePlaceWindow({ orgSlug, eyebrow, season, initialVenu
   const parksKey = all ? 'all' : picks.map(p => p.venueId).sort().join(',');
   const link = linkFor !== null && linkFor === parksKey;
 
+  // T1: "All our fields" from a season's schedule names the season (a house league admin may close every place only so).
+  const fromSeason = all && seasonId ? `&from=${seasonId}` : '';
   const read = useCallback(async (): Promise<CloseSource | null> => {
     if (!placesParam || !firstDay) return null;
-    const r = await fetch(`${api}?${q}&places=${placesParam}&first=${firstDay}&last=${lastDay || firstDay}`, { cache: 'no-store' }).catch(() => null);
+    const r = await fetch(`${api}?${q}&places=${placesParam}&first=${firstDay}&last=${lastDay || firstDay}${fromSeason}`, { cache: 'no-store' }).catch(() => null);
     const d = r?.ok ? await r.json().catch(() => null) : null;
     return (d as { source?: CloseSource } | null)?.source ?? null;
-  }, [placesParam, firstDay, lastDay, q]);
+  }, [placesParam, firstDay, lastDay, q, fromSeason]);
 
   // The window's read, again whenever the places, the diamonds or the days change, or after a refusal — one path, so a
   // late answer to an earlier choice is always dropped. Nothing chosen reads nothing: no games, no button.
@@ -239,6 +274,11 @@ export default function ClosePlaceWindow({ orgSlug, eyebrow, season, initialVenu
   const multiDay = !!lastDay && lastDay !== firstDay;
   const isToday = firstDay === frame?.today;
   const links = useMemo(() => (source ? linkTargets(source, ticked) : []), [source, ticked]);
+  // What the site will say after the press (S1–S3): the closures showing plus the chosen places, as families will read it.
+  const diamondParks = useMemo(() => new Set((frame?.venues ?? []).filter(v => v.allDiamonds).map(v => v.id)), [frame]);
+  const preview = useMemo(() => (source
+    ? closePreview(source.places, firstDay, lastDay || firstDay, showingNow, new Date().toISOString(), diamondParks)
+    : null), [source, firstDay, lastDay, showingNow, diamondParks]);
 
   // ── The table: house league (one group per season), rep, typed by hand ─────────────────────────────────────────
   const { rows, groups, drafts, typedCount } = useMemo(() => {
@@ -351,6 +391,8 @@ export default function ClosePlaceWindow({ orgSlug, eyebrow, season, initialVenu
       league: source.league.filter(g => ticked.has(g.id) && g.published).map(g => ({ id: g.id, seen: g.seen })),
       rep: source.rep.filter(g => ticked.has(g.id)).map(g => ({ id: g.id, seen: g.seen })),
       links: link ? links : [],
+      // T1: every place from a season's schedule names the season (the server's rule for a house league admin).
+      ...(all && seasonId ? { seasonId } : {}),
     };
     const what = JSON.stringify({ ...body, pressKey: null });
     if (pressFor.current && pressFor.current !== what) pressKey.current = newKey();
@@ -375,7 +417,6 @@ export default function ClosePlaceWindow({ orgSlug, eyebrow, season, initialVenu
     const failed = result.league.divisions.filter(d => d.outcome === 'failed');
     const emails = told.reduce((n, d) => n + d.emails, 0);
     const failedGames = failed.reduce((n, d) => n + d.games, 0);
-    const sentences = previewSentences(places, firstDay, lastDay || firstDay, frame?.today ?? firstDay);
     // The typed games left unticked: still "on" and maybe at the closed place (amber, so the strip and they never disagree
     // silently).
     const typedLeftGames = typedGames(source).filter(g => !ticked.has(g.id));
@@ -446,7 +487,12 @@ export default function ClosePlaceWindow({ orgSlug, eyebrow, season, initialVenu
             </div>
           </div>
         ))}
-        <p className={s.para}>{W.doneSite(sentences, lastDay || firstDay, places.length)}</p>
+        {preview?.alreadySays
+          ? <p className={s.para}>{W.doneUnchanged(preview.alreadySays, places.length)}</p>
+          : preview && (<>
+            <SitePreview preview={preview} lead={W.doneShows(preview.sameEnd, lastDay || firstDay)} />
+            <p className={s.para}>{W.doneReopen(places.length)}</p>
+          </>)}
         {result.league.games > 0 && <p className={s.para}>{W.doneNoUndo(result.league.verb)}</p>}
       </KitDialog>
     );
@@ -454,12 +500,14 @@ export default function ClosePlaceWindow({ orgSlug, eyebrow, season, initialVenu
 
   // ── The window (tab 2) ──────────────────────────────────────────────────────────────────────────────────────────────
   const noPlaces = !!frame && frame.venues.length === 0;
+  // T1: with no places, "All our fields" where the server offers it (an owner or an admin; a house league admin from the
+  // schedule).
+  const allOnly = noPlaces && frame!.canAll;
   const listedLeague = source ? source.league.filter(g => g.published).length : 0;
   const nothing = !!source && listedLeague === 0 && source.rep.length === 0;
   const repHiddenGames = source?.repHidden ? source.rep : [];
   const others = source ? { tournaments: source.tournaments, practices: source.practices, rep: repHiddenGames.length } : null;
   const othersCount = others ? others.tournaments.length + others.practices + others.rep : 0;
-  const sentences = source ? previewSentences(places, firstDay, lastDay || firstDay, frame?.today ?? firstDay) : [];
   const emails = sum?.families ?? 0;
   const total = sum ? W.closing(sum.games, sum.teams) : '';
   const left = CLOSE_LINE_MAX - line.length;
@@ -506,7 +554,20 @@ export default function ClosePlaceWindow({ orgSlug, eyebrow, season, initialVenu
     seasonDriven.current = false;
     setPicks(prev => prev.map(p => (p.venueId === venueId ? next : p)));
   }
-  const placesField = frame && (
+  /** The door to the Venue library (the library page opens its Add window instead of navigating). */
+  const venueDoor = (className?: string) => (onOpenVenueLibrary
+    ? <button type="button" className={className} onClick={() => { onOpenVenueLibrary(); onClose(); }}>{W.noPlacesDoor}</button>
+    : <Link className={className} href={venueLibraryHref}>{W.noPlacesDoor}</Link>);
+  const placesField = frame && (allOnly ? (
+    // T1: the one place there is to close, unticked, and why there is nothing else.
+    <div className={ck.field}>
+      <span className={ck.label}>{W.places}</span>
+      <SendRows>
+        <SendRow title={W.everyPlace} pick={{ checked: all, onChange: on => { if (!busy) setAll(on); } }} />
+      </SendRows>
+      <p className={s.noPlacesHint}>{W.noPlacesAll} {venueDoor()}</p>
+    </div>
+  ) : (
     <div className={ck.field}>
       <span className={ck.label}>{W.places}</span>
       <TickPicker title={W.places} face={W.chosen(picks.length, all)} bands={placeBands} phone={phone} disabled={busy}
@@ -515,8 +576,8 @@ export default function ClosePlaceWindow({ orgSlug, eyebrow, season, initialVenu
         search={frame.venues.length > 8 ? W.find : undefined}
         onToggle={choosePlace} doneLabel={W.done} />
     </div>
-  );
-  const pickRows = (all || picks.length > 0) && frame && (
+  ));
+  const pickRows = !allOnly && (all || picks.length > 0) && frame && (
     <div className={s.picks}>
       {all
         ? (
@@ -550,15 +611,13 @@ export default function ClosePlaceWindow({ orgSlug, eyebrow, season, initialVenu
     </div>
   );
 
-  if (noPlaces) {
+  if (noPlaces && !allOnly) {
     return (
       <KitDialog kind="form" size="medium" title={W.title} onClose={onClose}
         footer={(
           <>
             <DialogCancel>{W.notNow}</DialogCancel>
-            {onOpenVenueLibrary
-              ? <button type="button" className="btn btn-lime" onClick={() => { onOpenVenueLibrary(); onClose(); }}>{W.noPlacesDoor}</button>
-              : <Link className="btn btn-lime" href={venueLibraryHref}>{W.noPlacesDoor}</Link>}
+            {venueDoor('btn btn-lime')}
           </>
         )}>
         <div className={s.empty}><b>{W.noPlacesTitle}</b>{W.noPlacesBody}</div>
@@ -614,7 +673,7 @@ export default function ClosePlaceWindow({ orgSlug, eyebrow, season, initialVenu
           </>)}
 
           <p className={repKit.factsLabel}>{multiDay ? W.whatsAtDays(places) : W.whatsAt(places)}</p>
-          {nothing && <div className={s.empty}>{W.empty(places, firstDay)}</div>}
+          {nothing && <div className={s.empty}>{W.empty(places, firstDay, !preview?.alreadySays)}</div>}
           {rows.length > 0 && (
             <div className={s.block}>
               <FormTable stacked ariaLabel={W.whatsAt(places)} leadLabel={W.colGame}
@@ -670,7 +729,7 @@ export default function ClosePlaceWindow({ orgSlug, eyebrow, season, initialVenu
           {sum && sum.games > 0 && (
             <Statement lead={phone ? W.sumPhone(sum) : W.sumComputer(sum)} rest={sum.emails > 0 ? W.sumCap : undefined} />
           )}
-          {(() => { const w = W.site(sentences, lastDay || firstDay); return <div className={s.site}>{w.lead}<b>{w.said}</b>{w.rest}</div>; })()}
+          {preview && <SitePreview preview={preview} lead={W.siteShows(preview.sameEnd, lastDay || firstDay)} />}
 
           {listedLeague > 0 && (phone && !lineShown && !line
             ? (

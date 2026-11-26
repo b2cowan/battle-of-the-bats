@@ -14,7 +14,8 @@
  *   marked, or it was cancelled. It is DOWN when its closure is reopened. A second closure is its own mark — and one press
  *   marks a game once per closure it is at (mig 549, D1), so the game stays marked until the LAST of them reopens.
  * ⚖ THE STRIP CARRIES PLACE WORDS ONLY (K16): a closure's place, its diamond and its days. No count, no division, no
- *   person's or team's name, no admin line — `stripClosureOf` is the one door from a closure row to a public page.
+ *   person's or team's name, no admin line — `stripClosureOf` is the one door from a closure row to a public page. It
+ *   carries the place's id for the cover rule (S1, `closureCovers`), which the strip's box (`closureStrip`) never passes on.
  * ══════════════════════════════════════════════════════════════════════════════════════════════
  */
 
@@ -215,6 +216,11 @@ export interface StripPlaceDays {
  * person, team or admin line.
  */
 export interface StripClosure extends StripPlaceDays {
+  /** The club place it closes (null for every place). The cover rule and the park's row read it; it never leaves the
+   *  server — the strip's box (`closureStrip`) carries words only. */
+  venueId: string | null;
+  /** A whole park whose facilities are all diamonds (and it has some): its row reads "all diamonds". */
+  allDiamonds: boolean;
   /** The press (K3: the strip shows from it). */
   showsFrom: string;
   /** Midnight after Until: the line takes itself down then, with no job. */
@@ -222,22 +228,85 @@ export interface StripClosure extends StripPlaceDays {
 }
 
 /** The fields of a closure row the strip reads; a guard pins the server's select to exactly these. */
-export const STRIP_CLOSURE_COLUMNS = 'scope, place_name, facility_name, first_day, last_day, shows_from, ends_at' as const;
+export const STRIP_CLOSURE_COLUMNS = 'scope, org_venue_id, place_name, facility_name, first_day, last_day, shows_from, ends_at' as const;
 
-/** The one door from a closure row to a public page: it copies place words, days and two instants, and NOTHING else. */
+/** The one door from a closure row to a public page: it copies place words, days, two instants and the place's id (for
+ *  the cover rule, server side), and NOTHING else. `diamondParks`: the places whose facilities are all diamonds. */
 export function stripClosureOf(row: {
-  scope: ClosureScope; place_name: string | null; facility_name: string | null; first_day: string; last_day: string;
-  shows_from: string; ends_at: string;
-}): StripClosure {
+  scope: ClosureScope; org_venue_id: string | null; place_name: string | null; facility_name: string | null; first_day: string;
+  last_day: string; shows_from: string; ends_at: string;
+}, diamondParks: ReadonlySet<string> = new Set()): StripClosure {
+  return toStripClosure({
+    scope: row.scope, venueId: row.org_venue_id, placeName: row.place_name, facilityName: row.facility_name,
+    firstDay: row.first_day, lastDay: row.last_day, showsFrom: row.shows_from, endsAt: row.ends_at,
+  }, diamondParks);
+}
+
+/** The strip's shape of any closure (a row read, a Venue library row, a place the window is about to close): the one
+ *  place its scope decides which words it keeps (every place: no place; a diamond only for a diamond closure). */
+export function toStripClosure(c: Omit<StripClosure, 'allDiamonds'>, diamondParks: ReadonlySet<string>): StripClosure {
+  const venueId = c.scope === 'all' ? null : c.venueId;
   return {
-    scope: row.scope,
-    placeName: row.scope === 'all' ? null : row.place_name,
-    facilityName: row.scope === 'diamond' ? row.facility_name : null,
-    firstDay: row.first_day,
-    lastDay: row.last_day,
-    showsFrom: row.shows_from,
-    endsAt: row.ends_at,
+    scope: c.scope,
+    venueId,
+    placeName: c.scope === 'all' ? null : c.placeName,
+    facilityName: c.scope === 'diamond' ? c.facilityName : null,
+    allDiamonds: c.scope === 'place' && !!venueId && diamondParks.has(venueId),
+    firstDay: c.firstDay,
+    lastDay: c.lastDay,
+    showsFrom: c.showsFrom,
+    endsAt: c.endsAt,
   };
+}
+
+/** A whole park's row reads "all diamonds" only when it has facilities and every one is a diamond (the site and the
+ *  window's preview ask the same). */
+export const isAllDiamonds = (kinds: readonly string[]) => kinds.length > 0 && kinds.every(k => k === 'diamond');
+
+// ── The cover rule (S1, owner 2026-11-26; Session B's Venue library and Reopen read the same) ──────────────────────
+
+/** What the cover rule reads of a closure. */
+export interface CoverClosure { scope: ClosureScope; venueId: string | null; firstDay: string; lastDay: string }
+
+/**
+ * S1: closure `w` COVERS closure `n` — the wider one speaks for it on the site, for as long as it covers the same days.
+ * Wider: every place over any park or diamond; a whole park over a diamond of the SAME place id (never matched by name).
+ * Its days hold all of `n`'s remaining days: first day no later (a past first day counts as today), last day no earlier.
+ * Both are showing (the caller passes showing closures only). A covered closure is left off the site only: its record,
+ * marks and Reopen are untouched, and it comes back by itself when the wider one reopens.
+ */
+export function closureCovers(w: CoverClosure, n: CoverClosure, today: string): boolean {
+  if (w === n) return false;
+  const wider = (w.scope === 'all' && n.scope !== 'all')
+    || (w.scope === 'place' && n.scope === 'diamond' && !!w.venueId && w.venueId === n.venueId);
+  return wider && holdsDays(w, n, today);
+}
+
+/** `w`'s days hold all of `n`'s remaining ones: first day no later (a past first day counts as today), last no earlier. */
+function holdsDays(w: CoverClosure, n: CoverClosure, today: string): boolean {
+  const from = (d: string) => (d < today ? today : d);
+  return from(w.firstDay) <= from(n.firstDay) && w.lastDay >= n.lastDay;
+}
+
+/**
+ * `w` already says all `n` would on the site: it covers it (S1), or it is the SAME place (the same diamond, by its name at
+ * the same place id) for those days or more — a place pressed again. The window's "Your site won't change." asks this.
+ */
+export function closureSaysAlready(w: CoverClosure & { facilityName: string | null }, n: CoverClosure & { facilityName: string | null }, today: string): boolean {
+  if (closureCovers(w, n, today)) return true;
+  const same = w.scope === n.scope && (w.scope === 'all'
+    || (!!w.venueId && w.venueId === n.venueId && (w.scope === 'place' || w.facilityName === n.facilityName)));
+  return w !== n && same && holdsDays(w, n, today);
+}
+
+/** The closures no other one in the list covers: what the site says. */
+export function uncoveredClosures<T extends CoverClosure>(list: readonly T[], today: string): T[] {
+  return list.filter(n => !list.some(w => closureCovers(w, n, today)));
+}
+
+/** The closures in `list` that cover `n`, widest first (every place before a park). */
+export function coveringClosures<T extends CoverClosure>(n: CoverClosure, list: readonly T[], today: string): T[] {
+  return list.filter(w => closureCovers(w, n, today)).sort((a, b) => (a.scope === 'all' ? 0 : 1) - (b.scope === 'all' ? 0 : 1));
 }
 
 /** Showing now: from the press (K3) to the end of Until, and not reopened. No job ends one: this is the whole rule. */
@@ -269,10 +338,16 @@ function nextDay(day: string): string {
 export function stripSentence(c: StripPlaceDays, today: string, say: (day: string) => string): string {
   const name = closedPlaceName(c);
   const subject = name ? `${name} is` : 'All our fields are';
+  return `${subject} ${stripWhen(c, today, say)}.`;
+}
+
+/**
+ * The sentence's WHEN, alone: "closed today" · "closed tomorrow (Fri, Nov 27)" · "closed through Sun, Nov 29" · "closed on
+ * Sat, Nov 28" · "closed from … through …". The strip groups its closures by it (S2: one heading for the day).
+ */
+export function stripWhen(c: Pick<StripPlaceDays, 'firstDay' | 'lastDay'>, today: string, say: (day: string) => string): string {
   const oneDay = c.firstDay === c.lastDay;
-  let when: string;
-  if (c.firstDay <= today) when = oneDay || c.lastDay <= today ? 'closed today' : `closed through ${say(c.lastDay)}`;
-  else if (c.firstDay === nextDay(today)) when = oneDay ? `closed tomorrow (${say(c.firstDay)})` : `closed from tomorrow (${say(c.firstDay)}) through ${say(c.lastDay)}`;
-  else when = oneDay ? `closed on ${say(c.firstDay)}` : `closed from ${say(c.firstDay)} through ${say(c.lastDay)}`;
-  return `${subject} ${when}.`;
+  if (c.firstDay <= today) return oneDay || c.lastDay <= today ? 'closed today' : `closed through ${say(c.lastDay)}`;
+  if (c.firstDay === nextDay(today)) return oneDay ? `closed tomorrow (${say(c.firstDay)})` : `closed from tomorrow (${say(c.firstDay)}) through ${say(c.lastDay)}`;
+  return oneDay ? `closed on ${say(c.firstDay)}` : `closed from ${say(c.firstDay)} through ${say(c.lastDay)}`;
 }

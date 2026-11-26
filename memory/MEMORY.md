@@ -4,6 +4,8 @@
 
 - **Both public demos are RETIRED** (owner 2026-11-25; plan `docs/projects/active/RETIRE_PUBLIC_DEMOS_PLAN.md`). Any demo or sandbox instruction or ruling in these notes is history: build no demo work. The prospect demo and club previews are separate and stay.
 
+- [Closed places, summarized](design_decisions.md) — owner 2026-11-26, S1–S6 all A: a wider closure speaks for a narrower one on the site; a day's heading and a row per park; five rows, then "Show N more places"; the Venue library one box, a row per park; Reopen several diamonds in one press, one email per coach.
+
 - [No dotted lines in lists or table cells](design_decisions.md) — owner 2026-11-26: different facts get columns; like things get a count with names underneath; the rest goes in the opened row; a dot only in a quiet caption, two items at most. Draw it that way; `check:dot-joins` holds new code.
 
 - [Sign out is black everywhere](design_decisions.md) — owner 2026-11-26: no red on any sign-out control; it takes the ink of its neighbours. Rule: nav standard N4.

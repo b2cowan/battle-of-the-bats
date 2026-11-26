@@ -10,9 +10,10 @@ import { listActiveStaffForTeams } from './coach-membership';
 import { hasModuleEntitlement, type EntitlementOrg } from './module-entitlements';
 import { sendRainout } from './league-rainout-send';
 import { addCalendarDays, orgDayKey, tournamentToday, zonedWallClockToUtc } from './timezone';
-import { markPlaceOfAll, markSpent, type ClosureScope, type ClosureVerb, type RepMark } from './place-closures';
+import { isAllDiamonds, markPlaceOfAll, markSpent, type ClosureScope, type ClosureVerb, type RepMark } from './place-closures';
 import { placeClosureSource } from './place-closures-server';
-import { closedParks, seesEveryProgram, type CloseFrame, type CloseSource, type RepReach, type StaffClosure } from './place-closure-window';
+import { isUuid } from './utils';
+import { closedParks, mayCloseEveryPlace, seesEveryProgram, type CloseFrame, type CloseSource, type RepReach, type StaffClosure } from './place-closure-window';
 import { sendClosureCoachEmails, type CoachMailTeam } from './place-closure-mail';
 import type { RainSendDivision } from './league-rainout';
 import type { OrgRole } from './types';
@@ -39,10 +40,24 @@ export async function closeFrame(org: Org, role: OrgRole): Promise<CloseFrame> {
   const lib = await getClubVenueLibrary({ id: org.id, planId: org.planId } as Parameters<typeof getClubVenueLibrary>[0]);
   return {
     today: tournamentToday(),
-    venues: lib.venues.map(v => ({ id: v.id, name: v.name, facilities: v.facilities.map(f => ({ id: f.id, name: f.name })) })),
+    venues: lib.venues.map(v => ({
+      id: v.id, name: v.name, facilities: v.facilities.map(f => ({ id: f.id, name: f.name })),
+      allDiamonds: isAllDiamonds(v.facilities.map(f => f.kind)),
+    })),
     canAll: seesEveryProgram(role),
     rep: hasModuleEntitlement(org, 'module_rep_teams'),
   };
+}
+
+/**
+ * K1 + T1, on the server: may this person close every place at once? An owner or an admin, always; a house league admin
+ * only in a club with no places, and only when the request names one of the club's own seasons (the schedule's button).
+ * The press itself checks no role, so this is the one gate (the window read and the press both ask it).
+ */
+export async function mayCloseEveryPlaceHere(org: Org, role: OrgRole, venues: number, seasonId: unknown): Promise<boolean> {
+  if (seesEveryProgram(role)) return true;
+  if (venues > 0 || typeof seasonId !== 'string' || !isUuid(seasonId)) return false;
+  return mayCloseEveryPlace(role, { noPlaces: true, fromSeason: !!(await getLeagueSeasonById(seasonId, org.id)) });
 }
 
 /**
@@ -335,12 +350,12 @@ async function mailTeamsOf(orgId: string, closureIds: readonly string[], marks: 
 export async function showingClosures(orgId: string, now: Date = new Date()): Promise<StaffClosure[]> {
   const at = now.toISOString();
   const { data, error } = await supabaseAdmin.from('org_place_closures')
-    .select('id, scope, org_venue_id, place_name, facility_name, first_day, last_day, verb, created_at, closed_by')
+    .select('id, scope, org_venue_id, place_name, facility_name, first_day, last_day, verb, created_at, closed_by, shows_from, ends_at')
     .eq('org_id', orgId).is('reopened_at', null).lte('shows_from', at).gt('ends_at', at)
     .order('created_at').order('press_seq');
   if (error) throw error;
   const rows = (data ?? []) as { id: string; scope: ClosureScope; org_venue_id: string | null; place_name: string | null; facility_name: string | null;
-    first_day: string; last_day: string; verb: ClosureVerb; created_at: string; closed_by: string | null }[];
+    first_day: string; last_day: string; verb: ClosureVerb; created_at: string; closed_by: string | null; shows_from: string; ends_at: string }[];
   if (!rows.length) return [];
   const ids = rows.map(r => r.id);
   const [rainouts, marks, people] = await Promise.all([
@@ -370,7 +385,7 @@ export async function showingClosures(orgId: string, now: Date = new Date()): Pr
     const holders = [...new Map(kept.flatMap(x => facts.holders.get(x.id)!).map(h => [h.closureId, h.closure])).values()];
     return {
       id: r.id, scope: r.scope, venueId: r.org_venue_id, placeName: r.place_name, facilityName: r.facility_name,
-      firstDay: r.first_day, lastDay: r.last_day, verb: r.verb, closedAt: r.created_at,
+      firstDay: r.first_day, lastDay: r.last_day, verb: r.verb, closedAt: r.created_at, showsFrom: r.shows_from, endsAt: r.ends_at,
       closedBy: r.closed_by ? people.get(r.closed_by)?.displayName ?? null : null,
       // Still as this closure left them (postponed still postponed, cancelled still cancelled); only a postponed one waits
       // for a date (Reopen reads `verb` with it).

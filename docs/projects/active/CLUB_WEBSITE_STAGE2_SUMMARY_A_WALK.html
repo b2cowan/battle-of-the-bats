@@ -1,0 +1,484 @@
+<title>Walk · Closed places, summarized · Session A</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: one reading column; a walk index of cards, one walk open at a time; steps as Do / You should see rows with a tick. */
+:root {
+  --bg: #f4f6f5; --surface: #ffffff; --ink: #18211d; --muted: #5b6862; --line: #d5ddd9;
+  --accent: #1f6b4f; --accent-soft: #e2efe9; --warn: #9a5b00; --warn-soft: #fbefd9; --bad: #a3322b; --bad-soft: #f8e3e1;
+  --font-body: "Instrument Sans", "Segoe UI", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, "Cascadia Mono", Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #121715; --surface: #1a211e; --ink: #e5ece8; --muted: #9aa8a1; --line: #2e3833;
+  --accent: #6fcca4; --accent-soft: #1f3a2f; --warn: #f0b75c; --warn-soft: #3a2c14; --bad: #f08a80; --bad-soft: #3d1f1c; color-scheme: dark; } }
+:root[data-theme="dark"] {
+  --bg: #121715; --surface: #1a211e; --ink: #e5ece8; --muted: #9aa8a1; --line: #2e3833;
+  --accent: #6fcca4; --accent-soft: #1f3a2f; --warn: #f0b75c; --warn-soft: #3a2c14; --bad: #f08a80; --bad-soft: #3d1f1c; color-scheme: dark; }
+body { background: var(--bg); color: var(--ink); font: 15px/1.55 var(--font-body); padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 24px 64px; }
+.wrap { max-width: 860px; margin: 0 auto; display: grid; gap: 20px; }
+h1 { font-size: 30px; line-height: 1.15; margin: 0; text-wrap: balance; letter-spacing: -0.01em; }
+h2 { font-size: 19px; margin: 0; text-wrap: balance; }
+h3 { font-size: 13px; margin: 0; text-transform: uppercase; letter-spacing: 0.07em; color: var(--muted); font-weight: 600; }
+p { margin: 0; max-width: 68ch; }
+.eyebrow { font: 600 12px/1 var(--font-mono); letter-spacing: 0.08em; text-transform: uppercase; color: var(--accent); }
+.lead { color: var(--muted); }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 18px; display: grid; gap: 12px; min-width: 0; }
+.signin { border-color: var(--accent); }
+.kv { display: grid; grid-template-columns: max-content 1fr; gap: 6px 16px; }
+.kv dt { color: var(--muted); }
+.kv dd { margin: 0; min-width: 0; overflow-wrap: anywhere; }
+code, .mono { font-family: var(--font-mono); font-size: 0.92em; }
+a { color: var(--accent); }
+pre { margin: 6px 0 0; padding: 10px 12px; background: var(--bg); border: 1px solid var(--line); border-radius: 8px; font: 12px/1.5 var(--font-mono); white-space: pre-wrap; overflow-wrap: anywhere; }
+.amt { font-family: var(--font-mono); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.note { background: var(--warn-soft); border-radius: 8px; padding: 10px 12px; }
+ul.plain { margin: 0; padding-left: 18px; display: grid; gap: 4px; }
+.index { display: grid; gap: 8px; }
+.wcard { display: grid; grid-template-columns: 1fr auto; gap: 4px 12px; align-items: center; text-align: left; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; font: inherit; color: inherit; cursor: pointer; }
+.wcard[aria-expanded="true"] { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent) inset; }
+.wcard:focus-visible, button:focus-visible, textarea:focus-visible, input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.wcard .t { font-weight: 600; }
+.wcard .j { grid-column: 1; color: var(--muted); font-size: 14px; }
+.chip { grid-row: 1 / span 2; grid-column: 2; font: 600 12px/1 var(--font-body); padding: 6px 9px; border-radius: 999px; background: var(--bg); color: var(--muted); border: 1px solid var(--line); white-space: nowrap; }
+.chip.prog { color: var(--accent); border-color: var(--accent); }
+.chip.pass { background: var(--accent-soft); color: var(--accent); border-color: transparent; }
+.chip.issue { background: var(--bad-soft); color: var(--bad); border-color: transparent; }
+.chip.call, .chip.thin { background: var(--warn-soft); color: var(--warn); border-color: transparent; }
+.walk { display: grid; gap: 14px; }
+.meta { display: grid; gap: 10px; }
+.meta div { display: grid; gap: 2px; }
+.steps { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+.step { display: grid; grid-template-columns: 28px 1fr; gap: 10px; padding: 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); }
+.step.done { border-color: var(--accent); background: var(--accent-soft); }
+.step.stop { border-style: dashed; border-color: var(--warn); }
+.step input[type="checkbox"] { width: 20px; height: 20px; margin: 2px 0 0; accent-color: var(--accent); }
+.step .body { display: grid; gap: 6px; min-width: 0; }
+.step .who { font: 600 11px/1 var(--font-mono); text-transform: uppercase; letter-spacing: 0.07em; color: var(--warn); }
+.step .lab { font-weight: 600; font-size: 12px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); }
+.opts { display: grid; gap: 6px; }
+.opts label { display: flex; gap: 8px; align-items: flex-start; }
+.verdict { display: flex; flex-wrap: wrap; gap: 8px; }
+.verdict button, .btn { font: 600 14px/1 var(--font-body); padding: 10px 14px; border-radius: 8px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); cursor: pointer; }
+.verdict button.on[data-v="pass"] { background: var(--accent); color: var(--surface); border-color: var(--accent); }
+.verdict button.on[data-v="issue"] { background: var(--bad); color: var(--surface); border-color: var(--bad); }
+.verdict button.on[data-v="call"] { background: var(--warn); color: var(--surface); border-color: var(--warn); }
+textarea { width: 100%; box-sizing: border-box; min-height: 80px; font: 14px/1.5 var(--font-body); padding: 10px; border-radius: 8px; border: 1px solid var(--line); background: var(--bg); color: var(--ink); }
+.out { font: 13px/1.5 var(--font-mono); white-space: pre-wrap; }
+.row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.progress { font-weight: 600; }
+@media (max-width: 520px) { .kv { grid-template-columns: 1fr; } .kv dt { margin-top: 6px; } h1 { font-size: 25px; } }
+@media (prefers-reduced-motion: no-preference) { .step { transition: background-color 0.15s, border-color 0.15s; } }
+</style>
+
+<div class="wrap">
+  <header class="card" style="gap:8px">
+    <span class="eyebrow">Club Website · Stage 2 · Closed places, summarized · Session A</span>
+    <h1>Closed places, summarized: your site and the Close window</h1>
+    <p class="lead">Your site now says a closure once: a wider closure speaks for a narrower one, one heading for the day with a row per park, and past five rows “Show N more places”. The Close a place window shows you that strip before you press, or says your site won’t change. A club with no places can close all its fields.</p>
+    <p class="lead">Five walks, 36 steps, <b>in order</b>. Written Nov 26, 2026. Everything runs on Kestrel Bay on this computer. The emails go only to made-up addresses that can never receive mail.</p>
+    <p class="progress" id="progress">Checked 0 of 0</p>
+  </header>
+
+  <section class="card signin" aria-labelledby="signin-h">
+    <h2 id="signin-h">Sign in as</h2>
+    <dl class="kv">
+      <dt>Where</dt><dd><code>http://localhost:3000/auth/login</code> on this computer, with the dev server running. <b>Not the staging site.</b></dd>
+      <dt>Club president</dt><dd><code>president@kestrel-bay.example.test</code> · password <code>UATPassword2026!</code> (Morgan Ashby, the owner; Kestrel has no separate admin login, and an admin sees what the owner sees here). Walks A to E.</dd>
+      <dt>House league admin</dt><dd><code>league@kestrel-bay.example.test</code> · password <code>UATPassword2026!</code> (Priya Raman). Walk E.</dd>
+      <dt>A visitor</dt><dd>Nobody signs in. Keep a <b>private window</b> open on <code>http://localhost:3000/kestrel-bay</code> and refresh it when a step says so.</dd>
+    </dl>
+    <p class="lead">Dev-only sign-ins. Keep this page private.</p>
+  </section>
+
+  <section class="card" aria-labelledby="before-h">
+    <h2 id="before-h">Before you start</h2>
+    <p class="note"><b>Make the day first, between 6:00 a.m. and 5:30 p.m.</b> Ask me, or run these two yourself, in this order. The second also clears every earlier closure, so it is how you start again (walk E asks for it once more):<pre>node --env-file=.env.local scripts/seed-prospect-demo.mjs --club=kestrel
+node --env-file=.env.local scripts/seed-on-sale-pictures-extras.mjs --places-walk</pre></p>
+    <ul class="plain">
+      <li>Kestrel has five parks, every facility a diamond: <b>Alder Fields</b>, <b>Harbourview Park</b>, <b>Lions Park</b> (Diamonds 1 to 3), <b>Northshore Park</b> and <b>Pinecrest Park</b>.</li>
+      <li>“Today” and “tomorrow” below mean your own today and tomorrow. Counts of games and families are left out on purpose: they move as the day’s games start.</li>
+      <li>Kestrel has only five parks, so walk B uses a second day to make the sixth row that folds.</li>
+      <li>If a page never loads, tell me.</li>
+    </ul>
+  </section>
+
+  <section aria-labelledby="index-h" style="display:grid;gap:10px">
+    <h2 id="index-h">The walks</h2>
+    <div class="index" id="index"></div>
+  </section>
+
+  <section id="walkHost"></section>
+
+  <section class="card" aria-labelledby="call-h">
+    <h2 id="call-h">Two open calls for you (not part of the walk)</h2>
+    <p><b>1. Which season counts for a house league admin.</b> With no places, a house league admin may close all the fields from a season’s schedule. The server checks the season is your club’s own, but not that it is still running, so a finished season’s schedule counts too. Leave it, or allow only a season that is still running?</p>
+    <p><b>2. Archived places.</b> A club whose places are all archived counts as having none: the window offers “All our fields” and says “Your club has no places yet.” Leave it, or count archived places as places?</p>
+  </section>
+
+  <section class="card" aria-labelledby="sum-h">
+    <h2 id="sum-h">Paste-back (all walks)</h2>
+    <div class="row">
+      <button class="btn" type="button" id="copyAll">Copy the summary</button>
+      <button class="btn" type="button" id="reset">Clear my ticks</button>
+      <span class="lead" id="copied" aria-live="polite"></span>
+    </div>
+    <div class="card out" id="out" tabindex="0"></div>
+  </section>
+</div>
+
+
+<script>
+(function () {
+  "use strict";
+  var KEY = "club-website-stage2-summary-a-walk-v1";
+  var PAGE = "Club Website Stage 2 · Closed places, summarized · Session A";
+  var WALKS = [
+ {
+  "id": "A",
+  "title": "Two diamonds, then all fields",
+  "job": "Kestrel Bay president · computer width · your own test",
+  "forText": "A wider closure speaks for a narrower one on your site, and the window tells you what your site will say before you press.",
+  "passes": "Every line reads as written, your site never prints three lines for one closure, and the diamonds come back by themselves when all fields reopen.",
+  "notIn": "The Reopen window’s own words (Session B redraws them; today it still says “Your site stops saying it’s closed”), the coach and family emails (walked in §573 and §577).",
+  "who": "president@kestrel-bay.example.test, password UATPassword2026!.",
+  "where": "http://localhost:3000/kestrel-bay/admin/org/venues, and the private window on http://localhost:3000/kestrel-bay.",
+  "steps": [
+   {
+    "stop": true,
+    "d": "Sign in as <code>president@kestrel-bay.example.test</code>, open <b>Organization › Venue library</b>, press <b>Close a place</b>, tick <b>Lions Park</b> in Places, and on its row tick <b>Diamond 1</b> then <b>Diamond 2</b>.",
+    "s": "The row reads <b>2 of 3 diamonds</b>, and the day’s games at those diamonds are listed. <b>Stop if no games list.</b>"
+   },
+   {
+    "d": "Scroll to the bottom of the window.",
+    "s": "<b>Your site shows this at once, until the end of</b> today’s date, then a box on a light ground with one rail on its left: one bold line <b>Diamond 1 and Diamond 2 at Lions Park are closed today.</b> and under it a small grey line <b>Posted</b> (now) <b>by the club · ends tonight</b>."
+   },
+   {
+    "d": "Press the button (<b>Close 2 diamonds and email</b> … <b>families</b>).",
+    "s": "The result says <b>Your site shows this until the end of</b> today’s date, the same box, then <b>Reopen them from the Venue library.</b>"
+   },
+   {
+    "d": "Press <b>Done</b>. Refresh the private window.",
+    "s": "At the top of the club page: one bold line, <b>Diamond 1 and Diamond 2 at Lions Park are closed today.</b>, then the small line."
+   },
+   {
+    "d": "Press <b>Close a place</b> again, tick <b>All our fields</b> in Places, and scroll to the bottom.",
+    "s": "The box holds one line, <b>All our fields are closed today.</b>. The two diamonds are not named."
+   },
+   {
+    "d": "Press the button, then <b>Done</b>, and refresh the private window.",
+    "s": "One bold line, <b>All our fields are closed today.</b>, and the small line names one time only (the all-fields press) with <b>ends tonight</b>."
+   },
+   {
+    "d": "Press <b>Close a place</b>, tick <b>Lions Park</b>, and on its row tick <b>Diamond 3</b> only.",
+    "s": "At the bottom, no strip: a box that reads <b>Your site won’t change.</b> <b>It already says all our fields are closed today.</b> The button is still there to press."
+   },
+   {
+    "d": "Take Diamond 3 off and choose <b>Diamond 1</b> and <b>Diamond 2</b> only (the ones already closed). Then press <b>Not now</b>.",
+    "s": "It still reads <b>Your site won’t change.</b> before you leave. If an empty-day line shows, it no longer says <b>Closing it still tells families on your site.</b>"
+   },
+   {
+    "d": "In the Venue library, press <b>Reopen</b> on the <b>All our fields</b> row, then <b>Reopen</b> in its window.",
+    "s": "The All our fields row is gone; the two Lions Park diamond rows stay."
+   },
+   {
+    "d": "Refresh the private window.",
+    "s": "<b>Diamond 1 and Diamond 2 at Lions Park are closed today.</b> is back by itself."
+   }
+  ]
+ },
+ {
+  "id": "B",
+  "title": "Many places, and Show more",
+  "job": "Kestrel Bay president · computer width · carries on from A",
+  "forText": "Several parks on one day share one heading and a row each; past five rows, four show and the rest open in place.",
+  "passes": "The heading and park names are the only bold words, nothing is only counted, and the fold opens and closes in place on the site and in the window.",
+  "notIn": "A list past ten closures in one press (the press’s limit, tests hold it).",
+  "who": "president@kestrel-bay.example.test, password UATPassword2026!.",
+  "where": "The Venue library and the private window.",
+  "steps": [
+   {
+    "stop": true,
+    "d": "In the Venue library, press <b>Reopen</b> on each of the two Lions Park diamond rows (one at a time). Refresh the private window.",
+    "s": "No closed-places box on the club page. <b>Stop if one still shows.</b>"
+   },
+   {
+    "d": "Press <b>Close a place</b>, tick <b>Alder Fields</b>, <b>Harbourview Park</b>, <b>Northshore Park</b> and <b>Pinecrest Park</b>, and scroll to the bottom.",
+    "s": "A bold heading <b>Closed today</b>, then four rows, each a bold park name then <b>: all diamonds</b>: Alder Fields, Harbourview Park, Northshore Park, Pinecrest Park. No button under them."
+   },
+   {
+    "d": "Press the button and <b>Done</b>. Press <b>Close a place</b>, tick <b>Lions Park</b>, choose <b>Diamond 1</b> only, and scroll to the bottom.",
+    "s": "Five rows under <b>Closed today</b>, in name order, with <b>Lions Park: Diamond 1</b> in the middle, and still no button."
+   },
+   {
+    "d": "Press the button and <b>Done</b>. Press <b>Close a place</b>, set <b>Day</b> to tomorrow, tick <b>Lions Park</b> (all diamonds), and scroll to the bottom.",
+    "s": "The lead reads <b>Your site shows this at once:</b> with no “until” day. Under <b>Closed today</b> four rows, then an underlined <b>Show 2 more places</b>."
+   },
+   {
+    "d": "Press <b>Show 2 more places</b> in the window.",
+    "s": "Pinecrest Park joins the rows, then the bold line <b>Lions Park is closed tomorrow (</b>tomorrow’s date<b>).</b>, and the link reads <b>Show fewer</b>."
+   },
+   {
+    "d": "Press the button and <b>Done</b>. Refresh the private window, press <b>Show 2 more places</b>, then <b>Show fewer</b>.",
+    "s": "The site matches the window: four rows, the link, then the rest in place, and back to four. The small line reads <b>Posted by the club</b> (three press times) with no “ends”."
+   },
+   {
+    "d": "Look at the box once more.",
+    "s": "Only <b>Closed today</b> and the park names are bold; the diamonds and <b>all diamonds</b> are plain. Nothing says “And N more places are closed.”"
+   }
+  ]
+ },
+ {
+  "id": "C",
+  "title": "Different days, and the wider one reopened",
+  "job": "Kestrel Bay president · computer width · carries on from B",
+  "forText": "A closure that starts on a day the wider one misses keeps its own words; reopening the wider one brings the narrower ones back.",
+  "passes": "Tomorrow’s Lions Park closure is never hidden by today’s all fields, and B’s list returns whole after the reopen.",
+  "notIn": "A diamond closed longer than all fields (the same rule, tests hold it).",
+  "who": "president@kestrel-bay.example.test, password UATPassword2026!.",
+  "where": "The Venue library and the private window.",
+  "steps": [
+   {
+    "stop": true,
+    "d": "Press <b>Close a place</b>, keep <b>Day</b> on today, tick <b>All our fields</b>, and scroll to the bottom.",
+    "s": "<b>Your site shows this at once:</b> then two bold lines: <b>All our fields are closed today.</b> and <b>Lions Park is closed tomorrow (</b>tomorrow’s date<b>).</b> No park rows. <b>Stop if tomorrow’s line is missing.</b>"
+   },
+   {
+    "d": "Press the button and <b>Done</b>. Refresh the private window.",
+    "s": "The same two lines, and the small line names two press times: <b>Posted</b> … <b>and</b> … <b>by the club</b>."
+   },
+   {
+    "d": "In the Venue library, <b>Reopen</b> the <b>All our fields</b> row.",
+    "s": "That row goes; B’s six rows stay."
+   },
+   {
+    "d": "Refresh the private window.",
+    "s": "B’s box is back: <b>Closed today</b>, four rows, <b>Show 2 more places</b>."
+   }
+  ]
+ },
+ {
+  "id": "D",
+  "title": "On a phone",
+  "job": "A phone, or a window about 390 wide · carries on from C",
+  "forText": "The strip and its fold on a phone, and the window’s preview there.",
+  "passes": "Everything reads without sideways scrolling, and the fold is easy to tap.",
+  "notIn": "Nothing else changed on a phone.",
+  "who": "The private window, then president@kestrel-bay.example.test.",
+  "where": "http://localhost:3000/kestrel-bay on a phone, then the Venue library.",
+  "steps": [
+   {
+    "stop": true,
+    "d": "Open the club page on a phone (or narrow the private window to about 390 wide).",
+    "s": "The box sits under the bar: heading, rows, <b>Show 2 more places</b>, small line. No sideways scroll. <b>Stop if the page scrolls sideways.</b>"
+   },
+   {
+    "d": "Tap <b>Show 2 more places</b>, then <b>Show fewer</b>.",
+    "s": "The link is a comfortable tap (as tall as a button), the rows open in place, and closing keeps the box in view."
+   },
+   {
+    "d": "Signed in as president on the phone, open the Venue library, press <b>Close a place</b>, tick <b>Pinecrest Park</b> and scroll to the bottom. Then <b>Not now</b>.",
+    "s": "<b>Your site won’t change.</b> <b>It already says Pinecrest Park is closed today.</b> It fits the phone."
+   }
+  ]
+ },
+ {
+  "id": "E",
+  "title": "A club with no places",
+  "job": "President, then the house league admin · computer width · starts from a fresh day",
+  "forText": "A club with nothing in its Venue library can still close all its fields; a house league admin can only from a season’s schedule.",
+  "passes": "The president gets “All our fields” from the Venue library, the house league admin gets it only from the schedule, the press closes everything, and your five parks are back at the end.",
+  "notIn": "A club with no places and NO house league (the same window; tests hold the rule). Kestrel has no club with no places of its own, so this walk archives its parks and brings them back.",
+  "who": "president@kestrel-bay.example.test, then league@kestrel-bay.example.test, password UATPassword2026! for both.",
+  "where": "http://localhost:3000/kestrel-bay/admin/org/venues, then 2026 House League › Schedule.",
+  "steps": [
+   {
+    "stop": true,
+    "d": "Run the second seed line again (or ask me), so no closure is left. Refresh the private window.",
+    "s": "No closed-places box. <b>Stop if one shows.</b>"
+   },
+   {
+    "d": "As president, in the Venue library, <b>Archive</b> every park. A park that offers <b>Delete</b> instead, delete it (the seed brings it back).",
+    "s": "The table is empty; an <b>archived venues</b> link sits under it."
+   },
+   {
+    "d": "Press <b>Close a place</b>.",
+    "s": "Day and Until, then <b>Places</b> as one unticked row, <b>All our fields</b>, and under it <b>Your club has no places yet. To close one park or diamond, add it in the Venue library.</b> with an <b>Open the Venue library</b> link. The window is as tall as usual."
+   },
+   {
+    "d": "Tick <b>All our fields</b>.",
+    "s": "The day’s house league games are listed and ticked, the rep game too; the bottom shows <b>All our fields are closed today.</b>; the button reads <b>Close all our fields and email</b> … <b>families</b>. Press <b>Not now</b>."
+   },
+   {
+    "d": "Sign out. Sign in as <code>league@kestrel-bay.example.test</code>, open <b>Organization › Venue library</b> and press <b>Close a place</b>.",
+    "s": "Only <b>Your club has no places yet.</b> and the door to the Venue library: no All our fields. Press <b>Not now</b>."
+   },
+   {
+    "d": "Open <b>House league › 2026 House League › Schedule</b> and press <b>Close a place</b>.",
+    "s": "The same one-row window as the president’s, <b>All our fields</b> unticked, with the line under it."
+   },
+   {
+    "d": "Tick <b>All our fields</b>.",
+    "s": "The house league games are listed and ticked; rep shows as a count with no team name, under <b>Not changed here</b>."
+   },
+   {
+    "d": "Press <b>Close all our fields and email</b> … <b>families</b>.",
+    "s": "The result says the house league games were postponed and emailed, then <b>Your site shows this until the end of</b> today’s date with <b>All our fields are closed today.</b>"
+   },
+   {
+    "d": "Press <b>Done</b>. Refresh the private window.",
+    "s": "<b>All our fields are closed today.</b>"
+   },
+   {
+    "d": "Sign in as president. In the Venue library, press <b>Reopen</b> on the <b>All our fields</b> row.",
+    "s": "The row goes, and the private window (refreshed) shows no box."
+   },
+   {
+    "d": "Press the <b>archived venues</b> link and <b>Bring back</b> each park. If you deleted any, run the second seed line again.",
+    "s": "All five parks are back in the table."
+   },
+   {
+    "d": "Press <b>Close a place</b>.",
+    "s": "The usual <b>Places</b> field with its list, not the one-row window. Press <b>Not now</b>."
+   }
+  ]
+ }
+];
+  var state = { ticks: {}, verdict: {}, notes: {}, choice: {}, open: "A" };
+  try { var raw = localStorage.getItem(KEY); if (raw) { var got = JSON.parse(raw); state.ticks = got.ticks || {}; state.verdict = got.verdict || {}; state.notes = got.notes || {}; state.choice = got.choice || {}; state.open = got.open || "A"; } } catch (e) {}
+  function save() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} }
+  function el(tag, cls, html) { var n = document.createElement(tag); if (cls) n.className = cls; if (html != null) n.innerHTML = html; return n; }
+  function plain(html) { var d = document.createElement("div"); d.innerHTML = html; return d.textContent.replace(/\s+/g, " ").trim(); }
+  // A step added after the walk was published carries its own label ("7a"), so every other step keeps its number, and a
+  // tick already saved against it stays on the right step.
+  function num(w, i) { if (w.steps[i].n) return w.steps[i].n; var k = 0; for (var j = 0; j <= i; j++) if (!w.steps[j].n) k++; return String(k); }
+  function sid(w, i) { return w.id + "." + num(w, i); }
+  function counts(w) { var n = 0; w.steps.forEach(function (s, i) { if (state.ticks[sid(w, i)]) n++; }); return { done: n, all: w.steps.length }; }
+  var VWORD = { pass: "Passed", issue: "Issue", call: "Needs a call" };
+  function chipOf(w) {
+    var c = counts(w), v = state.verdict[w.id];
+    if (v === "pass" && c.done < c.all) return ["thin", "Passed · only " + c.done + " of " + c.all + " ticked"];
+    if (v) return [v, VWORD[v] + " · " + c.done + " of " + c.all];
+    if (c.done) return ["prog", "In progress · " + c.done + " of " + c.all];
+    return ["", "Not started · " + c.all + " steps"];
+  }
+
+  var index = document.getElementById("index"), host = document.getElementById("walkHost");
+  var cards = {};
+  WALKS.forEach(function (w, wi) {
+    var b = el("button", "wcard");
+    b.type = "button"; b.id = "card-" + w.id; b.setAttribute("aria-controls", "walk-" + w.id);
+    b.appendChild(el("span", "t", "Walk " + w.id + " · " + w.title));
+    b.appendChild(el("span", "j", w.job));
+    var chip = el("span", "chip"); b.appendChild(chip);
+    b.addEventListener("click", function () { state.open = w.id; save(); render(); document.getElementById("walk-" + w.id).scrollIntoView({ block: "start" }); });
+    index.appendChild(b);
+    cards[w.id] = { b: b, chip: chip };
+  });
+
+  function render() {
+    host.innerHTML = "";
+    WALKS.forEach(function (w, wi) {
+      var open = state.open === w.id;
+      cards[w.id].b.setAttribute("aria-expanded", open ? "true" : "false");
+      var ch = chipOf(w); cards[w.id].chip.className = "chip " + ch[0]; cards[w.id].chip.textContent = ch[1];
+      if (!open) return;
+      var sec = el("section", "card walk"); sec.id = "walk-" + w.id;
+      sec.appendChild(el("span", "eyebrow", "Walk " + w.id + " of " + WALKS.length + " · " + w.job));
+      sec.appendChild(el("h2", null, w.title));
+      var meta = el("div", "meta");
+      [["What this walk is for", w.forText], ["It passes when", w.passes], ["Not in this walk", w.notIn], ["Sign in as", w.who], ["Where and on what", w.where]].forEach(function (m) {
+        var d = el("div"); d.appendChild(el("h3", null, m[0])); d.appendChild(el("p", null, m[1])); meta.appendChild(d);
+      });
+      sec.appendChild(meta);
+      var ol = el("ol", "steps");
+      w.steps.forEach(function (s, i) {
+        var id = sid(w, i);
+        var li = el("li", "step" + (s.stop ? " stop" : "") + (state.ticks[id] ? " done" : ""));
+        var cb = el("input"); cb.type = "checkbox"; cb.id = "cb-" + id; cb.checked = !!state.ticks[id];
+        cb.setAttribute("aria-label", "Step " + num(w, i) + " done");
+        cb.addEventListener("change", function () { state.ticks[id] = cb.checked; save(); li.className = "step" + (s.stop ? " stop" : "") + (cb.checked ? " done" : ""); refresh(); });
+        li.appendChild(cb);
+        var body = el("div", "body");
+        if (s.stop || s.who) body.appendChild(el("span", "who", (s.stop ? "Stop check" : "") + (s.stop && s.who ? " · " : "") + (s.who || "")));
+        body.appendChild(el("span", "lab", num(w, i) + " · Do"));
+        body.appendChild(el("p", null, s.d));
+        body.appendChild(el("span", "lab", "You should see"));
+        body.appendChild(el("p", null, s.s));
+        li.appendChild(body);
+        ol.appendChild(li);
+      });
+      sec.appendChild(ol);
+      sec.appendChild(el("h3", null, "Your verdict on this walk"));
+      var vs = el("div", "verdict");
+      [["pass", "Pass"], ["issue", "Issue"], ["call", "Needs a call"]].forEach(function (v) {
+        var btn = el("button", state.verdict[w.id] === v[0] ? "on" : "", v[1]); btn.type = "button"; btn.setAttribute("data-v", v[0]);
+        btn.setAttribute("aria-pressed", state.verdict[w.id] === v[0] ? "true" : "false");
+        btn.addEventListener("click", function () { state.verdict[w.id] = state.verdict[w.id] === v[0] ? "" : v[0]; save(); render(); });
+        vs.appendChild(btn);
+      });
+      sec.appendChild(vs);
+      var lab = el("label", null, "<h3>Notes</h3>"); lab.setAttribute("for", "notes-" + w.id);
+      sec.appendChild(lab);
+      var ta = el("textarea"); ta.id = "notes-" + w.id; ta.value = state.notes[w.id] || "";
+      ta.placeholder = "What you saw, a word you would change, a question for me";
+      ta.addEventListener("input", function () { state.notes[w.id] = ta.value; save(); refresh(); });
+      sec.appendChild(ta);
+      var row = el("div", "row");
+      var cp = el("button", "btn", "Copy this walk’s summary"); cp.type = "button";
+      var msg = el("span", "lead"); msg.setAttribute("aria-live", "polite");
+      var out = el("div", "card out"); out.tabIndex = 0; out.textContent = walkSummary(w);
+      cp.addEventListener("click", function () { copy(walkSummary(w), out, msg); });
+      row.appendChild(cp);
+      if (wi + 1 < WALKS.length) {
+        var nx = el("button", "btn", "Next: walk " + WALKS[wi + 1].id); nx.type = "button";
+        nx.addEventListener("click", function () { state.open = WALKS[wi + 1].id; save(); render(); document.getElementById("walk-" + WALKS[wi + 1].id).scrollIntoView({ block: "start" }); });
+        row.appendChild(nx);
+      }
+      row.appendChild(msg);
+      sec.appendChild(row);
+      sec.appendChild(out);
+      sec._out = out; sec._w = w;
+      host.appendChild(sec);
+    });
+    refresh();
+  }
+
+  function walkSummary(w) {
+    var c = counts(w), v = state.verdict[w.id];
+    var lines = [w.id + " " + w.title + " · " + (v ? VWORD[v].toUpperCase() : "NO VERDICT") + " · " + c.done + " of " + c.all + " ticked"];
+    w.steps.forEach(function (s, i) { lines.push("  " + (state.ticks[sid(w, i)] ? "[x] " : "[ ] ") + num(w, i) + ". " + plain(s.d)); });
+    var n = (state.notes[w.id] || "").trim();
+    if (n) lines.push("  Notes: " + n.replace(/\n+/g, " / "));
+    return lines.join("\n");
+  }
+  function allSummary() {
+    var total = 0, done = 0;
+    WALKS.forEach(function (w) { var c = counts(w); total += c.all; done += c.done; });
+    return [PAGE, "Checked " + done + " of " + total, ""].concat(WALKS.map(walkSummary)).join("\n");
+  }
+  function refresh() {
+    var total = 0, done = 0;
+    WALKS.forEach(function (w) { var c = counts(w); total += c.all; done += c.done; var ch = chipOf(w); cards[w.id].chip.className = "chip " + ch[0]; cards[w.id].chip.textContent = ch[1]; });
+    document.getElementById("progress").textContent = "Checked " + done + " of " + total;
+    document.getElementById("out").textContent = allSummary();
+    var sec = host.querySelector(".walk"); if (sec && sec._out) sec._out.textContent = walkSummary(sec._w);
+  }
+  function copy(text, node, msg) {
+    function pick() { try { var r = document.createRange(); r.selectNodeContents(node); var s = window.getSelection(); s.removeAllRanges(); s.addRange(r); msg.textContent = "Selected: press Ctrl+C to copy."; } catch (e) {} }
+    try { navigator.clipboard.writeText(text).then(function () { msg.textContent = "Copied."; }, pick); } catch (e) { pick(); }
+  }
+  document.getElementById("copyAll").addEventListener("click", function () { copy(allSummary(), document.getElementById("out"), document.getElementById("copied")); });
+  var armed = false;
+  document.getElementById("reset").addEventListener("click", function () {
+    var b = document.getElementById("reset");
+    if (!armed) { armed = true; b.textContent = "Press again to clear every tick and note"; return; }
+    armed = false; b.textContent = "Clear my ticks";
+    state = { ticks: {}, verdict: {}, notes: {}, choice: {}, open: "A" }; save();
+    render();
+  });
+  render();
+})();
+</script>

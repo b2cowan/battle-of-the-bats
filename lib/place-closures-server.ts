@@ -5,7 +5,7 @@ import { getLeagueSeasons } from './db';
 import { addCalendarDays, formatShortWeekdayDate, orgDayKey, zonedWallClockToUtc } from './timezone';
 import { COACH_GAME_EVENT_TYPES } from './coach-tournament-games';
 import {
-  STRIP_CLOSURE_COLUMNS, firstClosureMatch, markPlaceOfAll, markStanding, placeEntriesValid, repTypedText, stripClosureOf,
+  STRIP_CLOSURE_COLUMNS, firstClosureMatch, isAllDiamonds, markPlaceOfAll, markStanding, placeEntriesValid, repTypedText, stripClosureOf,
   type ClosedPlace, type MarkWords, type ClosureScope, type ClosureVerb, type MarkedEventNow, type PlaceMatch, type RepMark, type StripClosure,
 } from './place-closures';
 
@@ -87,7 +87,9 @@ export async function reopenPlaceClosure(orgId: string, closureId: string, actor
 
 /**
  * The club's closures showing now (K3): from the press to the end of Until, not reopened — the strip's whole read, in the
- * order they were pressed. Place words and days only (`stripClosureOf`). ⚠ A failed read THROWS; the page decides.
+ * order they were pressed. Place words and days only (`stripClosureOf`), and the place's id for the cover rule (S1), which
+ * the strip's box never carries. A whole park's row reads "all diamonds" only when every facility it has is a diamond: the
+ * facilities' kinds are read for those parks (no names). ⚠ A failed read THROWS; the page decides.
  */
 export async function closuresShowing(orgId: string, now: Date = new Date()): Promise<StripClosure[]> {
   const at = now.toISOString();
@@ -96,7 +98,17 @@ export async function closuresShowing(orgId: string, now: Date = new Date()): Pr
     .eq('org_id', orgId).is('reopened_at', null).lte('shows_from', at).gt('ends_at', at)
     .order('created_at').order('press_seq');
   if (error) throw error;
-  return ((data ?? []) as unknown as Parameters<typeof stripClosureOf>[0][]).map(stripClosureOf);
+  const rows = (data ?? []) as unknown as Parameters<typeof stripClosureOf>[0][];
+  const parks = [...new Set(rows.filter(r => r.scope === 'place' && r.org_venue_id).map(r => r.org_venue_id!))];
+  // Only the words "all diamonds" ride on this read: a failure costs those words, never the strip (the closures still show,
+  // a whole park by its name alone).
+  const kinds = parks.length ? await fetchAllIn<{ org_venue_id: string; facility_type: string }>(parks, (c, a, b) =>
+    supabaseAdmin.from('org_venue_facilities').select('org_venue_id, facility_type').eq('org_id', orgId).in('org_venue_id', c)
+      .order('id').range(a, b)).catch(() => []) : [];
+  const byPark = new Map<string, string[]>();
+  for (const k of kinds) (byPark.get(k.org_venue_id) ?? byPark.set(k.org_venue_id, []).get(k.org_venue_id)!).push(k.facility_type);
+  const diamondParks = new Set(parks.filter(v => isAllDiamonds(byPark.get(v) ?? [])));
+  return rows.map(r => stripClosureOf(r, diamondParks));
 }
 
 // ── The rep marks ──────────────────────────────────────────────────────────────────────────────────────────────────

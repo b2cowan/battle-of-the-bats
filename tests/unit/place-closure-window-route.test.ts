@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { CLOSE_WORDS as W } from '../../lib/place-closure-window.ts';
+import { CLOSE_WORDS as W, mayCloseEveryPlace } from '../../lib/place-closure-window.ts';
 import { billingTestLoader } from './_billing-test-loader.ts';
 
 /**
@@ -17,7 +17,9 @@ const U = (n: number) => `00000000-0000-4000-8000-${String(n).padStart(12, '0')}
 const DAY = '2099-11-28';
 
 type Press = Record<string, unknown>;
-function harness(o: { plan?: string; role?: string; refusal?: string | null; replay?: boolean; addons?: string[] } = {}) {
+/** The club's own season, as the T1 server check finds it (`getLeagueSeasonById`). */
+const SEASON = U(50);
+function harness(o: { plan?: string; role?: string; refusal?: string | null; replay?: boolean; addons?: string[]; venues?: number } = {}) {
   const calls = { press: [] as Press[], sends: [] as unknown[], reopen: [] as unknown[], reopenMail: [] as unknown[] };
   const showing = [{ id: U(9), scope: 'place', venueId: U(1), placeName: 'Lions Park', facilityName: null, firstDay: DAY, lastDay: DAY,
     verb: 'postponed', closedAt: `${DAY}T12:10:00Z`, closedBy: 'Dana Reyes', leagueCalledOff: 4, seasonIds: ['s1'], marks: 1, markTeams: ['t'], markTeamNames: ['U13 Ospreys'] }];
@@ -42,7 +44,9 @@ function harness(o: { plan?: string; role?: string; refusal?: string | null; rep
       reopenPlaceClosure: async (...a: unknown[]) => { calls.reopen.push(a); return { refusal: null, reopenedAt: `${DAY}T15:00:00Z`, already: false }; },
     },
     '@/lib/place-closure-window-server': {
-      closeFrame: async () => ({ today: DAY, venues: [], canAll: true, rep: true }),
+      closeFrame: async () => ({ today: DAY, venues: Array.from({ length: o.venues ?? 0 }, (_, i) => ({ id: U(60 + i), name: `P${i}`, facilities: [], allDiamonds: false })), canAll: true, rep: true }),
+      mayCloseEveryPlaceHere: async (_org: unknown, role: Parameters<typeof mayCloseEveryPlace>[0], venues: number, seasonId: unknown) =>
+        mayCloseEveryPlace(role, { noPlaces: venues === 0, fromSeason: seasonId === SEASON }),
       closeSource: async () => ({ places: [], rep: [{ id: U(3) }] }),
       seasonPlacesOn: async () => [],
       showingClosures: async () => showing,
@@ -104,6 +108,21 @@ describe('K1 · who', () => {
     assert.equal((await harness({ role: 'league_admin' }).press(body({ places: [{ venueId: null, facilityId: null }] }))).status, 403);
     assert.equal((await harness({ role: 'league_admin' }).press(body({ links: [{ kind: 'rep', id: U(4), venueId: U(1) }] }))).status, 403);
     assert.equal((await harness({ role: 'league_admin' }).get('&places=all&first=' + DAY)).status, 403);
+  });
+  it('T1 · in a club with no places, a house league admin closes every place from a season — and only so', async () => {
+    const all = { places: [{ venueId: null, facilityId: null }] };
+    assert.equal((await harness({ role: 'league_admin' }).press(body({ ...all, seasonId: SEASON }))).status, 200);
+    assert.equal((await harness({ role: 'league_admin' }).get(`&places=all&first=${DAY}&from=${SEASON}`)).status, 200);
+    assert.equal((await harness({ role: 'league_admin' }).press(body({ ...all, seasonId: U(51) }))).status, 403, 'not the club\'s season');
+    assert.equal((await harness({ role: 'league_admin', venues: 2 }).press(body({ ...all, seasonId: SEASON }))).status, 403, 'K1 where places are listed');
+    assert.equal((await harness({ role: 'league_admin', venues: 2 }).get(`&places=all&first=${DAY}&from=${SEASON}`)).status, 403);
+    assert.equal((await harness({ role: 'admin', venues: 2 }).press(body(all))).status, 200, 'an admin, as before');
+    // The window offers "All our fields" exactly where the server allows it.
+    const canAll = async (role: string, qs: string, venues = 0) => (await (await harness({ role, venues }).get(qs)).json()).frame.canAll;
+    assert.equal(await canAll('league_admin', `&from=${SEASON}`), true);
+    assert.equal(await canAll('league_admin', ''), false);
+    assert.equal(await canAll('league_admin', `&from=${SEASON}`, 2), false);
+    assert.equal(await canAll('owner', '', 2), true);
   });
   it('a house league admin marks only the rep games the window offers them (on the place, not started)', async () => {
     const h = harness({ role: 'league_admin' });
@@ -205,8 +224,20 @@ describe('the guards', () => {
     assert.match(SEND, /kind: 'place_closure_coach'/);
   });
   it('K16 · the admin\'s line never reaches the strip: the preview is built from place words and days', () => {
-    assert.match(WINDOW, /previewSentences\(places, firstDay/);
-    assert.doesNotMatch(read('lib/place-closure-window.ts').split('export function previewSentences')[1].split('\n}\n')[0], /line/);
+    assert.match(WINDOW, /closePreview\(source\.places, firstDay/);
+    assert.doesNotMatch(read('lib/place-closure-window.ts').split('export function closePreview')[1].split('\n}\n')[0], /line/);
+    assert.doesNotMatch(read('lib/place-closures.ts').split('export function toStripClosure')[1].split('\n}\n')[0], /line/);
+  });
+  it('T1 · every place at once is asked of the server on the window\'s read AND the press (the press checks no role)', () => {
+    const ROUTE = read('app/api/admin/org/place-closures/route.ts');
+    assert.match(ROUTE, /const canAll = await mayCloseEveryPlaceHere\(ctx\.org, ctx\.role, read\.venues\.length, q\.get\('from'\)\);\n {2}const frame = \{ \.\.\.read, canAll \};/);
+    assert.match(ROUTE, /if \(places\[0\]\.venueId === null && !canAll\) return forbidden\(\);/);
+    assert.match(ROUTE, /if \(!\(await mayCloseEveryPlaceHere\(ctx\.org, ctx\.role, venues, body\.seasonId\)\)\) return forbidden\(\);/);
+    const SERVER = read('lib/place-closure-window-server.ts');
+    assert.match(SERVER, /if \(venues > 0 \|\| typeof seasonId !== 'string' \|\| !isUuid\(seasonId\)\) return false;/);
+    assert.match(SERVER, /getLeagueSeasonById\(seasonId, org\.id\)/, 'the club\'s own season');
+    assert.match(WINDOW, /const allOnly = noPlaces && frame!\.canAll;/, 'the window offers what the server says');
+    assert.match(WINDOW, /\$\{seasonId \? `&from=\$\{seasonId\}` : ''\}/, 'the frame read names the season');
   });
   it('K13 · nothing here moves a tournament game: the route never writes `games`, the window only links its Rain delay', () => {
     for (const f of ['app/api/admin/org/place-closures/route.ts', 'lib/place-closure-window-server.ts']) {

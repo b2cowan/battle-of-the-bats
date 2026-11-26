@@ -144,7 +144,11 @@ describe('one matching rule in two languages', () => {
 describe('what reaches a public page', () => {
   it('the strip reads its closures through the place-words-only columns and mapper', () => {
     assert.match(SERVER, /from\('org_place_closures'\)\s+\.select\(STRIP_CLOSURE_COLUMNS\)/);
-    assert.match(SERVER, /\.map\(stripClosureOf\)/);
+    assert.match(SERVER, /return rows\.map\(r => stripClosureOf\(r, diamondParks\)\);/);
+    // S2's "all diamonds": the facilities' KINDS only, for the wholly closed parks (no facility name reaches the strip).
+    assert.match(SERVER, /from\('org_venue_facilities'\)\.select\('org_venue_id, facility_type'\)/);
+    // A failed kinds read costs the words "all diamonds", never the strip (/review: it would have dropped every closure).
+    assert.match(SERVER, /\.order\('id'\)\.range\(a, b\)\)\.catch\(\(\) => \[\]\) : \[\];/);
   });
 
   it('a mark and a closure reason are read for ids the caller already decided may be shown, never by club or team', () => {

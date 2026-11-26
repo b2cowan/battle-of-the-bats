@@ -110,25 +110,29 @@ describe('K3 · K16 · the strip: from the press to the end of Until, place word
     assert.equal(isClosureShowing({ ...c, reopenedAt: '2026-11-28T15:00:00Z' }, Date.parse('2026-11-28T16:00:00Z')), false);
   });
 
-  it('copies place words and days and nothing else, whatever the row carries', () => {
+  it('copies place words, days and the place id (for the cover rule) and nothing else, whatever the row carries', () => {
     const row = {
-      scope: 'diamond' as const, place_name: 'Lions Park', facility_name: 'Diamond 2', first_day: '2026-11-28', last_day: '2026-11-29',
+      scope: 'diamond' as const, org_venue_id: 'lions', place_name: 'Lions Park', facility_name: 'Diamond 2', first_day: '2026-11-28', last_day: '2026-11-29',
       shows_from: '2026-11-28T01:40:00Z', ends_at: '2026-11-30T05:00:00Z',
       line: 'The fields are flooded, sorry Wrens!', closed_by: 'u1', games: 12, division: 'U9',
     };
     const out = stripClosureOf(row);
-    assert.deepEqual(Object.keys(out).sort(), ['endsAt', 'facilityName', 'firstDay', 'lastDay', 'placeName', 'scope', 'showsFrom']);
+    assert.deepEqual(Object.keys(out).sort(), ['allDiamonds', 'endsAt', 'facilityName', 'firstDay', 'lastDay', 'placeName', 'scope', 'showsFrom', 'venueId']);
     assert.deepEqual(out, {
-      scope: 'diamond', placeName: 'Lions Park', facilityName: 'Diamond 2', firstDay: '2026-11-28', lastDay: '2026-11-29',
-      showsFrom: '2026-11-28T01:40:00Z', endsAt: '2026-11-30T05:00:00Z',
+      scope: 'diamond', venueId: 'lions', placeName: 'Lions Park', facilityName: 'Diamond 2', allDiamonds: false,
+      firstDay: '2026-11-28', lastDay: '2026-11-29', showsFrom: '2026-11-28T01:40:00Z', endsAt: '2026-11-30T05:00:00Z',
     });
-    assert.deepEqual(stripClosureOf({ ...row, scope: 'all', place_name: 'x', facility_name: 'y' }).placeName, null);
+    const all = stripClosureOf({ ...row, scope: 'all', place_name: 'x', facility_name: 'y' });
+    assert.equal(all.placeName, null);
+    assert.equal(all.venueId, null);
     assert.equal(stripClosureOf({ ...row, scope: 'place' }).facilityName, null);
+    assert.equal(stripClosureOf({ ...row, scope: 'place' }, new Set(['lions'])).allDiamonds, true, 'a park that is all diamonds');
+    assert.equal(stripClosureOf(row, new Set(['lions'])).allDiamonds, false, 'only a whole park reads "all diamonds"');
   });
 
   it('the server reads exactly those columns: no count, division, person, team or admin line', () => {
     assert.deepEqual(STRIP_CLOSURE_COLUMNS.split(',').map(s => s.trim()).sort(),
-      ['ends_at', 'facility_name', 'first_day', 'last_day', 'place_name', 'scope', 'shows_from']);
+      ['ends_at', 'facility_name', 'first_day', 'last_day', 'org_venue_id', 'place_name', 'scope', 'shows_from']);
   });
 });
 

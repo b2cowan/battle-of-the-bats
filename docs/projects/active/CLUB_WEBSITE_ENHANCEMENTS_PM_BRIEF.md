@@ -77,9 +77,16 @@ app, and the team page and club home when its schedule is Public) and "Needs a n
 and moves it; a tournament is handed to its own Rain delay. Reopen takes the strip down at once and tells the marked
 coaches. It comes with League Plus and both Club plans. Success looks like: on a wet Saturday the admin closes the park
 once, a parent learns it from the club's site before driving there, and no rep game is moved by anyone but its coach.
-Two changes ruled 2026-11-26 are still to build: a club with no places listed is offered "All our fields" instead of a
-dead end (who may use it is still to be asked), and two separate presses on two diamonds of one park treat a game with
-no diamond recorded as one press does, with no second email to its coach.
+**Closed places, summarized (ruled 2026-11-26, S1–S6).** When closures overlap, the club's site now says it once: a
+wider closure speaks for a narrower one with the same days (two diamonds, then all fields, reads as one line), several
+parks on one day share one heading with a row each, and past five rows the rest open in place behind "Show N more
+places" instead of being only counted. The Close a place window shows the admin that strip before the press, or says
+"Your site won't change" when it already says so. A club with no places listed can close all its fields (owners,
+admins, and the house league admin from a season's schedule). Session A (the site and the window) is built and waits
+for the owner's walk; Session B (one Venue library box with a row per park, and Reopen for several diamonds in one press
+with one email per coach) is next, with two separate presses on two diamonds behaving as one press does. Success looks
+like: a parent reads one plain line for a rained-out park, never three that say the same thing, and the admin is never
+told the site changed when it did not.
 
 **Added from Milton Bats' meeting (2026-11-24, proposed, not drawn or ruled): the club's own feed.** The club wants to
 promote wins and tournament trips on its site and already posts to Instagram. Proposed: a coach sends photos from a

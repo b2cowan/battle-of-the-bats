@@ -572,6 +572,43 @@
   overflow-wrap: anywhere;
 }
 
+/* The closed places, summarized (Club Website Stage 2, S2–S3; summary drawing tabs 1–2): a day's heading over a row per
+   park, the park's name alone bold; a gap between a heading's group and the next; the fold's one button. */
+.noticeGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.noticeGroup + .noticeGroup,
+.noticeGroup + .noticeLine,
+.noticeLine + .noticeGroup { margin-top: 8px; }
+
+.noticeRow {
+  margin: 0;
+  font: 400 15px/1.35 var(--club-text-face);
+  color: var(--club-text);
+  overflow-wrap: anywhere;
+}
+.noticeRow b { font-weight: 650; }
+
+.noticeMore {
+  align-self: flex-start;
+  border: 0;
+  background: none;
+  padding: 0;
+  min-height: 28px;
+  font: 650 14px var(--club-text-face);
+  /* The club's link ink (the org layout writes it on :root, admin pages included, so the window's preview wears it too);
+     the text ink only where no club colour is set. */
+  color: var(--club-ink, var(--club-text));
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+@media (max-width: 900px) {
+  .noticeMore { min-height: 44px; }
+}
+
 .noticeDetail {
   margin: 0;
   font-size: 14px;

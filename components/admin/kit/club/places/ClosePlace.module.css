@@ -75,6 +75,15 @@ input.tickSearch { margin: 0 0.75rem 0.4rem; width: auto; }
   background: var(--card-bg); font-size: var(--type-body); line-height: 1.5; color: var(--text-primary);
 }
 
+/* The preview (S1–S3, the summary drawing's tab 6): the strip in its public shape on the club site's ground — the strip's
+   own box and rail, with no second rail around it. The box wears the club's tokens (`ClubFrame.module.css .tokens`). */
+.preview { margin: 0 0 0.9rem; padding: 0.6rem; border-radius: 8px; background: var(--club-ground); }
+.siteLead { margin: 0 0 0.4rem; line-height: 1.5; color: var(--text-primary); }
+
+/* T1: the no-places window's one place, "All our fields", and the line under it. */
+.noPlacesHint { margin: 0.4rem 0 0; font-size: var(--type-support); line-height: 1.45; color: var(--text-secondary); }
+.noPlacesHint a, .noPlacesHint button { color: inherit; font: inherit; font-weight: 650; text-decoration: underline; text-underline-offset: 3px; background: none; border: 0; padding: 0; cursor: pointer; }
+
 /* A row's second line (a typed place, "Started", the rep note). */
 .sub { display: block; font-size: var(--type-support); color: var(--text-secondary); line-height: 1.4; }
 .sub b { color: var(--text-primary); font-weight: 650; }
