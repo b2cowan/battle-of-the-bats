@@ -23,6 +23,7 @@ import { buildUnsubscribeUrl, buildUserUnsubscribeUrl, oneClickUnsubscribeHeader
 import { isDemoOrgId } from '@/lib/demo-org-server';
 import { isPreviewOrgId } from '@/lib/preview-org-server';
 import { insertAtWarmCardEnd, warmUnsubscribeFooterHtml } from '@/lib/email-envelope-warm';
+import { isUndeliverableAddress } from '@/lib/email-undeliverable';
 
 const RESEND_API = 'https://api.resend.com/emails';
 const FROM = process.env.RESEND_FROM ?? 'FieldLogicHQ <hello@fieldlogichq.ca>';
@@ -171,6 +172,13 @@ export async function sendMarketingEmail(opts: SendEmailOptions): Promise<SendRe
   });
 
   // ── 4. Call Resend ────────────────────────────────────────────────────────
+  // A reserved test or demo address is recorded as sent and never handed over (lib/email-undeliverable.ts).
+  if (isUndeliverableAddress(toEmail)) {
+    await updateSend(sendId, 'sent');
+    await incrementBatchCounter(batchId, 'sent');
+    return 'sent';
+  }
+
   const apiKey = process.env.RESEND_API_KEY;
   if (!apiKey) {
     console.warn(`[email-sender] RESEND_API_KEY not set — skipping send for ${emailKey} to ${toEmail}`);

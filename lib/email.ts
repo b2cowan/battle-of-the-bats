@@ -23,6 +23,7 @@ import type { FamilyMailFace } from '@/lib/email-club-identity';
 import { accountNoticeFootnoteHtml } from '@/lib/family-mail-footer';
 import { isLoggedKind, type EmailKind, type LoggedEmailKind, type UnloggedEmailKind } from '@/lib/email-kinds';
 import { FIELDLOGICHQ_CONTACT_EMAIL } from '@/lib/fieldlogichq-contact';
+import { isUndeliverableAddress } from '@/lib/email-undeliverable';
 
 const RESEND_API = 'https://api.resend.com/emails';
 const FROM = process.env.RESEND_FROM ?? 'FieldLogicHQ <onboarding@resend.dev>';
@@ -91,17 +92,6 @@ async function refusedForPreview(orgId: string | null): Promise<SendEmailResult 
   }
 }
 
-/**
- * Demo households (the Milton prospect demo seeds `first.last@miltonfamilies.local`, the other coaches
- * `@milton-bats.local`) carry `.local` addresses: a reserved name that can never be delivered. They are never handed to
- * the mail service, so practising a demo send to "54 families" spends the daily quota only on the real inboxes in it.
- * The caller still sees `sent`, so the screens show the full count a prospect expects. A real customer is never affected:
- * nothing at `.local` could have arrived.
- */
-export function isUndeliverableDemoAddress(to: string): boolean {
-  return /\.local$/i.test(to.trim().replace(/>$/, ''));
-}
-
 /** The mail service's answers that mean the request itself was refused, so nothing was sent. */
 const DEFINITE_REFUSALS = new Set([400, 401, 403, 404, 422]);
 
@@ -157,7 +147,8 @@ export async function sendEmail(
     ? opts.logId ?? await log.openSentEmailRow({ kind: opts.kind as LoggedEmailKind, to, orgId: opts.orgId, askedBy: opts.askedBy, feedbackId: opts.feedbackId })
     : null;
 
-  if (isUndeliverableDemoAddress(to)) {
+  // A reserved test or demo address is never handed to the mail service (lib/email-undeliverable.ts).
+  if (isUndeliverableAddress(to)) {
     if (log && logId) await log.settleSentEmailRow(logId, {});
     return { status: 'sent', logId };
   }
@@ -224,8 +215,8 @@ export async function sendEmailBatch(
   if (emails.length > EMAIL_BATCH_SIZE) throw new Error(`sendEmailBatch: ${emails.length} emails exceeds the batch limit of ${EMAIL_BATCH_SIZE}`);
   const previewRefusal = await refusedForPreview(orgId);
   if (previewRefusal) return previewRefusal;
-  // Demo addresses never reach the mail service (see isUndeliverableDemoAddress); an all-demo batch is "sent" without a request.
-  const going = emails.filter(e => !isUndeliverableDemoAddress(e.to));
+  // Reserved addresses never reach the mail service (lib/email-undeliverable.ts); a batch of only those is "sent" without a request.
+  const going = emails.filter(e => !isUndeliverableAddress(e.to));
   if (going.length === 0) return { status: 'sent' };
   const key = process.env.RESEND_API_KEY;
   if (!key) {

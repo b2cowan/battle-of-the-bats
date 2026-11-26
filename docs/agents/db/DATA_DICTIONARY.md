@@ -11539,7 +11539,7 @@ The **platform control plane** — the tables behind `/platform-admin/` that Fie
 **`feedback_id`** (uuid, nullable, FK → `feedback_submissions` ON DELETE SET NULL) — set on the "Feedback received" and reply emails, so the feedback record's conversation shows them.
 
 <!-- dict:col:platform_account_emails.resend_id -->
-**`resend_id`** (text, nullable) — the mail service's number (Resend id), shown in the email's window. NULL until Resend answered, or when it never did.
+**`resend_id`** (text, nullable) — the mail service's number (Resend id), shown in the email's window. NULL until Resend answered, when it never did, or for a reserved test address, which is never handed over (`lib/email-undeliverable.ts`): that row keeps `state='sent'` and no callback ever follows.
 
 <!-- dict:col:platform_account_emails.state -->
 **`state`** (text, NOT NULL, default `sent`) — `sent` | `unconfirmed` | `delayed` | `delivered` | `bounced` | `complained` | `failed` | `not_sent`. The console's words: Sent · Not confirmed · Delayed · Delivered · Bounced · Marked as spam · Failed · Not sent. `not_sent` = Resend suppressed it (the address bounced or complained before) or this site has no mail key; `failed` = Resend refused or could not send it.
@@ -12877,13 +12877,13 @@ FieldLogicHQ's three notification **delivery channels** and the preference/opt-o
 **`recipient_name`** (text, nullable) — optional display name.
 
 <!-- dict:col:email_sends.status -->
-**`status`** (text, NN, default `'queued'`, **no CHECK**) — per-send lifecycle; TS-typed `'queued' | 'sent' | 'failed' | 'suppressed'` ([lib/email-sender.ts:199](../../../lib/email-sender.ts#L199)). Initial `queued` (or `suppressed` on opt-out at insert) → `sent` | `failed` via `updateSend`, or `suppressed` via `cancelScheduledEmail`.
+**`status`** (text, NN, default `'queued'`, **no CHECK**) — per-send lifecycle; TS-typed `'queued' | 'sent' | 'failed' | 'suppressed'` ([lib/email-sender.ts:199](../../../lib/email-sender.ts#L199)). Initial `queued` (or `suppressed` on opt-out at insert) → `sent` | `failed` via `updateSend`, or `suppressed` via `cancelScheduledEmail`. A reserved test address (`lib/email-undeliverable.ts`) goes to `sent` without being handed to Resend.
 
 <!-- dict:col:email_sends.suppression_reason -->
 **`suppression_reason`** (text, nullable, **no CHECK**) — why a non-sent row was suppressed/failed. Domain = `opt_out` | `no_api_key` | `send_error` | `cancelled_on_upgrade`. Written on failure too (with `status='failed'`); reset to null on `'sent'`.
 
 <!-- dict:col:email_sends.resend_message_id -->
-**`resend_message_id`** (text, nullable) — the Resend API message id from the send response; the handle `cancelScheduledEmail` uses to cancel a still-scheduled send (POST `/{id}/cancel`).
+**`resend_message_id`** (text, nullable) — the Resend API message id from the send response; the handle `cancelScheduledEmail` uses to cancel a still-scheduled send (POST `/{id}/cancel`). NULL on a `sent` row for a reserved test address, which the cancel reads therefore skip.
 
 <!-- dict:col:email_sends.batch_id -->
 **`batch_id`** (uuid, nullable; FK→`email_batches(id)` ON DELETE SET NULL) — the parent batch, or **NULL for standalone scheduled emails** (`tournament_plus_upsell`/`_welcome`) — those call `sendMarketingEmail` with no `batchId`, so `incrementBatchCounter` no-ops and the rows never appear in the batch drill-in.
