@@ -906,9 +906,15 @@ export const SCHEDULE_SCREEN_WORDS = {
   /** On a found row's card (P7b A): "4 Thursdays on Diamond B are held by the draft Spring house league 2027." */
   foundDraftNote: (days: string, many: boolean, place: string, drafts: readonly string[]) =>
     `${days} on ${place} ${many ? 'are' : 'is'} held by the ${drafts.length > 1 ? 'drafts' : 'draft'} ${joinWithAnd(drafts)}.`,
-  /** The drafts step (P7b A, "warns on them like a clash"): slots on found time another draft holds. */
+  /** [marketing, 2E] The drafts step (P7b A, "warns on them like a clash"; Session 2D: any row, by part): a draft card's
+   *  line — its count and the other draft's name only, the length of the card's other lines (2D design check F3, Ask 2 A).
+   *  The rule is said once, above the cards (`foundDraftRule`). */
   foundDraftWarning: (slots: number, drafts: readonly string[]) =>
-    `${pluralize(slots, 'slot')} ${slots === 1 ? 'is' : 'are'} given on days the ${drafts.length > 1 ? 'drafts' : 'draft'} ${joinWithAnd(drafts)} ${drafts.length > 1 ? 'hold' : 'holds'} there`,
+    `${pluralize(slots, 'slot')} on time the ${drafts.length > 1 ? 'drafts' : 'draft'} ${joinWithAnd(drafts)} ${drafts.length > 1 ? 'hold' : 'holds'}`,
+  /** [marketing, 2E] The drafts step's one warning notice above the cards, shown only when some draft gives such slots.
+   *  Nothing refuses the second Finalize: it shows the time as a clash (owner 2026-11-26). */
+  foundDraftRule: (drafts: readonly string[]) =>
+    `Some of this time is also given out by the ${drafts.length > 1 ? 'drafts' : 'draft'} ${joinWithAnd(drafts)}. Whichever schedule is finalized first keeps it; the other shows it as a clash.`,
   venue: 'Venue',
   chooseVenue: 'Choose a venue',
   facilities: 'Facilities',

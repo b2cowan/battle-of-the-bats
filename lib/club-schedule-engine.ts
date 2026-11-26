@@ -216,6 +216,8 @@ export interface PoolBooking {
   ownerName: string;
   /** What it is (the clash rule's kind: practice · game · tryout · team_event), for "13U AAA's tryout day". */
   kind?: string | null;
+  /** Another schedule's FINAL slot only (Session 2D): since when it has held the time. Absent on a booking. */
+  heldSince?: number | null;
 }
 
 /**
@@ -223,33 +225,93 @@ export interface PoolBooking {
  * booking with no facility set holds nothing here — it is "busy then", the clash rule's softer finding, which the
  * calendar still marks; holding every field for it would hand out none of them.
  */
-export function heldSlots(slots: readonly Slot[], bookings: readonly PoolBooking[]): Map<string, PoolBooking> {
-  // Bucketed by venue and day, so a slot reads only its own day's bookings (a season's slots against every booking at
-  // the club's venues would otherwise be millions of comparisons). The earliest booking in the list still wins.
-  const dayOf = (ms: number) => Math.floor(ms / DAY_MS);
-  const bucket = new Map<string, number[]>();
-  bookings.forEach((b, i) => {
-    if (!b.venueId) return;
-    const last = dayOf(Math.max(b.startMs, b.endMs - 1));
-    for (let d = dayOf(b.startMs), n = 0; d <= last && n < 400; d++, n++) {
-      const k = `${b.venueId}|${d}`;
-      const list = bucket.get(k);
-      if (list) list.push(i); else bucket.set(k, [i]);
-    }
-  });
+export function heldSlots(
+  slots: readonly Slot[], bookings: readonly PoolBooking[],
+  /** Since when the asking schedule has held a slot (null or absent: not yet, so every final schedule takes it). */
+  mineSince?: (s: Slot) => number | null | undefined,
+): Map<string, PoolBooking> {
+  const bucket = byVenueDay(bookings);
   const out = new Map<string, PoolBooking>();
   for (const s of slots) {
+    // The earliest booking in the list wins (engineContext lists the bookings before other schedules' slots, so a team's
+    // practice on another schedule's slot is the name said).
     let hit = -1;
-    for (let d = dayOf(s.startMs), last = dayOf(Math.max(s.startMs, s.endMs - 1)); d <= last; d++) {
-      for (const i of bucket.get(`${s.venueId}|${d}`) ?? []) {
+    const mine = mineSince?.(s);
+    const takes = (b: PoolBooking) => b.heldSince === undefined || takesFrom({ state: 'final', heldSince: b.heldSince }, mine);
+    for (const k of venueDays(s.venueId, s.startMs, s.endMs)) {
+      for (const i of bucket.get(k) ?? []) {
         if (hit !== -1 && i >= hit) break;
-        const b = bookings[i];
-        if (b.startMs < s.endMs && s.startMs < b.endMs && (s.facilityId === null || samePlace(b, s))) { hit = i; break; }
+        if (onSlot(s, bookings[i]) && takes(bookings[i])) { hit = i; break; }
       }
     }
     if (hit !== -1) out.set(s.key, bookings[hit]);
   }
   return out;
+}
+
+/**
+ * Does another schedule's FINAL slot take a slot of the asking schedule (Session 2D)? Whichever is finalized first keeps
+ * it, judged slot by slot: time the asker does not hold as a final schedule (New schedule, a draft, Add time's new part,
+ * and time a final schedule is only now gaining) is taken by every final slot; time it already holds, only by one held
+ * since before — a later one never takes it (that one shows the clash instead).
+ */
+export const takesFrom = (s: { state: string; heldSince: number | null }, mineSince: number | null | undefined): boolean =>
+  s.state === 'final' && (mineSince == null || (s.heldSince != null && s.heldSince < mineSince));
+
+/** Time another schedule's DRAFT holds (Stage 2, Session 2D): its place and time, and the draft's name. */
+export interface DraftHold {
+  venueId: string;
+  facilityId: string | null;
+  sectionMask?: number | null;
+  startMs: number;
+  endMs: number;
+  by: string;
+}
+
+/**
+ * The drafts on each slot: every other schedule's draft holding its ground at an overlapping time, by name. Booked
+ * nowhere, so it never takes the slot (whichever schedule is finalized first keeps the time); the drafts step warns on
+ * the slots a draft gives there. A side the draft holds leaves the other side unwarned.
+ */
+export function draftsOn(slots: readonly Slot[], drafts: readonly DraftHold[]): Map<string, string[]> {
+  const bucket = byVenueDay(drafts);
+  const out = new Map<string, string[]>();
+  for (const s of slots) {
+    const by = new Set<string>();
+    for (const k of venueDays(s.venueId, s.startMs, s.endMs)) {
+      for (const i of bucket.get(k) ?? []) if (onSlot(s, drafts[i])) by.add(drafts[i].by);
+    }
+    if (by.size) out.set(s.key, [...by].sort((a, b) => a.localeCompare(b)));
+  }
+  return out;
+}
+
+/** The bucket keys of the days a span at a venue touches (400 at most: a bad end never runs away). */
+function venueDays(venueId: string, startMs: number, endMs: number): string[] {
+  const dayOf = (ms: number) => Math.floor(ms / DAY_MS);
+  const out: string[] = [];
+  for (let d = dayOf(startMs), last = dayOf(Math.max(startMs, endMs - 1)); d <= last && out.length < 400; d++) out.push(`${venueId}|${d}`);
+  return out;
+}
+
+/** Overlapping in time, on the slot's ground (or anywhere at a venue with no facilities). */
+const onSlot = (s: Slot, b: { facilityId: string | null; sectionMask?: number | null; startMs: number; endMs: number }) =>
+  b.startMs < s.endMs && s.startMs < b.endMs && (s.facilityId === null || samePlace(b, s));
+
+/** Bucketed by venue and day, so a slot reads only its own day's bookings (a season's slots against every booking at the
+ *  club's venues would otherwise be millions of comparisons). Each list keeps the input's order, as INDEXES (heldSlots'
+ *  "earliest wins" reads them), and a day is a UTC day: a slot and a booking are bucketed by the same clock, which is all
+ *  the lookup needs — so this is not `permit-time`'s club-day `bucketByDay`. */
+function byVenueDay(list: readonly { venueId: string | null; startMs: number; endMs: number }[]): Map<string, number[]> {
+  const bucket = new Map<string, number[]>();
+  list.forEach((b, i) => {
+    if (!b.venueId) return;
+    for (const k of venueDays(b.venueId, b.startMs, b.endMs)) {
+      const at = bucket.get(k);
+      if (at) at.push(i); else bucket.set(k, [i]);
+    }
+  });
+  return bucket;
 }
 
 const DAY_MS = 86_400_000;

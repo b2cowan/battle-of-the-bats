@@ -50,7 +50,7 @@ import {
 } from '@/lib/permit-form';
 import {
   HELD_FOR_OPTIONS, PERMIT_WORDS as W, WEEKDAY_OPTIONS, facilityListWords, fieldHourSentence, fieldPricesSentence, fileSizeWords,
-  heldForWords, hoursWords, permitMoney, priceGroups, sharePercent, spanWords, takenHeading, usedOfWords, usedPercent, weekdaysShort,
+  heldForWords, heldUnusedWords, hoursWords, permitMoney, priceGroups, sharePercent, spanWords, takenHeading, usedOfWords, usedPercent, weekdaysShort,
   bookedThatDayWords, type PermitHeldFor, type TakenKind,
 } from '@/lib/permit-words';
 import { permitUseSheets } from '@/lib/permit-use-workbook';
@@ -970,11 +970,14 @@ export function PermitWindow({
             )}
 
             <h3 className={vl.sectionHead}>{W.sectionUse}</h3>
+            {/* The Used line (Session 2D, round 1 Ask 9 A): Used stays booked time; unused time the final schedules hold that
+                no team has is the band's ONE note (2D design check F1 + F2, Ask 1 A) — beneath it, its own gap, absent when
+                there is none. */}
             <div className={own.windowBand}><MoneySummaryBand ariaLabel="How much of the permit is used" tiles={[
               { key: 'held', label: W.held, figure: hoursWords(u.heldMinutes) },
               { key: 'booked', label: W.booked, figure: hoursWords(u.bookedMinutes), caption: usedPercent(u.bookedMinutes, u.heldMinutes) },
               { key: 'unused', label: W.unused, figure: hoursWords(u.unusedMinutes) },
-            ]} /></div>
+            ]} note={heldUnusedWords(u.heldUnused, u.unusedMinutes) ?? undefined} /></div>
             <div className={own.rows}>
               {blocksRead.map(b => (
                 <UseRow key={b.id} title={blockWhere(b)} who={b.who}

@@ -30,6 +30,8 @@ import { newKey } from '@/lib/club-schedule-form';
 import { SCHEDULE_SCREEN_WORDS as W } from '@/lib/club-schedule-words';
 import { FACILITY_TYPE_LABELS, type FacilityType } from '@/lib/types';
 import type { FreeRow, FreeTime } from '@/lib/permit-free-time';
+import { sectionsOf, tickLabel, type FieldSections } from '@/lib/field-parts';
+import { partRowKey } from '@/lib/club-schedule-view';
 import sch from './Schedules.module.css';
 
 /** The finder's filters as the form holds them: hours as rows of From and Until (blank = any time). */
@@ -50,8 +52,8 @@ export const findFiltersFrom = (today: string): FindFilters => ({
   kinds: [], venueIds: [], issuers: [], minMinutes: 60,
 });
 
-/** A row's key: its place. */
-export const findRowKey = (r: Pick<FreeRow, 'venueId' | 'unit'>) => `${r.venueId}|${r.unit ?? ''}`;
+/** A row's key: its place, and its part of a split field (Session 2D; a whole place's key is unchanged). */
+export const findRowKey = (r: Pick<FreeRow, 'venueId' | 'unit' | 'sectionMask'>) => partRowKey(r.venueId, r.unit, r.sectionMask);
 
 /** The time the form already holds, sent so the finder never offers it again. */
 interface FindOwnTime { startsOn: string; endsOn: string; blocks: readonly object[]; datesOff: readonly object[] }
@@ -105,7 +107,7 @@ export function useFreeTime(q: string, filters: FindFilters | null, own: FindOwn
   };
 }
 
-interface Place { venueId: string; venueName: string; facilities: { id: string; name: string }[] }
+interface Place { venueId: string; venueName: string; facilities: { id: string; name: string; sections?: FieldSections }[] }
 interface Permit { id: string; name: string; issuer: string | null }
 
 /** "Thu, Apr 8" days said short: the first three, then how many more. */
@@ -137,7 +139,13 @@ export default function FindTheTime({ filters, onFilters, read, ticked, onTick, 
   const set = (patch: Partial<FindFilters>) => onFilters({ ...filters, ...patch });
   const toggle = (list: readonly (string | number)[], v: string | number) => (list.includes(v) ? list.filter(x => x !== v) : [...list, v]);
   const venueName = (id: string) => places.find(p => p.venueId === id)?.venueName ?? '';
-  const facilityName = (venueId: string, unit: string | null) => (unit ? places.find(p => p.venueId === venueId)?.facilities.find(f => f.id === unit)?.name ?? '' : venueName(venueId));
+  /** The row's place: the venue, the facility, or a split field in New schedule's tick-list words — "Field 1 (whole)",
+   *  "Field 1, side B" (2D design check F5). The row it brings keeps its box words ("Field 1 side B"). */
+  const facilityName = (venueId: string, unit: string | null, mask?: number) => {
+    if (!unit) return venueName(venueId);
+    const f = places.find(p => p.venueId === venueId)?.facilities.find(x => x.id === unit);
+    return f ? tickLabel(f.name, mask, sectionsOf(f.sections)) : '';
+  };
   const md = (d: string) => formatStoredDate(d, { withYear: false });
 
   const chips = <T extends string | number>(options: readonly { id: T; label: string }[], on: readonly T[], pick: (v: T) => void, label: string) => (
@@ -256,10 +264,10 @@ export default function FindTheTime({ filters, onFilters, read, ticked, onTick, 
       </div>
     );
   } else {
-    const freeMinutes = data.rows.reduce((m, r) => m + r.freeMinutes, 0);
     list = (
       <div className={sch.findList} aria-busy={loading}>
-        <p className={sch.findCount}>{loading ? W.findLoading : W.findCount(data.rows.length, freeMinutes)}</p>
+        {/* Facilities, not rows, and each piece of ground's hours once (2D design check F6): the reading's own totals. */}
+        <p className={sch.findCount}>{loading ? W.findLoading : W.findCount(data.places, data.freeMinutes)}</p>
         <div className={`${sch.findRow} ${sch.findHead}`} aria-hidden>
           <span>{W.findHeadPlace}</span><span>{W.findHeadPermit}</span><span className={sch.findRight}>{W.findHeadFree}</span>
         </div>
@@ -274,7 +282,7 @@ export default function FindTheTime({ filters, onFilters, read, ticked, onTick, 
           return (
             <div key={key} className={sch.findRow}>
               <CheckChoice checked={ticked.has(key)} disabled={!pickable} onChange={on => onTick(key, on)}
-                title={facilityName(r.venueId, r.unit)} caption={r.unit ? venueName(r.venueId) : undefined} />
+                title={facilityName(r.venueId, r.unit, r.sectionMask)} caption={r.unit ? venueName(r.venueId) : undefined} />
               <span className={sch.findCell}>
                 <b>{joinWithAnd(names)}</b>
                 {issuers.length > 0 && <small>{joinWithAnd(issuers)}</small>}

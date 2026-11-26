@@ -77,11 +77,11 @@ import { exportScheduleFile } from '@/lib/export/club-schedule-export';
 import type { DraftMeasure, TeamResult } from '@/lib/club-schedule-engine';
 import { HOUSE_LEAGUE, isProgramHolder } from '@/lib/club-schedule-holders';
 import {
-  datesOffChanged, dateOffVenues, fieldsLeftOff, mergeDatesOff, permitPlaces, permitRowDates, permitsSpan, rowsFromFound, settleOverlaps, type DateOffParks,
+  datesOffChanged, dateOffVenues, fieldsLeftOff, mergeDatesOff, permitPlaces, permitRowDates, permitsSpan, rowsFromFound, settleOverlaps, tickFound, type DateOffParks,
 } from '@/lib/club-schedule-permit-rows';
 import { hoursNumber } from '@/lib/club-draft-bill';
 import type { DateOff, TimeBlock } from '@/lib/permit-time';
-import { fieldPartName, placesOfTicks, resolveTicks, sectionsOf, tickOptions, ticksOfPlaces, type FieldSections, type RowPlaces } from '@/lib/field-parts';
+import { fieldPartName, masksOn, placesOfTicks, resolveTicks, sectionsOf, tickOptions, ticksOfPlaces, type FieldSections, type RowPlaces } from '@/lib/field-parts';
 import { Statement, Swatch } from './ScheduleParts';
 import sch from './Schedules.module.css';
 import FindTheTime, { draftDaysSaid, findFiltersFrom, findRowKey, useFreeTime, type FindFilters } from './FindTheTime';
@@ -135,8 +135,8 @@ interface HoursRow {
   /** That permit's own dates: sent as the row's only while several permits are ticked, so each permit's time keeps to
    *  its own dates inside the widened From and To (one permit: the row follows the schedule's dates, as before). */
   permitDates?: { fromDate: string; untilDate: string };
-  /** Found in Find the time (Session D): the days in it another schedule's draft holds, said on its card and warned on in
-   *  the drafts step (P7b A). Never sent — the form's own note. */
+  /** Found in Find the time (Session D): the days in it another schedule's draft holds, said on its card (the drafts
+   *  step's warning is the server's, per slot: `draftBy`). Never sent — the form's own note. */
   found?: { draftDays: { facilityId: string | null; day: string }[]; draftBy: string[] };
 }
 /** A date off; `permitId`: the permit it came with, so unticking that permit takes it away again. One row per permit and
@@ -273,6 +273,8 @@ interface DraftSlot {
   startClock: string; endClock: string; prime: boolean; weight: number; heldBy: { ownerName: string; kind: string | null } | null; kept: boolean;
   /** Its part of the field (Stage 2); absent: the whole field. */
   sectionMask?: number;
+  /** Other schedules' drafts holding its ground then (Session 2D); absent: none. */
+  draftBy?: string[];
 }
 interface DraftRead {
   strategy: string; label: string; round: number; score: number; lines: string[]; measures: DraftMeasure[];
@@ -518,7 +520,8 @@ export default function NewScheduleWindow({ q, orgSlug, orgName, startPermitId =
     if (!found.length) return;
     const newRows: HoursRow[] = found.map(f => ({
       key: newKey('row'), weekdays: [...f.weekdays], start: f.startTime, end: f.endTime,
-      place: { venueId: f.venueId, facilityIds: [...f.facilityIds] }, permitId: f.permitId,
+      // A finder row for a part of a split field (Session 2D) brings that part: "Field 1 side B".
+      place: { venueId: f.venueId, facilityIds: [...f.facilityIds], ...(f.parts ? { parts: f.parts } : {}) }, permitId: f.permitId,
       dates: { fromDate: f.fromDate, untilDate: f.untilDate },
       ...(f.draftDays.length ? { found: { draftDays: f.draftDays, draftBy: f.draftBy } } : {}),
     }));
@@ -1034,8 +1037,13 @@ export default function NewScheduleWindow({ q, orgSlug, orgName, startPermitId =
     const v = places.find(x => x.venueId === r.place?.venueId);
     const byFacility = new Map<string | null, string[]>();
     for (const d of r.found.draftDays) byFacility.set(d.facilityId, [...(byFacility.get(d.facilityId) ?? []), d.day]);
+    // A field the row names in part says its part ("Field 1 side B", Session 2D).
+    const nameOf = (fid: string) => {
+      const f = v?.facilities.find(x => x.id === fid);
+      return f ? fieldPartName(f.name, r.place ? masksOn(r.place, fid)[0] : undefined, sectionsOf(f.sections)) : '';
+    };
     return [...byFacility].map(([fid, days]) => W.foundDraftNote(draftDaysSaid(days), days.length > 1,
-      (fid ? v?.facilities.find(f => f.id === fid)?.name : v?.venueName) ?? '', r.found!.draftBy));
+      (fid ? nameOf(fid) : v?.venueName) ?? '', r.found!.draftBy));
   };
   const cardGroups = cards ? [
     ...permitOrder.map(id => {
@@ -1833,25 +1841,24 @@ export default function NewScheduleWindow({ q, orgSlug, orgName, startPermitId =
       }, 0);
     },
   } : null;
-  /** P7b A: found days another schedule's draft holds, by place and day — each draft warns on the slots it gives there,
-   *  like a clash (a draft is booked nowhere else, so this is the drafts step's only word of it). */
-  const foundHeld = new Map<string, readonly string[]>();
-  for (const r of draft.rows) {
-    if (!r.found || !r.place) continue;
-    for (const x of r.found.draftDays) foundHeld.set(`${r.place.venueId}|${x.facilityId ?? ''}|${x.day}`, r.found.draftBy);
-  }
-  const foundWarning = (d: DraftRead): string | null => {
-    if (!foundHeld.size || !gen) return null;
+  /** P7b A, widened by Session 2D to every row (found or typed): the slots a draft gives on ground another schedule's
+   *  draft holds then, warned on like a clash (a draft is booked nowhere else, so this is the drafts step's only word of
+   *  it). The server says which slots (`draftBy`, by part: side A held leaves side B unwarned). */
+  const draftHeld = (d: DraftRead): { slots: number; by: string[] } => {
     const by = new Set<string>();
     let slots = 0;
-    for (const s of gen.slots) {
-      const who = foundHeld.get(`${s.venueId}|${s.facilityId ?? ''}|${s.day}`);
-      if (!who || !(d.assignments[s.key] ?? []).length) continue;
+    for (const s of gen?.slots ?? []) {
+      if (!s.draftBy?.length || !(d.assignments[s.key] ?? []).length) continue;
       slots++;
-      for (const w of who) by.add(w);
+      for (const w of s.draftBy) by.add(w);
     }
-    return slots ? W.foundDraftWarning(slots, [...by]) : null;
+    return { slots, by: [...by] };
   };
+  /** 2D design check F3 (Ask 2 A): a card says its count and the other draft's name; the rule is said once, above the
+   *  cards, naming every other draft any card meets — absent when no draft gives such slots. */
+  const heldByDraft = gen ? gen.drafts.map(draftHeld) : [];
+  const heldNames = [...new Set(heldByDraft.flatMap(h => h.by))];
+  const foundRule = heldNames.length ? W.foundDraftRule(heldNames) : null;
   /** Add time's step 2 (drawing frame "Drafts for the new time"): what the new time gives each team, from the draft picked. */
   const addDrafts = (() => {
     if (!partOf || !gen || !pick) return null;
@@ -1925,6 +1932,12 @@ export default function NewScheduleWindow({ q, orgSlug, orgName, startPermitId =
           </span>
         </p>
       )}
+      {foundRule && (
+        <p className={`${ck.notice} ${ck.noticeWarn} ${sch.draftsSpan}`} role="status" data-drafts-held>
+          <AlertTriangle size={14} aria-hidden />
+          <span className={ck.noticeBody}>{foundRule}</span>
+        </p>
+      )}
       <div className={sch.cards} role="group" aria-label="Drafts">
         {gen.drafts.map((d, i) => (
           <button key={`${d.strategy}-${d.round}`} type="button" className={sch.card} aria-pressed={chosen === i} onClick={() => setChosen(i)}>
@@ -1941,7 +1954,7 @@ export default function NewScheduleWindow({ q, orgSlug, orgName, startPermitId =
                 );
               })}
               {d.warnings.map(w => <li key={w.line} className={sch.amber}><AlertTriangle size={13} aria-hidden />{w.line}</li>)}
-              {(() => { const w = foundWarning(d); return w && <li className={sch.amber}><AlertTriangle size={13} aria-hidden />{w}</li>; })()}
+              {heldByDraft[i].slots > 0 && <li className={sch.amber}><AlertTriangle size={13} aria-hidden />{W.foundDraftWarning(heldByDraft[i].slots, heldByDraft[i].by)}</li>}
             </ul>
           </button>
         ))}
@@ -2103,7 +2116,7 @@ export default function NewScheduleWindow({ q, orgSlug, orgName, startPermitId =
   else if (inFinder) {
     body = (
       <FindTheTime filters={findFilters!} onFilters={setFindFilters} read={freeRead} ticked={findTicked}
-        onTick={(key, on) => setFindTicked(t => { const n = new Set(t); if (on) n.add(key); else n.delete(key); return n; })}
+        onTick={(key, on) => setFindTicked(t => tickFound(t, key, on))}
         pricedBy={findPriced} onPricedBy={(key, id) => setFindPriced(p => ({ ...p, [key]: id }))}
         places={places} permitById={permitById} orgSlug={orgSlug} />
     );

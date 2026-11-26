@@ -27,6 +27,7 @@ const view: PermitView = {
   use: {
     heldMinutes: 450 * 60, bookedMinutes: 445.5 * 60, unusedMinutes: 4.5 * 60,
     days: [{ day: '2026-10-04', heldMinutes: 18 * 60, bookedMinutes: 18 * 60 }],
+    heldUnused: [],
   },
   weekMinutes: 18 * 60,
   renewedFrom: null,

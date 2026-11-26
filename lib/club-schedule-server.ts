@@ -14,11 +14,11 @@ import { readClubPlaces, readPermitTimes, type ClubPlaces } from './permit-looku
 import { facilityListWords } from './permit-words';
 import { readClubBookings } from './venue-clash-lookup';
 import { readAmount } from './club-bill-split';
-import { clock, fieldPrices, overlappingBlocks, shareOf, type DateOff, type PlaceUnit } from './permit-time';
+import { byFirstHeld, clock, fieldPrices, overlappingBlocks, shareOf, type DateOff, type PlaceUnit } from './permit-time';
 import { permitPlaces, rowOffItsPermit, savedPermitPlaces } from './club-schedule-permit-rows';
 import {
-  ageOf, cutSlots, heldSlots, seatCounts, shareTargets, slotKeyOf, slotWeight, teamResults, teamSlotSizes, teamTwice,
-  type EngineInput, type EngineTeam, type PoolBooking, type ScheduleBlock, type ScheduleTime, type Slot, type TeamBooking, type TeamResult,
+  ageOf, cutSlots, draftsOn, heldSlots, seatCounts, shareTargets, slotKeyOf, slotWeight, teamResults, teamSlotSizes, teamTwice,
+  type DraftHold, type EngineInput, type EngineTeam, type PoolBooking, type ScheduleBlock, type ScheduleTime, type Slot, type TeamBooking, type TeamResult,
   type WeightOf,
 } from './club-schedule-engine';
 import { readScheduleSettings, defaultSettings, isClock, sharingPools, slotRoom, type ScheduleSettings, type SettingsRefusal } from './club-schedule-settings';
@@ -31,7 +31,8 @@ import { familyClashes, partLabelFor, type FamilyMember, type FamilySlot, type P
 import { partIsGone } from './club-schedule-family-send';
 import { clubDay, keptHandBacks, waitingAsksOfSchedule, type KeptHandBack } from './club-hand-back-reads';
 import { scheduleMoney, type ScheduleMoney } from './club-money-reads';
-import { HOUSE_LEAGUE, isProgramHolder, storedHolders, teamsOnly } from './club-schedule-holders';
+import { HOUSE_LEAGUE, holdersOf, isProgramHolder, storedHolders, teamsOnly, type ProgramEmbed } from './club-schedule-holders';
+import { readScheduleSlotsIn } from './club-schedule-others-server';
 import { engineSlotOf, pinnedSlots, slotsWithPinned, timeKeeping, type KeepChange, type Keeping } from './club-schedule-keep';
 import { isLegalMask, maskOf, maskProp, partsOverlap, sortMasks, STORABLE_MASKS, WHOLE, type FieldSections } from './field-parts';
 
@@ -306,18 +307,6 @@ export function blockPlaces(rows: readonly BlockFacilityRow[] | null | undefined
   return Object.keys(parts).length ? { facilityIds, parts } : { facilityIds };
 }
 
-/** A slot's program row as PostgREST embeds it (one-to-one on the slot: an object, or an array from an older client). */
-type ProgramEmbed = { program: string } | { program: string }[] | null;
-
-/** A slot's holders as the scheduler reads them (Stage 11b): its teams in id order, then House league when a program row
- *  holds it — the floor keeps the two apart (`slot_both`), so it is one or the other. */
-export function holdersOf(s: { club_schedule_slot_teams: { team_id: string }[] | null; club_schedule_slot_programs?: ProgramEmbed }): string[] {
-  const teams = (s.club_schedule_slot_teams ?? []).map(t => t.team_id).sort();
-  const p = s.club_schedule_slot_programs;
-  const program = Array.isArray(p) ? p[0]?.program : p?.program;
-  return program === HOUSE_LEAGUE ? [...teams, HOUSE_LEAGUE] : teams;
-}
-
 export async function loadSchedule(orgId: string, scheduleId: string): Promise<LoadedSchedule | null> {
   if (!isUuid(scheduleId)) return null;
   const { data, error } = await supabaseAdmin.from('club_schedules').select(SCHEDULE_COLUMNS).eq('id', scheduleId).eq('org_id', orgId).maybeSingle();
@@ -490,13 +479,16 @@ export async function engineContext(orgId: string, p: {
   /** The rest of the schedule's family (Phase 8, `familyOthers`): each of their slots is the team's own booking, so a team
    *  is never given two practices at once across a schedule and its added parts — sent or not. */
   family?: readonly FamilyMember[];
-}): Promise<{ places: ClubPlaces; pool: PoolBooking[]; teamBookings: Map<string, TeamBooking[]>; prices: Prices }> {
+  /** A page that only marks what is held reads other schedules' FINAL slots at these venues: no drafts, nowhere else. */
+  finalSlotsAt?: readonly string[];
+}): Promise<{ places: ClubPlaces; pool: PoolBooking[]; mineSince: (s: Slot) => number | null; drafts: DraftHold[]; teamBookings: Map<string, TeamBooking[]>; prices: Prices }> {
   const own = new Set(p.slotIds);
   // House league has no team bookings of its own here: its league admins' games and practices are in the pool.
   p = { ...p, teamIds: teamsOnly(p.teamIds) };
-  const [places, pool, events, tryouts, prices] = await Promise.all([
+  const [places, pool, scheduled, events, tryouts, prices] = await Promise.all([
     p.places ?? readClubPlaces(orgId),
     readClubBookings(orgId, p.fromMs, p.toMs),
+    readScheduleSlotsIn(orgId, p.fromMs, p.toMs, p.finalSlotsAt ? { finalOnly: true, venueIds: p.finalSlotsAt } : {}),
     p.teamIds.length ? fetchAllIn<{ id: string; team_id: string; event_type: string; starts_at: string; ends_at: string | null; status: string; club_schedule_slot_id: string | null }>(p.teamIds, (c, a, b) => supabaseAdmin
       .from('rep_team_events').select('id, team_id, event_type, starts_at, ends_at, status, club_schedule_slot_id')
       .eq('org_id', orgId).in('team_id', c).neq('status', 'cancelled')
@@ -512,6 +504,29 @@ export async function engineContext(orgId: string, p: {
   const poolBookings: PoolBooking[] = pool.bookings
     .filter(b => !ownEvent(b.clubSlotOf))
     .map(b => ({ key: b.key, venueId: b.venueId, facilityId: b.facilityId, sectionMask: b.sectionMask ?? WHOLE, startMs: b.startMs, endMs: b.endMs, ownerName: b.ownerName, kind: b.kind }));
+  // OTHER SCHEDULES (Stage 2, Session 2D — the owed item). This schedule and its family never count: they are its own (the
+  // family is cut apart by `familyClashes`). Another schedule's FINAL slot joins the pool with since when it has held the
+  // time (`heldSlots` decides who takes it), named by the schedule — pushed AFTER the bookings, so where a team's sent
+  // practice or a league's game stands on it, that booking is the name said (the earliest in the list wins); the rest of
+  // the slot is still the schedule's. A DRAFT's slot is only warned on (`draftsOn`).
+  const mine = new Set([...scheduled.filter(s => own.has(s.id)).map(s => s.scheduleId), ...(p.family ?? []).map(m => m.id)]);
+  const drafts: DraftHold[] = [];
+  // Two final schedules on the same ground: the one that held it first is listed first, so it is the name said (as the
+  // permit's Used line credits it).
+  for (const s of [...scheduled].sort(byFirstHeld)) {
+    if (mine.has(s.scheduleId)) continue;
+    if (s.state === 'final') {
+      poolBookings.push({
+        key: `club_schedule_slot:${s.id}`, venueId: s.venueId, facilityId: s.facilityId, sectionMask: s.sectionMask,
+        startMs: s.startMs, endMs: s.endMs, ownerName: s.by, kind: null, heldSince: s.heldSince,
+      });
+    } else drafts.push(s);
+  }
+  // What the asking schedule already holds as a final one, by place and start (a slot's identity to the save).
+  const placeStart = (s: { venueId: string; facilityId: string | null; sectionMask?: number | null; startMs: number }) =>
+    `${s.venueId}|${s.facilityId ?? ''}|${s.sectionMask ?? WHOLE}|${s.startMs}`;
+  const ownSince = new Map(scheduled.filter(s => own.has(s.id)).map(s => [placeStart(s), s.heldSince]));
+  const mineSince = (s: Slot) => ownSince.get(placeStart(s)) ?? null;
   const teamBookings = new Map<string, TeamBooking[]>();
   const add = (teamId: string, startIso: string, endIso: string | null, isGame: boolean) => {
     const startMs = Date.parse(startIso);
@@ -530,7 +545,7 @@ export async function engineContext(orgId: string, p: {
   for (const m of p.family ?? []) {
     for (const s of m.slots) for (const t of s.teamIds) if (asked.has(t)) add(t, new Date(s.startMs).toISOString(), new Date(s.endMs).toISOString(), false);
   }
-  return { places, pool: poolBookings, teamBookings, prices };
+  return { places, pool: poolBookings, mineSince, drafts, teamBookings, prices };
 }
 
 /** The time and the settings, checked the way the save checks them (a refusal in words, or the slots it holds). */
@@ -704,7 +719,7 @@ export async function buildEngineInput(orgId: string, p: {
   keep?: Keeping | null;
   /** The rest of the schedule's family (Phase 8, `familyOthers`): its places at that time are not cut, its teams then are taken. */
   family?: readonly FamilyMember[];
-}): Promise<{ ok: true; input: EngineInput; prices: Prices; places: ClubPlaces; pool: PoolBooking[] } | Refused> {
+}): Promise<{ ok: true; input: EngineInput; prices: Prices; places: ClubPlaces; pool: PoolBooking[]; draftsOn: Map<string, string[]> } | Refused> {
   const ticked = p.settings.teamIds.map(id => p.teams.find(t => t.id === id)).filter((t): t is ClubTeam => !!t);
   const fromMs = Date.parse(`${p.time.startsOn}T00:00:00Z`) - 86_400_000, toMs = Date.parse(`${p.time.endsOn}T23:59:59Z`) + 86_400_000;
   const ctx = await engineContext(orgId, {
@@ -722,10 +737,11 @@ export async function buildEngineInput(orgId: string, p: {
     if (pinnedKeys.has(s.key) || (!s.removed && (s.locked || s.movedByHand))) fixed.set(s.key, s.teamIds.filter(t => ticked.some(x => x.id === t)));
   }
   const input: EngineInput = {
-    slots: checked.slots, teams: ticked, settings: p.settings, held: heldSlots(checked.slots, ctx.pool),
+    slots: checked.slots, teams: ticked, settings: p.settings, held: heldSlots(checked.slots, ctx.pool, ctx.mineSince),
     teamBookings: ctx.teamBookings, fixed,
   };
-  return { ok: true, input, prices: ctx.prices, places: ctx.places, pool: ctx.pool };
+  // Another schedule's draft on a slot's ground: the drafts step's warning (Session 2D), by slot key.
+  return { ok: true, input, prices: ctx.prices, places: ctx.places, pool: ctx.pool, draftsOn: draftsOn(checked.slots, ctx.drafts) };
 }
 
 // ── The page (specimens 6–10, 14) ────────────────────────────────────────────────────────────────
@@ -1003,7 +1019,7 @@ export async function scheduleView(orgId: string, loaded: LoadedSchedule, canMon
     // House league is always named when a slot holds it, whether or not the club still has house league.
     readClubTeams(orgId, { houseLeague: true }),
     // The family's practices are never "a booking already on the books" here: `familyShown` names them by part (Phase 8).
-    engineContext(orgId, { slotIds: [...loaded.slots.map(s => s.id), ...(opts.familySlotIds ?? [])], teamIds: [], fromMs, toMs, permitId, rowPermits: loaded.time.blocks.map(b => b.permitId) }),
+    engineContext(orgId, { slotIds: [...loaded.slots.map(s => s.id), ...(opts.familySlotIds ?? [])], teamIds: [], fromMs, toMs, permitId, rowPermits: loaded.time.blocks.map(b => b.permitId), finalSlotsAt: [...new Set(loaded.slots.map(s => s.venueId))] }),
     resolvePersonNamer(orgId, [row.sent_by, row.finalized_by]),
     row.state === 'final' ? waitingAsksOfSchedule(orgId, row.id) : Promise.resolve([]),
     billed ? scheduleMoney(orgId, row.id, row.allocation_id!) : Promise.resolve(null),
@@ -1016,7 +1032,7 @@ export async function scheduleView(orgId: string, loaded: LoadedSchedule, canMon
   const { slots, assignments, stored } = liveSlots(loaded, ctx.prices.weightOf);
   const billSlots = billSlotsOf(slots, assignments, ctx.prices.priceKeyOf);
   const pricing = canMoney ? schedulePricing(row, ctx.prices, billSlots, permitId) : null;
-  const held = heldSlots(slots, ctx.pool);
+  const held = heldSlots(slots, ctx.pool, ctx.mineSince);
   const houseLeagueOf = await houseLeagueSlots(orgId, stored.filter(s => s.teamIds.some(isProgramHolder)).map(s => s.id));
   const teamById = new Map(teams.map(t => [t.id, t]));
   const ticked = loaded.settings.teamIds.map(id => teamById.get(id)).filter((t): t is ClubTeam => !!t);

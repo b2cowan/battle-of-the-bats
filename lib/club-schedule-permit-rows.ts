@@ -17,6 +17,7 @@
  */
 import { addCalendarDays, isCalendarDate } from './timezone';
 import { blockUnits, clock, weekdayOf, type PlaceUnit, type TimeBlock, type VenueFacilities } from './permit-time';
+import { WHOLE, maskOf, masksOn } from './field-parts';
 
 /** A row of the schedule's time as the form sends it. Facilities are listed (empty = a venue with none, the venue itself). */
 export interface PermitRowBlock {
@@ -291,6 +292,16 @@ export function permitsSpan(permits: readonly { startsOn: string; endsOn: string
 
 // ── Found time into rows (Session D, "Find the time"; drawing tab 2 frames "picked" and "both"; owner rulings P4 A, P7b A) ──
 
+/** Ticking a finder row (its key: venue | facility, then `maskSuffix` for a part): a field's rows (the whole field, its
+ *  sides, its quarters) are one pick at a time — two rows of one field at the same hours are refused when the schedule is
+ *  made (`overlappingBlocks`), so ticking one unticks the others (Session 2D). */
+export function tickFound(ticked: ReadonlySet<string>, key: string, on: boolean): Set<string> {
+  const fieldOf = (k: string) => k.split('|').slice(0, 2).join('|');
+  const next = new Set([...ticked].filter(k => !on || fieldOf(k) !== fieldOf(key)));
+  if (on) next.add(key); else next.delete(key);
+  return next;
+}
+
 /** One place's found time, as `freeTime` (`lib/permit-free-time.ts`) returns it — only what a pick needs. */
 export interface FoundPlace {
   permitIds: readonly string[];
@@ -299,6 +310,8 @@ export interface FoundPlace {
   pieces: readonly {
     permitId: string; venueId: string; unit: string | null; weekdays: readonly number[]; startTime: string; endTime: string;
     fromDate: string; untilDate: string; draftDays: readonly string[]; draftBy: readonly string[];
+    /** A part of a split field (Session 2D); absent = the whole field. */
+    sectionMask?: number;
   }[];
 }
 
@@ -307,7 +320,9 @@ export interface FoundRow extends PermitRowBlock {
   permitId: string;
   fromDate: string;
   untilDate: string;
-  /** Each facility's draft-held days in the row (P7b A: they come in, said on the card; the drafts step warns on them). */
+  /** The fields it names in part (Session 2D, a finder row for "Field 1 side B"): facility id → its part. */
+  parts?: Record<string, number[]>;
+  /** Each facility's draft-held days in the row (P7b A: they come in, said on the card). */
   draftDays: { facilityId: string | null; day: string }[];
   draftBy: string[];
 }
@@ -324,7 +339,7 @@ export function rowsFromFound<P extends FoundPlace>(places: readonly P[], priced
     let blocks = place.pieces.map(pc => ({
       venueId: pc.venueId, facilityIds: pc.unit ? [pc.unit] : [], weekdays: [...pc.weekdays], startTime: pc.startTime, endTime: pc.endTime,
       fromDate: pc.fromDate as string | null, untilDate: pc.untilDate as string | null, permitId: pc.permitId,
-      draftDays: [...pc.draftDays], draftBy: [...pc.draftBy],
+      draftDays: [...pc.draftDays], draftBy: [...pc.draftBy], mask: maskOf(pc.sectionMask),
     }));
     const chosen = place.shared.length ? pricedBy(place) : null;
     if (chosen && blocks.length > 1) {
@@ -336,19 +351,24 @@ export function rowsFromFound<P extends FoundPlace>(places: readonly P[], priced
       // A piece split by the settling keeps only the draft days still inside it.
       const draftDays = b.draftDays.filter(d => d >= from && d <= until && b.weekdays.includes(weekdayOf(d)));
       const facilityId = b.facilityIds[0] ?? null;
+      // A field a row already names in other ground is never named twice in it (its whole and its side B are two rows:
+      // one block names a field once, mig 541 `part_overlap`).
       const same = out.find(r => r.permitId === b.permitId && r.venueId === b.venueId && r.startTime === b.startTime && r.endTime === b.endTime
         && r.fromDate === from && r.untilDate === until && r.weekdays.join() === b.weekdays.join()
-        && !!r.facilityIds.length === !!b.facilityIds.length);
+        && !!r.facilityIds.length === !!b.facilityIds.length
+        && b.facilityIds.every(f => !r.facilityIds.includes(f) || masksOn(r, f)[0] === b.mask));
       const days = draftDays.map(day => ({ facilityId, day }));
       const by = draftDays.length ? b.draftBy : [];
+      const part = facilityId && b.mask !== WHOLE ? { [facilityId]: [b.mask] } : null;
       if (same) {
         for (const f of b.facilityIds) if (!same.facilityIds.includes(f)) (same.facilityIds as string[]).push(f);
+        if (part) same.parts = { ...same.parts, ...part };
         same.draftDays.push(...days);
         for (const w of by) if (!same.draftBy.includes(w)) same.draftBy.push(w);
       } else {
         out.push({
           venueId: b.venueId, facilityIds: [...b.facilityIds], weekdays: b.weekdays, startTime: b.startTime, endTime: b.endTime,
-          fromDate: from, untilDate: until, permitId: b.permitId, draftDays: days, draftBy: [...by],
+          fromDate: from, untilDate: until, permitId: b.permitId, draftDays: days, draftBy: [...by], ...(part ? { parts: part } : {}),
         });
       }
     }

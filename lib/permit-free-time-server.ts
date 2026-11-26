@@ -16,6 +16,9 @@ import { supabaseAdmin } from './supabase-admin';
 import { fetchAll } from './supabase-paging';
 import { addCalendarDays, zonedWallClockToUtc } from './timezone';
 import { readClubBookings } from './venue-clash-lookup';
+import { readScheduleSlotsIn } from './club-schedule-others-server';
+import { takesFrom } from './club-schedule-engine';
+import { maskProp, sectionsOf } from './field-parts';
 import { readPermitTimes } from './permit-lookup';
 import { permitIssuers } from './permit-server';
 import { blockDates, blockUnits, windowOn, type BookingPlace, type PermitTime } from './permit-time';
@@ -46,11 +49,6 @@ function ownBookings(own: OwnTime, venueFacilities: ReadonlyMap<string, readonly
   return out;
 }
 
-interface SlotRow {
-  schedule_id: string; family_id: string; org_venue_id: string; facility_id: string | null; starts_at: string; ends_at: string;
-  club_schedules: { name: string; state: 'draft' | 'in_review' | 'final' } | null;
-}
-
 /**
  * The club's free time in the filters. `scheduleId`: a saved schedule asking (Add time) — the FAMILY's first schedule
  * (Phase 8: the schedule itself, or the one a part was added to) — its family's slots are taken, never "held by a draft". `own`: New schedule's rows, not saved yet — taken too, so what the form already holds is not offered
@@ -64,30 +62,28 @@ export async function readFreeTime(orgId: string, filters: FreeFilters, opts: { 
   const [times, issuers, kinds, pool, slots] = await Promise.all([
     timesRead,
     timesRead.then(t => permitIssuers(orgId, t.permits)),
-    fetchAll<{ id: string; facility_type: string | null }>((a, b) => supabaseAdmin.from('org_venue_facilities')
-      .select('id, facility_type').eq('org_id', orgId).order('id').range(a, b)),
+    fetchAll<{ id: string; facility_type: string | null; sections: number | null }>((a, b) => supabaseAdmin.from('org_venue_facilities')
+      .select('id, facility_type, sections').eq('org_id', orgId).order('id').range(a, b)),
     readClubBookings(orgId, fromMs, toMs),
-    // Every schedule's live slots in the window (a slot taken off by Send the changes is gone).
-    fetchAll<SlotRow>((a, b) => supabaseAdmin.from('club_schedule_slots')
-      .select('schedule_id, family_id, org_venue_id, facility_id, starts_at, ends_at, club_schedules!inner(name, state)')
-      .eq('org_id', orgId).is('removed_at', null)
-      .lt('starts_at', new Date(toMs).toISOString()).gt('ends_at', new Date(fromMs).toISOString())
-      .order('id').range(a, b)),
+    // Every schedule's live slots in the window (a slot taken off by Send the changes is gone) — the one read the builder
+    // and the permit's Used line make too (Session 2D).
+    readScheduleSlotsIn(orgId, fromMs, toMs),
   ]);
   const kindOf = new Map(kinds.map(k => [k.id, k.facility_type]));
+  const splitOf = new Map(kinds.map(k => [k.id, sectionsOf(k.sections)]));
 
   // Every venue, a venue with no facilities too, by name; each venue's facilities in the club's order.
   const venueFacilities = new Map<string, string[]>(
     [...times.venueName].sort(([, a], [, b]) => a.localeCompare(b)).map(([id]) => [id, times.venueFacilities.get(id) ?? []]),
   );
 
-  const booked: BookingPlace[] = pool.bookings.map(b => ({ venueId: b.venueId, facilityId: b.facilityId, startMs: b.startMs, endMs: b.endMs }));
+  // Each booking and slot keeps its part (Stage 2, Session 2D): side A taken leaves side B offered.
+  const booked: BookingPlace[] = pool.bookings.map(b => ({ venueId: b.venueId, facilityId: b.facilityId, ...maskProp(b.sectionMask), startMs: b.startMs, endMs: b.endMs }));
   const drafts: TakenTime[] = [];
   for (const s of slots) {
-    const place = { venueId: s.org_venue_id, facilityId: s.facility_id, startMs: Date.parse(s.starts_at), endMs: Date.parse(s.ends_at) };
-    const state = s.club_schedules?.state;
-    if (s.family_id === opts.scheduleId || state === 'final') booked.push(place);
-    else if (state === 'draft' || state === 'in_review') drafts.push({ ...place, by: s.club_schedules!.name });
+    // The asker here is never final (a new schedule, a draft, a new part): every final schedule takes its time.
+    if (s.familyId === opts.scheduleId || takesFrom(s, null)) booked.push(s);
+    else drafts.push(s);
   }
   if (opts.own) booked.push(...ownBookings(opts.own, venueFacilities));
 
@@ -98,6 +94,7 @@ export async function readFreeTime(orgId: string, filters: FreeFilters, opts: { 
     })),
     venueFacilities,
     kindOf: unit => (unit ? kindOf.get(unit) ?? null : null),
+    sectionsOf: unit => splitOf.get(unit) ?? 1,
     booked,
     drafts,
   }, filters);

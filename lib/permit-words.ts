@@ -18,7 +18,7 @@ import { daysBetweenDateStrings, formatStoredDate } from './timezone.ts';
 import { facilityWords } from './venue-clash-words.ts';
 import { fmt } from './coach-money-summary.ts';
 import { WEEKDAY_HEADS } from './calendar-recipe.ts';
-import { weekdayOf, type DateOff } from './permit-time.ts';
+import { weekdayOf, type DateOff, type HeldUnused } from './permit-time.ts';
 
 /** What a permit covers, named — the wire shape of the quiet line (a coach's reply carries exactly this). */
 export interface PermitOutside {
@@ -233,6 +233,27 @@ export const usedRatio = (booked: number, held: number) => (held > 0 ? Math.roun
 
 /** "64%" — booked over held, whole percent; "0%" when nothing is held. */
 export const usedPercent = (booked: number, held: number) => `${Math.round(usedRatio(booked, held) * 100)}%`;
+
+/** One schedule's share of the Used line, with or without its hours ("9 h of open slots on Spring rep 2027"). */
+function heldUnusedPart(h: HeldUnused, withHours: boolean): string {
+  const of = withHours ? `${hoursWords(h.minutes)} of ` : '';
+  if (h.holds === 'house_league') return `${of}house-league time on ${h.by} not given out`;
+  if (h.holds === 'teams') return `${withHours ? `${hoursWords(h.minutes)} ` : 'time '}given to teams on ${h.by} and not sent`;
+  return `${of}open slots on ${h.by}`;
+}
+
+/**
+ * [marketing, Stage 2E] THE USED LINE (round 1 Ask 9 A; plan "Words for /marketing"): what of the unused time the final
+ * schedules hold that no team has — ONE sentence, the total first and each schedule named inside it (2D design check F1,
+ * Ask 1 A). The Use band's one note in the window, and one note in the workbook. Null when nothing is held.
+ */
+export function heldUnusedWords(list: readonly HeldUnused[], unusedMinutes: number): string | null {
+  if (!list.length) return null;
+  const total = list.reduce((m, h) => m + h.minutes, 0);
+  const one = new Set(list.map(h => h.scheduleId)).size === 1;
+  const parts = list.length === 1 ? [heldUnusedPart(list[0], false)] : list.map(h => heldUnusedPart(h, true));
+  return `Of the ${hoursWords(unusedMinutes)} unused, ${hoursWords(total)} is held by ${one ? 'a schedule' : 'schedules'} and no team has it yet: ${joinWithAnd(parts)}.`;
+}
 
 export const permitMoney = (n: number | null | undefined) => (n == null ? '' : fmt(n));
 

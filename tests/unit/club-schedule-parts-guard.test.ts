@@ -55,7 +55,7 @@ describe('every list of schedules decides what an added part is', () => {
   });
 
   it('Find the time counts the asker\'s whole family as its own time', () => {
-    assert.match(readSource('lib/permit-free-time-server.ts'), /s\.family_id === opts\.scheduleId/);
+    assert.match(readSource('lib/permit-free-time-server.ts'), /s\.familyId === opts\.scheduleId/);
     assert.match(readSource('app/api/admin/schedules/free-time/route.ts'), /part_of_schedule_id as string \| null\) \?\? \(data\.id as string\)/);
   });
 

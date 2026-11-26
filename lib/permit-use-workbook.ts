@@ -13,7 +13,7 @@
 import { formatStoredDate, timesInZoneSentence } from './timezone.ts';
 import { formatTimeRange } from './utils.ts';
 import { facilityWords } from './venue-clash-words.ts';
-import { hoursNumber, hoursWords, permitMoney, shareWords, usedRatio, weekdaysWords, facilityListWords } from './permit-words.ts';
+import { heldUnusedWords, hoursNumber, hoursWords, permitMoney, shareWords, usedRatio, weekdaysWords, facilityListWords } from './permit-words.ts';
 import type { XlsxExtraSheet, XlsxNote } from './export/xlsx.ts';
 import type { PermitView } from './permit-server.ts';
 
@@ -91,6 +91,9 @@ export function permitUseSheets(view: PermitView, opts: { today: string; sport: 
   if (unplaced > 0.0001) {
     notes.push({ runs: [{ text: `${hoursWords(unplaced)} ${unplaced === 60 ? 'was' : 'were'} booked with no facility set inside the permit’s hours: counted on the block, not a field.` }] });
   }
+  // The Used line (Session 2D, round 1 Ask 9 A), as the window says it: ONE note (2D design check F1), the total first.
+  const heldLine = heldUnusedWords(view.use.heldUnused, view.use.unusedMinutes);
+  if (heldLine) notes.push({ runs: [{ text: heldLine }] });
 
   const dayRows = view.use.days.map(d => [
     d.day, formatStoredDate(d.day, { withYear: false }), hoursNumber(d.heldMinutes), hoursNumber(d.bookedMinutes),

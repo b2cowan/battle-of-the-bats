@@ -503,6 +503,46 @@ Migration first. Drawn together with Stage 3.
         ⚠ **Release order, sharper now:** every coach and family schedule read asks for `section_mask` and the field’s
         `sections`, so **541 must be on a database before this code is** (a read fails outright without it, where the
         old `select('*')` did not). Production order unchanged: 541 → 544 → 546 before the 2B/2C promote.
+- [x] **2D design check, applied 2026-11-26** (owner: "I agree with your recommendations", both asks of
+      `claude.ai/artifact/EVyadHYH81Ga9zMtaNNwyq` as recommended; source `SCHEDULE_PARTS_2D_DESIGN_CHECK.html`): the Used
+      line is the Use band's one note, total first (`heldUnusedWords` over the whole list; the workbook one note too);
+      a draft card says only its count and the other draft, the rule once in a warning notice above the cards
+      (`foundDraftRule`, only when a draft has such slots); Find the time's rows say the tick list's words (`tickLabel`,
+      shared with `tickOptions`); its count line reads the reading's own `places` and ground-once `freeMinutes` (a part
+      adds its minutes only on a day no row over its ground counts). Tests in `schedule-parts-other-schedules`.
+      **Help:** the drafts-step notice and the finder's row words fold into the 2E `/docs` pass.
+      **2D built** (no migration): the builder leaves out another schedule's final time and warns on another draft's, by
+      part; Find the time offers a split field's sides and quarters and counts other schedules' final time as taken; a
+      permit's Used counts a part by its share and the note says what of Unused the final schedules hold; the three
+      readers share one read of every schedule's slots (`lib/club-schedule-others-server.ts`).
+      **`/simplify` + `/review` 2026-11-26 (before the commit):** one shape for a slot as read, and a narrower read (the
+      window bounded on the start; the schedule page and the permit window read final slots at their own places); one
+      "held first" order (`byFirstHeld`) for the builder's name and the Used note. Fixed: "finalized first" was judged
+      per schedule, so hours a final schedule gained later (Settings…) took time a later-finalized one already held,
+      with no warning (High; now judged slot by slot, from when the schedule held it); the Used note could pass Unused
+      where a booking with no facility set overlaps a field's own booking; Find the time's count line missed the hours
+      only a part is free on a day the field's row also has some; an argument on the house-league save that could never
+      be used is gone.
+      - Deferred, predates 2D: in a saved draft's Settings…, Find the time can list the draft's own time (a row since
+        removed) as "held by the draft X"; fix: send the edited schedule's id and skip its own slots, its family still taken.
+      - Deferred, predates 2D: a found row can cover hours a row already on the form holds, and the save then refuses
+        "Two rows of hours overlap".
+      - Accepted: a final schedule's slot that grows longer at the same place and start keeps its older date, so the added
+        minutes are not checked against a schedule finalized since.
+      - Accepted (words, 2E): a schedule's hold reads like a booking on the scheduler ("held by Spring rep 2027's
+        booking", "Booked · …").
+      - Accepted (words, 2E): a house-league game made from a slot and then called off reads "house-league time … not
+        given out".
+      - Accepted: the Used note rounds each figure by itself, so quarter parts on odd lengths can differ from the total by
+        0.01 h.
+      - Accepted: the drafts step's warning also counts the past and locked slots a regenerate keeps.
+      - Accepted: an owner or admin without Rep Teams access reads rep schedule names where those schedules hold time
+        (names only).
+      - Not taken: skipping the holder columns for readers that don't say them, and one slot read shared across a
+        schedule page's added parts.
+- [ ] Reported by the 2D design check, not 2D's (for the 2E close or the ideas backlog): **P1** a draft card is a
+      `<button>` holding a `<ul>` (invalid; a screen reader reads the whole card as the button's name); **P2** Find the
+      time's list is a div table with an `aria-hidden` header and no `TABLE_EXCEPTION_REGISTER.md` row.
 - [ ] Reported by `/design`, not this project's to fix: the shipped "Give it to" menu inside a cell of the "Open slots and
       short teams" window has no row on `docs/agents/design/TABLE_EXCEPTION_REGISTER.md` (it was ruled for that window;
       a register row should say it is not a precedent).
@@ -1035,7 +1075,14 @@ Migration only if Stage 4's record needs it.
 - [ ] House league (round 2): the time row's "Field 1 in two sides, Field 3", the line "Field 1's sides hold one team
       each. Teams at once is for whole facilities.", "Teams at the same time" and its door, the rule sentences with
       divisions, the notice's report lines, the R6 refusal — Practice time; a part in every place word (tab 8)
-- [ ] The Used line: "Of the unused time, 9 h is open slots on {schedule}: the schedule holds it and no team has it yet."
+- [ ] The Used line, ONE note under the Use band since the 2D design check (Ask 1 A, 2026-11-26): "Of the 52 h unused,
+      15 h is held by schedules and no team has it yet: 9 h of open slots on {schedule} and 6 h of house-league time on
+      {schedule} not given out." (one schedule: "… held by a schedule …: open slots on {schedule}."); the workbook's note
+      says the same
+- [ ] The drafts step (2D design check Ask 2 A): the card line "4 slots on time the draft {name} holds", and the one notice
+      above the cards "Some of this time is also given out by the draft {name}. Whichever schedule is finalized first
+      keeps it; the other shows it as a clash."
+- [ ] Find the time (2D design check F5): the tick-list words on its rows, "Field 1 (whole)" / "Field 1, side B"
 
 ## Open questions
 

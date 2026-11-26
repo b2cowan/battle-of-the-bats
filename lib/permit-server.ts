@@ -23,7 +23,9 @@ import { addCalendarDays, zonedWallClockToUtc } from './timezone';
 import { fiscalYearOf, fiscalYearOptions, type FiscalSetting, type FiscalYear, type FiscalYearOption } from './club-fiscal-year';
 import { readClubBookings } from './venue-clash-lookup';
 import { readPermitTimes, type PermitRecord, type PermitTimes } from './permit-lookup';
-import { fieldPrices, heldTime, permitUse, type PermitUse, type UseBooking } from './permit-time';
+import { fieldPrices, heldTime, heldUnused, permitUse, type HeldUnused, type PermitUse, type UseBooking } from './permit-time';
+import { readScheduleSlotsIn } from './club-schedule-others-server';
+import { maskProp } from './field-parts';
 import type { PermitHeldFor } from './permit-words';
 import type { ClubBooking } from './venue-clash';
 import { canOpenPermitDocument } from './venue-library';
@@ -115,6 +117,8 @@ export interface PermitView {
     bookedMinutes: number;
     unusedMinutes: number;
     days: { day: string; heldMinutes: number; bookedMinutes: number }[];
+    /** Of the unused time, what each final schedule holds that no team has (Session 2D, round 1 Ask 9 A): the Used line. */
+    heldUnused: HeldUnused[];
   };
   weekMinutes: number;
   renewedFrom: { id: string; name: string } | null;
@@ -171,19 +175,31 @@ export async function permitIssuers(orgId: string, permits: readonly PermitRecor
   return new Map(permits.map(p => [p.id, issuerOf(p, names)]));
 }
 
-/** The club's bookings over a set of permits' dates, as the use reads them. */
-async function permitUseOf(orgId: string, permits: readonly PermitRecord[], t: PermitTimes): Promise<Map<string, PermitUse>> {
-  const out = new Map<string, PermitUse>();
+/** The club's bookings over a set of permits' dates, as the use reads them. `withHeld` (the permit's window): also the
+ *  final schedules' slots, for the Used line (`heldUnused`, Session 2D). */
+async function permitUseOf(orgId: string, permits: readonly PermitRecord[], t: PermitTimes, opts: { withHeld?: boolean } = {}): Promise<Map<string, PermitUse & { heldUnused: HeldUnused[] }>> {
+  const out = new Map<string, PermitUse & { heldUnused: HeldUnused[] }>();
   if (!permits.length) return out;
   const fromDay = permits.reduce((m, p) => (p.startsOn < m ? p.startsOn : m), permits[0].startsOn);
   const toDay = permits.reduce((m, p) => (p.endsOn > m ? p.endsOn : m), permits[0].endsOn);
   const fromMs = Date.parse(zonedWallClockToUtc(fromDay, '00:00')!);
   const toMs = Date.parse(zonedWallClockToUtc(addCalendarDays(toDay, 1), '00:00')!);
-  const pool = await readClubBookings(orgId, fromMs, toMs);
+  const [pool, scheduled] = await Promise.all([
+    readClubBookings(orgId, fromMs, toMs),
+    opts.withHeld
+      ? readScheduleSlotsIn(orgId, fromMs, toMs, { finalOnly: true, venueIds: [...new Set(permits.flatMap(p => p.blocks.map(b => b.venueId)))] })
+      : Promise.resolve([]),
+  ]);
+  // A booking on a part counts its share (Stage 2, Session 2D).
   const bookings: UseBooking[] = pool.bookings.map((b: ClubBooking) => ({
-    key: b.key, ownerName: b.ownerName, venueId: b.venueId, facilityId: b.facilityId, startMs: b.startMs, endMs: b.endMs,
+    key: b.key, ownerName: b.ownerName, venueId: b.venueId, facilityId: b.facilityId, startMs: b.startMs, endMs: b.endMs, ...maskProp(b.sectionMask),
   }));
-  for (const p of permits) out.set(p.id, permitUse(p, bookings, { venueFacilities: t.venueFacilities }));
+  for (const p of permits) {
+    out.set(p.id, {
+      ...permitUse(p, bookings, { venueFacilities: t.venueFacilities }),
+      heldUnused: heldUnused(p, scheduled, bookings, { venueFacilities: t.venueFacilities }),
+    });
+  }
   return out;
 }
 
@@ -257,7 +273,7 @@ export async function readPermitWindow(orgId: string, permitId: string, opts: {
   if (!p) return null;
   const [issuers, use, team, renewed, line, handedOutBy] = await Promise.all([
     issuerNames(orgId, [p]),
-    permitUseOf(orgId, [p], t),
+    permitUseOf(orgId, [p], t, { withHeld: true }),
     p.heldForTeamId
       ? supabaseAdmin.from('rep_teams').select('id, name').eq('id', p.heldForTeamId).eq('org_id', orgId).maybeSingle().then(r => r.data as { id: string; name: string } | null)
       : Promise.resolve(null),
@@ -331,7 +347,7 @@ export async function readPermitWindow(orgId: string, permitId: string, opts: {
     blocks, datesOff: [...p.datesOff], places,
     use: {
       heldMinutes: u.totals.heldMinutes, bookedMinutes: u.totals.bookedMinutes, unusedMinutes: u.totals.unusedMinutes,
-      days: u.days,
+      days: u.days, heldUnused: u.heldUnused,
     },
     weekMinutes: held.weekMinutes,
     renewedFrom: renewed,

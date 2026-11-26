@@ -21,6 +21,18 @@ export const isProgramHolder = (id: string): boolean => id === HOUSE_LEAGUE;
 /** The rep teams of a holder list (house league taken out). */
 export const teamsOnly = (ids: readonly string[]): string[] => ids.filter(id => !isProgramHolder(id));
 
+/** A slot's program row as PostgREST embeds it (one-to-one on the slot: an object, or an array from an older client). */
+export type ProgramEmbed = { program: string } | { program: string }[] | null;
+
+/** A slot's holders as the scheduler reads them (Stage 11b): its teams in id order, then House league when a program row
+ *  holds it — the floor keeps the two apart (`slot_both`), so it is one or the other. */
+export function holdersOf(s: { club_schedule_slot_teams: { team_id: string }[] | null; club_schedule_slot_programs?: ProgramEmbed }): string[] {
+  const teams = (s.club_schedule_slot_teams ?? []).map(t => t.team_id).sort();
+  const p = s.club_schedule_slot_programs;
+  const program = Array.isArray(p) ? p[0]?.program : p?.program;
+  return program === HOUSE_LEAGUE ? [...teams, HOUSE_LEAGUE] : teams;
+}
+
 /** A slot's holders as the database stores them: its rep teams, and its program (or null). */
 export function storedHolders(ids: readonly string[]): { teamIds: string[]; program: typeof HOUSE_LEAGUE | null } {
   return { teamIds: teamsOnly(ids), program: ids.some(isProgramHolder) ? HOUSE_LEAGUE : null };

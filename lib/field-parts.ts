@@ -35,6 +35,18 @@ const LEGAL: Record<FieldSections, readonly number[]> = {
   4: [0, 3, 12, 1, 2, 4, 8],
 };
 
+/** The four quarters, one bit each. */
+const QUARTERS: readonly number[] = [1, 2, 4, 8];
+
+/**
+ * A field's time counted BY PART (the permit's Used, Session 2D): `minutesOn(q)` is the time on quarter q — a reader
+ * filters its bookings with `partsOverlap(mask, q)` — and the field's time is their sum ÷ 4. So a part counts its share
+ * (bits ÷ 4, as `partFactor`), and two parts that overlap count their ground once.
+ */
+export function byQuarter(minutesOn: (quarter: number) => number): number {
+  return QUARTERS.reduce((t, q) => t + minutesOn(q), 0) / 4;
+}
+
 /** Every mask any field can store (the database CHECK's list). */
 export const STORABLE_MASKS: readonly number[] = [0, 1, 2, 3, 4, 8, 12];
 
@@ -72,6 +84,14 @@ export function partsOverlap(a: number | null | undefined, b: number | null | un
   const x = maskOf(a);
   const y = maskOf(b);
   return x === WHOLE || y === WHOLE || (x & y) !== 0;
+}
+
+/** Does `outer` hold ALL of `inner`'s ground on one field? The whole field holds every part; side A holds quarters A and B;
+ *  a part never holds the whole field (Find the time's "larger ground", Session 2D). */
+export function holdsAll(outer: number | null | undefined, inner: number | null | undefined): boolean {
+  const o = maskOf(outer);
+  const i = maskOf(inner);
+  return o === WHOLE || (i !== WHOLE && (o & i) === i);
 }
 
 /** Same field and overlapping ground: the one "same place?" a clash reader asks once both sides name a field. */
@@ -182,7 +202,14 @@ export function partLabel(mask: number, sections: FieldSections): string | null 
 export function tickOptions(fields: readonly PickableField[]): { id: string; label: string }[] {
   return fields.flatMap(f => (f.sections === 1
     ? [{ id: f.id, label: f.name }]
-    : legalMasks(f.sections).map(m => ({ id: tickValue(f.id, m), label: m === WHOLE ? `${f.name} (whole)` : fieldPartName(f.name, m, f.sections, ', ') }))));
+    : legalMasks(f.sections).map(m => ({ id: tickValue(f.id, m), label: tickLabel(f.name, m, f.sections) }))));
+}
+
+/** One tick's words: a field not split is its name; a split field is "Field 1 (whole)" or "Field 1, side B". The tick list
+ *  and Find the time's rows (2D design check F5) say a choice of ground the same way. */
+export function tickLabel(name: string, mask: number | null | undefined, sections: FieldSections): string {
+  if (sections === 1) return name;
+  return maskOf(mask) === WHOLE ? `${name} (whole)` : fieldPartName(name, mask, sections, ', ');
 }
 
 /**

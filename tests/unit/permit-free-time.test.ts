@@ -200,10 +200,11 @@ describe('freeTime — hour ranges that overlap', () => {
 });
 
 describe('the free-time module stands on its own (plan §8 Phase 4; P12: the Permits page’s later view is a door on it)', () => {
-  it('imports only the pure permit-time rule — no component, no React, no database, nothing of New schedule', () => {
+  it('imports only the pure permit-time rule and the parts rule — no component, no React, no database, nothing of New schedule', () => {
     const src = readFileSync(new URL('../../lib/permit-free-time.ts', import.meta.url), 'utf8');
     // Every way to bring code in — any quote, a side-effect import, a dynamic import(), a require() — not only `from '…'`.
+    // `field-parts` imports nothing itself (its own test holds that): a split field's parts (Session 2D).
     const brought = [...src.matchAll(/(?:from\s+|import\s*\(?\s*|require\s*\(\s*)(['"`])([^'"`]+)\1/g)].map(m => m[2]);
-    assert.deepEqual(brought, ['./permit-time']);
+    assert.deepEqual(brought, ['./permit-time', './field-parts']);
   });
 });

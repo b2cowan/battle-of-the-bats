@@ -127,6 +127,8 @@ export const POST = withObservability(async (req: Request) => {
       kept: input.fixed.has(s.key),
       // Its part (Stage 2), so the drafts step names "Field 1 side A"; a whole-field slot reads exactly as before.
       ...maskProp(s.sectionMask),
+      // Another schedule's draft on its ground (Session 2D): the drafts step warns on the slots a draft gives there.
+      draftBy: built.draftsOn.get(s.key),
     })),
     drafts: drafts.map(d => ({
       strategy: d.strategy, label: W.strategy[d.strategy], round: d.round, score: d.score,

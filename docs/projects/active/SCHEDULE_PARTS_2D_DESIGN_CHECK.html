@@ -1,0 +1,699 @@
+<title>Field Sides 2D Design Check</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500;700&family=Inter:wght@400;500;600;700&display=swap">
+<style>
+/* Layout: the house drawings page. Sticky tab row, one section at a time, a View row (Screen: Before · As built · Recommended, and Everything · Only what differs), each shipped window at its true width (KitDialog medium 640, xwide 1024; phone 390) on a cool document ground. */
+:root {
+  --doc-bg: #E9ECEF; --doc-card: #F7F8F9; --doc-ink: #1B2127; --doc-dim: #4F5963; --doc-line: #C9D0D6;
+  --doc-accent: #1F5F8B; --doc-new: #0F6B3E; --doc-new-soft: #D6EEE0; --doc-chg: #8A4B00; --doc-chg-soft: #F6E3C8;
+  --doc-bad: #A3261B; --doc-bad-soft: #F7DAD6; --doc-shade: rgba(20,24,28,.45);
+  --font-ui: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, Consolas, monospace;
+  /* The product's warm portal, as it ships. Frames keep these in both themes: a specimen, not the page. */
+  --paper: #F8F4ED; --card: #FFFFFF; --ink: #241E15; --ink-soft: #4A4235; --dim: #615A54; --surf2: #F4EFE6;
+  --line: rgba(70,55,30,.12); --line-strong: rgba(70,55,30,.20);
+  --olive: #57651E; --olive-soft: rgba(87,101,30,.10); --olive-edge: rgba(87,101,30,.3);
+  --lime: #D9F99D; --amber: #B26A00; --amber-ink: #6B4105; --amber-soft: #FBF1DF; --good: #2F7A3E; --scrim: #B0ABA4;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --doc-bg: #14181C; --doc-card: #1D2328; --doc-ink: #E8ECEF; --doc-dim: #9AA5AF; --doc-line: #333C44;
+    --doc-accent: #7DB8E0; --doc-new: #6FD39B; --doc-new-soft: #17301F; --doc-chg: #F0B968; --doc-chg-soft: #3A2A12;
+    --doc-bad: #F29B90; --doc-bad-soft: #3D1A16; --doc-shade: rgba(0,0,0,.6);
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --doc-bg: #14181C; --doc-card: #1D2328; --doc-ink: #E8ECEF; --doc-dim: #9AA5AF; --doc-line: #333C44;
+  --doc-accent: #7DB8E0; --doc-new: #6FD39B; --doc-new-soft: #17301F; --doc-chg: #F0B968; --doc-chg-soft: #3A2A12;
+  --doc-bad: #F29B90; --doc-bad-soft: #3D1A16; --doc-shade: rgba(0,0,0,.6);
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--doc-bg); color: var(--doc-ink); font-family: var(--font-ui); font-size: 15px; line-height: 1.5; margin: 0; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 0 48px; }
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 30; background: var(--doc-bg); }
+.wrap { max-width: 1240px; margin: 0 auto; }
+h1 { font-size: 1.35rem; margin: 0; letter-spacing: -.01em; text-wrap: balance; }
+h2 { font-size: 1.05rem; margin: 0 0 .4rem; text-wrap: balance; }
+p { margin: 0 0 .6rem; max-width: 78ch; }
+.top { padding: 14px 0 0; }
+.top .sub { color: var(--doc-dim); font-size: .85rem; margin: .15rem 0 .6rem; max-width: 120ch; }
+.tabs { display: flex; gap: 2px; overflow-x: auto; position: sticky; top: env(safe-area-inset-top, 0px); z-index: 20; background: var(--doc-bg); border-bottom: 1px solid var(--doc-line); }
+.tab { font: inherit; font-weight: 600; font-size: .88rem; padding: .55rem .8rem; background: transparent; color: var(--doc-dim); border: 0; border-bottom: 3px solid transparent; cursor: pointer; white-space: nowrap; min-height: 44px; }
+.tab[aria-selected="true"] { color: var(--doc-ink); border-bottom-color: var(--doc-accent); }
+.tab:focus-visible, .sw button:focus-visible, .mk:focus-visible, .fl:focus-visible, .copy:focus-visible, .pick input:focus-visible { outline: 2px solid var(--doc-accent); outline-offset: 2px; }
+.viewrow { display: flex; align-items: center; gap: .5rem 1.2rem; margin: 14px 0 6px; flex-wrap: wrap; }
+.viewrow .grp { display: inline-flex; align-items: center; gap: .5rem; }
+.viewrow b { font-size: .8rem; color: var(--doc-dim); font-weight: 600; }
+/* ONE white track, the chosen option in soft olive: drawn from the shipped ViewSwitch. */
+.sw { display: inline-flex; background: #fff; border: 1px solid var(--line-strong); border-radius: 10px; padding: 3px; gap: 2px; }
+.sw button { font: inherit; font-size: .85rem; font-weight: 600; padding: .35rem .8rem; border: 0; border-radius: 7px; background: transparent; color: #4A4235; cursor: pointer; min-height: 34px; }
+.sw button[aria-pressed="true"] { background: var(--olive-soft); color: var(--olive); }
+section.pane { display: none; padding-top: 4px; }
+section.pane.on { display: block; }
+.lede { font-size: .93rem; margin-top: 10px; max-width: 100ch; }
+.statecap { font-size: .85rem; color: var(--doc-dim); margin: 0 0 8px; }
+.statecap b { color: var(--doc-ink); }
+.scroller { overflow-x: auto; border: 1px solid var(--doc-line); border-radius: 10px; background: var(--doc-card); padding: 14px; }
+.cols { display: flex; gap: 18px; align-items: flex-start; }
+.side { flex: 1; min-width: 260px; font-size: .88rem; color: var(--doc-dim); }
+.side h3 { font-size: .9rem; color: var(--doc-ink); margin: 0 0 .3rem; }
+.side .li { display: flex; gap: .5rem; align-items: flex-start; margin-bottom: .55rem; }
+.side .li p { margin: 0; }
+.side .li b { color: var(--doc-ink); }
+.note { font-size: .86rem; color: var(--doc-dim); margin: 8px 0 0; max-width: 100ch; }
+
+/* Markers: every highlight opens its explanation (owner 2026-09-11). */
+.mk { font: 700 11px/1 var(--font-mono); min-width: 22px; height: 22px; padding: 0 5px; border-radius: 11px; border: 0; cursor: pointer; display: inline-grid; place-items: center; vertical-align: 2px; margin-left: 4px; flex: none; }
+.mk.bad { background: var(--doc-bad); color: #fff; }
+.mk.fix { background: var(--doc-new); color: #fff; }
+.mk.same { background: var(--doc-line); color: var(--doc-dim); }
+:root[data-theme="dark"] .mk.bad, :root[data-theme="dark"] .mk.fix { color: #111; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .mk.bad, :root:not([data-theme="light"]) .mk.fix { color: #111; } }
+.hl { outline: 2px dashed var(--doc-chg); outline-offset: 2px; border-radius: 4px; }
+.hl.good { outline-color: var(--doc-new); }
+
+/* State and diff switching. */
+body[data-state="b"] [data-s]:not([data-s*="b"]),
+body[data-state="a"] [data-s]:not([data-s*="a"]),
+body[data-state="r"] [data-s]:not([data-s*="r"]) { display: none !important; }
+body[data-diff="1"] .win .same, body[data-diff="1"] .ph .same { opacity: .2; }
+
+/* ───────── product frames, true size ───────── */
+.scrim { display: inline-block; padding: 20px; background: var(--scrim); border-radius: 10px; }
+.win { width: 1024px; background: var(--card); border: 1px solid var(--olive-edge); border-radius: 12px; color: var(--ink-soft); font: 14px/1.5 var(--font-ui); text-align: left; }
+.win.md { width: 640px; }
+.win.phone { width: 390px; border-radius: 14px; }
+.win p { max-width: none; }
+.dh { display: flex; align-items: flex-start; gap: .6rem; padding: 1.1rem 1.5rem .4rem; }
+.dh .tt { flex: 1; min-width: 0; }
+.dh .bk { display: block; font-size: 13px; font-weight: 650; color: var(--olive); margin-bottom: .25rem; }
+.dh .eb { display: block; font: 700 11px/1.3 var(--font-mono); letter-spacing: .09em; text-transform: uppercase; color: var(--ink-soft); margin-bottom: .2rem; }
+.dh .tl { display: block; font-size: 16px; font-weight: 700; line-height: 1.25; color: var(--ink); }
+.dh .st2 { display: block; font-size: 12px; color: var(--dim); margin-top: .2rem; }
+.dh .x { width: 32px; height: 32px; border-radius: 7px; display: grid; place-items: center; color: var(--dim); font-size: 15px; }
+.prog { display: flex; gap: 4px; padding: .35rem 1.5rem .75rem; border-bottom: 1px solid var(--line); }
+.prog span { flex: 1; height: 4px; border-radius: 2px; background: var(--olive); }
+.db { padding: .6rem 1.5rem 1.1rem; }
+.phone .db, .phone .dh { padding-left: 1rem; padding-right: 1rem; }
+.df { display: flex; align-items: center; gap: .6rem; padding: .85rem 1.5rem; border-top: 1px solid var(--line); }
+.df .fn { font-size: 12px; color: var(--dim); margin-right: auto; }
+.btn { font: 650 14px/1.25 var(--font-ui); padding: .45rem .9rem; min-height: 34px; border-radius: 6px; border: 1px solid var(--line-strong); background: var(--card); color: var(--ink-soft); white-space: nowrap; display: inline-flex; align-items: center; gap: .35rem; }
+.btn.pri { background: var(--lime); border-color: var(--lime); color: var(--ink); }
+.btn.sm { font-size: 13px; min-height: 30px; padding: .3rem .7rem; }
+/* the permit window */
+.shd { display: flex; align-items: center; justify-content: space-between; gap: .6rem; font: 700 11px/1.3 var(--font-mono); letter-spacing: .09em; text-transform: uppercase; color: var(--ink-soft); margin: 1.25rem 0 .5rem; }
+.shd:first-child { margin-top: .4rem; }
+.shd .hf { font: 600 13px/1.3 var(--font-ui); letter-spacing: 0; text-transform: none; color: var(--dim); }
+.rd { display: grid; grid-template-columns: 8.5rem minmax(0,1fr); gap: .35rem .9rem; margin: 0; font-size: 14px; }
+.rd dt { color: var(--dim); font-size: 13px; }
+.rd dd { margin: 0; color: var(--ink); }
+.meta { font-size: 12px; color: var(--dim); }
+.rows { border: 1px solid var(--line); border-radius: 8px; background: var(--card); }
+.row { display: flex; align-items: center; gap: .75rem; min-height: 44px; padding: .5rem .75rem; border-top: 1px solid var(--line); }
+.row:first-child { border-top: 0; }
+.row .m { flex: 1; min-width: 0; }
+.row .t { display: block; font-weight: 650; color: var(--ink); }
+.row .s { display: block; font-size: 12px; color: var(--dim); }
+.row .f { font-weight: 650; color: var(--ink); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.under { margin: .6rem .25rem 0; font-size: 12px; color: var(--dim); line-height: 1.5; }
+.under.nogap { margin-bottom: 0; }
+.bandnote { margin: 0 0 1rem; font-size: 12px; line-height: 1.55; color: var(--dim); }
+.door { color: var(--olive); font-weight: 600; }
+.band { display: grid; gap: 1px; background: var(--line); border: 1px solid var(--line); border-radius: 10px; overflow: hidden; margin-bottom: .6rem; }
+.band.t2 { grid-template-columns: repeat(2, 1fr); } .band.t3 { grid-template-columns: repeat(3, 1fr); }
+.band .tile { display: flex; flex-direction: column; gap: .22rem; padding: .85rem 1rem; background: var(--card); min-width: 0; }
+.band .lab { font-size: 11px; font-weight: 700; letter-spacing: .07em; text-transform: uppercase; color: var(--dim); }
+.band .fig { font-size: 20px; font-weight: 700; line-height: 1.1; color: var(--ink); font-variant-numeric: tabular-nums; }
+.band .cap { font-size: 12px; color: var(--dim); }
+.phone .band.t3 { grid-template-columns: repeat(2, minmax(0,1fr)); }
+.phone .band.t3 .tile:last-child { grid-column: 1 / -1; }
+.phone .band .tile { padding: .7rem .75rem; }
+.budget { margin-top: .75rem; padding-top: .6rem; border-top: 1px solid var(--line); }
+.end { display: flex; gap: 1rem; margin-top: 1.2rem; padding-top: .8rem; border-top: 1px solid var(--line); font-size: 13px; font-weight: 600; color: var(--ink-soft); }
+.gapmark { position: relative; }
+.gapmark::after { content: attr(data-gap); position: absolute; right: -8px; transform: translateX(100%); top: 50%; translate: 0 -50%; font: 700 10px/1 var(--font-mono); color: var(--doc-bad); white-space: nowrap; }
+/* New schedule: drafts step */
+.drafts { display: grid; grid-template-columns: 15rem minmax(0,1fr); gap: 1.1rem; align-items: start; }
+.phone .drafts { grid-template-columns: minmax(0,1fr); }
+.span { grid-column: 1 / -1; }
+.notice { display: flex; gap: .5rem; align-items: flex-start; padding: .6rem .8rem; border: 1px solid rgba(178,106,0,.35); background: var(--amber-soft); border-radius: 8px; font-size: 13px; color: var(--amber-ink); margin: 0; }
+.notice .ic { color: var(--amber); flex: none; margin-top: 1px; }
+.cards { display: grid; gap: .6rem; }
+.dcard { display: block; padding: .7rem .85rem; border: 1px solid var(--line); border-radius: 8px; background: var(--card); color: var(--ink); }
+.dcard.on { border: 2px solid var(--olive); padding: calc(.7rem - 1px) calc(.85rem - 1px); }
+.dcard .hd { display: flex; align-items: baseline; gap: .5rem; }
+.dcard .hd b { flex: 1; font-weight: 700; }
+.dcard .sc { font-size: 1.25rem; font-weight: 700; color: var(--olive); font-variant-numeric: tabular-nums; }
+.dcard .sc small { font-size: 12px; font-weight: 600; color: var(--dim); }
+.ms { margin: .4rem 0 0; padding: 0; list-style: none; font-size: 12.5px; color: var(--dim); }
+.ms li { display: flex; gap: .35rem; align-items: baseline; margin: .2rem 0; }
+.ms li .g { color: var(--good); flex: none; }
+.ms li.am { color: var(--amber-ink); }
+.ms li.am .w { color: var(--amber); flex: none; }
+.more { color: var(--olive); font-weight: 650; min-height: 34px; display: flex; align-items: center; }
+.chosen { display: grid; gap: .75rem; min-width: 0; }
+.lens { display: flex; align-items: center; gap: .6rem; flex-wrap: wrap; }
+.lens .sp { flex: 1; }
+.lines { border: 1px solid var(--line); border-radius: 8px; background: var(--card); }
+.tline { display: grid; grid-template-columns: 10px minmax(0,1.3fr) minmax(0,1fr) minmax(0,1fr) minmax(0,1fr); gap: .6rem; align-items: center; padding: .55rem .8rem; border-top: 1px solid var(--line); font-size: 13px; }
+.tline:first-child { border-top: 0; }
+.tline .sw2 { width: 10px; height: 10px; border-radius: 3px; }
+.tline b { color: var(--ink); }
+.statement { padding: .75rem .9rem; border: 1px solid var(--line); border-left: 3px solid var(--olive); border-radius: 8px; font-size: 13px; color: var(--ink-soft); }
+.phone .tline { grid-template-columns: 10px minmax(0,1fr) auto; }
+.phone .tline .hide { display: none; }
+/* Find the time */
+.ffil { display: grid; grid-template-columns: minmax(0,1.15fr) minmax(0,1.25fr) minmax(0,1fr); gap: 0 1rem; padding: .85rem .85rem .2rem; border: 1px solid var(--line); border-radius: 8px; background: var(--card); margin-bottom: .85rem; }
+.fld { display: flex; flex-direction: column; gap: .3rem; margin-bottom: .75rem; min-width: 0; }
+.fld.wide { grid-column: 1 / -1; }
+.lb { font-size: 12px; font-weight: 650; color: var(--ink-soft); }
+.ctl { min-height: 36px; border: 1px solid var(--line-strong); border-radius: 6px; background: var(--paper); padding: .45rem .65rem; font-size: 14px; color: var(--ink); white-space: nowrap; overflow: hidden; }
+.ctl.ph { color: var(--dim); }
+.hnt { font-size: 12px; color: var(--dim); }
+.chips { display: flex; flex-wrap: wrap; gap: .4rem; }
+.chip { display: inline-flex; align-items: center; gap: .3rem; min-height: 34px; padding: 0 .75rem; border: 1px solid var(--line-strong); border-radius: 999px; font-size: 13px; color: var(--ink-soft); }
+.chip.on { background: var(--olive-soft); border-color: var(--olive); color: var(--olive); font-weight: 600; }
+.hrs { display: grid; grid-template-columns: minmax(0,1fr) minmax(0,1fr); gap: 0 .75rem; max-width: 30rem; }
+.flist { border: 1px solid var(--line); border-radius: 8px; overflow: hidden; background: var(--card); }
+.fcount { margin: 0; padding: .5rem .85rem; font-size: 12px; color: var(--dim); border-bottom: 1px solid var(--line); }
+.frow { display: grid; grid-template-columns: minmax(0,1.1fr) minmax(0,1.05fr) minmax(0,1.4fr); gap: .6rem; padding: .6rem .85rem; align-items: start; border-bottom: 1px solid var(--line); }
+.frow:last-child { border-bottom: 0; }
+.frow.head { min-height: 36px; align-items: center; padding-top: .4rem; padding-bottom: .4rem; font-size: 12px; font-weight: 650; color: var(--dim); }
+.frow.sub { padding-left: 2.6rem; }
+.choice { display: flex; gap: .6rem; align-items: flex-start; min-width: 0; }
+.box { width: 22px; height: 22px; flex: none; border: 1.5px solid var(--line-strong); border-radius: 5px; background: var(--card); display: grid; place-items: center; color: #fff; font-size: 13px; margin-top: 1px; }
+.box.on { background: var(--olive); border-color: var(--olive); }
+.choice .ct b { display: block; font-weight: 650; color: var(--ink); }
+.choice .ct span { display: block; font-size: 12px; color: var(--dim); }
+.cell { display: flex; flex-direction: column; gap: .1rem; min-width: 0; }
+.cell b { font-weight: 650; color: var(--ink); }
+.cell small { font-size: 12px; color: var(--dim); }
+.cell small.am { color: var(--amber-ink); font-weight: 600; }
+.cell.r { text-align: right; align-items: flex-end; justify-self: end; }
+
+/* Findings and asks */
+.flist2 { display: grid; gap: 10px; }
+.fd { background: var(--doc-card); border: 1px solid var(--doc-line); border-radius: 10px; padding: 12px 14px; }
+.fd h3 { font-size: .95rem; margin: 0 0 .35rem; display: flex; gap: .5rem; align-items: baseline; flex-wrap: wrap; }
+.sev { font: 700 .66rem/1.4 var(--font-mono); letter-spacing: .07em; text-transform: uppercase; padding: .1rem .45rem; border-radius: 4px; }
+.sev.h { background: var(--doc-bad-soft); color: var(--doc-bad); }
+.sev.m { background: var(--doc-chg-soft); color: var(--doc-chg); }
+.sev.l { background: var(--doc-line); color: var(--doc-dim); }
+.sev.p { background: var(--doc-line); color: var(--doc-dim); }
+.fd dl { display: grid; grid-template-columns: 7.5rem minmax(0,1fr); gap: .25rem .8rem; margin: .3rem 0 0; font-size: .88rem; }
+.fd dt { color: var(--doc-dim); font-weight: 600; }
+.fd dd { margin: 0; }
+.ok { background: var(--doc-card); border: 1px solid var(--doc-line); border-radius: 10px; padding: 12px 14px; font-size: .9rem; }
+.ok ul { margin: .3rem 0 0 1.1rem; padding: 0; }
+.ok li { margin-bottom: .25rem; }
+.asks { display: grid; gap: 12px; }
+.ask { background: var(--doc-card); border: 1px solid var(--doc-line); border-radius: 10px; padding: 12px 14px; }
+.ask .rec { font-size: .85rem; color: var(--doc-new); font-weight: 600; margin: 0 0 .5rem; }
+.ask .why { font-size: .88rem; color: var(--doc-dim); margin: 0 0 .5rem; }
+.pick { display: grid; gap: .3rem; font-size: .9rem; }
+.pick label { display: flex; align-items: flex-start; gap: .5rem; min-height: 32px; cursor: pointer; }
+.pick input { margin-top: .3rem; }
+.paste { display: grid; gap: .5rem; margin-top: 14px; }
+.paste textarea { width: 100%; min-height: 120px; font: 13px/1.5 var(--font-mono); padding: .6rem .7rem; border: 1px solid var(--doc-line); border-radius: 8px; background: var(--doc-bg); color: var(--doc-ink); resize: vertical; }
+.copy { font: 600 .88rem var(--font-ui); padding: .5rem .9rem; border-radius: 8px; border: 1px solid var(--doc-accent); background: var(--doc-accent); color: #fff; cursor: pointer; justify-self: start; min-height: 40px; }
+:root[data-theme="dark"] .copy { color: #0E1418; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .copy { color: #0E1418; } }
+.copied { font-size: .85rem; color: var(--doc-new); }
+
+/* Explanation sheet */
+.shade { position: fixed; inset: 0; background: var(--doc-shade); z-index: 50; display: grid; place-items: center; padding: max(16px, env(safe-area-inset-top, 0px)) max(16px, env(safe-area-inset-right, 0px)) max(16px, env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px)); }
+.sheet { width: min(560px, 100%); max-height: 80vh; overflow: auto; background: var(--doc-card); color: var(--doc-ink); border: 1px solid var(--doc-line); border-radius: 12px; padding: 16px 18px; }
+.sheet h3 { margin: 0 0 .5rem; font-size: 1rem; }
+.sheet .k { font: 700 .68rem/1.3 var(--font-mono); letter-spacing: .07em; text-transform: uppercase; color: var(--doc-dim); margin: .7rem 0 .2rem; }
+.sheet p { margin: 0 0 .4rem; font-size: .92rem; }
+.sheet .cl { margin-top: .8rem; font: 600 .88rem var(--font-ui); padding: .45rem .9rem; min-height: 40px; border-radius: 8px; border: 1px solid var(--doc-line); background: transparent; color: var(--doc-ink); cursor: pointer; }
+.sheet .go { margin-left: .5rem; border-color: var(--doc-accent); color: var(--doc-accent); }
+@media (max-width: 700px) { .fd dl { grid-template-columns: minmax(0,1fr); } .fd dt { margin-top: .3rem; } }
+@media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto !important; } }
+</style>
+
+<div class="wrap" id="top">
+  <header class="top">
+    <h1>Field sides · Session 2D · design check</h1>
+    <p class="sub">The three pieces Session 2D built without a drawing: the permit window's Used line, the warning on a draft card, and Find the time's row for a side of a split field. Each tab shows the whole window at true size. Switch <b>Screen</b> between Before (as on dev before 2D), As built (the working copy today) and Recommended (this check's changes). Every numbered marker opens its explanation. Working words throughout: <code>/marketing</code> settles them in Stage 2E.</p>
+  </header>
+
+  <nav class="tabs" role="tablist" aria-label="Sections">
+    <button class="tab" role="tab" aria-selected="true" data-tab="used">1 · The Used line</button>
+    <button class="tab" role="tab" aria-selected="false" data-tab="cards">2 · The draft card warning</button>
+    <button class="tab" role="tab" aria-selected="false" data-tab="find">3 · A side in Find the time</button>
+    <button class="tab" role="tab" aria-selected="false" data-tab="phone">4 · Phone</button>
+    <button class="tab" role="tab" aria-selected="false" data-tab="findings">5 · Findings</button>
+    <button class="tab" role="tab" aria-selected="false" data-tab="asks">6 · Asks</button>
+  </nav>
+
+  <div class="viewrow" id="viewrow">
+    <span class="grp"><b>Screen</b>
+      <span class="sw" role="group" aria-label="Screen" id="sw-state">
+        <button type="button" data-v="b" aria-pressed="false">Before</button>
+        <button type="button" data-v="a" aria-pressed="true">As built</button>
+        <button type="button" data-v="r" aria-pressed="false">Recommended</button>
+      </span>
+    </span>
+    <span class="grp"><b>View</b>
+      <span class="sw" role="group" aria-label="View" id="sw-diff">
+        <button type="button" data-v="0" aria-pressed="true">Everything</button>
+        <button type="button" data-v="1" aria-pressed="false">Only what differs</button>
+      </span>
+    </span>
+  </div>
+
+  <!-- ═════════ 1 · THE USED LINE ═════════ -->
+  <section class="pane on" id="p-used" role="tabpanel">
+    <p class="lede">The permit window, read mode, for an admin who builds schedules (KitDialog medium, 640 px). Two final schedules hand this permit's time out: Spring rep 2027 has 9 h of open slots, Spring house league 2027 has 6 h the league hasn't given out.</p>
+    <p class="statecap" data-s="b"><b>Before 2D:</b> the Use band, then the rows. Nothing says that 15 of the 52 unused hours are already held by a schedule.</p>
+    <p class="statecap" data-s="a"><b>As built:</b> one paragraph per schedule between the band and the rows, in the window's quiet <code>under</code> face, sitting flush on the rows card.</p>
+    <p class="statecap" data-s="r"><b>Recommended:</b> the band's own one note, beneath it, with the band note's gap under it. Both schedules in one sentence, the total first. The words are illustrative; <code>/marketing</code> writes them.</p>
+    <div class="cols">
+      <div class="scroller"><div class="scrim">
+        <div class="win md">
+          <div class="dh"><div class="tt"><span class="eb">Permit · 2027</span><span class="tl">Sports Dome · Spring 2027</span></div><span class="x" aria-hidden="true">✎</span><span class="x" aria-hidden="true">✕</span></div>
+          <div class="db">
+            <div class="same">
+              <div class="shd"><span>The permit</span><span class="btn sm">⤓ Export</span></div>
+              <dl class="rd">
+                <dt>Issuer</dt><dd>Town of Milton</dd>
+                <dt>Reference</dt><dd>P-2027-114</dd>
+                <dt>Held for</dt><dd>Rep teams</dd>
+                <dt>Dates</dt><dd>Sun, Apr 4 – Sun, Jun 27, 2027 <span class="meta">· 13 Sundays</span></dd>
+                <dt>Document</dt><dd><span class="door">▤ sports-dome-2027.pdf</span><br><span class="meta">214 KB · added Mar 2</span></dd>
+              </dl>
+              <div class="shd"><span>The time</span><span class="hf">104 h held</span></div>
+              <div class="rows"><div class="row"><span class="m"><span class="t">Milton Sports Dome · Field 1 and Field 2</span><span class="s">Sun · 9:00 a.m.–1:00 p.m.</span></span><span class="f">104 h</span></div></div>
+              <p class="under">No dates off.</p>
+              <div class="shd"><span>Cost</span></div>
+              <div class="band t2"><div class="tile"><span class="lab">Cost</span><span class="fig">$8,320.00</span></div><div class="tile"><span class="lab">An hour held</span><span class="fig">$80.00</span></div></div>
+              <dl class="rd budget"><dt>On the budget</dt><dd>Field permits <span class="meta">· 2027 · </span><span class="door">Open the line ›</span></dd></dl>
+              <div class="shd"><span>Use</span></div>
+            </div>
+            <div class="band t3 same">
+              <div class="tile"><span class="lab">Held</span><span class="fig">104 h</span></div>
+              <div class="tile"><span class="lab">Booked</span><span class="fig">52 h</span><span class="cap">50%</span></div>
+              <div class="tile"><span class="lab">Unused</span><span class="fig">52 h</span></div>
+            </div>
+            <div data-s="a">
+              <p class="under hl">Of the unused time, 9 h is open slots on Spring rep 2027: the schedule holds it and no team has it yet.<button class="mk bad" data-k="u1" aria-label="Finding F1">F1</button></p>
+              <p class="under nogap hl">Of the unused time, 6 h is house-league time on Spring house league 2027: the schedule holds it and the league hasn’t given it out yet.<button class="mk bad" data-k="u2" aria-label="Finding F2">F2</button></p>
+            </div>
+            <p class="bandnote hl good" data-s="r">Of the 52 h unused, 15 h is held by schedules and no team has it yet: 9 h of open slots on Spring rep 2027 and 6 h of house-league time on Spring house league 2027 not given out.<button class="mk fix" data-k="u1r" aria-label="Fixes F1 and F2">fixes F1·F2</button></p>
+            <div class="rows same"><div class="row"><span class="m"><span class="t">Milton Sports Dome · Field 1 and Field 2</span><span class="s">Spring rep 2027 · Spring house league 2027</span></span><span class="f">52 of 104 h · 50%</span></div></div>
+            <div class="same">
+              <p class="under"><span class="door">Hand out this time in a schedule ›</span></p>
+              <p class="under"><u><b style="color:var(--ink)">Spring rep 2027 ›</b></u> and <u><b style="color:var(--ink)">Spring house league 2027 ›</b></u> hand this time out, so the permit stays.<button class="mk same" data-k="u3" aria-label="Note on the schedule names">3</button></p>
+              <div class="end"><span>↻ Renew for next year</span></div>
+            </div>
+          </div>
+        </div>
+      </div></div>
+      <aside class="side">
+        <h3>What to look at</h3>
+        <div class="li"><button class="mk bad" data-k="u1">F1</button><p><b>Two lines where the ruling said one.</b> Round 1 Ask 9 A: "one line names unused time a final schedule holds". With two schedules the window prints two sentences that open the same way.</p></div>
+        <div class="li"><button class="mk bad" data-k="u2">F2</button><p><b>No gap under the line.</b> The quiet line has no bottom margin and the rows card has no top margin, so the last line sits on the card's border.</p></div>
+        <div class="li"><button class="mk fix" data-k="u1r">fix</button><p><b>The band's note slot.</b> The shared band already has a place for one note under it, with 1 rem below. Use that slot.</p></div>
+        <div class="li"><button class="mk same" data-k="u3">3</button><p><b>The schedule names.</b> They stay plain text in the note. The links to the schedules stay in the line at the foot of the window.</p></div>
+      </aside>
+    </div>
+  </section>
+
+  <!-- ═════════ 2 · THE DRAFT CARD WARNING ═════════ -->
+  <section class="pane" id="p-cards" role="tabpanel">
+    <p class="lede">New schedule, step 2 (KitDialog xwide, 1024 px). The schedule's hours include Field 1, where the draft Fall house league already gives practices on some Sundays. Draft 1 puts 4 slots there, draft 2 puts 6, and draft 3 leaves that time open. The cards column is 15 rem (240 px) wide.</p>
+    <p class="statecap" data-s="b"><b>Before 2D:</b> only a row brought in by Find the time could warn. A typed row on the same ground said nothing. The line was short.</p>
+    <p class="statecap" data-s="a"><b>As built:</b> every row can warn, which is right. The line is now two sentences, about 145 characters, and wraps to six lines in a 240 px card. The second sentence is the same on every card.</p>
+    <p class="statecap" data-s="r"><b>Recommended:</b> the card keeps the count and the draft's name on one or two lines. The rule ("whichever is finalized first keeps it") appears once, in the step's warning notice above the cards. That notice uses the same style as the step's other notices.</p>
+    <div class="cols">
+      <div class="scroller"><div class="scrim">
+        <div class="win">
+          <div class="dh"><div class="tt"><span class="bk">‹ Settings</span><span class="tl">New schedule</span><span class="st2">Step 2 of 2 · drafts for Spring rep 2027</span></div><span class="x" aria-hidden="true">✕</span></div>
+          <div class="prog same"><span></span><span></span></div>
+          <div class="db">
+            <div class="drafts">
+              <p class="notice span hl good" data-s="r"><span class="ic">⚠</span><span>Some of this time is also given out by the draft Fall house league. Whichever schedule is finalized first keeps it; the other shows it as a clash.<button class="mk fix" data-k="c1r" aria-label="Fixes F3">fixes F3</button></span></p>
+              <div class="cards">
+                <div class="dcard on">
+                  <div class="hd same"><b>Balanced</b><span class="sc">86<small>/100</small></span></div>
+                  <ul class="ms">
+                    <li class="same"><span class="g">✓</span>Every team gets 12 practices</li>
+                    <li class="same"><span class="g">✓</span>Prime time within one of even</li>
+                    <li class="am same"><span class="w">⚠</span>2 teams have back-to-back nights</li>
+                    <li class="am hl" data-s="b"><span class="w">⚠</span>4 slots are given on days the draft Fall house league holds there<button class="mk same" data-k="c0">b</button></li>
+                    <li class="am hl" data-s="a"><span class="w">⚠</span>4 slots are given on time the draft Fall house league also holds. Whichever is finalized first keeps it; the other shows it as a clash.<button class="mk bad" data-k="c1" aria-label="Finding F3">F3</button></li>
+                    <li class="am hl good" data-s="r"><span class="w">⚠</span>4 slots on time the draft Fall house league holds<button class="mk fix" data-k="c1r" aria-label="Fixes F3">fix</button></li>
+                  </ul>
+                </div>
+                <div class="dcard">
+                  <div class="hd same"><b>Prime time first</b><span class="sc">81<small>/100</small></span></div>
+                  <ul class="ms">
+                    <li class="same"><span class="g">✓</span>Every team gets 12 practices</li>
+                    <li class="am same"><span class="w">⚠</span>Prime time off by 2 for 13U AA</li>
+                    <li class="am hl" data-s="b"><span class="w">⚠</span>6 slots are given on days the draft Fall house league holds there</li>
+                    <li class="am hl" data-s="a"><span class="w">⚠</span>6 slots are given on time the draft Fall house league also holds. Whichever is finalized first keeps it; the other shows it as a clash.<button class="mk bad" data-k="c1" aria-label="Finding F3">F3</button></li>
+                    <li class="am hl good" data-s="r"><span class="w">⚠</span>6 slots on time the draft Fall house league holds</li>
+                  </ul>
+                </div>
+                <div class="dcard">
+                  <div class="hd same"><b>Fewest trips</b><span class="sc">78<small>/100</small></span></div>
+                  <ul class="ms same">
+                    <li><span class="g">✓</span>Every team gets 12 practices</li>
+                    <li><span class="g">✓</span>No team at two venues in a week</li>
+                    <li class="am"><span class="w">⚠</span>3 teams short of prime time</li>
+                  </ul>
+                </div>
+                <span class="more same">Three more drafts<button class="mk bad" data-k="c2" aria-label="Finding F4" data-s="a">F4</button></span>
+              </div>
+              <div class="chosen same">
+                <div class="lens"><span class="sw" style="background:#fff"><button type="button" aria-pressed="true" tabindex="-1">By team</button><button type="button" aria-pressed="false" tabindex="-1">By day</button></span><span class="sp"></span><span class="btn sm">⤓ Export</span></div>
+                <div class="lines">
+                  <div class="tline"><span class="sw2" style="background:#5B7BD5"></span><b>9U AA</b><span>12 slots</span><span>4 prime</span><span>Sun</span></div>
+                  <div class="tline"><span class="sw2" style="background:#C2603A"></span><b>11U AA</b><span>12 slots</span><span>4 prime</span><span>Sun</span></div>
+                  <div class="tline"><span class="sw2" style="background:#3E9A6A"></span><b>13U AA</b><span>12 slots</span><span>5 prime</span><span>Sun</span></div>
+                  <div class="tline"><span class="sw2" style="background:#9A5BB8"></span><b>15U AA</b><span>12 slots</span><span>3 prime</span><span>Sun</span></div>
+                  <div class="tline"><span class="sw2" style="background:#B8963E"></span><b>17U AA</b><span>12 slots</span><span>4 prime</span><span>Sun</span></div>
+                </div>
+                <div class="statement">Saving keeps this draft with the schedule. Nothing is booked and no one is told until you finalize it.</div>
+              </div>
+            </div>
+          </div>
+          <div class="df same"><span class="btn">Back to settings</span><span class="btn pri">Save as a draft</span></div>
+        </div>
+      </div></div>
+      <aside class="side">
+        <h3>What to look at</h3>
+        <div class="li"><button class="mk bad" data-k="c1">F3</button><p><b>Six lines in a 240 px card, on every card that has the slots.</b> The other lines on a card are short facts. This one also explains a rule, and the rule is the same on every card.</p></div>
+        <div class="li"><button class="mk bad" data-k="c2">F4</button><p><b>The cards column grows about 90 px per card that warns.</b> On a 768 px tall laptop window, Three more drafts and the third card drop below the fold.</p></div>
+        <div class="li"><button class="mk fix" data-k="c1r">fix</button><p><b>The fact stays on the card and the rule is said once.</b> The rule goes in the step's warning notice, the place the step already uses for "too few slots" and gaps.</p></div>
+        <div class="li"><button class="mk same" data-k="c5">P</button><p><b>The card is a button that holds a list.</b> This was already true before 2D. Opens the note.</p></div>
+      </aside>
+    </div>
+  </section>
+
+  <!-- ═════════ 3 · A SIDE IN FIND THE TIME ═════════ -->
+  <section class="pane" id="p-find" role="tabpanel">
+    <p class="lede">Find the time inside New schedule (xwide, 1024 px; computer-only by its stylesheet). Field 1 is in two sides. The draft Fall house league holds side A on 4 of the 13 Sundays, so the whole of Field 1 is free on 9. Side B is free on all 13.</p>
+    <p class="statecap" data-s="b"><b>Before 2D:</b> a booking on side A held the whole field. Field 1 showed 9 days free and nothing else, so side B's 4 Sundays were never offered.</p>
+    <p class="statecap" data-s="a"><b>As built:</b> "Field 1 side B" is a row right after "Field 1". Ticking it unticks Field 1. Nothing in the two names says that one is the whole field and the other a part of it. The count line counts the side as a fourth facility and adds its hours to Field 1's.</p>
+    <p class="statecap" data-s="r"><b>Recommended:</b> the rows use the words of the tick list New schedule already ships for the same choice (its Facilities chips, round 2 tab 3): "Field 1 (whole)" and "Field 1, side B", flat, with no indent. The tick moving between them is that list's ruled behaviour. The count line counts facilities, not rows.</p>
+    <div class="cols">
+      <div class="scroller"><div class="scrim">
+        <div class="win">
+          <div class="dh"><div class="tt"><span class="bk">‹ New schedule</span><span class="tl">Find the time</span><span class="st2">Every facility the club holds on a permit. Free means nothing is booked there and no other schedule’s draft holds it.</span></div><span class="x" aria-hidden="true">✕</span></div>
+          <div class="db" style="padding-top:.9rem">
+            <div class="ffil same">
+              <div class="fld"><span class="lb">From</span><span class="ctl">Sun, Apr 4, 2027</span></div>
+              <div class="fld"><span class="lb">To</span><span class="ctl">Sun, Jun 27, 2027</span></div>
+              <div class="fld"><span class="lb">Shortest time</span><span class="ctl">1 hour</span><span class="hnt">Shorter free time is left out.</span></div>
+              <div class="fld wide"><span class="lb">Days</span><span class="chips"><span class="chip">Mon</span><span class="chip">Tue</span><span class="chip">Wed</span><span class="chip">Thu</span><span class="chip">Fri</span><span class="chip">Sat</span><span class="chip on">✓ Sun</span></span></div>
+              <div class="fld wide"><div class="hrs"><div class="fld" style="margin:0"><span class="lb">From</span><span class="ctl ph">Any time</span></div><div class="fld" style="margin:0"><span class="lb">Until</span><span class="ctl ph">Any time</span></div></div><span class="door" style="font-size:14px;margin-top:.4rem">+ Another time</span></div>
+              <div class="fld wide"><span class="lb">Where</span><span class="chips"><span class="chip">Bennett Park</span><span class="chip">Milton Sports Dome</span></span></div>
+            </div>
+            <div class="flist">
+              <p class="fcount" data-s="b">3 facilities the club holds in these dates · 121 h free</p>
+              <p class="fcount hl" data-s="a">4 facilities the club holds in these dates · 173 h free<button class="mk bad" data-k="f3" aria-label="Finding F6">F6</button></p>
+              <p class="fcount hl good" data-s="r">3 facilities the club holds in these dates · 121 h free, and side B of Field 1 on 4 more Sundays<button class="mk fix" data-k="f3r" aria-label="Fixes F6">fixes F6</button></p>
+              <div class="frow head same"><span>Facility</span><span>Permit</span><span style="text-align:right">Free</span></div>
+              <div class="frow">
+                <span class="choice"><span class="box" data-s="b"></span><span class="box" data-s="a" title="as built: unticked by ticking side B"></span><span class="box" data-s="r"></span><span class="ct"><b data-s="ab">Field 1</b><b data-s="r" class="hl good">Field 1 (whole)</b><span>Milton Sports Dome</span></span></span>
+                <span class="cell same"><b>Sports Dome · Spring 2027</b><small>Town of Milton</small></span>
+                <span class="cell r same"><b>9 days free of 13</b><small>Sun 9:00 a.m.–1:00 p.m. · 36 h</small><small class="am">4 held by a draft (Fall house league)</small></span>
+              </div>
+              <div class="frow hl" data-s="a">
+                <span class="choice"><span class="box on">✓</span><span class="ct"><b>Field 1 side B</b><span>Milton Sports Dome</span></span><button class="mk bad" data-k="f1" aria-label="Finding F5">F5</button></span>
+                <span class="cell"><b>Sports Dome · Spring 2027</b><small>Town of Milton</small></span>
+                <span class="cell r"><b>13 days free of 13</b><small>Sun 9:00 a.m.–1:00 p.m. · 52 h</small></span>
+              </div>
+              <div class="frow hl good" data-s="r">
+                <span class="choice"><span class="box on">✓</span><span class="ct"><b>Field 1, side B</b><span>Milton Sports Dome</span></span><button class="mk fix" data-k="f1r" aria-label="Fixes F5">fixes F5</button></span>
+                <span class="cell"><b>Sports Dome · Spring 2027</b><small>Town of Milton</small></span>
+                <span class="cell r"><b>13 days free of 13</b><small>Sun 9:00 a.m.–1:00 p.m. · 52 h</small></span>
+              </div>
+              <div class="frow same">
+                <span class="choice"><span class="box"></span><span class="ct"><b>Field 2</b><span>Milton Sports Dome</span></span></span>
+                <span class="cell"><b>Sports Dome · Spring 2027</b><small>Town of Milton</small></span>
+                <span class="cell r"><b>13 days free of 13</b><small>Sun 9:00 a.m.–1:00 p.m. · 52 h</small></span>
+              </div>
+              <div class="frow same">
+                <span class="choice"><span class="box"></span><span class="ct"><b>Diamond 3</b><span>Bennett Park</span></span></span>
+                <span class="cell"><b>Bennett Park · Spring 2027</b><small>Town of Milton</small></span>
+                <span class="cell r"><b>11 days free of 13</b><small>Sun 9:00 a.m.–12:00 p.m. · 33 h</small></span>
+              </div>
+            </div>
+          </div>
+          <div class="df"><span class="fn same">Each comes in as a row of hours tied to its permit, within the dates above.</span><span class="btn same">Back</span><span class="btn pri same">Add 1 to the schedule</span></div>
+        </div>
+      </div></div>
+      <aside class="side">
+        <h3>What to look at</h3>
+        <div class="li"><button class="mk bad" data-k="f1">F5</button><p><b>The two rows don't say whole and part.</b> The tick list New schedule ships for the same choice says "Field 1 (whole)" and "Field 1, side B". Without "(whole)", ticking side B and seeing Field 1 untick looks like a mistake.</p></div>
+        <div class="li"><button class="mk bad" data-k="f3">F6</button><p><b>The count line adds the side as a facility and adds its hours.</b> 36 h of Field 1 and 52 h of side B overlap on the same 9 Sundays.</p></div>
+        <div class="li"><button class="mk fix" data-k="f1r">fix</button><p><b>Use the shipped tick list's words, flat.</b> Round 2 left the indent out of that list on purpose: an indented parent with its own tick can't tell "all of it" from "some of it".</p></div>
+        <div class="li"><button class="mk same" data-k="f4">P</button><p><b>The list is a table drawn with divs.</b> This was already true before 2D. Opens the note.</p></div>
+      </aside>
+    </div>
+  </section>
+
+  <!-- ═════════ 4 · PHONE ═════════ -->
+  <section class="pane" id="p-phone" role="tabpanel">
+    <p class="lede">390 px. <b>Find the time is computer-only</b> (its stylesheet says so, and its three columns have no phone rule), so it has no phone frame here. The permit window and the drafts step do open on a phone. The Screen switch applies here too.</p>
+    <div class="scroller"><div style="display:flex;gap:20px;align-items:flex-start;flex-wrap:nowrap">
+      <div class="scrim">
+        <div class="win phone">
+          <div class="dh"><div class="tt"><span class="eb">Permit · 2027</span><span class="tl">Sports Dome · Spring 2027</span></div><span class="x">✕</span></div>
+          <div class="db">
+            <div class="cutm same" style="font:600 11px/1.3 var(--font-mono);letter-spacing:.06em;text-transform:uppercase;color:var(--dim);border:1px dashed var(--line-strong);border-radius:6px;padding:.45rem .7rem;text-align:center;margin-bottom:.6rem">The permit · the time · cost, as they ship</div>
+            <div class="shd same"><span>Use</span></div>
+            <div class="band t3 same">
+              <div class="tile"><span class="lab">Held</span><span class="fig">104 h</span></div>
+              <div class="tile"><span class="lab">Booked</span><span class="fig">52 h</span><span class="cap">50%</span></div>
+              <div class="tile"><span class="lab">Unused</span><span class="fig">52 h</span></div>
+            </div>
+            <div data-s="a">
+              <p class="under hl">Of the unused time, 9 h is open slots on Spring rep 2027: the schedule holds it and no team has it yet.</p>
+              <p class="under nogap hl">Of the unused time, 6 h is house-league time on Spring house league 2027: the schedule holds it and the league hasn’t given it out yet.<button class="mk bad" data-k="u2">F2</button></p>
+            </div>
+            <p class="bandnote hl good" data-s="r">Of the 52 h unused, 15 h is held by schedules and no team has it yet: 9 h of open slots on Spring rep 2027 and 6 h of house-league time on Spring house league 2027 not given out.<button class="mk fix" data-k="u1r">fix</button></p>
+            <div class="rows same"><div class="row"><span class="m"><span class="t">Milton Sports Dome · Field 1 and Field 2</span><span class="s">Spring rep 2027 · Spring house league 2027</span></span><span class="f">52 of 104 h</span></div></div>
+            <p class="under same"><span class="door">Hand out this time in a schedule ›</span></p>
+          </div>
+        </div>
+        <p class="note" style="color:#2A241C">Permit window · phone. As built: six lines of text before the rows. Recommended: four.</p>
+      </div>
+      <div class="scrim">
+        <div class="win phone">
+          <div class="dh"><div class="tt"><span class="bk">‹ Settings</span><span class="tl">New schedule</span><span class="st2">Step 2 of 2 · drafts for Spring rep 2027</span></div><span class="x">✕</span></div>
+          <div class="prog same"><span></span><span></span></div>
+          <div class="db">
+            <div class="drafts">
+              <p class="notice hl good" data-s="r"><span class="ic">⚠</span><span>Some of this time is also given out by the draft Fall house league. Whichever schedule is finalized first keeps it; the other shows it as a clash.</span></p>
+              <div class="cards">
+                <div class="dcard on">
+                  <div class="hd same"><b>Balanced</b><span class="sc">86<small>/100</small></span></div>
+                  <ul class="ms">
+                    <li class="same"><span class="g">✓</span>Every team gets 12 practices</li>
+                    <li class="same"><span class="g">✓</span>Prime time within one of even</li>
+                    <li class="am same"><span class="w">⚠</span>2 teams have back-to-back nights</li>
+                    <li class="am hl" data-s="b"><span class="w">⚠</span>4 slots are given on days the draft Fall house league holds there</li>
+                    <li class="am hl" data-s="a"><span class="w">⚠</span>4 slots are given on time the draft Fall house league also holds. Whichever is finalized first keeps it; the other shows it as a clash.<button class="mk bad" data-k="c1">F3</button></li>
+                    <li class="am hl good" data-s="r"><span class="w">⚠</span>4 slots on time the draft Fall house league holds</li>
+                  </ul>
+                </div>
+                <div class="dcard">
+                  <div class="hd same"><b>Prime time first</b><span class="sc">81<small>/100</small></span></div>
+                  <ul class="ms">
+                    <li class="same"><span class="g">✓</span>Every team gets 12 practices</li>
+                    <li class="am hl" data-s="a"><span class="w">⚠</span>6 slots are given on time the draft Fall house league also holds. Whichever is finalized first keeps it; the other shows it as a clash.</li>
+                    <li class="am hl good" data-s="r"><span class="w">⚠</span>6 slots on time the draft Fall house league holds</li>
+                    <li class="am hl" data-s="b"><span class="w">⚠</span>6 slots are given on days the draft Fall house league holds there</li>
+                  </ul>
+                </div>
+                <div class="dcard same"><div class="hd"><b>Fewest trips</b><span class="sc">78<small>/100</small></span></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <p class="note" style="color:#2A241C">Drafts step · phone. The cards stack at full width, so the long line takes 4 lines on each card instead of 6. The rule sentence is still repeated on each card.</p>
+      </div>
+    </div></div>
+  </section>
+
+  <!-- ═════════ 5 · FINDINGS ═════════ -->
+  <section class="pane" id="p-findings" role="tabpanel">
+    <p class="lede">Measured from the stylesheets and components as they stand in the working copy (2026-11-26). Each finding gives the rule it is checked against, the concrete change, and a recommendation. "P" marks problems that existed before 2D: they are noted here and not owed by 2D.</p>
+    <div class="flist2" id="findings"></div>
+    <h2 style="margin-top:18px">Works well</h2>
+    <div class="ok"><ul id="works"></ul></div>
+  </section>
+
+  <!-- ═════════ 6 · ASKS ═════════ -->
+  <section class="pane" id="p-asks" role="tabpanel">
+    <p class="lede"><b>Ruled by the owner 2026-11-26: Ask 1 A, Ask 2 A, and every other finding as recommended.</b> Two choices for you. The other findings are fixes the build session can make without asking: F2 and F4 follow from Asks 1 and 2, and F5 and F6 reuse rules and words that already ship. Tick your answers and copy the result back to the build session.</p>
+    <div class="asks" id="asks"></div>
+    <div class="paste">
+      <textarea id="answers" readonly aria-label="Your answers"></textarea>
+      <button type="button" class="copy" id="copy">Copy my answers</button>
+      <span class="copied" id="copied" aria-live="polite"></span>
+    </div>
+  </section>
+</div>
+
+<div class="shade" id="shade" hidden>
+  <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="sh-t">
+    <h3 id="sh-t"></h3>
+    <div id="sh-b"></div>
+    <button type="button" class="cl" id="sh-c">Close</button><button type="button" class="cl go" id="sh-g" hidden>Read the finding ›</button>
+  </div>
+</div>
+
+<script>
+const FINDINGS = [
+  { id: 'F1', sev: 'm', title: 'The Used line is one paragraph per schedule, beside the band, instead of the band’s one note',
+    rule: 'MoneySummaryBand: “ONE note, BENEATH the band and never inside it” (recipe deviation 3, the `note` prop). Round 1 Ask 9 A, ruled: “one line names unused time a final schedule holds that no team has.” Design decision 2026-10-11 on joined bands: “a line under the rows says the arithmetic once.”',
+    today: 'PermitWindows.tsx maps `u.heldUnused` to one `own.under` paragraph per schedule. With two schedules the window shows two sentences, both opening “Of the unused time,”. The band’s own note slot is not used.',
+    change: 'Pass one note to the Use band’s `note` prop. Give the total held first, then each schedule inside the same sentence. The workbook’s notes follow: one note, not one per schedule.',
+    rec: 'Fix in 2D. The words stay /marketing’s in 2E; the shape (one note, the total first) is the design call.' },
+  { id: 'F2', sev: 'm', title: 'No space between the Used line and the rows card',
+    rule: 'Spacing under a money band: the band note carries `margin: 0 0 1rem` (coaches.module.css .moneyBandNote). TABLE_AND_LIST_STANDARD: a note never touches the card next to it (owner 2026-10-26, “the Email families note touched its table card”). Permits.module.css records walk §296: “0.4rem read as glued”.',
+    today: '`.under` is `margin: .6rem .25rem 0` and `.rows` has no top margin. So the last Used line sits right on the rows card’s border (0 px), while every other gap in the window is 0.6–1.25 rem.',
+    change: 'Using the band’s note (F1) gives it 1 rem below with no new CSS. If the line stays an `own.under`, give the last one a bottom margin of 0.6 rem. A line that ends with a margin also survives the window body’s `p:last-child` rule.',
+    rec: 'Fixed by F1. Do not add a one-off margin rule.' },
+  { id: 'F3', sev: 'h', title: 'The draft-card warning runs to six lines and repeats the same rule on every card',
+    rule: 'A draft card’s lines are short facts measured for that draft. The schedule-gaps rulings (owner 2026-11-24) folded the card’s short-teams line past three teams, and replaced repeated per-week lines with “one line above the grid … the same sentence”. The step already has a warning notice spanning the row for what is true of every draft (shortWhy, gapWhy).',
+    today: '`foundDraftWarning` is about 145 characters in two sentences. In the 15 rem column (about 195 px of text after the padding and the icon) at the support size it wraps to 6 lines. The second sentence (“Whichever is finalized first keeps it; the other shows it as a clash.”) is the same on each card, and does not help you choose between drafts.',
+    change: 'Card line: the count and the draft’s name only, about 50 characters, the length of the other measures (“4 slots on time the draft Fall house league holds”). The rule appears once, in a warning notice above the cards, shown only when any draft has such slots. A draft with none shows no line, which is how the cards say which draft avoids the overlap.',
+    rec: 'Ask 2, recommended A.' },
+  { id: 'F4', sev: 'm', title: 'The cards column pushes Three more drafts below the fold',
+    rule: 'Whole-screen before/after: the thing the step exists for (choosing among three drafts) must stay in view.',
+    today: 'Each card that warns gains about 90 px (6 lines × about 18 px, less the old 2–3 lines). With two cards warning, the column is about 180 px taller. In a 768 px tall laptop window, Three more drafts and part of the third card drop below the fold.',
+    change: 'Comes with F3. The short card line adds about 18–36 px per card. The notice adds one line across the whole width, above both columns.',
+    rec: 'Fixed by F3.' },
+  { id: 'F5', sev: 'm', title: 'Find the time names a side differently from the tick list New schedule ships for the same choice',
+    rule: 'Draw a control from its shipped component. New schedule’s Facilities tick list (round 2 tab 3; `tickOptions` in field-parts) names a split field “Field 1 (whole)” and its parts “Field 1, side B”, flat, no indent. The indent was left out on purpose there: a parent row with its own tick cannot tell “all of it” from “some of it”. That list’s rule that a part unticks its whole field, and the reverse, is the build note from round 2.',
+    today: 'The finder’s rows read “Field 1” and “Field 1 side B” (no “(whole)”, no comma), with the same caption. Ticking side B unticks Field 1, following the ruled pattern, but nothing in the words says the two rows are the whole field and a part of it, so the untick looks like a mistake.',
+    change: 'Name the finder’s tick rows with the tick list’s words: “Field 1 (whole)” on a split field’s own row, “Field 1, side B” on a part row. Flat, no indent, caption “Milton Sports Dome” on both. Keep the tick behaviour. The row this brings into New schedule keeps its box words (“Field 1 side B”), and so does the found row’s card note.',
+    rec: 'Fix in 2D. It reuses the shipped words, so it is not an owner call. Radios were considered and left out: a radio can’t be cleared back to none, and the shipped list uses ticks.' },
+  { id: 'F6', sev: 'm', title: 'The count line counts the side as a facility and adds its hours on top of the field’s',
+    rule: 'A figure counts what it names. “N facilities” names facilities, and the “free” total should count each piece of ground once.',
+    today: '`findCount(data.rows.length, sum of freeMinutes)`: as built “4 facilities … · 173 h free” for 3 facilities. Side B’s 52 h is added to Field 1’s 36 h, though on 9 of the 13 Sundays it is the same ground.',
+    change: 'Count facilities, not rows: a part row adds no facility. Add a part’s hours only on the days its field’s row does not count them. The working words could then mention the extra part days separately (illustrated as “and side B of Field 1 on 4 more Sundays”). The arithmetic is the build session’s; the words are /marketing’s.',
+    rec: 'Fix in 2D. This is a figure, so it is not a matter of wording.' },
+  { id: 'P1', sev: 'p', title: 'A draft card is a <button> that holds a <ul>',
+    rule: 'A list inside a card button. HTML allows only phrasing content inside a button, so a list is invalid there. A screen reader reads the whole card as the button’s name.',
+    today: 'This was already the case before 2D. 2D lengthens the card’s spoken name by the warning, which makes it worse but does not cause it.',
+    change: 'Later: make the card a radio in a radiogroup (a div with role="radio" and aria-checked), or keep the button for the head only and point aria-describedby at the list.',
+    rec: 'Not 2D. Note it for the stage close (2E) or the ideas backlog. F3 keeps the spoken name short in the meantime.' },
+  { id: 'P2', sev: 'p', title: 'Find the time’s list is a table drawn with divs, with a hidden header row',
+    rule: 'TABLE_AND_LIST_STANDARD: when the reader’s question is answered by a column, it is a <table>. A surface that differs on an axis gets a TABLE_EXCEPTION_REGISTER row first (“No id, no merge”).',
+    today: 'The three-column grid (Facility · Permit · Free) has an aria-hidden header row, so a screen reader hears no column names. The register has no row for Find the time, the permit window’s use rows, or the drafts step. This was already the case before 2D, and 2D adds no column.',
+    change: 'Add a register row for Find the time (KEEP: computer-only, each row a tick choice, the Free column is read per row and never summed) with the header exposed to screen readers, or convert it to a table later.',
+    rec: 'Not 2D. Record it.' },
+];
+const WORKS = [
+  'The draft-card warning keeps the shipped amber line (the same icon, ink and size as the card’s other warnings), and Find the time’s draft-held line keeps its amber small face. Warnings look the same across the step.',
+  'Warning on every row, not only rows Find the time brought in, is right: a typed row on the same ground was silent before.',
+  'The Used line leaves Booked as booked time (Ask 9 A) and adds no tile. The band stays three tiles and keeps its phone form (two across, Unused full width).',
+  '“Field 1 side B” in the settings step’s card note matches the box words the round 1 drawing ruled. Only the finder’s list row changes in F5.',
+  'Placing side B right after Field 1, and one tick per field, both match the tick list New schedule ships. F5 only changes the words.',
+  'No italics and no new tokens anywhere: each piece uses faces that already exist (the quiet line, the amber line, the tick row).',
+];
+const ASKS = [
+  { id: 'Ask 1', q: 'The Used line with two schedules: one note or one line each?', why: 'Round 1 Ask 9 A ruled “one line”. The build made one per schedule. A permit handed out by two schedules is common (rep and house league on one dome).',
+    opts: ['A · One note under the band, the total first, each schedule named in it (the band’s note slot)', 'B · One line per schedule, as built, with a gap added under the last'], rec: 'A' },
+  { id: 'Ask 2', q: 'The draft-card warning: the full rule on every card, or the fact on the card and the rule once?', why: 'Each card’s count tells you which draft avoids the overlap. The rule sentence is the same on every card.',
+    opts: ['A · Card: “4 slots on time the draft Fall house league holds”. The rule once, in the step’s warning notice above the cards', 'B · As built: both sentences on every card that has such slots'], rec: 'A' },
+];
+
+const NOTES = {
+  u1: { f: 'F1', where: 'Two paragraphs under the Use band, one per schedule.' },
+  u2: { f: 'F2', where: 'The last Used line meets the rows card with no gap: .under has no bottom margin and .rows has no top margin.' },
+  u1r: { f: 'F1', fix: true, where: 'The band’s own note slot. One sentence with the total first, and 1 rem below it before the rows. The words are only illustrative.' },
+  u3: { title: 'The schedule names, kept as they ship', body: 'The foot of the window already makes each schedule’s name a link for the people who build schedules (13c). The note names the same schedules as plain text, so the window has one place that links to each schedule, not two. Nothing changes here.' },
+  c0: { title: 'Before 2D', body: 'Only a row Find the time brought in carried the found days, so only those rows could warn. The line was 65 characters and took two or three lines in the card.' },
+  c1: { f: 'F3', where: 'The 2D line in a 240 px card: six lines, the second sentence the same on every card.' },
+  c1r: { f: 'F3', fix: true, where: 'The card keeps the count; the rule appears once in the notice above the cards, in the same style as the step’s “too few slots” notice.' },
+  c2: { f: 'F4', where: 'Three more drafts, pushed down by about 180 px when two cards warn.' },
+  c5: { f: 'P1', where: 'Every draft card.' },
+  f1: { f: 'F5', where: '“Field 1” and “Field 1 side B”, ticked. Ticking side B has just unticked Field 1.' },
+  f3: { f: 'F6', where: '“4 facilities … 173 h free” for three facilities, with side B’s hours added on top of Field 1’s.' },
+  f3r: { f: 'F6', fix: true, where: 'Facilities counted once, hours counted once; the side’s extra Sundays named separately. The words are illustrative.' },
+  f1r: { f: 'F5', fix: true, where: '“Field 1 (whole)” and “Field 1, side B”, the words of New schedule’s own Facilities tick list, flat. The tick moving from the whole to the side now reads as the choice it is.' },
+  f4: { f: 'P2', where: 'The whole list.' },
+};
+
+const $ = s => document.querySelector(s);
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const SEV = { h: 'High', m: 'Medium', l: 'Low', p: 'Before 2D' };
+
+$('#findings').innerHTML = FINDINGS.map(f => `
+  <article class="fd" id="fd-${f.id}">
+    <h3><span>${f.id}</span><span class="sev ${f.sev}">${SEV[f.sev]}</span><span>${esc(f.title)}</span></h3>
+    <dl><dt>Rule</dt><dd>${esc(f.rule)}</dd><dt>What it does</dt><dd>${esc(f.today)}</dd><dt>Change</dt><dd>${esc(f.change)}</dd><dt>Recommend</dt><dd>${esc(f.rec)}</dd></dl>
+  </article>`).join('');
+$('#works').innerHTML = WORKS.map(w => `<li>${esc(w)}</li>`).join('');
+$('#asks').innerHTML = ASKS.map((a, i) => `
+  <div class="ask"><h3 style="margin:0 0 .3rem;font-size:.95rem">${a.id} · ${esc(a.q)}</h3>
+    <p class="why">${esc(a.why)}</p><p class="rec">Recommended: ${a.rec}</p>
+    <div class="pick" role="radiogroup" aria-label="${esc(a.id)}">${a.opts.map((o, j) => `<label><input type="radio" name="ask${i}" id="ask${i}-${j}" value="${o[0]}">${esc(o)}</label>`).join('')}</div>
+  </div>`).join('');
+
+function answers() {
+  const lines = ASKS.map((a, i) => { const c = document.querySelector(`input[name="ask${i}"]:checked`); return `${a.id} ${c ? c.value : '?'}`; });
+  $('#answers').value = 'Session 2D design check, answers: ' + lines.join(', ') + '.';
+}
+document.addEventListener('change', e => { if (e.target.name && e.target.name.startsWith('ask')) answers(); });
+answers();
+$('#copy').addEventListener('click', () => {
+  const t = $('#answers'); const done = () => { $('#copied').textContent = 'Copied.'; };
+  try { navigator.clipboard.writeText(t.value).then(done, () => { t.select(); $('#copied').textContent = 'Selected: press copy.'; }); }
+  catch (_) { t.select(); $('#copied').textContent = 'Selected: press copy.'; }
+});
+
+// Tabs
+const tabs = [...document.querySelectorAll('.tab')];
+function show(id) {
+  tabs.forEach(t => t.setAttribute('aria-selected', String(t.dataset.tab === id)));
+  document.querySelectorAll('section.pane').forEach(p => p.classList.toggle('on', p.id === 'p-' + id));
+  $('#viewrow').hidden = id === 'findings' || id === 'asks';
+}
+tabs.forEach(t => t.addEventListener('click', () => show(t.dataset.tab)));
+
+// Switches
+function sw(id, attr) {
+  const g = document.getElementById(id);
+  g.addEventListener('click', e => {
+    const b = e.target.closest('button'); if (!b) return;
+    g.querySelectorAll('button').forEach(x => x.setAttribute('aria-pressed', String(x === b)));
+    document.body.dataset[attr] = b.dataset.v;
+  });
+}
+document.body.dataset.state = 'a'; document.body.dataset.diff = '0';
+sw('sw-state', 'state'); sw('sw-diff', 'diff');
+
+// Explanations
+let goTo = null;
+function openNote(k) {
+  const n = NOTES[k]; if (!n) return;
+  let title, body = '';
+  if (n.f) {
+    const f = FINDINGS.find(x => x.id === n.f);
+    title = (n.fix ? 'Fixes ' : '') + f.id + ' · ' + f.title;
+    body = `<p class="k">Where you are looking</p><p>${esc(n.where)}</p>` +
+      (n.fix ? `<p class="k">What the change does</p><p>${esc(f.change)}</p>` : `<p class="k">What the code does today</p><p>${esc(f.today)}</p><p class="k">The rule</p><p>${esc(f.rule)}</p><p class="k">What to change</p><p>${esc(f.change)}</p>`);
+    goTo = f.id;
+  } else { title = n.title; body = `<p>${esc(n.body)}</p>`; goTo = null; }
+  $('#sh-t').textContent = title; $('#sh-b').innerHTML = body; $('#sh-g').hidden = !goTo;
+  $('#shade').hidden = false; $('#sh-c').focus();
+}
+document.addEventListener('click', e => {
+  const m = e.target.closest('.mk'); if (m && m.dataset.k) { e.preventDefault(); e.stopPropagation(); openNote(m.dataset.k); }
+});
+const closeNote = () => { $('#shade').hidden = true; };
+$('#sh-c').addEventListener('click', closeNote);
+$('#shade').addEventListener('click', e => { if (e.target.id === 'shade') closeNote(); });
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeNote(); });
+$('#sh-g').addEventListener('click', () => { const id = goTo; closeNote(); show('findings'); const el = document.getElementById('fd-' + id); if (el) el.scrollIntoView({ block: 'start' }); });
+</script>

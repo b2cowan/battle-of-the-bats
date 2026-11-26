@@ -21,6 +21,7 @@
  * `zonedWallClockToUtc` (daylight saving included), and a booking is an instant pair, exactly as the clash rule reads it.
  */
 import { ORG_TIME_ZONE, addCalendarDays, zonedWallClockToUtc } from './timezone.ts';
+import { WHOLE, byQuarter, partsOverlap } from './field-parts.ts';
 
 const MIN = 60_000;
 
@@ -132,6 +133,8 @@ function blockHoldsFacility(block: TimeBlock, facilityId: string, venueFacilitie
 export interface BookingPlace {
   venueId: string | null;
   facilityId: string | null;
+  /** The part of its field it holds (Club schedules Stage 2; 0 or absent = the whole field). A permit holds whole fields. */
+  sectionMask?: number | null;
   startMs: number;
   endMs: number;
 }
@@ -354,6 +357,47 @@ function unionMinutes(spans: Span[]): number {
   return unionSpans(spans).reduce((total, [s, e]) => total + (e - s), 0) / MIN;
 }
 
+/** Time on ONE field's part, less what `less` covers there: a span and the ground it holds. */
+interface OnField { c: Span; mask?: number | null }
+
+/**
+ * The minutes a set of spans on one field holds, less `less`, a part counting its share (Club schedules Stage 2, Session
+ * 2D; round 1 Ask 9 A): per quarter, the union of what holds it, ÷ 4 — side A and side B at once are the field once, two
+ * hours on side A are one. When every span is the whole field the four quarters read alike, so the figure is the plain
+ * union (no split = identical).
+ */
+function fieldMinutes(on: readonly OnField[], less: readonly OnField[] = []): number {
+  return byQuarter(q => {
+    const at = (list: readonly OnField[]) => list.filter(x => partsOverlap(x.mask, q)).map(x => x.c);
+    return unionMinutes(without(at(on), at(less)));
+  });
+}
+
+/** Taken spans out of a set of spans (the finder reads it too). */
+export const without = (spans: readonly Span[], taken: readonly Span[]): Span[] => spans.flatMap(s => subtractSpans(s, taken));
+
+/** Bookings bucketed once by venue and club day (one past midnight sits on both its days); `venues`: only those. The use,
+ *  the Used line and the finder read the same buckets. */
+export function bucketByDay<T extends BookingPlace>(list: readonly T[], venues?: ReadonlySet<string>): Map<string, T[]> {
+  const out = new Map<string, T[]>();
+  for (const b of list) {
+    if (!b.venueId || (venues && !venues.has(b.venueId)) || !(b.endMs > b.startMs)) continue;
+    for (const d of new Set([clubDayOf(b.startMs), clubDayOf(b.endMs - 1)])) {
+      const k = `${b.venueId}|${d}`;
+      const at = out.get(k);
+      if (at) at.push(b); else out.set(k, [b]);
+    }
+  }
+  return out;
+}
+
+/** The bookings that take time at one place: its own, and any at the venue with no facility set ("busy then" — the whole
+ *  venue). A venue with no facilities is taken by any booking there. On a field, a booking takes the ground it holds
+ *  (Stage 2, Session 2D): the whole field asked for is taken by any part, side B is not taken by side A. */
+export function takenAt<T extends BookingPlace>(list: readonly T[] | undefined, unit: PlaceUnit, mask: number = WHOLE): T[] {
+  return (list ?? []).filter(b => unit === null || b.facilityId === null || (b.facilityId === unit && partsOverlap(b.sectionMask, mask)));
+}
+
 const clip = (b: BookingPlace, w: { startMs: number; endMs: number }): Span | null => {
   const s = Math.max(b.startMs, w.startMs);
   const e = Math.min(b.endMs, w.endMs);
@@ -421,15 +465,7 @@ export function permitUse(
   const byDay = new Map<string, DayUse>();
   // The bookings at the permit's venues, bucketed ONCE by venue and club day (a booking past midnight sits on both its
   // days), so each block-date reads only that evening's few bookings rather than the whole pool.
-  const bucket = new Map<string, UseBooking[]>();
-  for (const b of bookings) {
-    if (!b.venueId || !venues.has(b.venueId)) continue;
-    for (const d of new Set([clubDayOf(b.startMs), clubDayOf(b.endMs - 1)])) {
-      const k = `${b.venueId}|${d}`;
-      const list = bucket.get(k);
-      if (list) list.push(b); else bucket.set(k, [b]);
-    }
-  }
+  const bucket = bucketByDay(bookings, venues);
   const addName = (list: string[], name: string) => { if (!list.includes(name)) list.push(name); };
   // A booking with no facility set counts once in this permit, however many of its blocks hold those hours (two blocks
   // of one venue's fields at the same hours, Fields 1–3 and 4–6): the part a block already counted is not counted again.
@@ -451,7 +487,8 @@ export function permitUse(
       for (const u of units) {
         dayHeld += span;
         const on = clipped.filter(x => !real || x.b.facilityId === u);
-        const m = unionMinutes(on.map(x => x.c));
+        // A booking on a part counts its share (Session 2D; a permit holds whole fields, so the place is the field).
+        const m = fieldMinutes(on.map(x => ({ c: x.c, mask: x.b.sectionMask })));
         dayPlaced += m;
         const p = places.get(placeKey(block.venueId, u)) ?? { venueId: block.venueId, unit: u, heldMinutes: 0, bookedMinutes: 0, who: [] };
         p.heldMinutes += span;
@@ -492,6 +529,79 @@ export function permitUse(
     days: [...byDay.values()].sort((a, z) => a.day.localeCompare(z.day)),
     totals: { heldMinutes, bookedMinutes, unusedMinutes: Math.max(0, heldMinutes - bookedMinutes) },
   };
+}
+
+/** A FINAL schedule's slot as the Used line reads it: its place and time, its schedule, and what it holds. */
+export interface ScheduledTime extends BookingPlace {
+  scheduleId: string;
+  by: string;
+  /** Nobody (an open slot), house league's time not yet given out, or teams not yet sent. */
+  holds: 'open' | 'house_league' | 'teams';
+  /** Since when its schedule has held this slot (null while not final): the later of the schedule's finalize and the
+   *  slot's own making, so time a final schedule gains afterwards counts from when it gained it. Two final schedules on
+   *  the same ground: the one that held it first keeps it. */
+  heldSince: number | null;
+}
+
+/** "Whichever is finalized first keeps it", as an order: held longest first (then the schedule's id). */
+export const byFirstHeld = (a: Pick<ScheduledTime, 'heldSince' | 'scheduleId'>, b: Pick<ScheduledTime, 'heldSince' | 'scheduleId'>): number =>
+  (a.heldSince ?? 0) - (b.heldSince ?? 0) || a.scheduleId.localeCompare(b.scheduleId);
+
+/** Of a permit's unused time, what one final schedule holds that no team has: one line on the window (round 1 Ask 9 A). */
+export interface HeldUnused { scheduleId: string; by: string; holds: ScheduledTime['holds']; minutes: number }
+
+/**
+ * THE USED LINE (Club schedules Stage 2, Session 2D; round 1 Ask 9 A, ruled): Used stays booked time; this says the part
+ * of Unused a final schedule holds that nobody has — its open slots, and house league's time before the league divides
+ * it (a practice or game the league or a send writes is a booking, so it is Booked and drops out here). Per place and
+ * date, inside the permit's blocks: each schedule's slots, less every booking there, a part counting its share. A
+ * booking with no facility set is the whole venue busy (as everywhere): it is taken out too. Two final schedules on the
+ * same ground: the one that held it first keeps it (the other's slot there is its clash, not unused time). And a day's
+ * lines never pass what `permitUse` leaves unused that day (it counts a booking with no facility set ON TOP of the
+ * fields' own bookings at the same hours). Under a minute is no line. Largest first.
+ */
+export function heldUnused(
+  permit: PermitTime,
+  slots: readonly ScheduledTime[],
+  bookings: readonly UseBooking[],
+  ctx: { venueFacilities: VenueFacilities },
+): HeldUnused[] {
+  const venues = new Set(permit.blocks.map(b => b.venueId));
+  // Held longest first: each slot is counted less what is booked there and what an earlier one already holds.
+  const slotsAt = bucketByDay([...slots].sort(byFirstHeld), venues);
+  if (!slotsAt.size) return [];
+  const bookedAt = bucketByDay(bookings, venues);
+  // What each day leaves unused, as Used counts it: the most that day's lines may say.
+  const room = new Map(permitUse(permit, bookings, ctx).days.map(d => [d.day, d.heldMinutes - d.bookedMinutes]));
+  const totals = new Map<string, HeldUnused>();
+  for (const block of permit.blocks) {
+    const units = blockUnits(block, ctx.venueFacilities);
+    for (const day of blockDates(permit, block)) {
+      const at = slotsAt.get(`${block.venueId}|${day}`);
+      if (!at) continue;
+      const w = windowOn(day, block);
+      if (!(w.endMs > w.startMs)) continue;
+      const clipOf = (b: BookingPlace): OnField | null => { const c = clip(b, w); return c ? { c, mask: b.sectionMask } : null; };
+      const clipped = (list: readonly BookingPlace[]) => list.map(clipOf).filter((x): x is OnField => !!x);
+      for (const u of units) {
+        const less = clipped(takenAt(bookedAt.get(`${block.venueId}|${day}`), u));
+        // A schedule's slot stands on its own facility (a slot always names one where the venue has them).
+        for (const s of at) {
+          if (u !== null && s.facilityId !== u) continue;
+          const c = clipOf(s);
+          if (!c) continue;
+          const m = Math.min(fieldMinutes([c], less), room.get(day) ?? 0);
+          less.push(c); // ground held earlier is not a later slot's unused time
+          if (!(m > 0)) continue;
+          room.set(day, room.get(day)! - m);
+          const k = `${s.holds}|${s.scheduleId}`;
+          (totals.get(k) ?? totals.set(k, { scheduleId: s.scheduleId, by: s.by, holds: s.holds, minutes: 0 }).get(k)!).minutes += m;
+        }
+      }
+    }
+  }
+  return [...totals.values()].filter(t => t.minutes >= 1)
+    .sort((a, b) => b.minutes - a.minutes || a.by.localeCompare(b.by) || a.holds.localeCompare(b.holds));
 }
 
 // ── 4. What a permit's dates off took (Club Tier Stage 13c, C2 = A — owner 2026-11-08) ────────────────────

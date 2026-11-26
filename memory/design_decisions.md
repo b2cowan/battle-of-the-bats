@@ -15,6 +15,12 @@ binding — weight them accordingly, and say so when citing one.
 **Not ruled:** any sweep of the other dotted lines already in the product.
 **Applies to:** every table, row list and drawing; `docs/agents/design/TABLE_AND_LIST_STANDARD.md` (above §1).
 
+### 2026-11-26 — ONE NOTE UNDER A BAND; A CARD SAYS ITS FACT, THE STEP SAYS THE RULE; A FINDER ROW SPEAKS THE TICK LIST'S WORDS (owner: "I agree with your recommendations", both asks of `claude.ai/artifact/EVyadHYH81Ga9zMtaNNwyq` as recommended; source `docs/projects/active/SCHEDULE_PARTS_2D_DESIGN_CHECK.html`; Club schedules Stage 2, Session 2D)
+
+**Decision:** (1) The permit window's Used line is ONE note in the Use band's own note slot (beneath the band, 1rem below it), the total first and every schedule named inside it — never a line per schedule; the workbook's notes follow. (2) A draft card's warning says only its count and the other draft's name, the length of the card's other lines; a rule true of every draft ("whichever is finalized first keeps it") is said once, in the drafts step's warning notice above the cards, shown only when some draft has such slots. (3) Find the time's tick rows name a split field with New schedule's Facilities tick-list words — "Field 1 (whole)", "Field 1, side B" — flat, no indent, one tick per field; its count line counts facilities, not rows, and counts each piece of ground's hours once.
+**Rationale:** the band's recipe allows one note and the Ask 9 A ruling said one line; a six-line warning repeated on three 240px cards pushed the choice below the fold and said the same rule three times (the 2026-11-24 schedule-gaps rulings already folded card lines and said a repeated sentence once); the indent was ruled out of the tick list in round 2 because a parent with its own tick can't tell all from some, so the finder copies the shipped list rather than the grid.
+**Applies to:** the permit window and its workbook, New schedule's drafts step, Find the time.
+
 ### 2026-11-26 — SIGN OUT IS BLACK EVERYWHERE (owner: "yes, make it black everywhere and build it now")
 
 **Decision:** Sign out wears no red anywhere: it takes the ink of the rows or buttons around it (dark text on Warm, light text on Dark), in the account menu, the phone sheets and on pages. An invite screen's "Sign out & continue" keeps the primary button. Held by `sign-out-ink-guard`; rule text in `docs/agents/design/NAV_STANDARD.md` N4.

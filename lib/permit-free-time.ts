@@ -22,9 +22,10 @@
  * ══════════════════════════════════════════════════════════════════════════════════════════════
  */
 import {
-  blockDates, blockUnits, clock, clubDayOf, subtractSpans, unionSpans, weekdayOf, windowOn,
+  blockDates, blockUnits, bucketByDay, clock, takenAt, unionSpans, weekdayOf, windowOn, without,
   type BookingPlace, type PermitTime, type PlaceUnit, type Span, type TimeBlock, type VenueFacilities,
 } from './permit-time';
+import { WHOLE, byQuarter, holdsAll, legalMasks, maskOf, maskProp, maskRank, partFactor, partsOverlap, type FieldSections } from './field-parts';
 
 const MIN = 60_000;
 
@@ -66,6 +67,8 @@ export interface FreeInput {
   venueFacilities: VenueFacilities;
   /** A facility's kind (null for a venue with none, or a facility with none recorded). */
   kindOf: (unit: PlaceUnit, venueId: string) => string | null;
+  /** How a facility splits (Stage 2, Session 2D); absent = nothing is split (every row is a whole place, as before). */
+  sectionsOf?: (unit: string) => FieldSections;
   /** Booked: the club's bookings and every schedule's own time that is not a draft. */
   booked: readonly BookingPlace[];
   /** Other schedules' draft and in-review slots, each naming its schedule. */
@@ -82,6 +85,8 @@ export interface FreePiece extends FreePattern {
   permitId: string;
   venueId: string;
   unit: PlaceUnit;
+  /** The part of the field it brings (Session 2D); absent = the whole field. */
+  sectionMask?: number;
   fromDate: string;
   untilDate: string;
   draftDays: string[];
@@ -91,6 +96,8 @@ export interface FreePiece extends FreePattern {
 export interface FreeRow {
   venueId: string;
   unit: PlaceUnit;
+  /** A part of a split field (Session 2D): its row counts only the days its larger ground does not. Absent = the whole. */
+  sectionMask?: number;
   /** The permits that hold this place in the filters, first day first. */
   permitIds: string[];
   /** Days a permit holds here in the filters (each with at least the shortest block). */
@@ -115,6 +122,11 @@ export interface FreeRow {
 
 export interface FreeTime {
   rows: FreeRow[];
+  /** The count line's facilities: a place once, however many part rows it has (2D design check F6). */
+  places: number;
+  /** The count line's free minutes, each piece of ground once: a part row adds its minutes only on a day no row over
+   *  its ground already counts (Field 1's own row, or the side a quarter is in). Not the sum of the rows'. */
+  freeMinutes: number;
   /** Permits the club holds that meet the window at all — 0 is "The club holds no permit between …". */
   permitsInDates: number;
   /** The weekdays the permits hold in the window, before the other filters (the empty result names them). */
@@ -149,31 +161,11 @@ function cutHours(start: string, end: string, hours: FreeFilters['hours']): { st
   return out;
 }
 
+/** The length of a set of stretches that don't overlap, minutes. */
+const spanMinutes = (spans: readonly Span[]) => spans.reduce((m, [s, e]) => m + (e - s) / MIN, 0);
+
 /** The longest piece, minutes. */
 const longest = (spans: readonly Span[]) => spans.reduce((m, [s, e]) => Math.max(m, (e - s) / MIN), 0);
-
-/** Taken spans out of a set of spans. */
-const without = (spans: readonly Span[], taken: readonly Span[]) => spans.flatMap(s => subtractSpans(s, taken));
-
-/** Bookings bucketed once by venue and club day (one past midnight sits on both its days), as `permitUse` does. */
-function bucketByDay<T extends BookingPlace>(list: readonly T[]): Map<string, T[]> {
-  const out = new Map<string, T[]>();
-  for (const b of list) {
-    if (!b.venueId || !(b.endMs > b.startMs)) continue;
-    for (const d of new Set([clubDayOf(b.startMs), clubDayOf(b.endMs - 1)])) {
-      const k = `${b.venueId}|${d}`;
-      const at = out.get(k);
-      if (at) at.push(b); else out.set(k, [b]);
-    }
-  }
-  return out;
-}
-
-/** The spans a set of bookings takes at one place: its own, and any at the venue with no facility set ("busy then" —
- *  the whole venue, never offered as free). A venue with no facilities is taken by any booking there. */
-function takenAt<T extends BookingPlace>(list: readonly T[] | undefined, unit: PlaceUnit): T[] {
-  return (list ?? []).filter(b => unit === null || b.facilityId === null || b.facilityId === unit);
-}
 
 /** "Newer": recorded later; a permit with no record date reads by its first day. */
 const newness = (p: FreePermit) => p.createdAt ?? p.startsOn;
@@ -254,78 +246,113 @@ export function freeTime(input: FreeInput, f: FreeFilters): FreeTime {
     for (const u of units) order.set(`${venueId}|${u}`, n++);
   }
 
+  // The fields something books or drafts BY PART (Stage 2, Session 2D): only those can offer a part row.
+  const partBooked = new Set([...input.booked, ...input.drafts].filter(b => b.facilityId && maskOf(b.sectionMask) !== WHOLE).map(b => b.facilityId!));
+
   const rows: FreeRow[] = [];
+  let groundMinutes = 0;
   for (const [key, byDay] of cells) {
     const { venueId, unit } = placeOf.get(key)!;
-    const status = new Map<string, 'free' | 'draft'>();
-    const draftByDay = new Map<string, string[]>();
-    const draftBy: string[] = [];
-    const shared: string[] = [];
-    let freeMinutes = 0, heldDays = 0, freeDays = 0, draftDays = 0;
-    for (const [day, cell] of [...byDay].sort(([a], [b]) => a.localeCompare(b))) {
-      const held = unionSpans(cell.spans);
-      if (longest(held) < minMinutes) continue;
-      heldDays++;
-      const open = without(held, takenAt(booked.get(`${venueId}|${day}`), unit).map(b => [b.startMs, b.endMs] as Span));
-      if (longest(open) < minMinutes) continue;
-      const onDay = takenAt(drafts.get(`${venueId}|${day}`), unit);
-      const free = without(open, onDay.map(b => [b.startMs, b.endMs] as Span));
-      if (longest(free) >= minMinutes) {
-        freeDays++;
-        status.set(day, 'free');
-        freeMinutes += free.reduce((m, [s, e]) => m + ((e - s) / MIN >= minMinutes ? (e - s) / MIN : 0), 0);
-        if (cell.permits.size > 1) shared.push(day);
-      } else {
-        draftDays++;
-        status.set(day, 'draft');
-        // The drafts that stand in the way: those meeting the time left once the bookings are out.
-        const who = [...new Set(onDay.filter(b => open.some(([s, e]) => b.startMs < e && b.endMs > s)).map(b => b.by))];
-        draftByDay.set(day, who);
-        for (const w of who) if (!draftBy.includes(w)) draftBy.push(w);
-      }
-    }
-    if (!heldDays) continue;
-
-    // The pieces a pick brings: each cut to the days that count (free, or held by a draft), dropped when none do.
-    const rowPieces: FreePiece[] = [];
-    for (const pc of pieces.get(key) ?? []) {
-      const counted = pc.days.filter(d => status.has(d));
-      if (!counted.length) continue;
-      const dd = counted.filter(d => status.get(d) === 'draft');
-      rowPieces.push({
-        permitId: pc.permitId, venueId: pc.venueId, unit: pc.unit, startTime: pc.startTime, endTime: pc.endTime,
-        weekdays: [...new Set(counted.map(weekdayOf))].sort((a, b) => a - b),
-        fromDate: counted[0], untilDate: counted[counted.length - 1],
-        draftDays: dd, draftBy: [...new Set(dd.flatMap(d => draftByDay.get(d) ?? []))],
-      });
-    }
-    // The stretches the row says: by hours, the weekdays that run at them; earliest weekday first.
-    const byHours = new Map<string, FreePattern>();
-    for (const pc of rowPieces) {
-      const k = `${pc.startTime}|${pc.endTime}`;
-      const at = byHours.get(k) ?? byHours.set(k, { weekdays: [], startTime: pc.startTime, endTime: pc.endTime }).get(k)!;
-      for (const w of pc.weekdays) if (!at.weekdays.includes(w)) at.weekdays.push(w);
-    }
-    const patterns = [...byHours.values()].map(x => ({ ...x, weekdays: x.weekdays.sort((a, b) => a - b) }))
-      .sort((a, b) => a.weekdays[0] - b.weekdays[0] || a.startTime.localeCompare(b.startTime));
-
+    // Each day's held time, in order, once: every row of the place (the field and its parts) reads the same days.
+    const days = [...byDay].sort(([a], [b]) => a.localeCompare(b))
+      .map(([day, cell]) => ({ day, cell, held: unionSpans(cell.spans) }))
+      .filter(d => longest(d.held) >= minMinutes);
+    if (!days.length) continue;
+    const heldDays = days.length;
     const permitIds = [...new Set((pieces.get(key) ?? []).map(pc => pc.permitId))]
       .sort((a, b) => permitById.get(a)!.startsOn.localeCompare(permitById.get(b)!.startsOn) || newness(permitById.get(a)!).localeCompare(newness(permitById.get(b)!)));
-    const sharing = [...new Set(shared.flatMap(d => [...byDay.get(d)!.permits]))];
-    const pricedBy = sharing.length
-      ? sharing.reduce((best, id) => (newness(permitById.get(id)!) > newness(permitById.get(best)!) ? id : best))
-      : null;
+    // A SPLIT FIELD (Stage 2, Session 2D): the field's own row as before (any part taken takes the whole), then a row per
+    // part that offers something its larger ground doesn't — side B on a Sunday side A is taken; a quarter only when its
+    // side doesn't either. A part's row counts EVERY day the part is free (owner 2026-11-26: picking side B alone brings
+    // every Sunday side B is free; a field's rows are one pick at a time, `tickFound`), so a day can show on the field's
+    // row and its side's. A field nothing books by part has no part row, so it reads exactly as before.
+    const masks = unit !== null && partBooked.has(unit) ? legalMasks(input.sectionsOf?.(unit) ?? 1) : [WHOLE];
+    const counts = new Map<number, Map<string, 'free' | 'draft'>>();
+    /** Each shown row's free stretches by day, for the count line's ground-once total. */
+    const shownFree = new Map<number, Map<string, Span[]>>();
+    for (const mask of masks) {
+      const larger = masks.filter(m => m !== mask && holdsAll(m, mask));
+      const status = new Map<string, 'free' | 'draft'>();
+      /** Each free day's stretches long enough to count, and each draft-held day's drafts. A day sits in one. */
+      const freeByDay = new Map<string, Span[]>();
+      const draftByDay = new Map<string, string[]>();
+      const shared: string[] = [];
+      for (const { day, cell, held } of days) {
+        const open = without(held, takenAt(booked.get(`${venueId}|${day}`), unit, mask).map(b => [b.startMs, b.endMs] as Span));
+        if (longest(open) < minMinutes) continue;
+        const onDay = takenAt(drafts.get(`${venueId}|${day}`), unit, mask);
+        const free = without(open, onDay.map(b => [b.startMs, b.endMs] as Span));
+        if (longest(free) >= minMinutes) {
+          status.set(day, 'free');
+          freeByDay.set(day, free.filter(([s, e]) => (e - s) / MIN >= minMinutes));
+          if (cell.permits.size > 1) shared.push(day);
+        } else {
+          status.set(day, 'draft');
+          // The drafts that stand in the way: those meeting the time left once the bookings are out.
+          draftByDay.set(day, [...new Set(onDay.filter(b => open.some(([s, e]) => b.startMs < e && b.endMs > s)).map(b => b.by))]);
+        }
+      }
+      counts.set(mask, status);
+      // A part's row stands only when it offers a day no larger ground does (free where none is free, held by a draft
+      // where none counts).
+      const offersMore = [...status].some(([day, s]) => !larger.some(m => (s === 'free' ? counts.get(m)?.get(day) === 'free' : counts.get(m)?.has(day))));
+      if (mask !== WHOLE && !offersMore) continue;
+      shownFree.set(mask, freeByDay);
+      const freeDays = freeByDay.size, draftDays = draftByDay.size;
+      // A part counts its share.
+      const freeMinutes = partFactor(mask) * spanMinutes([...freeByDay.values()].flat());
+      const draftBy = [...new Set([...draftByDay.values()].flat())];
 
-    rows.push({
-      venueId, unit, permitIds, heldDays, freeDays, draftDays, draftBy, freeMinutes,
-      patterns, evening: patterns.length > 0 && patterns.every(x => x.startTime >= EVENING),
-      shared, pricedBy, pieces: rowPieces,
-    });
+      // The pieces a pick brings: each cut to the days that count (free, or held by a draft), dropped when none do.
+      const rowPieces: FreePiece[] = [];
+      for (const pc of pieces.get(key) ?? []) {
+        const counted = pc.days.filter(d => status.has(d));
+        if (!counted.length) continue;
+        const dd = counted.filter(d => status.get(d) === 'draft');
+        rowPieces.push({
+          permitId: pc.permitId, venueId: pc.venueId, unit: pc.unit, ...maskProp(mask), startTime: pc.startTime, endTime: pc.endTime,
+          weekdays: [...new Set(counted.map(weekdayOf))].sort((a, b) => a - b),
+          fromDate: counted[0], untilDate: counted[counted.length - 1],
+          draftDays: dd, draftBy: [...new Set(dd.flatMap(d => draftByDay.get(d) ?? []))],
+        });
+      }
+      // The stretches the row says: by hours, the weekdays that run at them; earliest weekday first.
+      const byHours = new Map<string, FreePattern>();
+      for (const pc of rowPieces) {
+        const k = `${pc.startTime}|${pc.endTime}`;
+        const at = byHours.get(k) ?? byHours.set(k, { weekdays: [], startTime: pc.startTime, endTime: pc.endTime }).get(k)!;
+        for (const w of pc.weekdays) if (!at.weekdays.includes(w)) at.weekdays.push(w);
+      }
+      const patterns = [...byHours.values()].map(x => ({ ...x, weekdays: x.weekdays.sort((a, b) => a - b) }))
+        .sort((a, b) => a.weekdays[0] - b.weekdays[0] || a.startTime.localeCompare(b.startTime));
+
+      const sharing = [...new Set(shared.flatMap(d => [...byDay.get(d)!.permits]))];
+      const pricedBy = sharing.length
+        ? sharing.reduce((best, id) => (newness(permitById.get(id)!) > newness(permitById.get(best)!) ? id : best))
+        : null;
+
+      rows.push({
+        venueId, unit, ...maskProp(mask), permitIds, heldDays, freeDays, draftDays, draftBy, freeMinutes,
+        patterns, evening: patterns.length > 0 && patterns.every(x => x.startTime >= EVENING),
+        shared, pricedBy, pieces: rowPieces,
+      });
+    }
+    // The count line's minutes (2D design check F6): per day and quarter, the time ANY shown row over that ground offers,
+    // once. So side B's Sundays add nothing while Field 1's own row is free, and add their share for the hours only side B is.
+    for (const { day } of days) {
+      groundMinutes += byQuarter(q => spanMinutes(unionSpans(
+        [...shownFree].flatMap(([mask, freeByDay]) => (partsOverlap(mask, q) ? freeByDay.get(day) ?? [] : [])),
+      )));
+    }
   }
-  rows.sort((a, b) => (order.get(`${a.venueId}|${a.unit ?? ''}`) ?? n) - (order.get(`${b.venueId}|${b.unit ?? ''}`) ?? n));
+  // A field's parts follow it, in the part order (`maskRank`: sides, then quarters); the sort is stable.
+  rows.sort((a, b) => (order.get(`${a.venueId}|${a.unit ?? ''}`) ?? n) - (order.get(`${b.venueId}|${b.unit ?? ''}`) ?? n)
+    || maskRank(a.sectionMask) - maskRank(b.sectionMask));
 
   return {
     rows,
+    places: new Set(rows.map(r => `${r.venueId}|${r.unit ?? ''}`)).size,
+    freeMinutes: groundMinutes,
     permitsInDates: inDates.length,
     heldWeekdays: [...heldWeekdays].sort((a, b) => a - b),
     kinds: [...kinds].sort(),
