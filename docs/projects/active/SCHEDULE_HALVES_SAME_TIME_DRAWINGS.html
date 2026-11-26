@@ -363,6 +363,63 @@ section.pane.on { display: block; }
 /* A 44 px reach for the small dots and tags on a phone or tablet. */
 @media (max-width: 768px) { .tag { position: relative; } .mk::after, .mk2::after, .tag::after { content: ""; position: absolute; inset: -11px; } }
 @media (prefers-reduced-motion: no-preference) { .pane.on { animation: fade .15s ease-out; } @keyframes fade { from { opacity: .6; } to { opacity: 1; } } }
+
+/* ───────── round 2 ───────── */
+.frow.q { grid-template-columns: minmax(0,1fr) 7.5rem 8.5rem 4.5rem; }
+.frow .ctl.lock { opacity: .5; }
+.choice { display: flex; gap: 28px; align-items: flex-start; flex-wrap: wrap; }
+.grid .fc.half { padding-left: 1.5rem; }
+/* The schedule PDF as it prints: landscape US Letter (11 × 8.5 in = 1056 × 816 px), 14 mm margins, compact 8 pt body. */
+.pdfL { width: 1056px; min-height: 816px; background: #fff; color: #1a1a1a; font: 10.67px/1.3 Helvetica, Arial, sans-serif; border: 1px solid #ddd; box-shadow: 0 3px 12px rgba(0,0,0,.08); position: relative; }
+.pdfL .lh { height: 10px; background: #1F4E3D; }
+.pdfL .in { padding: 34px 53px 40px; }
+.pdfL h4 { font-size: 18px; margin: 0; color: #111; }
+.pdfL .ps { font-size: 11px; color: #555; margin: 2px 0 14px; }
+.pdfL .dayh { font-weight: 700; font-size: 12px; margin: 8px 0 5px; color: #111; }
+.pdfL table { width: 100%; border-collapse: collapse; }
+/* theme 'plain': no cell borders; head in the club's accent (default slate #1e293b), bold, 8.5 pt. */
+.pdfL th, .pdfL td { padding: 7px 15px; text-align: left; vertical-align: top; }
+.pdfL th { background: #1e293b; color: #fff; font-weight: 700; font-size: 11.3px; line-height: 1.25; }
+.pdfL tbody tr:nth-child(even) td { background: #f8f8fc; }
+.pdfL td.o { color: #888; }
+.pdfL .fn2 { font-size: 10.67px; color: #444; margin-top: 12px; line-height: 1.5; }
+.pdfL .foot { position: absolute; left: 53px; right: 53px; bottom: 22px; font-size: 9px; color: #777; display: flex; justify-content: space-between; }
+/* House league's Practice time window: kit list rows, three dropdowns across, the kit notice. */
+.hsec { font-size: 14px; font-weight: 650; color: var(--ink); margin: 0 0 .5rem; max-width: none; }
+.hsec .q { font-weight: 400; color: var(--dim); }
+.klist { border: 1px solid var(--line); border-radius: 8px; background: var(--card); margin-bottom: .4rem; }
+.krow { display: grid; grid-template-columns: minmax(0,1fr) auto; gap: .2rem 1rem; min-height: 52px; padding: .45rem .9rem; align-items: center; font-size: 14px; font-weight: 650; color: var(--ink); }
+.krow small { display: block; font-size: 12px; font-weight: 400; color: var(--dim); }
+.krow .kf { font-size: 12px; font-weight: 400; color: var(--ink-soft); font-variant-numeric: tabular-nums; }
+.g3 { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 0 .75rem; }
+/* ck.notice as shipped: olive-soft ground, strong hairline, support size; the lead line bold. Warn changes border and fill only. */
+.knote { border: 1px solid var(--line-strong); border-radius: 8px; background: var(--olive-soft); padding: .65rem .85rem; font-size: 12px; color: var(--ink-soft); line-height: 1.45; margin-bottom: .9rem; }
+.knote.warn { background: rgba(178,106,0,.08); border-color: rgba(178,106,0,.35); }
+.knote p { margin: 0; max-width: none; }
+.knote p + p { margin-top: .2rem; }
+.knote p b { font-weight: 650; color: var(--ink); }
+/* ck.link as shipped: olive, 650, underlined, the + inside the words. */
+.klink { color: var(--olive); font-weight: 650; font-size: 14px; text-decoration: underline; text-underline-offset: 3px; display: inline-block; min-height: 34px; padding-top: .35rem; }
+/* DialogReason in the foot: plain red 12px/600 beside the buttons. */
+.df .why2 { flex: 1 1 12rem; min-width: 0; display: flex; gap: .45rem; align-items: flex-start; font-size: 12px; font-weight: 600; line-height: 1.35; color: var(--red); }
+.df .why2 svg { margin-top: 1px; flex: none; }
+.ctl.hl { overflow: visible; }
+.asks { grid-template-columns: minmax(0,1fr); }
+.ask { min-width: 0; }
+@media (max-width: 768px) { .mk2 { position: relative; } }
+/* The venue row on a phone (shipped phone grid: name, kind, in use or ✕), the split on a line under it. */
+.phone { width: 390px; background: var(--card); border: 1px solid var(--olive-edge); border-radius: 14px; padding: 14px 16px; color: var(--ink-soft); font: 14px/1.5 var(--font-ui); }
+.prowP { display: grid; grid-template-columns: minmax(0,1fr) 7.5rem 3rem; gap: .5rem; align-items: center; margin-bottom: .4rem; }
+.prowP + .splitP { margin-bottom: .8rem; }
+.mailtxt { font: 13px/1.6 var(--font-ui); color: var(--ink); background: var(--card); border: 1px solid var(--line); border-radius: 8px; padding: .7rem .9rem; white-space: pre-line; }
+.mailtxt .sj { display: block; font-weight: 700; margin-bottom: .3rem; }
+.mailtxt mark { background: var(--doc-new-soft); color: inherit; border-radius: 3px; padding: 0 .15rem; }
+.own td mark { background: var(--doc-new-soft); color: inherit; border-radius: 3px; padding: 0 .15rem; }
+.strip { display: grid; gap: 0; border: 1px solid var(--line); border-radius: 8px; background: var(--card); }
+.strip > div { display: grid; grid-template-columns: 12rem minmax(0,1fr) 9rem; gap: .8rem; padding: .5rem .75rem; border-top: 1px solid var(--line); font-size: 14px; color: var(--ink); font-variant-numeric: tabular-nums; }
+.strip > div:first-child { border-top: 0; }
+.strip > div span:last-child { color: var(--ink-soft); }
+.strip.slots > div { grid-template-columns: minmax(0,1fr); }
 </style>
 
 <svg width="0" height="0" style="position:absolute" aria-hidden="true">
@@ -385,65 +442,68 @@ section.pane.on { display: block; }
 
 <div class="wrap">
   <div class="top">
-    <h1>A field in two sides, and teams at the same time</h1>
-    <div class="sub">Round 1 drawings for review. Nothing is built. Each screen is drawn at its true width from the styles that ship today. The example is the winter dome from Stage 1: one permit for <b>Fields 1–6, Sundays 9:00 a.m.–1:30 p.m., Jan 3 – Mar 7, 2027</b> (10 Sundays, three 90-minute starts), <b>$18,000.00</b>, so a whole field is <b>$80.00 an hour</b> and a 90-minute slot on it <b>$120.00</b>. Fields 5 and 6 are at "Half cost", as in the demo. <b>The permit, the dome and the teams are made up for the drawing.</b> The words "side", "side A" and "side B" are working words for the marketing pass. These are desk screens, so no phone is drawn.</div>
+    <h1>A field in sides or quarters, and teams at the same time · round 2</h1>
+    <div class="sub">Round 2 drawings for review. Nothing is built. Round 1's fourteen answers are in (tab 9 lists them, so they can be corrected). This round draws only what two of them add: <b>a field in four quarters</b> (round 1, 4 B) and <b>both pieces reaching house league</b> (round 1, 14 C). Round 1’s answers are written “round 1, 4 B”; “Ask 3” alone is this round’s. The example is the same winter dome: one permit for <b>Fields 1–6, Sundays 9:00 a.m.–1:30 p.m., Jan 3 – Mar 7, 2027</b> (10 Sundays, three 90-minute starts), <b>$18,000.00</b>, so a whole field is <b>$80.00 an hour</b> and a 90-minute slot on it <b>$120.00</b>. Fields 5 and 6 are at "Half cost". <b>The permit, the dome, the club and the teams are made up for the drawing.</b> "Side", "quarter" and "Not split" are working words for the marketing pass. These are desk screens, so no phone is drawn.</div>
     <div class="tabs" role="tablist" id="tabs">
-      <button class="tab" role="tab" data-t="idea" aria-selected="true">1 · The idea</button>
+      <button class="tab" role="tab" data-t="idea" aria-selected="true">1 · Round 2</button>
       <button class="tab" role="tab" data-t="venue" aria-selected="false">2 · Venue list</button>
       <button class="tab" role="tab" data-t="rows" aria-selected="false">3 · New schedule</button>
       <button class="tab" role="tab" data-t="grid" aria-selected="false">4 · The grid</button>
       <button class="tab" role="tab" data-t="bill" aria-selected="false">5 · Bill and PDF</button>
-      <button class="tab" role="tab" data-t="used" aria-selected="false">6 · Permit use</button>
-      <button class="tab" role="tab" data-t="rule" aria-selected="false">7 · Same-time rule</button>
-      <button class="tab" role="tab" data-t="report" aria-selected="false">8 · The report</button>
+      <button class="tab" role="tab" data-t="hlprac" aria-selected="false">6 · House league practices</button>
+      <button class="tab" role="tab" data-t="hlrule" aria-selected="false">7 · House league rule</button>
+      <button class="tab" role="tab" data-t="hlgames" aria-selected="false">8 · House league games and words</button>
       <button class="tab" role="tab" data-t="asks" aria-selected="false">9 · Asks</button>
     </div>
   </div>
 
-  <!-- ═════════ 1 · THE IDEA ═════════ -->
+  <!-- ═════════ 1 · ROUND 2 ═════════ -->
   <section class="pane on" id="p-idea">
-    <p class="lede"><b>A field can be split into two sides, A and B.</b> You say so once, in the venue list. After that, a schedule's row can use the whole field, both sides (one team on each), or one side while the other side goes elsewhere. Everything outside the club's schedules still sees one Field 1: permits, house league, a coach's own event, tryout days and tournaments.</p>
+    <p class="lede"><b>Round 1 settled sides. Two of its answers reach further than round 1 drew</b>, so this round draws them before anything is built, and asks eight questions they leave open.</p>
     <div class="stage">
       <div class="card">
-        <h3>The three cases, and which this drawing adds</h3>
+        <h3>What round 2 draws</h3>
         <div class="tblwrap"><table class="own">
-          <thead><tr><th>Case</th><th>What the club has</th><th>Today</th><th>After this</th></tr></thead>
+          <thead><tr><th>Your answer</th><th>What it adds</th><th>Where</th></tr></thead>
           <tbody>
-            <tr><td><b>Both sides</b></td><td>The whole of Field 1, one team on each side</td><td>Only by "Sharing a facility": the two teams share one slot, with nothing that says who is on which side</td><td>The row uses Field 1 in two sides. Each side is its own slot, with its own team (tab 3)</td></tr>
-            <tr><td><b>One side here</b></td><td>Side A for this schedule, side B for another schedule or for time the club keeps</td><td>Not possible</td><td>The row ticks side A only. The other schedule sees side B is free, and side A is not (tab 3)</td></tr>
-            <tr><td><b>Half cost</b></td><td>A permit for only half a field</td><td>"Half cost" on the permit</td><td>Unchanged. It is still one facility at half price, labelled "half" on the bill and the PDF</td></tr>
+            <tr><td><b>Round 1, 4 B</b> · up to four parts, A to D</td><td>A field in four quarters. The venue list's choice has three answers, so it is a select again. The tick list, the grid, the bill and the PDF learn quarters.</td><td>Tabs 2–5</td></tr>
+            <tr><td><b>Round 1, 14 C</b> · both reach house league</td><td>House league's Practice time with a field in parts, beside its own "Teams at once". A same-time rule inside that window. House-league games on a part, and the words families read.</td><td>Tabs 6–8</td></tr>
+            <tr><td><b>Follow-up 1</b></td><td>Does round 1’s 14 C widen its Ask 5 to house-league time a club schedule hands out, practices and games? Drawn as yes.</td><td>Ask 1</td></tr>
+            <tr><td><b>Follow-up 2</b></td><td>May a field in quarters also be used as halves (two quarters together) and whole? Drawn both ways.</td><td>Ask 2</td></tr>
           </tbody>
         </table></div>
       </div>
     </div>
     <div class="stage">
       <div class="card">
-        <h3>Three ways to put more than one team on a field</h3>
+        <h3>The three ways a field can be set, after both rounds</h3>
         <div class="tblwrap"><table class="own">
-          <thead><tr><th>Way</th><th>Where it is set</th><th>What it says</th><th>Counts toward a share, and bills</th></tr></thead>
+          <thead><tr><th>In the venue list</th><th>What a schedule's row may use</th><th>Toward a team's share</th><th>Price</th></tr></thead>
           <tbody>
-            <tr><td><b>Sharing a facility</b></td><td>A rule in a rep schedule</td><td>These teams may practise together, 2 to 4 on one facility, with no line between them</td><td>Half a facility each (for two). Unchanged</td></tr>
-            <tr><td><b>Teams at once</b></td><td>House league's Practice time</td><td>How many house-league teams practise on one facility at a time</td><td>House league's own. Unchanged</td></tr>
-            <tr class="hi"><td><b>Sides</b> (new)</td><td>The venue list, then a schedule's row</td><td>The field has a divider. One team on each side, each in its own slot</td><td>Half a facility each, proposed so it matches sharing (Ask 2)</td></tr>
+            <tr><td><b>Not split</b></td><td>The whole field</td><td>One practice</td><td>The field's price</td></tr>
+            <tr><td><b>Two sides</b></td><td>The whole field, side A, side B</td><td>A side counts half (round 1, 2 A)</td><td>Half (round 1, 3 A)</td></tr>
+            <tr class="hi"><td><b>Four quarters</b> (new)</td><td>The whole field, quarters A to D; if Follow-up 2 is yes, also quarters A–B and C–D, each half the field</td><td>A quarter counts a quarter; two quarters together count half</td><td>A quarter; two together, half</td></tr>
           </tbody>
         </table></div>
       </div>
-      <p class="note"><b>Why the same-time rule is drawn with this.</b> The rule looks for one start where every team in the group is free, with enough free places in one building. A field in two sides offers two places at that start. So the rule has to know about sides before it is built, and one question follows: may a group land on the two sides of one field? That is Ask 7, because ruling R3 was made before sides existed.</p>
+      <p class="note"><b>How round 1’s 2 A and 3 A carry to quarters is recorded as how the rulings combine</b>, for you to correct. It is also how four teams sharing one field count today: a shared slot counts 1 ÷ its teams toward each share. Ask 3 shows the one picture where it bites.</p>
     </div>
     <div class="stage">
       <div class="pair2">
         <div class="card">
-          <h3>What stays as it is</h3>
+          <h3>Ruled in round 1 and not redrawn</h3>
           <ul>
-            <li><b>Permits.</b> A permit holds whole fields. Its time, price rows, "Half cost" and Held hours do not change.</li>
-            <li><b>Every other picker.</b> House league, a coach's own event, tryout days and tournaments still offer Field 1 as one facility (Ask 5).</li>
-            <li><b>The venue table.</b> The Venue library page still lists "Field 1 · Field 2 · …".</li>
-            <li><b>A side is never shared</b>, as a "Half cost" field is never shared today.</li>
+            <li><b>Permit use</b> (round 1, 9 A). A practice on a quarter adds a quarter of its time to Used. Only the arithmetic changes.</li>
+            <li><b>The same-time rule in a rep schedule</b>, its entry-time message, the report and the hand-move warning (round 1, Asks 7 and 10–13). Quarters change none of it, except that a quarter is one more place where the rule counts free places at one start.</li>
+            <li>Round 1's drawings are kept in this page's history.</li>
           </ul>
         </div>
         <div class="card">
-          <h3>What a missed reader does</h3>
-          <p style="font-size:.88rem;margin:0">With the recommended storage (Ask 1), anything in the product not yet taught about sides reads a practice on side A as a practice on the whole of Field 1. It may call a clash that isn't one. It never misses one. The other storage turns each side into its own facility, and anything not taught then double-books in silence.</p>
+          <h3>Two findings from the code</h3>
+          <ul>
+            <li><b>The schedule's PDF prints landscape on US Letter</b>, in the compact size, not A4 portrait as round 1 drew it. Tab 5 draws the page as it prints.</li>
+            <li><b>House league has no game-day reminders and no PDF.</b> The reminder is a tournament feature. Nothing there changes, so nothing is drawn.</li>
+          </ul>
         </div>
       </div>
     </div>
@@ -451,7 +511,7 @@ section.pane.on { display: block; }
 
   <!-- ═════════ 2 · VENUE LIST ═════════ -->
   <section class="pane" id="p-venue">
-    <p class="lede"><b>The venue window, editing, before and after.</b> One new choice on each facility's row says whether it splits into two sides. The window is drawn at its true width (640 px). The Venue library table behind it does not change.</p>
+    <p class="lede"><b>The venue window, editing, before and after.</b> With four quarters the choice has three answers, so it is a select, not round 1's tick (round 1's design check: a tick is for yes or no). The window is drawn at its true width (640 px). The Venue library table behind it does not change.</p>
     <div class="viewrow"><b>View</b>
       <div class="sw" role="group" aria-label="View"><button type="button" data-v="all" aria-pressed="true">Everything</button><button type="button" data-v="diff" aria-pressed="false">Show only what differs</button></div>
     </div>
@@ -466,14 +526,12 @@ section.pane.on { display: block; }
             <div class="fld same"><span class="lb">Bookings contact</span><div class="ctl"><span class="v">bookings@miltonsportsdome.example</span></div><span class="hnt">Who to email about bookings at this venue.</span></div>
             <div class="fld same"><span class="lb">Notes</span><div class="ctl" style="min-height:5rem;align-items:flex-start"><span class="v">Enter by the east doors. Cleats only, no metal spikes.</span></div></div>
             <p class="mono-h same">Facilities</p>
-            <div class="rel hl" style="outline-offset:2px">
             <div class="frow"><div class="ctl"><span class="v">Field 1</span></div><div class="ctl"><span class="v">Field</span><svg class="ic" width="15" height="15"><use href="#i-chev"/></svg></div><span class="inuse">In use</span></div>
             <div class="frow"><div class="ctl"><span class="v">Field 2</span></div><div class="ctl"><span class="v">Field</span><svg class="ic" width="15" height="15"><use href="#i-chev"/></svg></div><span class="inuse">In use</span></div>
             <div class="frow"><div class="ctl"><span class="v">Field 3</span></div><div class="ctl"><span class="v">Field</span><svg class="ic" width="15" height="15"><use href="#i-chev"/></svg></div><span class="inuse">In use</span></div>
             <div class="frow"><div class="ctl"><span class="v">Field 4</span></div><div class="ctl"><span class="v">Field</span><svg class="ic" width="15" height="15"><use href="#i-chev"/></svg></div><span class="inuse">In use</span></div>
             <div class="frow"><div class="ctl"><span class="v">Field 5</span></div><div class="ctl"><span class="v">Field</span><svg class="ic" width="15" height="15"><use href="#i-chev"/></svg></div><span class="inuse">In use</span></div>
             <div class="frow"><div class="ctl"><span class="v">Field 6</span></div><div class="ctl"><span class="v">Field</span><svg class="ic" width="15" height="15"><use href="#i-chev"/></svg></div><span class="xx"><svg width="15" height="15"><use href="#i-x"/></svg></span></div>
-            </div>
             <span class="btn same" style="margin-top:.25rem"><svg width="14" height="14"><use href="#i-plus"/></svg>Add a facility</span>
           </div>
           <div class="df same"><div class="steps"><span class="stp">‹ Previous<b>Lions Park</b></span><span class="of">3 of 7</span><span class="stp" style="text-align:right">Next ›<b>Rotary Fields</b></span></div></div>
@@ -481,7 +539,7 @@ section.pane.on { display: block; }
         <div class="expl"></div>
       </div>
       <div class="stage">
-        <div class="cap"><h3>Proposed</h3><button type="button" class="tag new" data-say="One new tick per facility row, and one line when sides are in use. Numbered on the drawing.">New</button><span class="sw-note">Fields 1 and 2 split in two</span></div>
+        <div class="cap"><h3>Proposed</h3><button type="button" class="tag new" data-say="One new select on each facility row, after its kind, and one line when a split is in use. Numbered on the drawing.">New</button><span class="sw-note">Field 1 in four quarters, Field 2 in two sides</span></div>
         <div class="scroller"><div class="scrim"><div class="win md">
           <div class="dh rec same"><div class="tt"><span class="eb">Venue library</span><span class="tl">Milton Sports Dome</span></div><span class="x"><svg width="16" height="16"><use href="#i-check"/></svg></span><span class="x"><svg width="16" height="16"><use href="#i-x"/></svg></span></div>
           <div class="db" style="display:block">
@@ -490,44 +548,72 @@ section.pane.on { display: block; }
             <div class="fld same"><span class="lb">Bookings contact</span><div class="ctl"><span class="v">bookings@miltonsportsdome.example</span></div><span class="hnt">Who to email about bookings at this venue.</span></div>
             <div class="fld same"><span class="lb">Notes</span><div class="ctl" style="min-height:5rem;align-items:flex-start"><span class="v">Enter by the east doors. Cleats only, no metal spikes.</span></div></div>
             <p class="mono-h same">Facilities</p>
-            <p class="hnt rel hl" style="margin:-.1rem 0 .5rem">Field 1 has practices on its sides, so it keeps them.<button class="mk" data-n="2" aria-label="Change 2">2</button></p>
-            <div class="frow s"><div class="ctl"><span class="v">Field 1</span></div><div class="ctl"><span class="v">Field</span><svg class="ic" width="15" height="15"><use href="#i-chev"/></svg></div><span class="tick lock"><span class="bx on"><svg width="11" height="11"><use href="#i-check"/></svg></span>Two sides</span><span class="inuse">In use</span></div>
-            <div class="frow s"><div class="ctl"><span class="v">Field 2</span></div><div class="ctl"><span class="v">Field</span><svg class="ic" width="15" height="15"><use href="#i-chev"/></svg></div><span class="tick rel hl"><span class="bx on"><svg width="11" height="11"><use href="#i-check"/></svg></span>Two sides<button class="mk" data-n="1" aria-label="Change 1">1</button></span><span class="inuse">In use</span></div>
-            <div class="frow s"><div class="ctl"><span class="v">Field 3</span></div><div class="ctl"><span class="v">Field</span><svg class="ic" width="15" height="15"><use href="#i-chev"/></svg></div><span class="tick"><span class="bx"></span>Two sides</span><span class="inuse">In use</span></div>
-            <div class="frow s"><div class="ctl"><span class="v">Field 4</span></div><div class="ctl"><span class="v">Field</span><svg class="ic" width="15" height="15"><use href="#i-chev"/></svg></div><span class="tick"><span class="bx"></span>Two sides</span><span class="inuse">In use</span></div>
-            <div class="frow s"><div class="ctl"><span class="v">Field 5</span></div><div class="ctl"><span class="v">Field</span><svg class="ic" width="15" height="15"><use href="#i-chev"/></svg></div><span class="tick"><span class="bx"></span>Two sides</span><span class="inuse">In use</span></div>
-            <div class="frow s"><div class="ctl"><span class="v">Field 6</span></div><div class="ctl"><span class="v">Field</span><svg class="ic" width="15" height="15"><use href="#i-chev"/></svg></div><span class="tick"><span class="bx"></span>Two sides</span><span class="xx"><svg width="15" height="15"><use href="#i-x"/></svg></span></div>
+            <p class="hnt rel hl" style="margin:-.1rem 0 .5rem">Field 1 has practices on its quarters, so it stays in four quarters.<button class="mk" data-n="2" aria-label="Change 2">2</button></p>
+            <div class="frow q"><div class="ctl"><span class="v">Field 1</span></div><div class="ctl"><span class="v">Field</span><svg class="ic" width="15" height="15"><use href="#i-chev"/></svg></div><div class="ctl lock"><span class="v">Four quarters</span><svg class="ic" width="15" height="15"><use href="#i-chev"/></svg></div><span class="inuse">In use</span></div>
+            <div class="frow q"><div class="ctl"><span class="v">Field 2</span></div><div class="ctl"><span class="v">Field</span><svg class="ic" width="15" height="15"><use href="#i-chev"/></svg></div><div class="ctl rel hl"><span class="v">Two sides</span><svg class="ic" width="15" height="15"><use href="#i-chev"/></svg><button class="mk" data-n="1" aria-label="Change 1">1</button></div><span class="inuse">In use</span></div>
+            <div class="frow q"><div class="ctl"><span class="v">Field 3</span></div><div class="ctl"><span class="v">Field</span><svg class="ic" width="15" height="15"><use href="#i-chev"/></svg></div><div class="ctl"><span class="v">Not split</span><svg class="ic" width="15" height="15"><use href="#i-chev"/></svg></div><span class="inuse">In use</span></div>
+            <div class="frow q"><div class="ctl"><span class="v">Field 4</span></div><div class="ctl"><span class="v">Field</span><svg class="ic" width="15" height="15"><use href="#i-chev"/></svg></div><div class="ctl"><span class="v">Not split</span><svg class="ic" width="15" height="15"><use href="#i-chev"/></svg></div><span class="inuse">In use</span></div>
+            <div class="frow q"><div class="ctl"><span class="v">Field 5</span></div><div class="ctl"><span class="v">Field</span><svg class="ic" width="15" height="15"><use href="#i-chev"/></svg></div><div class="ctl"><span class="v">Not split</span><svg class="ic" width="15" height="15"><use href="#i-chev"/></svg></div><span class="inuse">In use</span></div>
+            <div class="frow q"><div class="ctl"><span class="v">Field 6</span></div><div class="ctl"><span class="v">Field</span><svg class="ic" width="15" height="15"><use href="#i-chev"/></svg></div><div class="ctl"><span class="v">Not split</span><svg class="ic" width="15" height="15"><use href="#i-chev"/></svg></div><span class="xx"><svg width="15" height="15"><use href="#i-x"/></svg></span></div>
             <span class="btn same" style="margin-top:.25rem"><svg width="14" height="14"><use href="#i-plus"/></svg>Add a facility</span>
           </div>
           <div class="df same"><div class="steps"><span class="stp">‹ Previous<b>Lions Park</b></span><span class="of">3 of 7</span><span class="stp" style="text-align:right">Next ›<b>Rotary Fields</b></span></div></div>
         </div></div></div>
         <div class="expl"></div>
         <div class="legend">
-          <div class="li" id="v-1"><button class="mk2" data-n="1" type="button">1</button><p><b>One tick on each facility's row: "Two sides".</b> A yes-or-no choice is a tick in this product, not a second select (two boxes reading "Field" and "Whole only" would look like two kinds). It saves as you go, like the rest of the window. The name box narrows from about 360 px to about 240 px, still wide enough for "Diamond 1 North" and the like. It is offered on every kind of facility, since a rink or a gym can be split too. Ticking it changes nothing already booked: every booking on Field 1 stays on the whole field. <b>On a phone</b> the window is a full-screen sheet and the tick moves to a line under the name.</p></div>
-          <div class="li" id="v-2"><button class="mk2" data-n="2" type="button">2</button><p><b>Sides in use can't be taken away.</b> While anything is booked on side A or side B, that field's tick is locked, and one line under the Facilities heading says which fields and why (said once, however many are locked). It follows the window's own rule for a booked facility ("…so it can be renamed but not removed"). Working words.</p></div>
+          <div class="li" id="v-1"><button class="mk2" data-n="1" type="button">1</button><p><b>A select after the kind: "Not split", "Two sides", "Four quarters".</b> It is the same native select the kind already uses, and it saves as you go, like the rest of the window. Its first answer reads "Not split" rather than "Whole only", so it answers a question about splitting and the two boxes on the row don't read as two kinds (the reason round 1 chose a tick). The name box narrows from about 360 px to about 240 px. It is offered on every kind of facility. Choosing a split changes nothing already booked: every booking on the field stays on the whole field. <b>On a phone</b> the window is a full-screen sheet and the select moves to a line of its own under the row (drawn below).</p></div>
+          <div class="li" id="v-2"><button class="mk2" data-n="2" type="button">2</button><p><b>A split in use is locked.</b> While anything is booked on one of Field 1's quarters, its select is locked and one line under the Facilities heading says which fields and why, once for all of them. Bookings on the whole field never lock it. It follows the window's rule for a booked facility (renamed, never removed). Whether a change that keeps every booked part may go through is Ask 7.</p></div>
         </div>
       </div>
     </div>
     <div class="stage">
-      <div class="cap"><h3>Reading the venue, after</h3><button type="button" class="tag chg" data-say="The read card ships today with name, kind and upcoming. A field with sides says so on a quiet second line under its name.">Restyled</button><span class="sw-note">The Facilities card in the read view, at its width in the window</span></div>
-      <div class="scroller"><div class="bare" style="width:592px">
-        <div class="rcard">
-          <div class="rr"><span class="nm">Field 1<small>Two sides, A and B</small></span><span class="k">Field</span><span class="u">36 upcoming</span></div>
-          <div class="rr"><span class="nm">Field 2<small>Two sides, A and B</small></span><span class="k">Field</span><span class="u">30 upcoming</span></div>
-          <div class="rr"><span class="nm">Field 3</span><span class="k">Field</span><span class="u">30 upcoming</span></div>
-          <div class="rr"><span class="nm">Field 4</span><span class="k">Field</span><span class="u">30 upcoming</span></div>
-          <div class="rr"><span class="nm">Field 5</span><span class="k">Field</span><span class="u">20 upcoming</span></div>
-          <div class="rr"><span class="nm">Field 6</span><span class="k">Field</span><span class="u">Nothing upcoming</span></div>
-        </div>
+      <div class="cap"><h3>On a phone</h3><button type="button" class="tag new" data-say="The window is a full-screen sheet on a phone. The shipped phone row is name, kind, then In use or the remove button. The split takes its own line under them.">New</button><span class="sw-note">The Facilities part of the sheet, 390 px</span></div>
+      <div class="scroller"><div class="phone">
+        <p class="mono-h" style="margin-top:0">Facilities</p>
+        <p class="hnt" style="margin:-.1rem 0 .5rem">Field 1 has practices on its quarters, so it stays in four quarters.</p>
+        <div class="prowP"><div class="ctl"><span class="v">Field 1</span></div><div class="ctl"><span class="v">Field</span><svg class="ic" width="15" height="15"><use href="#i-chev"/></svg></div><span class="inuse" style="font-size:12px;color:var(--dim);text-align:center">In use</span></div>
+        <div class="splitP"><div class="ctl lock"><span class="v">Four quarters</span><svg class="ic" width="15" height="15"><use href="#i-chev"/></svg></div></div>
+        <div class="prowP"><div class="ctl"><span class="v">Field 2</span></div><div class="ctl"><span class="v">Field</span><svg class="ic" width="15" height="15"><use href="#i-chev"/></svg></div><span class="inuse" style="font-size:12px;color:var(--dim);text-align:center">In use</span></div>
+        <div class="splitP rel hl"><div class="ctl hl" style="outline:0"><span class="v">Two sides</span><svg class="ic" width="15" height="15"><use href="#i-chev"/></svg></div><button class="mk" data-n="1" aria-label="Note 1">1</button></div>
+        <div class="prowP"><div class="ctl"><span class="v">Field 3</span></div><div class="ctl"><span class="v">Field</span><svg class="ic" width="15" height="15"><use href="#i-chev"/></svg></div><span class="inuse" style="font-size:12px;color:var(--dim);text-align:center">In use</span></div>
+        <div class="splitP"><div class="ctl"><span class="v">Not split</span><svg class="ic" width="15" height="15"><use href="#i-chev"/></svg></div></div>
       </div></div>
       <div class="expl"></div>
-      <p class="note"><b>Upcoming counts a field and its sides together</b>, so "36 upcoming" on Field 1 is every practice on the whole field, side A or side B. The Venue library table keeps its "Field 1 · Field 2 · …" column as it is: a field with sides is still one facility there.</p>
+      <div class="legend"><div class="li" id="vp-1"><button class="mk2" data-n="1" type="button">1</button><p><b>The split takes a full-width line under its facility's row</b>, because the shipped phone row (name, kind, then In use or ✕) has no room for a second select. Each facility then reads as two lines, with the usual gap between facilities. The box is 44 px tall on a phone, the portal's tap floor.</p></div></div>
+    </div>
+    <div class="pair2">
+      <div class="stage">
+        <div class="cap"><h3>The choice, open</h3><button type="button" class="tag new" data-say="The browser draws a native select's list. Three answers.">New</button><span class="sw-note">Field 2's select</span></div>
+        <div class="scroller"><div class="choice" style="width:300px">
+          <div class="narrow" style="width:200px"><div class="menu">
+            <div class="mi"><span class="tk"></span><span>Not split</span></div>
+            <div class="mi"><span class="tk on"><svg width="11" height="11"><use href="#i-check"/></svg></span><span>Two sides</span></div>
+            <div class="mi"><span class="tk"></span><span>Four quarters</span></div>
+          </div></div>
+        </div></div>
+        <div class="expl"></div>
+      </div>
+      <div class="stage">
+        <div class="cap"><h3>Reading the venue, after</h3><button type="button" class="tag chg" data-say="The read card ships today with name, kind and upcoming. A split field says so on a quiet second line under its name.">Restyled</button><span class="sw-note">The Facilities card in the read view</span></div>
+        <div class="scroller"><div class="bare" style="width:592px">
+          <div class="rcard">
+            <div class="rr"><span class="nm">Field 1<small>Four quarters, A to D</small></span><span class="k">Field</span><span class="u">140 upcoming</span></div>
+            <div class="rr"><span class="nm">Field 2<small>Two sides, A and B</small></span><span class="k">Field</span><span class="u">50 upcoming</span></div>
+            <div class="rr"><span class="nm">Field 3</span><span class="k">Field</span><span class="u">30 upcoming</span></div>
+            <div class="rr"><span class="nm">Field 4</span><span class="k">Field</span><span class="u">30 upcoming</span></div>
+            <div class="rr"><span class="nm">Field 5</span><span class="k">Field</span><span class="u">20 upcoming</span></div>
+            <div class="rr"><span class="nm">Field 6</span><span class="k">Field</span><span class="u">Nothing upcoming</span></div>
+          </div>
+        </div></div>
+        <div class="expl"></div>
+        <p class="note"><b>Upcoming counts a field and its parts together</b>: "140 upcoming" on Field 1 is every practice on the whole field and on each quarter. The Venue library table keeps its "Field 1 · Field 2 · …" column: a split field is still one facility there.</p>
+      </div>
     </div>
   </section>
 
   <!-- ═════════ 3 · NEW SCHEDULE ═════════ -->
   <section class="pane" id="p-rows">
-    <p class="lede"><b>The whole window, before and after.</b> A second schedule for the 9U teams on the dome: Field 1 in two sides, and side A of Field 2, because a final schedule for the 11U teams already holds side B. Only the permit's card changes. The other sections are folded.</p>
+    <p class="lede"><b>The whole window, before and after.</b> A schedule for the dome's youngest and oldest teams: on Sunday mornings Field 1 in four quarters for the 7U and 8U teams and Field 2 in two sides for the 9U teams; at noon both fields whole, for 13U AA and 15U AA. Only the permit's card changes. The other sections are folded.</p>
     <div class="viewrow"><b>View</b>
       <div class="sw" role="group" aria-label="View"><button type="button" data-v="all" aria-pressed="true">Everything</button><button type="button" data-v="diff" aria-pressed="false">Show only what differs</button></div>
     </div>
@@ -540,7 +626,7 @@ section.pane.on { display: block; }
           <div class="sect">
             <p class="sh same">The time</p>
             <div class="pr2 same">
-              <div class="fld"><span class="lb">Name<i>*</i></span><div class="ctl"><span class="v">Winter dome, 9U</span></div></div>
+              <div class="fld"><span class="lb">Name<i>*</i></span><div class="ctl"><span class="v">Winter dome, young and old</span></div></div>
               <div><div class="fld" style="margin-bottom:.3rem"><span class="lb">Permits</span><div class="ctl pk"><span class="v">Dome, winter 2027</span><svg class="ic" width="15" height="15"><use href="#i-chev"/></svg></div></div><span class="hnt">Each permit brings its own time and dates off. Untick one to take its time off again.</span><br><span class="door find"><svg width="15" height="15"><use href="#i-search"/></svg>Find the time across every permit ›</span></div>
             </div>
             <div class="pcards"><div class="pcard grow">
@@ -548,10 +634,17 @@ section.pane.on { display: block; }
               <p class="left same">Fields 3–6 are not on this schedule.</p>
               <div class="prow">
                 <div class="fld"><span class="lbl"><span class="lb">Facilities</span><span class="ven">Milton Sports Dome</span></span><div class="ctl pk"><span class="v">Field 1 and Field 2</span><svg class="ic" width="15" height="15"><use href="#i-chev"/></svg></div></div>
-                <div class="fld same"><span class="lb">Days<i>*</i></span><div class="ctl pk"><span class="v">Sun</span><svg class="ic" width="15" height="15"><use href="#i-chev"/></svg></div></div>
-                <div class="fld same"><span class="lb">From<i>*</i></span><div class="ctl"><span class="v">9:00 a.m.</span><svg class="ic" width="15" height="15"><use href="#i-clock"/></svg></div></div>
-                <div class="fld same"><span class="lb">Until<i>*</i></span><div class="ctl"><span class="v">1:30 p.m.</span><svg class="ic" width="15" height="15"><use href="#i-clock"/></svg></div></div>
-                <span class="rm off same"><svg width="15" height="15"><use href="#i-x"/></svg></span>
+                <div class="fld"><span class="lb">Days<i>*</i></span><div class="ctl pk"><span class="v">Sun</span><svg class="ic" width="15" height="15"><use href="#i-chev"/></svg></div></div>
+                <div class="fld"><span class="lb">From<i>*</i></span><div class="ctl"><span class="v">9:00 a.m.</span><svg class="ic" width="15" height="15"><use href="#i-clock"/></svg></div></div>
+                <div class="fld"><span class="lb">Until<i>*</i></span><div class="ctl"><span class="v">12:00 p.m.</span><svg class="ic" width="15" height="15"><use href="#i-clock"/></svg></div></div>
+                <span class="rm"><svg width="15" height="15"><use href="#i-x"/></svg></span>
+              </div>
+              <div class="prow">
+                <div class="fld"><span class="lbl"><span class="lb">Facilities</span><span class="ven">Milton Sports Dome</span></span><div class="ctl pk"><span class="v">Field 1 and Field 2</span><svg class="ic" width="15" height="15"><use href="#i-chev"/></svg></div></div>
+                <div class="fld"><span class="lb">Days<i>*</i></span><div class="ctl pk"><span class="v">Sun</span><svg class="ic" width="15" height="15"><use href="#i-chev"/></svg></div></div>
+                <div class="fld"><span class="lb">From<i>*</i></span><div class="ctl"><span class="v">12:00 p.m.</span><svg class="ic" width="15" height="15"><use href="#i-clock"/></svg></div></div>
+                <div class="fld"><span class="lb">Until<i>*</i></span><div class="ctl"><span class="v">1:30 p.m.</span><svg class="ic" width="15" height="15"><use href="#i-clock"/></svg></div></div>
+                <span class="rm"><svg width="15" height="15"><use href="#i-x"/></svg></span>
               </div>
               <span class="door rowdoor same"><svg width="14" height="14"><use href="#i-plus"/></svg>Add hours</span>
             </div></div>
@@ -564,14 +657,13 @@ section.pane.on { display: block; }
           <div class="cutm same">Who, and how much · cut from the drawing, unchanged</div>
           <div class="sect fold same"><p class="sh">Rules</p><span class="cnt">1 on</span><svg width="16" height="16" style="color:var(--dim)"><use href="#i-chev"/></svg></div>
         </div>
-        <div class="df"><span class="fn">60 slots for 4 teams.</span><span class="btn same">Cancel</span><span class="btn pri same">Generate drafts</span></div>
+        <div class="df"><span class="fn">60 slots for 14 teams.</span><span class="btn same">Cancel</span><span class="btn pri same">Generate drafts</span></div>
       </div></div></div>
       <div class="expl"></div>
-      <p class="note">Today nothing on this form knows that the 11U schedule holds part of Field 2, so the builder would put a 9U team on Field 2 at the same time as an 11U team. The only floor in the database is one schedule's own.</p>
     </div>
 
     <div class="stage">
-      <div class="cap"><h3>Proposed</h3><button type="button" class="tag new" data-say="Three changes on the card, numbered: sides in the Facilities list, the line naming time another schedule holds, and the count that follows.">New</button><span class="sw-note">Field 1 in two sides, Field 2 side A only</span></div>
+      <div class="cap"><h3>Proposed</h3><button type="button" class="tag new" data-say="Two changes on the card, numbered: the first row's box names the quarters and sides, and the count follows.">New</button><span class="sw-note">Mornings in quarters and sides, noon whole</span></div>
       <div class="scroller"><div class="scrim"><div class="win">
         <div class="dh same"><div class="tt"><span class="tl">New schedule</span><span class="st2">Step 1 of 2 · settings</span></div><span class="x"><svg width="16" height="16"><use href="#i-x"/></svg></span></div>
         <div class="prog same"><span class="on"></span><span></span></div>
@@ -579,19 +671,25 @@ section.pane.on { display: block; }
           <div class="sect">
             <p class="sh same">The time</p>
             <div class="pr2 same">
-              <div class="fld"><span class="lb">Name<i>*</i></span><div class="ctl"><span class="v">Winter dome, 9U</span></div></div>
+              <div class="fld"><span class="lb">Name<i>*</i></span><div class="ctl"><span class="v">Winter dome, young and old</span></div></div>
               <div><div class="fld" style="margin-bottom:.3rem"><span class="lb">Permits</span><div class="ctl pk"><span class="v">Dome, winter 2027</span><svg class="ic" width="15" height="15"><use href="#i-chev"/></svg></div></div><span class="hnt">Each permit brings its own time and dates off. Untick one to take its time off again.</span><br><span class="door find"><svg width="15" height="15"><use href="#i-search"/></svg>Find the time across every permit ›</span></div>
             </div>
             <div class="pcards"><div class="pcard grow">
               <p class="ph same"><strong>Dome, winter 2027</strong><span>Milton Sports Dome Inc. · Jan 3 – Mar 7, 2027</span></p>
               <p class="left same">Fields 3–6 are not on this schedule.</p>
-              <p class="left rel hl">Winter dome, 11U holds Field 2, side B on Sun, 9:00 a.m.–1:30 p.m. That time is left out.<button class="mk" data-n="2" aria-label="Change 2">2</button></p>
               <div class="prow">
-                <div class="fld rel hl"><span class="lbl"><span class="lb">Facilities</span><span class="ven">Milton Sports Dome</span></span><div class="ctl pk"><span class="v">Field 1 in two sides, Field 2 side A</span><svg class="ic" width="15" height="15"><use href="#i-chev"/></svg></div><button class="mk" data-n="1" aria-label="Change 1">1</button></div>
+                <div class="fld rel hl"><span class="lbl"><span class="lb">Facilities</span><span class="ven">Milton Sports Dome</span></span><div class="ctl pk"><span class="v">Field 1 in four quarters, Field 2 in two sides</span><svg class="ic" width="15" height="15"><use href="#i-chev"/></svg></div><button class="mk" data-n="1" aria-label="Change 1">1</button></div>
                 <div class="fld same"><span class="lb">Days<i>*</i></span><div class="ctl pk"><span class="v">Sun</span><svg class="ic" width="15" height="15"><use href="#i-chev"/></svg></div></div>
                 <div class="fld same"><span class="lb">From<i>*</i></span><div class="ctl"><span class="v">9:00 a.m.</span><svg class="ic" width="15" height="15"><use href="#i-clock"/></svg></div></div>
-                <div class="fld same"><span class="lb">Until<i>*</i></span><div class="ctl"><span class="v">1:30 p.m.</span><svg class="ic" width="15" height="15"><use href="#i-clock"/></svg></div></div>
-                <span class="rm off same"><svg width="15" height="15"><use href="#i-x"/></svg></span>
+                <div class="fld same"><span class="lb">Until<i>*</i></span><div class="ctl"><span class="v">12:00 p.m.</span><svg class="ic" width="15" height="15"><use href="#i-clock"/></svg></div></div>
+                <span class="rm same"><svg width="15" height="15"><use href="#i-x"/></svg></span>
+              </div>
+              <div class="prow same">
+                <div class="fld"><span class="lbl"><span class="lb">Facilities</span><span class="ven">Milton Sports Dome</span></span><div class="ctl pk"><span class="v">Field 1 and Field 2</span><svg class="ic" width="15" height="15"><use href="#i-chev"/></svg></div></div>
+                <div class="fld"><span class="lb">Days<i>*</i></span><div class="ctl pk"><span class="v">Sun</span><svg class="ic" width="15" height="15"><use href="#i-chev"/></svg></div></div>
+                <div class="fld"><span class="lb">From<i>*</i></span><div class="ctl"><span class="v">12:00 p.m.</span><svg class="ic" width="15" height="15"><use href="#i-clock"/></svg></div></div>
+                <div class="fld"><span class="lb">Until<i>*</i></span><div class="ctl"><span class="v">1:30 p.m.</span><svg class="ic" width="15" height="15"><use href="#i-clock"/></svg></div></div>
+                <span class="rm"><svg width="15" height="15"><use href="#i-x"/></svg></span>
               </div>
               <span class="door rowdoor same"><svg width="14" height="14"><use href="#i-plus"/></svg>Add hours</span>
             </div></div>
@@ -604,116 +702,121 @@ section.pane.on { display: block; }
           <div class="cutm same">Who, and how much · cut from the drawing, unchanged</div>
           <div class="sect fold same"><p class="sh">Rules</p><span class="cnt">1 on</span><svg width="16" height="16" style="color:var(--dim)"><use href="#i-chev"/></svg></div>
         </div>
-        <div class="df"><span class="fn rel hl">90 slots for 4 teams.<button class="mk" data-n="3" aria-label="Change 3">3</button></span><span class="btn same">Cancel</span><span class="btn pri same">Generate drafts</span></div>
+        <div class="df"><span class="fn rel hl">140 slots for 14 teams.<button class="mk" data-n="2" aria-label="Change 2">2</button></span><span class="btn same">Cancel</span><span class="btn pri same">Generate drafts</span></div>
       </div></div></div>
       <div class="expl"></div>
       <div class="legend">
-        <div class="li" id="r-1"><button class="mk2" data-n="1" type="button">1</button><p><b>Sides are in the Facilities list Stage 1 built.</b> A field with sides offers its whole field and each side as plain options, and you tick what this row uses (open below). The box says it in words: "Field 1 in two sides" means a team on each side; "Field 2 side A" means only that side. Ticking a field itself still means the whole field.</p></div>
-        <div class="li" id="r-2"><button class="mk2" data-n="2" type="button">2</button><p><b>The builder sees other schedules' time.</b> This is the item Stage 2 owes. A final schedule's slots are taken: one quiet line names them, in the place the card already uses for Add time's "already uses" line, and the builder leaves that time out. Another schedule's draft is not taken yet, so it is named in amber and left in (below). The line speaks about whole fields or sides, never single Sundays, unless the other schedule holds only some of them.</p></div>
-        <div class="li" id="r-3"><button class="mk2" data-n="3" type="button">3</button><p><b>The count follows.</b> 3 places (Field 1's two sides, and Field 2 side A) × 3 starts × 10 Sundays = 90 slots. With Field 1 and Field 2 whole it was 60.</p></div>
+        <div class="li" id="r-1"><button class="mk2" data-n="1" type="button">1</button><p><b>The box says it in words</b>, as round 1 drew for sides: "Field 1 in four quarters" means a team on each quarter; "Field 1 quarters A and C" means only those two. The box is about 290 px, so a long answer is cut with "…", as every box in the form is; the open list is the full answer.</p></div>
+        <div class="li" id="r-2"><button class="mk2" data-n="2" type="button">2</button><p><b>The count follows.</b> Mornings: 6 places (four quarters, two sides) × 2 starts × 10 Sundays = 120. Noon: 2 whole fields × 10 = 20. 140 slots. With both fields whole all morning it was 60.</p></div>
       </div>
     </div>
 
     <div class="stage">
-      <div class="cap"><h3>The list, open</h3><button type="button" class="tag chg" data-say="The tick list Stage 1 shipped on the row, kept flat as it ships: a field with sides offers three plain options, and a side another final schedule holds names its holder on the option's second line.">Restyled</button><span class="sw-note">At its width in the window (about 290 px)</span></div>
-      <div class="scroller"><div style="display:flex;gap:28px;width:680px">
-        <div class="narrow" style="width:290px">
-          <div class="fld"><span class="lbl"><span class="lb">Facilities</span><span class="ven">Milton Sports Dome</span></span><div class="ctl pk open"><span class="v">Field 1 in two sides, Field 2 side A</span><svg class="ic" width="15" height="15"><use href="#i-chev"/></svg></div></div>
+      <div class="cap"><h3>The list, open, both ways Follow-up 2 can go</h3><button type="button" class="tag chg" data-say="The tick list Stage 1 shipped on the row, kept flat as round 1 ruled: each place a plain option, a field without a split keeps its plain name.">Restyled</button><span class="sw-note">At its width in the window (about 290 px)</span></div>
+      <div class="scroller"><div style="display:flex;gap:28px;width:960px">
+        <div style="width:290px">
+          <p class="cut" style="font:700 11px/1.3 var(--font-mono);letter-spacing:.07em;text-transform:uppercase;color:var(--doc-dim);margin:0 0 .5rem">Quarters only (Ask 2 B)</p>
+          <div class="fld"><span class="lbl"><span class="lb">Facilities</span><span class="ven">Milton Sports Dome</span></span><div class="ctl pk open"><span class="v">Field 1 in four quarters, Field 2 in two sides</span><svg class="ic" width="15" height="15"><use href="#i-chev"/></svg></div></div>
           <div class="menu">
             <div class="mi"><span class="tk"></span><span>Every facility on this permit</span></div>
             <div class="sep"></div>
             <div class="mi rel"><span class="tk"></span><span>Field 1 (whole)</span><button class="mk" style="right:6px;top:7px" data-n="1" aria-label="Note 1">1</button></div>
-            <div class="mi"><span class="tk on"><svg width="11" height="11"><use href="#i-check"/></svg></span><span>Field 1, side A</span></div>
-            <div class="mi"><span class="tk on"><svg width="11" height="11"><use href="#i-check"/></svg></span><span>Field 1, side B</span></div>
+            <div class="mi"><span class="tk on"><svg width="11" height="11"><use href="#i-check"/></svg></span><span>Field 1, quarter A</span></div>
+            <div class="mi"><span class="tk on"><svg width="11" height="11"><use href="#i-check"/></svg></span><span>Field 1, quarter B</span></div>
+            <div class="mi"><span class="tk on"><svg width="11" height="11"><use href="#i-check"/></svg></span><span>Field 1, quarter C</span></div>
+            <div class="mi"><span class="tk on"><svg width="11" height="11"><use href="#i-check"/></svg></span><span>Field 1, quarter D</span></div>
             <div class="mi"><span class="tk"></span><span>Field 2 (whole)</span></div>
             <div class="mi"><span class="tk on"><svg width="11" height="11"><use href="#i-check"/></svg></span><span>Field 2, side A</span></div>
-            <div class="mi rel" style="align-items:flex-start"><span class="tk" style="margin-top:3px"></span><span>Field 2, side B<small style="display:block;margin:0;font-size:12px;color:var(--dim)">Held by Winter dome, 11U</small></span><button class="mk" style="right:6px;top:7px" data-n="2" aria-label="Note 2">2</button></div>
+            <div class="mi"><span class="tk on"><svg width="11" height="11"><use href="#i-check"/></svg></span><span>Field 2, side B</span></div>
             <div class="mi"><span class="tk"></span><span>Field 3</span></div><div class="mi"><span class="tk"></span><span>Field 4</span></div><div class="mi"><span class="tk"></span><span>Field 5</span></div><div class="mi"><span class="tk"></span><span>Field 6</span></div>
           </div>
         </div>
-        <div style="width:330px;font-size:.86rem;color:var(--doc-dim)">
-          <p style="margin-top:2rem"><b style="color:var(--doc-ink)">How the ticks read</b></p>
+        <div style="width:290px">
+          <p class="cut" style="font:700 11px/1.3 var(--font-mono);letter-spacing:.07em;text-transform:uppercase;color:var(--doc-dim);margin:0 0 .5rem">With halves (Ask 2 A, recommended)</p>
+          <div class="fld"><span class="lbl"><span class="lb">Facilities</span><span class="ven">Milton Sports Dome</span></span><div class="ctl pk open"><span class="v">Field 1 quarters A–B, C and D, Field 2 in two sides</span><svg class="ic" width="15" height="15"><use href="#i-chev"/></svg></div></div>
+          <div class="menu">
+            <div class="mi"><span class="tk"></span><span>Every facility on this permit</span></div>
+            <div class="sep"></div>
+            <div class="mi"><span class="tk"></span><span>Field 1 (whole)</span></div>
+            <div class="mi rel"><span class="tk on"><svg width="11" height="11"><use href="#i-check"/></svg></span><span>Field 1, quarters A–B</span><button class="mk" style="right:6px;top:7px" data-n="2" aria-label="Note 2">2</button></div>
+            <div class="mi"><span class="tk"></span><span>Field 1, quarters C–D</span></div>
+            <div class="mi"><span class="tk"></span><span>Field 1, quarter A</span></div>
+            <div class="mi"><span class="tk"></span><span>Field 1, quarter B</span></div>
+            <div class="mi"><span class="tk on"><svg width="11" height="11"><use href="#i-check"/></svg></span><span>Field 1, quarter C</span></div>
+            <div class="mi"><span class="tk on"><svg width="11" height="11"><use href="#i-check"/></svg></span><span>Field 1, quarter D</span></div>
+            <div class="mi"><span class="tk"></span><span>Field 2 (whole)</span></div>
+            <div class="mi"><span class="tk on"><svg width="11" height="11"><use href="#i-check"/></svg></span><span>Field 2, side A</span></div>
+            <div class="mi"><span class="tk on"><svg width="11" height="11"><use href="#i-check"/></svg></span><span>Field 2, side B</span></div>
+            <div class="mi"><span class="tk"></span><span>Field 3</span></div><div class="mi"><span class="tk"></span><span>Field 4</span></div><div class="mi"><span class="tk"></span><span>Field 5</span></div><div class="mi"><span class="tk"></span><span>Field 6</span></div>
+          </div>
+        </div>
+        <div style="width:320px;font-size:.86rem;color:var(--doc-dim)">
+          <p style="margin-top:1.6rem"><b style="color:var(--doc-ink)">How the ticks read</b></p>
           <ul style="padding-left:1.1rem;margin:0">
-            <li>Tick <b>Field 1 (whole)</b>: the whole field, one team at a time (as today).</li>
-            <li>Tick <b>side A and side B</b>: Field 1 in two sides, a team on each.</li>
-            <li>Tick <b>side A only</b>: one side here; side B is left for something else.</li>
-            <li>Ticking a side unticks its whole field, and ticking the whole field unticks its sides, so a field and its side are never both ticked. This is one new rule for the shared tick list, flagged for the build.</li>
+            <li>Tick <b>Field 1 (whole)</b>: the whole field, one team at a time, as today.</li>
+            <li>Tick <b>all four quarters</b>: Field 1 in four quarters, a team on each.</li>
+            <li>Tick <b>some quarters</b>: those quarters here; the others are left for something else.</li>
+            <li>With halves: tick <b>quarters A–B</b> for one team on that half, and quarters C and D for a team on each.</li>
+            <li>A place and a place inside it are never both ticked: ticking a quarter unticks the whole field and the half it is in; ticking a half unticks the whole field and its two quarters. This is the round 1 build note for the shared tick list, widened.</li>
           </ul>
         </div>
       </div></div>
       <div class="expl"></div>
       <div class="legend">
-        <div class="li" id="o-1"><button class="mk2" data-n="1" type="button">1</button><p><b>The list stays flat, as it ships.</b> A field with sides offers three plain options: "Field 1 (whole)", "Field 1, side A", "Field 1, side B". No indent and no half-ticked parent box, because a parent box could not tell "both sides" from "one side". A field without sides keeps its plain name. The box's words ("Field 1 in two sides, Field 2 side A") are new wording logic in the shared field-list words, flagged for the build.</p></div>
-        <div class="li" id="o-2"><button class="mk2" data-n="2" type="button">2</button><p><b>Time a final schedule holds names its holder on the option's second line</b>, the line the list already has for a detail, in normal ink. It is not greyed, because in this product grey means "can't be picked", and this can: the builder leaves out only the Sundays and hours that schedule holds, and the card's line says what was left out. A draft's time carries no second line (a draft holds nothing yet).</p></div>
+        <div class="li" id="o-1"><button class="mk2" data-n="1" type="button">1</button><p><b>Still flat.</b> A field in quarters offers five plain options: the whole field and quarters A to D. No indent and no half-ticked parent box, which round 1's design check ruled out because it can't tell "all" from "some". A field without a split keeps its plain name.</p></div>
+        <div class="li" id="o-2"><button class="mk2" data-n="2" type="button">2</button><p><b>With halves, the two halves are the fixed pairs A–B and C–D</b>: the dividers stand in a row, so A–B is one end of the field and C–D the other. Halves across the field (A with C) are not offered. A quartered field then offers seven options, and the box reads "Field 1 quarters A–B, C and D": one team on that half, one on each of the other two quarters, three places at each start.</p></div>
       </div>
-    </div>
-
-    <div class="stage">
-      <div class="cap"><h3>The three kinds of row, and a draft's time</h3><button type="button" class="tag new" data-say="One row of the permit's card for each case. The amber line is the draft case: named, not left out.">New</button><span class="sw-note">The permit's card only, at its width in the window</span></div>
-      <div class="scroller"><div class="bare" style="width:968px">
-        <p class="cut">A whole field (as today)</p>
-        <div class="pcard" style="margin-bottom:12px"><div class="prow" style="padding-top:.6rem"><div class="fld"><span class="lbl"><span class="lb">Facilities</span><span class="ven">Milton Sports Dome</span></span><div class="ctl pk"><span class="v">Field 3</span><svg class="ic" width="15" height="15"><use href="#i-chev"/></svg></div></div><div class="fld"><span class="lb">Days<i>*</i></span><div class="ctl pk"><span class="v">Sun</span><svg class="ic" width="15" height="15"><use href="#i-chev"/></svg></div></div><div class="fld"><span class="lb">From<i>*</i></span><div class="ctl"><span class="v">9:00 a.m.</span><svg class="ic" width="15" height="15"><use href="#i-clock"/></svg></div></div><div class="fld"><span class="lb">Until<i>*</i></span><div class="ctl"><span class="v">1:30 p.m.</span><svg class="ic" width="15" height="15"><use href="#i-clock"/></svg></div></div><span class="rm"><svg width="15" height="15"><use href="#i-x"/></svg></span></div></div>
-        <p class="cut">Both sides: a team on each (P2)</p>
-        <div class="pcard" style="margin-bottom:12px"><div class="prow" style="padding-top:.6rem"><div class="fld"><span class="lbl"><span class="lb">Facilities</span><span class="ven">Milton Sports Dome</span></span><div class="ctl pk"><span class="v">Field 1 in two sides</span><svg class="ic" width="15" height="15"><use href="#i-chev"/></svg></div></div><div class="fld"><span class="lb">Days<i>*</i></span><div class="ctl pk"><span class="v">Sun</span><svg class="ic" width="15" height="15"><use href="#i-chev"/></svg></div></div><div class="fld"><span class="lb">From<i>*</i></span><div class="ctl"><span class="v">9:00 a.m.</span><svg class="ic" width="15" height="15"><use href="#i-clock"/></svg></div></div><div class="fld"><span class="lb">Until<i>*</i></span><div class="ctl"><span class="v">1:30 p.m.</span><svg class="ic" width="15" height="15"><use href="#i-clock"/></svg></div></div><span class="rm"><svg width="15" height="15"><use href="#i-x"/></svg></span></div></div>
-        <p class="cut">One side, the other elsewhere (P3), with another schedule's draft on it</p>
-        <div class="pcard"><div class="prow" style="padding-top:.6rem"><div class="fld"><span class="lbl"><span class="lb">Facilities</span><span class="ven">Milton Sports Dome</span></span><div class="ctl pk"><span class="v">Field 2 side A</span><svg class="ic" width="15" height="15"><use href="#i-chev"/></svg></div></div><div class="fld"><span class="lb">Days<i>*</i></span><div class="ctl pk"><span class="v">Sun</span><svg class="ic" width="15" height="15"><use href="#i-chev"/></svg></div></div><div class="fld"><span class="lb">From<i>*</i></span><div class="ctl"><span class="v">9:00 a.m.</span><svg class="ic" width="15" height="15"><use href="#i-clock"/></svg></div></div><div class="fld"><span class="lb">Until<i>*</i></span><div class="ctl"><span class="v">1:30 p.m.</span><svg class="ic" width="15" height="15"><use href="#i-clock"/></svg></div></div><span class="rm"><svg width="15" height="15"><use href="#i-x"/></svg></span></div><p class="rowNotes" style="padding-bottom:.5rem">The draft Spring 11U also uses Field 2, side A on Sun, 9:00 a.m.–1:30 p.m. Whichever is finalized first keeps it.</p></div>
-      </div></div>
-      <div class="expl"></div>
-      <p class="note"><b>The draft line copies the finder's own rule and place</b> ("held by a draft (name)", ruled P7 in the several-permits plan; the amber note under the row): a draft is named and left in, never left out. "Whichever is finalized first keeps it" says what happens next; at Finalize the second schedule's clashing slots are refused, as the clash check already refuses a booked place. These are working words.</p>
-      <p class="note"><b>Not drawn, owed with this:</b> "Find the time" picks a row from its first to its last free day, so a Sunday a final schedule holds in the middle still comes along. The fix is the same reading of other schedules' time; nothing on screen changes except the rows it offers.</p>
+      <p class="note"><b>Another schedule's time on a quarter</b> is said exactly as round 1 drew for a side: "Winter dome, 11U holds Field 1, quarter D on Sun, 9:00 a.m.–12:00 p.m. That time is left out." on the card, and "Held by Winter dome, 11U" on the option's second line. With halves, a schedule holding quarters A–B holds both quarters, and its line names "quarters A–B".</p>
     </div>
   </section>
 
   <!-- ═════════ 4 · THE GRID ═════════ -->
   <section class="pane" id="p-grid">
-    <p class="lede"><b>The schedule page's grid, with Field 1 in two sides, drawn both ways at the page's true width (1200 px).</b> Rows are facilities and columns are the schedule's Sundays, as the grid ships. Each slot shows its time, then its team, with the team's colour on its left edge. The Fair shares band above the card is not drawn; it does not change.</p>
+    <p class="lede"><b>The schedule page's grid with Field 1 in four quarters, at the page's true width (1200 px).</b> Round 1, 8 B: a row per part, indented under its field. Rows are facilities and columns are Sundays, as the grid ships. A whole-field slot stays on the field's own row, as round 1 drew. The Fair shares band above the card does not change and is not drawn.</p>
     <div class="stage">
-      <div class="cap"><h3>Today</h3><button type="button" class="tag same" data-say="As it ships: Field 1 is one row. Two teams on it at once can only be a shared slot: the names stack in one box and the colour edge splits. Nothing says who is on which side.">Unchanged</button><span class="sw-note">The same teams, paired by "Sharing a facility"</span></div>
-      <div class="scroller"><div class="pg" id="gridT"></div></div>
-      <div class="expl"></div>
-    </div>
-    <div class="stage">
-      <div class="cap"><h3>A · One row for a field, its cell split</h3><button type="button" class="tag chg" data-say="Field 1 keeps one row. Each start is one box with the time on top and the two sides side by side under it.">Restyled</button><span class="sw-note">Winter dome, 9U · a draft</span></div>
-      <div class="scroller"><div class="pg" id="gridA"></div></div>
-      <div class="expl"></div>
-      <p class="note"><b>What goes wrong:</b> each side gets about 60 px. "9U Select" is cut to "9U Sel…", and a club whose teams are named "U11 Milton Bats Blue" would read nothing. A whole-field slot and a split one sit in the same cell at different widths, and dragging onto one side means hitting half a box.</p>
-    </div>
-    <div class="stage">
-      <div class="cap"><h3>B · A row per side</h3><button type="button" class="tag new" data-say="Each side is its own row, labelled with its field and side. A slot looks exactly like every other slot. Recommended (Ask 8).">New</button><span class="sw-note">The same week, the same teams</span></div>
-      <div class="scroller"><div class="pg" id="gridB"></div></div>
+      <div class="cap"><h3>Quarters only</h3><button type="button" class="tag new" data-say="Four quarter rows under Field 1, two side rows under Field 2. Every slot keeps the shipped look. Round 1, 8 B; this round’s Ask 2.">New</button><span class="sw-note">Winter dome, young and old · a draft</span></div>
+      <div class="scroller"><div class="pg" id="gridQ"></div></div>
       <div class="expl"></div>
       <div class="legend">
-        <div class="li" id="g-1"><button class="mk2" data-n="1" type="button">1</button><p><b>A side is a row</b>, labelled "Side A" with "Field 1 · Milton Sports Dome" under it, and indented one step under its field, the standard's way of showing a sub row. Every slot keeps the shipped look, so clashes, locks, the team colour edge, filters and drag and drop work as they do for any facility.</p></div>
-        <div class="li" id="g-2"><button class="mk2" data-n="2" type="button">2</button><p><b>A whole-field slot on a field with sides stays on the field's own row.</b> Here 13U AA has the whole of Field 1 at 12:00 p.m. on the first two Sundays, before the sides start, so those two side cells hold two slots, not three. The field's row shows "—" on a Sunday with no whole-field slot, as an empty cell does today. When a schedule never uses the whole field, the field's row is a label only: the sides are listed under it.</p></div>
+        <div class="li" id="gq-1"><button class="mk2" data-n="1" type="button">1</button><p><b>A quarter is a row</b>, labelled "Quarter A" with "Field 1 · Milton Sports Dome" under it, indented one step under its field, as round 1 drew a side. Up to four rows under one field (round 1, 8 B). Every slot keeps the shipped look, so clashes, locks, the team colour edge, filters and drag and drop work as they do for any facility.</p></div>
+        <div class="li" id="gq-2"><button class="mk2" data-n="2" type="button">2</button><p><b>The field's own row holds its whole-field slots</b>: 13U AA has the whole of Field 1 at 12:00 p.m. each Sunday. On a field the schedule never uses whole, the row is a label only and its parts are listed under it. The Facility filter lists Field 1 once; choosing it shows its row and all four quarter rows.</p></div>
       </div>
     </div>
     <div class="stage">
-      <div class="card">
-        <h3>The same answer goes to the slot window, By team and the exports</h3>
-        <ul>
-          <li><b>The slot window</b> names the place as the row does: "Sun, Jan 3 · 9:00 a.m. · Field 1, side A".</li>
-          <li><b>By team</b> lists a team's slots with the same place words.</li>
-          <li><b>The Facility filter</b> lists Field 1 once. Choosing it shows its whole-field row and both side rows.</li>
-          <li><b>The coaches portal and the family calendar</b> read the practice's place with its side: "Field 1, side A" at Milton Sports Dome, joined the way each surface joins a venue and a facility today.</li>
-        </ul>
+      <div class="cap"><h3>With halves (if Ask 2 is A)</h3><button type="button" class="tag new" data-say="The same week with 11U B on quarters A–B at 10:30 a.m. A half of a quartered field is its own row, between the field and its quarters.">New</button><span class="sw-note">The same Sundays, one half in use</span></div>
+      <div class="scroller"><div class="pg" id="gridH"></div></div>
+      <div class="expl"></div>
+      <div class="legend">
+        <div class="li" id="gh-3"><button class="mk2" data-n="3" type="button">3</button><p><b>A half of a quartered field is its own row</b>, "Quarters A–B", placed between the field and its quarters. So a quartered field can show up to six rows under its own. Rows appear only for the parts the schedule uses, so in practice a field shows the few it is run in. A slot on quarters A–B sits on its own row, and the quarter A and B rows have nothing at 10:30 a.m., because the half holds them. That is not an open slot: an open slot is always drawn, dashed, with the word Open.</p></div>
       </div>
     </div>
   </section>
 
   <!-- ═════════ 5 · BILL AND PDF ═════════ -->
   <section class="pane" id="p-bill">
-    <p class="lede"><b>On the bill, a side is priced like any half: half the field's price.</b> The bill counts slots by what they cost, so one side of a full field reads "half", the same as a "Half cost" field, because it costs the same. The place word "side" goes where a place is named: the PDF's column headings.</p>
+    <p class="lede"><b>On the bill, a quarter is priced at a quarter of the field's price, and the bill learns the word for it.</b> Today the bill names a slot only as full, half or shared, so a quarter falls into "more". The PDF gets a column per part, and is drawn here as it prints: landscape on US Letter.</p>
     <div class="stage">
-      <div class="cap"><h3>Bill the teams</h3><button type="button" class="tag chg" data-say="The window and its table ship today. One hint changes (mark 1). The captions need no change: a side already falls into the half count by its price.">Restyled</button><span class="sw-note">Bill window (800 px) · Winter dome, a draft, with sides, sharing and a Half cost field together</span></div>
+      <div class="cap"><h3>A team's caption, before and after</h3><button type="button" class="tag chg" data-say="Only the caption's words change. The figures are already right: the bill counts a slot by its price.">Restyled</button><span class="sw-note">Bill window, the 7U AA row</span></div>
+      <div class="scroller"><div class="bare" style="width:760px">
+        <div class="strip">
+          <div><b>Today</b><span>7U AA · 10 more · 3.8 full-field hours</span><span>$300.00</span></div>
+          <div class="rel"><b>Proposed</b><span>7U AA · 10 quarter-field slots · 3.8 full-field hours</span><span>$300.00</span><button class="mk" data-n="1" aria-label="Change 1">1</button></div>
+        </div>
+      </div></div>
+      <div class="expl"></div>
+      <div class="legend"><div class="li" id="bc-1"><button class="mk2" data-n="1" type="button">1</button><p><b>"Quarter-field" joins full, half and shared.</b> The bill counts a slot by its price, as round 1 kept it, so a quarter of a full field and a side of a "Half cost" field both read "quarter-field": both cost a quarter. A team with two kinds reads "6 half + 4 quarter · …", the shipped pattern. "More" stays for any other price (a quarter of a "Half cost" field, an eighth).</p></div></div>
+    </div>
+    <div class="stage">
+      <div class="cap"><h3>Bill the teams</h3><button type="button" class="tag chg" data-say="The window and its table ship today. The Split hint gains the quarter's price; the captions gain the quarter's word.">Restyled</button><span class="sw-note">Bill window (800 px) · Winter dome, young and old, a draft</span></div>
       <div class="scroller"><div class="scrim"><div class="win wd">
-        <div class="dh"><div class="tt"><span class="eb">Winter dome</span><span class="tl">Bill the teams</span></div><span class="x"><svg width="16" height="16"><use href="#i-x"/></svg></span></div>
+        <div class="dh"><div class="tt"><span class="eb">Winter dome, young and old</span><span class="tl">Bill the teams</span></div><span class="x"><svg width="16" height="16"><use href="#i-x"/></svg></span></div>
         <div class="db" style="display:block">
           <div class="pr2">
             <div class="fld"><span class="lb">Bill from</span><div class="ctl pk"><span class="v">Dome rental 2027</span><svg class="ic" width="15" height="15"><use href="#i-chev"/></svg></div><span class="hnt">The permit's budget line · $18,000.00 planned, $18,000.00 left</span></div>
-            <div class="fld"><span class="lb">Bill the teams for</span><div class="ctl pk"><span class="v">The time at the permit's price · $12,000.00</span><svg class="ic" width="15" height="15"><use href="#i-chev"/></svg></div><span class="hnt">Or a part of it, when the club covers some</span></div>
+            <div class="fld"><span class="lb">Bill the teams for</span><div class="ctl pk"><span class="v">The time at the permit's price · $7,200.00</span><svg class="ic" width="15" height="15"><use href="#i-chev"/></svg></div><span class="hnt">Or a part of it, when the club covers some</span></div>
           </div>
           <div class="pr2">
-            <div class="fld rel hl"><span class="lb">Split</span><p class="fixed" style="margin:0">By the time each team got</p><span class="hnt">Each field at the permit's price: a full field $80.00 an hour, a half field or one side $40.00</span><button class="mk" data-n="1" aria-label="Change 1">1</button></div>
+            <div class="fld rel hl"><span class="lb">Split</span><p class="fixed" style="margin:0">By the time each team got</p><span class="hnt">Each field at the permit's price: a full field $80.00 an hour, a half field or one side $40.00, a quarter $20.00</span><button class="mk" data-n="1" aria-label="Change 1">1</button></div>
             <div class="pr2" style="gap:0 .6rem">
               <div class="fld"><span class="lb">Payments</span><div class="ctl pk"><span class="v">Monthly</span><svg class="ic" width="15" height="15"><use href="#i-chev"/></svg></div></div>
               <div class="fld"><span class="lb">First payment due</span><div class="ctl"><span class="v">Jan 15, 2027</span><svg class="ic" width="15" height="15"><use href="#i-cal"/></svg></div></div>
@@ -722,524 +825,413 @@ section.pane.on { display: block; }
           <p class="hnt" style="margin:-.5rem 0 .7rem">2 payments: the first due Jan 15, then every month.</p>
           <div class="tframe"><table class="tk2" aria-label="Bill the teams">
             <thead><tr><th>Team</th><th class="n">Share</th><th class="n">Jan 15</th><th class="n">Feb 15</th></tr></thead>
-            <tbody>
-              <tr class="two"><td>9U AA<small class="rel">30 half-field slots · 22.5 full-field hours<button class="mk" style="right:auto;left:250px;top:-4px" data-n="2" aria-label="Note 2">2</button></small></td><td class="n">$1,800.00</td><td class="n">$900.00</td><td class="n">$900.00</td></tr>
-              <tr class="two"><td>9U A<small>30 half-field slots · 22.5 full-field hours</small></td><td class="n">$1,800.00</td><td class="n">$900.00</td><td class="n">$900.00</td></tr>
-              <tr class="two"><td>11U AA<small>30 shared slots · 22.5 full-field hours</small></td><td class="n">$1,800.00</td><td class="n">$900.00</td><td class="n">$900.00</td></tr>
-              <tr class="two"><td>11U A<small>30 shared slots · 22.5 full-field hours</small></td><td class="n">$1,800.00</td><td class="n">$900.00</td><td class="n">$900.00</td></tr>
-              <tr class="two"><td>11U B<small class="rel">20 half-field slots · 15 full-field hours<button class="mk" style="right:auto;left:236px;top:-4px" data-n="3" aria-label="Note 3">3</button></small></td><td class="n">$1,200.00</td><td class="n">$600.00</td><td class="n">$600.00</td></tr>
-              <tr class="two"><td>15U AA<small>15 full-field slots · 22.5 full-field hours</small></td><td class="n">$1,800.00</td><td class="n">$900.00</td><td class="n">$900.00</td></tr>
-              <tr class="two"><td>15U A<small>15 full-field slots · 22.5 full-field hours</small></td><td class="n">$1,800.00</td><td class="n">$900.00</td><td class="n">$900.00</td></tr>
-              <tr class="grp"><td>7 teams</td><td class="n">$12,000.00</td><td class="n">$6,000.00</td><td class="n">$6,000.00</td></tr>
-            </tbody>
+            <tbody id="billRows"></tbody>
           </table></div>
-          <p class="hnt" style="margin:-.3rem 0 .8rem">$6,000.00 less than the permit's $18,000.00: the 50 open slots.</p>
-          <div class="stmt"><b>The bill goes to the teams with the schedule.</b>Nothing is billed until you finalize. Then each team's share arrives on its Money › Club tab with its 2 payments, filed under Facility rental where the team's budget has it.</div>
+          <div class="cutm" style="margin-bottom:.8rem">The line under the table and the statement · cut from the drawing, unchanged</div>
         </div>
         <div class="df"><span class="btn">Cancel</span><span class="btn pri">Add the bill to the schedule</span></div>
       </div></div></div>
       <div class="expl"></div>
       <div class="legend">
-        <div class="li" id="b-1"><button class="mk2" data-n="1" type="button">1</button><p><b>The only change on the bill:</b> the Split hint adds "or one side" beside the half field's price, shown only when the schedule has a side. Today it reads "…a full field $80.00 an hour, a half field $40.00". Everything else in this frame is the window as it ships, so no separate Today frame is drawn.</p></div>
-        <div class="li" id="b-2"><button class="mk2" data-n="2" type="button">2</button><p><b>9U AA practised on a side of Field 1 every time.</b> Its caption already reads "half-field slots", because the bill counts a slot by its price and a side costs half. 30 × 0.75 full-field hours = 22.5. This is the same money as 11U AA, which shared all 30 of its slots on Field 3: the two ways of putting two teams on one field bill alike (Ask 2 and Ask 6).</p></div>
-        <div class="li" id="b-3"><button class="mk2" data-n="3" type="button">3</button><p><b>11U B is on Field 5, which the permit holds at "Half cost"</b> (case C). It reads the same as a side, because it costs the same. A side of a "Half cost" field would cost a quarter and read "1 more", as the bill counts any other price today (Ask 3).</p></div>
+        <div class="li" id="b-1"><button class="mk2" data-n="1" type="button">1</button><p><b>The Split hint adds "a quarter $20.00"</b>, shown only when the schedule has a quarter, beside round 1's "or one side". Everything else in this frame is the window as it ships.</p></div>
+        <div class="li" id="b-2"><button class="mk2" data-n="2" type="button">2</button><p><b>The money adds up with no new arithmetic.</b> Eight teams on quarters, 10 slots each at $30.00 (a quarter of $120.00): $2,400.00. Four on sides at $60.00: $2,400.00. Two on whole fields at $120.00: $2,400.00. $7,200.00 is two fields, three starts, ten Sundays. 10 × 1.5 hours × ¼ = 3.75 full-field hours, which the caption rounds to 3.8 as it rounds every figure today.</p></div>
       </div>
-      <p class="note"><b>Why not a separate word on the bill.</b> The brief asks for side words that are not "half field". On the bill that would hide a fact: a side of a full field and a "Half cost" field cost the club the same. The bill keeps counting by price. The place word belongs where a place is named.</p>
     </div>
     <div class="stage">
-      <div class="cap"><h3>The schedule's PDF</h3><button type="button" class="tag chg" data-say="The PDF ships today with a column per facility. A side gets its own column, named for its side, which follows the row-per-side grid (Ask 8). Case C keeps its heading and its note.">Restyled</button><span class="sw-note">One day of the PDF at A4 width</span></div>
-      <div class="scroller"><div class="pdf">
+      <div class="cap"><h3>The schedule's PDF, as it prints</h3><button type="button" class="tag chg" data-say="The PDF ships today with a column per facility, landscape on US Letter, compact. A part gets its own column with no price word in its heading. Case C keeps its heading and its note.">Restyled</button><span class="sw-note">One day, landscape US Letter (1056 × 816 px), 14 mm margins, 8 pt · a schedule on all six fields · a browser's wrap, close to the PDF's</span></div>
+      <div class="scroller"><div class="pdfL">
         <div class="lh"></div>
         <div class="in">
           <h4>Winter dome</h4>
           <div class="ps">Milton Sports Dome · Jan 3 – Mar 7, 2027 · 10 Sundays · Final, sent Dec 14 by Jordan Reyes</div>
-          <div class="dayh">Sun, Jan 17, 2027 · 18 slots · Milton Sports Dome</div>
+          <div class="dayh">Sun, Jan 17, 2027 · 26 slots · Milton Sports Dome</div>
           <table class="rel">
-            <thead><tr><th>Time</th><th class="rel" style="outline:2px dashed var(--doc-new);outline-offset:-2px">Field 1, side A<button class="mk" data-n="1" aria-label="Change 1">1</button></th><th style="outline:2px dashed var(--doc-new);outline-offset:-2px">Field 1, side B</th><th>Field 2</th><th>Field 3</th><th class="rel">Field 5 · half<button class="mk" data-n="2" aria-label="Note 2">2</button></th></tr></thead>
+            <thead><tr><th>Time</th><th class="rel">Field 1<button class="mk" data-n="3" aria-label="Change 3">3</button></th><th class="rel" style="outline:2px dashed var(--doc-new);outline-offset:-2px">Field 1, quarter A<button class="mk" data-n="2" aria-label="Change 2">2</button></th><th style="outline:2px dashed var(--doc-new);outline-offset:-2px">Field 1, quarter B</th><th style="outline:2px dashed var(--doc-new);outline-offset:-2px">Field 1, quarter C</th><th style="outline:2px dashed var(--doc-new);outline-offset:-2px">Field 1, quarter D</th><th>Field 2</th><th>Field 2, side A</th><th>Field 2, side B</th><th>Field 3</th><th>Field 4</th><th class="rel">Field 5 · half<button class="mk" data-n="4" aria-label="Note 4">4</button></th><th>Field 6 · half</th></tr></thead>
             <tbody>
-              <tr><td>9:00–10:30 a.m.</td><td>9U AA</td><td>9U A</td><td>15U AA</td><td>11U AA · 11U A</td><td>11U B</td></tr>
-              <tr><td>10:30 a.m.–12:00 p.m.</td><td>9U B</td><td>9U Select</td><td>15U A</td><td>11U AA · 11U A</td><td class="o">Open</td></tr>
-              <tr><td>12:00–1:30 p.m.</td><td class="o">Open</td><td>9U AA</td><td>13U AA</td><td>13U A</td><td>11U B</td></tr>
+              <tr><td>9:00–10:30 a.m.</td><td></td><td>7U AA</td><td>7U A</td><td>7U B</td><td>7U C</td><td></td><td>9U AA</td><td>9U A</td><td>11U AA · 11U A</td><td>13U A</td><td>11U B</td><td>15U A</td></tr>
+              <tr><td>10:30 a.m.–12:00 p.m.</td><td></td><td>8U AA</td><td>8U A</td><td>8U B</td><td>8U C</td><td></td><td>9U B</td><td>9U Select</td><td>13U B</td><td>15U B</td><td class="o">Open</td><td>11U C</td></tr>
+              <tr><td>12:00–1:30 p.m.</td><td>13U AA</td><td></td><td></td><td></td><td></td><td>15U AA</td><td></td><td></td><td>13U A</td><td class="o">Open</td><td>11U B</td><td>15U A</td></tr>
             </tbody>
           </table>
-          <div class="fn2">Times in Eastern Time.<br>Field 5 is a half field.<br>A slot handed back after this was printed is open on the club's schedule and on the team's.</div>
+          <div class="fn2">Times in Eastern Time.<br>Fields 5–6 are half fields.<br>A slot handed back after this was printed is open on the club’s schedule and on the team’s.</div>
         </div>
+        <div class="foot"><span>Milton Bats Baseball</span><span>Page 1 of 10</span></div>
+        <button class="mk" style="right:auto;left:8px;top:8px" data-n="1" aria-label="Note 1">1</button>
       </div></div>
       <div class="expl"></div>
       <div class="legend">
-        <div class="li" id="pd-1"><button class="mk2" data-n="1" type="button">1</button><p><b>Each side is its own column, and the PDF has to learn sides to draw it.</b> Today the PDF keys a column by its facility, so the two sides in one "Field 1" column would overwrite each other. Worse, it labels a column by its price share: left alone, a side would read "Field 1 · half" and add "Field 1 is a half field." under the table, the case-C words. The build gives the PDF a column per side, headed with the side's own words and no price word. A whole-field slot on a field with sides gets a "Field 1" column of its own, as the grid gets a row. The Excel export's Facility cell reads "Field 1, side A".</p></div>
-        <div class="li" id="pd-2"><button class="mk2" data-n="2" type="button">2</button><p><b>Case C is unchanged:</b> "Field 5 · half" in the heading and "Field 5 is a half field." under the table. Sharing is also unchanged: Field 3 shows "11U AA · 11U A" in one cell. Once the PDF learns sides, side and half never meet in one heading.</p></div>
+        <div class="li" id="pd-1"><button class="mk2" data-n="1" type="button">1</button><p><b>The page as it prints.</b> The export prints this PDF landscape on US Letter in the compact size, whatever the club's own print settings say ("a wide grid of facilities"). Round 1 drew it as A4 portrait, which was wrong. The table has no cell lines (the PDF's plain style) and a head in the club's accent colour (slate unless the club sets one). <b>It only just fits:</b> 13 columns, every field and every part, take about 245 of the page's 251 mm. Headings wrap to three lines and two-word names to two. One more split field would not fit: today the PDF then drops the columns that don't fit and says so under the table. That is Ask 8.</p></div>
+        <div class="li" id="pd-2"><button class="mk2" data-n="2" type="button">2</button><p><b>A column per part, headed with the part's own words</b> ("Field 1, quarter A"), wrapping as the page allows. No price word: left alone, a quarter of a full field would read "Field 1 · 25%", because today a heading carries the price share whenever it isn't full. The build gives the PDF a column per part, keyed by field and part, and the Excel export's Facility cell reads "Field 1, quarter A".</p></div>
+        <div class="li" id="pd-3"><button class="mk2" data-n="3" type="button">3</button><p><b>A whole-field column on a split field</b> appears when the day has a whole-field slot (13U AA at noon), as the grid's field row does. On a day with none it is left out.</p></div>
+        <div class="li" id="pd-4"><button class="mk2" data-n="4" type="button">4</button><p><b>Case C is unchanged:</b> "Field 5 · half" and the note "Fields 5–6 are half fields." under the table. Sharing is unchanged too: "11U AA · 11U A" in one cell.</p></div>
       </div>
     </div>
   </section>
 
-  <!-- ═════════ 6 · PERMIT USE ═════════ -->
-  <section class="pane" id="p-used">
-    <p class="lede"><b>What the permit's Used figure says, once the builder sees other schedules and a field has sides.</b> Used already counts every finalized practice, every program's bookings and every tournament game. Two things change: a practice on one side counts half the field's time, and a line names time a final schedule holds that no team has yet.</p>
+  <!-- ═════════ 6 · HOUSE LEAGUE PRACTICES ═════════ -->
+  <section class="pane" id="p-hlprac">
+    <p class="lede"><b>House league's Practice time window, before and after</b> (640 px, its size as it ships). It hands one division's time to its teams. Here the club's winter schedule hands house league Field 1 in two sides as well as Field 3 whole, and House league's time gives all of it to U9 for practices. <b>Nothing in house league splits a field</b>: the part comes with the time the club handed out (Ask 1).</p>
     <div class="viewrow"><b>View</b>
       <div class="sw" role="group" aria-label="View"><button type="button" data-v="all" aria-pressed="true">Everything</button><button type="button" data-v="diff" aria-pressed="false">Show only what differs</button></div>
     </div>
-    <div class="stage">
-      <div class="cap"><h3>The Permits page row</h3><button type="button" class="tag chg" data-say="The row ships today. Only the Used figure's arithmetic changes: a side counts half. Its words do not change.">Restyled</button><span class="sw-note">Permits page · club admin with money access · one row, at the table's width</span></div>
-      <div class="scroller"><div class="bare" style="width:1152px;background:var(--paper)">
-        <table class="ptbl">
-          <thead><tr><th>Permit</th><th>Where</th><th>Dates</th><th class="n">A week</th><th class="n">Used</th><th class="n">Cost</th><th style="width:28px"></th></tr></thead>
-          <tbody>
-            <tr class="band2"><td colspan="7">In use now</td></tr>
-            <tr><td class="same"><span class="nm">Dome, winter 2027</span><small>Milton Sports Dome Inc. · DOME-27-114</small></td><td class="same">Milton Sports Dome · every facility</td><td class="same">Jan 3 – Mar 7, 2027</td><td class="n same">27 h</td><td class="n rel hl">71%<small>191.25 of 270 h</small><button class="mk" data-n="1" aria-label="Change 1">1</button></td><td class="n same">$18,000.00</td><td class="same"><svg width="16" height="16" style="color:var(--dim)"><use href="#i-right"/></svg></td></tr>
-          </tbody>
-        </table>
-      </div></div>
-      <div class="expl"></div>
-      <div class="legend">
-        <div class="li" id="u-1"><button class="mk2" data-n="1" type="button">1</button><p><b>The row looks as it does today; only the arithmetic behind Used changes, so no Today frame is drawn. A practice on one side adds half its time.</b> A 90-minute practice on Field 1 side A adds 0.75 h; two teams on both sides add 1.5 h, the whole field. Without this, every side practice would count as the whole field and Used would read high: here it would say 82% (221.25 h) for the same Sundays. Held stays clock hours of whole fields, as today.</p></div>
-      </div>
-    </div>
-    <div class="stage">
-      <div class="cap"><h3>The permit window's Use section, before and after</h3><button type="button" class="tag new" data-say="The three tiles and the per-block rows ship today. New: one line under the rows naming time a final schedule holds that nobody has booked.">New</button><span class="sw-note">Permit window (640 px), the Use section only</span></div>
-      <div class="pair2 w640">
-        <div class="scroller"><div class="bare" style="width:592px">
-          <p class="cut">Today</p>
-          <p class="mono-h same" style="margin-top:0">Use</p>
-          <div class="band three same"><div><small>Held</small><b>270 h</b></div><div><small>Booked</small><b>191.25 h</b><span class="bc">71%</span></div><div><small>Unused</small><b>78.75 h</b></div></div>
-          <div class="urows same"><div class="urow"><span class="w">Milton Sports Dome · every facility<small>9U AA, 9U A, 11U AA and 11 more · Sun, 9:00 a.m.–1:30 p.m.</small></span><span class="f">191.25 of 270 h · 71%</span></div></div>
-          <span class="door">Hand out this time in a schedule ›</span>
-          <p class="hnt" style="margin:0">Winter dome, 9U and Winter dome, 11U hand this time out, so the permit stays.</p>
-        </div></div>
-        <div class="scroller"><div class="bare" style="width:592px">
-          <p class="cut">Proposed</p>
-          <p class="mono-h same" style="margin-top:0">Use</p>
-          <div class="band three same"><div><small>Held</small><b>270 h</b></div><div><small>Booked</small><b>191.25 h</b><span class="bc">71%</span></div><div><small>Unused</small><b>78.75 h</b></div></div>
-          <div class="urows same"><div class="urow"><span class="w">Milton Sports Dome · every facility<small>9U AA, 9U A, 11U AA and 11 more · Sun, 9:00 a.m.–1:30 p.m.</small></span><span class="f">191.25 of 270 h · 71%</span></div></div>
-          <p class="hnt rel hl" style="margin:.3rem 0 .5rem">Of the unused time, 9 h is open slots on Winter dome, 11U: the schedule holds it and no team has it yet.<button class="mk" data-n="2" aria-label="Change 2">2</button></p>
-          <span class="door same">Hand out this time in a schedule ›</span>
-          <p class="hnt same" style="margin:0">Winter dome, 9U and Winter dome, 11U hand this time out, so the permit stays.</p>
-        </div></div>
-      </div>
-      <div class="expl"></div>
-      <div class="legend">
-        <div class="li" id="w-2"><button class="mk2" data-n="2" type="button">2</button><p><b>Booked stays what teams actually booked.</b> A final schedule's open slots are not used: no team is on them. But no other schedule can have them either. So the figure stays honest for "how much of what we rent do we use?", and one line says how much of the unused time a schedule is sitting on. House-league time a final schedule hands to house league, not yet divided into practices, is named the same way ("…is house league's, not yet given to teams"). Drafts are not counted anywhere here: a draft holds nothing until it is finalized. This is Ask 9.</p></div>
-      </div>
-    </div>
-  </section>
-
-  <!-- ═════════ 7 · SAME-TIME RULE ═════════ -->
-  <section class="pane" id="p-rule">
-    <p class="lede"><b>"Teams at the same time" is one more entry in "Add a rule"</b> (R1), with "Never at the same time" offered in the same rule (R9). It names teams only (R10). The window is New schedule (also Tools › Settings…), with the other sections folded.</p>
-    <div class="viewrow"><b>View</b>
-      <div class="sw" role="group" aria-label="View"><button type="button" data-v="all" aria-pressed="true">Everything</button><button type="button" data-v="diff" aria-pressed="false">Show only what differs</button></div>
-    </div>
-    <div class="stage">
-      <div class="cap"><h3>Today</h3><button type="button" class="tag same" data-say="The Rules section as it ships: the rule rows as sentences with a pencil, Add a rule, and the three Always ticks.">Unchanged</button><span class="sw-note">New schedule · Rules open · desktop, club admin</span></div>
-      <div class="scroller"><div class="scrim"><div class="win">
-        <div class="dh same"><div class="tt"><span class="tl">New schedule</span><span class="st2">Step 1 of 2 · settings</span></div><span class="x"><svg width="16" height="16"><use href="#i-x"/></svg></span></div>
-        <div class="prog same"><span class="on"></span><span></span></div>
-        <div class="db">
-          <div class="cutm same">The time · cut from the drawing, unchanged</div>
-          <div class="cutm same">Who, and how much · cut from the drawing, unchanged</div>
-          <div class="sect">
-            <p class="sh">Rules <span class="cnt">5 on</span><svg width="16" height="16" style="color:var(--dim)"><use href="#i-chev"/></svg></p>
-            <div class="ruleList">
-              <div class="ruleLine same"><span class="s">9U A and 9U B share a facility, 2 at once</span><span class="pen"><svg width="15" height="15"><use href="#i-pen"/></svg></span></div>
-              <div class="ruleLine same"><span class="s">9U AA off Sun, Feb 14</span><span class="pen"><svg width="15" height="15"><use href="#i-pen"/></svg></span></div>
+    <div class="pair2 w700">
+      <div class="stage">
+        <div class="cap"><h3>Today</h3><button type="button" class="tag same" data-say="As it ships: the division's time as kit rows, three dropdowns, the notice, the foot. Field 1 arrives whole, and two teams share it with nothing that says who is where.">Unchanged</button><span class="sw-note">Practice time · house-league admin · U9, 10 teams</span></div>
+        <div class="scroller"><div class="scrim"><div class="win md">
+          <div class="dh same"><div class="tt"><span class="eb">Winter house league 2027 · U9</span><span class="tl">Practice time</span></div><span class="x"><svg width="16" height="16"><use href="#i-x"/></svg></span></div>
+          <div class="db">
+            <div>
+              <p class="hsec">U9’s practice time<span class="q"> · from house league’s time</span></p>
+              <div class="klist"><div class="krow"><span>Sun · 9:00 a.m.–1:30 p.m.<small>Field 1 and Field 3</small></span><span class="kf">9 hours a week</span></div></div>
+              <span class="klink">+ Give U9 more time</span>
             </div>
-            <span class="door same"><svg width="14" height="14"><use href="#i-plus"/></svg>Add a rule</span>
-            <p class="alwaysHead same">Always</p>
-            <div class="chk same"><span class="bx"><svg width="11" height="11"><use href="#i-check"/></svg></span><span>Never on a team's game day<small>Read from each team's whole schedule, away games included</small></span></div>
-            <div class="chk same"><span class="bx"><svg width="11" height="11"><use href="#i-check"/></svg></span><span>Never over a booking already on the books<small>The clash check's bookings: other teams, house league, tryout days, tournaments</small></span></div>
-            <div class="chk same"><span class="bx"><svg width="11" height="11"><use href="#i-check"/></svg></span><span>No back-to-back days for a team</span></div>
-          </div>
-        </div>
-        <div class="df same"><span class="fn">90 slots for 8 teams.</span><span class="btn">Cancel</span><span class="btn pri">Generate drafts</span></div>
-      </div></div></div>
-      <div class="expl"></div>
-    </div>
-    <div class="stage">
-      <div class="cap"><h3>Proposed</h3><button type="button" class="tag new" data-say="Two rules of the new kind, one open while being entered, and the sixth entry in Add a rule. Numbered on the drawing.">New</button><span class="sw-note">Two same-time rules: one closed, one being entered</span></div>
-      <div class="scroller"><div class="scrim"><div class="win">
-        <div class="dh same"><div class="tt"><span class="tl">New schedule</span><span class="st2">Step 1 of 2 · settings</span></div><span class="x"><svg width="16" height="16"><use href="#i-x"/></svg></span></div>
-        <div class="prog same"><span class="on"></span><span></span></div>
-        <div class="db">
-          <div class="cutm same">The time · cut from the drawing, unchanged</div>
-          <div class="cutm same">Who, and how much · cut from the drawing, unchanged</div>
-          <div class="sect">
-            <p class="sh">Rules <span class="cnt">7 on</span><svg width="16" height="16" style="color:var(--dim)"><use href="#i-chev"/></svg></p>
-            <div class="ruleList">
-              <div class="ruleLine same"><span class="s">9U A and 9U B share a facility, 2 at once</span><span class="pen"><svg width="15" height="15"><use href="#i-pen"/></svg></span></div>
-              <div class="ruleLine rel hl"><span class="s">13U AA and 9U AA at the same time</span><span class="pen"><svg width="15" height="15"><use href="#i-pen"/></svg></span><button class="mk" data-n="1" aria-label="Change 1">1</button></div>
-              <div class="ruleOpen rel hl">
-                <div class="rt"><span>Teams at the same time</span><span class="pen" style="flex:none"><svg width="15" height="15"><use href="#i-check"/></svg></span></div>
-                <div class="ruleFields two">
-                  <div class="fld"><span class="lb">Teams<i>*</i></span><div class="ctl pk"><span class="v">15U AA and 15U A</span><svg class="ic" width="15" height="15"><use href="#i-chev"/></svg></div></div>
-                  <div class="fld"><span class="lb">When</span><div class="ctl pk"><span class="v">Never at the same time</span><svg class="ic" width="15" height="15"><use href="#i-chev"/></svg></div></div>
-                </div>
-                <p class="ruleHint">The drafts keep these teams apart: never at the same start.</p>
-                <span class="recact"><svg width="14" height="14"><use href="#i-trash"/></svg>Remove this rule</span>
-                <button class="mk" data-n="2" aria-label="Change 2">2</button>
+            <div>
+              <p class="hsec">Hand it to the teams</p>
+              <div class="g3">
+                <div class="fld"><span class="lb">Each practice</span><div class="ctl"><span class="v">90 minutes</span><svg class="ic" width="15" height="15"><use href="#i-chev"/></svg></div></div>
+                <div class="fld"><span class="lb">Teams at once</span><div class="ctl"><span class="v">2 per facility</span><svg class="ic" width="15" height="15"><use href="#i-chev"/></svg></div></div>
+                <div class="fld"><span class="lb">Practices a week</span><div class="ctl"><span class="v">1 a week</span><svg class="ic" width="15" height="15"><use href="#i-chev"/></svg></div></div>
               </div>
-              <div class="ruleLine same"><span class="s">9U AA off Sun, Feb 14</span><span class="pen"><svg width="15" height="15"><use href="#i-pen"/></svg></span></div>
+              <div class="knote"><p><b>Every team gets 1 practice a week.</b> 2 slots stay open.</p></div>
             </div>
-            <span class="door same"><svg width="14" height="14"><use href="#i-plus"/></svg>Add a rule</span>
-            <p class="alwaysHead same">Always</p>
-            <div class="chk same"><span class="bx"><svg width="11" height="11"><use href="#i-check"/></svg></span><span>Never on a team's game day<small>Read from each team's whole schedule, away games included</small></span></div>
-            <div class="chk same"><span class="bx"><svg width="11" height="11"><use href="#i-check"/></svg></span><span>Never over a booking already on the books<small>The clash check's bookings: other teams, house league, tryout days, tournaments</small></span></div>
-            <div class="chk same"><span class="bx"><svg width="11" height="11"><use href="#i-check"/></svg></span><span>No back-to-back days for a team</span></div>
           </div>
+          <div class="df"><span class="fn">Next you choose whether to tell the families.</span><span class="btn">Cancel</span><span class="btn pri">Hand out practices</span></div>
+        </div></div></div>
+        <div class="expl"></div>
+      </div>
+      <div class="stage">
+        <div class="cap"><h3>Proposed</h3><button type="button" class="tag new" data-say="The club handed Field 1 out in two sides. The time row says so, and one line under the dropdowns says what Teams at once means beside a part. Numbered on the drawing.">New</button><span class="sw-note">The same U9, Field 1 now in two sides</span></div>
+        <div class="scroller"><div class="scrim"><div class="win md">
+          <div class="dh same"><div class="tt"><span class="eb">Winter house league 2027 · U9</span><span class="tl">Practice time</span></div><span class="x"><svg width="16" height="16"><use href="#i-x"/></svg></span></div>
+          <div class="db">
+            <div>
+              <p class="hsec same">U9’s practice time<span class="q"> · from house league’s time</span></p>
+              <div class="klist rel hl"><div class="krow"><span>Sun · 9:00 a.m.–1:30 p.m.<small>Field 1 in two sides, Field 3</small></span><span class="kf">9 hours a week</span></div><button class="mk" data-n="1" aria-label="Change 1">1</button></div>
+              <span class="klink same">+ Give U9 more time</span>
+            </div>
+            <div>
+              <p class="hsec same">Hand it to the teams</p>
+              <div class="g3 same">
+                <div class="fld"><span class="lb">Each practice</span><div class="ctl"><span class="v">90 minutes</span><svg class="ic" width="15" height="15"><use href="#i-chev"/></svg></div></div>
+                <div class="fld"><span class="lb">Teams at once</span><div class="ctl"><span class="v">2 per facility</span><svg class="ic" width="15" height="15"><use href="#i-chev"/></svg></div></div>
+                <div class="fld"><span class="lb">Practices a week</span><div class="ctl"><span class="v">1 a week</span><svg class="ic" width="15" height="15"><use href="#i-chev"/></svg></div></div>
+              </div>
+              <p class="hnt rel hl" style="margin:-.5rem 0 .6rem">Field 1’s sides hold one team each. Teams at once is for whole facilities.<button class="mk" data-n="2" aria-label="Change 2">2</button></p>
+              <div class="knote rel"><p><b>Every team gets 1 practice a week.</b> 2 slots stay open.</p><button class="mk" data-n="3" aria-label="Note 3">3</button></div>
+              <span class="klink rel hl">+ Add teams at the same time<button class="mk" data-n="4" aria-label="Note 4">4</button></span>
+            </div>
+          </div>
+          <div class="df same"><span class="fn">Next you choose whether to tell the families.</span><span class="btn">Cancel</span><span class="btn pri">Hand out practices</span></div>
+        </div></div></div>
+        <div class="expl"></div>
+        <div class="legend">
+          <div class="li" id="hp-1"><button class="mk2" data-n="1" type="button">1</button><p><b>The time row names the parts</b> the way New schedule's box does: "Field 1 in two sides, Field 3". Its hours count a side as half the field's time, as the permit's Used figure does (round 1, 9 A), so a field in two sides is still 4.5 hours a Sunday and the row still reads 9 hours.</p></div>
+          <div class="li" id="hp-2"><button class="mk2" data-n="2" type="button">2</button><p><b>A side or a quarter holds one team.</b> "Teams at once" counts on whole facilities only, because a part is never shared (round 1, Ask 6 A). The line appears only when the division's time has a part. This is Ask 5.</p></div>
+          <div class="li" id="hp-3"><button class="mk2" data-n="3" type="button">3</button><p><b>The same 12 places a week.</b> Today: Field 1 and Field 3, three starts each, two teams at once, 12 places. After: Field 3 with two at once is 6, and Field 1's two sides with one each is 6. The difference is that each family on Field 1 is told which side.</p></div>
+          <div class="li" id="hp-4"><button class="mk2" data-n="4" type="button">4</button><p><b>The same-time rule's home in house league</b>, under the three dropdowns. Drawn open on tab 7.</p></div>
         </div>
-        <div class="df"><span class="fn same">90 slots for 8 teams.</span><span class="btn same">Cancel</span><span class="btn pri same">Generate drafts</span></div>
-      </div></div></div>
-      <div class="expl"></div>
-      <div class="legend">
-        <div class="li" id="s-1"><button class="mk2" data-n="1" type="button">1</button><p><b>A closed rule reads as a sentence</b>, like every rule in the list: "13U AA and 9U AA at the same time", or "15U AA and 15U A never at the same time". It sits after the sharing rules, because both are about which teams go together. It names teams or a group, never a reason (R10).</p></div>
-        <div class="li" id="s-2"><button class="mk2" data-n="2" type="button">2</button><p><b>Open, it has two fields:</b> Teams (the same picker as sharing's, groups first) and When ("At the same time" or "Never at the same time"). The line under them says what the drafts will do. For "At the same time" it reads: "The drafts try to put these teams at the same start, in the same building, each on its own facility or side. A team never gets more than its share to match another; the drafts say where they couldn't." Working words.</p></div>
       </div>
     </div>
     <div class="stage">
-      <div class="cap"><h3>Add a rule, open</h3><button type="button" class="tag new" data-say="The shipped menu with one more entry at the end: the menu lists kinds in the order they were added.">New</button><span class="sw-note">The menu at its width</span></div>
-      <div class="scroller"><div class="narrow" style="width:340px">
-        <div class="menu">
-          <span class="ki"><b>Start and finish times</b><span>Teams that start after, or finish by, a time</span></span>
-          <span class="ki"><b>A team's day off</b><span>A date, or a day every week</span></span>
-          <span class="ki"><b>Facilities for a group</b><span>Facilities kept for some teams</span></span>
-          <span class="ki"><b>Sharing a facility</b><span>Teams that share a facility, 2 or more at once</span></span>
-          <span class="ki"><b>At most, a week</b><span>A weekly cap on any one team's slots</span></span>
-          <span class="ki rel hl" style="margin:3px"><b>Teams at the same time</b><span>Teams at one start, or never at once</span><button class="mk" data-n="1" aria-label="Note 1">1</button></span>
-        </div>
-      </div></div>
-      <div class="expl"></div>
-      <div class="legend"><div class="li" id="m-1"><button class="mk2" data-n="1" type="button">1</button><p><b>The sixth kind.</b> One entry covers both choices; the When field picks which. Offering "Never at the same time" as a seventh entry would put two near-identical lines in a short menu. The menu lists kinds in the order they were added, so the new one is last here, while the rule list groups by kind and puts it after sharing. That difference is on purpose, and it is how the shipped menu and list already differ.</p></div></div>
-    </div>
-    <div class="stage">
-      <div class="cap"><h3>When a group can never line up (R6), and a team in a sharing rule</h3><button type="button" class="tag new" data-say="Caught while the rule is entered, before the drafts are made. It stops Generate the way a half-filled rule does today: the button stays, and pressing it shows the reason.">New</button><span class="sw-note">The rule open, and the same rule closed</span></div>
-      <div class="scroller"><div class="bare" style="width:968px">
-        <p class="cut">Entered, and it can't be kept</p>
-        <div class="ruleOpen" style="border-top:1px solid var(--line)">
-          <div class="rt"><span>Teams at the same time</span><span class="pen" style="flex:none"><svg width="15" height="15"><use href="#i-check"/></svg></span></div>
-          <div class="ruleFields two">
-            <div class="fld"><span class="lb">Teams<i>*</i></span><div class="ctl pk"><span class="v">13U A and 11U B</span><svg class="ic" width="15" height="15"><use href="#i-chev"/></svg></div></div>
-            <div class="fld"><span class="lb">When</span><div class="ctl pk"><span class="v">At the same time</span><svg class="ic" width="15" height="15"><use href="#i-chev"/></svg></div></div>
-          </div>
-          <p class="ruleHint warn rel"><svg width="14" height="14"><use href="#i-warn"/></svg><span>13U A and 11U B can never be at the same time: 11U B is off every Sunday, and all of this schedule's time is on Sundays.</span><button class="mk" style="right:-14px" data-n="1" aria-label="Note 1">1</button></p>
-          <span class="recact"><svg width="14" height="14"><use href="#i-trash"/></svg>Remove this rule</span>
-        </div>
-        <p class="cut" style="margin-top:12px">Closed, after Generate drafts is pressed</p>
-        <div class="ruleList"><div class="ruleLine"><span class="s warn">Teams at the same time: 13U A and 11U B can never be at the same time. Change the rule, or remove it.</span><span class="pen"><svg width="15" height="15"><use href="#i-pen"/></svg></span></div></div>
-        <p class="ferr rel"><svg width="13" height="13"><use href="#i-warn"/></svg><span>13U A and 11U B can never be at the same time. Change the rule, or remove it.</span><button class="mk" style="right:auto;left:470px;top:-6px" data-n="2" aria-label="Note 2">2</button></p>
-        <div class="df" style="padding:.6rem 0 0;border:0"><span class="fn"></span><span class="btn">Cancel</span><span class="btn pri">Generate drafts</span></div>
-        <p class="cut" style="margin-top:14px">A team already in a sharing rule</p>
-        <div class="ruleOpen" style="border-top:1px solid var(--line)">
-          <div class="ruleFields two">
-            <div class="fld"><span class="lb">Teams<i>*</i></span><div class="ctl pk"><span class="v">9U A and 11U AA</span><svg class="ic" width="15" height="15"><use href="#i-chev"/></svg></div></div>
-            <div class="fld"><span class="lb">When</span><div class="ctl pk"><span class="v">At the same time</span><svg class="ic" width="15" height="15"><use href="#i-chev"/></svg></div></div>
-          </div>
-          <p class="ruleHint warn rel"><svg width="14" height="14"><use href="#i-warn"/></svg><span>9U A is in a sharing rule, so it can't be in a same-time rule too. Take it out of one.</span><button class="mk" style="right:-14px" data-n="3" aria-label="Note 3">3</button></p>
-        </div>
-      </div></div>
-      <div class="expl"></div>
-      <div class="legend">
-        <div class="li" id="n-1"><button class="mk2" data-n="1" type="button">1</button><p><b>Caught when it is entered (R6).</b> Today every rule refusal comes from the server when the form is sent. This one is worked out in the window, from what the form already holds, so it appears as you pick the teams. What it can know: a team off on every day of the time; start and finish times that never overlap; more teams than places free at any one start (counting sides as places, Ask 7); facilities kept for a group that keep the teams apart. What it can't know until the drafts run: game days, which change week to week. Those go in the report (tab 8).</p></div>
-        <div class="li" id="n-2"><button class="mk2" data-n="2" type="button">2</button><p><b>It stops Generate the way a half-filled rule does today.</b> The button is not greyed: pressing it shows the reason in the window's error line and opens Rules, with the rule's own row in amber ("{title}: …", the shipped pattern). The server refuses the same rule if it is ever sent.</p></div>
-        <div class="li" id="n-3"><button class="mk2" data-n="3" type="button">3</button><p><b>A team in a sharing rule can't join a same-time rule</b>, as a team can't be in two sharing rules today ("A team is in two sharing rules. Take it out of one."). This is Ask 11.</p></div>
-      </div>
-    </div>
-    <div class="stage">
-      <div class="cap"><h3>A hand move that breaks a group (R7)</h3><button type="button" class="tag new" data-say="The drag tooltip and the notice after the drop ship today. New: the group's reason in the tooltip, and the same fact said again in the notice.">New</button><span class="sw-note">Dragging 9U AA off its 9:00 a.m. start on Feb 21, on the grid</span></div>
-      <div class="scroller"><div class="bare" style="width:760px;position:relative;padding-top:64px">
-        <div class="tipbox" style="left:160px;top:10px">Sun, Feb 21 · 10:30 a.m.–12:00 p.m. · Field 3 · 13U AA stays at 9:00 a.m., so they are no longer at the same time<button class="mk" data-n="1" aria-label="Note 1">1</button></div>
-        <div style="display:grid;grid-template-columns:7.25rem 148px 148px;gap:0;border:1px solid var(--line);border-radius:8px;overflow:hidden;width:max-content">
-          <div style="padding:.5rem .7rem;font-weight:700;color:var(--ink);font-size:13px;border-bottom:1px solid var(--line)">Field 3<small style="display:block;font-weight:400;font-size:12px;color:var(--dim)">Milton Sports Dome</small></div>
-          <div style="padding:.35rem;border-left:1px solid var(--line);border-bottom:1px solid var(--line);display:flex;flex-direction:column;gap:.3rem"><div class="chip" style="--tc:#A0832B"><b>9:00–10:30 a.m.</b><span>13U AA</span></div><div class="chip open drop"><b>10:30 a.m.–12:00 p.m.</b><span>Open</span></div></div>
-          <div style="padding:.35rem;border-left:1px solid var(--line);border-bottom:1px solid var(--line);display:flex;flex-direction:column;gap:.3rem"><div class="chip" style="--tc:#A0832B"><b>9:00–10:30 a.m.</b><span>13U AA</span></div><div class="chip" style="--tc:#2E7D5B"><b>10:30 a.m.–12:00 p.m.</b><span>9U AA</span></div></div>
-        </div>
-        <p class="cut" style="margin-top:18px">After the drop: the notice at the screen's bottom-right corner</p>
-        <div class="vport"><div class="pill wrap"><span>9U AA moved to Sun, 10:30 a.m. · Field 3, Feb 21. It is no longer at the same time as 13U AA that Sunday.</span><span class="u">Undo</span><span class="cx"><svg width="13" height="13"><use href="#i-x"/></svg></span><button class="mk" data-n="2" aria-label="Note 2">2</button></div></div>
-      </div></div>
-      <div class="expl"></div>
-      <div class="legend">
-        <div class="li" id="h-1"><button class="mk2" data-n="1" type="button">1</button><p><b>While dragging, the amber outline and the tooltip say it</b>, the way every rule break is said today ("…kept for other teams", "…a day off"). The drop still goes through: R7 says a broken group warns, and the schedule's one refusal stays "a team twice at once".</p></div>
-        <div class="li" id="h-2"><button class="mk2" data-n="2" type="button">2</button><p><b>After the drop, the notice says it again.</b> Today a warning lives only in the tooltip, which is gone the moment you let go. A broken group moves another team's family's Sunday, so it is the one warning repeated, with Undo beside it. The shipped notice is one short line that fades; this sentence needs the notice's held, wrapping face (the one its error face already has: it stays until closed). That is a small addition to the shared notice, flagged for the build. For "This & later weeks" it reads "…that Sunday and 3 more." The keyboard path (Swap with… in the slot window) gets the same sentence in its which-weeks menu. This is Ask 12.</p></div>
+      <div class="card">
+        <h3>Where the part comes from, and what it reaches</h3>
+        <ul>
+          <li><b>All of house league's club time comes from a club schedule.</b> A final schedule's house-league slots go to House league's time, which gives each one to a division for its games or its practices. A slot on a side arrives as a slot on a side.</li>
+          <li><b>The practice keeps its part.</b> Each team's practice is written with the slot's place, now including its side. The Tell step and the practice's own window name it (tab 8).</li>
+          <li><b>Teams at once on a whole field is unchanged.</b> Two U9 teams on the whole of Field 3 still share it with nothing that says who is where.</li>
+        </ul>
       </div>
     </div>
   </section>
 
-  <!-- ═════════ 8 · THE REPORT ═════════ -->
-  <section class="pane" id="p-report">
-    <p class="lede"><b>The report is per rule (R8), and it covers "Sharing a facility" too.</b> Today a sharing rule that could not pair says nothing. The report appears in three places: a line on each draft card, a line on the schedule page, and its own part in the "Open slots and short teams" window, which says why.</p>
+  <!-- ═════════ 7 · HOUSE LEAGUE RULE ═════════ -->
+  <section class="pane" id="p-hlrule">
+    <p class="lede"><b>Where the same-time rule lives in house league.</b> House league has no "Add a rule": its only team rules today are Schedule health's game rules (twice in a day, home and away, games per team), and nothing at all about practices. The one place where house-league teams meet a time is Practice time's "Hand it to the teams", which is where round 1's Ask 14 put it. Siblings are usually in different divisions, so a rule names teams in any division.</p>
     <div class="viewrow"><b>View</b>
       <div class="sw" role="group" aria-label="View"><button type="button" data-v="all" aria-pressed="true">Everything</button><button type="button" data-v="diff" aria-pressed="false">Show only what differs</button></div>
     </div>
-    <div class="stage">
-      <div class="cap"><h3>The draft cards, before and after</h3><button type="button" class="tag chg" data-say="The card and its measure lines ship today. The sharing line gains a count; the same-time rules add a line each.">Restyled</button><span class="sw-note">New schedule, step 2: the chosen card and the team list beside it (true widths)</span></div>
-      <div class="pair2 w560">
-        <div class="scroller"><div class="bare" style="width:540px">
-          <p class="cut">Today</p>
-          <div class="drafts" style="grid-template-columns:15rem minmax(0,1fr)">
-            <div class="dcard on">
-              <div class="hd"><b>Best overall</b><span class="sc">91<small>/100</small></span></div>
-              <div class="ml">Every team gets its share</div>
-              <div class="ml">9U A and 9U B share a facility: half a facility each</div>
-              <div class="ml good"><svg width="12" height="12"><use href="#i-ok"/></svg>Each team on the same nights every week</div>
-              <div class="ml">6 slots left open</div>
+    <div class="pair2 w700">
+      <div class="stage">
+        <div class="cap"><h3>Today</h3><button type="button" class="tag same" data-say="As it ships, for U12: its time at Fields 4 and 5, the three dropdowns, the notice.">Unchanged</button><span class="sw-note">Practice time · U12, 4 teams</span></div>
+        <div class="scroller"><div class="scrim"><div class="win md">
+          <div class="dh same"><div class="tt"><span class="eb">Winter house league 2027 · U12</span><span class="tl">Practice time</span></div><span class="x"><svg width="16" height="16"><use href="#i-x"/></svg></span></div>
+          <div class="db">
+            <div>
+              <p class="hsec">U12’s practice time<span class="q"> · from house league’s time</span></p>
+              <div class="klist"><div class="krow"><span>Sun · 10:30 a.m.–1:30 p.m.<small>Field 4 and Field 5</small></span><span class="kf">6 hours a week</span></div></div>
+              <span class="klink">+ Give U12 more time</span>
             </div>
-            <div class="tlist">
-              <div class="tr" style="--tc:#3B5BA5"><span class="sw2"></span><b>9U B</b><span>20 · 16 shared</span><span class="d">Sun</span></div>
-              <div class="tr" style="--tc:#2E7D5B"><span class="sw2"></span><b>9U AA</b><span>10 slots</span><span class="d">Sun</span></div>
-              <div class="tr" style="--tc:#A0832B"><span class="sw2"></span><b>13U AA</b><span>15 slots</span><span class="d">Sun</span></div>
-            </div>
-          </div>
-        </div></div>
-        <div class="scroller"><div class="bare" style="width:540px">
-          <p class="cut">Proposed</p>
-          <div class="drafts" style="grid-template-columns:15rem minmax(0,1fr)">
-            <div class="dcard on">
-              <div class="hd same"><b>Best overall</b><span class="sc">91<small>/100</small></span></div>
-              <div class="ml same">Every team gets its share</div>
-              <div class="ml amber rel hl"><svg width="12" height="12"><use href="#i-warn"/></svg>9U A and 9U B share a facility on 8 of 10 Sundays: half a facility each<button class="mk" data-n="1" aria-label="Change 1">1</button></div>
-              <div class="ml amber rel hl"><svg width="12" height="12"><use href="#i-warn"/></svg>13U AA and 9U AA at the same time on 8 of 10 Sundays<button class="mk" data-n="2" aria-label="Change 2">2</button></div>
-              <div class="ml good rel hl"><svg width="12" height="12"><use href="#i-ok"/></svg>15U AA and 15U A never at the same time<button class="mk" data-n="2" aria-label="Change 2">2</button></div>
-              <div class="ml good same"><svg width="12" height="12"><use href="#i-ok"/></svg>Each team on the same nights every week</div>
-              <div class="ml same">6 slots left open</div>
-            </div>
-            <div class="tlist same">
-              <div class="tr" style="--tc:#3B5BA5"><span class="sw2"></span><b>9U B</b><span>20 · 16 shared</span><span class="d">Sun</span></div>
-              <div class="tr" style="--tc:#2E7D5B"><span class="sw2"></span><b>9U AA</b><span>10 slots</span><span class="d">Sun</span></div>
-              <div class="tr" style="--tc:#A0832B"><span class="sw2"></span><b>13U AA</b><span>15 slots</span><span class="d">Sun</span></div>
+            <div>
+              <p class="hsec">Hand it to the teams</p>
+              <div class="g3">
+                <div class="fld"><span class="lb">Each practice</span><div class="ctl"><span class="v">90 minutes</span><svg class="ic" width="15" height="15"><use href="#i-chev"/></svg></div></div>
+                <div class="fld"><span class="lb">Teams at once</span><div class="ctl"><span class="v">1 per facility</span><svg class="ic" width="15" height="15"><use href="#i-chev"/></svg></div></div>
+                <div class="fld"><span class="lb">Practices a week</span><div class="ctl"><span class="v">1 a week</span><svg class="ic" width="15" height="15"><use href="#i-chev"/></svg></div></div>
+              </div>
+              <div class="knote"><p><b>Every team gets 1 practice a week.</b></p></div>
             </div>
           </div>
-        </div></div>
+          <div class="df"><span class="fn">Next you choose whether to tell the families.</span><span class="btn">Cancel</span><span class="btn pri">Hand out practices</span></div>
+        </div></div></div>
+        <div class="expl"></div>
       </div>
-      <div class="expl"></div>
-      <div class="legend">
-        <div class="li" id="d-1"><button class="mk2" data-n="1" type="button">1</button><p><b>The sharing line gains a count</b>, and turns amber when it is short: "on 8 of 10 Sundays". Today the line lists a rule only if it was used at all, so a rule that never paired drops off the card. Now every sharing rule has a line: "9U A and 9U B never shared a facility" if it never paired.</p></div>
-        <div class="li" id="d-2"><button class="mk2" data-n="2" type="button">2</button><p><b>One line per same-time rule.</b> "Of 10" is the most the pair could share: the smaller team's practices (13U AA has 15, 9U AA has 10), because a team never gets extra time to match (R4). A green check when the group was together every time it could be; amber when not. "Never at the same time" is a check when kept. A rule broken every week reads "13U AA and 9U AA were never at the same time".</p></div>
+      <div class="stage">
+        <div class="cap"><h3>Proposed</h3><button type="button" class="tag new" data-say="Two rules: one closed, one being entered, the door, and the report in the notice. Numbered on the drawing.">New</button><span class="sw-note">U12 with two same-time rules</span></div>
+        <div class="scroller"><div class="scrim"><div class="win md">
+          <div class="dh same"><div class="tt"><span class="eb">Winter house league 2027 · U12</span><span class="tl">Practice time</span></div><span class="x"><svg width="16" height="16"><use href="#i-x"/></svg></span></div>
+          <div class="db">
+            <div class="same">
+              <p class="hsec">U12’s practice time<span class="q"> · from house league’s time</span></p>
+              <div class="klist"><div class="krow"><span>Sun · 10:30 a.m.–1:30 p.m.<small>Field 4 and Field 5</small></span><span class="kf">6 hours a week</span></div></div>
+              <span class="klink">+ Give U12 more time</span>
+            </div>
+            <div>
+              <p class="hsec same">Hand it to the teams</p>
+              <div class="g3 same">
+                <div class="fld"><span class="lb">Each practice</span><div class="ctl"><span class="v">90 minutes</span><svg class="ic" width="15" height="15"><use href="#i-chev"/></svg></div></div>
+                <div class="fld"><span class="lb">Teams at once</span><div class="ctl"><span class="v">1 per facility</span><svg class="ic" width="15" height="15"><use href="#i-chev"/></svg></div></div>
+                <div class="fld"><span class="lb">Practices a week</span><div class="ctl"><span class="v">1 a week</span><svg class="ic" width="15" height="15"><use href="#i-chev"/></svg></div></div>
+              </div>
+              <div class="knote warn rel hl"><p><b>Every team gets 1 practice a week.</b></p><p>U12 Cardinals and U9 Rays are at the same time on 6 of 10 Sundays. On the other 4, Rays are at 9:00 a.m., before U12’s time starts.</p><p>U12 Blue Jays and U9 Orioles are never at the same time.</p><button class="mk" data-n="4" aria-label="Change 4">4</button></div>
+              <div class="ruleList">
+                <div class="ruleLine rel hl"><span class="s">U12 Cardinals and U9 Rays at the same time</span><span class="pen"><svg width="15" height="15"><use href="#i-pen"/></svg></span><button class="mk" data-n="1" aria-label="Change 1">1</button></div>
+                <div class="ruleOpen rel hl">
+                  <div class="rt"><span>Teams at the same time</span><span class="pen" style="flex:none"><svg width="15" height="15"><use href="#i-check"/></svg></span></div>
+                  <div class="ruleFields">
+                    <div class="fld"><span class="lb">Teams<i>*</i></span><div class="ctl pk"><span class="v">U12 Blue Jays, U9 Orioles</span><svg class="ic" width="15" height="15"><use href="#i-chev"/></svg></div></div>
+                    <div class="fld"><span class="lb">When</span><div class="ctl pk"><span class="v">Never at the same time</span><svg class="ic" width="15" height="15"><use href="#i-chev"/></svg></div></div>
+                  </div>
+                  <p class="ruleHint">The practices keep these teams apart: never at the same start.</p>
+                  <span class="recact"><svg width="14" height="14"><use href="#i-trash"/></svg>Remove this rule</span>
+                  <button class="mk" data-n="2" aria-label="Change 2">2</button>
+                </div>
+              </div>
+              <span class="klink rel hl">+ Add teams at the same time<button class="mk" data-n="3" aria-label="Change 3">3</button></span>
+            </div>
+          </div>
+          <div class="df same"><span class="fn">Next you choose whether to tell the families.</span><span class="btn">Cancel</span><span class="btn pri">Hand out practices</span></div>
+        </div></div></div>
+        <div class="expl"></div>
+        <div class="legend">
+          <div class="li" id="hr-1"><button class="mk2" data-n="1" type="button">1</button><p><b>A rule reads as a sentence</b>, like the club's, with each team's division before it, because siblings are usually in different divisions. The same line shows in U9's Practice time too: one rule, seen from either division. It names teams only (R10).</p></div>
+          <div class="li" id="hr-2"><button class="mk2" data-n="2" type="button">2</button><p><b>Open, it has the club rule's two fields</b>: Teams, and When ("At the same time" or "Never at the same time", R9). The Teams list names each team with its division ("U9 Orioles"), this division's teams first, and the closed box joins them with commas, as the shipped list does. A large house league makes the list long: whether it needs a search is noted for the build.</p></div>
+          <div class="li" id="hr-3"><button class="mk2" data-n="3" type="button">3</button><p><b>The door</b> sits under the rules, after the three dropdowns, as "Add a rule" does in New schedule. The window is the one form a house-league admin uses to hand out practices, so a rule lives where it acts.</p></div>
+          <div class="li" id="hr-4"><button class="mk2" data-n="4" type="button">4</button><p><b>The report is the notice the window already has.</b> It is worked out as the dropdowns change, so it is read before Hand out, not after. One sentence per rule not kept, with the first reason, and one for each rule kept. <b>How the two divisions meet:</b> whichever division is handed out matches the other's practices as they stand. U9 went first, so U12's Cardinals go where U9's Rays are. The notice is worked out each time the window opens, so it always reads the other division as it stands now, never as it was. Rays move between early and late starts week by week (house league's own turns), so on 4 Sundays they are at 9:00 a.m., before U12's time. A team never gets an extra practice to match (R4).</p></div>
+        </div>
+      </div>
+    </div>
+    <div class="pair2">
+      <div class="stage">
+        <div class="cap"><h3>The Teams list, open</h3><button type="button" class="tag same" data-say="The shipped tick list as it is: plain labels. Each team is named with its division, the way the rule's sentence names it, so the list needs no change.">Unchanged</button><span class="sw-note">At its width in the window</span></div>
+        <div class="scroller"><div style="width:290px">
+          <div class="menu">
+            <div class="mi"><span class="tk on"><svg width="11" height="11"><use href="#i-check"/></svg></span><span>U12 Blue Jays</span></div>
+            <div class="mi"><span class="tk"></span><span>U12 Cardinals</span></div>
+            <div class="mi"><span class="tk"></span><span>U12 Expos</span></div>
+            <div class="mi"><span class="tk"></span><span>U12 Mariners</span></div>
+            <div class="mi"><span class="tk"></span><span>U7 Astros</span></div>
+            <div class="mi"><span class="tk"></span><span>U7 Pirates</span></div>
+            <div class="mi"><span class="tk"></span><span>U9 Cubs</span></div>
+            <div class="mi"><span class="tk on"><svg width="11" height="11"><use href="#i-check"/></svg></span><span>U9 Orioles</span></div>
+            <div class="mi"><span class="tk"></span><span>U9 Rays</span></div>
+          </div>
+          <p class="note" style="margin-top:.6rem">The list scrolls on through every division’s teams.</p>
+        </div></div>
+        <div class="expl"></div>
+      </div>
+      <div class="stage">
+        <div class="cap"><h3>When two teams can never line up (R6)</h3><button type="button" class="tag new" data-say="Caught while the rule is entered. It stops Hand out practices the way a refused setting does today: the window's reason line.">New</button><span class="sw-note">The rule open, then Hand out pressed</span></div>
+        <div class="scroller"><div class="bare" style="width:592px">
+          <div class="ruleOpen" style="border-top:1px solid var(--line)">
+            <div class="rt"><span>Teams at the same time</span><span class="pen" style="flex:none"><svg width="15" height="15"><use href="#i-check"/></svg></span></div>
+            <div class="ruleFields">
+              <div class="fld"><span class="lb">Teams<i>*</i></span><div class="ctl pk"><span class="v">U12 Expos, U7 Astros</span><svg class="ic" width="15" height="15"><use href="#i-chev"/></svg></div></div>
+              <div class="fld"><span class="lb">When</span><div class="ctl pk"><span class="v">At the same time</span><svg class="ic" width="15" height="15"><use href="#i-chev"/></svg></div></div>
+            </div>
+            <p class="ruleHint warn rel"><svg width="14" height="14"><use href="#i-warn"/></svg><span>U12 Expos and U7 Astros can never be at the same time: U12’s practice time is all at Milton Sports Dome and U7’s is all at Maple Grove Park.</span><button class="mk" style="right:-14px" data-n="1" aria-label="Note 1">1</button></p>
+          </div>
+          <p class="cut" style="margin-top:12px">After Hand out practices is pressed: the window's foot</p>
+          <div class="df rel" style="padding:.7rem 0 0;border-top:1px solid var(--line)"><span class="why2"><svg width="13" height="13"><use href="#i-warn"/></svg><span>U12 Expos and U7 Astros can never be at the same time. Change the rule, or remove it.</span></span><span class="btn">Cancel</span><span class="btn pri">Hand out practices</span><button class="mk" data-n="2" aria-label="Note 2">2</button></div>
+        </div></div>
+        <div class="expl"></div>
+        <div class="legend">
+          <div class="li" id="hn-1"><button class="mk2" data-n="1" type="button">1</button><p><b>Caught when it is entered (R6)</b>, from what the window can know: each division's time (its places and clocks), and the other team's practices if its division is handed out. What it can't know until the plan runs: which weeks a team takes its turn going without. Those go in the notice.</p></div>
+          <div class="li" id="hn-2"><button class="mk2" data-n="2" type="button">2</button><p><b>It stops Hand out the way a refused setting does today</b>: the window's reason line in the foot, red, beside the buttons, in place of "Next you choose whether to tell the families." It goes quiet at the next change in the window, wraps when long, and sits above the buttons on a phone. The amber line under the rule says it first; the foot repeats it only because the press was refused. The server refuses the same rule if it is ever sent.</p></div>
+        </div>
       </div>
     </div>
     <div class="stage">
-      <div class="cap"><h3>The schedule page line</h3><button type="button" class="tag chg" data-say="The season's one amber line between the toolbar and the grid ships today, with its See why door. It is ONE line by an owner ruling (2026-11-24). The rules join that sentence; they do not add a line.">Restyled</button><span class="sw-note">Between the toolbar and the grid</span></div>
-      <div class="scroller"><div class="bare" style="width:1152px">
-        <p class="cut">Today</p>
-        <div class="lines same" style="margin:0 0 .8rem"><div><svg width="13" height="13"><use href="#i-warn"/></svg><span>2 teams are 1 slot short of their share, and 6 slots are open, all on Sun, Mar 7. <span class="dr">See why ›</span></span></div></div>
-        <p class="cut">Proposed</p>
-        <div class="lines" style="margin:0"><div class="rel hl"><svg width="13" height="13"><use href="#i-warn"/></svg><span>2 teams are 1 slot short of their share, and 6 slots are open, all on Sun, Mar 7. 2 rules weren't kept every week. <span class="dr">See why ›</span></span><button class="mk" data-n="1" aria-label="Change 1">1</button></div></div>
+      <div class="card">
+        <h3>What the club's rulings mean in house league</h3>
+        <ul>
+          <li><b>R3, same place:</b> the same start in the same building, each on its own field or part. On a dome in sides that can be the two sides of one field (round 1, Ask 7 A).</li>
+          <li><b>R4, no extra time:</b> every team in a division gets the same number of practices, as today. The rule only picks which start.</li>
+          <li><b>R7, a hand move:</b> does not arise. A house-league admin never moves a club-time practice by hand ("Only the club can move or remove this practice."); handing out again is the only change, and its question already counts what changes.</li>
+          <li><b>R8, sharing:</b> house league has no sharing rule. Teams at once is a setting for the whole division, not a rule that can fail.</li>
+          <li><b>The rank (round 1, Ask 10 A):</b> below a team twice at once and the division's time, above the early-and-late turns.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═════════ 8 · HOUSE LEAGUE GAMES AND WORDS ═════════ -->
+  <section class="pane" id="p-hlgames">
+    <p class="lede"><b>House-league games on a part, and the words a part takes everywhere a family or an admin reads a place.</b> Games are generated one to a slot, and a game takes its slot's place, so a game on a slot on side A is a game on side A. Every surface already builds the place from the venue and the facility; the part joins the facility with a comma.</p>
+    <div class="stage">
+      <div class="cap"><h3>Generate games: the time it offers, and the games it makes</h3><button type="button" class="tag chg" data-say="The window ships today. Its time rows and its games list name the facility only. They gain the part. Nothing else in the window changes, so only these rows are drawn.">Restyled</button><span class="sw-note">The rows only, at the window's width; the rest of the window is unchanged</span></div>
+      <div class="scroller"><div class="bare" style="width:760px">
+        <p class="cut">Step 1, the division's game time · today, then proposed</p>
+        <div class="strip slots" style="margin-bottom:.4rem"><div>Sundays · 9:00–10:30 a.m. · Field 1</div></div>
+        <div class="strip slots rel hl" style="margin-bottom:1rem"><div>Sundays · 9:00–10:30 a.m. · Field 1, side A</div><div>Sundays · 9:00–10:30 a.m. · Field 1, side B</div><button class="mk" data-n="1" aria-label="Change 1">1</button></div>
+        <p class="cut">See the 45 games · proposed</p>
+        <div class="strip rel hl"><div><span>Sun, Jan 3 · 9:00–10:30 a.m.</span><span>Cardinals vs Rays</span><span>Field 1, side A</span></div><div><span>Sun, Jan 3 · 9:00–10:30 a.m.</span><span>Orioles vs Twins</span><span>Field 1, side B</span></div><button class="mk" data-n="2" aria-label="Change 2">2</button></div>
       </div></div>
       <div class="expl"></div>
-      <div class="legend"><div class="li" id="pl-1"><button class="mk2" data-n="1" type="button">1</button><p><b>Still one line for the season</b> (owner ruling 2026-11-24): the rules add one short sentence to it, never a second line, and the one "See why" opens the window. With nobody short, the line is the rules' sentence alone: "2 rules weren't kept every week." With one rule: "13U AA and 9U AA weren't at the same time every week."</p></div></div>
+      <div class="legend">
+        <div class="li" id="gg-1"><button class="mk2" data-n="1" type="button">1</button><p><b>Two sides are two rows of game time</b>, because they are two games at once. The window's count ("65 game slots in all") counts each side.</p></div>
+        <div class="li" id="gg-2"><button class="mk2" data-n="2" type="button">2</button><p><b>A game names its part</b> in the list, in the check before saving, and everywhere after. The generator's other checks (a team twice in a day, byes) are unchanged. Two games at once on one field is new for a house-league family, so the place word matters more here than anywhere.</p></div>
+      </div>
     </div>
     <div class="stage">
-      <div class="cap"><h3>Open slots and short teams</h3><button type="button" class="tag chg" data-say="The window, its callouts and its tables ship today. New: a Rules part after the reasons, one callout per rule that was not kept every week, and one line in the free group (Ask 13).">Restyled</button><span class="sw-note">The why window (800 px), scrolled to its end</span></div>
-      <div class="scroller"><div class="scrim"><div class="win wd">
-        <div class="dh"><div class="tt"><span class="eb">Winter dome</span><span class="tl">Open slots and short teams</span><span class="st2">Jan 3 – Mar 7, 2027 · 90 slots to hand out</span></div><span class="x"><svg width="16" height="16"><use href="#i-x"/></svg></span></div>
-        <div class="db" style="display:block">
-          <div class="gapGroup">
-            <div class="co olive">
-              <b class="h same">2 slots are open that short teams can take</b>
-              <p class="same">A team that is short, free then and allowed there can have it.</p>
-              <p class="rel hl">On Sun, Feb 7 the drafts ran out of tries before placing 15U A. The slot is open, and 15U A can have it.<button class="mk" data-n="3" aria-label="Change 3">3</button></p>
-            </div>
-            <p class="lab same">Open slots</p>
-            <table class="tk2 gap same"><thead><tr><th>When</th><th>Where</th><th>Who could take it</th><th></th></tr></thead>
-              <tbody><tr><td>Sun, Feb 7 · 10:30 a.m.</td><td>Field 3</td><td>15U A</td><td><span class="btn">Give it to <svg width="13" height="13"><use href="#i-chev"/></svg></span></td></tr><tr><td>Sun, Mar 7 · 12:00 p.m.</td><td>Field 1, side B</td><td>9U Select</td><td><span class="btn">Give it to <svg width="13" height="13"><use href="#i-chev"/></svg></span></td></tr></tbody></table>
-          </div>
-          <div class="gapGroup rel hl">
-            <button class="mk" data-n="1" aria-label="Change 1">1</button>
-            <div class="co">
-              <b class="h">13U AA and 9U AA were at the same time on 8 of 10 Sundays</b>
-              <p>9U AA has 10 practices and 13U AA has 15, so 10 is the most they can be together: a team never gets extra time to match another. On 2 Sundays they were apart.</p>
-              <div class="drs"><span>Change the rules ›</span></div>
-            </div>
-            <p class="lab">Sundays apart</p>
-            <table class="tk2 gap"><thead><tr><th>When</th><th>Why</th></tr></thead>
-              <tbody><tr><td>Sun, Feb 14</td><td>9U AA is off that day</td></tr><tr><td>Sun, Feb 28</td><td>13U AA has a game day</td></tr></tbody></table>
-          </div>
-          <div class="gapGroup rel hl">
-            <div class="co">
-              <b class="h">9U A and 9U B shared a facility on 8 of 10 Sundays</b>
-              <p class="rel">On the other 2 each practised alone, and each is billed a whole facility for those slots.<button class="mk" style="right:-14px" data-n="2" aria-label="Change 2">2</button></p>
-              <div class="drs"><span>Change the rules ›</span></div>
-            </div>
-            <p class="lab">Sundays alone</p>
-            <table class="tk2 gap"><thead><tr><th>When</th><th>Why</th></tr></thead>
-              <tbody><tr><td>Sun, Jan 17</td><td>9U B is off that day: school trip</td></tr><tr><td>Sun, Mar 7</td><td>No facility was free for both at one start</td></tr></tbody></table>
-          </div>
-        </div>
-      </div></div></div>
-      <div class="expl"></div>
-      <div class="legend">
-        <div class="li" id="y-1"><button class="mk2" data-n="1" type="button">1</button><p><b>Each rule not kept every week is one more group of the window, in the shape every group already has</b>: a callout, then its table, with a hairline between groups. No new heading. The rule groups come after the open-slot and short-team groups, because those are about the shares (the hard rules) and these are about the arrangement. A rule kept every week is not listed; "never at the same time" appears only if a hand move broke it. Each miss has one reason, the first one found: a team off, a game day, start and finish times, not enough free places at one start, a share or a weekly cap used up, a field kept for another group.</p></div>
-        <div class="li" id="y-2"><button class="mk2" data-n="2" type="button">2</button><p><b>Sharing's money consequence is said once, here</b>: a team that practised alone is billed a whole facility for that slot. Today nothing says so (Stage 0's check).</p></div>
-        <div class="li" id="y-3"><button class="mk2" data-n="3" type="button">3</button><p><b>Placements the week dropped when its attempts ran out</b> (Stage 0's second check) show up today as one more open slot and one more short team, with no why. One plain sentence in the free group names it. A known gap to fix with it: the window doesn't read "no back-to-back days", so it may offer a seat to a team that rule keeps off it. This is Ask 13.</p></div>
+      <div class="cap"><h3>Every place a part's words reach</h3><button type="button" class="tag chg" data-say="Each surface ships today with the facility's name. With a part, the facility's name gains the part after a comma.">Restyled</button><span class="sw-note">Read from the code; the new words highlighted</span></div>
+      <div class="card">
+        <div class="tblwrap"><table class="own">
+          <thead><tr><th>Where</th><th>Today</th><th>With a part</th></tr></thead>
+          <tbody>
+            <tr><td><b>Admin schedule list, the public schedule page, the coach's team page</b></td><td>Milton Sports Dome · Field 1</td><td>Milton Sports Dome · Field 1<mark>, side A</mark></td></tr>
+            <tr><td><b>Family email, schedule published</b></td><td>Sun, Jan 3 · 9:00 a.m. · Cardinals vs Rays · Milton Sports Dome · Field 1</td><td>… · Milton Sports Dome · Field 1<mark>, side A</mark></td></tr>
+            <tr><td><b>Family email, a game moved to the other side</b></td><td>(a move between fields)<br>Now: … · Milton Sports Dome · Field 3<br>Was: Milton Sports Dome · Field 2</td><td>Now: Sun, Jan 10, 9:00 a.m. · Milton Sports Dome · Field 1<mark>, side B</mark><br>Was: Milton Sports Dome · Field 1<mark>, side A</mark></td></tr>
+            <tr><td><b>Family email, practice times</b></td><td>Sundays, 9:00–10:30 a.m. · Milton Sports Dome · Field 1</td><td>… · Milton Sports Dome · Field 1<mark>, side A</mark></td></tr>
+            <tr><td><b>The Tell step's rows, a practice's own window (Where)</b></td><td>Milton Sports Dome — Field 1</td><td>Milton Sports Dome — Field 1<mark>, side A</mark></td></tr>
+            <tr><td><b>Calendar file, Excel and CSV (the Location the game keeps)</b></td><td>Milton Sports Dome — Field 1</td><td>Milton Sports Dome — Field 1<mark>, side A</mark></td></tr>
+            <tr><td><b>The public "Moved" mark</b></td><td>A game moved to another field is marked Moved</td><td>A game moved to the other side is marked Moved too</td></tr>
+            <tr><td><b>Game-day reminders</b></td><td>None in house league (a tournament feature)</td><td>No change</td></tr>
+          </tbody>
+        </table></div>
       </div>
-      <p class="note"><b>Reported, not changed here:</b> the shipped "Give it to" menu sits inside a table cell. It was ruled for this window, but it has no row on the table exception register, so the register should gain one saying it is not a precedent. The new rule groups add no control to any cell.</p>
+      <div class="expl"></div>
+      <p class="note"><b>Why a comma, not a second dash.</b> The club calendar reads a house-league game's facility back out of its stored place, splitting at the last " — ". "Milton Sports Dome — Field 1, side A" splits into the venue and "Field 1, side A". A second dash ("— Side A") would split into "Milton Sports Dome — Field 1" and "Side A". The same holds for a quarter: "Field 1, quarter C".</p>
+      <p class="note"><b>A part change is a move.</b> The game's change record compares its place; it learns the part, so moving a game from side A to side B is sent to families as a move, with the full Was line, as a field change is today.</p>
+    </div>
+    <div class="stage">
+      <div class="cap"><h3>The published email, its text</h3><button type="button" class="tag chg" data-say="The email's text lines, not its frame: the email ships today and only the place words change.">Restyled</button><span class="sw-note">The lines that carry a place</span></div>
+      <div class="scroller"><div class="bare" style="width:640px">
+        <div class="mailtxt"><span class="sj">Cardinals’ schedule is up</span>Milton Bats Baseball published the Winter house league 2027 schedule. Here are Ava’s games with Cardinals:
+Sun, Jan 3 · 9:00 a.m. · Cardinals vs Rays · Milton Sports Dome · Field 1<mark>, side A</mark>
+Sun, Jan 10 · 10:30 a.m. · Expos vs Cardinals · Milton Sports Dome · Field 4
+Sun, Jan 17 · 9:00 a.m. · Cardinals vs Mariners · Milton Sports Dome · Field 1<mark>, side B</mark></div>
+      </div></div>
+      <div class="expl"></div>
     </div>
   </section>
 
   <!-- ═════════ 9 · ASKS ═════════ -->
   <section class="pane" id="p-asks">
-    <p class="lede"><b>Fourteen asks.</b> Each starts on my recommendation. Pick an answer for each, then copy the summary at the bottom and paste it back in the chat. The first nine are about sides; Asks 10 to 13 are the same-time rule; Ask 14 is house league.</p>
+    <p class="lede"><b>Eight asks.</b> Each starts on my recommendation. Pick an answer for each, then copy the summary at the bottom and paste it back in the chat. Asks 1 and 2 are round 1's two open follow-ups.</p>
     <div class="asks">
       <div class="card">
         <h3>What you already ruled (shown so it can be corrected)</h3>
         <ul>
-          <li><b>P2, P3:</b> a schedule can run on half a field, both halves (a team on each) or one half (the other elsewhere). Case C ("Half cost") is unchanged.</li>
-          <li><b>R1–R10:</b> one more entry in Add a rule; it tries and reports; same start, same building, each team on its own field, at full price, the bill unchanged; a team's share is the limit; no "adjacent fields"; a group that can never line up is caught on entry; a hand move that breaks a group warns; the report is per rule and covers sharing; "never at the same time" is offered with it; teams only.</li>
+          <li><b>P1–P3:</b> a schedule on some of a permit's fields, for a period; on half a field, both halves (a team on each) or one half (the other elsewhere). Case C ("Half cost") unchanged.</li>
+          <li><b>R1–R10:</b> one more entry in Add a rule; it tries and reports; same start, same building, each team on its own field, the bill unchanged; a team's share is the limit; no "adjacent fields"; a group that can never line up is caught on entry; a hand move that breaks a group warns; the report is per rule and covers sharing; "never at the same time" is offered with it; teams only.</li>
+          <li><b>Round 1, 2026-11-25:</b> 1 A, a field that splits, not each part its own facility · 2 A, a side counts half a practice toward a share · 3 A, a side costs the field's price ÷ 2, worked out · <b>4 B, up to four parts, A to D</b> · 5 A, parts reach rep schedules and the practices they make (see Ask 1) · 6 A, sharing, teams at once and parts all kept, counted and billed alike, a part never shared · 7 A, a same-time group may land on two parts of one field · 8 B, a row per part on the grid, a column per part on the PDF · 9 A, Used stays booked time, with a line for held time no team has · 10 A, the rule below the hard rules and above the conveniences · 11 A, a team in a sharing rule and a same-time rule is refused · 12 A, the hand-move warning in the tooltip and the notice · 13 A, name the placements a week drops · <b>14 C, both reach house league</b>.</li>
         </ul>
       </div>
 
       <div class="ask">
-        <h3>Ask 1 · How a field's two sides are kept</h3>
+        <h3>Ask 1 · How far parts reach in house league (round 1’s 14 C read with its 5)</h3>
+        <p class="why">Round 1’s 5 A kept parts to rep schedules; its 14 C has house-league practices and games carry a part. All of house league's club time comes from a club schedule's final slots, which House league's time gives to divisions (read in the code).</p>
         <ul>
-          <li><b>A · One field that splits in two</b> (drawn; the database review's proposal). The venue list keeps Field 1 as one facility and says it has sides A and B. Permits, house league, a coach's event, tryout days, tournaments and the venue table all still see one Field 1. Anything not yet taught about sides reads a side as the whole field: it may call a clash that isn't one, and never misses one.</li>
-          <li><b>B · Each side is its own facility.</b> The venue list gains "Field 1, side A" and "Field 1, side B". Every picker in the product offers them, a permit counts them as extra fields (its Held hours double), and every check that compares facilities must learn they overlap Field 1. One it misses double-books without a word, and the count found about twenty such places.</li>
+          <li><b>A · House-league time a club schedule hands out, practices and games</b> (drawn, tabs 6–8). The part comes with the slot. House league never splits a field itself; a game moved by hand to another field goes to a whole field. A coach's own event, tryout days and tournaments stay whole (round 1 Ask 5’s C and D stay out).</li>
+          <li><b>B · A, and house league's own place pickers offer parts</b>: an admin can move a game to side B by hand, and a season without the club schedule can book a part.</li>
+          <li><b>C · Practices only.</b> House-league games stay on whole fields.</li>
         </ul>
-        <p class="rec">Recommend A.</p>
-        <div class="pick" role="radiogroup" aria-label="Ask 1"><label><input type="radio" name="a1" id="a1a" value="A" checked> A</label><label><input type="radio" name="a1" id="a1b" value="B"> B</label></div>
+        <p class="rec">Recommend A. The club splits a field where it hands out the time; house league uses what it was given. B adds a part picker to every house-league booking form.</p>
+        <div class="pick" role="radiogroup" aria-label="Ask 1"><label><input type="radio" name="a1" id="a1a" value="A" checked> A</label><label><input type="radio" name="a1" id="a1b" value="B"> B</label><label><input type="radio" name="a1" id="a1c" value="C"> C</label></div>
       </div>
 
       <div class="ask">
-        <h3>Ask 2 · A practice on a side: one practice or half a practice toward a team's share?</h3>
-        <p class="why">This matters under "Evenly" and "By percentage" (under "A set number a week" a practice is always one practice). Today a shared slot counts half (ruled 2026-10-12: "a shared slot is half a facility wherever time is measured"), and a "Half cost" field counts one. <b>One picture:</b> Field 1 in two sides for 9U AA and 9U A, Field 2 whole for 15U AA and 15U A ("Facilities for a group" keeps each age on its field), 3 starts × 10 Sundays, Evenly, $120.00 a whole-field slot.</p>
+        <h3>Ask 2 · A field in four quarters, also used as halves and whole</h3>
+        <ul>
+          <li><b>A · Yes: the whole field, either half (quarters A–B or C–D) or a quarter</b>, chosen on each row (drawn on tabs 3 and 4 as "with halves"). The list offers seven options for that field, and the grid can show up to six rows under it.</li>
+          <li><b>B · The whole field or quarters only.</b> A club that wants an 11U team on half of it sets the field to "Two sides" instead, and loses its quarters while it does.</li>
+        </ul>
+        <p class="rec">Recommend A. Dividers open as well as close: a dome that runs its youngest teams on quarters at 9:00 a.m. and an older team on a half at 10:30 a.m. needs both on one field. The halves are the fixed pairs A–B and C–D; halves across the field are not offered.</p>
+        <div class="pick" role="radiogroup" aria-label="Ask 2"><label><input type="radio" name="a2" id="a2a" value="A" checked> A</label><label><input type="radio" name="a2" id="a2b" value="B"> B</label></div>
+      </div>
+
+      <div class="ask">
+        <h3>Ask 3 · A quarter toward a team's share, and its price</h3>
+        <p class="why">Round 1 ruled a side counts half a practice and costs half (its 2 A and 3 A). Carried to quarters: a quarter counts a quarter and costs a quarter (÷ 4; a quarter of a "Half cost" field is an eighth). That is also how four teams sharing one field count today: a shared slot counts 1 ÷ its teams. <b>One picture where it bites:</b> Field 1 in quarters for 7U AA, 7U A, 7U B and 7U C; Field 2 whole for 15U AA and 15U A ("Facilities for a group" keeps each age on its field); 3 starts × 10 Sundays; $120.00 a whole-field slot.</p>
         <div class="tblwrap"><table class="own">
-          <thead><tr><th></th><th>9U AA</th><th>9U A</th><th>15U AA</th><th>15U A</th><th>Left open</th><th class="n">Billed</th></tr></thead>
+          <thead><tr><th></th><th>Each 7U team</th><th>Each 15U team</th><th>Left open</th><th class="n">Billed</th></tr></thead>
           <tbody>
-            <tr class="hi"><td><b>A · Half</b></td><td>30 on a side · $1,800</td><td>30 on a side · $1,800</td><td>15 · $1,800</td><td>15 · $1,800</td><td>Nothing</td><td class="n">$7,200 of $7,200</td></tr>
-            <tr><td><b>B · One</b></td><td>23 on a side · $1,380</td><td>22 on a side · $1,320</td><td>15 of 23: 8 short · $1,800</td><td>15 of 22: 7 short · $1,800</td><td>15 sides</td><td class="n">$6,300 of $7,200</td></tr>
-            <tr><td>Today, as "Sharing a facility"</td><td>30 shared · $1,800</td><td>30 shared · $1,800</td><td>15 · $1,800</td><td>15 · $1,800</td><td>Nothing</td><td class="n">$7,200 of $7,200</td></tr>
+            <tr class="hi"><td><b>A · a quarter, under Evenly</b></td><td>30 on a quarter, 10 short · $900</td><td>10 · $1,200</td><td>10 on Field 2</td><td class="n">$6,000 of $7,200</td></tr>
+            <tr class="hi"><td><b>A · a quarter, By percentage</b> (7U 12.5% each, 15U 25% each)</td><td>30 on a quarter · $900</td><td>15 · $1,800</td><td>Nothing</td><td class="n">$7,200 of $7,200</td></tr>
+            <tr><td><b>B · a quarter counts half, under Evenly</b></td><td>30 on a quarter · $900</td><td>15 · $1,800</td><td>Nothing</td><td class="n">$7,200 of $7,200</td></tr>
+            <tr><td>Today, as "Sharing a facility", 4 at once, under Evenly</td><td>30 shared · $900</td><td>10 · $1,200</td><td>10 on Field 2</td><td class="n">$6,000 of $7,200</td></tr>
           </tbody>
         </table></div>
         <ul>
-          <li><b>A · Half a practice</b>, like a shared slot. The same two teams on the same field get the same time and the same bill whether the club calls it sharing or sides. Every team has equal field time; the 9U teams get more, smaller practices.</li>
-          <li><b>B · One practice.</b> Counting a side as a whole practice makes the dome look like it has 90 practices for 4 teams. The 15U teams can't reach 22 or 23 on 30 whole-field slots, so they end short, and 15 sides go unused while the club still pays for them.</li>
-          <li><b>C · One practice, and change sharing to match.</b> Equal practice counts everywhere, but it reverses the 2026-10-12 ruling and gives the B row's shortfall to every sharing schedule too.</li>
+          <li><b>A · A quarter counts a quarter, priced ÷ 4.</b> Equal field time. A team on a quarter needs four practices for each one a whole-field team gets, so under Evenly a schedule that mixes quarters and whole fields leaves the quarter teams short: they run out of starts. It is the same today for four teams sharing a field. By percentage fixes it, and the draft cards already say who is short.</li>
+          <li><b>B · A quarter counts half, like a side, priced ÷ 4.</b> This picture fills under Evenly. But four teams on Field 1's quarters would count twice what the same four teams count sharing Field 1, the "same picture, two answers" problem round 1 settled for sides.</li>
         </ul>
-        <p class="rec">Recommend A. Left as they are, "Half cost" fields still count one practice (case C is ruled unchanged). Noted, not asked: that is the one place a smaller space counts whole.</p>
-        <div class="pick" role="radiogroup" aria-label="Ask 2"><label><input type="radio" name="a2" id="a2a" value="A" checked> A</label><label><input type="radio" name="a2" id="a2b" value="B"> B</label><label><input type="radio" name="a2" id="a2c" value="C"> C</label></div>
-      </div>
-
-      <div class="ask">
-        <h3>Ask 3 · A side's price</h3>
-        <ul>
-          <li><b>A · The field's price ÷ 2, worked out, never typed.</b> A side of a full field is $40.00 an hour here; a side of a "Half cost" field is a quarter. The permit stays the one place prices live, and nothing is stored twice.</li>
-          <li><b>B · Worked out, and a club may set a different share per field</b> in the venue list (a side at 60%, say). A second place to set a price, which the permit's own price rows would not show.</li>
-        </ul>
-        <p class="rec">Recommend A. A club that pays differently for small fields already has "Half cost" and "A percent" on the permit.</p>
+        <p class="rec">Recommend A. It keeps one measure everywhere, and quarters and four-way sharing read alike (round 1, 6 A). The help says to use By percentage when young and old teams share one schedule.</p>
         <div class="pick" role="radiogroup" aria-label="Ask 3"><label><input type="radio" name="a3" id="a3a" value="A" checked> A</label><label><input type="radio" name="a3" id="a3b" value="B"> B</label></div>
       </div>
 
       <div class="ask">
-        <h3>Ask 4 · How many sides, and what they are called</h3>
+        <h3>Ask 4 · The words for a quarter</h3>
         <ul>
-          <li><b>A · Two sides, lettered A and B</b> (drawn). The storage allows up to four, so quarters can come later with no database change.</li>
-          <li><b>B · Up to four, lettered A to D</b>, offered now ("Two sides" / "Four quarters").</li>
-          <li><b>C · Sides the club names</b> ("North half", "Infield"). Each field then needs its own list of names, which is the storage step up the review described.</li>
+          <li><b>A · The word says the size</b> (drawn): "side A" on a field in two sides, "quarter C" on a field in four; a half of a quartered field is "quarters A–B". The box: "Field 1 in four quarters".</li>
+          <li><b>B · One word for every part:</b> "section A", "sections A–B", "Field 1 in four sections". One word to learn, but it doesn't say how big the space is.</li>
+          <li><b>C · Letters only:</b> "Field 1 A", "Field 1 A–B". Shortest, but it reads like a field named "1A".</li>
         </ul>
-        <p class="rec">Recommend A. The ask came from halves; quarters are for very young age groups and nobody has asked for them.</p>
+        <p class="rec">Recommend A. A family that reads "quarter C" knows how much field their child has. Working words either way, for the marketing pass.</p>
         <div class="pick" role="radiogroup" aria-label="Ask 4"><label><input type="radio" name="a4" id="a4a" value="A" checked> A</label><label><input type="radio" name="a4" id="a4b" value="B"> B</label><label><input type="radio" name="a4" id="a4c" value="C"> C</label></div>
       </div>
 
       <div class="ask">
-        <h3>Ask 5 · How far sides reach</h3>
+        <h3>Ask 5 · "Teams at once" beside parts, in house league</h3>
         <ul>
-          <li><b>A · The club's rep schedules, and the practices they make.</b> A coach, a family and the calendar see "Field 1, side A" on the practice.</li>
-          <li><b>B · Also house-league time a schedule hands out</b>, practices and games (see Ask 14).</li>
-          <li><b>C · Also a coach's own event and tryout days</b>: the coaches portal's pickers offer sides.</li>
-          <li><b>D · Also tournaments.</b></li>
+          <li><b>A · A part holds one team.</b> Teams at once counts on whole facilities only, and one line says so when a division's time has a part (drawn, tab 6). It follows round 1’s 6 A: a part is never shared.</li>
+          <li><b>B · On a field the venue list splits, Teams at once names the parts.</b> "2 at once" on a field in two sides puts one team on each side and tells each family which, even when the club handed the field out whole.</li>
+          <li><b>C · A part holds Teams at once too.</b> "2 at once" on a side puts two teams on it, four on the field.</li>
         </ul>
-        <p class="why">Each step adds a kind of booking that must say which side, and everything that reads it. Under Ask 1 A, anything left out keeps booking whole fields, which is safe.</p>
-        <p class="rec">Recommend A.</p>
-        <div class="pick" role="radiogroup" aria-label="Ask 5"><label><input type="radio" name="a5" id="a5a" value="A" checked> A</label><label><input type="radio" name="a5" id="a5b" value="B"> B</label><label><input type="radio" name="a5" id="a5c" value="C"> C</label><label><input type="radio" name="a5" id="a5d" value="D"> D</label></div>
+        <p class="rec">Recommend A. B makes a second way to get a side, decided in house league rather than where the club splits its time, and C shares a part, which round 1’s 6 A ruled out.</p>
+        <div class="pick" role="radiogroup" aria-label="Ask 5"><label><input type="radio" name="a5" id="a5a" value="A" checked> A</label><label><input type="radio" name="a5" id="a5b" value="B"> B</label><label><input type="radio" name="a5" id="a5c" value="C"> C</label></div>
       </div>
 
       <div class="ask">
-        <h3>Ask 6 · Sharing, house league's "teams at once", and sides</h3>
+        <h3>Ask 6 · The house-league same-time rule: where it lives and how it reports</h3>
         <ul>
-          <li><b>A · Keep all three, counted alike</b> (tab 1). Sharing is a rule about teams and works on any field, divider or not. Sides are a fact about a field. "Teams at once" stays house league's own. Two teams on one field count and bill half each, whichever way they got there (Ask 2 A). A side is never shared. The help says when to use which.</li>
-          <li><b>B · Sides replace sharing for two at once.</b> Sharing stays only for 3 or 4 teams. A club with no divider loses the two-team case.</li>
+          <li><b>A · In Practice time, under "Hand it to the teams"</b> (drawn, tab 7). A rule names teams in any division and shows in each of their divisions' windows. Whichever division is handed out matches the other's practices as they stand. Caught on entry when the two can never meet (R6). The report is a line per rule in the notice the window already has, read before Hand out.</li>
+          <li><b>B · A season list in Schedule health's "Adjust the rules"</b>, beside the game rules. One place for the whole season, but that window scores games and never hands out a practice.</li>
+          <li><b>C · In Practice time, teams of one division only.</b> Simpler, but siblings are usually in different divisions.</li>
         </ul>
-        <p class="rec">Recommend A.</p>
-        <div class="pick" role="radiogroup" aria-label="Ask 6"><label><input type="radio" name="a6" id="a6a" value="A" checked> A</label><label><input type="radio" name="a6" id="a6b" value="B"> B</label></div>
+        <p class="rec">Recommend A. Practices are the only thing the rule acts on, and that window is where a house-league admin hands them out.</p>
+        <div class="pick" role="radiogroup" aria-label="Ask 6"><label><input type="radio" name="a6" id="a6a" value="A" checked> A</label><label><input type="radio" name="a6" id="a6b" value="B"> B</label><label><input type="radio" name="a6" id="a6c" value="C"> C</label></div>
       </div>
 
       <div class="ask">
-        <h3>Ask 7 · May a same-time group land on the two sides of one field?</h3>
-        <p class="why">R3 says "each on its own field, at full price; the bill does not change". It was ruled before sides existed.</p>
+        <h3>Ask 7 · Changing a field's split while a part is booked</h3>
         <ul>
-          <li><b>A · Yes: a side counts as a place.</b> 13U AA and 9U AA may be on Field 1 side A and side B at 9:00 a.m. Each team is billed for the place it got, exactly as it would be without the rule. The rule only picks the start; it never changes a price. For whole fields this changes nothing R3 ruled.</li>
-          <li><b>B · No: a group always takes whole fields.</b> On a dome where sides are most of the free time, groups line up less often.</li>
+          <li><b>A · Locked while anything is booked on a part</b> (drawn, tab 2). Free while only whole-field bookings exist.</li>
+          <li><b>B · A change that keeps every booked part may go through</b>: "Two sides" to "Four quarters" when quarters may be halves (Ask 2 A), so a booked side A becomes quarters A–B.</li>
         </ul>
-        <p class="rec">Recommend A. Read this way, R3's "full price" means the rule never makes a team share or pay less, which stays true.</p>
+        <p class="rec">Recommend A. A field's dividers rarely change in a season, and B rewrites every booking on the field in place.</p>
         <div class="pick" role="radiogroup" aria-label="Ask 7"><label><input type="radio" name="a7" id="a7a" value="A" checked> A</label><label><input type="radio" name="a7" id="a7b" value="B"> B</label></div>
       </div>
 
       <div class="ask">
-        <h3>Ask 8 · The grid</h3>
+        <h3>Ask 8 · A PDF day too wide for one page</h3>
+        <p class="why">The drawing's day (two split fields and four whole ones, 13 columns) takes about 245 of the landscape page's 251 mm (tab 5). One more field in quarters would not fit. Today the PDF then drops the columns that don't fit and says so under the table.</p>
         <ul>
-          <li><b>A · One row per field, its cell split</b> (tab 4, second drawing). About 60 px a side: names are cut.</li>
-          <li><b>B · A row per side</b> (tab 4, third drawing), indented under its field. Every slot keeps its shipped look and drop target; a whole-field slot stays on the field's own row. The PDF follows with a column per side.</li>
+          <li><b>A · Split the day into two tables</b> when it won't fit, keeping each field and its parts together ("Fields 1–2", then "Fields 3–6"), each with its own Time column.</li>
+          <li><b>B · As it ships:</b> the columns that don't fit are left off and named under the table; the Excel export has every column.</li>
         </ul>
-        <p class="rec">Recommend B.</p>
-        <div class="pick" role="radiogroup" aria-label="Ask 8"><label><input type="radio" name="a8" id="a8a" value="A"> A</label><label><input type="radio" name="a8" id="a8b" value="B" checked> B</label></div>
-      </div>
-
-      <div class="ask">
-        <h3>Ask 9 · The permit's Used figure</h3>
-        <ul>
-          <li><b>A · Used stays what teams actually booked</b> (tab 6). A side counts half the field's time. One line under it names the unused time a final schedule holds that no team has yet: its open slots, and house-league time not yet given to teams.</li>
-          <li><b>B · Used counts that held time too.</b> The Permits page would read higher for time nobody practises on.</li>
-        </ul>
-        <p class="rec">Recommend A. Used is how a club decides what to rent next year; time with no team on it is not used, even when no other schedule can have it.</p>
-        <div class="pick" role="radiogroup" aria-label="Ask 9"><label><input type="radio" name="a9" id="a9a" value="A" checked> A</label><label><input type="radio" name="a9" id="a9b" value="B"> B</label></div>
-      </div>
-
-      <div class="ask">
-        <h3>Ask 10 · Where the same-time rule ranks</h3>
-        <ul>
-          <li><b>A · Below the hard rules, above the conveniences</b> (the plan's proposal). First: a team twice at once, days off, game days, shares, start and finish times, facilities kept for a group, the daily and weekly caps, no back-to-back days, bookings already on the books. Then the group. Then: the same field each week, the same nights, early and late taken in turn, prime time.</li>
-          <li><b>B · Below everything, conveniences included:</b> a group lines up only where nothing else would move. Groups would line up much less often.</li>
-        </ul>
-        <p class="rec">Recommend A. Prime time sits with the conveniences here; say so if it should rank above the group.</p>
-        <div class="pick" role="radiogroup" aria-label="Ask 10"><label><input type="radio" name="a10" id="a10a" value="A" checked> A</label><label><input type="radio" name="a10" id="a10b" value="B"> B</label></div>
-      </div>
-
-      <div class="ask">
-        <h3>Ask 11 · A team in both a sharing rule and a same-time rule</h3>
-        <ul>
-          <li><b>A · Refused when entered</b> (tab 7), as a team in two sharing rules is refused today.</li>
-          <li><b>B · Allowed:</b> the sharing pair moves as one member of the group. More to build and more ways for a week to fail.</li>
-        </ul>
-        <p class="rec">Recommend A. With sides, a club that wants 9U A and 9U B together and at the same time as 11U AA can put all three in one same-time rule on Field 1's sides and a second field.</p>
-        <div class="pick" role="radiogroup" aria-label="Ask 11"><label><input type="radio" name="a11" id="a11a" value="A" checked> A</label><label><input type="radio" name="a11" id="a11b" value="B"> B</label></div>
-      </div>
-
-      <div class="ask">
-        <h3>Ask 12 · The hand-move warning</h3>
-        <ul>
-          <li><b>A · The tooltip, and the notice after the drop</b> (tab 7). The one warning said twice, because it moves another family's Sunday. The notice needs its held, wrapping face for it (the face its errors already use).</li>
-          <li><b>B · The tooltip only</b>, like every other rule break today.</li>
-        </ul>
-        <p class="rec">Recommend A.</p>
-        <div class="pick" role="radiogroup" aria-label="Ask 12"><label><input type="radio" name="a12" id="a12a" value="A" checked> A</label><label><input type="radio" name="a12" id="a12b" value="B"> B</label></div>
-      </div>
-
-      <div class="ask">
-        <h3>Ask 13 · Naming the placements a week drops</h3>
-        <ul>
-          <li><b>A · Yes, one sentence in the window's free group</b> (tab 8): "On Sun, Feb 7 the drafts ran out of tries before placing 15U A." Fix the back-to-back gap with it.</li>
-          <li><b>B · No.</b> The slot already shows as open, with the team that can take it.</li>
-        </ul>
-        <p class="rec">Recommend A. A linked group makes a dropped week more likely, and R2 says the builder reports why.</p>
-        <div class="pick" role="radiogroup" aria-label="Ask 13"><label><input type="radio" name="a13" id="a13a" value="A" checked> A</label><label><input type="radio" name="a13" id="a13b" value="B"> B</label></div>
-      </div>
-
-      <div class="ask">
-        <h3>Ask 14 · House league</h3>
-        <p class="why">The open question asked whether both apply to a house-league schedule "unchanged". They can't: a club schedule's rules never name house-league teams, and house league divides its own practice time in its Practice time window, with "Teams at once".</p>
-        <ul>
-          <li><b>A · Rep schedules only, for this project.</b> Time a club schedule hands to house league stays whole fields. A same-time rule for house league (siblings are common there) goes to the ideas backlog as its own piece of work.</li>
-          <li><b>B · The same-time rule also reaches house league's Practice time</b>, built in that window. Sides stay rep only.</li>
-          <li><b>C · Both reach house league.</b> House-league practices and games carry a side too.</li>
-        </ul>
-        <p class="rec">Recommend A.</p>
-        <div class="pick" role="radiogroup" aria-label="Ask 14"><label><input type="radio" name="a14" id="a14a" value="A" checked> A</label><label><input type="radio" name="a14" id="a14b" value="B"> B</label><label><input type="radio" name="a14" id="a14c" value="C"> C</label></div>
+        <p class="rec">Recommend A. A printed schedule that leaves fields off is the one a coach pins to the dome's wall.</p>
+        <div class="pick" role="radiogroup" aria-label="Ask 8"><label><input type="radio" name="a8" id="a8a" value="A" checked> A</label><label><input type="radio" name="a8" id="a8b" value="B"> B</label></div>
       </div>
 
       <div class="card paste">
@@ -1251,19 +1243,19 @@ section.pane.on { display: block; }
       <div class="card" id="design-card">
         <h3>What the design check changed before you saw this</h3>
         <ul id="design-list">
-          <li><b>The venue list:</b> "Two sides" is a tick, as every yes-or-no choice is, not a second select. The locked-sides message is said once under the heading. The window now shows all its fields, including Bookings contact and Notes, and the dome has the same six fields on every tab.</li>
-          <li><b>The tick list stays flat</b>, as it ships: "Field 1 (whole)", "Field 1, side A", "Field 1, side B". The first round drew an indented list with a half-ticked parent box, which could not tell "both sides" from "one side".</li>
-          <li><b>The grid:</b> a Today frame was added (the same teams, sharing). The side rows are indented under their field instead of joined by a dashed line (dashed already means "undecided" in this product). A whole-field slot stays on the field's row without hatching (hatching already means "a booking holds it"), and empty cells read "—". The toolbar is redrawn as it ships.</li>
-          <li><b>The PDF:</b> the first round said a side's heading would never read "half". The shipped PDF labels a column by its price, so it would, unless the build teaches it sides. The legend now says so.</li>
-          <li><b>The bill:</b> "Split" is the plain fixed value it is, the first payment's date is back, and the statement and the closing line are under the table, in its frame.</li>
-          <li><b>The rule:</b> a rule that can never line up stops Generate the way an unfinished rule does today (the reason shows when you press it), not by greying the button. The notice after a hand move is drawn as the shipped white notice.</li>
-          <li><b>The report:</b> the schedule page keeps its one line (owner ruling 2026-11-24); the rules join its sentence. In the why window the rule groups take the shape every group has, with no new heading.</li>
-          <li><b>Type and words:</b> table headings use the product's condensed display face; time ranges read "9:00 a.m.–1:30 p.m.", as the product writes them; the page no longer scrolls sideways on a phone; every highlight opens its note.</li>
+          <li><b>The PDF</b> has no cell lines, as the shipped PDF prints (its plain style), and a slate head, the default accent. Its headings are drawn as they really wrap (three lines at 13 columns), not forced to two; the legend now says the page only just fits, which is the new Ask 8.</li>
+          <li><b>Practice time</b> is drawn as it ships: the notice on its soft olive ground with its first line bold, the time row at its shipped height and weight, the section heads at 650, and "+ Give U9 more time" as the underlined link it is. The new "+ Add teams at the same time" door is the same link.</li>
+          <li><b>The house-league rule</b> has no heading above it that repeats its own door, as the club rule list has none. The Teams list is the shipped tick list unchanged: each team named with its division ("U9 Orioles"), the box joining them with commas.</li>
+          <li><b>The refusal when two teams can never line up</b> is the window's reason line in its foot, red beside the buttons, as every refused setting is today, not a box in the body.</li>
+          <li><b>The venue list</b> gained its phone frame: the split takes its own line under the facility's row. The marker on Field 2's select is no longer clipped.</li>
+          <li><b>The grid</b>: a field's row label is the venue name only, as it ships; the marker no longer covers "Quarters A–B"; the legend says plainly that an empty quarter row under a booked half is not an open slot.</li>
+          <li><b>Words and the page</b>: round 1's answers are written "round 1, 4 B" so they can't be mistaken for this round's asks; the house-league example now matches between tabs 6 and 7; no "practise" (the product never uses the verb); the page no longer scrolls sideways on a phone.</li>
+          <li><b>Kept on purpose:</b> the page keeps its name, so its history threads with round 1.</li>
         </ul>
       </div>
       <div class="card">
         <h3>After you rule</h3>
-        <p style="margin:0">The answers go into the plan as Stage 2's and Stage 3's rulings. Stage 2 starts with the database change on the ruled shape, then the venue list, the rows, the builder, every clash check, the grid, the PDF and permit use. Stage 3 needs no database change. The working words ("side", "Field 1 in two sides", the rule's names and its report sentences) go through one marketing pass per stage before the walk.</p>
+        <p style="margin:0">The answers go into the plan as Stage 2's and Stage 3's round 2 rulings. Then the database review settles how a booking names its part (four parts, halves of a quartered field if Ask 2 is A, house-league games and practices) before the migration is written. The working words ("Not split", "quarter", "quarters A–B", the house-league rule's sentences) go through one marketing pass per stage before the walk.</p>
       </div>
     </div>
   </section>
@@ -1271,101 +1263,77 @@ section.pane.on { display: block; }
 
 <script>
 (function () {
-  /* ── the two grids, drawn from data so both read the same week ── */
+  /* ── the grids, drawn from data so both read the same Sundays ── */
   var dates = ["Sun, Jan 3", "Sun, Jan 10", "Sun, Jan 17", "Sun, Jan 24", "Sun, Jan 31", "Sun, Feb 7", "Sun, Feb 14"];
-  var times = ["9:00–10:30 a.m.", "10:30 a.m.–12:00 p.m.", "12:00–1:30 p.m."];
-  var C = { "9U AA": "#2E7D5B", "9U A": "#B5541C", "9U B": "#3B5BA5", "9U Select": "#8A3FA0", "13U AA": "#A0832B", "13U A": "#2A8C99", "15U AA": "#6B6B2A", "15U A": "#9A3B5E" };
-  /* Field 1, by date then start: [side A, side B], or "W:team" for the whole field. */
-  function f1(d, t) {
-    if (t === 2 && d < 2) return "W:13U AA";
-    var a = [["9U AA", "9U A"], ["9U B", "9U Select"], ["9U A", "9U AA"]][t];
-    if (d % 2) a = [a[1], a[0]];
-    if (t === 2 && d === 4) a = [a[0], ""];
-    return a;
-  }
-  function f2(d, t) { return [["13U AA", "15U AA", "13U A"], ["15U A", "13U AA", "15U AA"], ["13U A", "15U A", "13U AA"]][t][d % 3]; }
-  function chip(team, time, cls) {
+  var T = ["9:00–10:30 a.m.", "10:30 a.m.–12:00 p.m.", "12:00–1:30 p.m."];
+  var C = { "7U AA": "#2E7D5B", "7U A": "#B5541C", "7U B": "#3B5BA5", "7U C": "#8A3FA0", "8U AA": "#2A8C99", "8U A": "#9A3B5E", "8U B": "#6B6B2A", "8U C": "#A34A28",
+    "9U AA": "#4E7A2E", "9U A": "#7A4FB0", "9U B": "#1F6F8B", "9U Select": "#B07A1F", "13U AA": "#A0832B", "15U AA": "#5C6B73", "11U B": "#8C5A3C" };
+  var Q7 = ["7U AA", "7U A", "7U B", "7U C"], Q8 = ["8U AA", "8U A", "8U B", "8U C"];
+  function chip(team, time) {
     if (!team) return '<div class="chip open"><b>' + time + '</b><span>Open</span></div>';
-    return '<div class="chip ' + (cls || "") + '" style="--tc:' + C[team] + '"><b>' + time + '</b><span>' + team + '</span></div>';
+    return '<div class="chip" style="--tc:' + C[team] + '"><b>' + time + '</b><span>' + team + '</span></div>';
   }
-  function shell(id, gridHtml, note) {
+  function none() { return '<span class="none">—</span>'; }
+  function shell(id, gridHtml) {
     var el = document.getElementById(id);
     if (!el) return;
     el.innerHTML =
-      '<div class="ptitle"><b>Winter dome, 9U</b><span>Milton Sports Dome · Jan 3 – Mar 7, 2027 · a draft</span></div>' +
+      '<div class="ptitle"><b>Winter dome, young and old</b><span>Milton Sports Dome · Jan 3 – Mar 7, 2027 · a draft</span></div>' +
       '<div class="gcard"><div class="gh2">Read the schedule</div><div class="gsub">Choose a view to inspect this schedule.</div>' +
       '<div class="tbar"><span class="lead">Grid<svg width="14" height="14"><use href="#i-chev"/></svg></span>' +
-      '<span class="rng"><i>‹</i>Jan 3 – Feb 14, 2027<i>›</i></span>' +
-      '<span class="grow"></span>' +
+      '<span class="rng"><i>‹</i>Jan 3 – Feb 14, 2027<i>›</i></span><span class="grow"></span>' +
       '<span class="quiet">Facility<svg width="13" height="13"><use href="#i-chev"/></svg></span>' +
       '<span class="quiet">Group<svg width="13" height="13"><use href="#i-chev"/></svg></span>' +
       '<span class="quiet">Team<svg width="13" height="13"><use href="#i-chev"/></svg></span>' +
       '<span class="btn"><svg width="15" height="15"><use href="#i-dots"/></svg>Tools</span><span class="btn">Export</span><span class="btn pri">Send</span></div>' +
-      gridHtml + '</div>' + (note || "");
+      gridHtml + '</div>';
   }
   var cols = 'grid-template-columns:7.25rem repeat(' + dates.length + ',minmax(0,1fr))';
   function head() { var h = '<div class="gh">Facility</div>'; dates.forEach(function (d) { h += '<div class="gh">' + d + '</div>'; }); return h; }
   function label(name, sub, cls, mk) { return '<div class="fc ' + (cls || "") + (mk ? ' rel' : '') + '">' + name + '<small>' + sub + '</small>' + (mk || "") + '</div>'; }
+  function mk(n) { return '<button class="mk" style="right:-6px;top:-6px" data-n="' + n + '" aria-label="Note ' + n + '">' + n + '</button>'; }
+  /* one row: fn(d) returns [[timeIndex, team], ...] for that Sunday */
+  function row(fn) { var h = ""; dates.forEach(function (_, d) { var s = fn(d); h += '<div class="cell">' + (s.length ? s.map(function (x) { return chip(x[1], T[x[0]]); }).join("") : none()) + '</div>'; }); return h; }
+  function field2() {
+    return label("Field 2", "Milton Sports Dome") + row(function () { return [[2, "15U AA"]]; }) +
+      label("Side A", "Field 2 · Milton Sports Dome", "sub") + row(function (d) { return [[0, d % 2 ? "9U A" : "9U AA"], [1, d % 2 ? "9U Select" : "9U B"]]; }) +
+      label("Side B", "Field 2 · Milton Sports Dome", "sub") + row(function (d) { return [[0, d % 2 ? "9U AA" : "9U A"], [1, d % 2 ? "9U B" : "9U Select"]]; });
+  }
+  /* Quarters only */
+  var q = '<div class="grid" style="' + cols + '">' + head();
+  q += label("Field 1", "Milton Sports Dome", "", mk(2)) + row(function () { return [[2, "13U AA"]]; });
+  [0, 1, 2, 3].forEach(function (k) {
+    q += label("Quarter " + "ABCD"[k], "Field 1 · Milton Sports Dome", "sub", k ? "" : mk(1)) +
+      row(function (d) { return [[0, Q7[(k + d) % 4]], [1, Q8[(k + d) % 4]]]; });
+  });
+  q += field2() + '</div>';
+  shell("gridQ", q);
+  /* With halves: 11U B on quarters A–B at 10:30, 8U AA and 8U A on quarters C and D */
+  var h = '<div class="grid" style="' + cols + '">' + head();
+  h += label("Field 1", "Milton Sports Dome") + row(function () { return [[2, "13U AA"]]; });
+  h += label("Quarters A–B", "Field 1 · Milton Sports Dome", "sub", mk(3)) + row(function () { return [[1, "11U B"]]; });
+  [0, 1, 2, 3].forEach(function (k) {
+    h += label("Quarter " + "ABCD"[k], "Field 1 · Milton Sports Dome", "sub") +
+      row(function (d) { var s = [[0, Q7[(k + d) % 4]]]; if (k === 2) s.push([1, d % 2 ? "8U A" : "8U AA"]); if (k === 3) s.push([1, d % 2 ? "8U AA" : "8U A"]); return s; });
+  });
+  h += field2() + '</div>';
+  shell("gridH", h);
 
-  function none() { return '<span class="none">—</span>'; }
-  /* Today: Field 1 whole, the same teams paired by "Sharing a facility" (names stacked, the edge split). */
-  var tg = '<div class="grid" style="' + cols + '">' + head() + label("Field 1", "Milton Sports Dome");
-  dates.forEach(function (_, d) {
-    tg += '<div class="cell">';
-    times.forEach(function (tm, t) {
-      var v = f1(d, t);
-      if (typeof v === "string") { tg += chip(v.slice(2), tm); return; }
-      if (!v[1]) { tg += chip(v[0], tm); return; }
-      tg += '<div class="chip shared" style="--tc:' + C[v[0]] + ';--tc2:' + C[v[1]] + '"><b>' + tm + '</b><span>' + v[0] + '</span><span>' + v[1] + '</span></div>';
-    });
-    tg += '</div>';
+  /* ── the bill's rows ── */
+  var bill = [["7U AA", "q"], ["7U A", "q"], ["7U B", "q"], ["7U C", "q"], ["8U AA", "q"], ["8U A", "q"], ["8U B", "q"], ["8U C", "q"],
+    ["9U AA", "h"], ["9U A", "h"], ["9U B", "h"], ["9U Select", "h"], ["13U AA", "f"], ["15U AA", "f"]];
+  var cap = { q: "10 quarter-field slots · 3.8 full-field hours", h: "10 half-field slots · 7.5 full-field hours", f: "10 full-field slots · 15 full-field hours" };
+  var amt = { q: ["$300.00", "$150.00"], h: ["$600.00", "$300.00"], f: ["$1,200.00", "$600.00"] };
+  var rows = "";
+  bill.forEach(function (b, i) {
+    var note = i === 0 ? '<button class="mk" style="right:auto;left:270px;top:-4px" data-n="2" aria-label="Note 2">2</button>' : "";
+    rows += '<tr class="two"><td>' + b[0] + '<small class="' + (b[1] === "q" ? "rel" : "") + '">' + cap[b[1]] + note + '</small></td><td class="n">' + amt[b[1]][0] + '</td><td class="n">' + amt[b[1]][1] + '</td><td class="n">' + amt[b[1]][1] + '</td></tr>';
   });
-  tg += label("Field 2", "Milton Sports Dome");
-  dates.forEach(function (_, d) { tg += '<div class="cell">'; times.forEach(function (tm, t) { tg += chip(f2(d, t), tm); }); tg += '</div>'; });
-  tg += '</div>';
-  shell("gridT", tg);
-
-  /* A: one row for Field 1, split cells */
-  var a = '<div class="grid" style="' + cols + '">' + head() + label("Field 1", "Milton Sports Dome");
-  dates.forEach(function (_, d) {
-    a += '<div class="cell">';
-    times.forEach(function (tm, t) {
-      var v = f1(d, t);
-      if (typeof v === "string") { a += chip(v.slice(2), tm); return; }
-      a += '<div class="chip2"><div class="t">' + tm + '</div><div class="hv">' +
-        (v[0] ? '<div style="--tc:' + C[v[0]] + '"><em>A</em>' + v[0] + '</div>' : '<div class="op"><em>A</em>Open</div>') +
-        (v[1] ? '<div style="--tc:' + C[v[1]] + '"><em>B</em>' + v[1] + '</div>' : '<div class="op"><em>B</em>Open</div>') + '</div></div>';
-    });
-    a += '</div>';
-  });
-  a += label("Field 2", "Milton Sports Dome");
-  dates.forEach(function (_, d) { a += '<div class="cell">'; times.forEach(function (tm, t) { a += chip(f2(d, t), tm); }); a += '</div>'; });
-  a += '</div>';
-  shell("gridA", a);
-
-  /* B: a row per side, plus a whole-field row only where it holds a slot */
-  var b = '<div class="grid" style="' + cols + '">' + head();
-  b += label("Field 1", "Whole field · Milton Sports Dome", "", '<button class="mk" style="right:4px;top:4px" data-n="2" aria-label="Note 2">2</button>');
-  dates.forEach(function (_, d) {
-    var inner = "";
-    times.forEach(function (tm, t) { var v = f1(d, t); if (typeof v === "string") inner += chip(v.slice(2), tm); });
-    b += '<div class="cell">' + (inner || none()) + '</div>';
-  });
-  [0, 1].forEach(function (s) {
-    b += label("Side " + "AB"[s], "Field 1 · Milton Sports Dome", "sub", s ? "" : '<button class="mk" style="right:4px;top:4px" data-n="1" aria-label="Note 1">1</button>');
-    dates.forEach(function (_, d) {
-      var inner = "";
-      times.forEach(function (tm, t) { var v = f1(d, t); if (typeof v !== "string") inner += chip(v[s], tm); });
-      b += '<div class="cell">' + (inner || none()) + '</div>';
-    });
-  });
-  b += label("Field 2", "Milton Sports Dome");
-  dates.forEach(function (_, d) { b += '<div class="cell">'; times.forEach(function (tm, t) { b += chip(f2(d, t), tm); }); b += '</div>'; });
-  b += '</div>';
-  shell("gridB", b);
+  rows += '<tr class="grp"><td>14 teams</td><td class="n">$7,200.00</td><td class="n">$3,600.00</td><td class="n">$3,600.00</td></tr>';
+  var br = document.getElementById("billRows"); if (br) br.innerHTML = rows;
 
   /* ── tabs ── */
-  var names = ["idea", "venue", "rows", "grid", "bill", "used", "rule", "report", "asks"];
+  var names = ["idea", "venue", "rows", "grid", "bill", "hlprac", "hlrule", "hlgames", "asks"];
   var tabs = document.querySelectorAll(".tab");
   function show(name) {
     tabs.forEach(function (t) { t.setAttribute("aria-selected", String(t.dataset.t === name)); });
@@ -1404,10 +1372,10 @@ section.pane.on { display: block; }
     });
   });
   /* The asks, said back as text to paste. */
-  var askNames = ["How sides are kept", "A side counts toward a share as", "A side's price", "How many sides and their names", "How far sides reach", "Sharing, teams at once and sides", "A same-time group on two sides of one field", "The grid", "The permit's Used figure", "Where the same-time rule ranks", "A team in a sharing and a same-time rule", "The hand-move warning", "Naming the dropped placements", "House league"];
+  var askNames = ["How far parts reach in house league", "A field in quarters also as halves and whole", "A quarter toward a share, and its price", "The words for a quarter", "Teams at once beside parts", "The house-league same-time rule", "Changing a split while a part is booked", "A PDF day too wide for one page"];
   var out = document.getElementById("answers");
   function fill() {
-    var lines = ["Sides and same-time drawings, round 1: my answers"];
+    var lines = ["Sides and same-time drawings, round 2: my answers"];
     askNames.forEach(function (label, i) {
       var picked = document.querySelector("input[name=a" + (i + 1) + "]:checked");
       lines.push("Ask " + (i + 1) + " (" + label + "): " + (picked ? picked.value : "no answer"));
@@ -1422,8 +1390,8 @@ section.pane.on { display: block; }
     var fallback = function () { out.removeAttribute("readonly"); out.focus(); out.select(); out.setAttribute("readonly", ""); done(); };
     if (navigator.clipboard && navigator.clipboard.writeText) { navigator.clipboard.writeText(out.value).then(done, fallback); } else { fallback(); }
   });
-  var h = (location.hash || "").replace("#", "");
-  if (names.indexOf(h) > -1) show(h);
+  var hh = (location.hash || "").replace("#", "");
+  if (names.indexOf(hh) > -1) show(hh);
   window.addEventListener("hashchange", function () { var n = (location.hash || "").replace("#", ""); if (names.indexOf(n) > -1) show(n); });
 })();
 </script>

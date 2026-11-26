@@ -235,6 +235,53 @@ from a prompt this plan carries.
 > commit only it). Commit at the owner's word. Finish with a product-owner summary: what the club would see, and each
 > ask with its recommendation.
 
+#### 4c. Prompt for round 2 of the halves and same-time drawing (fresh chat)
+
+> Drawing session for the club schedules plan, round 2 of Stages 2 and 3. Plan:
+> `docs/projects/active/SCHEDULE_FIELDS_SAME_TIME_TRADES_PLAN.md`. Read §2, Stage 2 "Drawing, round 1: the asks" (the
+> owner's fourteen rulings, the two follow-ups, and "What round 1 did not draw"), the Census (§E, house league), Stage 3,
+> §5 and the Open questions. **No code and no migration in this session:** drawings, `/design`, the asks, then records.
+>
+> **Round 1** is `docs/projects/active/SCHEDULE_HALVES_SAME_TIME_DRAWINGS.html`, artifact
+> https://claude.ai/artifact/YTTYBE67znkupmwLYkLZRR. Round 2 is the SAME page, republished from the same file path so the
+> history threads: update its tabs, show the round 1 rulings in "What you already ruled", and draw only what the rulings
+> add. Keep the house layout, whole-screen before and after at true size, every highlight clickable, controls drawn from
+> the shipped component, the coaches portal's written rules as the benchmark. Round 1's `/design` lessons hold (a flat
+> tick list; a tick only for yes or no; hatching means a booking, dashed means undecided; the schedule page's one line).
+>
+> **Two follow-ups come first.** If the owner has not answered them in the chat, they are the first two asks, each with
+> a recommendation: (1) does Ask 14 C widen Ask 5 to house-league time a club schedule hands out, practices and games;
+> (2) may a field in four quarters also be used as halves (two quarters together) and whole. Where an answer changes a
+> picture, draw both.
+>
+> **Draw:**
+> 1. **The venue list:** the three-way choice (whole only, two sides, four quarters), now a select; locked while a part
+>    is booked; the read card.
+> 2. **New schedule:** a field in quarters in the flat tick list, the box's words, and (if allowed) halves of a quartered
+>    field.
+> 3. **The grid:** a field in quarters (up to four rows under its field, Ask 8 B), at the page's true width.
+> 4. **The bill and the PDF:** a quarter on the bill (its caption reads "1 more" today) and the Split hint; the PDF with
+>    a column per part at A4 width (check it still fits beside the other fields).
+> 5. **House league (Ask 14 C), using helpers to read its shipped screens** (CLAUDE.md, broad reading): its Practice time
+>    window with a field in parts beside its own "Teams at once" (how the two relate on a split field); where the
+>    same-time rule is entered in house league (it has no "Add a rule": find the shipped home), its entry-time message
+>    (R6) and its report; house-league games generated on club time on a part, and the words a part takes on the public
+>    schedule page, family emails and game-day reminders.
+>
+> **The asks, each with a recommendation (lettered choices):** the two follow-ups if open; confirm how Asks 2 A and 3 A
+> extend to quarters (a quarter counts a quarter of a practice and costs the field's price ÷ 4); the words for a quarter
+> ("side" does not fit four parts); "Teams at once" beside parts in house league; where the house-league same-time rule
+> lives and how it reports; anything else the drawing shows that the rulings do not settle.
+>
+> **Words:** working words only, for the one `/marketing` pass per stage.
+>
+> **Before hand-off:** run `/design` on the page and apply its findings. **After the owner rules:** run `/dba` on how a
+> booking names its part (four parts, halves of a quartered field if allowed, house-league games and practices), and
+> record its finding in §5 (still no migration). **Records:** the plan (round 2 under Stage 2 and Stage 3, the asks),
+> and the board line `schedule-fields-trades` in `docs/agents/strategy/OWNER_BRIEF_PROJECTS.json` (that file holds other
+> sessions' edits: change only this block, and commit only it). Commit at the owner's word. Finish with a product-owner
+> summary: what the club and the house-league admin would see, and each ask with its recommendation.
+
 ### Stage 1 — Pick the fields (P1)
 No migration expected.
 - [x] Drawing, round 1 (2026-11-25): [SCHEDULE_PICK_FIELDS_DRAWINGS.html](SCHEDULE_PICK_FIELDS_DRAWINGS.html), artifact
@@ -291,8 +338,14 @@ Migration first. Drawn together with Stage 3.
       all applied except: no separate Today frame where only one hint or the arithmetic changes (the bill, the Permits
       row; said on the drawing), and one reported for the register owner, below). Its fourteen asks are below
       ("Drawing, round 1: the asks"), **ruled by the owner 2026-11-25** (Ask 4 B and Ask 14 C against the recommendation).
-- [ ] Drawing, round 2: what the rulings add (four parts, halves of a quartered field, house league), with the two open
-      asks below. Then `/dba` on how a booking names a part, before the migration.
+- [x] Drawing, round 2 (2026-11-25): the SAME page and artifact, republished so the history threads (round 1 is in its
+      version history). Draws what Ask 4 B and Ask 14 C add; its eight asks are below ("Drawing, round 2: the asks"),
+      **ruled by the owner 2026-11-25, all eight as recommended**. Through `/design` before hand-off (findings on its
+      Asks tab).
+- [x] The owner rules round 2 (2026-11-25: all A).
+- [ ] `/dba` on how a booking names a part (four parts; the halves A–B and C–D of a quartered field, Ask 2 A;
+      house-league games and practices on club time, Ask 1 A; a split locked while any part is booked, Ask 7 A),
+      recorded in §5, before the migration.
 - [ ] Reported by `/design`, not this project's to fix: the shipped "Give it to" menu inside a cell of the "Open slots and
       short teams" window has no row on `docs/agents/design/TABLE_EXCEPTION_REGISTER.md` (it was ruled for that window;
       a register row should say it is not a precedent).
@@ -388,6 +441,84 @@ owner's answer.
   report.
 - **Shares are a split of the whole supply** (`shareTargets`, `lib/club-schedule-engine.ts:19-21`), which is why counting
   a side as one practice (Ask 2 B) inflates the supply and leaves whole-field teams short.
+
+#### Drawing, round 2: the asks (Stages 2 and 3) — RULED by the owner 2026-11-25 (drawn 2026-11-25; Version 3 of the artifact)
+
+**Ruled (owner, 2026-11-25, pasted from the drawing):** "Ask 1 A, Ask 2 A, Ask 3 A, Ask 4 A, Ask 5 A, Ask 6 A, Ask 7 A,
+Ask 8 A." No notes. Every answer is the recommendation. The two round 1 follow-ups are settled by Asks 1 and 2.
+
+**What the rulings settle for the build:**
+- **House league (Ask 1 A):** a part reaches house-league time a club schedule hands out, practices and games. The part
+  comes with the slot; house league never splits a field itself, and its own place pickers offer whole facilities only.
+  `league_games` and `league_practices` carry the part (§5).
+- **A quartered field (Ask 2 A):** whole, the halves A–B and C–D (fixed pairs, never B–C), or one quarter: seven options
+  in the tick list, up to six grid rows under the field.
+- **A quarter's count and price (Ask 3 A):** ¼ of a practice toward a share, the field's price ÷ 4, worked out, never
+  typed. Accepted with it: under Evenly, a schedule mixing quarters and whole fields leaves the quarter teams short (the
+  drawing's picture: 7U 10 short each, 10 Field 2 slots open); By percentage is how a club fills it. How the rulings
+  combine (not separately asked): a half of a quartered field counts ½ and costs ÷ 2, as a side does (round 1 Asks 2 A,
+  3 A).
+- **Words (Ask 4 A):** the word says the size: "side A", "quarter C", "quarters A–B". Working words still go to the
+  `/marketing` pass.
+- **Teams at once (Ask 5 A):** a part holds one team; Teams at once counts on whole facilities only, with a line when the
+  time has a part.
+- **The house-league same-time rule (Ask 6 A):** in Practice time under "Hand it to the teams", naming teams in any
+  division, shown in each division's window; whichever division is handed out matches the other's practices as they
+  stand; R6 on entry; one line per rule in the window's existing notice, before Hand out.
+- **Changing a split (Ask 7 A):** locked while any part is booked; free while only whole-field bookings exist. This is
+  wider than §5's "lowering the count is refused while anything names a higher one": two sides → four quarters is
+  refused too while a side is booked.
+- **The PDF (Ask 8 A):** a day too wide for one page splits into two tables, each field kept with its parts (today the
+  PDF drops columns that don't fit, `lib/export/pdf.ts:630-640`).
+
+The same page, [SCHEDULE_HALVES_SAME_TIME_DRAWINGS.html](SCHEDULE_HALVES_SAME_TIME_DRAWINGS.html), artifact
+https://claude.ai/artifact/YTTYBE67znkupmwLYkLZRR. Tabs: Round 2 · Venue list (the split is a select: "Not split" / "Two
+sides" / "Four quarters", locked while a part is booked) · New schedule (quarters in the flat tick list, both ways Ask 2
+can go) · The grid (a row per quarter; a half of a quartered field is its own row, up to six under a field) · Bill and
+PDF · House league practices · House league rule · House league games and words · Asks. Round 1's permit use, rule and
+report tabs are ruled and not redrawn. Working words: "Not split", "quarter A", "quarters A–B", "Field 1 in four
+quarters", "Field 1 quarters A–B, C and D", "quarter-field slots", "Teams at the same time" (house league).
+
+| # | Ask | Recommended |
+|---|---|---|
+| 1 | Follow-up: how far parts reach in house league (14 C with Ask 5): **A** house-league time a club schedule hands out, practices and games, the part comes with the slot, house league never splits a field · **B** A + house league's own place pickers offer parts · **C** practices only | A |
+| 2 | Follow-up: a field in quarters also used as halves and whole: **A** yes, the fixed pairs A–B and C–D (seven options in the list, up to six grid rows) · **B** whole or quarters only | A |
+| 3 | A quarter toward a share and its price: **A** a quarter counts ¼, priced ÷ 4 (the rulings carried through; also how a four-way shared slot counts today, 1 ÷ its teams). Under Evenly a schedule mixing quarters and whole fields leaves the quarter teams short (the drawing's picture: 7U 10 short each, 10 Field 2 slots open, $6,000 of $7,200); By percentage fills it · **B** a quarter counts ½ like a side (fills that picture, but four teams on quarters count twice what four teams sharing the field count) | A |
+| 4 | The words for a quarter: **A** the word says the size ("side A", "quarter C", "quarters A–B") · **B** one word, "section" · **C** letters only ("Field 1 A") | A |
+| 5 | "Teams at once" beside parts in house league: **A** a part holds one team; Teams at once counts on whole facilities only, with a line when the time has a part (Ask 6 A) · **B** on a split field Teams at once names the parts · **C** a part holds Teams at once too | A |
+| 6 | The house-league same-time rule: **A** in Practice time under "Hand it to the teams", naming teams in any division, shown in each division's window; whichever division is handed out matches the other's practices as they stand; R6 on entry; the report is a line per rule in the window's existing notice, before Hand out · **B** a season list in Schedule health's "Adjust the rules" · **C** Practice time, one division only | A |
+| 7 | Changing a field's split while a part is booked: **A** locked (free while only whole-field bookings exist) · **B** a change that keeps every booked part goes through (two sides → four quarters, side A becomes quarters A–B) | A |
+| 8 | A PDF day too wide for one page (added by `/design`: 13 columns take ~245 of 251 mm; one more split field does not fit, and today the PDF drops the columns that don't fit, `lib/export/pdf.ts:630-640`): **A** split the day into two tables, each field kept with its parts · **B** as it ships | A |
+
+**`/design` (2026-11-25, 11 findings, all applied; listed on the page's Asks tab):** the PDF drawn with no cell lines
+(`theme: 'plain'`) and the default slate head, its headings as they really wrap; Practice time drawn as shipped (the
+notice's olive ground and bold lead line, `ck.link` for "+ Give U9 more time" and the new door, 650 heads, 52 px time
+row); no heading that repeats the rule's door; the Teams list unchanged (`PickField` has no aside or groups, so teams are
+named "U9 Orioles" and joined by commas); the R6 refusal as the foot's `DialogReason`; the venue row's phone frame;
+grid labels venue-only; round 1 answers written "round 1, 4 B". Kept: the page's name, so the history threads.
+**Build notes it raised:** a large house league makes the Teams list long (search is a build question); the house-league
+rule's notice is worked out when the window opens, so it reads the other division as it stands.
+
+**Facts round 2 rests on (opened in the code 2026-11-25):**
+- **The club schedule PDF prints landscape on US Letter, compact (8 pt), 14 mm margins** (`lib/export/club-schedule-export.ts:84`,
+  `lib/export/pdf.ts:463-471`), not A4 portrait as round 1 drew. Thirteen columns (Field 1 whole + four quarters, Field 2
+  whole + two sides, Fields 3–6) fit one page; two-word names wrap. Left alone, a quarter's heading reads "Field 1 · 25%"
+  (`weightWords`, `lib/club-schedule-document.ts:82`): the build keys the column by field and part, the part on the
+  heading's second line, no price word.
+- **The bill names a quarter "more" today** (`billTeamCaption`, `lib/club-schedule-words.ts:1337`): a 0.25 slot is neither
+  full, half nor shared. Proposed: a "quarter" count ("10 quarter-field slots"), by price as round 1 kept it.
+- **A shared slot counts 1 ÷ its teams toward a share** (`lib/club-schedule-engine.ts:262`, `:543`), so four-way sharing
+  counts ¼ each: Ask 3 A keeps quarters and four-way sharing alike.
+- **House league's Practice time** (`components/admin/kit/club/league/time/PracticeTimeWindow.tsx`, words
+  `lib/league-practice-time.ts:293-333`): three native selects (Each practice, Teams at once "1–4 per facility", Practices
+  a week); Teams at once is one number per division (`:128`, seats = pieces × teams at once `:181`). No team-level rule
+  exists anywhere in house league; Schedule health's "Adjust the rules" holds game rules only.
+- **All house-league club time comes from final club-schedule slots** given to a division in House league's time
+  (`lib/league-time-server.ts:48-62`); games are one per slot and take its place (`lib/league-game-generator.ts:18`).
+- **House league has no game-day reminders and no PDF** (`lib/game-day-reminders.ts` is tournament-only). Its place words
+  are "Venue · Facility" on pages and emails, built at read time; the stored place is "Venue — Facility", read back by
+  splitting at the LAST " — " (`lib/club-calendar.ts:105-110`), so a part joins with a comma ("Field 1, side A"), never a
+  second dash.
 
 #### Census — every reader of a venue facility (Stage 0, 2026-11-25)
 
@@ -557,7 +688,11 @@ No migration expected (the rule is one more entry in the schedule's settings).
       never at the same time" choice; the entry-time message (R6); the per-rule report on the draft cards, on the page
       and in the "Open slots and short teams" window, covering sharing (R8); the hand-move warning (R7). Its asks (7, 10–14)
       are under Stage 2, "Drawing, round 1: the asks". **Ruled 2026-11-25** (7 A, 10 A, 11 A, 12 A, 13 A, 14 C).
-      Ask 14 C adds the rule inside house league's Practice time window: drawn in round 2.
+      Ask 14 C adds the rule inside house league's Practice time window: **drawn in round 2 (2026-11-25)**, tab 7, with its
+      home and report as round 2's Ask 6, **ruled 2026-11-25 (A)**.
+- [ ] House league (round 2 Ask 6 A): the rule in `PracticeTimeWindow.tsx` under "Hand it to the teams"; the planner
+      (`planPractices`, `lib/league-practice-time.ts`) places a linked team at its partner's existing start where it can;
+      R6 from both divisions' time; one notice line per rule.
 - [ ] `lib/club-schedule-settings.ts`: the rule's shape, limits and validator beside `sharing`; `rulesOn`, `defaultRules`.
 - [ ] `lib/club-schedule-engine.ts`: a per-week step between `needsFor` and `planWeek` that picks starts where every
       member is eligible, free and still owed a slot, with enough free fields in one place, and hands the result to the
@@ -613,9 +748,11 @@ Migration only if Stage 4's record needs it.
 - **Decision:** a trade is priced by the Send the changes arithmetic, never by new arithmetic. **Rationale:** a sent
   bill's terms never change; one place works out what a slot is worth.
 - **Proposed by `/dba` (2026-11-25); RULED by the owner 2026-11-25 (round 1 Ask 1 A): halves are stored as shape
-  (B).** ⚠ Ask 4 B (up to four parts) and a possible "half of a quartered field" change how a booking names its part:
-  `/dba` re-passes that before the migration (Stage 2, round 2). Ask 14 C puts `league_games` in scope (the column
-  below is no longer conditional) and house league's practice time with it. A field carries a number of parts; a booking names one part, or 0 for the whole field. **This reverses the
+  (B).** ⚠ Ask 4 B (up to four parts) and round 2 Ask 2 A (the halves A–B and C–D of a quartered field, ruled
+  2026-11-25) change how a booking names its part: `/dba` re-passes that before the migration (Stage 2). Ask 14 C with
+  round 2 Ask 1 A puts `league_games` in scope (the column below is no longer conditional) and house league's practice
+  time with it; the part comes with the club slot, house league never splits a field. Round 2 Ask 7 A locks any change
+  to a field's split while a part is booked, not only lowering it. A field carries a number of parts; a booking names one part, or 0 for the whole field. **This reverses the
   plan's earlier lean to (A)**, whose reason ("(A) keeps every one-field-one-slot reader working") the census disproves.
   (A) keeps the readers that only carry an id working. It breaks the two kinds that matter: every list of a venue's
   fields and every "same id?" clash comparison, and it breaks them silently (Census, Verdict).
@@ -675,7 +812,13 @@ Migration only if Stage 4's record needs it.
 - [ ] The per-schedule switch's label — the schedule's settings
 - [ ] The names for a field's parts — the venue list, the schedule's rows, the grid, the PDF. Working words: the "Two sides" tick
       and its locked line, "Field 1 (whole)", "side A", "Field 1 in two sides", "Field 2 side A", the "holds … That time is left out." line,
-      the draft line "Whichever is finalized first keeps it", the Split hint's "a half field or one side"
+      the draft line "Whichever is finalized first keeps it", the Split hint's "a half field or one side". Round 2 (Ask 4
+      A, ruled 2026-11-25): the select's "Not split" / "Two sides" / "Four quarters" and its locked line, "quarter A", "quarters A–B",
+      "Field 1 in four quarters", "Field 1 quarters A–B, C and D", "Quarter A" / "Quarters A–B" grid rows, the PDF's
+      two-line part headings, the bill's "quarter-field slots" and "a quarter $20.00"
+- [ ] House league (round 2): the time row's "Field 1 in two sides, Field 3", the line "Field 1's sides hold one team
+      each. Teams at once is for whole facilities.", "Teams at the same time" and its door, the rule sentences with
+      divisions, the notice's report lines, the R6 refusal — Practice time; a part in every place word (tab 8)
 - [ ] The Used line: "Of the unused time, 9 h is open slots on {schedule}: the schedule holds it and no team has it yet."
 
 ## Open questions
@@ -685,11 +828,10 @@ Migration only if Stage 4's record needs it.
 - [x] Stage 0's two confirmations (the sharing rule's silence; the dropped placements). Done 2026-11-25 (Stage 0).
 - [x] **Asks the census adds to the halves drawing (2026-11-25):** all put to the owner in the round 1 drawing
       (Stage 2, "Drawing, round 1: the asks", Asks 1–9 and 14) and ruled 2026-11-25.
-- [ ] **Does Ask 14 C widen Ask 5 to house-league time a club schedule hands out (practices and games)?** The plan reads
-      it so until the owner says otherwise. (Asked 2026-11-25.)
-- [ ] **On a field in four quarters, may a team also use half of it (two quarters together) and the whole?** Recommended:
-      yes, whole, either half, or a quarter, the way clubs run young age groups; it changes how a booking names its
-      part (`/dba`). (Asked 2026-11-25.)
+- [x] **Does Ask 14 C widen Ask 5 to house-league time a club schedule hands out (practices and games)?** **Yes, ruled
+      2026-11-25 (round 2 Ask 1 A):** the part comes with the slot; house league never splits a field.
+- [x] **On a field in four quarters, may a team also use half of it (two quarters together) and the whole?** **Yes, ruled
+      2026-11-25 (round 2 Ask 2 A):** the fixed pairs A–B and C–D; it changes how a booking names its part (`/dba`).
   - The storage shape: (B), as `/dba` proposes in §5, or (A).
   - **Does a practice on half a field count as one practice or half a practice toward a team's share** (under "Evenly"
     and "By percentage")? Today a shared slot counts ½ and a "Half cost" field counts 1. Left as it is, halves hand

@@ -13,8 +13,10 @@ from the Milton Bats demo. Status is on the board.
   2026-11-25). One team goes on each part as its own slot, or one part goes to this schedule and the rest to something
   else. The product knows the parts are the one field, so nothing can be booked over them by accident. A part counts
   toward a team's share and costs in proportion (a side is half a practice and half the price), so two teams on one
-  field bill the same whether the club calls it sharing or sides. It reaches the club's rep schedules and house league;
-  coaches' own events, tryout days and tournaments keep booking whole fields.
+  field bill the same whether the club calls it sharing or sides. A field in quarters can also be used as either half
+  or whole, and a quarter is a quarter of a practice and of the price. It reaches the club's rep schedules and house
+  league (whose practices and games take the part their club time came with); coaches' own events, tryout days and
+  tournaments keep booking whole fields.
 - **Teams at the same time.** A new rule names two or more teams and the builder tries to put them at the same time in
   the same building, each on its own field. It can be entered as often as needed. Its opposite, "never at the same
   time", comes with it for a coach who runs two teams.
