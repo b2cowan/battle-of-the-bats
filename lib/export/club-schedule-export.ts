@@ -20,7 +20,7 @@ import { loadBrandMark } from './brand-mark';
 import { BRANDING_TEXT } from './pdf';
 import { downloadICSFromInstants } from './ics';
 import { formatStoredDate, tournamentToday } from '../timezone';
-import { clubScheduleDocument, scheduleSheets, type ScheduleDocInput } from '../club-schedule-document';
+import { clubScheduleDocument, scheduleSheets, slotPlaceWords, type ScheduleDocInput } from '../club-schedule-document';
 
 export interface ScheduleExportInput extends ScheduleDocInput {
   /** The page's "orgSlug=…" query. */
@@ -52,7 +52,8 @@ export async function exportScheduleFile(kind: 'xlsx' | 'pdf' | 'ics', input: Sc
   if (kind === 'ics') {
     const placeOf = (s: ScheduleExportInput['slots'][number]) => {
       const v = input.places.find(p => p.venueId === s.venueId);
-      const f = s.facilityId ? v?.facilities.find(x => x.id === s.facilityId)?.name : null;
+      // The field with its part, as a calendar says it: "Milton Sports Dome · Field 1, side A" (Stage 2).
+      const f = s.facilityId ? slotPlaceWords(input.places, s) : null;
       return [v?.venueName, f].filter(Boolean).join(' · ');
     };
     const entries = input.slots.flatMap(s => s.teamIds.map(teamId => ({

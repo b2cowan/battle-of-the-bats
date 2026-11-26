@@ -8,7 +8,8 @@ import { isUuid } from './utils';
 import type { RepTeamEvent } from './types';
 import { slotPatterns, slotWeight } from './club-schedule-engine';
 import { keptRateOf, slotFigure, teamInstallments, type Installment, type PriceMode } from './club-schedule-bill';
-import { SCHEDULE_NOTICES, SCHEDULE_REFUSALS as R, patternLine, placeWords } from './club-schedule-words';
+import { SCHEDULE_NOTICES, SCHEDULE_REFUSALS as R, clubPlaceWords, patternLine } from './club-schedule-words';
+import { maskSuffix } from './field-parts';
 import { billSlotsOf, computeBill, liveSlots, loadSchedule, readBillTerms, readClubTeams, schedulePrices, type ScheduleRow } from './club-schedule-server';
 import { readClubPlaces } from './permit-lookup';
 import { tellBuilders } from './club-schedule-send';
@@ -124,7 +125,7 @@ export async function teamReviews(orgId: string, teamId: string): Promise<Review
     ]);
     const { slots, assignments } = liveSlots(loaded, prices.weightOf);
     const own = slots.filter(s => (assignments.get(s.key) ?? []).includes(teamId));
-    const patterns = slotPatterns(slots, teamId, assignments).map(p => patternLine(p, placeWords(places.venueName.get(p.venueId) ?? '', p.facilityId ? places.facilityName.get(p.facilityId) ?? null : null)));
+    const patterns = slotPatterns(slots, teamId, assignments).map(p => patternLine(p, clubPlaceWords(places, p.venueId, p.facilityId, p.sectionMask)));
     const bill = computeBill(loaded.row, billSlotsOf(slots, assignments, prices.priceKeyOf), prices.hourOf, teamOrder);
     const cents = bill?.shares?.shares.get(teamId);
     const installments = bill && cents ? teamInstallments(teamId, cents, bill.billSlots, bill.periods, bill.shares?.paymentWeight) : [];
@@ -231,7 +232,7 @@ export type HandBackScope = 'one' | 'remaining' | 'all';
 
 export const readHandBackScope = (v: unknown): HandBackScope | null => (v === 'one' || v === 'remaining' || v === 'all' ? v : null);
 
-export interface ClubPractice { id: string; starts_at: string; ends_at: string | null; status: string; club_schedule_slot_id: string; org_venue_id: string | null; org_venue_facility_id: string | null }
+export interface ClubPractice { id: string; starts_at: string; ends_at: string | null; status: string; club_schedule_slot_id: string; org_venue_id: string | null; org_venue_facility_id: string | null; section_mask?: number | null }
 
 export interface PracticeSeries {
   scheduleId: string;
@@ -246,7 +247,7 @@ export interface PracticeSeries {
  *  haven't started — the series a hand-back reaches. A practice already in a waiting ask is left out (Stage 11d). */
 export async function practiceSeries(orgId: string, teamId: string, event: RepTeamEvent): Promise<PracticeSeries | null> {
   if (!event.clubScheduleSlotId) return null;
-  const { data: slot, error } = await supabaseAdmin.from('club_schedule_slots').select('schedule_id, club_schedules ( name, state )')
+  const { data: slot, error } = await supabaseAdmin.from('club_schedule_slots').select('schedule_id, section_mask, club_schedules ( name, state )')
     .eq('id', event.clubScheduleSlotId).eq('org_id', orgId).maybeSingle();
   if (error) throw error;
   if (!slot) return null;
@@ -255,7 +256,7 @@ export async function practiceSeries(orgId: string, teamId: string, event: RepTe
   const slotIds = (await fetchAll<{ id: string }>((a, b) => supabaseAdmin.from('club_schedule_slots').select('id').eq('org_id', orgId).eq('schedule_id', scheduleId).order('id').range(a, b))).map(s => s.id);
   const [practices, waiting] = await Promise.all([
     fetchAllIn<ClubPractice>(slotIds, (c, a, b) => supabaseAdmin.from('rep_team_events')
-      .select('id, starts_at, ends_at, status, club_schedule_slot_id, org_venue_id, org_venue_facility_id')
+      .select('id, starts_at, ends_at, status, club_schedule_slot_id, org_venue_id, org_venue_facility_id, section_mask')
       .eq('org_id', orgId).eq('team_id', teamId).in('club_schedule_slot_id', c).neq('status', 'cancelled').order('id').range(a, b)),
     // The schedule's slots in a waiting ask — by the schedule (`club_schedule_hand_backs_schedule_idx`), never a list of every slot.
     fetchAll<{ slot_id: string }>((a, b) => supabaseAdmin.from('club_schedule_hand_back_slots')
@@ -263,11 +264,13 @@ export async function practiceSeries(orgId: string, teamId: string, event: RepTe
       .eq('club_schedule_hand_backs.schedule_id', scheduleId).order('id').range(a, b)),
   ]);
   const askedSlots = new Set(waiting.map(w => w.slot_id));
-  const placeKey = (p: { starts_at: string; org_venue_id: string | null; org_venue_facility_id: string | null }) => {
+  // The weekly place with its part (Stage 2): side A's Sundays are one series, side B's another. The practice's own part is
+  // its slot's (a club practice is always on its slot's part, mig 546).
+  const placeKey = (p: { starts_at: string; org_venue_id: string | null; org_venue_facility_id: string | null; section_mask?: number | null }) => {
     const z = utcToZonedInputs(p.starts_at);
-    return `${weekdayOf(z.date)}|${z.time}|${p.org_venue_id ?? ''}|${p.org_venue_facility_id ?? ''}`;
+    return `${weekdayOf(z.date)}|${z.time}|${p.org_venue_id ?? ''}|${p.org_venue_facility_id ?? ''}${maskSuffix(p.section_mask)}`;
   };
-  const mine = placeKey({ starts_at: event.startsAt, org_venue_id: event.orgVenueId ?? null, org_venue_facility_id: event.orgVenueFacilityId ?? null });
+  const mine = placeKey({ starts_at: event.startsAt, org_venue_id: event.orgVenueId ?? null, org_venue_facility_id: event.orgVenueFacilityId ?? null, section_mask: (slot.section_mask as number | null) ?? null });
   const nowIso = new Date().toISOString();
   return {
     scheduleId, scheduleName, askedSlots,

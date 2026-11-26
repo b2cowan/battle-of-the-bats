@@ -18,20 +18,25 @@
  *
  * A DRAFT says so: its subtitle reads "a draft", and its filename carries the draft's name (Ask 19).
  */
-import { buildDayDocument, type ScheduleDocument } from './export/schedule-document.ts';
+import { buildDayDocument, DAY_HEADING_SEP, type ScheduleDocument } from './export/schedule-document.ts';
 import { formatShortWeekdayDate, formatStoredDate, timesInZoneSentence } from './timezone.ts';
 import { formatTime, formatTimeRange, joinWithAnd, pluralize, possessive } from './utils.ts';
 import { facilityListWords, weekdayCount } from './permit-words.ts';
 import { fmt as money } from './coach-money-summary.ts';
 import type { PriceMode } from './club-schedule-bill.ts';
 import { teamsOnly } from './club-schedule-holders.ts';
+import { fieldPartName, maskOf, maskSuffix, partFactor, sectionsOf, sortMasks, WHOLE } from './field-parts.ts';
 
-export interface DocPlace { venueId: string; venueName: string; facilities: { id: string; name: string }[] }
+/** A venue and its fields; `sections` is a field's split (Stage 2; absent: not split). */
+export interface DocPlace { venueId: string; venueName: string; facilities: { id: string; name: string; sections?: number }[] }
 export interface DocTeam { id: string; name: string; groupName: string | null }
 export interface DocSlot {
   key: string; venueId: string; facilityId: string | null; day: string; weekday: number;
   startClock: string; endClock: string; startsAt: string; endsAt: string;
+  /** `weight` is the slot's whole price weight: the field's permit share × its part's size (Session 2B's one weight). */
   teamIds: string[]; weight: number; prime: boolean;
+  /** The part of its field it is on (Stage 2; absent: the whole field). */
+  sectionMask?: number;
   heldBy: { ownerName: string; kind: string | null } | null;
   handedBackTeamId?: string | null;
   /** The permit that prices it (several permits, Session C). */
@@ -78,6 +83,23 @@ function placeWords(places: readonly DocPlace[], venueId: string, facilityId: st
   return v?.facilities.find(f => f.id === facilityId)?.name ?? '';
 }
 
+const fieldOf = (places: readonly DocPlace[], s: Pick<DocSlot, 'venueId' | 'facilityId'>) =>
+  places.find(p => p.venueId === s.venueId)?.facilities.find(f => f.id === s.facilityId);
+
+/** A SLOT's place with its part, the one home: "Field 1, quarter A" on paper; the screens join with a space
+ *  (lib/club-schedule-view `slotPlaceName`). The field's name alone when whole; the venue when it has no facility. */
+export function slotPlaceWords(places: readonly DocPlace[], s: Pick<DocSlot, 'venueId' | 'facilityId' | 'sectionMask'>, sep = ', '): string {
+  const name = placeWords(places, s.venueId, s.facilityId);
+  return s.facilityId ? fieldPartName(name, s.sectionMask, sectionsOf(fieldOf(places, s)?.sections), sep) : name;
+}
+
+/** A slot's column: its field, and its part when it has one ("id", "id|3") — one half never overwrites the other. */
+const columnKey = (s: Pick<DocSlot, 'facilityId' | 'sectionMask'>) => `${s.facilityId ?? ''}${maskSuffix(s.sectionMask)}`;
+
+/** Each field's permit share alone (Full 1, Half 0.5): a slot's weight without its part's size. */
+const fieldShares = (slots: readonly DocSlot[]) =>
+  new Map(slots.flatMap(s => (s.facilityId ? [[s.facilityId, s.weight / partFactor(s.sectionMask)] as const] : [])));
+
 /** "Field 5 · half", "Field 5 · 75%" — a column's heading carries the permit's price share when it isn't Full. */
 function weightWords(weight: number): string {
   if (Math.abs(weight - 1) < 0.0001) return '';
@@ -119,9 +141,8 @@ export function scheduleSubtitle(input: ScheduleDocInput): string {
 
 /** The notes under the tables — said once, never inside a cell. */
 export function scheduleNotes(input: ScheduleDocInput): string[] {
-  const used = new Map<string, number>();
-  for (const s of input.slots) if (s.facilityId) used.set(s.facilityId, s.weight);
-  const off = [...used].filter(([, w]) => Math.abs(w - 1) > 0.0001);
+  // The permit's share, never a part's size: a side of a full field is not "a half field" (Stage 2).
+  const off = [...fieldShares(input.slots)].filter(([, w]) => Math.abs(w - 1) > 0.0001);
   const halfNames = off.filter(([, w]) => Math.abs(w - 0.5) < 0.0001)
     .map(([id]) => input.places.flatMap(p => p.facilities).find(f => f.id === id)?.name ?? '').filter(Boolean);
   const notes = [timesInZoneSentence()];
@@ -146,34 +167,78 @@ export function scheduleNotes(input: ScheduleDocInput): string[] {
 
 interface PdfRow { day: string; venueId: string; startClock: string; endClock: string; cells: Map<string, string> }
 
+/** A column of a day's table: its cell key and its heading. */
+interface DocColumn { id: string; heading: string }
+/** A field's columns on a day: itself, or the parts the day uses. Kept in one table when a day splits. */
+interface DocField { name: string; columns: DocColumn[] }
+
 /**
  * THE PDF's SECTIONS — a day (a venue a day when it holds two), the time down, the facilities across. Through the
  * shared day document, so the day heading reads the house way.
+ *
+ * A day can hold more columns than its page: with parts, two quartered fields and four whole ones are 13 columns, about
+ * 245 of the page's 251 mm (round 2, Ask 8). So every day declares how it splits — the Time column repeated, each field
+ * with its parts kept in one table — and the PDF engine splits it ONLY when it would otherwise drop a column
+ * ("Sun, Jan 17, 2027 · 14 slots · Milton Sports Dome · Field 1 and Field 2", then "… · Fields 3–6"). A schedule's
+ * columns are never dropped again (Ask 8 A).
  */
 export function clubScheduleDocument(input: ScheduleDocInput): ScheduleDocument & { notes: string[] } {
-  // One row per day, venue and time range; a cell per facility.
+  // One row per day, venue and time range; a cell per facility — and per part, so one side never overwrites the other.
   const rows = new Map<string, PdfRow>();
   const sorted = [...input.slots].sort((a, b) => a.day.localeCompare(b.day) || a.startsAt.localeCompare(b.startsAt));
+  const masksOn = new Map<string, Set<number>>();
   for (const s of sorted) {
     const key = `${s.day}|${s.venueId}|${s.startClock}|${s.endClock}`;
     const row = rows.get(key) ?? rows.set(key, { day: s.day, venueId: s.venueId, startClock: s.startClock, endClock: s.endClock, cells: new Map() }).get(key)!;
-    row.cells.set(s.facilityId ?? '', slotWords(s, input.teams));
+    row.cells.set(columnKey(s), slotWords(s, input.teams));
+    const dayField = `${s.day}|${s.venueId}|${s.facilityId ?? ''}`;
+    (masksOn.get(dayField) ?? masksOn.set(dayField, new Set()).get(dayField)!).add(maskOf(s.sectionMask));
   }
-  const weightOf = new Map<string, number>();
-  for (const s of input.slots) weightOf.set(s.facilityId ?? '', s.weight);
-  const columnsOf = (venueId: string) => {
+  const shares = fieldShares(input.slots);
+  // Every field the schedule uses at this venue has its columns every day: the parts that day uses (a whole-field column
+  // only when the day has a whole-field slot — the grid's field row), or its one plain column on a day with nothing.
+  const fieldsOn = (day: string, venueId: string): DocField[] => {
     const v = input.places.find(p => p.venueId === venueId);
     const usedHere = new Set(input.slots.filter(s => s.venueId === venueId).map(s => s.facilityId ?? ''));
-    const list = (v?.facilities ?? []).filter(f => usedHere.has(f.id)).map(f => ({ id: f.id, name: f.name }));
-    return list.length ? list : [{ id: '', name: v?.venueName ?? '' }];
+    const list = (v?.facilities ?? []).filter(f => usedHere.has(f.id)).map(f => {
+      const today = masksOn.get(`${day}|${venueId}|${f.id}`);
+      return {
+        name: f.name,
+        columns: (today ? sortMasks([...today]) : [WHOLE]).map(m => ({
+          id: columnKey({ facilityId: f.id, sectionMask: m }),
+          // A part is headed by its own words, the part on the second line, and no price word: a quarter of a full field
+          // would otherwise read "Field 1 · 25%". The whole field keeps its permit share ("Field 5 · half").
+          heading: m === WHOLE ? [f.name, weightWords(shares.get(f.id) ?? 1)].filter(Boolean).join(' · ') : fieldPartName(f.name, m, sectionsOf(f.sections), '\n'),
+        })),
+      };
+    });
+    const venue = v?.venueName ?? '';
+    return list.length ? list : [{ name: venue, columns: [{ id: '', heading: venue }] }];
   };
-  const doc = buildDayDocument<PdfRow, { columns: { id: string; name: string }[]; slots: number }>([...rows.values()], ['Time'], {
+  const dayWords = (d: string) => (d ? `${formatShortWeekdayDate(d)}, ${d.slice(0, 4)}` : '');
+  const doc = buildDayDocument<PdfRow, { venueName: string; fields: DocField[]; columns: DocColumn[] }>([...rows.values()], ['Time'], {
     dateOf: r => r.day,
     sectionOf: r => r.venueId,
-    dayWords: d => (d ? `${formatShortWeekdayDate(d)}, ${d.slice(0, 4)}` : ''),
-    prepare: list => ({ columns: columnsOf(list[0].venueId), slots: list.reduce((n, r) => n + r.cells.size, 0) }),
-    facts: (list, ctx) => [pluralize(ctx.slots, 'slot'), input.places.find(p => p.venueId === list[0].venueId)?.venueName ?? ''],
-    headersOf: (_list, ctx) => ['Time', ...ctx.columns.map(c => [c.name, weightWords(weightOf.get(c.id) ?? 1)].filter(Boolean).join(' · '))],
+    dayWords,
+    prepare: list => {
+      const fields = fieldsOn(list[0].day, list[0].venueId);
+      return { venueName: input.places.find(p => p.venueId === list[0].venueId)?.venueName ?? '', fields, columns: fields.flatMap(f => f.columns) };
+    },
+    facts: (list, ctx) => [pluralize(list.reduce((n, r) => n + r.cells.size, 0), 'slot'), ctx.venueName],
+    headersOf: (_list, ctx) => ['Time', ...ctx.columns.map(c => c.heading)],
+    splitOf: (list, ctx) => {
+      let next = 1;   // column 0 is Time, repeated in every table
+      return {
+        lead: 1,
+        blocks: ctx.fields.map(f => f.columns.map(() => next++)),
+        labelOf: blocks => {
+          const held = blocks.map(b => ctx.fields[b]);
+          const cols = held.flatMap(f => f.columns);
+          const slots = list.reduce((n, r) => n + cols.filter(c => r.cells.has(c.id)).length, 0);
+          return [dayWords(list[0].day), pluralize(slots, 'slot'), ctx.venueName, facilityListWords(held.map(f => f.name))].filter(Boolean).join(DAY_HEADING_SEP);
+        },
+      };
+    },
     cells: (r, ctx) => [formatTimeRange(r.startClock, r.endClock), ...ctx.columns.map(c => r.cells.get(c.id) ?? '')],
   });
   return { ...doc, notes: scheduleNotes(input) };
@@ -233,10 +298,11 @@ export function scheduleSheets(input: ScheduleDocInput): ScheduleSheets {
   const priced = pricedBy != null;
   const groupOf = (id: string) => input.teams.find(t => t.id === id)?.groupName ?? '';
   const sorted = [...input.slots].sort((a, b) => a.startsAt.localeCompare(b.startsAt)
-    || placeWords(input.places, a.venueId, a.facilityId).localeCompare(placeWords(input.places, b.venueId, b.facilityId), 'en-CA', { numeric: true }));
+    || slotPlaceWords(input.places, a).localeCompare(slotPlaceWords(input.places, b), 'en-CA', { numeric: true }));
+  // "Field 1, quarter A" names its part and no price word (round 2 tab 5); a whole field keeps its share ("Field 5 (half)").
   const facilityCell = (s: DocSlot) => {
-    const w = weightWords(s.weight);
-    return `${placeWords(input.places, s.venueId, s.facilityId)}${w ? ` (${w})` : ''}`;
+    const w = maskOf(s.sectionMask) === WHOLE ? weightWords(s.weight) : '';
+    return `${slotPlaceWords(input.places, s)}${w ? ` (${w})` : ''}`;
   };
   const headers = ['Date', 'Day', 'Start', 'End', 'Facility', 'Team', 'Group', 'Hours', ...(priced ? ['Cost'] : [])];
   const rows: (string | number | null)[][] = [];
@@ -267,11 +333,15 @@ export function scheduleSheets(input: ScheduleDocInput): ScheduleSheets {
     ];
   });
   // By field: each field's slots, hours and who had them.
-  const fields = [...new Map(input.slots.map(s => [`${s.venueId}|${s.facilityId ?? ''}`, s])).values()];
-  const byField = fields.map(f => {
-    const mine = input.slots.filter(s => s.venueId === f.venueId && s.facilityId === f.facilityId);
+  // A part is its own row ("Field 1, side A"), as it is its own column on the PDF.
+  const byPlace = new Map<string, DocSlot[]>();
+  for (const s of input.slots) {
+    const key = `${s.venueId}|${columnKey(s)}`;
+    (byPlace.get(key) ?? byPlace.set(key, []).get(key)!).push(s);
+  }
+  const byField = [...byPlace.values()].map(mine => {
     const who = [...new Set(mine.flatMap(s => s.teamIds))].map(t => nameOf(input.teams, t));
-    return [facilityCell(f), mine.length, Math.round(mine.reduce((n, s) => n + hours(Date.parse(s.endsAt) - Date.parse(s.startsAt)), 0) * 100) / 100, who.join(' · ')];
+    return [facilityCell(mine[mine.length - 1]), mine.length, Math.round(mine.reduce((n, s) => n + hours(Date.parse(s.endsAt) - Date.parse(s.startsAt)), 0) * 100) / 100, who.join(' · ')];
   });
 
   const notes = scheduleNotes(input).slice(0, 3);

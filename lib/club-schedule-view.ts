@@ -22,6 +22,7 @@ import { slotPosOf, type Slot } from './club-schedule-engine';
 import { fieldPartName, maskOf, maskProp, maskSuffix, partFactor, partLabel, sectionsOf, sortMasks, WHOLE } from './field-parts';
 import { priceTheBill, type BillSlot } from './club-schedule-bill';
 import { isProgramHolder } from './club-schedule-holders';
+import { slotPlaceWords } from './club-schedule-document';
 import type { ScheduleAsk, ScheduleListRow, ScheduleView, SlotView } from './club-schedule-server';
 
 export type { ScheduleAsk, ScheduleListRow, ScheduleView, SlotView };
@@ -125,12 +126,8 @@ export function placeName(places: readonly SchedulePlace[], venueId: string, fac
 }
 
 /** A SLOT's place in a line, with its part (Stage 2): "Field 1 side A", "Field 1 quarter C"; the field's name when whole. */
-export function slotPlaceName(places: readonly SchedulePlace[], s: Pick<SlotView, 'venueId' | 'facilityId' | 'sectionMask'>): string {
-  const name = placeName(places, s.venueId, s.facilityId);
-  if (!s.facilityId || maskOf(s.sectionMask) === WHOLE) return name;
-  const f = places.find(p => p.venueId === s.venueId)?.facilities.find(x => x.id === s.facilityId);
-  return fieldPartName(name, s.sectionMask, sectionsOf(f?.sections));
-}
+export const slotPlaceName = (places: readonly SchedulePlace[], s: Pick<SlotView, 'venueId' | 'facilityId' | 'sectionMask'>): string =>
+  slotPlaceWords(places, s, ' ');
 
 /** Whether the schedule's slots stand on a side or half (mask 3 or 12) and on a quarter — the Split hint's two words. */
 export function partKinds(slots: readonly Pick<SlotView, 'sectionMask'>[]): { half: boolean; quarter: boolean } {
@@ -526,7 +523,7 @@ export function askedSlots(asks: readonly ScheduleAsk[]): Map<string, ScheduleAs
 /** A Sunday in the callout (drawn): "Sun, Mar 7, 9:30 a.m. · Field 1" — the club's day and clock, the slot's place. */
 export function askSundayLine(s: ScheduleAsk['sundays'][number], places: readonly SchedulePlace[]): string {
   const z = utcToZonedInputs(s.startsAt);
-  const place = s.venueId ? placeName(places, s.venueId, s.facilityId) : '';
+  const place = s.venueId ? slotPlaceName(places, { ...s, venueId: s.venueId }) : '';
   return `${formatShortWeekdayDate(z.date)}, ${formatTime(z.time)}${place ? ` · ${place}` : ''}`;
 }
 

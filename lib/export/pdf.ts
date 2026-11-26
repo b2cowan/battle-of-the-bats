@@ -91,6 +91,30 @@ export interface ReportFit {
 }
 
 /**
+ * A SECTION TOO WIDE FOR ITS PAGE SPLITS INTO TABLES, NEVER DROPS A COLUMN (Club schedules Stage 2, round 2 Ask 8 A:
+ * "a printed schedule that leaves fields off is the one a coach pins to the dome's wall"). Opt-in, per own-header group:
+ * only a group that declares it changes, and only when its columns' no-shred floors would not fit the page (the point
+ * at which the fit contract would otherwise give columns up). Each table repeats the `lead` columns (the Time column)
+ * and holds whole blocks (a field and its parts are one block, so a field never parts from its sides), packed in order.
+ */
+export interface PdfGroupSplit {
+  /** How many leading columns every table repeats. */
+  lead: number;
+  /** The column runs (indices into the group's headers) kept whole in one table, in order. */
+  blocks: number[][];
+  /** A table's heading, from the blocks it holds (indices into `blocks`) — "Sun, Jan 17, 2027 · 14 slots · … · Fields 1–2". */
+  labelOf: (blocks: number[]) => string;
+}
+
+/** One section of a grouped document: its heading, its own headers when its columns differ, its rows. */
+export interface PdfGroup {
+  label: string;
+  headers?: string[];
+  rows: (string | number | null | undefined)[][];
+  split?: PdfGroupSplit;
+}
+
+/**
  * Shorten customer-named column headings to codes, and say what they mean.
  *
  * The fit contract's last resort is dropping a whole column and admitting it. For a table
@@ -431,8 +455,9 @@ export function buildTablePDF(
     penColumns?: number[];
     /** When provided, renders one autoTable per group (division page breaks). A group may
      *  carry its own `headers` (falls back to the top-level `headers` when absent) so one
-     *  document can hold sections with different columns (e.g. a development summary). */
-    groups?: { label: string; headers?: string[]; rows: (string | number | null | undefined)[][] }[];
+     *  document can hold sections with different columns (e.g. a development summary), and may
+     *  declare `split` (a section too wide for the page becomes several tables, never fewer columns). */
+    groups?: PdfGroup[];
     /** The report's own footnotes, printed under the table. See the block that draws them. */
     notes?: PdfNote[];
   },
@@ -627,6 +652,60 @@ export function buildTablePDF(
     };
   }
 
+  /** A section heading's type — set to draw it, and to measure it. */
+  function setGroupHeadingFont() {
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(10);
+  }
+
+  /**
+   * A section that declares `split` (PdfGroupSplit) and is wider than the paper becomes several tables, each the lead
+   * columns plus whole blocks packed in order, measured on the same floors `fitColumns` drops by — so it splits exactly
+   * where it would otherwise have dropped — and also before the table's heading, which lists what it holds, would run
+   * off the paper. A row with nothing in a table's own columns stays out of that table (that time has no slot there); a
+   * table with nothing at all keeps every row, blank, never a heading over no rows. One block wider than the page alone
+   * is one table, fitted as any table is: the only case left that still drops a column and says so.
+   */
+  function splitWide(group: PdfGroup): PdfGroup[] {
+    const { split, headers: hdrs } = group;
+    if (!split || !hdrs) return [group];
+    const { floors } = columnMetrics(hdrs, group.rows);
+    const width = (cols: number[]) => cols.reduce((n, i) => n + (floors[i] ?? 0), 0);
+    const all = hdrs.map((_, i) => i);
+    if (width(all) <= contentWidth) return [group];
+    const lead = all.slice(0, split.lead);
+    const tables: number[][] = [];
+    let current: number[] = [];
+    let used = width(lead);
+    // Measured with the room "(continued)" takes on a page the table spills onto.
+    const headingFits = (blocks: number[]) => {
+      setGroupHeadingFont();
+      return doc.getTextWidth(printable(`${split.labelOf(blocks)}   (continued)`)) <= contentWidth;
+    };
+    split.blocks.forEach((cols, b) => {
+      const w = width(cols);
+      if (current.length && (used + w > contentWidth || !headingFits([...current, b]))) {
+        tables.push(current);
+        current = [];
+        used = width(lead);
+      }
+      current.push(b);
+      used += w;
+    });
+    if (current.length) tables.push(current);
+    if (tables.length < 2) return [group];
+    return tables.map(blocks => {
+      const own = blocks.flatMap(b => split.blocks[b]);
+      const cols = [...lead, ...own];
+      const filled = group.rows.filter(r => own.some(i => String(r[i] ?? '').trim() !== ''));
+      return {
+        label: printable(split.labelOf(blocks)),
+        headers: cols.map(i => hdrs[i]),
+        rows: (filled.length ? filled : group.rows).map(r => cols.map(i => r[i])),
+      };
+    });
+  }
+
   /**
    * ONE column grid for every section of a grouped document.
    *
@@ -711,8 +790,7 @@ export function buildTablePDF(
   const GROUP_RULE_GAP = 4;         // clear air between the rule and the first row
   const GROUP_HEAD_H = GROUP_RULE_OFFSET + GROUP_RULE_GAP;
   function drawGroupHeading(label: string, y: number): number {
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(10);
+    setGroupHeadingFont();
     doc.setTextColor(20, 20, 35);
     doc.text(label, MARGIN, y + GROUP_LABEL_BASELINE);
     doc.setDrawColor(accentRgb.r, accentRgb.g, accentRgb.b);
@@ -798,13 +876,15 @@ export function buildTablePDF(
   if (groups && groups.length > 0) {
     let startY = drawHeader(true);
     const footerMargin = 18; // leave room for footer
+    // A section that declares `split` and is wider than the paper is several tables from here on (Ask 8 A).
+    const sections = groups.flatMap(splitWide);
 
     // Groups that use the top-level headers (division-style documents) share ONE fit,
     // measured over all their rows together: every division keeps the SAME columns, and
     // the honest "didn't fit" line belongs to the document — once, under the title —
     // never repeated beneath every division heading. Only a group carrying its own
     // headers (mixed-column documents like the development summary) fits individually.
-    const sharedGroups = groups.filter(g => !g.headers);
+    const sharedGroups = sections.filter(g => !g.headers);
     const sharedRows = sharedGroups.flatMap(g => g.rows);
     const sharedFit = sharedGroups.length > 0
       ? fitColumns(headers, sharedRows, fit?.dropOrder)
@@ -816,7 +896,7 @@ export function buildTablePDF(
     // widow announcing a section that is really on the next page.
     const groupKeep = GROUP_HEAD_H + estRowH * 4;
 
-    groups.forEach((group, idx) => {
+    sections.forEach((group, idx) => {
       if (idx > 0 && startY > pageHeight - footerMargin - groupKeep) {
         doc.addPage();
         startY = drawHeader(false);
@@ -942,7 +1022,7 @@ export async function downloadPDF(
   rows: (string | number | null | undefined)[][],
   settings: OrgPdfSettings = DEFAULT_PDF_SETTINGS,
   report?: {
-    groups?: { label: string; headers?: string[]; rows: (string | number | null | undefined)[][] }[];
+    groups?: PdfGroup[];
     identity?: string;
     shape?: ReportShape;
     fit?: ReportFit;

@@ -21,7 +21,7 @@ import type { SendKind } from './club-schedule-send';
 import { HAND_BACK_WORDS, type CreditMove } from './club-hand-back-words';
 import { FACT_LABELS, factRow, noticeFacts } from './notification-facts';
 import { facilityListWords } from './permit-words';
-import { fieldTicksWords, masksOn, sectionsOf, WHOLE, type FieldSections } from './field-parts';
+import { fieldPartName, fieldTicksWords, masksOn, sectionsOf, WHOLE, type FieldSections } from './field-parts';
 
 /** Cents said as money — the schedule's one spelling, on every screen and in every email. */
 export const moneyCents = (cents: number) => fmt(cents / 100);
@@ -271,6 +271,23 @@ export function weeklyDays(first: string, last: string): string[] {
 
 /** A slot's place, as the email and the log say it: "Lane 1", or the venue when it has no facilities. */
 export const placeWords = (venue: string, facility: string | null) => facility ?? venue;
+
+/** The club's places as a line reads them (`readClubPlaces`): names, and each field's split. */
+export interface PlaceNames {
+  venueName: ReadonlyMap<string, string>;
+  facilityName: ReadonlyMap<string, string>;
+  sectionsOf: ReadonlyMap<string, FieldSections>;
+}
+
+/**
+ * A slot's place in a line a coach reads — the email's pattern, a review card, a hand-back's Sundays — with its part
+ * (Stage 2): "Field 1, side A", "Field 1, quarter C"; the field alone when whole; the venue when it has no facility.
+ * The part joins with a comma, as the club calendar says it (round 2 facts).
+ */
+export function clubPlaceWords(places: PlaceNames, venueId: string, facilityId: string | null, mask?: number | null): string {
+  const field = facilityId ? places.facilityName.get(facilityId) ?? null : null;
+  return placeWords(places.venueName.get(venueId) ?? '', field ? fieldPartName(field, mask, places.sectionsOf.get(facilityId!) ?? 1, ', ') : null);
+}
 
 // ── The bill, in words (specimen 14) ─────────────────────────────────────────────────────────────
 

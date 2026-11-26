@@ -3,6 +3,7 @@ import { supabaseAdmin } from './supabase-admin';
 import { fetchAll, fetchAllIn } from './supabase-paging';
 import { utcToZonedInputs } from './timezone';
 import { weekdayOf } from './permit-time';
+import { maskProp } from './field-parts';
 import { resolvePersonNamer } from './db';
 
 /**
@@ -39,7 +40,7 @@ export function eachCents(xs: readonly { cents: number }[]): number | null {
 }
 
 /** A Sunday an ask counts: its slot as it stands (its time, venue and facility), and its figure as asked. */
-export interface AskSunday { slotId: string | null; startsAt: string; endsAt: string; cents: number; venueId: string | null; facilityId: string | null }
+export interface AskSunday { slotId: string | null; startsAt: string; endsAt: string; cents: number; venueId: string | null; facilityId: string | null; /** Its part (Stage 2; absent: whole). */ sectionMask?: number }
 
 /** An ask, as every list and window reads it. */
 export interface AskSummary {
@@ -66,13 +67,13 @@ type Row = {
   rep_teams: { name: string } | null;
   club_schedule_hand_back_slots: {
     slot_id: string | null; starts_at: string; ends_at: string; cents: number | string; handed_back: boolean;
-    club_schedule_slots: { starts_at: string; ends_at: string; removed_at: string | null; org_venue_id: string; facility_id: string | null } | null;
+    club_schedule_slots: { starts_at: string; ends_at: string; removed_at: string | null; org_venue_id: string; facility_id: string | null; section_mask: number | null } | null;
   }[] | null;
 };
 
 const SELECT = 'id, state, team_id, schedule_id, asked_at, asked_by, closed_at, late_for, decline_reason, asked_cents, accepted_cents, credited_cents, to_pay_cents, '
   + 'club_schedules ( name ), rep_teams ( name ), '
-  + 'club_schedule_hand_back_slots ( slot_id, starts_at, ends_at, cents, handed_back, club_schedule_slots ( starts_at, ends_at, removed_at, org_venue_id, facility_id ) )';
+  + 'club_schedule_hand_back_slots ( slot_id, starts_at, ends_at, cents, handed_back, club_schedule_slots ( starts_at, ends_at, removed_at, org_venue_id, facility_id, section_mask ) )';
 
 const num = (v: number | string | null) => (v == null ? null : Number(v));
 
@@ -105,7 +106,7 @@ async function summarize(orgId: string, rows: readonly Row[]): Promise<AskSummar
       : r.state === 'accepted' ? slots.filter(s => s.handed_back) : slots;
     const sundays = counted.map(s => ({
       slotId: s.slot_id, startsAt: s.club_schedule_slots?.starts_at ?? s.starts_at, endsAt: s.club_schedule_slots?.ends_at ?? s.ends_at,
-      cents: Number(s.cents), venueId: s.club_schedule_slots?.org_venue_id ?? null, facilityId: s.club_schedule_slots?.facility_id ?? null,
+      cents: Number(s.cents), venueId: s.club_schedule_slots?.org_venue_id ?? null, facilityId: s.club_schedule_slots?.facility_id ?? null, ...maskProp(s.club_schedule_slots?.section_mask),
     })).sort((x, y) => x.startsAt.localeCompare(y.startsAt));
     out.push({
       id: r.id, state: r.state, teamId: r.team_id, teamName: r.rep_teams?.name ?? 'The team',

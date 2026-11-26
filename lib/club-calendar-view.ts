@@ -52,6 +52,8 @@ export interface CalendarWhere {
   venueId: string | null;
   venueName: string | null;
   facility: string | null;
+  /** The part of the facility it is on, in words ("side A", "quarter C"; Club schedules Stage 2); absent: the whole. */
+  part?: string | null;
   address: string | null;
   /** The booking's own words when it isn't on a club venue ("Eastview Park", "Westfield School — back field"). */
   text: string | null;
@@ -191,10 +193,16 @@ export const otherTimeWords = (o: Pick<CalendarOther, 'startMs' | 'endMs'>): str
 export function whereWords(b: Pick<CalendarBooking, 'where' | 'sport'>): string {
   const w = b.where;
   if (w.venueName) {
-    const fac = facilityWords(b.sport, w.facility);
+    const fac = facilityLine(b);
     return fac ? `${w.venueName} · ${fac}` : w.venueName;
   }
   return w.text ?? '';
+}
+
+/** The facility as the calendar says it, with its part joined by a comma ("Diamond 2, side A"), never a second " · ". */
+function facilityLine(b: Pick<CalendarBooking, 'where' | 'sport'>): string {
+  const fac = facilityWords(b.sport, b.where.facility);
+  return fac && b.where.part ? `${fac}, ${b.where.part}` : fac;
 }
 
 // ---------------------------------------------------------------------------
@@ -348,7 +356,7 @@ export function exportRows(bookings: readonly CalendarBooking[]): CalendarExport
     who: b.who,
     what: b.what,
     venue: b.where.venueName ?? b.where.text ?? '',
-    facility: b.where.venueName ? facilityWords(b.sport, b.where.facility) : '',
+    facility: b.where.venueName ? facilityLine(b) : '',
     clash: clashLineWords(b) ?? '',
   }));
 }

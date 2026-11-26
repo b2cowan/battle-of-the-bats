@@ -34,6 +34,7 @@
 import { formatWeekdayDate } from '../timezone';
 import { pluralize } from '../utils';
 import { scheduleStatusWord } from '../tournament-schedule-status';
+import type { PdfGroupSplit } from './pdf';
 
 /** One game, as a schedule screen holds it. Values are already display-formatted except `date`. */
 export interface ScheduleGame {
@@ -52,8 +53,9 @@ export interface ScheduleGame {
 
 export interface ScheduleDocument {
   headers: string[];
-  /** A group may carry its own column headings (a venue's fields); without them it reads the document's `headers`. */
-  groups: { label: string; headers?: string[]; rows: string[][] }[];
+  /** A group may carry its own column headings (a venue's fields); without them it reads the document's `headers`.
+   *  `split`: how it becomes several tables when it is wider than the page (lib/export/pdf.ts `PdfGroupSplit`). */
+  groups: { label: string; headers?: string[]; rows: string[][]; split?: PdfGroupSplit }[];
 }
 
 /** The day heading's separator, wide enough to read across a landscape page. */
@@ -76,6 +78,8 @@ export interface DayDocumentSpec<T, C> {
   prepare: (items: T[]) => C;
   facts: (items: T[], ctx: C) => string[];
   headersOf?: (items: T[], ctx: C) => string[];
+  /** A section that may be too wide for the page says how it splits. */
+  splitOf?: (items: T[], ctx: C) => PdfGroupSplit;
   cells: (item: T, ctx: C) => string[];
 }
 
@@ -92,7 +96,8 @@ export function buildDayDocument<T, C>(items: readonly T[], headers: string[], s
     const ctx = spec.prepare(list);
     const label = [spec.dayWords(spec.dateOf(list[0])) || spec.noDate || '', ...spec.facts(list, ctx)].filter(Boolean).join(DAY_HEADING_SEP);
     const own = spec.headersOf?.(list, ctx);
-    return { label, ...(own ? { headers: own } : {}), rows: list.map(it => spec.cells(it, ctx)) };
+    const split = spec.splitOf?.(list, ctx);
+    return { label, ...(own ? { headers: own } : {}), rows: list.map(it => spec.cells(it, ctx)), ...(split ? { split } : {}) };
   });
   return { headers, groups };
 }

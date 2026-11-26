@@ -17,7 +17,7 @@ import { clubBillFigures, clubInstallmentDue } from './club-money-figures';
 import { toCents } from './coach-register';
 import { formatShortWeekdayDate, tournamentToday, utcToZonedInputs } from './timezone';
 import { readClubPlaces } from './permit-lookup';
-import { SCHEDULE_NOTICES, placeWords } from './club-schedule-words';
+import { SCHEDULE_NOTICES, clubPlaceWords } from './club-schedule-words';
 import { tellBuilders } from './club-schedule-send';
 import { HAND_BACK_WORDS as W, dayRange, namePractices, type CreditMove, type PracticesNamed } from './club-hand-back-words';
 import {
@@ -330,7 +330,7 @@ export async function answerView(orgId: string, handBackId: string, canMove: boo
     askedAt: summary.askedAt, askedBy: { name: nameOf(summary.askedBy), headCoach: asker?.coachRole === 'head_coach' },
     sundays: summary.sundays.map(s => ({
       day: utcToZonedInputs(s.startsAt).date, startsAt: s.startsAt, endsAt: s.endsAt,
-      place: s.venueId ? placeWords(places.venueName.get(s.venueId) ?? '', s.facilityId ? places.facilityName.get(s.facilityId) ?? null : null) : '',
+      place: s.venueId ? clubPlaceWords(places, s.venueId, s.facilityId, s.sectionMask) : '',
     })),
     weekday: summary.weekday, count: summary.count, cents, eachCents: eachCents(capped),
     bill: {
@@ -566,8 +566,8 @@ export async function lateAskOffer(p: { orgId: string; teamId: string; teamName:
   if (!hb || hb.kind !== 'landed' || hb.late) return fail(409, hb?.late ? 'asked' : 'nothing', hb?.late ? W.refuse.lateAsked : W.refuse.lateNothing);
   if (!hb.askCents) return fail(409, 'nothing', W.refuse.lateNothing);
   const [rows, places] = await Promise.all([
-    fetchAll<{ starts_at: string; ends_at: string; cents: number | string; club_schedule_slots: { starts_at: string; ends_at: string; org_venue_id: string; facility_id: string | null; club_schedule_slot_teams: { team_id: string }[] | null } | null }>((a, b) => supabaseAdmin
-      .from('club_schedule_hand_back_slots').select('starts_at, ends_at, cents, club_schedule_slots ( starts_at, ends_at, org_venue_id, facility_id, club_schedule_slot_teams ( team_id ) )')
+    fetchAll<{ starts_at: string; ends_at: string; cents: number | string; club_schedule_slots: { starts_at: string; ends_at: string; org_venue_id: string; facility_id: string | null; section_mask: number | null; club_schedule_slot_teams: { team_id: string }[] | null } | null }>((a, b) => supabaseAdmin
+      .from('club_schedule_hand_back_slots').select('starts_at, ends_at, cents, club_schedule_slots ( starts_at, ends_at, org_venue_id, facility_id, section_mask, club_schedule_slot_teams ( team_id ) )')
       .eq('org_id', p.orgId).eq('hand_back_id', hb.id).eq('handed_back', true).order('id').range(a, b)),
     readClubPlaces(p.orgId),
   ]);
@@ -580,7 +580,7 @@ export async function lateAskOffer(p: { orgId: string; teamId: string; teamName:
     const startsAt = s?.starts_at ?? r.starts_at, endsAt = s?.ends_at ?? r.ends_at;
     return {
       day: utcToZonedInputs(startsAt).date, startsAt, endsAt,
-      place: s ? placeWords(places.venueName.get(s.org_venue_id) ?? '', s.facility_id ? places.facilityName.get(s.facility_id) ?? null : null) : '',
+      place: s ? clubPlaceWords(places, s.org_venue_id, s.facility_id, s.section_mask) : '',
     };
   });
   return {

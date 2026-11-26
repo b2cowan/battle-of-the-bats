@@ -33,7 +33,7 @@ import { clubDay, keptHandBacks, waitingAsksOfSchedule, type KeptHandBack } from
 import { scheduleMoney, type ScheduleMoney } from './club-money-reads';
 import { HOUSE_LEAGUE, isProgramHolder, storedHolders, teamsOnly } from './club-schedule-holders';
 import { engineSlotOf, pinnedSlots, slotsWithPinned, timeKeeping, type KeepChange, type Keeping } from './club-schedule-keep';
-import { isLegalMask, maskOf, partsOverlap, sortMasks, STORABLE_MASKS, WHOLE, type FieldSections } from './field-parts';
+import { isLegalMask, maskOf, maskProp, partsOverlap, sortMasks, STORABLE_MASKS, WHOLE, type FieldSections } from './field-parts';
 
 /**
  * ══════════════════════════════════════════════════════════════════════════════════════════════
@@ -946,7 +946,7 @@ export interface ScheduleAsk {
   cents: number | null;
   count: number; weekday: number | null;
   /** The Sundays it counts, as they stand (a waiting ask: those still to come the team still holds — Ask 7), in order. */
-  sundays: { slotId: string | null; startsAt: string; venueId: string | null; facilityId: string | null }[];
+  sundays: { slotId: string | null; startsAt: string; venueId: string | null; facilityId: string | null; sectionMask?: number }[];
 }
 
 /** A slot house league holds, as the club's schedule reads it. */
@@ -1085,7 +1085,7 @@ export async function scheduleView(orgId: string, loaded: LoadedSchedule, canMon
       id: a.id, teamId: a.teamId, teamName: a.teamName, late: !!a.lateFor,
       askedOn: clubDay(a.askedAt), handedBackOn: a.handedBackAt ? clubDay(a.handedBackAt) : null, askedBy: a.askedByName,
       cents: canMoney ? a.cents : null, count: a.count, weekday: a.weekday,
-      sundays: a.sundays.map(s => ({ slotId: s.slotId, startsAt: s.startsAt, venueId: s.venueId, facilityId: s.facilityId })),
+      sundays: a.sundays.map(s => ({ slotId: s.slotId, startsAt: s.startsAt, venueId: s.venueId, facilityId: s.facilityId, ...maskProp(s.sectionMask) })),
     })),
     pays: money ? Object.fromEntries([...money.teams].map(([t, p]) => [t, p.pays])) : null,
     kept: plainBacks.map(k => {

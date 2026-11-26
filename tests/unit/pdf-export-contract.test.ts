@@ -27,6 +27,7 @@ import {
   type LineupPosterOptions, type LineupPosterPlayer,
 } from '../../lib/export/pdf';
 import { buildBracketDoc } from '../../lib/export/bracket-pdf';
+import { clubScheduleDocument, type DocSlot } from '../../lib/club-schedule-document';
 import type { Game, Team } from '../../lib/types';
 import {
   checkinSheetHeadings, checkinTickColumn, CHECKIN_TICK_HEADING, CHECKIN_FORBIDDEN_HEADINGS,
@@ -422,6 +423,90 @@ describe('fit contract: drop whole columns and say so — never shred', () => {
     for (const call of at.calls) assert.deepEqual(call.head[0], at.calls[0].head[0]);
     const notices = doc.texts.filter(t => t.str.includes('didn’t fit this page'));
     assert.equal(notices.length, 1, 'the admission belongs to the document, not every division');
+  });
+});
+
+// ── A section too wide splits instead (Club schedules Stage 2, round 2 Ask 8 A) ─────────────────
+
+describe('a club schedule day too wide for the page splits into tables, each field kept with its parts', () => {
+  // Two quartered fields (a whole slot at noon, four quarters at 9) and four whole ones: 14 columns and Time.
+  const fields = ['Field 1', 'Field 2', 'Field 3', 'Field 4', 'Field 5', 'Field 6'].map((name, i) => ({ id: `f${i + 1}`, name, sections: i < 2 ? 4 : 1 }));
+  let k = 0;
+  const slot = (facilityId: string, mask: number, start: string, end: string): DocSlot => ({
+    key: `s${++k}`, venueId: 'v', facilityId, day: '2027-01-17', weekday: 7, startClock: start, endClock: end,
+    startsAt: `2027-01-17T${start}:00Z`, endsAt: `2027-01-17T${end}:00Z`, teamIds: [`T${k}`], weight: mask ? 0.25 : 1, prime: false, heldBy: null,   // a quarter's weight is a quarter
+    ...(mask ? { sectionMask: mask } : {}),
+  });
+  const wide: DocSlot[] = [
+    ...['f1', 'f2'].flatMap(f => [slot(f, 0, '12:00', '13:30'), ...[1, 2, 4, 8].map(m => slot(f, m, '09:00', '10:30'))]),
+    ...['f3', 'f4', 'f5', 'f6'].map(f => slot(f, 0, '09:00', '10:30')),
+  ];
+  const input = {
+    name: 'Winter dome', startsOn: '2027-01-03', endsOn: '2027-03-07', datesOff: [],
+    places: [{ venueId: 'v', venueName: 'Milton Sports Dome', facilities: fields }],
+    teams: wide.flatMap(s => s.teamIds).map(id => ({ id, name: id, groupName: null })), slots: wide,
+  };
+  const render = (slots: DocSlot[]) => {
+    const doc = clubScheduleDocument({ ...input, slots });
+    const at = makeAutoTable();
+    const pdf: MockDoc = buildTablePDF(MockDoc, at, {
+      title: 'Winter dome', headers: doc.headers, rows: [], settings: settings(),
+      shape: { orientation: 'landscape', density: 'compact' }, groups: doc.groups,
+    });
+    return { doc, at, pdf };
+  };
+
+  it('two tables, every column printed once, nothing left off and no "didn’t fit" line', () => {
+    const { doc, at, pdf } = render(wide);
+    assert.equal(doc.groups[0].headers!.length, 15);
+    assert.equal(at.calls.length, 2);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const heads: string[][] = at.calls.map((c: any) => c.head[0]);
+    for (const h of heads) assert.equal(h[0], 'Time', 'each table has its own Time column');
+    assert.deepEqual(heads.flatMap(h => h.slice(1)).sort(), doc.groups[0].headers!.slice(1).sort());
+    assert.ok(!pdf.texts.some(t => t.str.includes('didn’t fit')), 'no column dropped');
+  });
+  it('a field never parts from its quarters: Field 1 with its four, then Field 2 with its four and Fields 3–6', () => {
+    const { at, pdf } = render(wide);
+    assert.deepEqual(at.calls[0].head[0], ['Time', 'Field 1', 'Field 1\nquarter A', 'Field 1\nquarter B', 'Field 1\nquarter C', 'Field 1\nquarter D']);
+    assert.equal(at.calls[1].head[0].filter((h: string) => h.startsWith('Field 2')).length, 5);
+    const labels = pdf.texts.map(t => t.str);
+    assert.ok(labels.some(l => l.endsWith('Milton Sports Dome   ·   Field 1') && l.includes('5 slots')));
+    assert.ok(labels.some(l => l.endsWith('Fields 2–6') && l.includes('9 slots')));
+  });
+  it('long field names: another table before a heading would run off the paper', () => {
+    const named = Array.from({ length: 16 }, (_, i) => ({ id: `n${i}`, name: `${'North South East West Upper Lower Inner Outer Front Back Left Right Old New Big Small'.split(' ')[i]} Diamond` }));
+    const slots = named.map(f => slot(f.id, 0, '09:00', '10:30'));
+    const doc = clubScheduleDocument({ ...input, places: [{ venueId: 'v', venueName: 'Milton Sports Dome', facilities: named }], teams: slots.map(s => ({ id: s.teamIds[0], name: s.teamIds[0], groupName: null })), slots });
+    const at = makeAutoTable();
+    const pdf: MockDoc = buildTablePDF(MockDoc, at, {
+      title: 'Winter dome', headers: doc.headers, rows: [], settings: settings(),
+      shape: { orientation: 'landscape', density: 'compact' }, groups: doc.groups,
+    });
+    const headings = pdf.texts.filter(t => t.str.includes('Milton Sports Dome   ·'));
+    assert.ok(headings.length > 1);
+    for (const h of headings) assert.ok(h.w! <= 279.4 - 28, `"${h.str}" fits the page`);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    assert.equal(at.calls.reduce((n: number, c: any) => n + c.head[0].length - 1, 0), 16, 'every field printed once');
+  });
+  it('a table of fields with nothing that day keeps the times, blank, never a heading over no rows', () => {
+    // Field 1 and Field 2 hold every slot; Fields 3–6 are used on another day only.
+    const busy = wide.filter(s => s.facilityId === 'f1' || s.facilityId === 'f2');
+    const later = ['f3', 'f4', 'f5', 'f6'].map(f => ({ ...slot(f, 0, '09:00', '10:30'), day: '2027-01-24', startsAt: '2027-01-24T09:00:00Z', endsAt: '2027-01-24T10:30:00Z' }));
+    const slots = [...busy, ...later];
+    const doc = clubScheduleDocument({ ...input, slots, teams: slots.flatMap(s => s.teamIds).map(id => ({ id, name: id, groupName: null })) });
+    const at = makeAutoTable();
+    buildTablePDF(MockDoc, at, {
+      title: 'Winter dome', headers: doc.headers, rows: [], settings: settings(),
+      shape: { orientation: 'landscape', density: 'compact' }, groups: doc.groups,
+    });
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    for (const c of at.calls as any[]) assert.ok(c.body.length > 0);
+  });
+  it('a day that fits is one table, exactly as before', () => {
+    const { at } = render(wide.filter(s => s.facilityId !== 'f1' && s.facilityId !== 'f2'));
+    assert.equal(at.calls.length, 1);
+    assert.deepEqual(at.calls[0].head[0], ['Time', 'Field 3', 'Field 4', 'Field 5', 'Field 6']);
   });
 });
 

@@ -59,8 +59,8 @@ import { permitDoor, type ScheduleOutside } from '@/lib/permit-dates-off-view';
 import { usePermitsLink } from '@/components/admin/kit/useAdminKitNav';
 import type { DateOff } from '@/lib/permit-time';
 import {
-  NO_GROUP, askedSlots, dropLanding, engineSlotsOf, firstCursor, gridColumns, nightsWords, oneWeekdayOf, openingDay, pct, perWeek, placeName, placeRows, scheduleDates,
-  slotDays, slotTime, stepGrid, teamColour, type ScheduleView, type SlotView,
+  NO_GROUP, askedSlots, dropLanding, engineSlotsOf, firstCursor, gridColumns, nightsWords, oneWeekdayOf, openingDay, pct, perWeek, placeName, placeRows, scheduleDates, slotPlaceName,
+  slotDays, slotRowKey, slotTime, stepGrid, teamColour, type ScheduleView, type SlotView,
 } from '@/lib/club-schedule-view';
 
 interface PageRead extends ScheduleView {
@@ -213,7 +213,8 @@ export default function SchedulePage() {
   const nameOf = useCallback((id: string) => teamById.get(id)?.name ?? (isProgramHolder(id) ? W.heldByHouseLeague : 'A team'), [teamById]);
   const colourOf = useCallback((id: string) => teamColour(shown?.teams ?? [], id), [shown]);
   const groupOf = useCallback((id: string) => teamById.get(id)?.groupId ?? null, [teamById]);
-  const placeOfSlot = useCallback((x: Pick<SlotView, 'venueId' | 'facilityId'>) => placeName(shown?.places ?? [], x.venueId, x.facilityId), [shown]);
+  // A slot's place with its part (Stage 2): "Field 1 side A" in every tooltip, notice and window.
+  const placeOfSlot = useCallback((x: Pick<SlotView, 'venueId' | 'facilityId' | 'sectionMask'>) => slotPlaceName(shown?.places ?? [], x), [shown]);
   // The schedule's sharing rules read against its teams: a slot's room (Stage 11c) — the moves, the drop and the slot window.
   const sharing = useMemo(() => sharingPools(read?.schedule.settings.rules.sharing ?? [], shown?.teams ?? []), [read, shown]);
   // The Sundays a waiting ask counts, by slot id — ringed on the grid, marked on a phone's Day, named in the slot window.
@@ -224,7 +225,8 @@ export default function SchedulePage() {
   const range = shown && cursor ? { startsOn: shown.schedule.startsOn, endsOn: shown.schedule.endsOn, oneWeekday, cursor } : null;
   const cols = range ? gridColumns(range) : null;
   const allRows = useMemo(() => (shown ? placeRows(shown.places, shown.slots) : []), [shown]);
-  const rows = facilityFilter.size ? allRows.filter(r => facilityFilter.has(r.key)) : allRows;
+  // The Facility filter names a field once; choosing it shows its row and every part row under it (Stage 2).
+  const rows = facilityFilter.size ? allRows.filter(r => facilityFilter.has(r.fieldKey) || facilityFilter.has(r.key)) : allRows;
   const weekSet = new Set(cols?.days ?? []);
   const weekClashes = shown ? shown.slots.filter(x => weekSet.has(x.day) && x.clash).length : 0;
   // A phone's Day: the dates with slots; the day picked, or where it opens (today's, or the next with slots).
@@ -306,7 +308,7 @@ export default function SchedulePage() {
     if (!plan.edits.length) { say(W.skipped(plan.skipped.length || 1, W.skippedWhy[plan.skipped[0]?.why ?? 'no_slot'])); return; }
     const moved = new Set(plan.moved);
     const toDays = mine.filter(x => moved.has(x.week) && x.weekday === m.to.weekday && x.startClock === m.to.startClock
-      && x.venueId === m.to.venueId && x.facilityId === m.to.facilityId).map(x => x.day).sort();
+      && slotRowKey(x) === slotRowKey(m.to)).map(x => x.day).sort();
     const landing = dropLanding(m.from, m.to, m.teamId, sharing);
     const swapWith = landing?.kind === 'swap' ? landing.withTeam : null;
     const where = `${formatShortWeekdayDate(m.to.day).split(',')[0]}, ${formatTime(m.to.startClock)} · ${placeOfSlot(m.to)}`;
@@ -547,7 +549,7 @@ export default function SchedulePage() {
       <AlertTriangle size={13} aria-hidden />{pluralize(weekClashes, 'clash', 'clashes')}
     </button>
   );
-  const facilityOptions = allRows.map(r => ({ id: r.key, label: r.name }));
+  const facilityOptions = allRows.filter(r => r.key === r.fieldKey).map(r => ({ id: r.key, label: r.name }));
 
   // ── By team · By group (specimen 8) ──
   const weeks = new Set(v.slots.map(x => x.week)).size || 1;

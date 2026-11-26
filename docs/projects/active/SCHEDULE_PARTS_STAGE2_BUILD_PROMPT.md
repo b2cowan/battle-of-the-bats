@@ -149,6 +149,26 @@ At the end a part travels everywhere a practice goes, and the PDF prints it.
    field kept with its parts (today `lib/export/pdf.ts:630-640` drops the columns that don't fit; that drop must never
    happen to a schedule's columns again). Landscape US Letter, as shipped.
 4. Tests: Send writes the part; the hours fix; the PDF split (a fixture with two quartered fields and four whole ones).
+5. **Carried from 2B (committed `b37a4bccc`, the index `c1d36fe06`; the plan's "2B built 2026-11-26" line holds the
+   reasons and every open `/review` finding):**
+   - **Owed here:** the coach's hand-back series key (`lib/club-schedule-coach.ts` `placeKey`) and the PDF cell
+     (`lib/club-schedule-document.ts`, the place cell ~`:160`) carry the part; Send writes `section_mask` onto the
+     practice (`rep_team_events.section_mask` exists since 541). Also the schedule page's after-a-move span
+     (`app/[orgSlug]/admin/schedules/[scheduleId]/page.tsx` `toDays`, ~`:310`) matches on the field, not the part.
+   - **The one home, extended by 2B's `/simplify`:** `lib/field-parts.ts` now also holds `maskSuffix` (a key's part,
+     nothing for the whole field), `maskProp` (the optional `sectionMask`, no property for the whole field), `maskRank`,
+     `samePlace` (every clash reader), `tickOptions`/`resolveTicks`/`placesOfTicks`/`fieldTicksWords`/`partLabel`; the
+     engine has `slotOrder` (the cut's and the kept merge's one order). It imports nothing (a test holds it). Use these;
+     never write `|${mask}` or `mask !== WHOLE ? {…} : {}` by hand.
+   - **The rule 2B kept:** with no split field every path reads byte-for-byte as before — the two "no split" tests in
+     `tests/unit/club-schedule-parts.test.ts`; extend them to Send and the PDF.
+   - **Not 2C's (the plan's 2B line):** prime time under "A set number a week" with parts (an owner design call); house
+     league and league-time reads (2E); free time reading a part as the whole field busy (2D); the bill hint by size on a
+     "Half cost" field; the save proof covers draft schedules only.
+   - **Production order** (`MANUAL_PROD_STEPS.json`): 541, then 544, before the 2B promote; 545 (an index) any time.
+   - **Before a browser look:** restart the dev server (shared modules changed).
+   - A failing `club-scheduler-guard` test naming `scripts/lib/prospect-demo-rep.mjs` is another session's, not 2C's.
+   - This item is uncommitted when 2C starts: commit it with 2C's first commit.
 
 ## Session 2D — other schedules, and the permit's Used figure
 

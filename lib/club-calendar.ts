@@ -38,6 +38,7 @@ import {
   type ClubBooking,
 } from './venue-clash';
 import { clashOtherName, facilityWords } from './venue-clash-words';
+import { partWords, sectionsOf } from './field-parts';
 import { VENUE_FACILITY_SEPARATOR } from './venue-label';
 import { SCRIMMAGE_LABEL } from './coach-schedule-vocab';
 import { DEFAULT_BOOKING_MINUTES } from './booking-length';
@@ -166,7 +167,7 @@ export async function readClubCalendar(reader: CalendarReader, from: string, to:
       .from('tournaments').select('id, name, sport, settings').eq('org_id', orgId).order('id').range(a, b)),
     fetchAll<{ id: string; name: string; address: string | null }>((a, b) => supabaseAdmin
       .from('org_venues').select('id, name, address').eq('org_id', orgId).order('id').range(a, b)),
-    fetchAll<Named>((a, b) => supabaseAdmin.from('org_venue_facilities').select('id, name').eq('org_id', orgId).order('id').range(a, b)),
+    fetchAll<Named & { sections?: number | null }>((a, b) => supabaseAdmin.from('org_venue_facilities').select('id, name, sections').eq('org_id', orgId).order('id').range(a, b)),
   ]);
 
   const games = await fetchAllIn<GameRow>(tournaments.map(t => t.id), (c, a, b) => supabaseAdmin.from('games')
@@ -215,6 +216,13 @@ export async function readClubCalendar(reader: CalendarReader, from: string, to:
   const venueName = new Map(libVenues.map(v => [v.id, v.name]));
   const venueAddress = new Map(libVenues.map(v => [v.id, v.address]));
   const facilityName = new Map(libFacilities.map(f => [f.id, f.name]));
+  // A booking's part in words, from its mask and its field's split (Stage 2): "side A"; null for the whole field.
+  const fieldSections = new Map(libFacilities.map(f => [f.id, sectionsOf(f.sections)]));
+  /** No property for the whole field, so a booking that isn't on a part is the object it was. */
+  const partProp = (facilityId: string | null | undefined, mask: number | null | undefined) => {
+    const part = facilityId ? partWords(mask, fieldSections.get(facilityId) ?? 1) : null;
+    return part ? { part } : {};
+  };
 
   // Which of the club's tournaments this reader sees (a staff member's assignments narrow them), and so which games are
   // inside a tournament booking on the page.
@@ -327,8 +335,8 @@ export async function readClubCalendar(reader: CalendarReader, from: string, to:
     : { label: page === 'schedule' ? W.doorTeam(teamName(teamId)) : W.doorTryouts(teamName(teamId)), href: `/${slug}/admin/rep-teams/teams/${teamId}/${page}` };
   /** A rep booking's OWN words — a club venue's are its copy (a past booking keeps the name it was played under); a team's
    *  own place or typed words as the coach wrote them, never compared. */
-  const repWhere = (r: Pick<TryoutRow, 'location' | 'location_address' | 'field_number' | 'org_venue_id'>, club: boolean, sport: string | null): CalendarWhere => club && r.org_venue_id
-    ? { venueId: r.org_venue_id, venueName: r.location, facility: r.field_number, address: r.location_address ?? venueAddress.get(r.org_venue_id) ?? null, text: null }
+  const repWhere = (r: Pick<TryoutRow, 'location' | 'location_address' | 'field_number' | 'org_venue_id'> & { org_venue_facility_id?: string | null; section_mask?: number | null }, club: boolean, sport: string | null): CalendarWhere => club && r.org_venue_id
+    ? { venueId: r.org_venue_id, venueName: r.location, facility: r.field_number, ...partProp(r.org_venue_facility_id, r.section_mask), address: r.location_address ?? venueAddress.get(r.org_venue_id) ?? null, text: null }
     : { venueId: null, venueName: null, facility: null, address: r.location_address, text: [r.location, r.field_number ? facilityWords(sport, r.field_number) : null].filter(Boolean).join(' · ') || null };
 
   if (canOpenRep) {
@@ -379,7 +387,7 @@ export async function readClubCalendar(reader: CalendarReader, from: string, to:
           teamId: null, ownerName: seasonName, colour: null, headCoach: null,
           who, what: [div, kind === 'practice' ? 'Practice' : null].filter(Boolean).join(' · ') || seasonName, sport: s?.sport ?? null,
           where: r.org_venue_id
-            ? { venueId: r.org_venue_id, venueName: line.venue ?? venueName.get(r.org_venue_id) ?? null, facility: line.facility, address: venueAddress.get(r.org_venue_id) ?? null, text: null }
+            ? { venueId: r.org_venue_id, venueName: line.venue ?? venueName.get(r.org_venue_id) ?? null, facility: line.facility, ...partProp(r.org_venue_facility_id, r.section_mask), address: venueAddress.get(r.org_venue_id) ?? null, text: null }
             : { venueId: null, venueName: null, facility: null, address: null, text: r.location },
           ...clashOf(key),
           door: { label: W.doorSeason(seasonName), href: `/${slug}/admin/house-league/seasons/${r.season_id}/schedule` },

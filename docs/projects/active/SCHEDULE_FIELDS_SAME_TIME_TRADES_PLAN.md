@@ -425,6 +425,40 @@ Migration first. Drawn together with Stage 3.
         org_venue_id, starts_at) — the table had no index starting with the schedule; applied to dev 2026-11-26, the save's
         lookup plan reads it (Index Scan); schema-visible, so `check:migrations` tracks it to prod (no order: any time). For `/marketing` (2E): the sharing rule's "half facilities"
         sentence names case C fields only; a part is never shared but is not called a half facility.
+  - [x] **2C part 1 built 2026-11-26** (mig 546, `club_practices_write` and `club_schedule_apply_changes` re-made from
+        the live bodies: a practice Finalize or Send the changes writes, reinstates or moves takes its SLOT’s part, never
+        the payload’s; a house-league practice or game the send moves takes its slot’s part, said to the owner out loud
+        (round 2 Ask 1 A); a catch-up for practices already on a part slot (0 rows on dev and prod). `/dba` on the text:
+        the bodies differ from the live ones only by the part lines; the catch-up skips a part its field no longer offers.
+        Rolled-back proof `scripts/schedule-parts-send-check.sql`, 12 of 12; **applied to dev 2026-11-26** at the owner’s
+        word (“apply 546 to dev”, and again for the revision after `/review`), read back + the proof re-run on the applied
+        functions, 12 of 12; prod pending, ORDER after 541 and 544, before the 2C promote — `MANUAL_PROD_STEPS.json`).
+        Built: the PDF’s column per (field, part) and its split of a day too wide for the page into tables, each field
+        kept with its parts, never a column dropped (`PdfGroupSplit` in `lib/export/pdf.ts`, `splitOf` on the shared day
+        document); the workbook’s “Field 1, quarter A” and By field a row per part; the calendar file’s place; the club
+        calendar and its CSV; `clubPlaceWords` (the one home for a coach line’s place) on the review card, the hand-back
+        Sundays and the late-ask offer; the hand-back series keyed by the practice’s part; the schedule page’s after-a-move
+        span and Facility filter. Tests: `club-schedule-parts-paper`, `pdf-export-contract` (the split).
+        **`/simplify` + `/review` 2026-11-26 (before the commit):** one home for a slot’s place with its part
+        (`slotPlaceWords`; the screens’ `slotPlaceName` calls it); the split said where the day is built. Fixed: a
+        house-league game the send carried to another part of the same field kept its old part (the plan writes no move
+        for it; the function now sets it, proof P11); a Finalize of an ended schedule whose field was split anew was
+        refused (written as the whole field now, P12); the schedule page’s hand-back callout named the field without the
+        part; a split table’s heading could run off the paper; a table of idle fields printed no rows.
+        **Accepted, found by `/review`:** the hand-back series reads the chosen practice’s part from its slot, so 546 goes
+        to a database before the code does; proof P07 runs a copy of the catch-up statement, not the file’s.
+        **Owed to 2C part 2:** (a) the send’s email place words (`placeOf`, `changePlaceOf`, `patternsFor` through
+        `clubPlaceWords`) and Finding #56 (a gained shared slot’s hours at its share: `gainedSlots` carry the slot’s real
+        `teamIds` via `billSlotsOf`, `gainedMinutes` = `pricedMinutes(…).get(t)`), both in `lib/club-schedule-send.ts`;
+        (b) every coach and family place word (about 25 readers): teach the two shared readers, `mapRepTeamEvent` /
+        `getRepTeamEvents` (`lib/db.ts`) and `EVENT_COLUMNS` / `toEntry` (`lib/family-view.ts`), the event’s part and its
+        field’s split, then append the part in the place helpers they feed (`ScheduleEventSheet`, `practicePlaceLabel`,
+        `feedPlace`, the schedule calendar export, the family `placeLabel` and `family-team-schedule`) — read at read time,
+        never stored text, since the Venue library rename cascade rewrites `field_number`; (c) a side-only move trips no
+        family “schedule change” notice (the coach event route watches `location` and `starts_at`), and a house-league
+        practice or game that changes only part is told to nobody; (d) the club calendar’s clash line names the other
+        booking’s field without its part. **2E:** the house-league season calendar and public schedule say no part
+        (`lib/league-season-calendar.ts`).
 - [ ] Reported by `/design`, not this project's to fix: the shipped "Give it to" menu inside a cell of the "Open slots and
       short teams" window has no row on `docs/agents/design/TABLE_EXCEPTION_REGISTER.md` (it was ruled for that window;
       a register row should say it is not a precedent).
