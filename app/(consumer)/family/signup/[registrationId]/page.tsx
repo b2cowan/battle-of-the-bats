@@ -87,7 +87,8 @@ export default async function FamilySignupPage({ params }: { params: Promise<{ r
   } as React.CSSProperties;
 
   return (
-    <div className={frame.tokens} data-club-face={clubFace(org.themeFont)} style={{ ...vars, background: 'var(--club-ground)', minHeight: '100dvh' }}>
+    // data-club-site: a light ground under every theme, so the page scrollbar takes the dark handle (globals.css).
+    <div className={frame.tokens} data-club-site="" data-club-face={clubFace(org.themeFont)} style={{ ...vars, background: 'var(--club-ground)', minHeight: '100dvh' }}>
       <PublicPage frame="club" width="form">
         <div>
           <Link href={back.href} className={kit.back}>{W.inApp.back(back.label)}</Link>

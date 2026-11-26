@@ -9,6 +9,7 @@
  * or says "Nothing was made. Try again." (the room window that would open next is Session P3's).
  */
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { Upload } from 'lucide-react';
 import KitDialog, { DialogCancel, DialogReason } from '@/components/shared/KitDialog';
 import DateTimeInput from '@/components/shared/DateTimeInput';
 import { pickLogoColours } from '@/lib/logo-colours';
@@ -76,6 +77,7 @@ export default function MakeClubWindow({ onClose, onMade }: {
   const [failed, setFailed] = useState(false);
   const [cap, setCap] = useState(false);
   const formRef = useRef<HTMLFormElement>(null);
+  const logoInput = useRef<HTMLInputElement>(null);
 
   const fromLogo = useFileColours(logo);
   const colours = own ?? fromLogo ?? FALLBACK;
@@ -219,12 +221,23 @@ export default function MakeClubWindow({ onClose, onMade }: {
           </label>
         </div>
 
-        <label className={kit.fieldGroup}>
-          <span className={kit.label}>Logo *</span>
-          <input data-field="logo" type="file" accept={PREVIEW_LOGO_TYPES.join(',')} className={styles.file}
-            onChange={e => { setLogo(e.target.files?.[0] ?? null); setOwn(null); clear('logo'); }} {...aria('logo')} />
+        {/* The browser's grey "Choose File" is hidden: the portal's button opens the picker, the chosen name beside it.
+            A group, not a <label>, so the button keeps its own name; a refused logo puts focus on the button. */}
+        <div className={kit.fieldGroup} role="group" aria-labelledby="pc-logo-label">
+          <span className={kit.label} id="pc-logo-label">Logo *</span>
+          <input ref={logoInput} type="file" accept={PREVIEW_LOGO_TYPES.join(',')} hidden
+            onChange={e => { setLogo(e.target.files?.[0] ?? null); setOwn(null); clear('logo'); }} />
+          <div className={styles.fileRow}>
+            <button type="button" data-field="logo" className="btn btn-secondary btn-sm" onClick={() => logoInput.current?.click()}
+              aria-describedby={errors.logo ? 'pc-logo-file pc-logo-error' : 'pc-logo-file'}>
+              <Upload size={14} aria-hidden /> {logo ? 'Change file' : 'Choose file'}
+            </button>
+            <span id="pc-logo-file" className={logo ? styles.fileName : styles.fileNone} aria-live="polite">
+              {logo ? logo.name : 'No file chosen'}
+            </span>
+          </div>
           {errorFor('logo')}
-        </label>
+        </div>
 
         <label className={kit.fieldGroup}>
           <span className={kit.label}>Where the club published this logo *</span>

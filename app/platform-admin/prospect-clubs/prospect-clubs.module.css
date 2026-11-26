@@ -55,7 +55,12 @@
 .address { display: flex; align-items: center; gap: 0.25rem; }
 .addressHost { color: var(--text-tertiary); font-size: var(--type-body); white-space: nowrap; }
 
-.file { font: inherit; min-height: 44px; }
+.fileRow { display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap; }
+.fileName, .fileNone { min-width: 0; overflow-wrap: anywhere; font-size: var(--type-support); color: var(--text-primary); }
+.fileNone { color: var(--text-tertiary); }
+@media (max-width: 640px) {
+  .fileRow > button { min-height: var(--tap-min, 44px); }
+}
 
 .colourLine { display: flex; align-items: center; gap: 0.4rem; margin: 0; flex-wrap: wrap; font-size: var(--type-support); color: var(--text-secondary); }
 .swatch { width: 20px; height: 20px; border-radius: 4px; border: 1px solid var(--home-line); }

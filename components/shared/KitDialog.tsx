@@ -174,7 +174,7 @@ export default function KitDialog({
   onClose,
   children,
   footer,
-  footerStart,
+  footerStart: startGiven,
   footerAbove,
   steps,
   record = false,
@@ -283,6 +283,9 @@ export default function KitDialog({
   const panelRef = useRef<HTMLDivElement>(null);
   const bodyRef = useRef<HTMLDivElement>(null);
   const isRecord = record || steps != null;
+  // A sentence handed in as bare words becomes the bare <span> the foot note's face is written for (the CSS cannot select
+  // loose text, so it read at the panel's size: Make a club for a meeting, owner 2026-11-25).
+  const footerStart = typeof startGiven === 'string' && startGiven ? <span>{startGiven}</span> : startGiven;
   const hasFoot = footer != null || footerStart != null;
   const [reasonSlot, setReasonSlot] = useState<HTMLDivElement | null>(null);
   const [reasonQuiet, setReasonQuiet] = useState(false);

@@ -1100,11 +1100,15 @@ html[data-user-theme="warm"]:has([data-coach-warm-enabled]) body { background: #
    handle (owner, 2026-10-23, the marketing home). A page that paints the cream gives <html> the same two warm
    tokens the thumb asks for. The admin, coach and guest warm pages need it too (owner, 2026-10-26: no handle on
    a long admin board) — their wrappers carry the tokens for the scrollers INSIDE them, never for <html>'s own.
+   The club's own site and the public tournament pages are light under EVERY theme, so they are listed with no theme
+   condition (owner, 2026-11-25: no handle on a club's home page). A new light page ground belongs in this list.
    Dark keeps the white fallback, which is visible on its ground. */
 html:has([data-warm-base="marketing"]),
 html:not([data-user-theme="dark"]):has([data-warm-base="pref"]),
 html[data-user-theme="warm"]:has([data-coach-warm-enabled]),
-html:has([data-guest-kit]) {
+html:has([data-guest-kit]),
+html:has([data-club-site]),
+html:has([data-public-frame="light"]) {
   --home-line-strong: rgba(70, 55, 30, 0.20);
   --home-line-rgb: 70, 55, 30;
 }

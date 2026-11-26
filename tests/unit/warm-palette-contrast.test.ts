@@ -237,6 +237,17 @@ describe('warm palette — legible by construction', () => {
     assert.deepEqual(parseHex(rule[2]), consumerPaper, 'the page base and the consumer --home-paper must move together');
   });
 
+  it('every always-light page gives the page scrollbar its dark handle', () => {
+    // The page scrollbar is <html>'s, outside every wrapper; without these tokens its thumb is translucent white,
+    // invisible on a light ground (found three times: marketing, admin, then a club's home page).
+    const css = readFileSync(COACH_PALETTE, 'utf8');
+    const rule = /([^}]*)\{\s*--home-line-strong: rgba\(70, 55, 30, 0\.20\);\s*--home-line-rgb: 70, 55, 30;\s*\}/.exec(css);
+    assert.ok(rule, 'the page-scrollbar ink rule is gone from app/globals.css');
+    for (const marker of ['[data-warm-base="marketing"]', '[data-club-site]', '[data-public-frame="light"]']) {
+      assert.ok(rule[1].includes(`html:has(${marker})`), `${marker} pages left the page-scrollbar ink rule`);
+    }
+  });
+
   it('every prose ink clears AA on every ground', () => {
     const failures: string[] = [];
     for (const name of PROSE_INKS) {
