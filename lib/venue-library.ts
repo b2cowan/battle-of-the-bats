@@ -22,7 +22,7 @@ import { canMoveClubMoney } from './member-access.ts';
 import type { EntitlementOrg } from './module-entitlements.ts';
 import { joinWithAnd, pluralize } from './utils.ts';
 import type { FieldSections } from './field-parts.ts';
-import type { OrgRole } from './types';
+import { FACILITY_TYPE_LABELS, type FacilityType, type OrgRole } from './types.ts';
 
 /** THE save rule (Ask 9) — the route checks it on every write, the page reads it to hide Add venue and the pencil. */
 export function canSaveVenueLibrary(role: OrgRole | string | null | undefined, capabilities: Record<string, boolean> | null | undefined): boolean {
@@ -131,14 +131,37 @@ export const NO_USAGE: VenueUsage = {
   anyBooking: false, teams: [], seasons: [], tournaments: [], everTeams: [], everSeasons: [], everTournaments: [], facilities: {},
 };
 
-/** "6 teams · house league · 1 tournament" — the table's Booked by column; null when nothing books it this season. */
-export function bookedBySummary(u: VenueUsage): string | null {
-  const parts = [
+/**
+ * The phone row's one line (the table says the same in three columns): "Booked by 6 teams, house league and
+ * 1 tournament". A sentence, never a dotted line (owner 2026-11-26).
+ */
+export function bookedSentence(u: VenueUsage | undefined): string {
+  const parts = u ? [
     u.teams.length ? pluralize(u.teams.length, 'team') : '',
     u.seasons.length ? 'house league' : '',
     u.tournaments.length ? pluralize(u.tournaments.length, 'tournament') : '',
-  ].filter(Boolean);
-  return parts.length ? parts.join(' · ') : null;
+  ].filter(Boolean) : [];
+  return parts.length ? `Booked by ${joinWithAnd(parts)}` : VENUE_LIBRARY_WORDS.nothingBooked;
+}
+
+/** How many names the table's Facilities cell shows before "and N more"; the venue's window lists them all. */
+const FACILITY_NAMES_SHOWN = 4;
+
+/**
+ * The table's Facilities cell: the count leads, in the venue's own word when every facility is one named kind
+ * ("3 diamonds", otherwise "2 facilities"), and the names sit under it in the club's order. Null when it has none.
+ */
+export function facilitiesCell(facilities: readonly LibraryFacility[]): { count: string; names: string } | null {
+  if (!facilities.length) return null;
+  const kinds = new Set(facilities.map(f => f.facilityType));
+  const [only] = kinds;
+  const label = kinds.size === 1 && only !== 'other' ? FACILITY_TYPE_LABELS[only as FacilityType] : undefined;
+  const names = [...facilities].sort((a, b) => a.displayOrder - b.displayOrder).map(f => f.name);
+  const more = names.length - FACILITY_NAMES_SHOWN;
+  return {
+    count: label ? pluralize(names.length, label.toLowerCase()) : pluralize(names.length, 'facility', 'facilities'),
+    names: more > 0 ? `${names.slice(0, FACILITY_NAMES_SHOWN).join(', ')} and ${more} more` : names.join(', '),
+  };
 }
 
 /** "24 games", "3 practices", "24 games, 3 practices" — a house-league season's use, in the window. */
@@ -186,7 +209,7 @@ export const VENUE_LIBRARY_WORDS = {
   emptyBody: 'Add a venue once, with its facilities. Teams, house league and tournaments book it from here.',
   /** The quiet line under the table: "1 archived venue". */
   archivedLine: (n: number) => pluralize(n, 'archived venue'),
-  nothingBooked: 'Nothing booked',
+  nothingBooked: 'Nothing booked this season',
   noFacilities: 'No facilities',
   addressHint: 'Used for the map link on every schedule and family calendar.',
   /** A facility a booking holds, in the form where its ✕ would be. */
@@ -194,6 +217,8 @@ export const VENUE_LIBRARY_WORDS = {
   /** The window's sections. */
   facilitiesHeading: 'Facilities',
   bookedByHeading: 'Booked by this season',
+  /** The table's three booking columns and the heading over them (the window keeps the heading above). */
+  bookedColumns: { group: 'Booked this season', teams: 'Teams', league: 'House league', tournaments: 'Tournaments', leagueYes: 'Yes' },
   nothingThisSeason: 'Nothing books it this season.',
   archivedEyebrow: 'Venue library · Archived',
   /** Said once in the window's pill after Bring back / Archive. */

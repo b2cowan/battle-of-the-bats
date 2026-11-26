@@ -210,7 +210,9 @@ describe('5. the Venue library — who saves, Archive vs Delete, archived out of
     const page = readCode(LIB_PAGE);
     // Add venue is the library's lime; Add permit, for the same savers, moved with the list to Permits (Club Tier 13c, C1).
     // Club Website Stage 2: the header also holds Close a place for the people who close (K1); Add venue stays the savers'.
-    assert.match(page, /actions=\{planAllowed && \(canSave \|\| canClose\) \? \(/);
+    // Owner 2026-11-26: at a desk the two doors share the intro's row; a phone keeps them in the page's action row.
+    assert.match(page, /actions=\{planAllowed && isPhone && \(canSave \|\| canClose\) \? doors : undefined\}/);
+    assert.match(page, /<CoachListToolbar actions=\{isPhone \? undefined : doors\}>/);
     assert.match(page, /\{canSave && \(\s*<button type="button" className=\{`btn btn-lime/);
     assert.doesNotMatch(page, /ViewSwitch|AddPermitWindow/, 'the Venues | Permits switch is gone; the list lives on Permits');
     assert.match(readCode('app/[orgSlug]/admin/permits/page.tsx'), /\{!!permits\?\.canSave && \(\s*<button type="button" className=\{`btn btn-lime/);

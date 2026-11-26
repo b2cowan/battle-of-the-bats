@@ -1769,7 +1769,7 @@ const orgHelp: HelpPageContent = {
                 <li>Click <strong>Add venue</strong> and enter its name, its address (it powers the map link on every schedule), its facilities with their kind, and any notes. The kind is the word every booking form uses for them: a dome of fields reads <strong>Field</strong> to a baseball team, never <strong>Diamond</strong>.</li>
                 <li>Press <strong>Add venue</strong>. Nothing saves until you do.</li>
               </ol>
-              <p>The table shows each venue&rsquo;s facilities and who books it this season. Click a venue to read it: its address, its <strong>Bookings contact</strong> (the venue&rsquo;s booking office, an email), each facility&rsquo;s upcoming bookings, the permits that hold time there (a row opens the permit; &times; comes back), and the teams, house-league season and tournaments that book it. The pencil turns the whole venue into its form, and every change saves as you go; the check mark turns it back.</p>
+              <p>The table shows how many facilities each venue has, with their names, and, under <strong>Booked this season</strong>, how many teams and tournaments book it and whether house league does. On a phone, each row says in one sentence what books the venue. Click a venue to read it: its address, its <strong>Bookings contact</strong> (the venue&rsquo;s booking office, an email), each facility&rsquo;s upcoming bookings, the permits that hold time there (a row opens the permit; &times; comes back), and the teams, house-league season and tournaments that book it. The pencil turns the whole venue into its form, and every change saves as you go; the check mark turns it back.</p>
             </>
           ),
         },
@@ -1800,7 +1800,7 @@ const orgHelp: HelpPageContent = {
           title: 'A closed place at the top of the library',
           content: (
             <>
-              <p>While a place is closed, the owner, admins and league admins see a <strong>Closed</strong> row at the top of the Venue library, above the table. It names the place (<em>Lions Park &middot; all diamonds</em>, or one diamond, or <em>All our fields</em>) and says when it was closed and what changed, for example <em>Sat, Nov 28 &middot; closed 7:10 a.m. by Dana Reyes &middot; 4 postponed, 1 rep game marked</em>. <strong>Reopen</strong> is on that row. In the table, the place&rsquo;s own row reads <strong>Closed today</strong>.</p>
+              <p>While a place is closed, the owner, admins and league admins see a <strong>Closed</strong> row at the top of the Venue library, above the table. It names the place (<em>All diamonds at Lions Park</em>, <em>Diamond 2 at Lions Park</em>, or <em>All our fields</em>). One line says which days it is closed for and who closed it, for example <em>For Sat, Nov 28, closed at 7:10 a.m. by Dana Reyes</em>, and a second says what changed, for example <em>4 postponed, 1 rep game marked</em>. <strong>Reopen</strong> is on that row. In the table, the place&rsquo;s own row reads <strong>Closed today</strong>.</p>
               <p><strong>Close a place</strong> is in the library&rsquo;s toolbar. See <a href="#close-a-place">Close a place</a>.</p>
             </>
           ),

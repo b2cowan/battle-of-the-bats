@@ -6,7 +6,7 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import {
-  NO_USAGE, VENUE_LIBRARY_WORDS, archiveQuestion, bookedBySummary, canSaveVenueLibrary, deleteQuestion,
+  NO_USAGE, VENUE_LIBRARY_WORDS, archiveQuestion, bookedSentence, facilitiesCell, canSaveVenueLibrary, deleteQuestion,
   bookingsEmailProblem, duplicateFacilityName, seasonUseWords, tournamentUseWords, type VenueUsage,
 } from '../../lib/venue-library.ts';
 import { whereLibraryBody, whereOfLibraryRow } from '../../lib/where-field.ts';
@@ -30,14 +30,25 @@ describe('who saves (Ask 9): the people who schedule a program', () => {
 const usage = (over: Partial<VenueUsage>): VenueUsage => ({ ...NO_USAGE, ...over });
 
 describe('Booked by this season, in words', () => {
-  it('reads by program, as the table draws it', () => {
-    assert.equal(bookedBySummary(usage({
+  it('the phone row says it as a sentence, never a dotted line', () => {
+    assert.equal(bookedSentence(usage({
       teams: ['11U AA', '12U AA', '13U AAA', '14U AA', '15U AA', '15U AAA'],
       seasons: [{ id: 's', name: '2026 Fall House League', games: 24, practices: 0 }],
       tournaments: [{ id: 't', name: 'UAT Rep Club Invitational 2026', games: 12 }],
-    })), '6 teams · house league · 1 tournament');
-    assert.equal(bookedBySummary(usage({ teams: ['13U AAA'] })), '1 team');
-    assert.equal(bookedBySummary(NO_USAGE), null);
+    })), 'Booked by 6 teams, house league and 1 tournament');
+    assert.equal(bookedSentence(usage({ teams: ['13U AAA'] })), 'Booked by 1 team');
+    assert.equal(bookedSentence(NO_USAGE), 'Nothing booked this season');
+    assert.equal(bookedSentence(undefined), 'Nothing booked this season');
+  });
+  it('the Facilities cell: a count in the venue’s own word, the names under it, four then "and N more"', () => {
+    const f = (name: string, facilityType: string, displayOrder: number) => ({ id: name, name, facilityType, displayOrder });
+    assert.deepEqual(facilitiesCell([f('Diamond 2', 'diamond', 2), f('Diamond 1', 'diamond', 1)]), { count: '2 diamonds', names: 'Diamond 1, Diamond 2' });
+    assert.deepEqual(facilitiesCell([f('Centre Court', 'court', 1)]), { count: '1 court', names: 'Centre Court' });
+    assert.equal(facilitiesCell([f('A', 'diamond', 1), f('Cage', 'other', 2)])?.count, '2 facilities');
+    assert.equal(facilitiesCell([f('A', 'other', 1)])?.count, '1 facility');
+    assert.equal(facilitiesCell(['A', 'B', 'C', 'D'].map((n, i) => f(n, 'field', i)))?.names, 'A, B, C, D');
+    assert.equal(facilitiesCell(['A', 'B', 'C', 'D', 'E', 'F'].map((n, i) => f(n, 'field', i)))?.names, 'A, B, C, D and 2 more');
+    assert.equal(facilitiesCell([]), null);
   });
   it('a season and a tournament say their games', () => {
     assert.equal(seasonUseWords({ games: 24, practices: 0 }), '24 games');

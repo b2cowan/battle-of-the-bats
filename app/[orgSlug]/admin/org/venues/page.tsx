@@ -6,9 +6,10 @@
  *
  *   the page   — the 1200px column. Title "Venue library" (eyebrow Organization), Add venue — the one lime, and it ASKS —
  *                for whoever saves. The lede in the toolbar names every program. A table: Venue (the name the link, the
- *                address under it) · Facilities (by name, in the club's order) · Booked by this season (by program, in
- *                words) · one chevron; the whole row opens. A quiet "N archived venues" line opens them. On a phone the
- *                table is the kit's white rows with a chevron.
+ *                address under it) · Facilities (the count, the names under it in the club's order) · under "Booked this
+ *                season", a column each for Teams, House league and Tournaments · one chevron; the whole row opens. No
+ *                cell is a dotted line (owner 2026-11-26). A quiet "N archived venues" line opens them. On a phone the
+ *                table is the kit's white rows with a chevron: the name, then one sentence saying what books it.
  *   a venue    — the read-first window (`VenueWindow`): it reads, the pencil edits it whole, saving as you go. Its Permits
  *                section lists the permits holding time there, each opening its window over the venue's.
  *   archive    — a venue anything books (past included) offers Archive; one nothing books offers Delete (red, asks).
@@ -50,7 +51,7 @@ import { AddVenueWindow, VenueQuestion, VenueWindow } from '@/components/admin/k
 import { PermitWindow } from '@/components/admin/kit/club/PermitWindows';
 import { BudgetLineHandOff } from '@/components/admin/kit/club/money/BudgetWindows';
 import own from '@/components/admin/kit/club/VenueLibrary.module.css';
-import { NO_USAGE, VENUE_LIBRARY_WORDS as W, bookedBySummary, type LibraryVenue, type VenueUsage } from '@/lib/venue-library';
+import { NO_USAGE, VENUE_LIBRARY_WORDS as W, bookedSentence, facilitiesCell, type LibraryVenue, type VenueUsage } from '@/lib/venue-library';
 import { PERMIT_WORDS as PW } from '@/lib/permit-words';
 import type { VenuePermitRow } from '@/lib/permit-server';
 import LoadingState from '@/components/shared/LoadingState';
@@ -62,9 +63,6 @@ type Level =
   | { kind: 'venue'; id: string }
   | { kind: 'permit'; id: string; edit?: boolean; said?: string | null }
   | { kind: 'line'; lineId: string; yearKey: string };
-
-const facilitiesWords = (v: LibraryVenue) =>
-  [...v.facilities].sort((a, b) => a.displayOrder - b.displayOrder).map(f => f.name).join(' · ');
 
 export default function VenueLibraryPage() {
   const { currentOrg, loading: orgLoading, userRole } = useOrg();
@@ -190,22 +188,35 @@ export default function VenueLibraryPage() {
     done(W.broughtBack(v.name), setActive(v.id, true));
   }
 
+  /** A booking column's cell: how many (or the word that stands for any), a quiet dash for none. */
+  const count = (n: number | undefined, word?: string) => (
+    <td className={`${repKit.num}${n ? '' : ` ${repKit.dim}`}`}>{n ? word ?? n : '—'}</td>
+  );
+
   const table = (venues: LibraryVenue[], label: string) => (
     <>
       <div className={`${repKit.tableFrame} ${repKit.deskOnly}`}>
         <table className={repKit.table} aria-label={label}>
+          <colgroup span={2} />
+          <colgroup span={3} />
+          <colgroup />
           <thead>
             <tr>
-              <th scope="col">Venue</th>
-              <th scope="col">Facilities</th>
-              <th scope="col">{W.bookedByHeading}</th>
-              <th scope="col" className={repKit.go}><span className={repKit.srOnly}>Open</span></th>
+              <th scope="col" rowSpan={2} className={own.headFoot}>Venue</th>
+              <th scope="col" rowSpan={2} className={own.headFoot}>Facilities</th>
+              <th scope="colgroup" colSpan={3} className={own.groupHead}>{W.bookedColumns.group}</th>
+              <th scope="col" rowSpan={2} className={repKit.go}><span className={repKit.srOnly}>Open</span></th>
+            </tr>
+            <tr>
+              <th scope="col" className={`${repKit.num} ${own.countHead}`}>{W.bookedColumns.teams}</th>
+              <th scope="col" className={`${repKit.num} ${own.countHead}`}>{W.bookedColumns.league}</th>
+              <th scope="col" className={`${repKit.num} ${own.countHead}`}>{W.bookedColumns.tournaments}</th>
             </tr>
           </thead>
           <tbody>
             {venues.map(v => {
-              const facilities = facilitiesWords(v);
-              const booked = read?.usage[v.id] ? bookedBySummary(read.usage[v.id]) : null;
+              const facilities = facilitiesCell(v.facilities);
+              const use = read?.usage[v.id];
               return (
                 <tr key={v.id} className={repKit.rowOpens} onClick={() => { if (window.getSelection()?.toString()) return; openFromPage({ kind: 'venue', id: v.id }); }}>
                   <td>
@@ -213,8 +224,12 @@ export default function VenueLibraryPage() {
                     {isClosedToday(v.id) && <> <span className={`${repKit.chip} ${repKit.chipWarn}`}>{CW.closedToday}</span></>}
                     {v.address && <span className={repKit.cellSub}>{v.address}</span>}
                   </td>
-                  <td className={facilities ? undefined : repKit.dim}>{facilities || W.noFacilities}</td>
-                  <td className={booked ? undefined : repKit.dim}>{booked ?? W.nothingBooked}</td>
+                  <td className={facilities ? undefined : repKit.dim}>
+                    {facilities ? <><span className={own.facilityCount}>{facilities.count}</span><span className={repKit.cellSub}>{facilities.names}</span></> : W.noFacilities}
+                  </td>
+                  {count(use?.teams.length)}
+                  {count(use?.seasons.length, W.bookedColumns.leagueYes)}
+                  {count(use?.tournaments.length)}
                   <td className={repKit.go}><span className={repKit.goLink} aria-hidden><ChevronRight size={16} /></span></td>
                 </tr>
               );
@@ -224,13 +239,11 @@ export default function VenueLibraryPage() {
       </div>
       <div className={repKit.phoneOnly}>
         <ClubRowFrame><ClubRowList inset label={label}>
-          {venues.map(v => {
-            const booked = read?.usage[v.id] ? bookedBySummary(read.usage[v.id]) : null;
-            return (
-              <ClubRow key={v.id} as="button" aria-haspopup="dialog" onClick={() => openFromPage({ kind: 'venue', id: v.id })} title={v.name}
-                caption={<>{isClosedToday(v.id) && <><span className={`${repKit.chip} ${repKit.chipWarn}`}>{CW.closedToday}</span> </>}{[facilitiesWords(v) || W.noFacilities, booked ?? W.nothingBooked].join(' · ')}</>} chevron />
-            );
-          })}
+          {venues.map(v => (
+            <ClubRow key={v.id} as="button" aria-haspopup="dialog" onClick={() => openFromPage({ kind: 'venue', id: v.id })}
+              title={<>{v.name}{isClosedToday(v.id) && <span className={`${repKit.chip} ${repKit.chipWarn}`}>{CW.closedToday}</span>}</>}
+              caption={bookedSentence(read?.usage[v.id])} chevron />
+          ))}
         </ClubRowList></ClubRowFrame>
       </div>
     </>
@@ -252,7 +265,7 @@ export default function VenueLibraryPage() {
           <div className={own.closedBody}>
             <span className={`${repKit.chip} ${repKit.chipWarn}`}>{CW.closed}</span>
             <strong>{CW.rowName(c)}</strong>
-            <span className={own.closedLine}>{CW.rowLine(c)}</span>
+            {CW.rowLines(c).map(line => <span key={line} className={own.closedLine}>{line}</span>)}
           </div>
           <button type="button" className={`btn btn-outline ${own.closedReopen}`} onClick={() => setReopening(c)}>{CW.reopen}</button>
         </div>

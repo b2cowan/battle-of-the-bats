@@ -102,6 +102,14 @@
 
 /* CLOSE A PLACE (Club Website Stage 2, K11): a closure showing on the site, one row at the top of the library — an amber
    edge, the place, its days and who closed it, and Reopen (full width on its own line on a phone). */
+/* The table's heading over the three booking columns (owner 2026-11-26): one label spanning them, the other headings
+   on the foot of the two-row head. Named by element too, so they outrank the table's own heading rule. */
+thead th.headFoot { vertical-align: bottom; }
+thead th.groupHead { text-align: center; padding-bottom: 0.2rem; }
+/* As narrow as their headings, so Venue and Facilities keep the room on a smaller screen (/review 2026-11-26). */
+thead th.countHead { width: 1%; }
+.facilityCount { white-space: nowrap; }
+
 .closedRow {
   display: flex; flex-wrap: wrap; align-items: center; gap: 0.6rem 0.9rem; margin: 0 0 0.9rem; padding: 0.75rem 0.9rem;
   border: 1px solid var(--home-line); border-left: 3px solid var(--warning); border-radius: 8px; background: var(--card-bg);

@@ -575,15 +575,19 @@ export const CLOSE_WORDS = {
   // The Venue library's closed row (drawing tab 3, "Where it lives").
   closed: 'Closed',
   closedToday: 'Closed today',
-  /** "Lions Park · all diamonds". */
+  /** "Diamond 2 at Lions Park" · "All diamonds at Lions Park". */
   rowName: (c: { scope: ClosedPlace['scope']; placeName: string | null; facilityName: string | null }) =>
-    c.scope === 'all' ? 'All our fields' : c.scope === 'diamond' ? `${c.placeName} · ${c.facilityName}` : `${c.placeName} · all diamonds`,
-  /** "Sat, Nov 28 · closed 7:10 a.m. by Dana Reyes · 4 postponed, 1 rep game marked". */
-  rowLine: (c: { firstDay: string; lastDay: string; closedAt: string; closedBy: string | null; leagueCalledOff: number; verb: ClosureVerb; marks: number }) => [
-    c.firstDay === c.lastDay ? formatShortWeekdayDate(c.firstDay) : `${formatShortWeekdayDate(c.firstDay)} to ${formatShortWeekdayDate(c.lastDay)}`,
-    `closed ${closeClock(c.closedAt)}${c.closedBy ? ` by ${c.closedBy}` : ''}`,
-    [c.leagueCalledOff ? `${c.leagueCalledOff} ${c.verb}` : null, c.marks ? `${c.marks === 1 ? '1 rep game' : `${c.marks} rep games`} marked` : null].filter(Boolean).join(', ') || null,
-  ].filter(Boolean).join(' · '),
+    c.scope === 'all' ? 'All our fields' : c.scope === 'diamond' ? `${c.facilityName} at ${c.placeName}` : `All diamonds at ${c.placeName}`,
+  /**
+   * The row's two plain lines, never one dotted one (owner 2026-11-26): the days it is closed for and who closed it
+   * when ("For Sat, Nov 28, closed at 7:10 a.m. by Dana Reyes" — the time is the press, which can be an earlier day),
+   * then what it did to games ("4 postponed, 1 rep game marked"), when it did anything.
+   */
+  rowLines: (c: { firstDay: string; lastDay: string; closedAt: string; closedBy: string | null; leagueCalledOff: number; verb: ClosureVerb; marks: number }): string[] => {
+    const days = c.firstDay === c.lastDay ? formatShortWeekdayDate(c.firstDay) : `${formatShortWeekdayDate(c.firstDay)} to ${formatShortWeekdayDate(c.lastDay)}`;
+    const did = [c.leagueCalledOff ? `${c.leagueCalledOff} ${c.verb}` : null, c.marks ? `${c.marks === 1 ? '1 rep game' : `${c.marks} rep games`} marked` : null].filter(Boolean).join(', ');
+    return [`For ${days}, closed at ${closeClock(c.closedAt)}${c.closedBy ? ` by ${c.closedBy}` : ''}`, ...(did ? [did] : [])];
+  },
   /** The Overview's line (build words; the drawing names it, it does not word it). Counted by park (Session 2D: two
    *  diamonds at one park are one place closed), each named as `groupWord`: "2 diamonds at Lions Park". */
   overviewLabel: 'Places closed',
