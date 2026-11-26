@@ -84,9 +84,11 @@ describe('the Ledger reads like the coach\'s Ledger (Ask 6), on the coach\'s own
     assert.match(coach, /const inDates = \(book\?\.book \?\? \[\]\)\.filter\(r => r\.overdueDays != null \|\| r\.date === null\s*\|\| \(r\.date >= dateRange\.from && r\.date <= dateRange\.to\)\);/);
   });
   it('the club\'s Ledger filters on the screen, as the coach\'s does — a tick never waits on the server (owner 2026-10-09)', () => {
-    // The read carries the book and the window only; Type, Status, Category and Item narrow it here.
+    // The read carries the book and the window only; the search (owner 2026-11-24), then Type, Status, Category and
+    // Item narrow it here.
     assert.doesNotMatch(ledger, /params\.(set|append)\('(status|type|category|item)'/);
-    assert.match(ledger, /const shown = lines\.filter\(r => statusSet\.has\(r\.status\)/);
+    assert.match(ledger, /const searched = wanted\.length === 0 \? lines : lines\.filter\(r => ledgerRowMatches\(/);
+    assert.match(ledger, /const shown = searched\.filter\(r => statusSet\.has\(r\.status\)/);
     assert.match(ledger, /\}, \[bookId, slug, window_\.from, window_\.to, beginRead\]\);/, 'only a new book or window reads again');
   });
   it('both halves of the filed word show — Category then Item, as on the coach’s Ledger (owner 2026-10-07)', () => {
@@ -94,8 +96,9 @@ describe('the Ledger reads like the coach\'s Ledger (Ask 6), on the coach\'s own
     assert.match(ledger, /data-label="Category">\{row\.category \?\? ''\}<\/td>\s*<td className=\{moneyKit\.cat\} data-label="Item">\{row\.item \?\? ''\}<\/td>/);
     assert.match(ledger, /label="Item" options=\{itemNames\.map\(/, 'the Item filter lists the items in the window');
   });
-  it('the Balance leaves once an entry that moves it is hidden — Type, Category, Item, or Status without Posted (§255); the export holds the whole period', () => {
-    assert.match(ledger, /const showBalance = types\.size === 0 && cats\.size === 0 && items\.size === 0 && statuses\.has\('posted'\);/);
+  it('the Balance leaves once an entry that moves it is hidden — Type, Category, Item, a search, or Status without Posted (§255); the export holds the whole period', () => {
+    assert.match(ledger, /const searching = query\.trim\(\) !== '';/);
+    assert.match(ledger, /const showBalance = types\.size === 0 && cats\.size === 0 && items\.size === 0 && !searching && statuses\.has\('posted'\);/);
     assert.match(ledger, /params\.set\('export', '1'\)/);
   });
   it('the coach\'s Ledger holds the same rule: a Status without Actual takes the Balance too (§255)', () => {

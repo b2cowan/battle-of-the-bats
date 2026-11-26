@@ -57,7 +57,7 @@ describe('the wiring', () => {
     assert.ok(!/\.limit\(1\)\.maybeSingle\(\)/.test(fn), 'no single-row read of a Stripe refund');
   });
   it('a payment that lands records the refunds made in Stripe before it (events out of order)', () => {
-    assert.equal(src.match(/reconcileDashboardRefunds\(/g)?.length, 3, 'defined once, called from both landings');
+    assert.equal(src.match(/reconcileDashboardRefunds\(/g)?.length, 4, 'defined once, called from the league, team and sponsor landings');
   });
   it('a team part refund never lands through the full-refund function', () => {
     assert.ok(/if \(rRow\?\.part_refund\)[\s\S]*?bookTeamRefund/.test(src));

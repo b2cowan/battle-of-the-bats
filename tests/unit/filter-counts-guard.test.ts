@@ -124,8 +124,9 @@ describe('D5 — the club Ledger counts what ticking a choice would list, and Al
     // The read is the whole window, every status (owner 2026-10-09), so its length IS every entry in the period.
     assert.match(page, /total: lines\.length,/);
     assert.match(page, /total=\{view\.total\}/, 'the export menu still says every entry in the period');
-    // Counted on the screen now, over the window's lines, with the filters as they are.
-    assert.match(page, /optionCounts: ledgerOptionCounts\(lines, \{ status: statusSet, types: typeSet, categories: catSet, items: itemSet \}\)/);
+    // Counted on the screen now, over the window's lines the search leaves (owner 2026-11-24), with the filters as
+    // they are.
+    assert.match(page, /optionCounts: ledgerOptionCounts\(searched, \{ status: statusSet, types: typeSet, categories: catSet, items: itemSet \}\)/);
   });
 });
 

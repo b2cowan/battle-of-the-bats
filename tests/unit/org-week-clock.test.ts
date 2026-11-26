@@ -75,7 +75,9 @@ describe('every week grouping reads the org-zone key (no device or server clock 
   it('the public league schedule files a game by the Monday of its org-zone day, and reads today in the org zone', () => {
     const page = read('app/[orgSlug]/league/[seasonSlug]/schedule/page.tsx');
     assert.match(page, /seasonWeeks\(bookings, today\)/);
-    assert.match(page, /const today = orgDayKey\(new Date\(\)\.toISOString\(\)\);/);
+    // One reading of the clock for the page (club website game day), turned into the org-zone day.
+    assert.match(page, /const renderedAt = new Date\(\);/);
+    assert.match(page, /const today = orgDayKey\(renderedAt\.toISOString\(\)\);/);
     assert.doesNotMatch(page, /getDay\(\)|toLocale(Date|Time)?String\(/, 'no server-clock day or time');
     const lib = read('lib/league-season-calendar.ts');
     assert.match(lib, /day: g\.scheduledAt \? orgDayKey\(g\.scheduledAt\) : ''/);
