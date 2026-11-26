@@ -68,7 +68,11 @@ describe('the focused page — the chrome asks the rule', () => {
     const growth = gated.find(g => g.includes('<PoweredByBadge'));
     const fan = gated.find(g => g.includes('<MyTeamDock'));
     assert.ok(growth && fan, 'both gated fragments are there');
-    assert.match(growth, /\{isFreeTournamentPlan && \(\s*<PoweredByBadge[\s\S]*?\{showAcquisitionBanner && \(\s*<TournamentAcquisitionBanner/);
+    assert.match(growth, /\{showsFreePromos && \(\s*<PoweredByBadge[\s\S]*?\{showAcquisitionBanner && \(\s*<TournamentAcquisitionBanner/);
+    // Neither is on a preview club (Track P), and the badge waits its turn behind the banner (owner 2026-11-26).
+    assert.match(layout, /const showsFreePromos = isFreeTournamentPlan && !org\.isPreview;/);
+    assert.match(layout, /if \(showsFreePromos\) \{/);
+    assert.match(growth, /yieldToBanner=\{showAcquisitionBanner\}/);
     assert.ok(layout.indexOf('<PoweredByBadge') < layout.indexOf('<div className={`${clubFrameStyles.tokens}'), 'the badge renders outside the frame');
     for (const piece of ['<PublicAppOnly><MyTeamDock', '<PublicAppOnly><FollowDeepLinkPrompt', '<PublicAppOnly><FollowAccountNudge',
       '<PublicAppOnly><AccountFollowSync', '{!effectivelyFinished && <AlertsNudge', '<InstallAppPrompt']) {

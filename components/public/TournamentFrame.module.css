@@ -350,14 +350,10 @@
 .footHostText { text-decoration: none; }
 
 /* The free plan's acquisition banner floats over the foot of the page (unchanged, Stage 1). The footer is the last thing
-   on a framed page, so it makes room under itself while the banner shows; dismissed, the room goes with it. */
+   on a framed page, so it makes room under itself while the banner shows, by the banner's measured height; dismissed,
+   the room goes with it. */
 :global(html):has(.frame):has(:global([data-growth-banner])) :global([data-public-frame-footer]) > div {
-  padding-bottom: calc(160px + env(safe-area-inset-bottom, 0px)); /* the banner's two rows on a phone */
-}
-@media (min-width: 721px) {
-  :global(html):has(.frame):has(:global([data-growth-banner])) :global([data-public-frame-footer]) > div {
-    padding-bottom: 104px; /* its one row from 721 px */
-  }
+  padding-bottom: calc(var(--public-growth-banner-h, 160px) + 28px + env(safe-area-inset-bottom, 0px));
 }
 
 .footLink:focus-visible,
@@ -366,8 +362,8 @@ a.footHost:focus-visible {
   outline-offset: 2px;
 }
 
-/* Stage 6 measurements exposed undersized free-event promotion controls outside the frame, and a badge hidden by
-   a wrapped banner. Geometry only, gated by the frame's marker. */
+/* Stage 6 measurements exposed undersized free-event promotion controls outside the frame. Geometry only, gated by
+   the frame's marker. The banner and the badge are never on screen together, so neither is stacked over the other. */
 :global(html):has(.frame) :global([data-growth-banner]) a,
 :global(html):has(.frame) :global([aria-label='Tournament platform attribution']) a {
   display: inline-flex; align-items: center; min-height: 44px;
@@ -375,19 +371,8 @@ a.footHost:focus-visible {
 :global(html):has(.frame) :global([data-growth-banner]) button {
   width: 44px; height: 44px;
 }
-:global(html):has(.frame):has(:global([data-growth-banner])) :global([aria-label='Tournament platform attribution']) {
-  bottom: calc(1rem + var(--public-growth-banner-h, 160px) + 8px);
-}
 :global(html):has(.frame):has(:global([aria-label='Tournament platform attribution'])) :global([data-public-frame-footer]) > div {
   padding-bottom: calc(96px + env(safe-area-inset-bottom, 0px));
-}
-:global(html):has(.frame):has(:global([data-growth-banner])):has(:global([aria-label='Tournament platform attribution'])) :global([data-public-frame-footer]) > div {
-  padding-bottom: calc(var(--public-growth-banner-h, 160px) + 96px + env(safe-area-inset-bottom, 0px));
-}
-@media (max-width: 900px) {
-  :global(html):has(.frame):has(:global([data-growth-banner])) :global([aria-label='Tournament platform attribution']) {
-    bottom: calc(var(--bottom-nav-height, 3.5rem) + env(safe-area-inset-bottom, 0px) + var(--public-growth-banner-h, 160px) + 8px);
-  }
 }
 
 /* ── The readable baseline (Part 3): today's pages, unchanged in layout, read on the light ground ──────────────────────

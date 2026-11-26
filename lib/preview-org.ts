@@ -21,6 +21,8 @@
  *     robots.txt line (that file is public and would list our prospects). The directory and "discoverable" read false
  *     whatever is stored.
  *   - **Watched.** Error alerts stay ON: a preview is in front of a prospect, so a fault there matters more, not less.
+ *   - **One ask.** "Claim it" only: a preview's tournament pages carry neither the free plan's "Powered by" badge nor
+ *     its sign-up banner (owner 2026-11-26).
  *
  * ⚠ Why this is NOT the demo list (`lib/demo-org.ts`). The demo list means two things at once: "not a customer, silent,
  * unindexed" (a preview needs all of it) and "a read-only shared sandbox with a banner and a no-login door" (a preview

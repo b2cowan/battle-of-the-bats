@@ -22,6 +22,14 @@ export function isAcquisitionHiddenOnPath(pathname: string | null | undefined) {
   return Boolean(pathname?.endsWith('/register') || pathname?.includes('/official'));
 }
 
+// A free event shows ONE of our cards at a time: the banner first, the Powered-by badge once the banner is
+// closed (or where it is not shown at all). The badge learns that from this key and this event, so both live here.
+export const ACQUISITION_BANNER_DISMISSED_EVENT = 'flhq-acq-banner-dismissed';
+
+export function acquisitionBannerDismissKey(orgSlug: string, tournamentSlug: string) {
+  return `flhq-acq-dismiss-public_tournament_banner-${orgSlug}-${tournamentSlug}`;
+}
+
 export function buildTournamentAcquisitionHref(input: {
   source: TournamentPlusAcquisitionSource;
   orgSlug: string;

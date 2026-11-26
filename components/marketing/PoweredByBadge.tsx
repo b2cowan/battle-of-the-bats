@@ -2,8 +2,10 @@
 
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
-import { usePublicPathname } from '@/lib/use-public-pathname';
+import { useClubBase, usePublicPathname } from '@/lib/use-public-pathname';
 import {
+  ACQUISITION_BANNER_DISMISSED_EVENT,
+  acquisitionBannerDismissKey,
   buildTournamentAcquisitionHref,
   isAcquisitionHiddenOnPath,
   trackTournamentAcquisition,
@@ -13,35 +15,41 @@ import styles from './tournament-growth.module.css';
 type PoweredByBadgeProps = {
   orgSlug: string;
   tournamentSlug: string;
-  offsetForBanner?: boolean;
+  /** This visitor is offered the banner, so the badge waits until it is closed. */
+  yieldToBanner?: boolean;
 };
 
-export default function PoweredByBadge({ orgSlug, tournamentSlug, offsetForBanner = false }: PoweredByBadgeProps) {
+export default function PoweredByBadge({ orgSlug, tournamentSlug, yieldToBanner = false }: PoweredByBadgeProps) {
   const pathname = usePublicPathname();
   // Same page rule as the banner: the badge is absent on the registration form and the
   // score-entry screens, where it floated over the form's fields and submit button (2026-10-16).
   const hiddenForFlow = isAcquisitionHiddenOnPath(pathname);
-  // The server only knows the banner is *eligible*; whether it actually shows is
-  // client state (localStorage dismissal + per-flow suppression). Track it here so
-  // the badge never keeps a phantom "banner above me" offset, floating mid-page
-  // (conversion sweep 2026-07-14, Journey F finding 2). Deferred read via
-  // setTimeout(0) — the same hydration-safe idiom the banner itself uses.
-  const bannerEligible = offsetForBanner && !hiddenForFlow;
-  const [bannerDismissed, setBannerDismissed] = useState(true);
+  // One card at a time (owner 2026-11-26): the banner first, this badge once it is closed. The banner is never
+  // on a club's own web address (hideOnClubOwnHost), so there the badge has nothing to wait for.
+  const onClubOwnHost = useClubBase()?.ownHost === true;
+  const waitsForBanner = yieldToBanner && !onClubOwnHost;
+  // The server only knows the banner is *eligible*; whether it was closed is client state (localStorage),
+  // so a waiting badge stays off the page until that is read. Deferred via setTimeout(0) — the same
+  // hydration-safe idiom the banner itself uses. Held as the key, so one event's answer never serves another.
+  const dismissKey = acquisitionBannerDismissKey(orgSlug, tournamentSlug);
+  const [closedKey, setClosedKey] = useState<string | null>(null);
   useEffect(() => {
-    if (!bannerEligible) return;
-    const dismissKey = `flhq-acq-dismiss-public_tournament_banner-${orgSlug}-${tournamentSlug}`;
+    if (!waitsForBanner) return;
     const timer = window.setTimeout(() => {
-      setBannerDismissed(localStorage.getItem(dismissKey) === '1');
+      try {
+        if (localStorage.getItem(dismissKey) === '1') setClosedKey(dismissKey);
+      } catch {
+        setClosedKey(dismissKey); // no storage: the banner cannot show either
+      }
     }, 0);
-    const onDismiss = () => setBannerDismissed(true);
-    window.addEventListener('flhq-acq-banner-dismissed', onDismiss);
+    const onDismiss = () => setClosedKey(dismissKey);
+    window.addEventListener(ACQUISITION_BANNER_DISMISSED_EVENT, onDismiss);
     return () => {
       window.clearTimeout(timer);
-      window.removeEventListener('flhq-acq-banner-dismissed', onDismiss);
+      window.removeEventListener(ACQUISITION_BANNER_DISMISSED_EVENT, onDismiss);
     };
-  }, [bannerEligible, orgSlug, tournamentSlug]);
-  const bannerVisible = bannerEligible && !bannerDismissed;
+  }, [waitsForBanner, dismissKey]);
+  const visible = !hiddenForFlow && (!waitsForBanner || closedKey === dismissKey);
 
   const href = buildTournamentAcquisitionHref({
     source: 'public_powered_by_badge',
@@ -53,7 +61,7 @@ export default function PoweredByBadge({ orgSlug, tournamentSlug, offsetForBanne
   useEffect(() => {
     // A badge that is not on screen is not a view — and must not use up the session's one
     // view either, or landing on the register form first would hide every later impression.
-    if (hiddenForFlow) return;
+    if (!visible) return;
     const key = `flhq-acq-view-public_powered_by_badge-${orgSlug}-${tournamentSlug}`;
     if (sessionStorage.getItem(key) === '1') return;
     sessionStorage.setItem(key, '1');
@@ -66,13 +74,13 @@ export default function PoweredByBadge({ orgSlug, tournamentSlug, offsetForBanne
       currentPath: window.location.pathname,
       ctaHref: href,
     });
-  }, [hiddenForFlow, href, orgSlug, tournamentSlug]);
+  }, [visible, href, orgSlug, tournamentSlug]);
 
-  if (hiddenForFlow) return null;
+  if (!visible) return null;
 
   return (
     <aside
-      className={`${styles.poweredBy} ${bannerVisible ? styles.poweredByWithBanner : ''}`}
+      className={styles.poweredBy}
       aria-label="Tournament platform attribution"
     >
       <span>Powered by FieldLogicHQ</span>

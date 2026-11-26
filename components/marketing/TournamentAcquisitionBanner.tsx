@@ -6,6 +6,8 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { usePublicPathname } from '@/lib/use-public-pathname';
 import { readFollowedTeam } from '@/lib/follow';
 import {
+  ACQUISITION_BANNER_DISMISSED_EVENT,
+  acquisitionBannerDismissKey,
   buildTeamWorkspaceAcquisitionHref,
   buildTournamentAcquisitionHref,
   isAcquisitionHiddenOnPath,
@@ -41,7 +43,7 @@ function TournamentAcquisitionBanner({
   const bannerRef = useRef<HTMLElement>(null);
   const [dismissed, setDismissed] = useState(true);
   const [variant, setVariant] = useState<BannerVariant | null>(null);
-  const dismissKey = `flhq-acq-dismiss-public_tournament_banner-${orgSlug}-${tournamentSlug}`;
+  const dismissKey = acquisitionBannerDismissKey(orgSlug, tournamentSlug);
   const hiddenForFlow = isAcquisitionHiddenOnPath(pathname);
   const organizerHref = useMemo(() => buildTournamentAcquisitionHref({
     source: 'public_tournament_banner',
@@ -96,8 +98,8 @@ function TournamentAcquisitionBanner({
     });
   }, [dismissed, hiddenForFlow, variant, activeHref, orgSlug, tournamentSlug]);
 
-  // Preview-only geometry: long tournament names can make this taller than the badge's old fixed offset.
-  // Publish the actual height so the framed page can keep both promotions and its footer clear.
+  // Framed pages only: long tournament names can wrap this taller than a fixed allowance.
+  // Publish the actual height so the framed page's footer can keep clear of it.
   useEffect(() => {
     const banner = bannerRef.current;
     if (!banner || !document.querySelector('[data-public-frame]')) return;
@@ -159,8 +161,8 @@ function TournamentAcquisitionBanner({
         onClick={() => {
           localStorage.setItem(dismissKey, '1');
           setDismissed(true);
-          // Same-page listeners (the Powered-by badge's offset) react immediately.
-          window.dispatchEvent(new Event('flhq-acq-banner-dismissed'));
+          // The Powered-by badge takes the banner's place straight away.
+          window.dispatchEvent(new Event(ACQUISITION_BANNER_DISMISSED_EVENT));
         }}
         aria-label="Dismiss"
       >

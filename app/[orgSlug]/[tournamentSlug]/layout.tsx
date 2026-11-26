@@ -109,6 +109,8 @@ export default async function TournamentLayout({
   // Part 3d). This layout no longer reads the preview switch.
   // The free presentation (the badge and the banner): the free plan's and a Premium coach's event's (R6).
   const isFreeTournamentPlan = showsFreeCredit(org.planId);
+  // …except on a preview club (Track P), whatever its plan: "Claim it" is the only ask there (owner 2026-11-26).
+  const showsFreePromos = isFreeTournamentPlan && !org.isPreview;
 
   // Stage B.2 — the event chrome's conditional door UP to the org's public page (the band's
   // "Hosted by" door, the footer's host line and the desk rail's crumb), via the ONE shared resolver. That resolver owns
@@ -134,7 +136,7 @@ export default async function TournamentLayout({
   // majority pays a cookie read instead of an auth resolution on every render
   // (Nav Unification Stage A paper-cut #2; anonymous line in NAV_UNIFICATION_PLAN §5).
   let showAcquisitionBanner = false;
-  if (isFreeTournamentPlan) {
+  if (showsFreePromos) {
     if (await hasSupabaseSessionCookie()) {
       const authCtx = await getAuthContext({ orgSlug }).catch(() => null);
       showAcquisitionBanner = !authCtx || authCtx.org.id !== org.id;
@@ -295,11 +297,11 @@ export default async function TournamentLayout({
       {/* The free plan's FieldLogicHQ badge and its acquisition banner render OUTSIDE the frame's element (both are fixed,
           so where they sit in the markup moves nothing). */}
       {unlessFocused(<>
-        {isFreeTournamentPlan && (
+        {showsFreePromos && (
           <PoweredByBadge
             orgSlug={orgSlug}
             tournamentSlug={tournament.slug}
-            offsetForBanner={showAcquisitionBanner}
+            yieldToBanner={showAcquisitionBanner}
           />
         )}
         {showAcquisitionBanner && (
