@@ -2047,11 +2047,12 @@ export const SCREENS = [
    * club site's light ground, the pinned tab row). Until Stage 1 no public tournament page had a rendered gate (only the
    * admin's preview of them did). The frame is the only look (Stage 8 deleted the preview switch); `ready` waits for
    * the band, so a page that ever renders without it fails loudly instead of being measured.
-   * The four organizers are scripts/seed-public-frame-fixtures.mjs's (Riverdale is the demo seed's), named literally as
+   * The organizers are scripts/seed-public-frame-fixtures.mjs's (the Overview's was the retired public demo's Riverdale
+   * until 2026-11-25; it is now Cedar Valley, a club in a dark colour, before its event), named literally as
    * the club's are. The layout file under `[tournamentSlug]` wears the frame, so the Overview's `route` is the folder.
    * ══════════════════════════════════════════════════════════════════════════════════════════
    */
-  { id: 'pubt-overview',          session: 'anon', path: () => '/riverdale-minor-ball/summer-classic',             ready: '[data-public-frame-band]',
+  { id: 'pubt-overview',          session: 'anon', path: () => '/stage2-cedar-valley/winter-warmup',               ready: '[data-public-frame-band]',
     route: 'app/[orgSlug]/[tournamentSlug]' },
   { id: 'pubt-schedule-pale',     session: 'anon', path: () => '/stage1-lakeshore-lightning/fall-classic/schedule', ready: '[data-public-frame-band]',
     route: 'app/[orgSlug]/[tournamentSlug]/schedule' },

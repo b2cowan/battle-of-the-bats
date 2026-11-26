@@ -1,6 +1,7 @@
 # Retire the public demos — Implementation Plan
 
-> **Status:** Building. Phase 1 built on dev 2026-11-25 (commit at the owner's word); Phase 2 next.
+> **Status:** Building. Phase 1 committed `89814487a` (+ `2bb98904f`) 2026-11-25. Phase 2 committed `ecbc17aed` (migration) + `c5dc00592` (automation) + the script commit 2026-11-26, after `/review`;
+> its production run waits on Step 1 and Phase 2 being live on production (see Phase 2 "As built").
 > **Created:** 2026-11-25
 > **Branch:** dev
 > **Ruling:** `docs/agents/strategy/BUSINESS_DECISIONS.md`, "2026-11-25 — Both public demos are RETIRED" (owner: *"Remove both,
@@ -92,19 +93,19 @@ The visitor-facing half. One `/marketing` pass settles the replacement words (se
 Migration first, per the planning rules. Each automation change gets its own commit, with a message stating the behavior change
 (AGENCY_RULES "shared agent automation"; the owner's ruling for this project covers these changes as its subject).
 
-- [ ] **Migration `540_the_public_demos_stop_refreshing.sql`** (number re-checked at build): `cron.unschedule` the demo tournament
+- [x] **Migration `543_the_public_demos_stop_refreshing.sql`** (number re-checked at build: 540–542 were taken): `cron.unschedule` the demo tournament
       tick and the coach tick jobs (scheduled in 224 and 226, made nightly in 273). Idempotent: unschedule only if present. Apply
       to dev; production goes with the Phase 2 release. Record it in `MANUAL_PROD_STEPS.json` if that is the route at build.
       Commit on its own: *"The two nightly demo refresh jobs no longer run."*
-- [ ] **Dictionary and snapshots:** no table or column changes. Run `npm run refresh:snapshots` (dev and prod) after the apply,
+- [x] **Dictionary and snapshots:** no table or column changes. Run `npm run refresh:snapshots` (dev and prod) after the apply,
       and `npm run check:dictionary`. If the dictionary lists the cron jobs, remove those lines in the same commit.
-- [ ] **Retire the production demo check** before any data goes:
+- [x] **Retire the production demo check** before any data goes:
       - `check:demos:prod` and its steps in `.claude/commands/release.md` (around :159-177, :368-372, :399);
       - `check:demos` in `package.json` and `check-demos.mjs` from `verify:changed` (`scripts/verify-changed.mjs` or wherever it is
         wired);
       - the `reseed-demos-if-stale` step in `amplify.yml:119-126`.
       Its own commit: *"Releases no longer check or rebuild the public demos."*
-- [ ] **A one-off retirement script,** `scripts/retire-public-demos.mjs`:
+- [x] **A one-off retirement script,** `scripts/retire-public-demos.mjs`:
       - Dry run by default; `--apply` deletes; `--prod` requires the host guard used by the other prod scripts.
       - It deletes the two demo orgs with the **same purge the platform-admin delete uses** (`app/api/platform-admin/orgs/[id]/delete/route.ts`,
         storage included). The console's demo refusal stays in place until Phase 3, so the script calls the purge directly.
@@ -112,12 +113,55 @@ Migration first, per the planning rules. Each automation change gets its own com
       - It deletes the two shared auth users, and their sessions with them.
       - It prints counts only, never rows (the 2026-11-18 production-read rule). The demo data is fictional, but the
         script still reports counts, never rows.
-- [ ] Run it on **dev** (`--apply`). Confirm the door routes still redirect and the public pages render.
+- [x] Run it on **dev** (`--apply`). Confirm the door routes still redirect and the public pages render.
 - [ ] Run it on **production** only on the owner's yes in that session (Decision D4): dry run first, its counts shown to the owner,
       then `--apply`. Record it in the release history.
-- [ ] Local fixtures that assume `riverdale-minor-ball` exists: `scripts/seed-public-frame-fixtures.mjs:6,191`,
+- [x] Local fixtures that assume `riverdale-minor-ball` exists: `scripts/seed-public-frame-fixtures.mjs:6,191`,
       `scripts/layout-screens.mjs:2050-2054`, `scripts/seed-qa-day-fixtures.mjs:839`. Point them at a dev fixture org, or drop the
       demo screens from the layout list.
+
+- **As built (2026-11-26):**
+  - **Owner yeses, this session:** "go, yes to all four, accept staging" (the UX summary; the four automation changes:
+    the build file, the release runbook, the package scripts, the everyday check chain; staging's old demo buttons
+    erroring until Step 1 is pushed there).
+  - **Migration 543** unschedules both jobs, each only if present, and also deletes their four heartbeat rows (two dispatch,
+    two arrival). Without that, the platform-admin job-freshness panel would have listed four forever-stale demo jobs.
+    Applied to dev twice, read back 0 jobs and 0 rows. `MANUAL_PROD_STEPS.json` entry `pending`. No table or column changes, and
+    the dictionary never listed the jobs. `check:dictionary` OK. The snapshot hook ran (the divergences it reports are
+    other sessions' 540–542).
+  - **Automation:** `amplify.yml`'s reseed step is gone. ⚠ That step ran on **every** branch, dev included, so until this
+    change is pushed, a staging build would re-seed the dev demos (re-run the script if one does). `release.md` §1d-1 is a
+    retired stub (the heading is kept so references resolve), and Phase 2b's demo step and the promote's "No live-demo gate"
+    line are gone. `package.json` lost `check:demos`, `check:demos:prod`, `tick:demos`, `reseed:demos` and `reseed:demos:dry` (the
+    owner approved all four command families). `verify:changed` no longer runs `check-demos.mjs`. `capture-marketing-shots.mjs
+    --check` stays: it only checks that the files exist, never the demo.
+  - **The script** uses the console delete's purge without calling the route. The route's own steps are written inline and
+    pinned line by line by four other projects' guard tests, so it was not extracted. The script repeats the route's
+    table deletes in the same order and removes files through the same shared helpers, and
+    `tests/unit/retire-public-demos-script.test.ts` fails if the two drift apart. It refuses before any change on a live
+    subscription, an online-payments account, a club web address, a member other than the shared account, or an account in
+    another club. It deletes an account only when none of the 14 non-cascading account columns still name it (re-counted
+    after the clubs go). It checks the two slugs against `lib/demo-org.ts`, writes `delete_organization` /
+    `delete_organization_files` / `delete_demo_account` audit rows, and prints counts only.
+  - **After `/review` (2026-11-26):** the shared account is found as the demo club's own member and must carry the registry's
+    email. The script never lists every account, which on production would load real people's records (the 2026-11-18 rule),
+    and it cannot reach a stranger who signed up with a demo address. The `delete_organization` row is written strictly,
+    before anything changes, and records the club's id, its rules files and its account id. A re-run uses it to finish an
+    account or a file removal an earlier run left behind (a `_files_failed` row is retried), and a failed read-back is a
+    failure. A dev dry run after the change found both clubs gone and the files done, with nothing to redo.
+    Coverage note: `pubt-overview` now sweeps a registration-open Overview, not a games-in-progress one.
+  - **Dev run (2026-11-26):** riverdale-minor-ball had 1 member, 3 tournaments and 0 files; riverdale-ridge had 1 member, 5 teams
+    and 0 files (its account was named by 101 non-cascading records, all inside the club, 0 after it went). Both clubs and
+    both accounts deleted, read back 0 and 0, and a second run reports everything already gone. After the run on the dev server:
+    the five old demo addresses still 308 to `/pricing` with no cookie set, and home, pricing and the three persona pages
+    plus the sign-in page answer 200. A fixture sign-in (`uat-asst-money-read`) works. `/riverdale-minor-ball` and
+    `/riverdale-ridge` now answer 404, as expected with the clubs gone and the slugs reserved (D3).
+  - **Fixtures:** `pubt-overview` now measures `/stage2-cedar-valley/winter-warmup` (a club in a dark colour, renders the frame
+    band). `seed-public-frame-fixtures.mjs` no longer lists Riverdale. A stale comment in `seed-qa-day-fixtures.mjs` was corrected.
+  - **Production: NOT run.** When this was built, production was at `6e361818b` (11-24) and Step 1 was not even on
+    `origin/dev`. Its three conditions: (1) Step 1 is live on production, (2) 543 is applied there, (3) the reseed step is out
+    of the live build. Then the `--prod` dry run, the owner sees the counts, the owner says yes **in that session**, `--apply`, and
+    the run is recorded in the release history.
 
 ### Phase 3 — Remove the machinery (code only; the data is already gone)
 
@@ -164,7 +208,10 @@ One unit of work, which may land as several commits. Grep for `demo-org`, `demo-
 - [ ] **Scripts:**
       - delete `seed-demo-tournament.mjs`, `seed-demo-coach.mjs`, `check-demo-sandbox.mjs`, `check-demo-coach.mjs`, `check-demos.mjs`;
       - delete `reseed-demos-if-stale.mjs`, `lib/demo-world-fingerprint.mjs`, `sweep-demo-sandbox.mjs`, `tick-demo-sandbox.mjs`, `tick-demo-coach.mjs`;
-      - delete the `package.json` scripts `tick:demos` and `reseed:demos{,:dry}` (`check:demos*` went in Phase 2).
+      - (the `package.json` scripts `check:demos*`, `tick:demos` and `reseed:demos{,:dry}` all went in Phase 2);
+      - delete `retire-public-demos.mjs` and `tests/unit/retire-public-demos-script.test.ts` once production has run it;
+      - `capture-marketing-shots.mjs`'s `seedHint` still names the removed `npm run check:demos` (it prints only in capture
+        mode, which this phase removes).
 - [ ] **Screenshots (Decision D6):**
       - keep the images in `public/marketing/**` and the help images, and whatever registry the pages read;
       - remove the demo page addresses and the demo capture mode from `lib/marketing-shots.ts`, `lib/help-shots.ts`,

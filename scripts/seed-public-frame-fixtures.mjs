@@ -3,7 +3,8 @@
  * frame", plan docs/projects/active/PUBLIC_TOURNAMENT_SITE_REVIEW_PLAN.md §4; build prompt
  * PUBLIC_TOURNAMENT_STAGE1_BUILD_PROMPT.md, Part 1 step 8). DEV ONLY, re-runnable; later stages' walks reuse it.
  *
- * Riverdale (riverdale-minor-ball / summer-classic) already exists and is the dark organizer colour. This adds:
+ * (The dark organizer colour used to be the public demo's Riverdale event; the demo was retired 2026-11-25, so Cedar
+ * Valley's dark purple below carries the Overview's gate instead.) This adds:
  *   • Lakeshore Lightning Softball (Club) — a club's tournament in a PALE colour (#F2C94C), no theme of its own
  *   • Metro Sports Events (Tournament Plus) — a paid standalone with ITS OWN colour (#E0457B) and a logo
  *   • Northfield Sports Events (Tournament, free) — a free event: the neutral band, no mark (finished, last week)
@@ -188,7 +189,7 @@ async function build(f) {
 }
 
 console.log(`Source: ${SOURCE_ORG}/${SOURCE_SLUG} (${srcDivs.length} divisions, ${srcTeams.length} teams, ${srcGames.length} games)\n`);
-const made = [['riverdale-minor-ball', '/riverdale-minor-ball/summer-classic', 'club-run, dark colour (existing) → the platform blue band']];
+const made = [];
 for (const f of FIXTURES) made.push([f.org.slug, await build(f), f.shows]);
 
 const base = process.env.FIXTURE_BASE_URL ?? 'http://localhost:3000';

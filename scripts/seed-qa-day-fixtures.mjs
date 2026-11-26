@@ -836,8 +836,8 @@ async function seedBook() {
 // PART D — Group 1C, the money lab
 // ═══════════════════════════════════════════════════════════════════════════════════════════
 // ⚠ WHY A DEDICATED ORG. Every team on dev that carries real money data is one we must not
-// disturb: the coach demo sandbox (`riverdale-ridge`, the shop window a prospect walks into) and
-// the owner's standing `toronto blue jays5` fixture, which was deliberately retained by ruling.
+// disturb: the owner's standing `toronto blue jays5` fixture, which was deliberately retained by
+// ruling (the coach demo sandbox was one too, until it was retired on 2026-11-25).
 // Money QA needs to CHANGE numbers — add lines, pay instalments, import a sheet — so it gets its
 // own throwaway club, the same way §1.19 did.
 //
