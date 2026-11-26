@@ -2532,7 +2532,10 @@ export async function sweepStuckSponsorRefunds(now: Date = new Date()): Promise<
   const before = new Date(now.getTime() - 15 * 60_000).toISOString();
   const { data, error } = await supabaseAdmin.from('club_sponsor_deal_refunds')
     .select('id, org_id, amount, online_payments(id, stripe_account_id, stripe_payment_intent_id)')
-    .eq('status', 'pending').is('stripe_refund_id', null).lt('created_at', before).order('created_at').limit(50);
+    // ⚠ Only the app's OWN refunds (origin 'app'). A refund made in the club's Stripe dashboard (mig 542) already exists at
+    // Stripe: asking for it again would refund the sponsor twice. It always carries Stripe's id, so the id test alone would
+    // keep it out; the origin test says so on purpose and survives a change to either.
+    .eq('origin', 'app').eq('status', 'pending').is('stripe_refund_id', null).lt('created_at', before).order('created_at').limit(50);
   if (error) throw error;
   type Row = { id: string; org_id: string; amount: number | string; online_payments: OpRef | OpRef[] | null };
   type OpRef = { id: string; stripe_account_id: string; stripe_payment_intent_id: string | null };

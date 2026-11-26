@@ -780,6 +780,8 @@ describe('Stage 6 fixes Part A — a refund made in Stripe', () => {
 
   it('⚠ the daily retry never asks Stripe about a refund made in Stripe (it would refund the sponsor twice)', () => {
     const landing = readCode(LANDING);
+    const sweep = landing.slice(landing.indexOf('export async function sweepStuckSponsorRefunds'));
+    assert.match(sweep, /\.eq\('origin', 'app'\)\.eq\('status', 'pending'\)\.is\('stripe_refund_id', null\)/);
     // The app's own refunds settle only as the app's: a row made in Stripe is never handed to the settle that books an app refund.
     const apply = landing.slice(landing.indexOf('async function applySponsorRefundEvent'), landing.indexOf('type StripeSponsorRefundOutcome'));
     assert.match(apply, /from\('club_sponsor_deal_refunds'\)\.select\('id, status, stripe_refund_id'\)\.eq\('online_payment_id', op\.id\)\.eq\('origin', 'app'\)/);
