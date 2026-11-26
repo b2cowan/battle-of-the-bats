@@ -417,7 +417,8 @@ describe('Part 3b after the walk — a sponsor’s dispute and its notices', () 
   });
 
   it('the notices: a sponsor’s open dispute says answer it and do not refund; a loss says what the books did; a failed refund says what the club can do', () => {
-    assert.match(landing, /SPONSOR_DISPUTE_WORDS\.openBody\(amount, disputeDue\(d\.due_by\)\)/);
+    // A real dispute says answer it and do not refund; a bank only asking has its own words (bank-inquiry-words.test.ts).
+    assert.match(landing, /\(inquiry \? SPONSOR_DISPUTE_WORDS\.inquiryBody : SPONSOR_DISPUTE_WORDS\.openBody\)\(amount, disputeDue\(d\.due_by\)\)/);
     assert.match(landing, /d\.lost_booked_at \? SPONSOR_DISPUTE_WORDS\.lostLine\(amount, day\) : SPONSOR_DISPUTE_WORDS\.partialBody\(amount\)/);
     assert.match(readCode('lib/online-payment-words.ts'), /Refund it again from the payment, or send the money another way and record it in the Ledger\./);
     assert.doesNotMatch(readCode('lib/online-payment-words.ts').slice(readCode('lib/online-payment-words.ts').indexOf('export function sponsorRefundFailedNotice')).split('export const SPONSOR_DISPUTE_WORDS')[0], /Send the money another way, then record the refund\./);

@@ -77,6 +77,8 @@ export interface DealRead {
   address: string | null;
   bar: EmailBar;
   link: string | null;
+  /** "Send the link again" would email the business (B-2): false, and the button reads Make a new link. */
+  againEmails: boolean;
   registered: boolean;
   hasMailingAddress: boolean;
   /** A contact email for sponsors, or the club's public one: an offer email names it (/legal 2026-11-22). */

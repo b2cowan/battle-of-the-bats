@@ -14,7 +14,7 @@ import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { Copy } from 'lucide-react';
 import { Facts } from './money/MoneyKit';
 import { RepChip } from './RepKit';
-import { disputeChip, disputeOutcome, isInquiry, type DisputeRecord } from '@/lib/online-payment-dispute';
+import { disputeOutcome, isInquiry, isPastDue, type DisputeRecord } from '@/lib/online-payment-dispute';
 import { DISPUTE_WORDS as D, PAYOUTS_WORDS, disputeDue, disputeWhyFull, money } from '@/lib/online-payment-words';
 import { CARD_REFUND_WORDS } from '@/lib/house-league-money-words';
 import { formatStoredDate } from '@/lib/timezone';
@@ -70,7 +70,7 @@ export default function DisputeBlock({ d, orgSlug, team, isPhone = false }: {
   const [copied, setCopied] = useTransient();
   const outcome = disputeOutcome(d.status);
   const inquiry = isInquiry(d.status);
-  const pastDue = disputeChip(d) === 'notAnswered';
+  const pastDue = isPastDue(d);
   const amber = d.youAnswer;
 
   // Back from Stripe: the page returns from the browser's cache with the button still "Opening Stripe…".
@@ -142,7 +142,7 @@ export default function DisputeBlock({ d, orgSlug, team, isPhone = false }: {
       </h4>
       <Facts rows={rows} />
       {d.refundedOn && <p className={css.line}>{D.refunded(day(d.refundedOn))}</p>}
-      {d.children.length > 1 && <p className={css.line}>{D.siblings(childList(d.children))}</p>}
+      {d.children.length > 1 && <p className={css.line}>{(inquiry ? D.siblingsInquiry : D.siblings)(childList(d.children))}</p>}
       {(d.youAnswer || d.canCopy) && (
         <div className={css.buttons}>
           {d.youAnswer && (

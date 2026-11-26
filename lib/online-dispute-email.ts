@@ -34,7 +34,7 @@ export function disputeOpenedEmailHtml(p: {
     warmEmailParagraph(escapeHtml(M.act(p.record))),
     !inquiry && p.stripeFee != null ? warmEmailParagraph(escapeHtml(DW.feeFromClub(money(p.stripeFee)))) : '',
     warmEmailButton(M.button(p.record), p.link),
-    warmEmailSmall(escapeHtml(M.noChange)),
+    inquiry ? '' : warmEmailSmall(escapeHtml(M.noChange)),
     p.test ? warmEmailSmall(escapeHtml(E.testNote)) : '',
   ].filter(Boolean).join('\n'));
   return { subject, html };
@@ -42,12 +42,14 @@ export function disputeOpenedEmailHtml(p: {
 
 /** §1.6 email 2: three days before the answer is due, only while it is unanswered (the daily job). The same envelope. */
 export function disputeReminderEmailHtml(p: {
-  club: string; forWhom: string; record: string | null; receiptNo: string; dueBy: string; link: string; test: boolean;
+  club: string; forWhom: string; record: string | null; receiptNo: string; dueBy: string; status: string; link: string; test: boolean;
 }): { subject: string; html: string } {
-  const subject = `${p.test ? E.testPrefix : ''}${M.reminder.subject(disputeDue(p.dueBy), p.club)}`;
+  const R = M.reminder;
+  const inquiry = isInquiry(p.status);
+  const subject = `${p.test ? E.testPrefix : ''}${(inquiry ? R.subjectInquiry : R.subject)(disputeDue(p.dueBy), p.club)}`;
   const html = warmEmailDocument([
-    warmEmailParagraph(escapeHtml(M.reminder.lead(p.receiptNo, p.forWhom, disputeDue(p.dueBy, { clock: true, year: true })))),
-    warmEmailParagraph(escapeHtml(M.reminder.after)),
+    warmEmailParagraph(escapeHtml((inquiry ? R.leadInquiry : R.lead)(p.receiptNo, p.forWhom, disputeDue(p.dueBy, { clock: true, year: true })))),
+    warmEmailParagraph(escapeHtml(inquiry ? R.afterInquiry : R.after)),
     warmEmailButton(M.button(p.record), p.link),
     p.test ? warmEmailSmall(escapeHtml(E.testNote)) : '',
   ].filter(Boolean).join('\n'));

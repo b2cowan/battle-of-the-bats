@@ -214,10 +214,25 @@ describe('the reason keeps its own date (owner call (e), approved 3A 2026-11-23)
     assert.match(email, /parseReasonInput\(body, today, reasonErrors\(\)\)/);
     assert.match(email, /reasonOn: why\.value\.reasonOn/);
     assert.doesNotMatch(email, /deleteUnsentDeal/, 'a link already handed over in person is never removed by a failed email');
+    // One plan decides it for the page and the press (Board Ready Stage 6 fixes, B-2): never sent, then invoiced or paid, then
+    // the reason, then the send rules.
     const again = read('app/api/admin/sponsorships/deals/[dealId]/again/route.ts');
-    const ranOut = again.indexOf("if (!reasonHolds(first.reason, first.reasonOn, today)) return unsent('ran_out');");
-    assert.ok(ranOut > 0 && ranOut < again.indexOf('sendOffer({'), 'the reason is read before any email');
+    const planned = again.indexOf('await againPlan({');
+    assert.ok(planned > 0 && planned < again.indexOf('await replaceDealLink('), 'asked before the old link stops working');
+    const gate = again.indexOf("if (!plan.emails) return unsent(quiet && plan.outcome === 'not_emailed' ? 'not_due' : plan.outcome, plan.error);");
+    assert.ok(gate > 0 && gate < again.indexOf('sendOffer({'), 'the plan is read before any email');
+    const promised = again.indexOf("if (quiet) return unsent('not_due');");
+    assert.ok(promised > gate && promised < again.indexOf('sendOffer({'), 'a confirm that said nothing is emailed is kept');
+    assert.ok(read('components/admin/kit/club/sponsorships/DealScreen.tsx').includes("act('/again', { expectsEmail: data.againEmails })"));
     assert.match(again, /await markLinkUnsent\(org\.id, dealId\)/);
+    const step = read('lib/club-sponsorship-offer-send.ts');
+    const plan = step.slice(step.indexOf('export async function againPlan('), step.indexOf('export async function paidReasonRefusal('));
+    const order = ["outcome: 'link_only' }", "outcome: 'not_due' }", "outcome: 'ran_out' }", 'await offerSendCheck({', 'await paidReasonRefusal(', 'emails: true, first']
+      .map(s => plan.indexOf(s));
+    assert.ok(order.every((at, i) => at > 0 && (i === 0 || at > order[i - 1])), `the plan's order: ${order}`);
+    assert.match(plan, /if \(!linkTakesForm\(deal\)\) return \{ emails: false, outcome: 'not_due' \};/);
+    assert.match(plan, /if \(!reasonHolds\(first\.reason, first\.reasonOn, today\)\) return \{ emails: false, outcome: 'ran_out' \};/);
+    assert.match(read('app/api/admin/sponsorships/deals/[dealId]/route.ts'), /await againPlan\(\{/, 'the page names its button from the same plan');
   });
   it('Email the offer keeps every Send rule: the address, a contact, no stopped or opted-out address', () => {
     // Part 4a (drawing F6): every Send rule lives in the one shared step, which this route asks before it sends.

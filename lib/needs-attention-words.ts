@@ -83,6 +83,9 @@ export const SETTLED_WORDS = {
   disputeWon: 'The club won the dispute.',
   disputeAnswered: 'Answered in Stripe. The bank decides.',
   disputeLost: 'The dispute was lost.',
+  // A bank only asking (B-3, B-4, owner 2026-11-25). DRAFT; /marketing 2026-11-26.
+  inquiryClosed: 'The bank closed its question without taking any money.',
+  inquiryDisputed: 'The bank opened a dispute.',
   // A sponsor’s lost dispute (mig 532, DRAFT for /marketing): the deal stopped waiting on that money.
   // A sponsor's won dispute that left an extra standing (mig 534, DRAFT for /marketing): nothing stands past the invoice any more.
   sponsorExtraBack: 'Nothing on this deal is extra any more.',

@@ -130,7 +130,7 @@ export const DEAL_WORDS = {
     errBusiness: 'Pick a business, or type a new one.',
     errNewName: 'A business name is up to 80 characters.',
     errEmail: 'Enter the business’s email, like frank@harbourdental.ca.',
-    errNoStanding: 'No payment from them counts right now (refunded or disputed). Pick another reason.', // DRAFT
+    errNoStanding: 'No payment from them counts right now (refunded, disputed, or their bank is asking about it). Pick another reason.', // DRAFT
     errPkg: 'Pick a package.',
     errTarget: 'Pick where it shows.',
     errAmount: 'Enter an amount, like 1,000.00.',
@@ -194,7 +194,7 @@ export const DEAL_WORDS = {
     lapsed: (on: string) => `Last paid us on ${dayYear(on)}, more than two years ago, so there’s no reason on record to email them. To give them a link in person, use Offer a deal.`,
     archived: (pkg: string) => `The ${pkg} package is archived. Offer them another one.`,
     noEmail: 'There’s no email address on file for them. To give them a link in person, use Offer a deal.',
-    noStandingPayment: 'Their payment is disputed or being refunded, so there’s no reason on record to email them. To give them a link in person, use Offer a deal.',
+    noStandingPayment: 'Their payment is disputed or being refunded, or their bank is asking about it, so there’s no reason on record to email them. To give them a link in person, use Offer a deal.',
     sends: (n: number) => `Sends ${n} ${n === 1 ? 'email' : 'emails'}`,
     send: (n: number) => `Send ${n} ${n === 1 ? 'offer' : 'offers'}`,
     sending: 'Sending…',
@@ -309,6 +309,9 @@ export const DEAL_WORDS = {
     newLinkAsk: 'Make a new link?', // DRAFT
     newLinkBody: 'The old link stops working. Nothing is emailed.', // DRAFT
     newLinkButton: 'Make a new link', // DRAFT
+    // A deal that was emailed, where the press would email nothing (invoiced or paid, a reason run out, no address, a stop):
+    // the button and confirm read Make a new link (B-2, owner 2026-11-25).
+    newLinkCopyBody: 'The old link stops working. Nothing is emailed, so copy the new link and give it to them.', // DRAFT
     // The notice at the top of the deal (PageNotice, good): /design's open point placed it there. DRAFT.
     // "Make a new link" opens the same window as Make the link only (owner 2026-11-23), copying the new link in the click.
     newLinkCopiedTitle: 'The new link is copied',
@@ -326,6 +329,8 @@ export const DEAL_WORDS = {
     linkWindowClose: 'Close',
     ranOut: 'The new link is made. Their reason to be emailed has run out, so nothing was emailed. Give it to them in person.',
     notEmailedNewLink: 'The new link is made. It couldn’t be emailed, so give it to them in person.',
+    // An invoiced or paid deal: nothing was attempted (B-2, owner 2026-11-25).
+    notDueNewLink: 'The new link is made. Nothing was emailed, so give it to them in person.', // DRAFT
     // Email the offer, on a deal made as a link only (the drawing's tab 2 record action). DRAFT.
     emailTitle: 'Email the offer',
     emailSent: (email: string) => `Offer emailed to ${email}.`,
@@ -540,6 +545,8 @@ export const DEAL_WORDS = {
     withdrawn: (club: string) => `This offer was withdrawn. Contact ${club}.`,
     // Owner call (f), 2026-11-22 (/legal's re-check): a link "Send the link again" replaced, while the offer is still open.
     replaced: (club: string) => `This link has been replaced. Look for the club’s newer email, or contact ${club}.`,
+    // When the newer link was not emailed (B-2, owner 2026-11-25): there is no newer email to look for.
+    replacedNoEmail: (club: string) => `This link has been replaced. Contact ${club}.`, // DRAFT
     ended: (club: string) => `This offer has ended. Contact ${club}.`, // DRAFT
     goneTitle: 'Sponsorship', // DRAFT
     notFound: 'This link doesn’t work. Ask the club for a new one.', // DRAFT (a forged or mangled token)

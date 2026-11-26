@@ -610,6 +610,9 @@ async function afterDisputeApplied(onlinePaymentId: string, out: { disputeId: st
   if (!op || !d) return;
   const org = await orgById(op.org_id);
   if (!org) return;
+  // An inquiry that became a dispute keeps its id (mig 396): its "nothing has been taken" notice is settled first, or the open
+  // copy would block the dispute's own and the club would never hear "don't refund" (B-3, owner 2026-11-25).
+  if (isDisputeOpen(d.status) && !isInquiry(d.status)) await clearSettled({ orgIds: [op.org_id], kinds: ['card_disputed'] });
   if (op.flow === 'sponsorship') { await afterSponsorDispute(org, op, d); return; }
   if (isDisputeOpen(d.status)) {
     await raiseDisputed(org, op, d);
@@ -635,11 +638,16 @@ async function raiseDisputed(org: Organization, op: DisputedPay, d: DisputeRow):
   const [answerer, who, members] = await Promise.all([disputeAnswerer(org.id), disputeWho(op), activeMembers(org.id)]);
   const desk = members.filter(m => (op.flow === 'tournament_team' ? canRefundOnline(m, org) : canRefundLeagueOnline(m, org)) && !answerer.ids.includes(m.user_id)).map(m => m.user_id);
   const inquiry = isInquiry(d.status);
-  const title = who.many ? DISPUTE_WORDS.itemTitleMany(who.many) : DISPUTE_WORDS.itemTitle(who.who);
+  const title = who.many
+    ? (inquiry ? DISPUTE_WORDS.itemTitleManyInquiry(who.many) : DISPUTE_WORDS.itemTitleMany(who.many))
+    : (inquiry ? DISPUTE_WORDS.itemTitleInquiry(who.who) : DISPUTE_WORDS.itemTitle(who.who));
   const receipt = String(op.receipt_no ?? '');
   const amount = formatMoney(Number(d.amount));
   const link = recordHref(org, op, who.firstReg && !who.many ? { regId: who.firstReg } : undefined);
-  const extra: Record<string, string> = op.team_id ? { teamId: op.team_id } : who.regIds.length ? { registrationIds: who.regIds.join(',') } : {};
+  const extra: Record<string, string> = {
+    ...(op.team_id ? { teamId: op.team_id } : who.regIds.length ? { registrationIds: who.regIds.join(',') } : {}),
+    ...(inquiry ? { inquiry: 'yes' } : {}),
+  };
   // One wording for the four cases (dispute or inquiry, the answerer's copy or the desk's): the facts, passed once.
   const words = (answers: string | null) => DISPUTE_WORDS.item({
     payer: who.payerName, receiptNo: receipt, amount, reason: d.reason, held: formatMoney(disputeHeld(d)), inquiry,
@@ -741,7 +749,7 @@ export async function sendDisputeReminders(now: Date = new Date()): Promise<numb
     .in('status', ['warning_needs_response', 'needs_response']).eq('answered', false).is('reminder_emailed_at', null)
     .gt('due_by', now.toISOString()).lte('due_by', soon).limit(200);
   let sent = 0;
-  for (const d of (data ?? []) as Array<{ id: string; org_id: string; online_payment_id: string; due_by: string }>) {
+  for (const d of (data ?? []) as Array<{ id: string; org_id: string; online_payment_id: string; status: string; due_by: string }>) {
     try {
       const [org, { data: opData }, answerer] = await Promise.all([
         orgById(d.org_id),
@@ -755,7 +763,7 @@ export async function sendDisputeReminders(now: Date = new Date()): Promise<numb
       const who = await disputeWho(op);
       const html = disputeReminderEmailHtml({
         club: org.name, forWhom: who.many ?? who.name, record: who.many ? null : who.record, receiptNo: String(op.receipt_no ?? ''),
-        dueBy: d.due_by, test: !op.livemode,
+        dueBy: d.due_by, status: d.status, test: !op.livemode,
         link: `${process.env.NEXT_PUBLIC_APP_URL ?? ''}${recordHref(org, op, who.firstReg && !who.many ? { regId: who.firstReg } : undefined)}`,
       });
       const res = await sendEmail(answerer.email, html.subject, html.html, { kind: 'card_dispute_reminder', orgId: org.id, idempotencyKey: `dispute-reminder:${d.id}` });
@@ -2260,9 +2268,13 @@ async function afterSponsorDispute(org: Organization, op: DisputedPay, d: Disput
   const everyone = [...new Set([...people, ...answerer.ids])];
   const extra: Record<string, string> = dealId ? { sponsorDealId: dealId } : {};
   if (isDisputeOpen(d.status)) {
+    // A bank only asking takes nothing and leaves refunds open: it never reads as a dispute.
+    const inquiry = isInquiry(d.status);
     await raiseOnce({
-      org, userIds: everyone, eventType: 'card_disputed', subjectKey: 'onlineDisputeId', subjectId: d.id, link, extra,
-      title: SPONSOR_DISPUTE_WORDS.openTitle(business), body: SPONSOR_DISPUTE_WORDS.openBody(amount, disputeDue(d.due_by)),
+      org, userIds: everyone, eventType: 'card_disputed', subjectKey: 'onlineDisputeId', subjectId: d.id, link,
+      extra: inquiry ? { ...extra, inquiry: 'yes' } : extra,
+      title: inquiry ? SPONSOR_DISPUTE_WORDS.inquiryTitle(business) : SPONSOR_DISPUTE_WORDS.openTitle(business),
+      body: (inquiry ? SPONSOR_DISPUTE_WORDS.inquiryBody : SPONSOR_DISPUTE_WORDS.openBody)(amount, disputeDue(d.due_by)),
     });
   }
   if (d.status === 'lost' && !d.won_back_at && !(await disputeLostRaised(op.org_id, d.id))) {

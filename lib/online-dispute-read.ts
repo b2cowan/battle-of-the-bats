@@ -3,7 +3,7 @@ import { supabaseAdmin } from './supabase-admin';
 import { disputeAnswerer } from './online-payment-landing';
 import { clubPublicContact } from './club-email-context';
 import { childList } from './league-pay-words';
-import { currentDispute, isDisputeOpen, type DisputeRecord, type DisputeView } from './online-payment-dispute';
+import { currentDispute, isDisputeOpen, isInquiry, type DisputeRecord, type DisputeView } from './online-payment-dispute';
 import { DEBIT_NOTICE_WORDS as DW, DISPUTE_WORDS as D, SCOPE_WORDS, disputeFactsText, money } from './online-payment-words';
 import { formatStoredDate } from './timezone';
 import { possessive } from './utils';
@@ -157,7 +157,7 @@ export async function readDisputes(p: {
       factsText: !canCopy ? '' : disputeFactsText({
         test: !op.livemode, receiptNo, amount, paidDay: day(op.paid_on, true) ?? '', cardLast4: op.card_last4,
         payerName, payerEmail: op.payer_email, forLine, registeredDay, registeredBy, refundPolicy: policy,
-        receiptEmailedDay: day(op.receipt_emailed_at, true), club, contactEmail: contact,
+        receiptEmailedDay: day(op.receipt_emailed_at, true), club, contactEmail: contact, inquiry: isInquiry(view.status),
       }),
       refundedOn: op.status === 'refunded' ? refundedOn.get(op.id) ?? null : null,
       children,

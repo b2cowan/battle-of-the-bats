@@ -385,9 +385,9 @@ const platformAdminHelp: HelpPageContent = {
       id: 'club-online-payments',
       group: 'Support SOP',
       heading: 'How to read a club\'s Online payments',
-      summary: 'A club\'s Online payments tab, the Health list of clubs whose online payments need a look, and why Delete refuses while money is in flight.',
-      keywords: ['online payments', 'online payments tab', 'health online payments', 'needs a look', 'dispute', 'open dispute', 'card dispute', 'show the player', 'stripe messages', 'stopped retrying', 'stripe fee', 'terms', 'payments terms', 'clearing', 'bank debit', 'payouts', 'a family paid and it isn\'t there', 'delete refuses', 'money in flight', 'read only'],
-      searchText: 'online payments tab a club says a family paid and it isnt there account terms last 30 days clearing open disputes tiles panel receipt show the player opening a name is logged stripe messages we couldn’t process stopped retrying older than 30 days health online payments needs a look club what since open disputes by answer by date disconnected with a dispute open stripe closed the account stripe messages failed not on the current payments terms a row leaves when it clears today counts the list super admin billing support read only test mode nothing here is real money delete refuses money in flight open dispute clearing debit wait for them to finish then delete payouts tab never connected no tab',
+      summary: 'A club\'s Online payments tab, the Health list of clubs whose online payments need a look, and why Delete refuses while money is in flight or a bank is asking.',
+      keywords: ['online payments', 'online payments tab', 'health online payments', 'needs a look', 'dispute', 'open dispute', 'card dispute', 'bank question', 'bank asking', 'inquiry', 'can’t be deleted yet','show the player', 'stripe messages', 'stopped retrying', 'stripe fee', 'terms', 'payments terms', 'clearing', 'bank debit', 'payouts', 'a family paid and it isn\'t there', 'delete refuses', 'money in flight', 'read only'],
+      searchText: 'online payments tab a club says a family paid and it isnt there account terms last 30 days clearing open disputes tiles panel receipt show the player opening a name is logged stripe messages we couldn’t process stopped retrying older than 30 days health online payments needs a look club what since open disputes by answer by date disconnected with a dispute open stripe closed the account stripe messages failed not on the current payments terms a row leaves when it clears today counts the list super admin billing support read only test mode nothing here is real money delete refuses money in flight open dispute open bank question about a card payment bank only asking this club can’t be deleted yet clearing debit wait for them to finish then delete payouts tab never connected no tab',
       links: [
         { label: 'Online payments', href: '/platform-admin/online-payments' },
         { label: 'Clubs & portals', href: '/platform-admin/orgs' },
@@ -407,7 +407,7 @@ const platformAdminHelp: HelpPageContent = {
                 <HelpDef term="Terms">Version of a date, or Out of date, with when the owner agreed. A club that agreed to the draft before the Payments Terms were published reads Out of date.</HelpDef>
                 <HelpDef term="Last 30 days">The total, with the count of payments and refunds.</HelpDef>
                 <HelpDef term="Clearing">How many bank debits are still clearing.</HelpDef>
-                <HelpDef term="Open disputes">How many, with Stripe&rsquo;s fees on them so far (Stripe takes those from the club&rsquo;s own Stripe balance).</HelpDef>
+                <HelpDef term="Open disputes">How many, with Stripe&rsquo;s fees on them so far (Stripe takes those from the club&rsquo;s own Stripe balance). A bank that is only asking about a card payment is counted here too, though no money has been taken.</HelpDef>
               </HelpDefs>
             </>
           ),
@@ -431,7 +431,7 @@ const platformAdminHelp: HelpPageContent = {
             <>
               <p><strong>Health &rsaquo; Online payments</strong> lists every club that needs a look, most urgent first, with the club, what is wrong and since when. A row opens that club&rsquo;s Online payments tab. A row is there for:</p>
               <ul>
-                <li>open disputes, by answer-by date;</li>
+                <li>open disputes, including a bank that is only asking, by answer-by date;</li>
                 <li>a club that is disconnected with a dispute still open;</li>
                 <li>Stripe closing the account;</li>
                 <li>Stripe messages that failed;</li>
@@ -446,7 +446,7 @@ const platformAdminHelp: HelpPageContent = {
           title: 'Why Delete refuses while money is in flight',
           content: (
             <>
-              <p>The <strong>Delete the club</strong> window refuses while the club&rsquo;s online payments have money in flight, and names each: an open card dispute or a bank debit still clearing. It says to wait for them to finish, then delete; the club&rsquo;s Online payments tab shows each one.</p>
+              <p>The <strong>Delete the club</strong> window refuses while the club has an open card dispute, an open bank question about a card payment or a bank debit still clearing, and names each. It says to wait for them to finish, then delete; the club&rsquo;s Online payments tab shows each one. When only bank questions are open, it reads <em>This club can&rsquo;t be deleted yet</em>, because no money is in flight.</p>
               <HelpNote variant="info" title="Deleting never closes the Stripe account">Deletion disconnects the club&rsquo;s payouts first, and the Stripe account stays the club&rsquo;s own. Cancelling or moving a club to a plan without online payments never disconnects it either.</HelpNote>
             </>
           ),
@@ -2134,8 +2134,8 @@ const platformAdminHelp: HelpPageContent = {
       group: 'Support SOP',
       heading: 'How to delete an organization',
       summary: 'Permanently remove an organization and all its data from FieldLogicHQ.',
-      keywords: ['delete organization', 'delete org', 'delete the club', 'remove organization', 'gdpr', 'data deletion', 'hard delete', 'purge org', 'access tab', 'danger zone', 'end now', 'scheduled cancel', 'running subscription'],
-      searchText: 'how do i delete an organization permanently remove org data gdpr data erasure hard delete purge account delete the club end of the access tab type the web name to confirm why required email the owner that the account is closed also delete the stripe customer only when the customer asked to be forgotten cancel the subscription first still has a running subscription super admin only invoice history stays in stripe end now scheduled cancel keeps the subscription running until its date',
+      keywords: ['delete organization', 'delete org', 'delete the club', 'remove organization', 'gdpr', 'data deletion', 'hard delete', 'purge org', 'access tab', 'danger zone', 'end now', 'scheduled cancel', 'running subscription', 'card dispute', 'bank question', 'bank asking', 'bank debit clearing', 'can’t be deleted yet'],
+      searchText: 'how do i delete an organization permanently remove org data gdpr data erasure hard delete purge account delete the club end of the access tab type the web name to confirm why required email the owner that the account is closed also delete the stripe customer only when the customer asked to be forgotten cancel the subscription first still has a running subscription super admin only invoice history stays in stripe end now scheduled cancel keeps the subscription running until its date refuses while an open card dispute open bank question about a card payment or bank debit still clearing this club can’t be deleted yet wait for them to finish',
       links: [
         { label: 'Clubs & portals', href: '/platform-admin/orgs' },
         { label: 'Retention', href: '/platform-admin/retention' },
@@ -2153,7 +2153,7 @@ const platformAdminHelp: HelpPageContent = {
             <li><strong>Delete user accounts if required.</strong> If the deletion is part of a data erasure request and the people have no other clubs, delete their accounts from their person records after the club is removed.</li>
           </HelpSteps>
           <p>If you do not see <strong>Delete the club</strong> at the end of the Access tab, your role is not Super admin &mdash; hand the deletion to one.</p>
-          <p>The window also refuses while the club&rsquo;s online payments have money in flight (an open card dispute or a bank debit still clearing) and names each one. Wait for them to finish, then delete; see <em>How to read a club&rsquo;s Online payments</em>.</p>
+          <p>The window also refuses while the club has an open card dispute, an open bank question about a card payment or a bank debit still clearing, and names each one. Wait for them to finish, then delete; see <em>How to read a club&rsquo;s Online payments</em>.</p>
         </>
       ),
       faqs: [

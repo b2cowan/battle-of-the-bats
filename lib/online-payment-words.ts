@@ -231,6 +231,10 @@ export const SPONSOR_DISPUTE_WORDS = {
   openTitle: (business: string) => `${possessive(business)} card payment is disputed`,
   openBody: (amount: string, due: string | null) =>
     `The sponsor’s bank is disputing ${amount}. Answer it in Stripe${due ? ` by ${due}` : ''}. Don’t refund this sponsor while it is open, or they get the money back twice.`,
+  // A bank only asking (an inquiry): nothing is taken, and a refund stays open (B-3, owner 2026-11-25). DRAFT; /marketing 2026-11-26.
+  inquiryTitle: (business: string) => `${possessive(business)} bank is asking about a card payment`,
+  inquiryBody: (amount: string, due: string | null) =>
+    `The sponsor’s bank is asking about ${amount}. No money has been taken. Answer it in Stripe${due ? ` by ${due}` : ''}. If the money should go back, you can refund the payment.`,
   lostTitle: (business: string) => `${possessive(business)} dispute was lost`,
   lostLine: (amount: string, day: string) =>
     `The bank took back ${amount} on ${day}. The payment is out of the books and the deal is owing again. Ask the sponsor to pay again, or withdraw the deal. No credit note is needed.`,
@@ -579,6 +583,10 @@ function oweToday(families: number, teams: number): string {
 /** The failed-subscription ending's first sentence: the owner's bell says only this; the Payouts card adds what follows. */
 const LEAVING_FAILED_LINE = (clubName: string) => `${possessive(clubName)} subscription payment didn’t go through.`;
 
+/** A bank's open questions, counted apart from disputes: no money is held on one (B-4, owner 2026-11-25). DRAFT. */
+export const openBankQuestions = (n: number) => (n === 1 ? '1 bank question about a card payment is open' : `${n} bank questions about card payments are open`);
+const allOf = (parts: string[]) => (parts.length > 1 ? `${parts.slice(0, -1).join(', ')} and ${parts[parts.length - 1]}` : parts[0] ?? '');
+
 /** LEAVING ONLINE PAYMENTS (12d-2 Part 3; words CLUB_TIER_STAGE12D_COPY.md §4). One rule (ask 4): no ending disconnects
  *  the Stripe account; every ending closes open pay pages and counts them (ask 11). Marked "derived": no words-doc key,
  *  owed to /marketing. */
@@ -590,6 +598,9 @@ export const LEAVING_WORDS = {
     disputes: (n: number, due: string | null) => (n === 1
       ? `1 card dispute is open. Answer it in Stripe${due ? ` by ${due}` : ''}; Stripe holds its money until the bank decides.`
       : `${n} card disputes are open. Answer them in Stripe by their due dates; Stripe holds their money until the banks decide.`),
+    inquiries: (n: number, due: string | null) => (n === 1
+      ? `A bank is asking about a card payment. Answer it in Stripe${due ? ` by ${due}` : ''}. No money has been taken.`
+      : `Banks are asking about ${n} card payments. Answer them in Stripe by their due dates. No money has been taken.`),
     past: 'Payments already made stay in your books. Refunds of them are made in Stripe, and your Stripe account stays yours.',
   },
   move: {
@@ -603,9 +614,12 @@ export const LEAVING_WORDS = {
     stops: (owe: string) => `Nobody can pay you online; pay pages still open close.${owe ? ` ${owe}` : ''}`,
     pages: (n: number) => (n === 1 ? '1 pay page is open right now.' : `${n} pay pages are open right now.`),
     clearing: (n: number) => (n === 1 ? '1 bank debit is still clearing. It finishes and reaches your bank.' : `${n} bank debits are still clearing. They finish and reach your bank.`),
-    stripe: (disputes: number) => (disputes
-      ? `Your Stripe account stays yours: money in it keeps paying out to your bank. Refunds and the ${disputes} open ${disputes === 1 ? 'dispute' : 'disputes'} are handled in Stripe while you’re suspended.`
-      : 'Your Stripe account stays yours: money in it keeps paying out to your bank. Refunds are handled in Stripe while you’re suspended.'),
+    stripe: (disputes: number, inquiries = 0) => {
+      const handled = allOf(['Refunds',
+        disputes ? `the ${disputes} open ${disputes === 1 ? 'dispute' : 'disputes'}` : '',
+        inquiries ? `the ${inquiries} open bank ${inquiries === 1 ? 'question' : 'questions'}` : ''].filter(Boolean));
+      return `Your Stripe account stays yours: money in it keeps paying out to your bank. ${handled} are handled in Stripe while you’re suspended.`;
+    },
   },
   // Plans end at the renewal date (Part C): a cancel that waits for its date. Its heading is the move's ("stop on {date}");
   // the rest is its own — nothing stops at the click, and the way back is keeping the plan, not "moving back up". Derived:
@@ -616,11 +630,11 @@ export const LEAVING_WORDS = {
   },
   delete: {
     heading: 'Your online payments',
-    waiting: (disputes: number, clearing: number) => {
+    waiting: (disputes: number, clearing: number, inquiries = 0) => {
       const d = disputes === 1 ? '1 card dispute is open' : `${disputes} card disputes are open`;
       const c = clearing === 1 ? '1 bank debit is still clearing' : `${clearing} bank debits are still clearing`;
-      const parts = [disputes ? d : null, clearing ? c : null].filter(Boolean);
-      return parts.length ? `${parts.join(' and ')}. We wait for them before deleting.` : null;
+      const parts = [disputes ? d : '', inquiries ? openBankQuestions(inquiries) : '', clearing ? c : ''].filter(Boolean);
+      return parts.length ? `${allOf(parts)}. We wait for them before deleting.` : null;
     },
     owe: (owe: string) => (owe ? `${owe} Their pay pages close when we disconnect.` : null),
     disconnect: 'We disconnect your payouts before deleting. Your Stripe account stays yours, with any money in it.',
@@ -660,12 +674,13 @@ export const LEAVING_WORDS = {
   },
   // Derived (console words, owed to /marketing): what the operator's cancel or plan change stops, from the same count.
   // `when`: 'now', 'on the move', or 'on {date}' for a cancel that waits for its date (Plans end at the renewal date, Part C).
-  operator: (o: { familiesOwing: number; teamsOwing: number; openPages: number; debitsClearing: number; openDisputes: number }, when: 'now' | 'on the move' | `on ${string}`) => {
+  operator: (o: { familiesOwing: number; teamsOwing: number; openPages: number; debitsClearing: number; openDisputes: number; openInquiries: number }, when: 'now' | 'on the move' | `on ${string}`) => {
     const parts = [
       oweToday(o.familiesOwing, o.teamsOwing).replace(/\.$/, ''),
       o.openPages ? (o.openPages === 1 ? '1 pay page closes' : `${o.openPages} pay pages close`) : '',
       o.debitsClearing ? (o.debitsClearing === 1 ? '1 bank debit is still clearing' : `${o.debitsClearing} bank debits are still clearing`) : '',
       o.openDisputes ? (o.openDisputes === 1 ? '1 card dispute is open' : `${o.openDisputes} card disputes are open`) : '',
+      o.openInquiries ? openBankQuestions(o.openInquiries) : '',
     ].filter(Boolean);
     const list = parts.length > 1 ? `${parts.slice(0, -1).join(', ')} and ${parts[parts.length - 1]}` : parts[0] ?? '';
     return `Online payments stop ${when}${list ? `: ${list}` : ''}. The club’s Stripe account stays connected.`;
@@ -1218,7 +1233,11 @@ export function disputeDue(iso: string | null | undefined, opts: { clock?: boole
  */
 export const DISPUTE_WORDS = {
   // §1.1 the Fee cell / a team's payment row.
-  chip: { disputed: 'Disputed', inquiry: 'Bank asking', withBank: 'Disputed · with the bank', notAnswered: 'Disputed · not answered' },
+  // An inquiry keeps "Bank asking" once answered or past due (B-4, owner 2026-11-25): it never turns into "Disputed" by time.
+  chip: {
+    disputed: 'Disputed', inquiry: 'Bank asking', withBank: 'Disputed · with the bank', notAnswered: 'Disputed · not answered',
+    inquiryAnswered: 'Bank asking · answered', inquiryNotAnswered: 'Bank asking · not answered', // DRAFT
+  },
   answerBy: (name: string, due: string) => `${name} answers by ${due}`,
   answerByYou: (due: string) => `Answer by ${due}`,
   answered: (day: string) => `Answered ${day}`,
@@ -1232,6 +1251,7 @@ export const DISPUTE_WORDS = {
   tipAnswered: 'The cardholder’s bank is disputing this payment. Nothing is left for the club to do; the bank decides, and this can take weeks.',
   // Derived (the item's inquiry words, §1.4) for the chip's tap on an inquiry, where nothing is held: owed to /marketing.
   tipInquiry: 'The cardholder’s bank is asking about this payment. Nothing has been taken.',
+  tipInquiryAnswered: 'The cardholder’s bank is asking about this payment. Nothing has been taken, and nothing is left for the club to do.', // DRAFT
   // §1.2 the record block.
   heading: 'The cardholder’s bank is disputing this payment',
   headingInquiry: 'The cardholder’s bank is asking about this payment',
@@ -1270,11 +1290,14 @@ export const DISPUTE_WORDS = {
   lostLine: (day: string, receiptNo: string, book: 'season' | 'tournament', owesAgain: string) =>
     `Lost ${day}. The bank took back receipt ${receiptNo}. It’s out of the ${book === 'season' ? 'season’s' : 'tournament’s'} book, and ${owesAgain}.`,
   siblings: (children: string) => `This is one payment for ${children}. The dispute is on the whole payment.`,
+  siblingsInquiry: (children: string) => `This is one payment for ${children}. The bank’s question is about the whole payment.`, // DRAFT
   againAfterOther: (childFirst: string) =>
     `${childFirst} paid again another way after the dispute was lost. If this dispute is now won, ${childFirst} has paid twice.`,
   // §1.4 Needs attention. `who` is "{childPossessive}" / "{teamNamePossessive}"; `payer` is "{guardianPossessive}".
   itemTitle: (who: string) => `${who} card payment is disputed`,
   itemTitleMany: (children: string) => `A card payment for ${children} is disputed`,
+  itemTitleInquiry: (who: string) => `The bank is asking about ${who} card payment`, // DRAFT
+  itemTitleManyInquiry: (children: string) => `The bank is asking about a card payment for ${children}`, // DRAFT
   /**
    * `card_disputed` (drawing tab 3): ONE entry for its four cases. The answerer's copy (`answers` null) carries the
    * bank's reason (no reason, no row), what Stripe holds (the figure leads only when it differs from the Amount row's;
@@ -1345,11 +1368,13 @@ export function disputeFactsText(f: {
   payerName: string | null; payerEmail: string | null; forLine: string;
   registeredDay: string | null; registeredBy: string | null; refundPolicy: string | null;
   receiptEmailedDay: string | null; club: string; contactEmail: string | null;
+  /** The bank is only asking: the text never calls the payment disputed. */
+  inquiry?: boolean;
 }): string {
   const paidBy = f.payerName ? `${f.payerName}${f.payerEmail ? ` (${f.payerEmail})` : ''}` : f.payerEmail;
   return [
     f.test ? 'Test mode: no money moved.' : null,
-    `Disputed payment: receipt ${f.receiptNo}, ${f.amount}, paid ${f.paidDay} by card${f.cardLast4 ? ` ending ${f.cardLast4}` : ''}.`,
+    `${f.inquiry ? 'Payment the bank is asking about' : 'Disputed payment'}: receipt ${f.receiptNo}, ${f.amount}, paid ${f.paidDay} by card${f.cardLast4 ? ` ending ${f.cardLast4}` : ''}.`,
     paidBy ? `Paid by ${paidBy}.` : null,
     `For: ${f.forLine}.`,
     f.registeredDay ? `Registered ${f.registeredDay}${f.registeredBy ? ` by ${f.registeredBy}` : ''}.` : null,
@@ -1384,6 +1409,10 @@ export const DISPUTE_EMAIL_WORDS = {
     subject: (due: string, club: string) => `Answer by ${due}: a card dispute for ${club}`,
     lead: (receiptNo: string, forWhom: string, dueFull: string) => `The dispute on receipt ${receiptNo} for ${forWhom} is due to be answered in Stripe on ${endSentence(dueFull)}`,
     after: 'If it isn’t answered by then, the bank decides without the club’s side.',
+    // The bank only asking (B-4, owner 2026-11-25). DRAFT; /marketing 2026-11-26.
+    subjectInquiry: (due: string, club: string) => `Answer by ${due}: a bank is asking about a card payment to ${club}`,
+    leadInquiry: (receiptNo: string, forWhom: string, dueFull: string) => `The bank’s question about receipt ${receiptNo} for ${forWhom} is due to be answered in Stripe on ${endSentence(dueFull)}`,
+    afterInquiry: 'Nothing has been taken. Answering can stop it becoming a dispute.',
   },
 } as const;
 

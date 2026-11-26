@@ -16,6 +16,7 @@ import { SETTLED_WORDS as W } from './needs-attention-words';
 import { money as formatMoney } from './online-payment-words';
 import { PAYOUTS_ACCOUNT_COLUMNS, factsFromRow, payoutsState, type PayoutsAccountRow } from './online-payment-account';
 import type { SettledNotice } from './types';
+import { isInquiry } from './online-payment-dispute';
 
 /**
  * NEEDS ATTENTION CLEARS ITSELF (owner ruling 2026-10-16, Owner QA §322 "Found before W2"; plan
@@ -774,7 +775,9 @@ const disputes = (rows: NoticeRow[]) =>
 /**
  * A card payment is disputed (12d-1, `onlineDisputeId`; words §1.4). The answerer's copy (raised with `answerer: 'yes'`
  * — the contract Part 3's raise keeps) clears once the answer is sent; every other copy waits for the bank's decision.
- * Won, prevented or an inquiry that closed read "won"; lost reads lost (its own item, `card_dispute_lost`, takes over).
+ * Won or prevented read "won"; an inquiry that closed says the bank took nothing; lost reads lost (its own item,
+ * `card_dispute_lost`, takes over). A notice raised while the bank was only asking (`inquiry: 'yes'`) settles the moment it
+ * becomes a dispute, so the dispute's own notice can be raised (one open copy per person and dispute, mig 390).
  */
 const cardDisputed: Resolver = async rows => {
   const out = new Map<string, Verdict>();
@@ -784,7 +787,8 @@ const cardDisputed: Resolver = async rows => {
     if (!id) continue;
     const d = byId.get(id);
     if (!d) out.set(r.id, said(W.onlinePaymentGone, { link: null }));
-    else if (DISPUTE_CLOSED.has(d.status)) out.set(r.id, said(d.status === 'lost' ? W.disputeLost : W.disputeWon, { at: d.closed_at }));
+    else if (DISPUTE_CLOSED.has(d.status)) out.set(r.id, said(d.status === 'lost' ? W.disputeLost : d.status === 'warning_closed' ? W.inquiryClosed : W.disputeWon, { at: d.closed_at }));
+    else if (meta(r, 'inquiry') === 'yes' && !isInquiry(d.status)) out.set(r.id, said(W.inquiryDisputed, { at: null }));
     else if (meta(r, 'answerer') === 'yes' && d.answered) out.set(r.id, said(W.disputeAnswered, { at: d.answered_at }));
     else out.set(r.id, 'waiting');
   }

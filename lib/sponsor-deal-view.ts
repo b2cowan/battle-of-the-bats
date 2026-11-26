@@ -22,7 +22,7 @@ import { clubPublicContact } from './club-email-context';
 import { CLUB_FORM_BUCKET, signupFormView, sponsorshipFormId } from './club-form-server';
 import { dealLinkFormState, type DealLinkAnswer } from './club-form-deal';
 import { readPackage, readSettings } from './club-sponsorships-server';
-import { markDealOpened, readDeal } from './club-sponsorship-deals-server';
+import { markDealOpened, newerLinkEmailed, readDeal } from './club-sponsorship-deals-server';
 import { dealBullets, linkTakesForm, linkTakesLogo, type DealInvoice } from './club-sponsorship-deals';
 import { clubCanEmailInvoice, invoiceStanding, refundCounts, refundNoteCancelled, refundedAway } from './club-sponsor-invoice';
 import { sponsorCardFacts, unrecordedCardPayment } from './sponsor-card-server';
@@ -39,7 +39,7 @@ import type { Organization } from './types';
 export type LinkDoor =
   | { kind: 'open'; orgId: string; dealId: string }
   /** Signed by us, but replaced since ("Send the link again"): the page says so (owner call (f), 2026-11-22). */
-  | { kind: 'replaced'; orgId: string }
+  | { kind: 'replaced'; orgId: string; dealId: string; linkUnsentAt: string | null }
   | null;
 
 /** The deal a token opens, at its current version — or what is left of it. Never read a deal token anywhere else. */
@@ -48,11 +48,11 @@ export async function dealFromLinkToken(token: string): Promise<LinkDoor> {
   if (!secret || typeof token !== 'string') return null;
   const read = readSponsorDealToken(token, secret);
   if (!read) return null;
-  const { data, error } = await supabaseAdmin.from('club_sponsor_deals').select('org_id, link_version').eq('id', read.dealId).maybeSingle();
+  const { data, error } = await supabaseAdmin.from('club_sponsor_deals').select('org_id, link_version, link_unsent_at').eq('id', read.dealId).maybeSingle();
   if (error) throw error;
-  const row = data as { org_id: string; link_version: number } | null;
+  const row = data as { org_id: string; link_version: number; link_unsent_at: string | null } | null;
   if (!row) return null;
-  return row.link_version === read.version ? { kind: 'open', orgId: row.org_id, dealId: read.dealId } : { kind: 'replaced', orgId: row.org_id };
+  return row.link_version === read.version ? { kind: 'open', orgId: row.org_id, dealId: read.dealId } : { kind: 'replaced', orgId: row.org_id, dealId: read.dealId, linkUnsentAt: row.link_unsent_at };
 }
 
 /** The club a door's deal belongs to, when its plan still carries Sponsorships (`publicClubRefusal`, page 'sponsorship'). */
@@ -95,7 +95,8 @@ export interface SponsorBusinessPrefill {
 
 export type SponsorPageView =
   | { state: 'notFound' }
-  | { state: 'closed'; club: SponsorClubFace; replaced?: true; ended?: true }
+  /** `newerEmail`: a replaced link whose newer one was emailed. */
+  | { state: 'closed'; club: SponsorClubFace; replaced?: true; newerEmail?: boolean; ended?: true }
   | {
     state: 'form' | 'done';
     token: string;
@@ -161,7 +162,11 @@ export async function buildSponsorPageView(orgSlug: string, token: string, opts:
   if (!org || org.id !== door.orgId || publicClubRefusal(org, 'sponsorship')) return { state: 'notFound' };
   const settings = await readSettings(org.id);
   const club = await clubFace(org, settings.contactEmail);
-  if (door.kind === 'replaced') return { state: 'closed', club, replaced: true };
+  if (door.kind === 'replaced') {
+    // A failed read says the line that is true either way.
+    const newerEmail = await newerLinkEmailed(org.id, door.dealId, door.linkUnsentAt).catch(() => false);
+    return { state: 'closed', club, replaced: true, newerEmail };
+  }
 
   const deal = await readDeal(org.id, door.dealId);
   // A deal refunded away (Part 3b) still shows its invoice and refund to the business that paid it, with no way to pay.

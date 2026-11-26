@@ -133,7 +133,7 @@ export default function DealScreen({ dealId }: { dealId: string }) {
     // copy starts NOW with the link still on its way, because a browser only lets a click copy.
     let linkArrived: (link: string | null) => void = () => {};
     const copying = path === '/again' && linkMade ? copyWhenReady(new Promise<string | null>(res => { linkArrived = res; })) : null;
-    const r = await send<{ emailed?: boolean; error?: string; link?: string; outcome?: 'emailed' | 'unconfirmed' | 'link_only' | 'ran_out' | 'not_emailed'; to?: string }>(api(path), 'POST', body ?? {});
+    const r = await send<{ emailed?: boolean; error?: string; link?: string; outcome?: 'emailed' | 'unconfirmed' | 'link_only' | 'not_due' | 'ran_out' | 'not_emailed'; to?: string }>(api(path), 'POST', body ?? {});
     linkArrived(r.ok ? r.data.link ?? null : null);
     const copiedNow = copying ? await copying : null;
     setBusy(false);
@@ -146,6 +146,7 @@ export default function DealScreen({ dealId }: { dealId: string }) {
     if (o === 'emailed' && r.data.to) setNotice({ tone: 'good', text: D.deal.sentNewLink(r.data.to) });
     else if (o === 'link_only') linkWindow = copiedNow ? { title: D.deal.newLinkCopiedTitle, text: D.deal.newLinkCopied(d.businessName), copy: false } : { title: D.deal.newLinkMadeTitle, text: D.deal.newLinkMadeNotCopied };
     else if (o === 'ran_out') linkWindow = { title: D.deal.newLinkMadeTitle, text: D.deal.ranOut };
+    else if (o === 'not_due') linkWindow = { title: D.deal.newLinkMadeTitle, text: D.deal.notDueNewLink };
     else if (o === 'unconfirmed') linkWindow = { title: D.deal.unconfirmedTitle, text: D.deal.unconfirmed(d.businessName) };
     else if (o) linkWindow = { title: D.deal.newLinkMadeTitle, text: D.deal.notEmailedNewLink };
     setAsking(null);
@@ -326,7 +327,7 @@ export default function DealScreen({ dealId }: { dealId: string }) {
           {emailBlock && <span className={ck.hint}>{emailBlock}</span>}
           {d.state !== 'withdrawn' && data.link && (
             <button type="button" className={css.linkButton} aria-haspopup="dialog" disabled={busy} onClick={() => setAsking('again')}>
-              <RefreshCw size={14} aria-hidden />{linkMade ? D.deal.newLink : D.deal.again}
+              <RefreshCw size={14} aria-hidden />{data.againEmails ? D.deal.again : D.deal.newLink}
             </button>
           )}
           {stopped
@@ -352,9 +353,9 @@ export default function DealScreen({ dealId }: { dealId: string }) {
         </KitDialog>
       )}
       {asking === 'again' && (
-        <KitDialog kind="question" busy={busy} onClose={() => setAsking(null)} title={linkMade ? D.deal.newLinkAsk : D.deal.againAsk}
-          footer={<><DialogCancel /><button type="button" className="btn btn-lime" disabled={busy} onClick={() => void act('/again')}>{linkMade ? D.deal.newLinkButton : D.deal.againButton}</button></>}>
-          <p className={ck.hint}>{linkMade ? D.deal.newLinkBody : D.deal.againBody}</p>
+        <KitDialog kind="question" busy={busy} onClose={() => setAsking(null)} title={data.againEmails ? D.deal.againAsk : D.deal.newLinkAsk}
+          footer={<><DialogCancel /><button type="button" className="btn btn-lime" disabled={busy} onClick={() => void act('/again', { expectsEmail: data.againEmails })}>{data.againEmails ? D.deal.againButton : D.deal.newLinkButton}</button></>}>
+          <p className={ck.hint}>{data.againEmails ? D.deal.againBody : linkMade ? D.deal.newLinkBody : D.deal.newLinkCopyBody}</p>
         </KitDialog>
       )}
       {asking === 'email' && (

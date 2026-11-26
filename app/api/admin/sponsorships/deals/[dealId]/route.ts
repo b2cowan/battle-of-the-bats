@@ -16,6 +16,7 @@ import { loadFiscalSetting } from '@/lib/club-fiscal-year-server';
 import { fiscalYearOf } from '@/lib/club-fiscal-year';
 import { offerAgainFill } from '@/lib/club-sponsorship-offer-again-server';
 import { offerLapsedNow } from '@/lib/club-sponsorship-offer-lapsed';
+import { againPlan } from '@/lib/club-sponsorship-offer-send';
 import { parsePrice } from '@/lib/club-sponsorships';
 import { DEAL_WORDS } from '@/lib/club-sponsorship-deal-words';
 import { SPONSORSHIPS_WORDS } from '@/lib/club-sponsorships-words';
@@ -57,6 +58,9 @@ export const GET = withObservability(async (req: Request, { params }: Params) =>
   // An earlier year's open offer whose place has gone back: its link is dead, so the page offers none of the link's presses.
   const lapsed = offerLapsed(deal, today, fiscalYearOf(today, fiscal));
   const rate = settings.registered ? gstHstRateOn(business?.address?.province ?? null, today) : null;
+  // Would "Send the link again" email it? The button and its confirm say so only then (B-2).
+  const againEmails = deal.state !== 'withdrawn' && !lapsed
+    && (await againPlan({ orgId: org.id, settings, deal, offers, businessEmail: business?.email ?? null, today })).emails;
   return NextResponse.json({
     deal: { ...shown, band: bandOf(deal) },
     business,
@@ -72,6 +76,7 @@ export const GET = withObservability(async (req: Request, { params }: Params) =>
     bar: emailBarFor(address, bars.stops, bars.family),
     link: deal.state === 'withdrawn' || lapsed ? null : dealLinkUrl(org.slug, deal.id, linkVersion),
     lapsed,
+    againEmails,
     registered: settings.registered,
     hasMailingAddress: !!settings.mailingAddress,
     hasContact: !!(await offerContactOf(org.id, settings)),

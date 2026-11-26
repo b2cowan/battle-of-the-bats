@@ -23,7 +23,7 @@ import { KeepOverWindow, PayLinkAnywayWindow, PayLinkReplaceWindow, PaymentViewW
 import type { OpenPayPage } from '@/lib/online-pay-pages';
 import { RepChip } from '@/components/admin/kit/club/RepKit';
 import DisputeBlock, { disputeShows } from '@/components/admin/kit/club/DisputeBlock';
-import { blocksRefund, disputeChip, type DisputeRecord } from '@/lib/online-payment-dispute';
+import { blocksRefund, disputeChip, isPastDue, type DisputeRecord } from '@/lib/online-payment-dispute';
 import { DISPUTE_WORDS as DPW, disputeDue } from '@/lib/online-payment-words';
 import { useIsPhone } from '@/lib/hooks/useIsPhone';
 import { useParams } from 'next/navigation';
@@ -449,7 +449,7 @@ export default function TeamPayments(props: Props) {
     const chip = disputeChip(d);
     if (!chip) return null;
     const sub = d.answered ? DPW.answered(day(d.answeredAt))
-      : chip === 'notAnswered' ? DPW.wasDue(disputeDue(d.dueBy))
+      : isPastDue(d) ? DPW.wasDue(disputeDue(d.dueBy))
         : d.dueBy ? (d.youAnswer ? DPW.answerByYou(disputeDue(d.dueBy)) : DPW.answerBy(d.answererName, disputeDue(d.dueBy))) : null;
     return <span className={styles.payChip}><RepChip tone={d.youAnswer ? 'warn' : 'info'}>{DPW.chip[chip]}</RepChip>{sub && <span className={styles.payTagSub}>{sub}</span>}</span>;
   };

@@ -138,6 +138,8 @@ export const GET = withObservability(async (req: Request) => {
     openPages: out?.openPages ?? null,
     openDisputes: out?.openDisputes ?? null,
     firstDisputeDue: out?.firstDisputeDue ?? null,
+    openInquiries: out?.openInquiries ?? null,
+    firstInquiryDue: out?.firstInquiryDue ?? null,
     // 12d-2 Part 4 (words §5.1, ask 6): who agreed, when, to which version — the owner's read-out. An owner who has left
     // keeps their name: the stored email stands in once the user is gone.
     terms: isOwner && row?.terms_agreed_at ? {

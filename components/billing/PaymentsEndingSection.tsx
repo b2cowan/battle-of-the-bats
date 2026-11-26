@@ -40,11 +40,11 @@ export default function PaymentsEndingSection({ section, ending }: { section: En
         <p>{L.cancel.stops(owe)}</p>
         {o.openPages > 0 && <p>{L.cancel.pages(o.openPages)}</p>}
         {o.debitsClearing > 0 && <p>{L.cancel.clearing(o.debitsClearing)}</p>}
-        <p>{L.cancel.stripe(o.openDisputes)}</p>
+        <p>{L.cancel.stripe(o.openDisputes, o.openInquiries)}</p>
       </section>
     );
   }
-  const waiting = L.delete.waiting(o.openDisputes, o.debitsClearing);
+  const waiting = L.delete.waiting(o.openDisputes, o.debitsClearing, o.openInquiries);
   const owing = L.delete.owe(owe);
   return (
     <section aria-label={L.delete.heading}>

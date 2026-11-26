@@ -10,9 +10,9 @@ import 'server-only';
 import { gstHstRateOn } from './gst-hst-rates';
 import { sendOfferEmail } from './sponsor-offer-email';
 import { payLinkSecret } from './sponsor-deal-link';
-import { createDeal, deleteUnsentDeal, readDeal, readOfferBars, readStandingPaidOn, sponsorHasPayment, type NewDeal } from './club-sponsorship-deals-server';
+import { createDeal, deleteUnsentDeal, readDeal, readOfferBars, readStandingPaidOn, sponsorHasPayment, type DealOfferRead, type NewDeal } from './club-sponsorship-deals-server';
 import { dealLinkUrl, offerContactOf, recordOfferSafely } from './club-sponsorship-deal-actions';
-import { checklistOf, emailBarFor, type ClubDeal, type OfferReason } from './club-sponsorship-deals';
+import { checklistOf, emailBarFor, linkTakesForm, reasonHolds, type ClubDeal, type OfferReason } from './club-sponsorship-deals';
 import { DEAL_WORDS } from './club-sponsorship-deal-words';
 import { SPONSORSHIPS_WORDS } from './club-sponsorships-words';
 import type { SponsorshipSettings } from './club-sponsorships';
@@ -37,6 +37,34 @@ export async function offerSendCheck(input: {
   const bar = emailBarFor(input.to, bars.stops, bars.family);
   if (bar) return { ok: false, block: { error: bar.kind === 'do_not_offer' ? O.errBarredStop : O.errBarred, status: 409, code: bar.kind } };
   return { ok: true, to: input.to, contactEmail };
+}
+
+/**
+ * WHAT "SEND THE LINK AGAIN" WILL DO, read once for the page and the press (Board Ready Stage 6 fixes, B-2; owner
+ * 2026-11-25), so the button and its confirm never promise an email the press won't send. A new link is always made; it is
+ * emailed only when the deal was offered by email, still takes the business's details (an invoiced or paid deal is emailed
+ * nothing), its reason still holds today, and every send rule passes. Only a send that fails can't be known beforehand.
+ */
+export type AgainPlan =
+  | { emails: true; first: DealOfferRead; to: string; contactEmail: string }
+  /** `link_only`: never emailed. `not_due`: invoiced or paid. `ran_out`: the reason. `not_emailed`: a send rule (`error`: its words). */
+  | { emails: false; outcome: 'link_only' | 'not_due' | 'ran_out' | 'not_emailed'; error?: string };
+
+export async function againPlan(input: {
+  orgId: string; settings: SponsorshipSettings; deal: ClubDeal; offers: DealOfferRead[]; businessEmail: string | null; today: string;
+}): Promise<AgainPlan> {
+  const { deal, offers, today } = input;
+  const first = offers.find(o => o.kind === 'offer') ?? offers[0] ?? null;
+  if (!first) return { emails: false, outcome: 'link_only' };
+  // The deal's state first: an invoiced or paid deal is emailed nothing, however old its reason is.
+  if (!linkTakesForm(deal)) return { emails: false, outcome: 'not_due' };
+  if (!reasonHolds(first.reason, first.reasonOn, today)) return { emails: false, outcome: 'ran_out' };
+  const check = await offerSendCheck({ orgId: input.orgId, settings: input.settings, to: deal.offeredTo ?? input.businessEmail, sponsorId: deal.sponsorId });
+  if (!check.ok) return { emails: false, outcome: 'not_emailed' };
+  // A first reason of "They paid us" is read against the payments as they stand today (owner 2026-11-25).
+  const refusal = first.reason === 'paid_recently' ? await paidReasonRefusal(input.orgId, deal.sponsorId, first.reasonOn, today) : null;
+  if (refusal) return { emails: false, outcome: 'not_emailed', error: refusal };
+  return { emails: true, first, to: check.to, contactEmail: check.contactEmail };
 }
 
 /**

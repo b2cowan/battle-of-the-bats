@@ -86,7 +86,7 @@ export const NOTIFICATION_EVENT_LABELS: Record<NotificationEventType, string> = 
   debit_reversed:                    'A bank payment was returned after it cleared',
   // 12d words §1.4 `kind.dispute.*` / `kind.disputeLost.*`; the paid-twice label is drawn from §2.2's item.
   online_payment_over:               'A team paid more than it owed',
-  card_disputed:                     'A card payment was disputed',
+  card_disputed:                     'A bank disputed or asked about a card payment',
   card_dispute_lost:                 'A dispute was lost',
   club_schedule_reply:               'A team replied to a schedule',
   club_schedule_handed_back:         'A team handed back club time',
@@ -172,7 +172,7 @@ export const NOTIFICATION_EVENT_DESCRIPTIONS: Record<NotificationEventType, stri
   debit_returned:                    'A bank debit was returned while it was clearing. Nothing was taken. The family was emailed a way to pay.',
   debit_reversed:                    'The bank reversed a payment that had cleared. It’s out of the book and the amount is owing again.',
   online_payment_over:               'A team’s online payment landed after it had paid, or for more than it owed. Refund the extra to the card.',
-  card_disputed:                     'A cardholder’s bank is disputing a card payment. Only the person who set up payouts can answer it in Stripe.',
+  card_disputed:                     'A cardholder’s bank is disputing a card payment, or asking about one. Only the person who set up payouts can answer it in Stripe.',
   card_dispute_lost:                 'The bank took back a payment. It’s out of the book and the amount is owing again.',
   club_payment_handed_off:           'Your club received a family’s dues payment for one of your players. Record it in the team’s book when the money reaches you.',
   club_payment_not_received:         'A head coach says a family’s payment you sent them never reached the team.',

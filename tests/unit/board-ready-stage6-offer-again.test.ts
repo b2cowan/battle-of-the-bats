@@ -296,9 +296,12 @@ describe('the callout (11A) and one old deal (12A)', () => {
     const step = read('lib/club-sponsorship-offer-send.ts');
     assert.match(step, /if \(on\) return reasonOn > on \? DEAL_WORDS\.again\.errPaidLater\(on\) : null;/);
     assert.match(step, /await sponsorHasPayment\(orgId, sponsorId\)\) \? O\.errNoStanding : null/);
-    for (const f of ['route.ts', '[dealId]/email/route.ts', '[dealId]/again/route.ts']) {
+    for (const f of ['route.ts', '[dealId]/email/route.ts']) {
       assert.match(read(`app/api/admin/sponsorships/deals/${f}`), /paidReasonRefusal\(org\.id, /, f);
     }
+    // Send the link again asks through its plan (Board Ready Stage 6 fixes, B-2), which the deal's page reads too.
+    assert.match(read('app/api/admin/sponsorships/deals/[dealId]/again/route.ts'), /await againPlan\(/);
+    assert.match(step, /await paidReasonRefusal\(input\.orgId, deal\.sponsorId, first\.reasonOn, today\)/);
   });
 });
 
@@ -313,7 +316,10 @@ describe('one send step (drawing F6; /legal must-fixes 2–4)', () => {
     for (const f of filesUnder('app/api/admin/sponsorships', '.ts')) {
       const code = read(f);
       if (!/\b(sendOffer|offerNewDeal)\(/.test(code)) continue;
-      assert.match(code, /\boffer(Send|Club)Check\(/, `${f} sends without offerSendCheck`);
+      assert.match(code, /\b(offer(Send|Club)Check|againPlan)\(/, `${f} sends without offerSendCheck`);
     }
+    // againPlan is a door to the same check, never a way round it.
+    const step = read('lib/club-sponsorship-offer-send.ts');
+    assert.match(step.slice(step.indexOf('export async function againPlan(')), /await offerSendCheck\(\{[\s\S]*?if \(!check\.ok\) return \{ emails: false/);
   });
 });

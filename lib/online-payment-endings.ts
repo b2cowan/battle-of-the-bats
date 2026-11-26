@@ -6,9 +6,9 @@ import { hasPlanFeature } from './plan-features';
 import { addCalendarDays, daysBetweenDateStrings, formatStoredDate, tournamentToday } from './timezone';
 import type { OrgPlan } from './types';
 import { PLAN_CONFIG } from './plan-config';
-import { LEAVING_WORDS } from './online-payment-words';
+import { LEAVING_WORDS, openBankQuestions } from './online-payment-words';
 import { FACT_LABELS, factRow, noticeFacts, type NoticeFacts } from './notification-facts';
-import { OPEN_DISPUTE_STATUSES } from './online-payment-dispute';
+import { OPEN_DISPUTE_STATUSES, isInquiry } from './online-payment-dispute';
 import { tournamentTracksPayments } from './tournament-payments-tracked';
 
 /**
@@ -40,11 +40,14 @@ export interface PaymentsOutstanding {
   openDisputes: number;
   /** The soonest answer-by date of an open dispute (an instant), when Stripe gives one. */
   firstDisputeDue: string | null;
+  /** Open inquiries: a bank only asking. Counted apart (nothing is held), and still waited for by the Delete. */
+  openInquiries: number;
+  firstInquiryDue: string | null;
 }
 
 export const NOTHING_OUTSTANDING: PaymentsOutstanding = {
   connected: false, disconnected: false, familiesOwing: 0, teamsOwing: 0, openPages: 0, debitsClearing: 0,
-  openDisputes: 0, firstDisputeDue: null,
+  openDisputes: 0, firstDisputeDue: null, openInquiries: 0, firstInquiryDue: null,
 };
 
 async function count(q: PromiseLike<{ count: number | null; error: unknown }>): Promise<number> {
@@ -123,10 +126,13 @@ export async function readOutstanding(orgId: string): Promise<PaymentsOutstandin
     teamsOwing(orgId),
     countClubPayPages(orgId),
     count(supabaseAdmin.from('online_payments').select('id', { count: 'exact', head: true }).eq('org_id', orgId).eq('status', 'clearing')),
-    supabaseAdmin.from('online_payment_disputes').select('due_by').eq('org_id', orgId).in('status', [...OPEN_DISPUTE_STATUSES]),
+    supabaseAdmin.from('online_payment_disputes').select('status, due_by').eq('org_id', orgId).in('status', [...OPEN_DISPUTE_STATUSES]),
   ]);
   if (disputes.error) throw disputes.error;
-  const dues = (disputes.data ?? []).map(d => d.due_by as string | null).filter((d): d is string => !!d).sort();
+  const open = (disputes.data ?? []) as Array<{ status: string; due_by: string | null }>;
+  const inquiries = open.filter(d => isInquiry(d.status));
+  const real = open.filter(d => !isInquiry(d.status));
+  const firstDue = (list: typeof open) => list.map(d => d.due_by).filter((d): d is string => !!d).sort()[0] ?? null;
   return {
     connected: true,
     disconnected: !!acct.disconnected_at,
@@ -134,18 +140,21 @@ export async function readOutstanding(orgId: string): Promise<PaymentsOutstandin
     teamsOwing: teams,
     openPages: pages,
     debitsClearing: clearing,
-    openDisputes: (disputes.data ?? []).length,
-    firstDisputeDue: dues[0] ?? null,
+    openDisputes: real.length,
+    firstDisputeDue: firstDue(real),
+    openInquiries: inquiries.length,
+    firstInquiryDue: firstDue(inquiries),
   };
 }
 
 /** What the operator's Delete waits for (owner ruling 2): money in flight, each named. Empty = nothing in flight. (The Stripe
  *  fees FieldLogicHQ billed back — unbilled, failed, or on an unpaid invoice — retired with Stripe-owned pricing Stage 4.) */
-export type InFlight = 'disputes' | 'clearing';
+export type InFlight = 'disputes' | 'inquiries' | 'clearing';
 
 export function moneyInFlight(o: PaymentsOutstanding): { kind: InFlight; n: number }[] {
   const out: { kind: InFlight; n: number }[] = [];
   if (o.openDisputes) out.push({ kind: 'disputes', n: o.openDisputes });
+  if (o.openInquiries) out.push({ kind: 'inquiries', n: o.openInquiries });
   if (o.debitsClearing) out.push({ kind: 'clearing', n: o.debitsClearing });
   return out;
 }
@@ -154,11 +163,14 @@ export function moneyInFlight(o: PaymentsOutstanding): { kind: InFlight; n: numb
 export function inFlightRefusal(items: readonly { kind: InFlight; n: number }[]): string {
   const say: Record<InFlight, (n: number) => string> = {
     disputes: n => (n === 1 ? '1 card dispute is open' : `${n} card disputes are open`),
+    inquiries: openBankQuestions,
     clearing: n => (n === 1 ? '1 bank debit is still clearing' : `${n} bank debits are still clearing`),
   };
   const parts = items.map(i => say[i.kind](i.n));
   const list = parts.length > 1 ? `${parts.slice(0, -1).join(', ')} and ${parts[parts.length - 1]}` : parts[0];
-  return `This club’s online payments still have money in flight: ${list}. Wait for them to finish, then delete. Its Online payments tab shows each.`;
+  // A bank only asking holds no money: with nothing else open, the refusal doesn't say any is in flight.
+  const lead = items.every(i => i.kind === 'inquiries') ? 'This club can’t be deleted yet' : 'This club’s online payments still have money in flight';
+  return `${lead}: ${list}. Wait for them to finish, then delete. Its Online payments tab shows each.`;
 }
 
 /**

@@ -22,7 +22,7 @@ import { clockOf, isBank, isShown, newestFirst, refundBase, refundState, refundT
 import type { RegDebit } from './league-debits';
 import { childList } from './league-pay-words';
 import { DISPUTE_WORDS, disputeDue, reasonShort } from './online-payment-words';
-import { disputeChip, type DisputeRecord } from './online-payment-dispute';
+import { disputeChip, isInquiry, isPastDue, type DisputeRecord } from './online-payment-dispute';
 import { leagueUnrecordedWhy } from './online-payment-words';
 
 // ── What the screen reads ───────────────────────────────────────────────────────────────────────
@@ -305,9 +305,11 @@ export function feeCell(
     const D = DISPUTE_WORDS;
     const kind = disputeChip(dispute);
     if (kind) {
-      flag = { text: D.chip[kind], tone: dispute.youAnswer ? 'warn' : 'info', tip: dispute.answered ? D.tipAnswered : kind === 'inquiry' ? D.tipInquiry : D.tip(money(dispute.held > 0 ? dispute.held : dispute.amount), 'season') };
+      const tip = isInquiry(dispute.status) ? (dispute.answered ? D.tipInquiryAnswered : D.tipInquiry)
+        : dispute.answered ? D.tipAnswered : D.tip(money(dispute.held > 0 ? dispute.held : dispute.amount), 'season');
+      flag = { text: D.chip[kind], tone: dispute.youAnswer ? 'warn' : 'info', tip };
       sub = dispute.answered ? D.answered(regDay(dispute.answeredAt, today))
-        : kind === 'notAnswered' ? D.wasDue(disputeDue(dispute.dueBy))
+        : isPastDue(dispute) ? D.wasDue(disputeDue(dispute.dueBy))
           : dispute.dueBy ? (dispute.youAnswer ? D.answerByYou(disputeDue(dispute.dueBy)) : D.answerBy(dispute.answererName, disputeDue(dispute.dueBy))) : sub;
     } else if (dispute.status === 'lost' && dispute.lostBookedAt && isOwing(state)) {
       primary = D.lost(money(state.owing));

@@ -61,6 +61,8 @@ export type PayoutsView = {
   openPages?: number | null;
   openDisputes?: number | null;
   firstDisputeDue?: string | null;
+  openInquiries?: number | null;
+  firstInquiryDue?: string | null;
   /** 12d-2 (words §3.3): the club has Accounting, where its payouts list lives; without it the owner's card carries it. */
   hasAccounting?: boolean;
   /** 12d-2: the club has connected payouts at some time (a payouts list exists). */
@@ -786,6 +788,7 @@ function DisconnectWindow({ orgSlug, home, view, onClose, onDone }: {
   const clearing = view.debitsClearing ?? 0;
   const pages = view.openPages ?? 0;
   const disputes = view.openDisputes ?? 0;
+  const inquiries = view.openInquiries ?? 0;
   const W = payoutsWords(home);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -819,6 +822,7 @@ function DisconnectWindow({ orgSlug, home, view, onClose, onDone }: {
       {pages > 0 && <p>{L.pages(pages)}</p>}
       {clearing > 0 && <p>{W.disconnect.clearing(clearing)}</p>}
       {disputes > 0 && <p>{L.disputes(disputes, view.firstDisputeDue ? formatStoredDate(view.firstDisputeDue, { withYear: false }) : null)}</p>}
+      {inquiries > 0 && <p>{L.inquiries(inquiries, view.firstInquiryDue ? formatStoredDate(view.firstInquiryDue, { withYear: false }) : null)}</p>}
       <p>{L.past}</p>
       {error && <p className={`${ck.notice} ${ck.noticeBad}`} role="alert">{error}</p>}
     </KitDialog>

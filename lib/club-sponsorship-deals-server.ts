@@ -285,7 +285,9 @@ export async function readDealBusiness(orgId: string, id: string): Promise<DealB
 }
 
 /** The offer emails a deal sent (its history and the reason it was offered for). */
-export async function readDealOffers(orgId: string, dealId: string): Promise<{ email: string; reason: OfferReason; reasonOn: string; kind: 'offer' | 'again'; sentAt: string; sentByName: string }[]> {
+export type DealOfferRead = { email: string; reason: OfferReason; reasonOn: string; kind: 'offer' | 'again'; sentAt: string; sentByName: string };
+
+export async function readDealOffers(orgId: string, dealId: string): Promise<DealOfferRead[]> {
   const { data, error } = await supabaseAdmin.from('club_sponsor_offers').select('email, reason, reason_on, kind, sent_at, sent_by_name')
     .eq('org_id', orgId).eq('deal_id', dealId).order('sent_at');
   if (error) throw error;
@@ -421,6 +423,16 @@ export async function replaceDealLink(orgId: string, dealId: string): Promise<nu
   if (error) throw error;
   // null: someone else replaced it first — the caller says so rather than send a link that is already dead.
   return data?.length ? next : null;
+}
+
+/**
+ * Was the deal's current link emailed? Read for a replaced link's page, which sends its reader to "the club's newer email"
+ * only when one went (B-2). A new link made with nothing emailed stamps `link_unsent_at` (mig 527); a later offer row means
+ * an email has gone since.
+ */
+export async function newerLinkEmailed(orgId: string, dealId: string, linkUnsentAt: string | null): Promise<boolean> {
+  const last = (await readDealOffers(orgId, dealId)).at(-1);
+  return !!last && (!linkUnsentAt || Date.parse(last.sentAt) > Date.parse(linkUnsentAt));
 }
 
 /** A new link went out with nothing emailed (Make a new link, a reason that has run out): the history says so. */

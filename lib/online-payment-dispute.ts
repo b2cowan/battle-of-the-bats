@@ -138,14 +138,20 @@ export function currentDispute<T extends Pick<DisputeView, 'status' | 'openedAt'
   return [...pool].sort((a, b) => b.openedAt.localeCompare(a.openedAt))[0];
 }
 
-/** The chip a row wears (words §1.1): an inquiry, a dispute waiting, answered and with the bank, or past due unanswered. */
-export type DisputeChip = 'inquiry' | 'disputed' | 'withBank' | 'notAnswered';
+/** The chip a row wears (words §1.1): a dispute waiting, answered and with the bank, or past due unanswered; an inquiry's
+ *  own three, which never say "Disputed" (B-4). */
+export type DisputeChip = 'disputed' | 'withBank' | 'notAnswered' | 'inquiry' | 'inquiryAnswered' | 'inquiryNotAnswered';
 export function disputeChip(d: Pick<DisputeView, 'status' | 'answered' | 'dueBy'>, now: Date = new Date()): DisputeChip | null {
   if (!isDisputeOpen(d.status)) return null;
-  if (d.answered) return 'withBank';
-  if (d.dueBy && new Date(d.dueBy).getTime() < now.getTime()) return 'notAnswered';
-  return isInquiry(d.status) ? 'inquiry' : 'disputed';
+  const inquiry = isInquiry(d.status);
+  if (d.answered) return inquiry ? 'inquiryAnswered' : 'withBank';
+  if (isPastDue(d, now)) return inquiry ? 'inquiryNotAnswered' : 'notAnswered';
+  return inquiry ? 'inquiry' : 'disputed';
 }
+
+/** Open, unanswered and past the answer-by instant. */
+export const isPastDue = (d: Pick<DisputeView, 'status' | 'answered' | 'dueBy'>, now: Date = new Date()): boolean =>
+  isDisputeOpen(d.status) && !d.answered && !!d.dueBy && new Date(d.dueBy).getTime() < now.getTime();
 
 /** No refund while a dispute is open (words §1.2 `dispute.noRefund`): Stripe already took the money back. An inquiry took
  *  nothing, and a refund is Stripe's own way to settle one (/review 2026-10-27), so an inquiry never blocks. */
