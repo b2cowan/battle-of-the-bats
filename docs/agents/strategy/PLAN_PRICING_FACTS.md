@@ -273,7 +273,9 @@ Plans & pricing Stage 1 (2026-11-03). Adding a plan is first a `/strategy` decis
    (`scripts/audit-stripe-billing.mjs`) needs the plan too.
 4. **Words:** pricing and persona pages, help articles (and their search text), plan emails: `/marketing`, then `/docs`.
 5. **Tax:** a new price is a change to what FieldLogicHQ charges, so `/accounting` reviews it before hand-off.
-6. **Demo:** only if the release's `/demos` pass decides the plan belongs in the shop window. Never a gate.
+6. ~~**Demo:** only if the release's `/demos` pass decides the plan belongs in the shop window. Never a gate.~~ Retired
+   2026-11-25: the public demos are retired (`BUSINESS_DECISIONS.md` "Both public demos are RETIRED"), so a new plan has no
+   demo step.
 
 Not listed by the code check, because none has a recorded answer (found 2026-11-03; a product question each, raise them when a plan is next
 added): which plans the early-access sign-up offers, which plans get an upgrade panel, the pricing strip's "not on sale

@@ -8,6 +8,89 @@
 
 ---
 
+### 2026-11-25 — Both public demos are RETIRED: no more no-login "See it live" sandboxes; proof before buying is the screenshots and walkthroughs, and a prospect sees the product with us (Decided)
+**Status:** **Decided** (owner, 2026-11-25: asked "can we just get rid of them?", was shown the trade-off and the one partial
+option worth arguing for (keep the coach demo alone as Club's shop window), and ruled *"Remove both, run /strategy to log it"*).
+**Decision:**
+1. **Both public demo sandboxes are retired**: the tournament demo (Riverdale Minor Ball Association) and the coach demo (the
+   Riverdale Ridge team). Nothing is kept as a partial demo: no coach-only demo and no club demo. The club demo that the
+   2026-11-18 entry left unscheduled is also not coming.
+2. **Every public door to them is removed**, not left to redirect: the "See it live" buttons on the home page, the persona pages
+   and the pricing cards, the footer's "Live demos" link, the `/demos` page, and every line that promises a running demo (the
+   prospect pitch page's "The demo is running right now", and the walkthroughs' closing text and search description). A door that
+   quietly lands somewhere else is the same bug as a dead link.
+3. **Proof before buying is now** the product screenshots already on the marketing pages and the walkthrough pages (self-serve),
+   plus the accompanied path: the pitch deck, a prospect's own club preview (Track P, 2026-11-24) and a prospect demo world built
+   for a meeting (Milton). **The self-serve plans stay self-serve.** Club, Club · Association and League Plus are still bought
+   at checkout with no invitation step (2026-11-18 ruling 1 is unchanged). Only the "walk it first, alone" step is gone.
+4. **The removal is one unit**: the doors first (hidden in a way that can be undone), then the words, then the demo machinery
+   itself (its code, seeds, checks, nightly jobs, the two shared demo accounts and the demo data). The demo check in the release
+   runbook and the `/demos` command retire with it.
+**Rationale:**
+- **The premise of the open door is gone.** The 2026-08-02 ruling rested on Tournament Plus being free until 2027-01-01 (its
+  ruling 2), and its ruling 5 required the question to be "re-asked, not assumed" when that ended. The Founding Season was
+  removed on 2026-11-19. This is that re-ask, and the answer is no.
+- **The cost is real and recurring.** About a dozen sign-in and session defects since August came from one shared account
+  being signed into by every visitor: the session leaking onto the marketing bar, the sign-in screen, `/discover`, the account
+  menu and the phone sheets; a sign-out that ejected every visitor; two-step setup that would sign everyone out; an anonymous
+  session reaching billing; and on 2026-11-22, production signing pricing-page visitors into the coach demo just by scrolling,
+  which took two hotfixes (the repo's first cherry-pick hotfix). Before the September decoupling, about 9% of all commits were
+  demo upkeep. Since then, no full `/demos` curation pass has run, so the demos were already drifting behind the product.
+- **There is no evidence they sell.** No usage was measured, by design (2026-08-02: "we will never know who used the demo
+  unless they convert"). No coach or club has signed up since the doors opened on 2026-08-10. The one real prospect meeting
+  (Milton, 2026-11-24) used a world built for that club, not the demos.
+**Trade-off accepted, said plainly:** the product no longer has a "try it yourself before anyone talks to you" path. A
+stranger sees screenshots and walkthroughs; seeing the live product means a conversation with us. **Pre-revenue realism:**
+this is a judgement without data either way. If the open launch shows visitors stalling at "I want to see it first", the
+answer is a new decision here, not a quiet revival of the sandboxes. A second cost: the marketing and help screenshots were
+taken inside the demos and **cannot be retaken once they are gone**, so the next re-shoot needs another source (a dev fixture
+or a prospect world).
+**Not a replacement, said plainly:** a prospect preview is made by the owner, for a meeting, and shows only a club's public
+website. It does not do the demos' job and needs no change because of this ruling.
+**Affects:** GTM (the funnel's only no-contact proof path is withdrawn); positioning (the "it is running right now" claim,
+2026-08-02 ruling 3, is no longer made); every public page with a demo door; the prospect pitch page; the walkthroughs; the
+release runbook and its morning-after demo check; the `/demos` agent; CLAUDE.md's demo-sandbox section; the board. **No price,
+plan name, capacity band, SKU, trial, inclusion or gate moves.** Drift check: `lib/plan-config.ts` and `lib/plan-features.ts`
+are untouched (the demo orgs were comped, never a plan). In `PLAN_PRICING_FACTS.md`, the "Demo" step of the new-plan checklist
+is retired in this entry; its line listing "the coach demo" among the coach marketing doors goes when that door does.
+`BRAND_STRATEGY.md`, `memory/project_pricing_strategy.md` and `memory/project_free_tier_strategy.md` say nothing about the demos.
+**Handoff:**
+HANDOFF → `/marketing`: re-word every surface that promises a live demo, so that no line points at a demo or claims one is
+running. On the home page persona cards, the three persona pages (organizers, coaches, clubs, including the `/for-clubs`
+"Both halves are live today" block), the pricing cards' "Not ready? See … first" lines and the footer, the job is to cut the
+door and decide whether a screenshot or walkthrough link takes its place or nothing does. The prospect pitch page's "a live
+demo behind every one of them" and "The demo is running right now" need re-wording for a deck that is now shown with us in the
+room, and so do the walkthroughs' "The demo is running right now…" ending and their "Walk the live demo yourself" search
+description. Constraint: never imply a free trial of the live product exists without signing up. **Then `/docs`:** the help
+articles that name "a demo club" as a reason a button is absent.
+HANDOFF → `/plan`: the removal project, as one plan and PM brief. Its order:
+- **(1) Doors off**, in a way that can be undone. The doors' switch is one setting, but the `/demos` page and the pitch-page
+  words ignore it, so this step needs a small change.
+- **(2) The words**, from `/marketing` above.
+- **(3) The machinery**: the demo code paths in sign-in, the request layer and the write guards (the source of the session
+  defects); the seeds and checkers; the build's re-seed step; the two nightly jobs (they need a new migration to unschedule
+  them); the two shared demo accounts; the demo data on dev and production; the tour anchors; the demo unit tests.
+- **(4) The records**: the release runbook's demo check, the `/demos` command, CLAUDE.md's demo-sandbox section, and the board.
+- Watch for: the platform-admin delete refuses demo clubs on purpose; the production demo check goes red the moment the data is
+  gone, so retire it first; one UAT test uses a tour anchor as its selector; the screenshot and help-shot capture tools point at
+  demo pages; and the reserved slugs should stay reserved.
+HANDOFF → `/billing`: none. The demo orgs' Tournament Plus comp (2026-08-02 D2) ends with their data; no plan, key or gate is
+involved.
+HANDOFF → `/demos`: no further passes. The command is retired by the removal plan (step 4). Its pass log stays as history.
+HANDOFF → owner: the board's "After the Canadian launch" goal still says it holds "marketing, the demo, and product work the
+launch does not need" (from 2026-11-17). "The demo" in that line no longer exists; reword it when convenient.
+**Supersedes:**
+- **2026-08-02 — The product demo is UNGATED at the door** (all five rulings and D1–D4).
+- **2026-08-10 — THE DOORS ARE OPEN** (both demos public on production, and the door placements).
+- **2026-08-11 — `/demos` ships as a single shareable demo address.**
+- **2026-08-28 — The demo tour becomes DOORS, not narration**, the part where "the demo carries it for a stranger". The deck
+  keeps its role for accompanied prospects.
+- **2026-11-18 — The Club release is an OPEN launch**, ruling 2 only ("the shop window for Club at launch is the coach demo").
+  Ruling 1, the open self-serve launch, stands.
+- The 2026-08-07 Proposed entry was already superseded by 2026-08-10.
+**Relates to:** 2026-11-24 Track P (the prospect's own club preview; unchanged); the 2026-09-13 demo decoupling (its five
+measures retire with the machinery); 2026-11-19 Founding Season removal (which removed ruling 2's premise).
+
 ### 2026-11-25 — A tournament's "Who can enter" (Anyone · Not listed · By invitation) adds NO plan gate; it rides the keys that exist (Decided)
 **Status:** **Decided** (owner, 2026-11-25, Board Ready Stage 5 round 3 paste-back, ruling **48A**: "Handed to the
 tournament side as one item; /strategy confirms it changes no plan gate"; placed the same day as a stage of the
@@ -601,7 +684,7 @@ HANDOFF → `/marketing` — no surface changes now. If the free plan's inclusio
 HANDOFF → `/billing` — none (no gate key changes).
 
 ### 2026-11-18 — The Club release is an OPEN launch: any club may buy Club, Club · Association or League Plus at the flip, with no invitation step; no club demo for launch (Decided)
-**Status:** **Decided** (owner, 2026-11-18, the Club readiness Stage 8 writing session: "open", and "no club demo is fine for launch").
+**Status:** **Decided** (owner, 2026-11-18, the Club readiness Stage 8 writing session: "open", and "no club demo is fine for launch"). **Ruling 2 superseded by 2026-11-25 — Both public demos are RETIRED** (there is no coach demo to be Club's shop window, and no club demo is coming); ruling 1 stands.
 **Decision:**
 1. **Open, not invite-only.** From the gate flip, any club can self-serve buy **Club**, **Club · Association** or **League
    Plus** at list price through Stripe checkout (Club and Club · Association with their 90-day trial, card collected; League
@@ -3088,7 +3171,7 @@ HANDOFF → owner       — decide the read-only window's build slot before the 
 
 ### 2026-08-28 — The demo tour becomes DOORS, not narration: the deck carries the story in a conversation, the demo carries it for a stranger
 
-**Status:** Decided (owner, 2026-08-28) **and executed** — built on dev the same day (`ea8ddd14`, no migration; plan `docs/projects/active/DEMO_TOUR_TRIM_PLAN.md`). The before/after the owner ruled from: `claude.ai/code/artifact/521b8e63-0014-4c1f-bfc4-9fa28226a59d`.
+**Status:** **Superseded in part by 2026-11-25 — Both public demos are RETIRED**: the demo half ("the demo carries it for a stranger") is gone; the deck's role for accompanied prospects stands. Was: Decided (owner, 2026-08-28) **and executed** — built on dev the same day (`ea8ddd14`, no migration; plan `docs/projects/active/DEMO_TOUR_TRIM_PLAN.md`). The before/after the owner ruled from: `claude.ai/code/artifact/521b8e63-0014-4c1f-bfc4-9fa28226a59d`.
 
 **Decision:** The guided tour in both demo sandboxes keeps its **entry points** and gives up its **explaining**. Concretely: **1,131 words across 14 steps → 457 across 12.** Three coach steps that carried 65% of all the words are cut to a hook plus one proof point; two tournament steps that restated jumps the moments dock already owned are deleted. **The pitch-deck slides now carry the narrative in accompanied prospect conversations.** Season phases (Registration week, Game day, Tryout day, Off-season, Mid-season, Season's End) are untouched.
 
@@ -3330,7 +3413,7 @@ HANDOFF → /strategy (self, on ratification)
 
 ### 2026-08-11 — The chooser's revisit trigger FIRED: `/demos` ships as a single shareable demo address for outbound industry contact — the funnel's own chooser is untouched
 
-**Status:** Decided (owner, 2026-08-11 — *"I want a page that has that so I can send to people in the industry for them to try all demos… we can put a simple link in the marketing pages footer for now"*). ✅ BUILT on `dev` 2026-08-11, verified rendering, **not committed and not on production**.
+**Status:** **Superseded by 2026-11-25 — Both public demos are RETIRED** (the `/demos` page goes with them). Was: Decided (owner, 2026-08-11 — *"I want a page that has that so I can send to people in the industry for them to try all demos… we can put a simple link in the marketing pages footer for now"*). ✅ BUILT on `dev` 2026-08-11, verified rendering, **not committed and not on production**.
 
 **Decision:** A standalone demo chooser exists at **`/demos`** — both "See it live" doors (tournament sandbox `riverdale-minor-ball`, coach sandbox `riverdale-ridge`) on one page, at one short top-level address, reserved so no org slug can shadow it.
 
@@ -3407,7 +3490,7 @@ HANDOFF → /marketing — none. No customer copy changes; marketing already use
 
 ### 2026-08-10 — THE DOORS ARE OPEN: both demos are public on production, and the funnel now has a zero-contact proof path for every live product
 
-**Status:** Decided AND executed (owner-directed across 2026-08-08 → 2026-08-10; doors: *"flip the doors"*; placements: *"looks good, I approve those recommendations"* + the Club-block/reroute follow-ups: *"go ahead"*). Live on production as of the 2026-08-10 release (verified against the live site and databases, not plans).
+**Status:** **Superseded by 2026-11-25 — Both public demos are RETIRED.** Was: Decided AND executed (owner-directed across 2026-08-08 → 2026-08-10; doors: *"flip the doors"*; placements: *"looks good, I approve those recommendations"* + the Club-block/reroute follow-ups: *"go ahead"*). Live on production as of the 2026-08-10 release (verified against the live site and databases, not plans).
 
 **Decision:** The three-part go-public decision (Proposed 2026-08-07, below) is executed in full — with the placement set ratified alongside it:
 
@@ -3761,7 +3844,7 @@ HANDOFF → owner — **revisit trigger 2027-01-01**, alongside the sandbox's (e
 ---
 
 ### 2026-08-02 — The product demo is UNGATED at the door. Openness is the competitive asset while the product is free anyway; what gets gated is the ROOM, not the visitor
-**Status:** Decided (owner, 2026-08-02 — put to the owner as an explicit competitive-risk question ahead of the Tournament Admin Sandbox build; *"I agree with your recommendations"*)
+**Status:** **Superseded by 2026-11-25 — Both public demos are RETIRED** (the re-ask ruling 5 required, made once the Founding Season was removed). Was: Decided (owner, 2026-08-02 — put to the owner as an explicit competitive-risk question ahead of the Tournament Admin Sandbox build; *"I agree with your recommendations"*)
 
 **Decision:** Five rulings that together set the GTM posture for the "See it live" sandbox — and, because the machinery is shared, for the Coach Sandbox behind it.
 
