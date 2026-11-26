@@ -939,14 +939,13 @@ export const TOURNAMENT_WALKTHROUGH: Walkthrough = {
     // ⚠ The description is DERIVED from the slides the page actually shows — see
     // `derivedSeoDescription`, which hangs its phrase list on this clause. It carries no "real
     // screens, not a brochure" claim (see the note on `closing.body` below): every one of the
-    // ten places that claim appeared came out on 2026-08-21, and what replaces it points at the
-    // demo instead — an invitation is stronger than a denial, and it stays true whatever the
-    // pictures are.
+    // ten places that claim appeared came out on 2026-08-21. Its closing sentence, which pointed at
+    // the live demo, went with the demos (2026-11-25): the description now ends on its last phrase.
     subject: 'the tournament runs on FieldLogicHQ',
   },
   eyebrow: 'For tournament organizers · a 90-second walkthrough',
   title: 'The weekend the phone stayed in your pocket.',
-  sub: 'Five jobs that stop being yours the day the tournament runs on FieldLogicHQ — and a live demo you can walk when you are done.',
+  sub: 'Five jobs that stop being yours the day the tournament runs on FieldLogicHQ.',
   door: { path: SEE_IT_LIVE_PATH, label: 'See a live tournament' },
   back: { href: '/for-tournament-organizers', label: 'Everything else Tournament does' },
   fallbackPull: [
@@ -959,8 +958,8 @@ export const TOURNAMENT_WALKTHROUGH: Walkthrough = {
     '#15',
   ],
   closing: {
-    eyebrow: 'That was the pitch. Here’s the proof.',
-    title: 'Walk the real thing — it’s running right now.',
+    eyebrow: 'That was the pitch. Here’s where to go next.',
+    title: 'Your next tournament can run like this.',
     /**
      * ⚠⚠ THE "NOT A MOCKUP" SENTENCE IS GONE, AND IT IS NOT COMING BACK (owner ruling
      * 2026-08-21). It used to open this paragraph: "Every picture above is the real FieldLogicHQ
@@ -973,11 +972,14 @@ export const TOURNAMENT_WALKTHROUGH: Walkthrough = {
      * the picture, never a screen that looks identical to it.
      *
      * What is left is the stronger half anyway — an invitation rather than a denial, and one that
-     * stays true no matter what the pictures are. ⚠ It is also now the ONLY thing distinguishing
-     * this page from /demos' own claim ("not recordings or screenshots"), which vouches for the
-     * DEMO being live and is untouched because it is still true.
+     * stays true no matter what the pictures are.
+     *
+     * ⚠ The invitation used to be into the live demo ("The demo is running right now…"). Both
+     * public demos were retired (owner ruling 2026-11-25), so it is now an invitation to start, in
+     * the persona page's own facts (`/marketing` 2026-11-25). It must never offer a free try of
+     * the live product without signing up.
      */
-    body: 'The demo is running right now: walk into the same tournament, nothing to sign up for, nothing you can break.',
+    body: 'Tournament is free to start: no credit card, no time limit.',
   },
 };
 
@@ -994,7 +996,7 @@ export const COACH_WALKTHROUGH: Walkthrough = {
   },
   eyebrow: 'For head coaches · a 90-second walkthrough',
   title: 'Run the team. Keep your evenings.',
-  sub: 'The jobs the Coaches Portal takes off your plate — and a whole demo season you can walk when you are done.',
+  sub: 'The jobs the Coaches Portal takes off your plate, one screen at a time.',
   door: { path: SEE_IT_LIVE_COACHES_PATH, label: 'See a coach’s season' },
   back: { href: '/for-coaches', label: 'Everything else the Coaches Portal does' },
   /**
@@ -1031,13 +1033,12 @@ export const COACH_WALKTHROUGH: Walkthrough = {
     '#09',
   ],
   closing: {
-    eyebrow: 'That was the pitch. Here’s the proof.',
-    title: 'Sit in a coach’s seat — the season is running right now.',
-    // ⚠ The "not a mockup" sentence that opened this paragraph is GONE — the full reasoning is on
-    // the tournament closing above, and it applies identically here. "A season" not "a team": the
-    // sandbox runs five teams, one per phase of the year, and each picture is taken on the phase
-    // its screen belongs to.
-    body: 'The demo is running right now, and it is a whole year you can walk: tryout day, mid-season, the off-season books, and a season already closed.',
+    eyebrow: 'That was the pitch. Here’s where to go next.',
+    title: 'Your season, in one place.',
+    // ⚠ The "not a mockup" sentence that opened this paragraph is GONE, and so is the invitation
+    // into the live demo (retired 2026-11-25) — the full reasoning is on the tournament closing
+    // above. ⚠ No "free" here: the Premium Coaches Portal is a paid plan.
+    body: 'Roster, lineups, schedule, budget and team documents, from tryout day to the season’s end.',
   },
 };
 

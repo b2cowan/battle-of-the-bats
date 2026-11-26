@@ -22,7 +22,8 @@ const exists = (rel: string) => existsSync(path.join(REPO, rel));
 
 /** Every marketing page and the pieces only they wear, read whole. */
 const PAGE_DIRS = ['app/pricing', 'app/for-clubs', 'app/for-coaches', 'app/for-leagues', 'app/for-tournament-organizers',
-  'app/changelog', 'app/demos', 'app/pitch', 'app/see-it-live/switch', 'app/see-it-live/coaches/switch',
+  // `/demos` and the two demo confirm screens left on 2026-11-25 (both public demos retired): each is a redirect now.
+  'app/changelog', 'app/pitch',
   // The public Security page (Board Ready §0c, S3): the legal pages' frame on the kit's ground.
   'app/security'];
 const MARKETING_FILES = [
@@ -68,7 +69,7 @@ const DARK_ONLY: [string, RegExp][] = [
 describe('S4 — the marketing set is warm, with no dark island', () => {
   it('finds the files it is meant to scan', () => {
     for (const f of ['app/page.tsx', 'app/pricing/page.tsx', 'app/for-clubs/page.tsx', 'app/changelog/page.tsx',
-      'app/demos/page.tsx', 'components/Footer.module.css']) {
+      'components/Footer.module.css']) {
       assert.ok(MARKETING_FILES.includes(f), `${f} is scanned`);
     }
   });
@@ -118,8 +119,10 @@ describe('S4 — the marketing set is warm, with no dark island', () => {
 describe('S4 — every marketing page says what it is when shared (P7)', () => {
   const INDEXED = ['app/page.tsx', 'app/pricing/page.tsx', 'app/for-clubs/page.tsx', 'app/for-coaches/page.tsx',
     'app/for-leagues/page.tsx', 'app/for-tournament-organizers/page.tsx', 'app/for-coaches/walkthrough/page.tsx',
-    'app/for-tournament-organizers/walkthrough/page.tsx', 'app/changelog/page.tsx', 'app/demos/page.tsx'];
-  const NOT_INDEXED = ['app/pitch/[slug]/page.tsx', 'app/see-it-live/switch/page.tsx', 'app/see-it-live/coaches/switch/page.tsx'];
+    'app/for-tournament-organizers/walkthrough/page.tsx', 'app/changelog/page.tsx'];
+  // `/demos` and the two demo confirm screens left these lists when the demos were retired (owner ruling 2026-11-25):
+  // they render nothing now, only a permanent redirect to /pricing (pinned in demo-sandbox-door-and-chrome.test.ts).
+  const NOT_INDEXED = ['app/pitch/[slug]/page.tsx'];
 
   it('every marketing page takes its metadata from the one helper', () => {
     for (const f of [...INDEXED, ...NOT_INDEXED]) {
@@ -215,7 +218,7 @@ describe('S4 — retirements and the sitemap', () => {
     assert.match(readCode('next.config.ts'), /source: '\/platform\/:page\(accounting\|house-league\|rep-teams\|tournaments\)', destination: '\/', permanent: true/);
   });
 
-  it('the demo chooser is in the sitemap', () => {
-    assert.match(readCode('app/sitemap.ts'), /path: '\/demos'/);
+  it('the retired demo chooser is not in the sitemap (owner ruling 2026-11-25)', () => {
+    assert.doesNotMatch(readCode('app/sitemap.ts'), /path: '\/demos'/);
   });
 });

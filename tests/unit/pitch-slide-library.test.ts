@@ -350,9 +350,12 @@ test('the derived furniture counts and names what the page actually shows', () =
     const description = derivedSeoDescription(w, w.fallbackPull);
     assert.match(description, /^[A-Z][a-z]+ jobs that stop being yours the day /);
     assert.ok(description.includes(w.seo.subject), `${w.path}'s description lost its subject`);
+    // The closing "Walk the live demo yourself — no sign-up." went with the demos (owner ruling
+    // 2026-11-25): the description ends on the last shown phrase, and promises no demo.
+    assert.ok(!/demo/i.test(description), `${w.path}'s description still promises a demo`);
     assert.ok(
-      description.endsWith('Walk the live demo yourself — no sign-up.'),
-      `${w.path}'s description lost its closing invitation`,
+      description.endsWith(`${PITCH_SLIDES[w.fallbackPull[w.fallbackPull.length - 1]].seoPhrase}.`),
+      `${w.path}'s description must end on its last shown phrase`,
     );
     let at = -1;
     for (const id of w.fallbackPull) {

@@ -2,7 +2,7 @@ import { test, describe } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import {
-  getDemoOrgByKind, isDemoOrganizerEmail, DEMO_COACH_TEAM_IDS, DEMO_COACH_SHOWCASE,
+  getDemoOrgByKind, DEMO_COACH_TEAM_IDS, DEMO_COACH_SHOWCASE,
 } from '../../lib/demo-org.ts';
 import { isReservedOrgSlug } from '../../lib/reserved-slugs.ts';
 import {
@@ -11,114 +11,81 @@ import {
 import {
   SANDBOX_HIDDEN_TOURNAMENT_NAV_KEYS, isNavKeyHiddenInSandbox,
 } from '../../lib/sandbox-curation.ts';
-import { SEE_IT_LIVE_PATH } from '../../lib/sandbox-door.ts';
+import { SEE_IT_LIVE_PATH, RETIRED_DEMO_LANDING, sandboxDoorsVisible } from '../../lib/sandbox-door.ts';
 
 /**
  * Slices S3 (the door), S4 (the chrome) and S6 (curation).
  *
- * The write-block contract lives in `demo-sandbox-write-guard.test.ts` and is the guarantee this
- * door rests on. What is pinned HERE is the door's own non-negotiables — the ones that would fail
- * quietly and dangerously rather than loudly:
- *
- *   • nothing derived from the request may choose who gets signed in, and there is deliberately no
- *     redirect parameter at all;
- *   • the door path can never be shadowed by an org slug.
+ * ⚠ The door is SHUT (owner ruling 2026-11-25): the S3 block below now pins that no public address
+ * signs anyone in and every old demo address lands on /pricing. The chrome and curation pins stay
+ * until Phase 3 of RETIRE_PUBLIC_DEMOS_PLAN.md deletes the demo machinery and this file with it,
+ * because a demo session may still be open until Phase 2 deletes the shared accounts.
  */
 
 const demo = getDemoOrgByKind('tournament')!;
 
-/** Read once, lazily — the test runner transpiles to CJS, so no top-level await. */
-let doorSourceCache: string | null = null;
-async function doorSource(): Promise<string> {
-  doorSourceCache ??= await readFile(new URL('../../app/see-it-live/route.ts', import.meta.url), 'utf8');
-  return doorSourceCache;
-}
+/**
+ * The doors are SHUT (owner ruling 2026-11-25, "Both public demos are RETIRED"; Ask 1 ruled A). This block used to pin
+ * how the door signed a stranger into the shared demo account safely. It now pins the opposite: no public address
+ * signs anyone in, and every old demo address lands on /pricing. Phase 3 of RETIRE_PUBLIC_DEMOS_PLAN.md deletes the
+ * routes and this file with them.
+ */
+const readRepo = (rel: string) => readFile(new URL(`../../${rel}`, import.meta.url), 'utf8');
+/** Comment-stripped, so a docblock that names the old calls can never be what satisfies (or fails) a pin. */
+const codeOf = (src: string) => src.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '');
+/** Anything that could read, mint or swap a session. */
+const SESSION_CODE = /demo-session|attachDemoSession|currentSessionUser|signIn|createServerClient|supabase|getSignedInUser|demo-org|cookies\(/;
 
-describe('the door (S3)', () => {
-  test('signs in exactly one hardcoded, allow-listed, unreachable address', () => {
-    assert.equal(isDemoOrganizerEmail(demo.organizerEmail), true);
-    assert.match(demo.organizerEmail, /@example\.com$/);
+describe('the doors are shut (retired 2026-11-25)', () => {
+  test('the marketing switch is off in code, whatever the Amplify variable says (Decision D1)', () => {
+    const before = process.env.NEXT_PUBLIC_SEE_IT_LIVE_DOORS;
+    try {
+      for (const value of ['true', 'false', '', undefined]) {
+        if (value === undefined) delete process.env.NEXT_PUBLIC_SEE_IT_LIVE_DOORS;
+        else process.env.NEXT_PUBLIC_SEE_IT_LIVE_DOORS = value;
+        assert.equal(sandboxDoorsVisible(), false, `the doors showed with the variable at ${JSON.stringify(value)}`);
+      }
+    } finally {
+      if (before === undefined) delete process.env.NEXT_PUBLIC_SEE_IT_LIVE_DOORS;
+      else process.env.NEXT_PUBLIC_SEE_IT_LIVE_DOORS = before;
+    }
   });
 
-  test('takes no redirect target from the request — not even a validated one', async () => {
-    // An open redirect wearing a marketing button. The landing path is a constant on the
-    // allow-list entry; if this ever needs to vary, it varies in lib/demo-org.ts, not in a URL.
-    const src = await doorSource();
-    assert.ok(!/searchParams\.get\(\s*['"]next['"]/.test(src), 'door must not read ?next');
-    assert.ok(!/searchParams\.get\(\s*['"]redirect/.test(src), 'door must not read ?redirect');
-    assert.ok(!/searchParams\.get\(\s*['"]email/.test(src), 'door must not read ?email');
+  test('every old demo address lands on the pricing page (Ask 1 ruled A)', () => {
+    assert.equal(RETIRED_DEMO_LANDING, '/pricing');
   });
 
-  test('resolves its redirect host through a trusted-origin helper, never a raw Origin header', async () => {
-    const src = await doorSource();
-    // ⚠ Was `resolveTrustedAppOrigin` until 2026-08-07. That helper answers with the CANONICAL
-    // host, which is right for a link going into an email and wrong for a redirect the visitor
-    // follows on this request: the door sets the session cookie for the host it was ASKED for, so
-    // sending them to a different host throws the session away. See the host-parity block at the
-    // foot of this file for the production trace.
-    assert.ok(src.includes('resolveSameHostOrigin'), 'door must use resolveSameHostOrigin');
-    assert.ok(
-      !/headers\.get\(\s*['"]origin['"]\s*\)/i.test(src),
-      'door must not read the request Origin header directly',
-    );
+  test('both door routes answer with a permanent redirect and sign nobody in', async () => {
+    for (const file of ['app/see-it-live/route.ts', 'app/see-it-live/coaches/route.ts']) {
+      const code = codeOf(await readRepo(file));
+      assert.match(code, /NextResponse\.redirect\(\s*new URL\(\s*RETIRED_DEMO_LANDING,\s*resolveSameHostOrigin\(request\)\s*\),\s*308\s*\)/,
+        `${file} must redirect 308 to the retired-demo landing on the host the visitor asked for`);
+      assert.doesNotMatch(code, SESSION_CODE, `${file} must not read, mint or swap a session`);
+      assert.doesNotMatch(code, /searchParams/, `${file} must take nothing from the request`);
+      assert.doesNotMatch(code, /export (async )?function POST/, `${file} is a GET only`);
+    }
   });
 
-  test('is rate-limited', async () => {
-    const src = await doorSource();
-    assert.ok(src.includes('FixedWindowRateLimiter'), 'door must be rate-limited');
-    assert.ok(src.includes("globalLimiter.take('global')"), 'a spoofing-proof global ceiling is required');
+  test('both confirm screens and /demos render nothing but a permanent redirect', async () => {
+    for (const file of ['app/see-it-live/switch/page.tsx', 'app/see-it-live/coaches/switch/page.tsx', 'app/demos/page.tsx']) {
+      const code = codeOf(await readRepo(file));
+      assert.match(code, /permanentRedirect\(RETIRED_DEMO_LANDING\)/, `${file} must permanently redirect to the retired-demo landing`);
+      assert.doesNotMatch(code, SESSION_CODE, `${file} must not read or swap a session`);
+      assert.doesNotMatch(code, /<form|<Link|href=/, `${file} must offer no door`);
+    }
   });
 
-  test('asks for nothing before letting a visitor in — no form, no email, no interstitial', async () => {
-    // The GTM posture is binding (BUSINESS_DECISIONS.md 2026-08-02). A door that reads a body has
-    // started collecting something.
-    const src = await doorSource();
-    assert.ok(!/req(uest)?\.json\(\)/.test(src), 'the door must not read a request body');
-    assert.ok(!/export async function POST/.test(src), 'the door is a GET; a POST implies a form');
+  test('both session-swap endpoints refuse with 410 Gone and touch no session', async () => {
+    for (const file of ['app/api/sandbox/switch/route.ts', 'app/api/sandbox/switch-coach/route.ts']) {
+      const code = codeOf(await readRepo(file));
+      assert.match(code, /status:\s*410/, `${file} must answer 410`);
+      assert.doesNotMatch(code, SESSION_CODE, `${file} must not touch a session`);
+      assert.doesNotMatch(code, /export (async )?function GET/, `${file} grew a GET`);
+    }
   });
 
-  test('the confirm screen is reachable ONLY for a visitor who is already signed in', async () => {
-    // The ungated ruling forbids asking a STRANGER for something. The confirm screen asks a
-    // CUSTOMER for permission before replacing their session — so it must be gated on there being
-    // a session at all, and a logged-out visitor must never meet it.
-    const src = await doorSource();
-    const confirmLine = src.split('\n').find(l => l.includes('SANDBOX_CONFIRM_PATH') && l.includes('redirect'));
-    assert.ok(confirmLine, 'the door must redirect to the confirm screen somewhere');
-
-    const rateLimit = src.indexOf('ipLimiter.take(ip)');
-    const seededLookup = src.indexOf('await demoOrgIdForSlug(');
-    const sessionCheck = src.indexOf('await currentSessionUser(');
-    const attach = src.indexOf('await attachDemoSession('); // the CALL, not the import line
-
-    // Two orderings, both of which were defects before the 2026-08-03 review:
-    //   • metering comes FIRST, so the failure branches below it can't be used to spend uncapped
-    //     queries and uncapped `critical` alerts;
-    //   • the existing-session check comes BEFORE any session is written, so a real customer's
-    //     account can never be replaced without the confirm screen.
-    assert.ok(rateLimit > 0 && seededLookup > rateLimit,
-      'the rate limiter must be spent before any lookup or alert');
-    assert.ok(sessionCheck > 0 && attach > sessionCheck,
-      'the existing-session check must come before the door writes any session');
-  });
-
-  test('the session swap is a POST that takes no input', async () => {
-    const src = await readFile(new URL('../../app/api/sandbox/switch/route.ts', import.meta.url), 'utf8');
-    assert.ok(/export async function POST/.test(src), 'destroying a session must not be a GET');
-    assert.ok(!/export async function GET/.test(src), 'a GET here would be sign-out-by-image-tag');
-    assert.ok(!/req(uest)?\.json\(\)/.test(src), 'the swap must not read a request body');
-    assert.ok(src.includes('isTrustedAppOrigin'), 'the swap must refuse a cross-origin submit');
-    assert.ok(src.includes('FixedWindowRateLimiter'), 'the swap must be rate-limited');
-    // Same non-negotiable as the door: nothing from the request may choose the account.
-    assert.ok(!/searchParams\.get\(/.test(src), 'the swap must take no parameters at all');
-  });
-
-  test('its path can never be shadowed by an organization slug', () => {
+  test('its path can never be shadowed by an organization slug (Decision D3)', () => {
     assert.equal(isReservedOrgSlug(SEE_IT_LIVE_PATH.replace('/', '')), true);
-  });
-
-  test('lands on the fan side — the half that proves it is live within seconds', () => {
-    assert.ok(demo.landingPath.startsWith(`/${demo.slug}/`), demo.landingPath);
-    assert.ok(!demo.landingPath.includes('/admin'), 'the door must not land on the operator side');
   });
 });
 
@@ -352,14 +319,13 @@ describe('demo doors keep the visitor on the host they arrived at', () => {
     );
   });
 
-  test('every door that mints a session uses the same-host resolver, not the email one', async () => {
-    // The four routes that set the demo cookie and redirect in one response. An email-bound
-    // resolver in any of them reintroduces the production defect verbatim.
+  test('both retired doors still redirect on the same host, not the email one', async () => {
+    // The two door routes no longer mint a session (retired 2026-11-25), but they still redirect, and a
+    // redirect the visitor follows on this request belongs on the host they asked for. The two
+    // session-swap endpoints left this list: they answer 410 and redirect nowhere.
     const doors = [
       'app/see-it-live/route.ts',
       'app/see-it-live/coaches/route.ts',
-      'app/api/sandbox/switch/route.ts',
-      'app/api/sandbox/switch-coach/route.ts',
     ];
     for (const file of doors) {
       const src = await readFile(new URL(`../../${file}`, import.meta.url), 'utf8');

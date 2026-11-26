@@ -45,5 +45,5 @@ export function derivedSeoDescriptionFrom(subject: string, phrases: readonly str
     : `${phrases.slice(0, -1).join(', ')}, and ${phrases[phrases.length - 1]}`;
   const word = COUNT_WORDS[phrases.length] ?? String(phrases.length);
   const jobs = phrases.length === 1 ? 'job that stops' : 'jobs that stop';
-  return `${word} ${jobs} being yours the day ${subject} — ${list}. Walk the live demo yourself — no sign-up.`;
+  return `${word} ${jobs} being yours the day ${subject} — ${list}.`;
 }

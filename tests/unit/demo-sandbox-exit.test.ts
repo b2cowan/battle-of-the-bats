@@ -237,15 +237,12 @@ describe('a demo door opens only for a person going there, never for a prefetch'
     const notAPress = exit.slice(exit.indexOf('export function demoDoorNotAPress'), exit.indexOf('export async function currentSessionUser'));
     // a Next prefetch or a browser prefetch/prerender (Sec-Purpose) — and NOT the app's in-page fetch for a click
     assert.match(notAPress, /return isPrefetchRequest\(request\) \? new NextResponse\(null, \{ status: 204, headers: \{ 'Cache-Control': 'no-store' \} \}\) : null;/);
+    // The doors were SHUT on 2026-11-25 (owner ruling: both public demos retired). A prefetch of one can sign nobody in
+    // now because the door itself signs nobody in: it only redirects to /pricing (pinned in demo-sandbox-door-and-chrome).
     for (const door of ['../../app/see-it-live/route.ts', '../../app/see-it-live/coaches/route.ts']) {
       const src = await readFile(new URL(door, import.meta.url), 'utf8');
-      const get = src.slice(src.indexOf('export async function GET'));
-      const guard = get.indexOf('demoDoorNotAPress(request)');
-      assert.ok(guard > 0, door);
-      assert.match(get, /const notAPress = demoDoorNotAPress\(request\);\s*if \(notAPress\) return notAPress;/, door);
-      for (const later of ['take(', 'currentSessionUser(', 'attachDemoSession(']) {
-        const at = get.indexOf(later);
-        assert.ok(at < 0 || at > guard, `${door}: ${later} runs before the prefetch guard`);
+      for (const call of ['take(', 'currentSessionUser(', 'attachDemoSession(']) {
+        assert.ok(!src.includes(call), `${door}: the retired door must not call ${call}`);
       }
     }
   });
@@ -261,11 +258,13 @@ test('demoDoorNotAPress: a prefetch is answered 204; a click (page load or the a
   const { demoDoorNotAPress } = await import('../../lib/sandbox-exit.ts');
   const at = (headers: Record<string, string>) => demoDoorNotAPress(new NextRequest('https://www.fieldlogichq.ca/see-it-live/coaches', { headers }));
   // Next <Link> prefetch (any value: its segment cache sends 1, 2 and 3), a browser prerender
-  for (const headers of <Record<string, string>[]>[
+  // `as`, not `<T>[...]`: the repo's runner strips types and refuses the angle-bracket form, which kept this whole
+  // file from running under `npm test` (found 2026-11-25).
+  for (const headers of [
     { rsc: '1', 'next-router-prefetch': '1', 'sec-fetch-dest': 'empty' },
     { rsc: '1', 'next-router-prefetch': '2' },
     { 'sec-fetch-dest': 'document', 'sec-purpose': 'prefetch;prerender' },
-  ]) assert.equal(at(headers)?.status, 204, JSON.stringify(headers));
+  ] as Record<string, string>[]) assert.equal(at(headers)?.status, 204, JSON.stringify(headers));
   // ⚠ the production router's fetch for a CLICK must go through (job 291: refusing it killed every demo button on prod)
   assert.equal(at({ rsc: '1', 'sec-fetch-dest': 'empty', 'sec-fetch-mode': 'cors' }), null);
   // a real page load, and a client that sends none of the signs (never dead-ended)
@@ -274,13 +273,13 @@ test('demoDoorNotAPress: a prefetch is answered 204; a click (page load or the a
 });
 
 test('every marketing link to a demo door is never prefetched', async () => {
+  // Pricing's demo line and /demos left this list when the demos were retired (2026-11-25): Pricing's line points at the
+  // walkthroughs now, and /demos is a redirect. The rest sit behind the switch that is off in code (Phase 3 deletes them).
   const sites: Array<[string, RegExp, number]> = [
-    ['../../components/PricingSection.tsx', /<Link href=\{DEMO_DOORS\[plan\.key\]!\.href\} prefetch=\{false\}/g, 1],
     ['../../app/for-clubs/page.tsx', /<Link href=\{SEE_IT_LIVE(_COACHES)?_PATH\} prefetch=\{false\}/g, 4],
     ['../../app/for-coaches/page.tsx', /<Link href=\{SEE_IT_LIVE_COACHES_PATH\} prefetch=\{false\}/g, 2],
     ['../../app/for-tournament-organizers/page.tsx', /<Link href=\{SEE_IT_LIVE_PATH\} prefetch=\{false\}/g, 2],
     ['../../app/page.tsx', /<Link href=\{doorPath\} prefetch=\{false\}/g, 1],
-    ['../../app/demos/page.tsx', /href=\{demo\.door\}\s*prefetch=\{false\}/g, 1],
     ['../../components/marketing/WalkthroughPage.tsx', /<Link href=\{w\.door\.path\} prefetch=\{false\}/g, 1],
   ];
   for (const [file, re, count] of sites) {

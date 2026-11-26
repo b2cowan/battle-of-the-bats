@@ -289,7 +289,7 @@ describe('S3b, in both states', () => {
   });
 
   it('no "module", no "visibility", no "the org" on the pages S3b touched, in any state', async () => {
-    for (const file of ['app/page.tsx', 'app/for-clubs/page.tsx', 'app/for-leagues/page.tsx', 'app/pricing/page.tsx', 'app/demos/page.tsx']) {
+    for (const file of ['app/page.tsx', 'app/for-clubs/page.tsx', 'app/for-leagues/page.tsx', 'app/pricing/page.tsx']) {
       for (const [name, gating] of [['production', PRODUCTION], ['all open', ALL_OPEN]] as const) {
         const page = await render(file, gating);
         assert.doesNotMatch(page, /\bmodules?\b/i, `${file} (${name}) says "module"`);
@@ -378,11 +378,10 @@ describe('S3b, in both states', () => {
     assert.ok(at('Is this too complex for a volunteer-run organization?') > at('Getting started'), 'drawing tab 2');
   });
 
-  it('W71: /for-coaches copies a link for the club; /demos names the portal a club gives its coaches', async () => {
+  // W71's second half (/demos naming the portal a club gives its coaches) went with the demos (owner ruling 2026-11-25).
+  it('W71: /for-coaches copies a link for the club', async () => {
     const coaches = await render('app/for-coaches/page.tsx', PRODUCTION);
     assert.ok(coaches.includes('Is your club considering the Club plan?') && coaches.includes('Copy a link for your club'));
-    const demos = await render('app/demos/page.tsx', PRODUCTION);
-    assert.ok(demos.includes('Running a club? This is the portal each of your coaches gets with Club.'));
   });
 });
 

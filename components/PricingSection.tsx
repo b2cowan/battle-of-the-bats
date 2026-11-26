@@ -11,7 +11,6 @@ import { planTrialLine } from '@/lib/plan-trial-line';
 import { FIELDLOGICHQ_CONTACT_EMAIL } from '@/lib/fieldlogichq-contact';
 import { parseStartPricing, withStartPricing } from '@/lib/start-door';
 import { BILLING_TAX_WORDS } from '@/lib/billing-tax';
-import { SEE_IT_LIVE_PATH, SEE_IT_LIVE_COACHES_PATH, sandboxDoorsVisible } from '@/lib/sandbox-door';
 import type { OrgPlan } from '@/lib/types';
 import kit from './marketing/MarketingKit.module.css';
 import styles from './PricingSection.module.css';
@@ -279,15 +278,15 @@ const TEAM_PLAN: Plan = {
 };
 
 /**
- * The quiet demo line under a paid live card's CTA (owner-ratified 2026-08-10) — for the pricing
- * page's skeptic, who won't start free because they suspect "free" hides a hollow product. Text
- * weight below the CTA, so the buying path loses nothing; product-specific wording here (unlike
- * the hero's shared label) because both doors share one screen. Marketing layout only, and only
- * while the doors are on.
+ * The quiet "Not ready?" line under a paid live card's CTA — for the pricing page's skeptic, who
+ * wants to see the product before paying. Text weight below the CTA, so the buying path loses
+ * nothing. Marketing layout only. It pointed at the live demos until they were retired (owner
+ * ruling 2026-11-25); it now points at each product's walkthrough, the self-serve proof that
+ * remains (`/marketing`, 2026-11-25: never a free try of the live product).
  */
-const DEMO_DOORS: Partial<Record<OrgPlan, { href: string; label: string }>> = {
-  tournament_plus: { href: SEE_IT_LIVE_PATH, label: 'See a live tournament first' },
-  team: { href: SEE_IT_LIVE_COACHES_PATH, label: "See a coach's season first" },
+const WALKTHROUGH_LINKS: Partial<Record<OrgPlan, { href: string; label: string }>> = {
+  tournament_plus: { href: '/for-tournament-organizers/walkthrough', label: 'See the 90-second walkthrough first' },
+  team: { href: '/for-coaches/walkthrough', label: 'See the 90-second walkthrough first' },
 };
 
 /** One-line descriptors for the marketing coming-soon strip — a gated plan's whole pitch there. */
@@ -388,8 +387,6 @@ export default function PricingSection({ gatingMap, onChoosePlan, currentPlan, p
     ? [...orderedPlans.filter(p => !(gatingMap[p.key] ?? false)), ...(teamGated ? [] : [TEAM_PLAN])]
     : orderedPlans;
   const banded = marketingLayout && bands && anyProgramPlanOpen(gatingMap);
-  // NEXT_PUBLIC_ vars are inlined into the client bundle, so this works in a client component.
-  const demoDoorsOpen = marketingLayout && sandboxDoorsVisible();
   const clubLargeOpen = marketingLayout && isPlanOpen(gatingMap, 'club_large');
 
   function getSignupHref(plan: Plan) {
@@ -543,11 +540,11 @@ export default function PricingSection({ gatingMap, onChoosePlan, currentPlan, p
         {!isGated && plan.quietLine && (
           <p className={`${kit.small} ${styles.planDemoLine}`}>{plan.quietLine}</p>
         )}
-        {demoDoorsOpen && !isGated && !onChoosePlan && DEMO_DOORS[plan.key] && (
+        {marketingLayout && !isGated && !onChoosePlan && WALKTHROUGH_LINKS[plan.key] && (
           <p className={`${kit.small} ${styles.planDemoLine}`}>
             Not ready?{' '}
-            <Link href={DEMO_DOORS[plan.key]!.href} prefetch={false} className={`${kit.link} ${styles.planDemoLink}`}>
-              {DEMO_DOORS[plan.key]!.label}
+            <Link href={WALKTHROUGH_LINKS[plan.key]!.href} className={`${kit.link} ${styles.planDemoLink}`}>
+              {WALKTHROUGH_LINKS[plan.key]!.label}
             </Link>
           </p>
         )}

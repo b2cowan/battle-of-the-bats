@@ -21,6 +21,7 @@
  */
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
+import { FIELDLOGICHQ_CONTACT_EMAIL } from '@/lib/fieldlogichq-contact';
 import kit from './MarketingKit.module.css';
 import { derivedMeta, type PitchSlide } from '@/lib/walkthrough-content';
 import { pictureFor } from './slide-picture';
@@ -35,15 +36,20 @@ const PRINT_HOST = 'fieldlogichq.ca';
 const HERO = {
   eyebrow: 'FieldLogicHQ · a walkthrough',
   title: 'The jobs that stop being yours.',
-  sub: 'A handful of screens, picked for one conversation — and a live demo behind every one of them.',
+  sub: 'A handful of screens, picked for one conversation.',
 };
 
+/**
+ * The closing is written for a prospect reading (or printing) this link ALONE: it pointed at the live
+ * demos until they were retired (owner ruling 2026-11-25), and now points at the one page that serves
+ * every persona, plus a real way to ask a question (`/marketing` 2026-11-25). It promises no call, no
+ * demo and no free try of the live product; Tournament is the only plan it calls free, because it is.
+ * Still the invitation, never the "not a mockup" denial (see the walkthrough closings).
+ */
 const CLOSING = {
-  eyebrow: 'That was the pitch. Here’s the proof.',
-  title: 'The demo is running right now.',
-  // The invitation, never the "not a mockup" denial — see the long note on the walkthrough
-  // closings; it applies here identically and pre-emptively.
-  body: 'Walk the live demos yourself — nothing to sign up for, nothing you can break.',
+  eyebrow: 'That was the pitch. Here’s where to go next.',
+  title: 'Pick the plan that fits, when you’re ready.',
+  body: `Every plan and its price is on one page, and Tournament is free to start. Questions first? Email ${FIELDLOGICHQ_CONTACT_EMAIL}.`,
 };
 
 export default function ProspectDeckPage({ slides }: { slides: PitchSlide[] }) {
@@ -89,20 +95,20 @@ export default function ProspectDeckPage({ slides }: { slides: PitchSlide[] }) {
              this link alone. */}
       <SlidePanels panels={slides.map(slide => ({ slide, shown: shownFor.get(slide.id) ?? null }))} />
 
-      {/* ── Closing: the proof, then the ask ─────────────────────────────── */}
+      {/* ── Closing: where to go next, then the ask ─────────────────────────────── */}
       <section className={cn(kit.section, styles.ctaSection)}>
         <div className="container">
           <p className={kit.eyebrow}>{CLOSING.eyebrow}</p>
           <h2 className={cn(kit.heading, styles.ctaTitle)}>{CLOSING.title}</h2>
           <p className={cn(kit.body, styles.ctaBody)}>{CLOSING.body}</p>
           <div className={cn(kit.row, styles.heroActions)}>
-            <Link href="/demos" className={kit.btn}>
-              Walk the demos
+            <Link href="/pricing" className={kit.btn}>
+              See plans and prices
             </Link>
           </div>
           {/* The leave-behind carries its own way back: buttons don't survive a PDF, an
               address does. Hidden on screen, shown only in print. */}
-          <p className={styles.printUrl}>{PRINT_HOST}/demos</p>
+          <p className={styles.printUrl}>{PRINT_HOST}/pricing</p>
         </div>
       </section>
 

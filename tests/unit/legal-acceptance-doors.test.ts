@@ -232,8 +232,6 @@ const EXEMPT_SUBTREES: Record<string, string> = {
 const EXEMPT_FILES: Record<string, string> = {
   'app/[orgSlug]/layout.tsx': 'reads the user only for a demo organization (the demo accounts are exempt); its signed-in children are the shells above',
   'app/page.tsx': 'a signed-in person is redirected to their workspace, which mounts the screen',
-  'app/see-it-live/switch/page.tsx': 'the demo door — the demo accounts are exempt',
-  'app/see-it-live/coaches/switch/page.tsx': 'the demo door — the demo accounts are exempt',
 };
 const RESOLVES_USER = /getAuthUserCached|getAuthContextWithRole|getCoachPortalAuth|getPlatformAdminContext|getAuthenticatedUser|getSignedInUser|\.getUser\(/;
 

@@ -1,6 +1,6 @@
 # Retire the public demos — Implementation Plan
 
-> **Status:** Planning (written 2026-11-25, nothing built; both owner asks ruled 2026-11-25, Phase 1 is ready to build)
+> **Status:** Building. Phase 1 built on dev 2026-11-25 (commit at the owner's word); Phase 2 next.
 > **Created:** 2026-11-25
 > **Branch:** dev
 > **Ruling:** `docs/agents/strategy/BUSINESS_DECISIONS.md`, "2026-11-25 — Both public demos are RETIRED" (owner: *"Remove both,
@@ -47,28 +47,45 @@ See [RETIRE_PUBLIC_DEMOS_PM_BRIEF.md](RETIRE_PUBLIC_DEMOS_PM_BRIEF.md).
 
 The visitor-facing half. One `/marketing` pass settles the replacement words (see "Words for /marketing") before the commit.
 
-- [ ] **The door routes stop signing anyone in.** `app/see-it-live/route.ts` and `app/see-it-live/coaches/route.ts` return a
+- [x] **The door routes stop signing anyone in.** `app/see-it-live/route.ts` and `app/see-it-live/coaches/route.ts` return a
       permanent redirect (308) to the page in Decision D2, and never call sign-in. The two switch screens
       (`app/see-it-live/switch/page.tsx`, `app/see-it-live/coaches/switch/page.tsx`) and `app/api/sandbox/switch{,-coach}/route.ts`
       redirect the same way (the switch endpoints refuse with 410).
-- [ ] **The buttons go.** `sandboxDoorsVisible()` returns `false` in code, independent of the Amplify variable. Every gated door
+- [x] **The buttons go.** `sandboxDoorsVisible()` returns `false` in code, independent of the Amplify variable. Every gated door
       disappears together: `app/page.tsx`, `app/for-tournament-organizers/page.tsx`, `app/for-coaches/page.tsx`,
       `app/for-clubs/page.tsx` (the demo block and the rep-teams door), `components/PricingSection.tsx` ("Not ready? See … first"),
       `components/Footer.tsx` ("Live demos"), and the walkthrough buttons (`lib/walkthrough-content.ts:950,998` via
       `WalkthroughPage.tsx:115`). Where a page's layout leans on the door, Phase 1 places the `/marketing` replacement (or nothing).
-- [ ] **`/demos` redirects** (308, Decision D2) instead of rendering. `app/demos/page.tsx` becomes a redirect;
+- [x] **`/demos` redirects** (308, Decision D2) instead of rendering. `app/demos/page.tsx` becomes a redirect;
       `app/sitemap.ts:30-31` drops it.
-- [ ] **The ungated promises are re-worded** (`/marketing`): `components/marketing/ProspectDeckPage.tsx:38-46,99-105` ("a live
+- [x] **The ungated promises are re-worded** (`/marketing`): `components/marketing/ProspectDeckPage.tsx:38-46,99-105` ("a live
       demo behind every one of them", "The demo is running right now.", the `/demos` button and printed address);
       `lib/walkthrough-content.ts:980,1040` (closing text); `lib/walkthrough-derive.ts:48` (SEO description).
-- [ ] **Tests.** Update `tests/unit/demo-sandbox-door-and-chrome.test.ts` and `tests/unit/public-face-s4-marketing*` (or
+- [x] **Tests.** Update `tests/unit/demo-sandbox-door-and-chrome.test.ts` and `tests/unit/public-face-s4-marketing*` (or
       whichever assert the doors render) to assert the doors are absent and the door routes redirect without signing in. The
       Phase 3 deletion removes the demo-only tests; Phase 1 must not leave them red.
 - [ ] `/docs`: `lib/help-content/platform-admin.tsx:255,338,368-370,1933,1969` ("a demo club" as a reason a button is absent)
       leaves the help text in Phase 3, when the reason stops existing. It is listed here so the `/docs` pass is scheduled once.
-- [ ] Verify: `npm run verify:changed`; a quick local check that the home page, pricing, the three persona pages, the footer, a
+- [x] Verify: `npm run verify:changed`; a quick local check that the home page, pricing, the three persona pages, the footer, a
       walkthrough and a pitch page show no demo, and that `/see-it-live` lands on the D2 page signed out.
 - **Walk:** none of its own. The owner looks at the five public pages once on staging, folded into the next release's public-page look.
+- **As built (2026-11-25):**
+  - The four door addresses answer 308 to `/pricing` (the two routes on the host the visitor asked for); the two swap endpoints
+    answer 410. None imports any session code; a probe on the dev server saw no `Set-Cookie` on any of them. A browser still
+    holding a demo session is signed out by the unchanged exit rule when it reaches `/pricing`.
+  - `sandboxDoorsVisible()` returns `false`; the gated door branches stay in the pages until Phase 3 deletes them with the switch.
+    `RETIRED_DEMO_LANDING` (`lib/sandbox-door.ts`) names the landing once.
+  - Pricing's "Not ready?" line now points at the two walkthroughs (no longer behind the switch).
+  - **Wider than the plan listed:** the walkthroughs' opening lines (also present mode's first slide) and both closing titles
+    promised a running demo too; all re-worded. `app/demos/page.module.css` and `app/see-it-live/switch/switch.module.css` were
+    deleted (orphaned by the redirects; the dead-class gate flagged them).
+  - `tests/unit/demo-sandbox-exit.test.ts` had not run under `npm test` since 2026-11-22 (a `<T>[]` assertion the type-stripping
+    runner refuses fails the whole file); fixed to `as`, and its 26 tests pass.
+  - Verify: `check:spelling` green; the 6 flipped test files pass (176); `verify:changed` stops at `npm test` on other sessions'
+    in-flight work (48 failures, none in a file this phase touched), so the later gates were run one by one: all pass apart from
+    findings in other sessions' files. `tsc` clean apart from another session's `place-closures.test.ts`.
+  - Local look (dev server): home, pricing, the three persona pages, both walkthroughs and the sitemap carry no demo link or
+    demo words. No pitch page could be opened: dev has no saved deck with a share link.
 
 ### Phase 2 — Retire the production check, unschedule the jobs, delete the data (dev, then production)
 
@@ -207,16 +224,27 @@ One unit of work, which may land as several commits. Grep for `demo-org`, `demo-
 ## Words for /marketing
 
 > One pass, before the Phase 1 commit. Each line is a cut or a replacement; `/marketing` decides which.
+> **Settled 2026-11-25** (one `/marketing` pass; the build session trimmed two walkthrough bodies to claims the persona pages
+> already make). The pitch page is written for a prospect who **opens the link alone** (its own code says so, and it prints as
+> a leave-behind), not for "a deck shown with us in the room" as this list first framed it.
 
-- [ ] Home page persona cards (tournament and coach): the "See it live" link — cut, or a walkthrough or screenshot link — prospects
-- [ ] `/for-tournament-organizers` (two door buttons), `/for-coaches` (two door buttons) — cut or replace — prospects
-- [ ] `/for-clubs`: the "Both halves are live today" demo block and the rep-teams card door — rewrite or cut — club buyers
-- [ ] Pricing cards: "Not ready? See a live tournament first →" / "Not ready? See a coach's season first →" — cut or replace — buyers
-- [ ] Footer: "Live demos" — cut — everyone
-- [ ] Pitch page: "A handful of screens, picked for one conversation — and a live demo behind every one of them." and "The demo
+- [x] Home page persona cards (tournament and coach): the "See it live" link — cut, or a walkthrough or screenshot link — prospects
+      **Settled: CUT.** Both cards fall back to the whole-card link the League and Club cards use.
+- [x] `/for-tournament-organizers` (two door buttons), `/for-coaches` (two door buttons) — cut or replace — prospects
+      **Settled: CUT** all four buttons and both "No sign-up, no email…" lines; each page already links its walkthrough under the hero.
+- [x] `/for-clubs`: the "Both halves are live today" demo block and the rep-teams card door — rewrite or cut — club buyers
+      **Settled: CUT** the whole card (both variants) and the rep-teams link; the facts it sat beside are said elsewhere on the page, and no club demo is coming.
+- [x] Pricing cards: "Not ready? See a live tournament first →" / "Not ready? See a coach's season first →" — cut or replace — buyers
+      **Settled: REPLACE** with "Not ready? See the 90-second walkthrough first" → each product's walkthrough.
+- [x] Footer: "Live demos" — cut — everyone
+      **Settled: CUT.**
+- [x] Pitch page: "A handful of screens, picked for one conversation — and a live demo behind every one of them." and "The demo
       is running right now." plus its button and printed address — rewrite for a deck shown with us in the room — prospects in a meeting
-- [ ] Walkthrough ending "The demo is running right now…" and the description "Walk the live demo yourself" — rewrite — prospects, search
-- [ ] Constraint (from the ruling): never imply a free try of the live product without signing up.
+      **Settled:** sub "A handful of screens, picked for one conversation."; closing eyebrow "That was the pitch. Here’s where to go next.", title "Pick the plan that fits, when you’re ready.", body "Every plan and its price is on one page, and Tournament is free to start. Questions first? Email support@fieldlogichq.ca." (the contact constant); button "See plans and prices" → `/pricing`; printed address `fieldlogichq.ca/pricing`.
+- [x] Walkthrough ending "The demo is running right now…" and the description "Walk the live demo yourself" — rewrite — prospects, search
+      **Settled:** subs "Five jobs that stop being yours the day the tournament runs on FieldLogicHQ." / "The jobs the Coaches Portal takes off your plate, one screen at a time."; both eyebrows "That was the pitch. Here’s where to go next."; tournament "Your next tournament can run like this." + "Tournament is free to start: no credit card, no time limit."; coach "Your season, in one place." + "Roster, lineups, schedule, budget and team documents, from tryout day to the season’s end." (no "free": Premium is paid); SEO description: the closing sentence CUT, it ends on the last shown phrase.
+- [x] Constraint (from the ruling): never imply a free try of the live product without signing up.
+      Held: no line offers a try of the live product; "free" is said only of Tournament.
 
 ## Owner asks — RULED 2026-11-25 (owner: *"Ask 1 A, Ask 2 A, commit"*)
 
@@ -228,8 +256,13 @@ One unit of work, which may land as several commits. Grep for `demo-org`, `demo-
 
 ## Open Questions
 
-- [ ] Which tests assert the doors render (Phase 1 needs them flipped, not deleted): list them at build with a grep for
-      `sandboxDoorsVisible` and `see-it-live` under `tests/`.
+- [x] Which tests assert the doors render: answered at build (2026-11-25). Flipped: `demo-sandbox-door-and-chrome` (the S3
+      block now pins the shut doors), `demo-sandbox-exit`, `public-face-s4-marketing`, `public-plan-pages-both-states`,
+      `legal-acceptance-doors` and `pitch-slide-library` (the SEO description's closing sentence).
+- [ ] **Owner question (found at build, not this project's to fix):** both walkthroughs' button says "Start free" and goes to
+      the *tournament* sign-up, the coach walkthrough included. With the demo button gone it is that page's only button, and
+      the Premium Coaches Portal is paid. `/marketing` recommends a per-walkthrough button (the coach one as `/for-coaches`
+      has it). Route it to `/plan` or fix it on its own, the owner's call.
 - [ ] Does any exclusion in Phase 3 depend on the demo list *instead of* `is_test_organization` for an org that is not a demo?
       (Check `platform-metrics.ts` and `free-time-*.ts` first.)
 - [ ] Whether `capture-marketing-shots.mjs --check` still earns its place in `verify:changed` once the capture mode is gone.

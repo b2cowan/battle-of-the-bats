@@ -70,9 +70,18 @@ export const SANDBOX_CONFIRM_PATH = '/see-it-live/switch';
  */
 export const SANDBOX_SWITCH_ENDPOINT = '/api/sandbox/switch';
 
-/** Should the marketing site show its "See it live" doors? */
+/**
+ * Where every retired demo address lands: `/demos`, `/see-it-live`, `/see-it-live/coaches` and their two
+ * confirm screens (owner ruling 2026-11-25, Ask 1 ruled A: a permanent redirect to the pricing page).
+ */
+export const RETIRED_DEMO_LANDING = '/pricing';
+
+/**
+ * Should the marketing site show its "See it live" doors? **Never again** (owner ruling 2026-11-25,
+ * "Both public demos are RETIRED"; plan Decision D1: the door is shut in code, not by the Amplify
+ * variable). `NEXT_PUBLIC_SEE_IT_LIVE_DOORS` is read by nothing now; the owner deletes it in Phase 4.
+ * The callers and this function go in Phase 3.
+ */
 export function sandboxDoorsVisible(): boolean {
-  const explicit = process.env.NEXT_PUBLIC_SEE_IT_LIVE_DOORS;
-  if (explicit !== undefined && explicit !== '') return explicit === 'true';
-  return process.env.NODE_ENV !== 'production';
+  return false;
 }
