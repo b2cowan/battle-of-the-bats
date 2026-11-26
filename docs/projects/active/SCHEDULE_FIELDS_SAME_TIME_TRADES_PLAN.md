@@ -343,9 +343,10 @@ Migration first. Drawn together with Stage 3.
       **ruled by the owner 2026-11-25, all eight as recommended**. Through `/design` before hand-off (findings on its
       Asks tab).
 - [x] The owner rules round 2 (2026-11-25: all A).
-- [ ] `/dba` on how a booking names a part (four parts; the halves A–B and C–D of a quartered field, Ask 2 A;
+- [x] `/dba` on how a booking names a part (four parts; the halves A–B and C–D of a quartered field, Ask 2 A;
       house-league games and practices on club time, Ask 1 A; a split locked while any part is booked, Ask 7 A),
-      recorded in §5, before the migration.
+      recorded in §5 (2026-11-25): a four-bit mask in quarter units, 0 = whole; the place floor becomes an exclusion
+      constraint; the same five tables. Proposed; the migration session builds on it (Finding #55).
 - [ ] Reported by `/design`, not this project's to fix: the shipped "Give it to" menu inside a cell of the "Open slots and
       short teams" window has no row on `docs/agents/design/TABLE_EXCEPTION_REGISTER.md` (it was ruled for that window;
       a register row should say it is not a precedent).
@@ -766,6 +767,62 @@ Migration only if Stage 4's record needs it.
     share ÷ its parts, at the five places a slot's weight is read (✓ grep: engine `:141`, `lib/club-schedule-keep.ts:48`,
     `lib/club-schedule-coach.ts:305`, `lib/club-schedule-server.ts:531`, `app/api/admin/schedules/[scheduleId]/route.ts:239`).
     The cleanest form is one `weightOf(facility, section, permit)`, so none of the five can forget it. No price is stored twice.
+  - **Re-pass (`/dba`, 2026-11-25, after round 2): a booking names its part as a set of quarters, a four-bit mask.
+    Proposed, for the migration session; it supersedes the column name, values and floor in the two bullets below
+    (the shape (B) and the tables in scope hold).** Logged as Finding #55 in `docs/agents/db/DB_ARCHITECTURE_REVIEW.md`.
+    - **The value.** `section_mask smallint NOT NULL DEFAULT 0`, always in quarter units whatever the field's split:
+      1 = quarter A, 2 = B, 4 = C, 8 = D. Side A of a two-sided field is 3 (A+B) and side B is 12 (C+D): the same values
+      as the halves A–B and C–D of a quartered field, because they are the same ground. 0 is the whole field, never 15
+      (one spelling for whole, and every existing row and every untaught reader already reads it). Legal by the field's
+      `sections`: 1 → {0}; 2 → {0, 3, 12}; 4 → {0, 1, 2, 4, 8, 3, 12}. B–C (6) is never legal (Ask 2 A's fixed pairs).
+    - **Why a mask, not a part number** (0 whole, 1–4 the parts, 5 = A–B, 6 = C–D). With a number, overlap and weight
+      are a lookup table every reader must copy, and a reader that copies it wrong double-books. With the mask, overlap
+      is one expression, `a = 0 OR b = 0 OR (a & b) <> 0`, and the weight is bits ÷ 4, so a side and a half of a
+      quartered field weigh the same by construction (round 1 Ask 3 A and round 2 Ask 3 A agree with no extra rule). A
+      value means the same ground whatever `sections` says, so the split lock (Ask 7 A) protects which values are legal,
+      never what a stored value means. Were Ask 7 B ever wanted, two sides → four quarters rewrites no booking (3 and 12
+      stay legal), and four → two needs only that every booked mask is 3 or 12.
+    - **The weight.** One `weightOf(facility, mask, permit)` = the field's share × (mask 0 → 1, else bits ÷ 4) at the five
+      weight sites below; a quarter of a "Half cost" field is 0.125. One shared `partsOverlap(a, b)` that every clash
+      reader imports; no reader writes its own.
+    - **The words** come from (mask, `sections`) at read time: 3 reads "side A" on a two-sided field and "quarters A–B"
+      on a quartered one. Nothing stored holds a word.
+    - **Columns: the same five tables, renamed** `section_mask` (`facility_section` reads as one part):
+      `club_schedule_slots`, `org_time_block_facilities`, `rep_team_events`, `league_practices` and `league_games` (in,
+      not conditional: round 2 Ask 1 A). On each a named CHECK `<table>_section_mask_valid`: `section_mask IN
+      (0,1,2,3,4,8,12)`; on the four booking tables also `section_mask = 0 OR <its facility column> IS NOT NULL` (a part
+      without its field means nothing). `org_venue_facilities.sections`: CHECK `IN (1, 2, 4)`, not 1–4 (thirds cannot be
+      written in quarters; if ever wanted, the mask widens to twelfths, an advisory, not this build).
+    - **Copied, not derived, downstream.** `rep_team_events`, `league_practices` and `league_games` already copy their
+      slot's field (`org_venue_facility_id`); the part is written beside it in the same statement wherever the field is
+      copied from a slot (a game reaches its slot through `league_slot_uses.slot_id`, a practice through
+      `club_schedule_slot_id`). **Counted 2026-11-25:** on dev every row made from a slot sits on its slot's field
+      (385 rep events, 7 house-league practices, 64 house-league games; 0 differ); prod holds none. A house-league hand
+      edit that changes a game's or practice's field writes 0 (house league never splits a field, round 2 Ask 1 A).
+      Deriving the part through the slot was rejected: every clash reader on these tables compares the field column
+      directly and would need a join to learn the part.
+    - **The floor becomes a constraint, not a trigger.** `btree_gist` is installed (mig 380; the plan-grant exclusion is
+      the precedent). Replace `club_schedule_slots_family_place_start` with an exclusion constraint on
+      (`family_id` =, `org_venue_id` =, `coalesce(facility_id, nil uuid)` =, `section_range(section_mask)` &&,
+      `tstzrange(starts_at, ends_at, '[)')` &&), where `section_range` is an IMMUTABLE function: 0 → [0,4), 1 → [0,1),
+      2 → [1,2), 4 → [2,3), 8 → [3,4), 3 → [0,2), 12 → [2,4). Every legal mask is a run of quarters next to each other,
+      which is what lets a range stand in for the bits. It refuses a whole and a part, quarter A beside A–B, and any two
+      slots at overlapping times on one place in one family, race-free and with no trigger. **It is stricter than today's
+      index** (overlapping times, not an equal start): counted 2026-11-25, 0 overlapping pairs among dev's 1,516 slots;
+      prod has none. The migration re-counts both before it adds the constraint.
+    - **What stays a trigger:** a mask legal for its field's `sections` (needs the facility row); on
+      `org_time_block_facilities`, no part on a permit-owned block and no two overlapping masks of one field in one block
+      (its primary key becomes (block, facility, section_mask)); and the split lock: an update of `sections` is refused
+      while any of the five tables names a non-zero mask on that field (round 2 Ask 7 A: any change, not only lowering),
+      in the route and in a trigger on `org_venue_facilities`.
+    - **Build notes for the migration session.** (1) An exclusion clash raises SQLSTATE `23P01`, not `23505`:
+      `lib/club-schedule-server.ts:137` maps only the unique violation to the "changed" refusal, so it must learn the new
+      code and constraint name, or a clash shows as a server error. (2) An exclusion constraint checks each row as it is
+      written: a save that inserts its new slots before deleting the old ones would now fail where the equal-start index
+      let a shifted grid through. Read the save paths' order first; if needed, make the constraint
+      `DEFERRABLE INITIALLY IMMEDIATE` and defer it in that one function. (3) Add a named CHECK `ends_at > starts_at` on
+      `club_schedule_slots` first (none is in the dev snapshot), because a range whose start is after its end raises an
+      error rather than a refusal.
   - **Proposed columns (named for the migration session; not "part", which already means time added to a schedule
     (mig 491) and a house-league time row (`lib/league-time.ts:46`); words for customers go to `/marketing`):**
     `org_venue_facilities.sections smallint NOT NULL DEFAULT 1`, CHECK `org_venue_facilities_sections_range`
@@ -794,9 +851,9 @@ Migration only if Stage 4's record needs it.
     schedule (a coach booking "the north half" for a team event, a tournament on half a diamond). Then a small child
     table of named sections, still referenced as (field, section), is the step up. It is still not a second facility
     row.
-  - **Pre-existing, Low, logged when the owner rules:** the correction's hours figure counts a gained shared slot at
-    the full slot (`lib/club-schedule-send.ts:421`, `:678`); the amount is right. Fix it in Stage 2 so sharing and
-    halves read alike. Nothing is written to `docs/agents/db/DB_ARCHITECTURE_REVIEW.md` until the shape is ruled.
+  - **Pre-existing, Low, logged 2026-11-25 as Finding #56:** the correction's hours figure counts a gained shared slot
+    at the full slot (`lib/club-schedule-send.ts:421`, `:678`); the amount is right. Fix it in Stage 2 so sharing and
+    parts read alike. The ruled shape and the re-pass are Finding #55.
 - **No new plan gate proposed.** These live inside the club scheduler and the coaches portal as they are gated today;
   reconcile against `docs/agents/strategy/PLAN_PRICING_FACTS.md` at each build, and route any gate question to `/strategy`.
 - **`/accounting` is not triggered:** this is the product's customer bookkeeping, not FieldLogicHQ's own.

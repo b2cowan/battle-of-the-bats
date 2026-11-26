@@ -28,6 +28,36 @@
 
 ---
 
+### [2026-11-25] — Finding #55: A field in parts — shape (B), and a booking names its part as a quarter mask (designed before the migration)
+**Severity:** Advisory
+**Finding:** Club schedules Stage 2 splits a venue field into two sides or four quarters (owner rulings 2026-11-25,
+rounds 1 and 2). Shape (B) was ruled: the field stays one `org_venue_facilities` row carrying `sections`, and a booking
+names its part. Round 2 allows a quartered field to be booked as the fixed halves A–B and C–D as well as whole or one
+quarter, carries the part into house-league practices and games made from club time, and locks a field's split while any
+part is booked. A part number (0 whole, 1–4, 5 = A–B, 6 = C–D) would make overlap and weight a lookup every clash
+reader copies; a reader that copies it wrong double-books.
+**Tables affected:** org_venue_facilities, club_schedule_slots, org_time_block_facilities, rep_team_events, league_practices, league_games
+**Recommendation:** `section_mask smallint NOT NULL DEFAULT 0` in quarter units (1/2/4/8 = A–D; a side and a half of a
+quartered field = 3 or 12; 0 = whole, never 15), a named CHECK `IN (0,1,2,3,4,8,12)` on all five tables and
+`section_mask = 0 OR <facility> IS NOT NULL` on the four booking tables; `sections` CHECK `IN (1,2,4)`. The weight is
+share × (bits ÷ 4), with one shared overlap helper. The downstream tables copy the part beside the field they already
+copy (dev 2026-11-25: 0 of 456 slot-made rows sit off their slot's field). Replace
+`club_schedule_slots_family_place_start` with a `btree_gist` exclusion constraint on family, venue, facility,
+`section_range(mask)` and the time range (dev: 0 overlapping pairs in 1,516 slots; prod: no slots). Triggers keep the
+legal-for-`sections` check, the permit-block refusal and the split lock. Map SQLSTATE 23P01 in the schedule save's
+refusal mapping, check the save paths' insert/delete order (deferrable if needed), and add `ends_at > starts_at` first.
+Full text: `docs/projects/active/SCHEDULE_FIELDS_SAME_TIME_TRADES_PLAN.md` §5.
+**Status:** Open (proposed; the migration session reviews it again with the migration)
+
+### [2026-11-25] — Finding #56: A gained shared slot's hours are recorded at the full slot
+**Severity:** Low
+**Finding:** When a club sends schedule changes, a gained shared slot's hours are recorded at the full slot
+(`lib/club-schedule-send.ts:421`, `:678`, `teamIds: [t]`); the amount billed is right, the hours shown beside it are
+not. Pre-existing; it becomes visible once parts exist, because a gained part would record its share.
+**Tables affected:** club_schedule_sends
+**Recommendation:** Fix in Club schedules Stage 2 so sharing and parts record hours alike.
+**Status:** Open
+
 ### [2026-11-22] — Finding #54: Migrations 522–523 (a bank check in progress, kept on the server per person) designed and reviewed before apply
 **Severity:** Advisory
 **Finding:** S7 (plan `BANK_CHECK_NOVICE_UX_PLAN.md` §0 A18, nine rulings 2026-11-22) moves the bank check's working draft
