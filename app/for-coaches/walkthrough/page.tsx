@@ -2,6 +2,8 @@ import { getWalkthroughRender } from '@/lib/pitch-deck-store';
 import { walkthroughMetadata } from '@/lib/walkthrough-content';
 import { marketingMetadata } from '@/lib/marketing-metadata';
 import WalkthroughPage from '@/components/marketing/WalkthroughPage';
+import { isPlanOpen } from '@/lib/plan-config';
+import { getPlanGatingMap } from '@/lib/plan-gating-server';
 
 // The story lives in lib/walkthrough-content.ts; the rendering (scroll page, present mode,
 // print leave-behind) lives in components/marketing/WalkthroughPage.tsx. This file is the route.
@@ -29,5 +31,7 @@ export default async function CoachWalkthroughPage() {
   // The DECK is a saved row too since stage C — present mode renders it, and the pull is
   // already normalised against it, so reordering the deck re-orders this page by itself.
   const { walkthrough, deckIds, pull } = await getWalkthroughRender('coach');
-  return <WalkthroughPage walkthrough={walkthrough} deckIds={deckIds} pull={pull} />;
+  // The ask is the paid Premium sign-up, so it follows the plan's live sale gate, exactly as /for-coaches' button does.
+  const askOpen = isPlanOpen(await getPlanGatingMap(), 'team');
+  return <WalkthroughPage walkthrough={walkthrough} deckIds={deckIds} pull={pull} askOpen={askOpen} />;
 }

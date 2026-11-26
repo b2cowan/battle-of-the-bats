@@ -899,6 +899,19 @@ export interface Walkthrough {
    */
   door: { path: string; label: string };
   /**
+   * The page's ask: the lime button in both CTA rows. Per walkthrough, because the two products start
+   * differently. Tournament is free, so its ask is "Start free". The Premium Coaches Portal is paid, so its
+   * ask is `/for-coaches`' own button word for word ("Start now" → the coach sign-up), and `gated` names the
+   * plan whose sale gate turns it into the same express-interest button that page shows while the plan is
+   * closed. Until 2026-11-25 both walkthroughs said "Start free" → the TOURNAMENT sign-up, which on the coach
+   * page read as a free try of a paid plan (owner: "fix the coach walkthrough button now").
+   */
+  ask: {
+    href: string;
+    label: string;
+    gated?: { plan: 'team'; planInterest: string[]; featuresInterested: string[] };
+  };
+  /**
    * The way back into the full persona page, for a reader who wants everything else. The LABEL
    * names the product the persona page is about ("Everything else Tournament does", "Everything
    * else the Coaches Portal does"), so it is data here, not one shared sentence (The public face,
@@ -947,6 +960,7 @@ export const TOURNAMENT_WALKTHROUGH: Walkthrough = {
   title: 'The weekend the phone stayed in your pocket.',
   sub: 'Five jobs that stop being yours the day the tournament runs on FieldLogicHQ.',
   door: { path: SEE_IT_LIVE_PATH, label: 'See a live tournament' },
+  ask: { href: '/start/tournament', label: 'Start free' },
   back: { href: '/for-tournament-organizers', label: 'Everything else Tournament does' },
   fallbackPull: [
     '#11',
@@ -998,6 +1012,12 @@ export const COACH_WALKTHROUGH: Walkthrough = {
   title: 'Run the team. Keep your evenings.',
   sub: 'The jobs the Coaches Portal takes off your plate, one screen at a time.',
   door: { path: SEE_IT_LIVE_COACHES_PATH, label: 'See a coach’s season' },
+  // The same button, destination and interest form as /for-coaches (W73, 2026-11-18: no "free" over a paid plan).
+  ask: {
+    href: '/coaches/start?source=coach_walkthrough',
+    label: 'Start now',
+    gated: { plan: 'team', planInterest: ['coaches_portal'], featuresInterested: ['roster', 'lineups', 'budget', 'team_documents'] },
+  },
   back: { href: '/for-coaches', label: 'Everything else the Coaches Portal does' },
   /**
    * ⚠ SEVEN PANELS AS THE CODE DEFAULT — the pull walks the same year the deck does: tryout day

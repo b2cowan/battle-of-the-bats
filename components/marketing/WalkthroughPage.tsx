@@ -19,6 +19,8 @@
  * anywhere (owner ruling 2026-08-21).
  */
 import Link from 'next/link';
+import EarlyAccessModalTrigger from '@/components/EarlyAccessModalTrigger';
+import { interestButtonLabel } from '@/lib/plan-config';
 import { cn } from '@/lib/utils';
 import kit from './MarketingKit.module.css';
 import {
@@ -42,8 +44,12 @@ export default function WalkthroughPage({
   walkthrough: w,
   deckIds,
   pull,
+  askOpen = true,
 }: {
   walkthrough: Walkthrough;
+  /** Is the ask's plan on sale? Only read when the walkthrough's ask names a gated plan (the coach page); the route
+   *  asks the live gate per request, as /for-coaches does. */
+  askOpen?: boolean;
   /** The resolved DECK running order (saved row or code fallback — stage C). Present mode
    *  renders this; unbuilt ids in it render nothing. */
   deckIds: string[];
@@ -119,9 +125,19 @@ export default function WalkthroughPage({
   // page's lime button; the door is the secondary, with the live dot (no arrow on either).
   const askThenDoor = (
     <>
-      <Link href="/start/tournament" className={kit.btn}>
-        Start free
-      </Link>
+      {w.ask.gated && !askOpen ? (
+        <EarlyAccessModalTrigger
+          className={kit.btn}
+          initialPlanInterest={w.ask.gated.planInterest}
+          initialFeaturesInterested={w.ask.gated.featuresInterested}
+        >
+          {interestButtonLabel()}
+        </EarlyAccessModalTrigger>
+      ) : (
+        <Link href={w.ask.href} className={kit.btn}>
+          {w.ask.label}
+        </Link>
+      )}
       {showSandboxDoor && (
         <Link href={w.door.path} prefetch={false} className={cn(kit.btn, kit.btnSecondary, kit.live)}>
           {w.door.label}

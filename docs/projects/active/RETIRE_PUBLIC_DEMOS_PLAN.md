@@ -259,10 +259,11 @@ One unit of work, which may land as several commits. Grep for `demo-org`, `demo-
 - [x] Which tests assert the doors render: answered at build (2026-11-25). Flipped: `demo-sandbox-door-and-chrome` (the S3
       block now pins the shut doors), `demo-sandbox-exit`, `public-face-s4-marketing`, `public-plan-pages-both-states`,
       `legal-acceptance-doors` and `pitch-slide-library` (the SEO description's closing sentence).
-- [ ] **Owner question (found at build, not this project's to fix):** both walkthroughs' button says "Start free" and goes to
-      the *tournament* sign-up, the coach walkthrough included. With the demo button gone it is that page's only button, and
-      the Premium Coaches Portal is paid. `/marketing` recommends a per-walkthrough button (the coach one as `/for-coaches`
-      has it). Route it to `/plan` or fix it on its own, the owner's call.
+- [x] **Owner question (found at build): the coach walkthrough's "Start free" → the tournament sign-up. RULED 2026-11-25:**
+      *"fix the coach walkthrough button now."* Each walkthrough now carries its own ask: Tournament keeps "Start free" →
+      `/start/tournament`; the coach walkthrough says "Start now" → `/coaches/start?source=coach_walkthrough`, the
+      `/for-coaches` button word for word, and becomes the same express-interest button while the Premium plan is off sale
+      (the route reads the live gate). Pinned in `pitch-slide-library.test.ts`.
 - [ ] Does any exclusion in Phase 3 depend on the demo list *instead of* `is_test_organization` for an org that is not a demo?
       (Check `platform-metrics.ts` and `free-time-*.ts` first.)
 - [ ] Whether `capture-marketing-shots.mjs --check` still earns its place in `verify:changed` once the capture mode is gone.

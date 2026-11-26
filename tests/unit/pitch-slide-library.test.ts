@@ -366,3 +366,24 @@ test('the derived furniture counts and names what the page actually shows', () =
     }
   }
 });
+
+/**
+ * Each walkthrough's ask is its own (owner 2026-11-25, "fix the coach walkthrough button now"): both used to say
+ * "Start free" → the TOURNAMENT sign-up, which on the coach page read as a free try of the paid Premium portal.
+ * Pinned: the coach ask is /for-coaches' button word for word, says no "free", follows the plan's sale gate, and the
+ * page renders the ask from the data rather than a typed link.
+ */
+test('each walkthrough asks for its own product, and only Tournament is called free', async () => {
+  const { readFile } = await import('node:fs/promises');
+  const byPersona = Object.fromEntries(WALKTHROUGHS.map(w => [w.persona, w]));
+  assert.deepEqual(byPersona.tournament.ask, { href: '/start/tournament', label: 'Start free' });
+  const coach = byPersona.coach.ask;
+  assert.equal(coach.label, 'Start now');
+  assert.match(coach.href, /^\/coaches\/start\?source=/);
+  assert.doesNotMatch(coach.label, /free/i);
+  assert.equal(coach.gated?.plan, 'team', 'the coach ask follows the Premium plan\'s sale gate');
+  const page = await readFile(new URL('../../components/marketing/WalkthroughPage.tsx', import.meta.url), 'utf8');
+  assert.doesNotMatch(page, /href="\/start\/tournament"/, 'the walkthrough page types no ask of its own');
+  const route = await readFile(new URL('../../app/for-coaches/walkthrough/page.tsx', import.meta.url), 'utf8');
+  assert.match(route, /askOpen = isPlanOpen\(await getPlanGatingMap\(\), 'team'\)/, 'the coach route asks the live gate');
+});
