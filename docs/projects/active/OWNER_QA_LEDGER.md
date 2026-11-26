@@ -28897,6 +28897,11 @@ Committed 2026-11-25, ahead of the walk (owner: "yes commit now").
 **Walks:** A Prospect clubs and making one, every refusal in place (22) · B every page of the preview says so, and Register is closed (11) · C removing it by hand until Session P4’s removal ships (4).
 
 **Left out (pinned by tests):** the five-open cap window, a crafted sign-up post refused on the server, the refused share images and calendar feed, a logo whose bytes are not the image it claims, a lost answer after the club was made.
+**Paste-back 2026-11-25, 37 of 37 ticked (A 22/22 · B 11/11 · C 4/4, all marked Passed), no notes.** Read the same day on dev:
+- **C holds:** Oakridge's club is gone and its preview record is stamped Removed (9:50 p.m. Toronto).
+- **Open, A16, A18 and B7:** the record's meeting is **Dec 17 at 9:00 a.m.**, not "today, about five minutes from now" (A13); the club was made at 9:46 p.m. and removed at 9:50 p.m. With that meeting the removal date is not today plus 30, the list does not read "Today", and the tournament's first game cannot show "Live now". Whether the date was picked by hand or the window saved another one than was entered is the question to the owner.
+
+**✅ CLOSED 2026-11-25 on the owner's word** (asked whether they picked Dec 17 themselves: *"yes i did, you can close the walk"*). The window saved the date as entered. With that meeting the tournament's live game at meeting time (B7) was not seen in this walk.
 <!-- /§568 -->
 
 
