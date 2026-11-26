@@ -1513,6 +1513,11 @@ the demos follow the product and are curated with `/demos`, never as a build ste
   in the shared waiting list; Delete’s record row and address release are still written twice; a preview’s files are
   cleared a second time in the run that removed it. The schema snapshots stay for the release (they carry other
   sessions’ migrations too).
+- 2026-11-26 — **Track P Session P4 closed: the walk passed 33 of 33 (§575; A 18, B 9, C 6; no notes).** Every session of
+  Track P's build is committed, and the three with something to see (P2, P3, P4) are walked. Still owed before the first
+  real preview on production: 547, the code and 548 live there. Before the email can send: the Privacy prospect
+  sentence published, then the mailing address set. The four guards listed under P4's build entry (grants, club share
+  census, legal-line surfaces, plan-reader door) were rerun after the pass and all four still fail.
 
 ## 8. Census questions for Stage 0 (answer from code, not from this plan)
 
