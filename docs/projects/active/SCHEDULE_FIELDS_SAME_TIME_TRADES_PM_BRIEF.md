@@ -9,9 +9,12 @@ from the Milton Bats demo. Status is on the board.
 
 - **Pick the fields.** Ticking a permit in New schedule brings in all its fields today, and they cannot be unticked. They
   become ticks, so a schedule on two of a dome's six fields is the obvious thing to do.
-- **Half a field is a real place.** A field can be split into halves. One team goes on each half as its own slot, or one
-  half goes to this schedule and the other half to something else. The product knows the two halves are the one field,
-  so nothing can be booked over them by accident.
+- **Part of a field is a real place.** In the venue list a field can be split into two sides or four quarters (owner,
+  2026-11-25). One team goes on each part as its own slot, or one part goes to this schedule and the rest to something
+  else. The product knows the parts are the one field, so nothing can be booked over them by accident. A part counts
+  toward a team's share and costs in proportion (a side is half a practice and half the price), so two teams on one
+  field bill the same whether the club calls it sharing or sides. It reaches the club's rep schedules and house league;
+  coaches' own events, tryout days and tournaments keep booking whole fields.
 - **Teams at the same time.** A new rule names two or more teams and the builder tries to put them at the same time in
   the same building, each on its own field. It can be entered as often as needed. Its opposite, "never at the same
   time", comes with it for a coach who runs two teams.

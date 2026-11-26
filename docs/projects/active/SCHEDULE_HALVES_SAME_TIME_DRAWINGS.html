@@ -1,0 +1,1429 @@
+<title>Field Sides and Same-Time Drawings</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=IBM+Plex+Mono:wght@500;700&family=Inter:wght@400;500;600;700&display=swap">
+<style>
+/* Layout: the house drawings page. Sticky tab row, one section at a time, each shipped screen at its true width (640 / 800 / 1024 / 1152 px) on a cool document ground. */
+:root {
+  --doc-bg: #E9ECEF; --doc-card: #F7F8F9; --doc-ink: #1B2127; --doc-dim: #4F5963; --doc-line: #C9D0D6;
+  --doc-accent: #1F5F8B; --doc-new: #0F6B3E; --doc-new-soft: #D6EEE0; --doc-chg: #8A4B00; --doc-chg-soft: #F6E3C8;
+  --font-ui: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, Consolas, monospace;
+  --font-display: 'Barlow Condensed', 'Arial Narrow', system-ui, sans-serif;
+  /* The product's warm portal, as it ships. Frames keep these in both themes: a specimen, not the page. */
+  --paper: #F8F4ED; --card: #FFFFFF; --ink: #241E15; --ink-soft: #4A4235; --dim: #615A54; --surf2: #F4EFE6;
+  --line: rgba(70,55,30,.12); --line-strong: rgba(70,55,30,.20);
+  --olive: #57651E; --olive-soft: rgba(87,101,30,.10); --olive-edge: rgba(87,101,30,.3);
+  --lime: #D9F99D; --amber: #B26A00; --amber-ink: #6B4105; --amber-soft: #FBF1DF; --red: #B03A22; --scrim: #B0ABA4; --good: #2F7A3E;
+  --tip: #2A241C; --tip-ink: #FFFFFF;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --doc-bg: #14181C; --doc-card: #1D2328; --doc-ink: #E8ECEF; --doc-dim: #9AA5AF; --doc-line: #333C44;
+    --doc-accent: #7DB8E0; --doc-new: #6FD39B; --doc-new-soft: #17301F; --doc-chg: #F0B968; --doc-chg-soft: #3A2A12;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --doc-bg: #14181C; --doc-card: #1D2328; --doc-ink: #E8ECEF; --doc-dim: #9AA5AF; --doc-line: #333C44;
+  --doc-accent: #7DB8E0; --doc-new: #6FD39B; --doc-new-soft: #17301F; --doc-chg: #F0B968; --doc-chg-soft: #3A2A12;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--doc-bg); color: var(--doc-ink); font-family: var(--font-ui); font-size: 15px; line-height: 1.5; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 0 48px; }
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 30; background: var(--doc-bg); }
+.wrap { max-width: 1200px; margin: 0 auto; }
+h1 { font-size: 1.35rem; margin: 0; letter-spacing: -.01em; text-wrap: balance; }
+h3 { font-size: .95rem; margin: 0 0 .2rem; }
+p { margin: 0 0 .6rem; max-width: 72ch; }
+.top { padding: 14px 0 0; }
+.top .sub { color: var(--doc-dim); font-size: .85rem; margin: .15rem 0 .6rem; max-width: 120ch; }
+/* Only the tab row is sticky, so a phone keeps most of its screen. */
+.tabs { display: flex; gap: 2px; overflow-x: auto; position: sticky; top: env(safe-area-inset-top, 0px); z-index: 20; background: var(--doc-bg); border-bottom: 1px solid var(--doc-line); }
+.tab { font: inherit; font-weight: 600; font-size: .88rem; padding: .55rem .8rem; background: transparent; color: var(--doc-dim); border: 0; border-bottom: 3px solid transparent; cursor: pointer; white-space: nowrap; min-height: 44px; }
+.tab[aria-selected="true"] { color: var(--doc-ink); border-bottom-color: var(--doc-accent); }
+.tab:focus-visible, .sw button:focus-visible, .mk:focus-visible, .mk2:focus-visible, .copy:focus-visible, .pick input:focus-visible, .tag:focus-visible { outline: 2px solid var(--doc-accent); outline-offset: 2px; }
+.viewrow { display: flex; align-items: center; gap: .7rem; margin: 16px 0 6px; flex-wrap: wrap; }
+.viewrow b { font-size: .8rem; color: var(--doc-dim); font-weight: 600; }
+/* ONE white track, the chosen option in soft olive: drawn from the shipped view switch. */
+.sw { display: inline-flex; background: #fff; border: 1px solid var(--line-strong); border-radius: 10px; padding: 3px; gap: 2px; }
+.sw button { font: inherit; font-size: .85rem; font-weight: 600; padding: .35rem .8rem; border: 0; border-radius: 7px; background: transparent; color: #4A4235; cursor: pointer; min-height: 34px; }
+.sw button[aria-pressed="true"] { background: var(--olive-soft); color: var(--olive); }
+section.pane { display: none; padding-top: 6px; }
+section.pane.on { display: block; }
+.lede { font-size: .95rem; margin-top: 14px; max-width: 90ch; }
+.stage { margin: 14px 0 26px; }
+.cap { display: flex; flex-wrap: wrap; align-items: baseline; gap: .5rem .8rem; margin-bottom: 6px; }
+.cap h3 { margin: 0; }
+.cap .sw-note { font-size: .8rem; color: var(--doc-dim); }
+.tag { font-family: var(--font-mono); font-size: .66rem; font-weight: 700; letter-spacing: .07em; text-transform: uppercase; padding: .1rem .45rem; border-radius: 4px; border: 0; cursor: pointer; }
+.tag.new { background: var(--doc-new-soft); color: var(--doc-new); }
+.tag.chg { background: var(--doc-chg-soft); color: var(--doc-chg); }
+.tag.same { background: var(--doc-line); color: var(--doc-dim); }
+.scroller { overflow-x: auto; border: 1px solid var(--doc-line); border-radius: 10px; background: var(--doc-card); padding: 12px; }
+.note { font-size: .86rem; color: var(--doc-dim); margin: 8px 0 0; max-width: 90ch; }
+.note b { color: var(--doc-ink); }
+.pair2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(300px, 100%), 1fr)); gap: 14px; }
+.pair2.w700 { grid-template-columns: repeat(auto-fit, minmax(min(700px, 100%), 1fr)); }
+.pair2.w640 { grid-template-columns: repeat(auto-fit, minmax(min(640px, 100%), 1fr)); }
+.pair2.w560 { grid-template-columns: repeat(auto-fit, minmax(min(560px, 100%), 1fr)); }
+.cutm { font: 600 11px/1.3 var(--font-mono); letter-spacing: .06em; text-transform: uppercase; color: var(--doc-dim); background: var(--doc-card); border: 1px dashed var(--doc-line); border-radius: 6px; padding: .45rem .7rem; text-align: center; }
+.pair2 > * { min-width: 0; }
+.card { background: var(--doc-card); border: 1px solid var(--doc-line); border-radius: 10px; padding: 12px 14px; min-width: 0; }
+.card ul, .ask ul { margin: .3rem 0 .4rem 1.1rem; padding: 0; font-size: .88rem; }
+.card li, .ask li { margin-bottom: .25rem; }
+.tblwrap { overflow-x: auto; }
+.asks { display: grid; gap: 12px; }
+.ask { background: var(--doc-card); border: 1px solid var(--doc-line); border-radius: 10px; padding: 12px 14px; }
+.ask .rec { font-size: .85rem; color: var(--doc-new); font-weight: 600; margin: 0 0 .5rem; }
+.ask .why { font-size: .85rem; color: var(--doc-dim); margin: 0 0 .5rem; }
+.pick { display: flex; flex-wrap: wrap; gap: .4rem 1.1rem; font-size: .88rem; }
+.pick label { display: inline-flex; align-items: center; gap: .4rem; min-height: 32px; cursor: pointer; }
+.own { width: 100%; border-collapse: collapse; font-size: .88rem; font-variant-numeric: tabular-nums; }
+.own th, .own td { text-align: left; padding: .45rem .6rem; border-bottom: 1px solid var(--doc-line); vertical-align: top; }
+.own th { font: 700 .68rem/1.3 var(--font-mono); letter-spacing: .07em; text-transform: uppercase; color: var(--doc-dim); }
+.own td.n, .own th.n { text-align: right; }
+.own tr.hi td { background: var(--doc-new-soft); }
+.paste { display: grid; gap: .5rem; }
+.paste textarea { width: 100%; min-height: 300px; font: 13px/1.5 var(--font-mono); padding: .6rem .7rem; border: 1px solid var(--doc-line); border-radius: 8px; background: var(--doc-bg); color: var(--doc-ink); resize: vertical; }
+.copy { font: 600 .88rem var(--font-ui); padding: .5rem .9rem; border-radius: 8px; border: 1px solid var(--doc-accent); background: var(--doc-accent); color: #fff; cursor: pointer; justify-self: start; min-height: 40px; }
+:root[data-theme="dark"] .copy { color: #0E1418; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .copy { color: #0E1418; } }
+.copied { font-size: .85rem; color: var(--doc-new); }
+
+/* ───────── product frames, true size (KitDialog: medium 640, wide 800, xwide 1024; club page 1200) ───────── */
+.scrim { display: inline-block; padding: 20px; background: var(--scrim); border-radius: 10px; }
+.win { width: 1024px; background: var(--card); border: 1px solid var(--olive-edge); border-radius: 12px; color: var(--ink-soft); font: 14px/1.5 var(--font-ui); position: relative; }
+.win.md { width: 640px; } .win.wd { width: 800px; }
+.win svg, .pg svg { flex: none; display: block; }
+.dh { display: flex; align-items: flex-start; gap: .6rem; padding: 1.1rem 1.5rem .4rem; }
+.dh .tt { flex: 1; }
+.dh .eb { display: block; font: 700 11px/1.3 var(--font-mono); letter-spacing: .09em; text-transform: uppercase; color: var(--ink-soft); margin-bottom: .2rem; }
+.dh .tl { display: block; font-size: 16px; font-weight: 700; line-height: 1.25; color: var(--ink); }
+.dh .st2 { display: block; font-size: 12px; color: var(--dim); margin-top: .2rem; }
+.dh .x { width: 32px; height: 32px; border-radius: 7px; display: grid; place-items: center; color: var(--dim); }
+.dh.rec { border-bottom: 1px solid var(--line); padding-bottom: .75rem; }
+.prog { display: flex; gap: 4px; padding: .35rem 1.5rem .75rem; border-bottom: 1px solid var(--line); }
+.prog span { flex: 1; height: 4px; border-radius: 2px; background: var(--line); }
+.prog span.on { background: var(--olive); }
+.db { padding: .6rem 1.5rem 1rem; display: grid; gap: .9rem; }
+.df { display: flex; align-items: center; gap: .6rem; padding: .85rem 1.5rem; border-top: 1px solid var(--line); }
+.df .fn { font-size: 12px; color: var(--dim); margin-right: auto; }
+.df .fn.warn { color: var(--amber-ink); }
+.btn { font: 650 14px/1.25 var(--font-ui); padding: .45rem .9rem; min-height: 34px; border-radius: 6px; border: 1px solid var(--line-strong); background: var(--card); color: var(--ink-soft); white-space: nowrap; display: inline-flex; align-items: center; gap: .35rem; }
+.btn.pri { background: var(--lime); border-color: var(--lime); color: var(--ink); }
+.btn.off { opacity: .45; }
+.sect { border: 1px solid var(--line); border-radius: 8px; background: var(--card); padding: .75rem 1rem .6rem; }
+.sect > .sh { font-size: 16px; font-weight: 700; color: var(--ink); margin: 0 0 .6rem; max-width: none; display: flex; align-items: center; gap: .6rem; }
+.sect > .sh .cnt { font-size: 12px; font-weight: 400; color: var(--dim); margin-right: auto; }
+.sect.fold { display: flex; align-items: center; gap: .6rem; padding: .6rem 1rem; }
+.sect.fold .sh { margin: 0; }
+.sect.fold .cnt { font-size: 12px; color: var(--dim); margin-right: auto; }
+.pr2 { display: grid; grid-template-columns: minmax(0,1fr) minmax(0,1fr); gap: 0 .75rem; }
+.fld { display: flex; flex-direction: column; gap: .3rem; margin-bottom: .9rem; min-width: 0; }
+.lb { font-size: 12px; font-weight: 650; color: var(--ink-soft); }
+.lbl { display: flex; align-items: baseline; gap: .75rem; min-width: 0; }
+.lbl .ven { margin-left: auto; min-width: 0; font-size: 12px; font-weight: 400; color: var(--dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.lb i { font-style: normal; margin-left: .15rem; }
+.ctl { min-height: 36px; border: 1px solid var(--line-strong); border-radius: 6px; background: var(--paper); padding: .5rem .65rem; display: flex; align-items: center; justify-content: space-between; gap: .4rem; font-size: 14px; line-height: 1.25; color: var(--ink); white-space: nowrap; overflow: hidden; }
+.ctl.pk { min-height: 39px; }
+.ctl .v { overflow: hidden; text-overflow: ellipsis; }
+.ctl .v.ph { color: var(--dim); }
+.ctl .ic { color: var(--dim); }
+.ctl.open { border-color: var(--olive); box-shadow: 0 0 0 2px var(--olive-soft); }
+.ctl.lock { opacity: .55; }
+.hnt { font-size: 12px; color: var(--dim); line-height: 1.4; }
+.hnt.warn { color: var(--amber-ink); display: flex; gap: .35rem; align-items: flex-start; }
+.hnt.warn svg { color: var(--amber); margin-top: 1px; }
+.door { display: inline-flex; align-items: center; gap: .3rem; min-height: 34px; color: var(--olive); font-weight: 650; font-size: 14px; white-space: nowrap; }
+.door.find { font-size: 12px; gap: .35rem; margin-top: .15rem; }
+.pcards { display: flex; flex-direction: column; gap: .6rem; margin: 0 0 .6rem; }
+.pcard { padding: .6rem .75rem 0; border: 1px solid var(--line); border-radius: 8px; background: var(--card); }
+.pcard .ph { display: flex; flex-wrap: wrap; align-items: baseline; gap: .2rem .5rem; margin: 0 0 .35rem; font-size: 12px; color: var(--dim); max-width: none; }
+.pcard .ph strong { font-size: 14px; color: var(--ink); }
+.pcard .left { font-size: 12px; line-height: 1.45; color: var(--dim); margin: 0 0 .1rem; max-width: none; }
+.pcard .left.warn { color: var(--amber-ink); }
+.prow { display: grid; grid-template-columns: minmax(0,1.4fr) minmax(0,1.2fr) minmax(0,.8fr) minmax(0,.8fr) auto; gap: 0 .6rem; align-items: end; }
+.rm { width: 34px; height: 34px; margin-bottom: .9rem; border: 1px solid var(--line); border-radius: 6px; background: var(--card); display: grid; place-items: center; color: var(--ink-soft); }
+.rm.off { opacity: .4; }
+.pcard.grow { padding-bottom: .3rem; }
+.rowdoor { margin-top: -.35rem; }
+.menu { border: 1px solid var(--line-strong); border-radius: 8px; background: var(--card); box-shadow: 0 2px 6px rgba(70,55,30,.06), 0 14px 36px rgba(70,55,30,.14); padding: .3rem 0; color: var(--ink); font: 14px/1.5 var(--font-ui); }
+.menu .mi { min-height: 36px; padding: .35rem .75rem; display: flex; gap: .55rem; align-items: center; }
+.menu .mi.sub { padding-left: 2.1rem; }
+.menu .mi.dis { color: var(--dim); }
+.menu .mi small { font-size: 12px; color: var(--dim); margin-left: auto; }
+.menu .mi .tk { width: 16px; height: 16px; border: 1.5px solid var(--line-strong); border-radius: 4px; flex: none; display: grid; place-items: center; color: #fff; }
+.menu .mi .tk.on { background: var(--olive); border-color: var(--olive); }
+.menu .mi .tk.part { background: var(--olive-soft); border-color: var(--olive); }
+.menu .sep { border-top: 1px solid var(--line); margin: .3rem 0; }
+.menu .ki { padding: .45rem .9rem; display: block; }
+.menu .ki b { display: block; font-weight: 650; font-size: 14px; }
+.menu .ki span { display: block; font-size: 12px; color: var(--dim); }
+.bare { background: var(--card); color: var(--ink-soft); font: 14px/1.5 var(--font-ui); padding: 12px; border-radius: 8px; }
+.bare .cut { font: 700 11px/1.3 var(--font-mono); letter-spacing: .07em; text-transform: uppercase; color: var(--dim); margin: 0 0 .5rem; }
+.narrow { width: 320px; }
+.mono-h { font: 700 11px/1.3 var(--font-mono); letter-spacing: .09em; text-transform: uppercase; color: var(--ink-soft); margin: 1.25rem 0 .4rem; }
+
+/* venue window */
+.frow { display: grid; grid-template-columns: minmax(0,1fr) 9rem 4.5rem; gap: .5rem; margin-bottom: .5rem; align-items: center; }
+.frow.s { grid-template-columns: minmax(0,1fr) 9rem 7rem 4.5rem; }
+.frow .tick { display: inline-flex; align-items: center; gap: .45rem; font-size: 14px; color: var(--ink); min-height: 36px; position: relative; }
+.frow .tick .bx { width: 16px; height: 16px; border-radius: 4px; border: 1.5px solid var(--line-strong); display: grid; place-items: center; color: #fff; flex: none; }
+.frow .tick .bx.on { background: var(--olive); border-color: var(--olive); }
+.frow .tick.lock { color: var(--dim); }
+.frow .tick.lock .bx.on { opacity: .55; }
+.frow .xx { width: 32px; height: 32px; border-radius: 6px; display: grid; place-items: center; color: var(--dim); justify-self: center; }
+.frow .inuse { font-size: 12px; color: var(--dim); text-align: center; }
+.rcard { border: 1px solid var(--line); border-radius: 8px; background: var(--card); }
+.rcard .rr { display: grid; grid-template-columns: minmax(0,1fr) 7rem 8rem; min-height: 40px; padding: .5rem .75rem; align-items: center; border-top: 1px solid var(--line); }
+.rcard .rr:first-child { border-top: 0; }
+.rcard .rr .k, .rcard .rr .u { font-size: 12px; color: var(--dim); }
+.rcard .rr .u { text-align: right; font-variant-numeric: tabular-nums; }
+.rcard .rr .nm { color: var(--ink); }
+.rcard .rr .nm small { display: block; font-size: 12px; color: var(--dim); }
+.kv { display: grid; grid-template-columns: 9rem 1fr; gap: .3rem .8rem; font-size: 14px; }
+.kv dt { color: var(--dim); font-size: 12px; font-weight: 650; padding-top: 2px; }
+.kv dd { margin: 0; color: var(--ink); }
+.saved { position: absolute; right: 24px; bottom: 64px; font-size: 12px; background: var(--olive-soft); color: var(--olive); border-radius: 999px; padding: .2rem .7rem; font-weight: 650; }
+.steps { display: flex; gap: .5rem; width: 100%; align-items: center; }
+.steps .stp { border: 1px solid var(--line-strong); border-radius: 8px; min-height: 38px; padding: .35rem .7rem; font-size: 12px; color: var(--ink-soft); display: flex; flex-direction: column; line-height: 1.25; }
+.steps .stp b { font-size: 13px; color: var(--ink); }
+.steps .of { margin: 0 auto; font-size: 12px; color: var(--dim); }
+
+/* rules */
+.ruleList { border-top: 1px solid var(--line); margin-bottom: .5rem; }
+.ruleLine { display: flex; align-items: center; gap: .6rem; min-height: 44px; border-bottom: 1px solid var(--line); font-size: 14px; color: var(--ink); }
+.ruleLine .s { flex: 1; min-width: 0; }
+.ruleLine .s.warn { color: var(--amber-ink); }
+.ruleLine .s.idle { color: var(--dim); }
+.pen { width: 34px; height: 34px; border: 1px solid var(--line-strong); border-radius: 6px; display: grid; place-items: center; color: var(--ink-soft); flex: none; }
+.ruleOpen { border-bottom: 1px solid var(--line); padding: .6rem 0 .3rem; }
+.ruleOpen .rt { display: flex; align-items: center; gap: .6rem; font-weight: 700; color: var(--ink); margin-bottom: .5rem; }
+.ruleOpen .rt span { flex: 1; }
+.ruleFields { display: grid; grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr)); gap: 0 .75rem; }
+.ferr { display: flex; gap: .4rem; align-items: flex-start; font-size: 12px; color: var(--red); margin-top: .2rem; }
+.ferr svg { margin-top: 1px; flex: none; }
+.rowNotes { font-size: 12px; font-weight: 600; color: var(--amber-ink); margin: -.6rem 0 .6rem; line-height: 1.4; }
+.ruleHint { font-size: 12px; color: var(--dim); margin: -.4rem 0 .6rem; max-width: 80ch; }
+.ruleHint.warn { color: var(--amber-ink); display: flex; gap: .4rem; }
+.ruleHint.warn svg { color: var(--amber); margin-top: 1px; flex: none; }
+.recact { display: inline-flex; gap: .35rem; align-items: center; font-size: 14px; color: var(--ink); min-height: 34px; }
+.alwaysHead { font-size: 12px; font-weight: 650; color: var(--ink-soft); margin: .7rem 0 .3rem; }
+.chk { display: flex; gap: .55rem; align-items: flex-start; font-size: 14px; color: var(--ink); min-height: 32px; margin-bottom: .2rem; }
+.chk .bx { width: 16px; height: 16px; border-radius: 4px; background: var(--olive); color: #fff; display: grid; place-items: center; margin-top: 2px; flex: none; }
+.chk small { display: block; font-size: 12px; color: var(--dim); }
+
+/* club page + grid */
+.pg { width: 1200px; background: var(--paper); color: var(--ink-soft); font: 14px/1.5 var(--font-ui); padding: 18px 24px 24px; border-radius: 8px; }
+.pg .ptitle { display: flex; align-items: baseline; gap: .6rem; padding-bottom: .7rem; border-bottom: 1px solid var(--line); margin-bottom: .9rem; }
+.pg .ptitle b { font-size: 20px; color: var(--ink); }
+.pg .ptitle span { font-size: 12px; color: var(--dim); }
+.gcard { background: var(--card); border: 1px solid var(--line); border-radius: 8px; padding: .9rem 1rem 1rem; }
+.gcard .gh2 { font-size: 16px; font-weight: 700; color: var(--ink); }
+.gcard .gsub { font-size: 12px; color: var(--dim); margin-bottom: .7rem; }
+.tbar { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem; margin-bottom: .8rem; }
+.tbar .ctl { min-height: 34px; padding: .35rem .6rem; }
+.tbar .lead { display: inline-flex; align-items: center; gap: .35rem; min-height: 34px; padding: .35rem .7rem; border-radius: 999px; background: var(--olive-soft); color: var(--olive); font-weight: 650; border: 1px solid var(--olive-edge); }
+.tbar .quiet { display: inline-flex; align-items: center; gap: .3rem; min-height: 34px; padding: .35rem .7rem; border-radius: 999px; border: 1px solid var(--line-strong); background: var(--card); color: var(--ink-soft); font-weight: 600; font-size: 13px; }
+.tbar .rng { display: inline-flex; align-items: center; gap: .3rem; font-weight: 650; color: var(--ink); font-size: 14px; }
+.tbar .rng i { font-style: normal; width: 30px; height: 30px; border: 1px solid var(--line-strong); border-radius: 6px; display: grid; place-items: center; color: var(--dim); }
+.tbar .grow { flex: 1; }
+.grid { display: grid; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; background: var(--card); }
+.grid .gh { font: 700 13px/1.3 var(--font-display); text-transform: uppercase; letter-spacing: .04em; color: var(--ink-soft); text-align: center; padding: .55rem .3rem; border-bottom: 1px solid var(--line-strong); background: var(--card); }
+.grid .gh:first-child { text-align: left; padding-left: .7rem; }
+.grid .fc { padding: .5rem .7rem; border-top: 1px solid var(--line); font-weight: 700; color: var(--ink); font-size: 12px; line-height: 1.3; }
+.grid .fc small { display: block; font-weight: 400; font-size: 12px; color: var(--dim); }
+.grid .fc.sub { padding-left: 1.5rem; }
+.grid .cell { padding: .35rem; border-top: 1px solid var(--line); border-left: 1px solid var(--line); display: flex; flex-direction: column; gap: .3rem; min-width: 0; }
+.grid .none { color: var(--dim); text-align: center; margin: auto 0; }
+.chip { min-height: 44px; border-radius: 6px; background: var(--surf2); border: 1px solid var(--line); border-left: 3px solid var(--tc, var(--line-strong)); padding: .25rem .4rem; font-size: 12px; line-height: 1.3; color: var(--ink); min-width: 0; position: relative; }
+.chip b { display: block; font-variant-numeric: tabular-nums; font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.chip span { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.chip.open { background: transparent; border: 1px dashed var(--line-strong); color: var(--dim); }
+.chip.shared { border-left: 0; padding-left: calc(.4rem + 3px); }
+.chip.shared::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; border-radius: 6px 0 0 6px; background: linear-gradient(var(--tc) 0 50%, var(--tc2) 50% 100%); }
+.chip.drop { outline: 2px dashed var(--amber); outline-offset: 1px; }
+.chip2 { min-height: 44px; border-radius: 6px; border: 1px solid var(--line); background: var(--card); font-size: 12px; line-height: 1.3; overflow: hidden; }
+.chip2 .t { font-weight: 700; font-variant-numeric: tabular-nums; padding: .15rem .4rem; background: var(--surf2); border-bottom: 1px solid var(--line); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.chip2 .hv { display: grid; grid-template-columns: 1fr 1fr; }
+.chip2 .hv > div { padding: .15rem .3rem; border-left: 3px solid var(--tc, var(--line-strong)); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--ink); min-width: 0; }
+.chip2 .hv > div + div { box-shadow: inset 1px 0 0 var(--line); }
+.chip2 .hv > div.op { color: var(--dim); border-left-style: dashed; }
+.chip2 .hv em { font-style: normal; font: 700 10px var(--font-mono); color: var(--dim); margin-right: .2rem; }
+.band { display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); border: 1px solid var(--line); border-radius: 8px; background: var(--card); margin-bottom: .8rem; }
+.band > div { padding: .55rem .8rem; border-left: 1px solid var(--line); }
+.band > div:first-child { border-left: 0; }
+.band small { display: block; font: 600 11px/1.3 var(--font-ui); color: var(--dim); }
+.band b { display: block; font-size: 18px; color: var(--ink); font-variant-numeric: tabular-nums; }
+.band .bc { display: block; font-size: 12px; color: var(--dim); }
+.band b.am { color: var(--amber-ink); }
+.band.three { grid-template-columns: repeat(3, minmax(0,1fr)); }
+.lines { display: grid; gap: .2rem; margin-bottom: .7rem; }
+.lines div { font-size: 12px; color: var(--amber-ink); display: flex; gap: .35rem; align-items: flex-start; }
+.lines div svg { color: var(--amber); margin-top: 1px; }
+.lines div a, .lines div .dr { color: var(--olive); font-weight: 650; text-decoration: none; }
+.tipbox { position: absolute; background: var(--tip); color: var(--tip-ink); font-size: 12px; line-height: 1.35; padding: .4rem .55rem; border-radius: 6px; max-width: 18rem; z-index: 4; box-shadow: 0 6px 18px rgba(0,0,0,.18); }
+/* NoticePill as shipped: white, hairline, shadow, 12px/600 tertiary ink, Undo in olive words. Drawn here in the held, wrapping face the error pill already has. */
+.pill { display: inline-flex; align-items: flex-start; gap: .8rem; background: var(--card); color: var(--dim); border: 1px solid var(--line); font: 600 12px/1.45 var(--font-ui); padding: .55rem .7rem .55rem .9rem; border-radius: 999px; box-shadow: 0 2px 6px rgba(70,55,30,.06), 0 10px 28px rgba(70,55,30,.14); max-width: 27rem; }
+.pill.wrap { border-radius: 14px; }
+.pill .u { color: var(--olive); font-weight: 700; white-space: nowrap; }
+.pill .cx { color: var(--dim); }
+.vport { position: relative; width: 760px; height: 150px; background: var(--paper); border: 1px solid var(--line); border-radius: 8px; }
+.vport .pill { position: absolute; right: 16px; bottom: 16px; }
+
+/* drafts step */
+.drafts { display: grid; grid-template-columns: 15rem minmax(0,1fr); gap: 1rem; }
+.dcard { border: 1px solid var(--line); border-radius: 8px; padding: .65rem .75rem; background: var(--card); margin-bottom: .5rem; }
+.dcard.on { border: 2px solid var(--olive); }
+.dcard .hd { display: flex; align-items: baseline; gap: .4rem; margin-bottom: .3rem; }
+.dcard .hd b { color: var(--ink); flex: 1; }
+.dcard .hd .sc { color: var(--olive); font-weight: 700; font-size: 16px; }
+.dcard .hd .sc small { color: var(--dim); font-weight: 400; font-size: 11px; }
+.ml { display: flex; gap: .35rem; font-size: 12px; color: var(--dim); line-height: 1.4; margin-bottom: .2rem; }
+.ml svg { margin-top: 2px; flex: none; }
+.ml.good svg { color: var(--good); }
+.ml.amber { color: var(--amber-ink); }
+.ml.amber svg { color: var(--amber); }
+.ml .sp { width: 12px; flex: none; }
+.tlist { border-top: 1px solid var(--line); }
+.tlist .tr { display: grid; grid-template-columns: 12px minmax(0,1fr) 8rem 3rem; gap: .5rem; align-items: center; min-height: 36px; border-bottom: 1px solid var(--line); font-size: 12px; font-variant-numeric: tabular-nums; }
+.tlist .tr .sw2 { width: 10px; height: 10px; border-radius: 3px; background: var(--tc); }
+.tlist .tr b { color: var(--ink); }
+.tlist .tr .am { color: var(--amber-ink); }
+.tlist .tr .d { color: var(--dim); font-size: 12px; }
+
+/* why window */
+.co { background: var(--card); border: 1px solid var(--line); border-left: 3px solid var(--amber); border-radius: 6px; padding: .6rem .8rem; margin-bottom: .7rem; }
+.co.olive { border-left-color: var(--olive); }
+.co b.h { display: block; color: var(--ink); margin-bottom: .15rem; }
+.co p { font-size: 13px; color: var(--ink-soft); margin: 0 0 .35rem; max-width: none; }
+.co .drs { display: flex; flex-wrap: wrap; gap: .2rem 1rem; }
+.co .drs span { color: var(--olive); font-weight: 650; font-size: 13px; }
+.tk2 { width: 100%; border-collapse: collapse; font-size: 14px; margin-bottom: .9rem; font-variant-numeric: tabular-nums; }
+.tk2 th { text-align: left; font: 700 12px/1.3 var(--font-display); text-transform: uppercase; letter-spacing: .05em; color: var(--ink-soft); padding: .45rem 1rem; border-bottom: 1px solid var(--line-strong); }
+.tk2 td { padding: .42rem 1rem; border-bottom: 1px solid var(--line); color: var(--ink); vertical-align: top; }
+.tk2 tr.two td { padding-top: .7rem; padding-bottom: .7rem; }
+.tk2.gap { font-size: 12px; }
+.tk2.gap th, .tk2.gap td { padding-left: .6rem; padding-right: .6rem; }
+.tframe { border: 1px solid var(--line); border-radius: 8px; overflow: hidden; margin-bottom: .8rem; }
+.tframe .tk2 { margin: 0; }
+.tframe .tk2 tr:last-child td { border-bottom: 0; }
+.fixed { font-size: 14px; color: var(--ink); min-height: 36px; display: flex; align-items: center; }
+.stmt { background: var(--card); border: 1px solid var(--line); border-left: 3px solid var(--olive); border-radius: 6px; padding: .6rem .8rem; font-size: 13px; color: var(--ink-soft); }
+.stmt b { display: block; color: var(--ink); }
+.tk2 td.am { color: var(--amber-ink); font-weight: 650; }
+.tk2 td.d { color: var(--dim); }
+.tk2 .n { text-align: right; }
+.tk2 td small { display: block; font-size: 12px; color: var(--dim); }
+.tk2 tr.grp td { font-weight: 700; }
+/* gapSec, as the why window ships it: display face 12px 700, .05em, secondary ink. */
+.lab { font: 700 12px/1.3 var(--font-display); letter-spacing: .05em; text-transform: uppercase; color: var(--ink-soft); margin: .4rem 0 .3rem; }
+.gapGroup + .gapGroup { border-top: 1px solid var(--line); padding-top: .9rem; margin-top: .2rem; }
+
+/* PDF */
+.pdf { width: 794px; background: #fff; color: #222; font: 12px/1.4 var(--font-ui); border: 1px solid #ddd; box-shadow: 0 3px 12px rgba(0,0,0,.08); }
+.pdf .lh { height: 14px; background: #1F4E3D; }
+.pdf .in { padding: 22px 34px 28px; }
+.pdf h4 { font-size: 18px; margin: 0; color: #111; }
+.pdf .ps { font-size: 11px; color: #555; margin: 2px 0 14px; }
+.pdf .dayh { font-weight: 700; font-size: 12px; margin: 10px 0 4px; color: #111; }
+.pdf table { width: 100%; border-collapse: collapse; font-size: 11px; }
+.pdf th, .pdf td { border: 1px solid #cfcfcf; padding: 4px 6px; text-align: left; }
+.pdf th { background: #f0f0f0; font-weight: 700; }
+.pdf td.o { color: #888; }
+.pdf .fn2 { font-size: 10.5px; color: #444; margin-top: 10px; }
+
+/* permits table */
+.ptbl { width: 100%; border-collapse: collapse; font-size: 14px; background: var(--card); border: 1px solid var(--line); border-radius: 8px; font-variant-numeric: tabular-nums; }
+.ptbl th { text-align: left; font: 700 12px/1.3 var(--font-display); text-transform: uppercase; letter-spacing: .05em; color: var(--ink-soft); padding: .55rem 1rem; border-bottom: 1px solid var(--line-strong); }
+.ptbl td { padding: .7rem 1rem; border-bottom: 1px solid var(--line); vertical-align: top; color: var(--ink); }
+.ptbl td small { display: block; font-size: 12px; color: var(--dim); }
+.ptbl td.n, .ptbl th.n { text-align: right; }
+.ptbl tr.band2 td { font: 700 12px/1.3 var(--font-display); letter-spacing: .05em; text-transform: uppercase; color: var(--ink-soft); background: var(--paper); padding: .45rem 1rem; }
+.ptbl .nm { color: var(--ink); font-weight: 650; }
+.urows { border: 1px solid var(--line); border-radius: 8px; background: var(--card); margin-bottom: .5rem; }
+.urow { display: grid; grid-template-columns: minmax(0,1fr) auto; gap: .2rem 1rem; min-height: 44px; padding: .5rem .75rem; font-size: 14px; align-items: center; }
+.urow .w { color: var(--ink); }
+.urow small { display: block; font-size: 12px; color: var(--dim); }
+.urow .f { text-align: right; font-variant-numeric: tabular-nums; color: var(--ink); }
+
+/* markers + diff mode */
+.rel { position: relative; }
+.hl { outline: 2px dashed var(--doc-new); outline-offset: 3px; border-radius: 6px; }
+.mk { position: absolute; z-index: 5; width: 22px; height: 22px; border-radius: 50%; border: 0; background: var(--doc-accent); color: #fff; font: 700 12px var(--font-ui); cursor: pointer; display: grid; place-items: center; box-shadow: 0 0 0 3px rgba(31,95,139,.25); right: -11px; top: -11px; }
+.show-diff .same { opacity: .22; filter: grayscale(1); }
+.expl { display: none; margin-top: 10px; background: var(--doc-card); border: 1px solid var(--doc-accent); border-radius: 10px; padding: 10px 14px; font-size: .88rem; max-width: 90ch; }
+.expl.on { display: block; }
+.legend { display: grid; gap: 8px; margin-top: 10px; }
+.legend .li { display: grid; grid-template-columns: 26px minmax(0,1fr); gap: 8px; font-size: .88rem; align-items: start; padding: 2px; }
+.legend .li .mk2 { width: 22px; height: 22px; border-radius: 50%; border: 0; background: var(--doc-accent); color: #fff; font: 700 12px var(--font-ui); display: grid; place-items: center; cursor: pointer; }
+.legend .li p { margin: 0; max-width: 88ch; }
+.legend .li.flash { background: var(--doc-chg-soft); border-radius: 6px; }
+@media (max-width: 560px) { .tab { padding: .55rem .6rem; } }
+/* A 44 px reach for the small dots and tags on a phone or tablet. */
+@media (max-width: 768px) { .tag { position: relative; } .mk::after, .mk2::after, .tag::after { content: ""; position: absolute; inset: -11px; } }
+@media (prefers-reduced-motion: no-preference) { .pane.on { animation: fade .15s ease-out; } @keyframes fade { from { opacity: .6; } to { opacity: 1; } } }
+</style>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <symbol id="i-chev" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-right" viewBox="0 0 24 24"><path d="m9 6 6 6-6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-x" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></symbol>
+    <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2"/><path d="M12 7v5l3 2" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></symbol>
+    <symbol id="i-cal" viewBox="0 0 24 24"><rect x="3.5" y="5" width="17" height="15" rx="2" fill="none" stroke="currentColor" stroke-width="2"/><path d="M3.5 10h17M8 3v4M16 3v4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></symbol>
+    <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7" fill="none" stroke="currentColor" stroke-width="2"/><path d="m20 20-3.5-3.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></symbol>
+    <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></symbol>
+    <symbol id="i-check" viewBox="0 0 24 24"><path d="m5 12 5 5 9-10" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-pen" viewBox="0 0 24 24"><path d="M4 20h4L19 9l-4-4L4 16v4Z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></symbol>
+    <symbol id="i-trash" viewBox="0 0 24 24"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></symbol>
+    <symbol id="i-warn" viewBox="0 0 24 24"><path d="M12 3 2 20h20L12 3Z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M12 10v4M12 17v.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></symbol>
+    <symbol id="i-ok" viewBox="0 0 24 24"><path d="m5 12 5 5 9-10" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-dots" viewBox="0 0 24 24"><circle cx="5" cy="12" r="1.6" fill="currentColor"/><circle cx="12" cy="12" r="1.6" fill="currentColor"/><circle cx="19" cy="12" r="1.6" fill="currentColor"/></symbol>
+  </defs>
+</svg>
+
+<div class="wrap">
+  <div class="top">
+    <h1>A field in two sides, and teams at the same time</h1>
+    <div class="sub">Round 1 drawings for review. Nothing is built. Each screen is drawn at its true width from the styles that ship today. The example is the winter dome from Stage 1: one permit for <b>Fields 1–6, Sundays 9:00 a.m.–1:30 p.m., Jan 3 – Mar 7, 2027</b> (10 Sundays, three 90-minute starts), <b>$18,000.00</b>, so a whole field is <b>$80.00 an hour</b> and a 90-minute slot on it <b>$120.00</b>. Fields 5 and 6 are at "Half cost", as in the demo. <b>The permit, the dome and the teams are made up for the drawing.</b> The words "side", "side A" and "side B" are working words for the marketing pass. These are desk screens, so no phone is drawn.</div>
+    <div class="tabs" role="tablist" id="tabs">
+      <button class="tab" role="tab" data-t="idea" aria-selected="true">1 · The idea</button>
+      <button class="tab" role="tab" data-t="venue" aria-selected="false">2 · Venue list</button>
+      <button class="tab" role="tab" data-t="rows" aria-selected="false">3 · New schedule</button>
+      <button class="tab" role="tab" data-t="grid" aria-selected="false">4 · The grid</button>
+      <button class="tab" role="tab" data-t="bill" aria-selected="false">5 · Bill and PDF</button>
+      <button class="tab" role="tab" data-t="used" aria-selected="false">6 · Permit use</button>
+      <button class="tab" role="tab" data-t="rule" aria-selected="false">7 · Same-time rule</button>
+      <button class="tab" role="tab" data-t="report" aria-selected="false">8 · The report</button>
+      <button class="tab" role="tab" data-t="asks" aria-selected="false">9 · Asks</button>
+    </div>
+  </div>
+
+  <!-- ═════════ 1 · THE IDEA ═════════ -->
+  <section class="pane on" id="p-idea">
+    <p class="lede"><b>A field can be split into two sides, A and B.</b> You say so once, in the venue list. After that, a schedule's row can use the whole field, both sides (one team on each), or one side while the other side goes elsewhere. Everything outside the club's schedules still sees one Field 1: permits, house league, a coach's own event, tryout days and tournaments.</p>
+    <div class="stage">
+      <div class="card">
+        <h3>The three cases, and which this drawing adds</h3>
+        <div class="tblwrap"><table class="own">
+          <thead><tr><th>Case</th><th>What the club has</th><th>Today</th><th>After this</th></tr></thead>
+          <tbody>
+            <tr><td><b>Both sides</b></td><td>The whole of Field 1, one team on each side</td><td>Only by "Sharing a facility": the two teams share one slot, with nothing that says who is on which side</td><td>The row uses Field 1 in two sides. Each side is its own slot, with its own team (tab 3)</td></tr>
+            <tr><td><b>One side here</b></td><td>Side A for this schedule, side B for another schedule or for time the club keeps</td><td>Not possible</td><td>The row ticks side A only. The other schedule sees side B is free, and side A is not (tab 3)</td></tr>
+            <tr><td><b>Half cost</b></td><td>A permit for only half a field</td><td>"Half cost" on the permit</td><td>Unchanged. It is still one facility at half price, labelled "half" on the bill and the PDF</td></tr>
+          </tbody>
+        </table></div>
+      </div>
+    </div>
+    <div class="stage">
+      <div class="card">
+        <h3>Three ways to put more than one team on a field</h3>
+        <div class="tblwrap"><table class="own">
+          <thead><tr><th>Way</th><th>Where it is set</th><th>What it says</th><th>Counts toward a share, and bills</th></tr></thead>
+          <tbody>
+            <tr><td><b>Sharing a facility</b></td><td>A rule in a rep schedule</td><td>These teams may practise together, 2 to 4 on one facility, with no line between them</td><td>Half a facility each (for two). Unchanged</td></tr>
+            <tr><td><b>Teams at once</b></td><td>House league's Practice time</td><td>How many house-league teams practise on one facility at a time</td><td>House league's own. Unchanged</td></tr>
+            <tr class="hi"><td><b>Sides</b> (new)</td><td>The venue list, then a schedule's row</td><td>The field has a divider. One team on each side, each in its own slot</td><td>Half a facility each, proposed so it matches sharing (Ask 2)</td></tr>
+          </tbody>
+        </table></div>
+      </div>
+      <p class="note"><b>Why the same-time rule is drawn with this.</b> The rule looks for one start where every team in the group is free, with enough free places in one building. A field in two sides offers two places at that start. So the rule has to know about sides before it is built, and one question follows: may a group land on the two sides of one field? That is Ask 7, because ruling R3 was made before sides existed.</p>
+    </div>
+    <div class="stage">
+      <div class="pair2">
+        <div class="card">
+          <h3>What stays as it is</h3>
+          <ul>
+            <li><b>Permits.</b> A permit holds whole fields. Its time, price rows, "Half cost" and Held hours do not change.</li>
+            <li><b>Every other picker.</b> House league, a coach's own event, tryout days and tournaments still offer Field 1 as one facility (Ask 5).</li>
+            <li><b>The venue table.</b> The Venue library page still lists "Field 1 · Field 2 · …".</li>
+            <li><b>A side is never shared</b>, as a "Half cost" field is never shared today.</li>
+          </ul>
+        </div>
+        <div class="card">
+          <h3>What a missed reader does</h3>
+          <p style="font-size:.88rem;margin:0">With the recommended storage (Ask 1), anything in the product not yet taught about sides reads a practice on side A as a practice on the whole of Field 1. It may call a clash that isn't one. It never misses one. The other storage turns each side into its own facility, and anything not taught then double-books in silence.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═════════ 2 · VENUE LIST ═════════ -->
+  <section class="pane" id="p-venue">
+    <p class="lede"><b>The venue window, editing, before and after.</b> One new choice on each facility's row says whether it splits into two sides. The window is drawn at its true width (640 px). The Venue library table behind it does not change.</p>
+    <div class="viewrow"><b>View</b>
+      <div class="sw" role="group" aria-label="View"><button type="button" data-v="all" aria-pressed="true">Everything</button><button type="button" data-v="diff" aria-pressed="false">Show only what differs</button></div>
+    </div>
+    <div class="pair2 w700">
+      <div class="stage">
+        <div class="cap"><h3>Today</h3><button type="button" class="tag same" data-say="As it ships today: name, kind and remove on each facility row. Nothing in this frame is proposed.">Unchanged</button><span class="sw-note">Venue window, editing · club admin</span></div>
+        <div class="scroller"><div class="scrim"><div class="win md">
+          <div class="dh rec same"><div class="tt"><span class="eb">Venue library</span><span class="tl">Milton Sports Dome</span></div><span class="x"><svg width="16" height="16"><use href="#i-check"/></svg></span><span class="x"><svg width="16" height="16"><use href="#i-x"/></svg></span></div>
+          <div class="db" style="display:block">
+            <div class="fld same"><span class="lb">Name<i>*</i></span><div class="ctl"><span class="v">Milton Sports Dome</span></div></div>
+            <div class="fld same"><span class="lb">Address</span><div class="ctl"><span class="v">1200 Sports Way, Milton</span></div><span class="hnt">Used for the map link on every schedule and family calendar.</span></div>
+            <div class="fld same"><span class="lb">Bookings contact</span><div class="ctl"><span class="v">bookings@miltonsportsdome.example</span></div><span class="hnt">Who to email about bookings at this venue.</span></div>
+            <div class="fld same"><span class="lb">Notes</span><div class="ctl" style="min-height:5rem;align-items:flex-start"><span class="v">Enter by the east doors. Cleats only, no metal spikes.</span></div></div>
+            <p class="mono-h same">Facilities</p>
+            <div class="rel hl" style="outline-offset:2px">
+            <div class="frow"><div class="ctl"><span class="v">Field 1</span></div><div class="ctl"><span class="v">Field</span><svg class="ic" width="15" height="15"><use href="#i-chev"/></svg></div><span class="inuse">In use</span></div>
+            <div class="frow"><div class="ctl"><span class="v">Field 2</span></div><div class="ctl"><span class="v">Field</span><svg class="ic" width="15" height="15"><use href="#i-chev"/></svg></div><span class="inuse">In use</span></div>
+            <div class="frow"><div class="ctl"><span class="v">Field 3</span></div><div class="ctl"><span class="v">Field</span><svg class="ic" width="15" height="15"><use href="#i-chev"/></svg></div><span class="inuse">In use</span></div>
+            <div class="frow"><div class="ctl"><span class="v">Field 4</span></div><div class="ctl"><span class="v">Field</span><svg class="ic" width="15" height="15"><use href="#i-chev"/></svg></div><span class="inuse">In use</span></div>
+            <div class="frow"><div class="ctl"><span class="v">Field 5</span></div><div class="ctl"><span class="v">Field</span><svg class="ic" width="15" height="15"><use href="#i-chev"/></svg></div><span class="inuse">In use</span></div>
+            <div class="frow"><div class="ctl"><span class="v">Field 6</span></div><div class="ctl"><span class="v">Field</span><svg class="ic" width="15" height="15"><use href="#i-chev"/></svg></div><span class="xx"><svg width="15" height="15"><use href="#i-x"/></svg></span></div>
+            </div>
+            <span class="btn same" style="margin-top:.25rem"><svg width="14" height="14"><use href="#i-plus"/></svg>Add a facility</span>
+          </div>
+          <div class="df same"><div class="steps"><span class="stp">‹ Previous<b>Lions Park</b></span><span class="of">3 of 7</span><span class="stp" style="text-align:right">Next ›<b>Rotary Fields</b></span></div></div>
+        </div></div></div>
+        <div class="expl"></div>
+      </div>
+      <div class="stage">
+        <div class="cap"><h3>Proposed</h3><button type="button" class="tag new" data-say="One new tick per facility row, and one line when sides are in use. Numbered on the drawing.">New</button><span class="sw-note">Fields 1 and 2 split in two</span></div>
+        <div class="scroller"><div class="scrim"><div class="win md">
+          <div class="dh rec same"><div class="tt"><span class="eb">Venue library</span><span class="tl">Milton Sports Dome</span></div><span class="x"><svg width="16" height="16"><use href="#i-check"/></svg></span><span class="x"><svg width="16" height="16"><use href="#i-x"/></svg></span></div>
+          <div class="db" style="display:block">
+            <div class="fld same"><span class="lb">Name<i>*</i></span><div class="ctl"><span class="v">Milton Sports Dome</span></div></div>
+            <div class="fld same"><span class="lb">Address</span><div class="ctl"><span class="v">1200 Sports Way, Milton</span></div><span class="hnt">Used for the map link on every schedule and family calendar.</span></div>
+            <div class="fld same"><span class="lb">Bookings contact</span><div class="ctl"><span class="v">bookings@miltonsportsdome.example</span></div><span class="hnt">Who to email about bookings at this venue.</span></div>
+            <div class="fld same"><span class="lb">Notes</span><div class="ctl" style="min-height:5rem;align-items:flex-start"><span class="v">Enter by the east doors. Cleats only, no metal spikes.</span></div></div>
+            <p class="mono-h same">Facilities</p>
+            <p class="hnt rel hl" style="margin:-.1rem 0 .5rem">Field 1 has practices on its sides, so it keeps them.<button class="mk" data-n="2" aria-label="Change 2">2</button></p>
+            <div class="frow s"><div class="ctl"><span class="v">Field 1</span></div><div class="ctl"><span class="v">Field</span><svg class="ic" width="15" height="15"><use href="#i-chev"/></svg></div><span class="tick lock"><span class="bx on"><svg width="11" height="11"><use href="#i-check"/></svg></span>Two sides</span><span class="inuse">In use</span></div>
+            <div class="frow s"><div class="ctl"><span class="v">Field 2</span></div><div class="ctl"><span class="v">Field</span><svg class="ic" width="15" height="15"><use href="#i-chev"/></svg></div><span class="tick rel hl"><span class="bx on"><svg width="11" height="11"><use href="#i-check"/></svg></span>Two sides<button class="mk" data-n="1" aria-label="Change 1">1</button></span><span class="inuse">In use</span></div>
+            <div class="frow s"><div class="ctl"><span class="v">Field 3</span></div><div class="ctl"><span class="v">Field</span><svg class="ic" width="15" height="15"><use href="#i-chev"/></svg></div><span class="tick"><span class="bx"></span>Two sides</span><span class="inuse">In use</span></div>
+            <div class="frow s"><div class="ctl"><span class="v">Field 4</span></div><div class="ctl"><span class="v">Field</span><svg class="ic" width="15" height="15"><use href="#i-chev"/></svg></div><span class="tick"><span class="bx"></span>Two sides</span><span class="inuse">In use</span></div>
+            <div class="frow s"><div class="ctl"><span class="v">Field 5</span></div><div class="ctl"><span class="v">Field</span><svg class="ic" width="15" height="15"><use href="#i-chev"/></svg></div><span class="tick"><span class="bx"></span>Two sides</span><span class="inuse">In use</span></div>
+            <div class="frow s"><div class="ctl"><span class="v">Field 6</span></div><div class="ctl"><span class="v">Field</span><svg class="ic" width="15" height="15"><use href="#i-chev"/></svg></div><span class="tick"><span class="bx"></span>Two sides</span><span class="xx"><svg width="15" height="15"><use href="#i-x"/></svg></span></div>
+            <span class="btn same" style="margin-top:.25rem"><svg width="14" height="14"><use href="#i-plus"/></svg>Add a facility</span>
+          </div>
+          <div class="df same"><div class="steps"><span class="stp">‹ Previous<b>Lions Park</b></span><span class="of">3 of 7</span><span class="stp" style="text-align:right">Next ›<b>Rotary Fields</b></span></div></div>
+        </div></div></div>
+        <div class="expl"></div>
+        <div class="legend">
+          <div class="li" id="v-1"><button class="mk2" data-n="1" type="button">1</button><p><b>One tick on each facility's row: "Two sides".</b> A yes-or-no choice is a tick in this product, not a second select (two boxes reading "Field" and "Whole only" would look like two kinds). It saves as you go, like the rest of the window. The name box narrows from about 360 px to about 240 px, still wide enough for "Diamond 1 North" and the like. It is offered on every kind of facility, since a rink or a gym can be split too. Ticking it changes nothing already booked: every booking on Field 1 stays on the whole field. <b>On a phone</b> the window is a full-screen sheet and the tick moves to a line under the name.</p></div>
+          <div class="li" id="v-2"><button class="mk2" data-n="2" type="button">2</button><p><b>Sides in use can't be taken away.</b> While anything is booked on side A or side B, that field's tick is locked, and one line under the Facilities heading says which fields and why (said once, however many are locked). It follows the window's own rule for a booked facility ("…so it can be renamed but not removed"). Working words.</p></div>
+        </div>
+      </div>
+    </div>
+    <div class="stage">
+      <div class="cap"><h3>Reading the venue, after</h3><button type="button" class="tag chg" data-say="The read card ships today with name, kind and upcoming. A field with sides says so on a quiet second line under its name.">Restyled</button><span class="sw-note">The Facilities card in the read view, at its width in the window</span></div>
+      <div class="scroller"><div class="bare" style="width:592px">
+        <div class="rcard">
+          <div class="rr"><span class="nm">Field 1<small>Two sides, A and B</small></span><span class="k">Field</span><span class="u">36 upcoming</span></div>
+          <div class="rr"><span class="nm">Field 2<small>Two sides, A and B</small></span><span class="k">Field</span><span class="u">30 upcoming</span></div>
+          <div class="rr"><span class="nm">Field 3</span><span class="k">Field</span><span class="u">30 upcoming</span></div>
+          <div class="rr"><span class="nm">Field 4</span><span class="k">Field</span><span class="u">30 upcoming</span></div>
+          <div class="rr"><span class="nm">Field 5</span><span class="k">Field</span><span class="u">20 upcoming</span></div>
+          <div class="rr"><span class="nm">Field 6</span><span class="k">Field</span><span class="u">Nothing upcoming</span></div>
+        </div>
+      </div></div>
+      <div class="expl"></div>
+      <p class="note"><b>Upcoming counts a field and its sides together</b>, so "36 upcoming" on Field 1 is every practice on the whole field, side A or side B. The Venue library table keeps its "Field 1 · Field 2 · …" column as it is: a field with sides is still one facility there.</p>
+    </div>
+  </section>
+
+  <!-- ═════════ 3 · NEW SCHEDULE ═════════ -->
+  <section class="pane" id="p-rows">
+    <p class="lede"><b>The whole window, before and after.</b> A second schedule for the 9U teams on the dome: Field 1 in two sides, and side A of Field 2, because a final schedule for the 11U teams already holds side B. Only the permit's card changes. The other sections are folded.</p>
+    <div class="viewrow"><b>View</b>
+      <div class="sw" role="group" aria-label="View"><button type="button" data-v="all" aria-pressed="true">Everything</button><button type="button" data-v="diff" aria-pressed="false">Show only what differs</button></div>
+    </div>
+    <div class="stage">
+      <div class="cap"><h3>Today</h3><button type="button" class="tag same" data-say="As Stage 1 shipped it (2026-11-25): the Facilities list on the row, the not-on-this-schedule line, the card's own Add hours. Nothing in this frame is proposed.">Unchanged</button><span class="sw-note">New schedule · desktop, club admin · as Stage 1 built it</span></div>
+      <div class="scroller"><div class="scrim"><div class="win">
+        <div class="dh same"><div class="tt"><span class="tl">New schedule</span><span class="st2">Step 1 of 2 · settings</span></div><span class="x"><svg width="16" height="16"><use href="#i-x"/></svg></span></div>
+        <div class="prog same"><span class="on"></span><span></span></div>
+        <div class="db">
+          <div class="sect">
+            <p class="sh same">The time</p>
+            <div class="pr2 same">
+              <div class="fld"><span class="lb">Name<i>*</i></span><div class="ctl"><span class="v">Winter dome, 9U</span></div></div>
+              <div><div class="fld" style="margin-bottom:.3rem"><span class="lb">Permits</span><div class="ctl pk"><span class="v">Dome, winter 2027</span><svg class="ic" width="15" height="15"><use href="#i-chev"/></svg></div></div><span class="hnt">Each permit brings its own time and dates off. Untick one to take its time off again.</span><br><span class="door find"><svg width="15" height="15"><use href="#i-search"/></svg>Find the time across every permit ›</span></div>
+            </div>
+            <div class="pcards"><div class="pcard grow">
+              <p class="ph same"><strong>Dome, winter 2027</strong><span>Milton Sports Dome Inc. · Jan 3 – Mar 7, 2027</span></p>
+              <p class="left same">Fields 3–6 are not on this schedule.</p>
+              <div class="prow">
+                <div class="fld"><span class="lbl"><span class="lb">Facilities</span><span class="ven">Milton Sports Dome</span></span><div class="ctl pk"><span class="v">Field 1 and Field 2</span><svg class="ic" width="15" height="15"><use href="#i-chev"/></svg></div></div>
+                <div class="fld same"><span class="lb">Days<i>*</i></span><div class="ctl pk"><span class="v">Sun</span><svg class="ic" width="15" height="15"><use href="#i-chev"/></svg></div></div>
+                <div class="fld same"><span class="lb">From<i>*</i></span><div class="ctl"><span class="v">9:00 a.m.</span><svg class="ic" width="15" height="15"><use href="#i-clock"/></svg></div></div>
+                <div class="fld same"><span class="lb">Until<i>*</i></span><div class="ctl"><span class="v">1:30 p.m.</span><svg class="ic" width="15" height="15"><use href="#i-clock"/></svg></div></div>
+                <span class="rm off same"><svg width="15" height="15"><use href="#i-x"/></svg></span>
+              </div>
+              <span class="door rowdoor same"><svg width="14" height="14"><use href="#i-plus"/></svg>Add hours</span>
+            </div></div>
+            <span class="door same"><svg width="14" height="14"><use href="#i-plus"/></svg>Add hours with no permit</span>
+            <div class="pr2 same" style="margin-top:.4rem">
+              <div class="fld"><span class="lb">From<i>*</i></span><div class="ctl"><span class="v">Jan 3, 2027</span><svg class="ic" width="15" height="15"><use href="#i-cal"/></svg></div></div>
+              <div class="fld"><span class="lb">To<i>*</i></span><div class="ctl"><span class="v">Mar 7, 2027</span><svg class="ic" width="15" height="15"><use href="#i-cal"/></svg></div></div>
+            </div>
+          </div>
+          <div class="cutm same">Who, and how much · cut from the drawing, unchanged</div>
+          <div class="sect fold same"><p class="sh">Rules</p><span class="cnt">1 on</span><svg width="16" height="16" style="color:var(--dim)"><use href="#i-chev"/></svg></div>
+        </div>
+        <div class="df"><span class="fn">60 slots for 4 teams.</span><span class="btn same">Cancel</span><span class="btn pri same">Generate drafts</span></div>
+      </div></div></div>
+      <div class="expl"></div>
+      <p class="note">Today nothing on this form knows that the 11U schedule holds part of Field 2, so the builder would put a 9U team on Field 2 at the same time as an 11U team. The only floor in the database is one schedule's own.</p>
+    </div>
+
+    <div class="stage">
+      <div class="cap"><h3>Proposed</h3><button type="button" class="tag new" data-say="Three changes on the card, numbered: sides in the Facilities list, the line naming time another schedule holds, and the count that follows.">New</button><span class="sw-note">Field 1 in two sides, Field 2 side A only</span></div>
+      <div class="scroller"><div class="scrim"><div class="win">
+        <div class="dh same"><div class="tt"><span class="tl">New schedule</span><span class="st2">Step 1 of 2 · settings</span></div><span class="x"><svg width="16" height="16"><use href="#i-x"/></svg></span></div>
+        <div class="prog same"><span class="on"></span><span></span></div>
+        <div class="db">
+          <div class="sect">
+            <p class="sh same">The time</p>
+            <div class="pr2 same">
+              <div class="fld"><span class="lb">Name<i>*</i></span><div class="ctl"><span class="v">Winter dome, 9U</span></div></div>
+              <div><div class="fld" style="margin-bottom:.3rem"><span class="lb">Permits</span><div class="ctl pk"><span class="v">Dome, winter 2027</span><svg class="ic" width="15" height="15"><use href="#i-chev"/></svg></div></div><span class="hnt">Each permit brings its own time and dates off. Untick one to take its time off again.</span><br><span class="door find"><svg width="15" height="15"><use href="#i-search"/></svg>Find the time across every permit ›</span></div>
+            </div>
+            <div class="pcards"><div class="pcard grow">
+              <p class="ph same"><strong>Dome, winter 2027</strong><span>Milton Sports Dome Inc. · Jan 3 – Mar 7, 2027</span></p>
+              <p class="left same">Fields 3–6 are not on this schedule.</p>
+              <p class="left rel hl">Winter dome, 11U holds Field 2, side B on Sun, 9:00 a.m.–1:30 p.m. That time is left out.<button class="mk" data-n="2" aria-label="Change 2">2</button></p>
+              <div class="prow">
+                <div class="fld rel hl"><span class="lbl"><span class="lb">Facilities</span><span class="ven">Milton Sports Dome</span></span><div class="ctl pk"><span class="v">Field 1 in two sides, Field 2 side A</span><svg class="ic" width="15" height="15"><use href="#i-chev"/></svg></div><button class="mk" data-n="1" aria-label="Change 1">1</button></div>
+                <div class="fld same"><span class="lb">Days<i>*</i></span><div class="ctl pk"><span class="v">Sun</span><svg class="ic" width="15" height="15"><use href="#i-chev"/></svg></div></div>
+                <div class="fld same"><span class="lb">From<i>*</i></span><div class="ctl"><span class="v">9:00 a.m.</span><svg class="ic" width="15" height="15"><use href="#i-clock"/></svg></div></div>
+                <div class="fld same"><span class="lb">Until<i>*</i></span><div class="ctl"><span class="v">1:30 p.m.</span><svg class="ic" width="15" height="15"><use href="#i-clock"/></svg></div></div>
+                <span class="rm off same"><svg width="15" height="15"><use href="#i-x"/></svg></span>
+              </div>
+              <span class="door rowdoor same"><svg width="14" height="14"><use href="#i-plus"/></svg>Add hours</span>
+            </div></div>
+            <span class="door same"><svg width="14" height="14"><use href="#i-plus"/></svg>Add hours with no permit</span>
+            <div class="pr2 same" style="margin-top:.4rem">
+              <div class="fld"><span class="lb">From<i>*</i></span><div class="ctl"><span class="v">Jan 3, 2027</span><svg class="ic" width="15" height="15"><use href="#i-cal"/></svg></div></div>
+              <div class="fld"><span class="lb">To<i>*</i></span><div class="ctl"><span class="v">Mar 7, 2027</span><svg class="ic" width="15" height="15"><use href="#i-cal"/></svg></div></div>
+            </div>
+          </div>
+          <div class="cutm same">Who, and how much · cut from the drawing, unchanged</div>
+          <div class="sect fold same"><p class="sh">Rules</p><span class="cnt">1 on</span><svg width="16" height="16" style="color:var(--dim)"><use href="#i-chev"/></svg></div>
+        </div>
+        <div class="df"><span class="fn rel hl">90 slots for 4 teams.<button class="mk" data-n="3" aria-label="Change 3">3</button></span><span class="btn same">Cancel</span><span class="btn pri same">Generate drafts</span></div>
+      </div></div></div>
+      <div class="expl"></div>
+      <div class="legend">
+        <div class="li" id="r-1"><button class="mk2" data-n="1" type="button">1</button><p><b>Sides are in the Facilities list Stage 1 built.</b> A field with sides offers its whole field and each side as plain options, and you tick what this row uses (open below). The box says it in words: "Field 1 in two sides" means a team on each side; "Field 2 side A" means only that side. Ticking a field itself still means the whole field.</p></div>
+        <div class="li" id="r-2"><button class="mk2" data-n="2" type="button">2</button><p><b>The builder sees other schedules' time.</b> This is the item Stage 2 owes. A final schedule's slots are taken: one quiet line names them, in the place the card already uses for Add time's "already uses" line, and the builder leaves that time out. Another schedule's draft is not taken yet, so it is named in amber and left in (below). The line speaks about whole fields or sides, never single Sundays, unless the other schedule holds only some of them.</p></div>
+        <div class="li" id="r-3"><button class="mk2" data-n="3" type="button">3</button><p><b>The count follows.</b> 3 places (Field 1's two sides, and Field 2 side A) × 3 starts × 10 Sundays = 90 slots. With Field 1 and Field 2 whole it was 60.</p></div>
+      </div>
+    </div>
+
+    <div class="stage">
+      <div class="cap"><h3>The list, open</h3><button type="button" class="tag chg" data-say="The tick list Stage 1 shipped on the row, kept flat as it ships: a field with sides offers three plain options, and a side another final schedule holds names its holder on the option's second line.">Restyled</button><span class="sw-note">At its width in the window (about 290 px)</span></div>
+      <div class="scroller"><div style="display:flex;gap:28px;width:680px">
+        <div class="narrow" style="width:290px">
+          <div class="fld"><span class="lbl"><span class="lb">Facilities</span><span class="ven">Milton Sports Dome</span></span><div class="ctl pk open"><span class="v">Field 1 in two sides, Field 2 side A</span><svg class="ic" width="15" height="15"><use href="#i-chev"/></svg></div></div>
+          <div class="menu">
+            <div class="mi"><span class="tk"></span><span>Every facility on this permit</span></div>
+            <div class="sep"></div>
+            <div class="mi rel"><span class="tk"></span><span>Field 1 (whole)</span><button class="mk" style="right:6px;top:7px" data-n="1" aria-label="Note 1">1</button></div>
+            <div class="mi"><span class="tk on"><svg width="11" height="11"><use href="#i-check"/></svg></span><span>Field 1, side A</span></div>
+            <div class="mi"><span class="tk on"><svg width="11" height="11"><use href="#i-check"/></svg></span><span>Field 1, side B</span></div>
+            <div class="mi"><span class="tk"></span><span>Field 2 (whole)</span></div>
+            <div class="mi"><span class="tk on"><svg width="11" height="11"><use href="#i-check"/></svg></span><span>Field 2, side A</span></div>
+            <div class="mi rel" style="align-items:flex-start"><span class="tk" style="margin-top:3px"></span><span>Field 2, side B<small style="display:block;margin:0;font-size:12px;color:var(--dim)">Held by Winter dome, 11U</small></span><button class="mk" style="right:6px;top:7px" data-n="2" aria-label="Note 2">2</button></div>
+            <div class="mi"><span class="tk"></span><span>Field 3</span></div><div class="mi"><span class="tk"></span><span>Field 4</span></div><div class="mi"><span class="tk"></span><span>Field 5</span></div><div class="mi"><span class="tk"></span><span>Field 6</span></div>
+          </div>
+        </div>
+        <div style="width:330px;font-size:.86rem;color:var(--doc-dim)">
+          <p style="margin-top:2rem"><b style="color:var(--doc-ink)">How the ticks read</b></p>
+          <ul style="padding-left:1.1rem;margin:0">
+            <li>Tick <b>Field 1 (whole)</b>: the whole field, one team at a time (as today).</li>
+            <li>Tick <b>side A and side B</b>: Field 1 in two sides, a team on each.</li>
+            <li>Tick <b>side A only</b>: one side here; side B is left for something else.</li>
+            <li>Ticking a side unticks its whole field, and ticking the whole field unticks its sides, so a field and its side are never both ticked. This is one new rule for the shared tick list, flagged for the build.</li>
+          </ul>
+        </div>
+      </div></div>
+      <div class="expl"></div>
+      <div class="legend">
+        <div class="li" id="o-1"><button class="mk2" data-n="1" type="button">1</button><p><b>The list stays flat, as it ships.</b> A field with sides offers three plain options: "Field 1 (whole)", "Field 1, side A", "Field 1, side B". No indent and no half-ticked parent box, because a parent box could not tell "both sides" from "one side". A field without sides keeps its plain name. The box's words ("Field 1 in two sides, Field 2 side A") are new wording logic in the shared field-list words, flagged for the build.</p></div>
+        <div class="li" id="o-2"><button class="mk2" data-n="2" type="button">2</button><p><b>Time a final schedule holds names its holder on the option's second line</b>, the line the list already has for a detail, in normal ink. It is not greyed, because in this product grey means "can't be picked", and this can: the builder leaves out only the Sundays and hours that schedule holds, and the card's line says what was left out. A draft's time carries no second line (a draft holds nothing yet).</p></div>
+      </div>
+    </div>
+
+    <div class="stage">
+      <div class="cap"><h3>The three kinds of row, and a draft's time</h3><button type="button" class="tag new" data-say="One row of the permit's card for each case. The amber line is the draft case: named, not left out.">New</button><span class="sw-note">The permit's card only, at its width in the window</span></div>
+      <div class="scroller"><div class="bare" style="width:968px">
+        <p class="cut">A whole field (as today)</p>
+        <div class="pcard" style="margin-bottom:12px"><div class="prow" style="padding-top:.6rem"><div class="fld"><span class="lbl"><span class="lb">Facilities</span><span class="ven">Milton Sports Dome</span></span><div class="ctl pk"><span class="v">Field 3</span><svg class="ic" width="15" height="15"><use href="#i-chev"/></svg></div></div><div class="fld"><span class="lb">Days<i>*</i></span><div class="ctl pk"><span class="v">Sun</span><svg class="ic" width="15" height="15"><use href="#i-chev"/></svg></div></div><div class="fld"><span class="lb">From<i>*</i></span><div class="ctl"><span class="v">9:00 a.m.</span><svg class="ic" width="15" height="15"><use href="#i-clock"/></svg></div></div><div class="fld"><span class="lb">Until<i>*</i></span><div class="ctl"><span class="v">1:30 p.m.</span><svg class="ic" width="15" height="15"><use href="#i-clock"/></svg></div></div><span class="rm"><svg width="15" height="15"><use href="#i-x"/></svg></span></div></div>
+        <p class="cut">Both sides: a team on each (P2)</p>
+        <div class="pcard" style="margin-bottom:12px"><div class="prow" style="padding-top:.6rem"><div class="fld"><span class="lbl"><span class="lb">Facilities</span><span class="ven">Milton Sports Dome</span></span><div class="ctl pk"><span class="v">Field 1 in two sides</span><svg class="ic" width="15" height="15"><use href="#i-chev"/></svg></div></div><div class="fld"><span class="lb">Days<i>*</i></span><div class="ctl pk"><span class="v">Sun</span><svg class="ic" width="15" height="15"><use href="#i-chev"/></svg></div></div><div class="fld"><span class="lb">From<i>*</i></span><div class="ctl"><span class="v">9:00 a.m.</span><svg class="ic" width="15" height="15"><use href="#i-clock"/></svg></div></div><div class="fld"><span class="lb">Until<i>*</i></span><div class="ctl"><span class="v">1:30 p.m.</span><svg class="ic" width="15" height="15"><use href="#i-clock"/></svg></div></div><span class="rm"><svg width="15" height="15"><use href="#i-x"/></svg></span></div></div>
+        <p class="cut">One side, the other elsewhere (P3), with another schedule's draft on it</p>
+        <div class="pcard"><div class="prow" style="padding-top:.6rem"><div class="fld"><span class="lbl"><span class="lb">Facilities</span><span class="ven">Milton Sports Dome</span></span><div class="ctl pk"><span class="v">Field 2 side A</span><svg class="ic" width="15" height="15"><use href="#i-chev"/></svg></div></div><div class="fld"><span class="lb">Days<i>*</i></span><div class="ctl pk"><span class="v">Sun</span><svg class="ic" width="15" height="15"><use href="#i-chev"/></svg></div></div><div class="fld"><span class="lb">From<i>*</i></span><div class="ctl"><span class="v">9:00 a.m.</span><svg class="ic" width="15" height="15"><use href="#i-clock"/></svg></div></div><div class="fld"><span class="lb">Until<i>*</i></span><div class="ctl"><span class="v">1:30 p.m.</span><svg class="ic" width="15" height="15"><use href="#i-clock"/></svg></div></div><span class="rm"><svg width="15" height="15"><use href="#i-x"/></svg></span></div><p class="rowNotes" style="padding-bottom:.5rem">The draft Spring 11U also uses Field 2, side A on Sun, 9:00 a.m.–1:30 p.m. Whichever is finalized first keeps it.</p></div>
+      </div></div>
+      <div class="expl"></div>
+      <p class="note"><b>The draft line copies the finder's own rule and place</b> ("held by a draft (name)", ruled P7 in the several-permits plan; the amber note under the row): a draft is named and left in, never left out. "Whichever is finalized first keeps it" says what happens next; at Finalize the second schedule's clashing slots are refused, as the clash check already refuses a booked place. These are working words.</p>
+      <p class="note"><b>Not drawn, owed with this:</b> "Find the time" picks a row from its first to its last free day, so a Sunday a final schedule holds in the middle still comes along. The fix is the same reading of other schedules' time; nothing on screen changes except the rows it offers.</p>
+    </div>
+  </section>
+
+  <!-- ═════════ 4 · THE GRID ═════════ -->
+  <section class="pane" id="p-grid">
+    <p class="lede"><b>The schedule page's grid, with Field 1 in two sides, drawn both ways at the page's true width (1200 px).</b> Rows are facilities and columns are the schedule's Sundays, as the grid ships. Each slot shows its time, then its team, with the team's colour on its left edge. The Fair shares band above the card is not drawn; it does not change.</p>
+    <div class="stage">
+      <div class="cap"><h3>Today</h3><button type="button" class="tag same" data-say="As it ships: Field 1 is one row. Two teams on it at once can only be a shared slot: the names stack in one box and the colour edge splits. Nothing says who is on which side.">Unchanged</button><span class="sw-note">The same teams, paired by "Sharing a facility"</span></div>
+      <div class="scroller"><div class="pg" id="gridT"></div></div>
+      <div class="expl"></div>
+    </div>
+    <div class="stage">
+      <div class="cap"><h3>A · One row for a field, its cell split</h3><button type="button" class="tag chg" data-say="Field 1 keeps one row. Each start is one box with the time on top and the two sides side by side under it.">Restyled</button><span class="sw-note">Winter dome, 9U · a draft</span></div>
+      <div class="scroller"><div class="pg" id="gridA"></div></div>
+      <div class="expl"></div>
+      <p class="note"><b>What goes wrong:</b> each side gets about 60 px. "9U Select" is cut to "9U Sel…", and a club whose teams are named "U11 Milton Bats Blue" would read nothing. A whole-field slot and a split one sit in the same cell at different widths, and dragging onto one side means hitting half a box.</p>
+    </div>
+    <div class="stage">
+      <div class="cap"><h3>B · A row per side</h3><button type="button" class="tag new" data-say="Each side is its own row, labelled with its field and side. A slot looks exactly like every other slot. Recommended (Ask 8).">New</button><span class="sw-note">The same week, the same teams</span></div>
+      <div class="scroller"><div class="pg" id="gridB"></div></div>
+      <div class="expl"></div>
+      <div class="legend">
+        <div class="li" id="g-1"><button class="mk2" data-n="1" type="button">1</button><p><b>A side is a row</b>, labelled "Side A" with "Field 1 · Milton Sports Dome" under it, and indented one step under its field, the standard's way of showing a sub row. Every slot keeps the shipped look, so clashes, locks, the team colour edge, filters and drag and drop work as they do for any facility.</p></div>
+        <div class="li" id="g-2"><button class="mk2" data-n="2" type="button">2</button><p><b>A whole-field slot on a field with sides stays on the field's own row.</b> Here 13U AA has the whole of Field 1 at 12:00 p.m. on the first two Sundays, before the sides start, so those two side cells hold two slots, not three. The field's row shows "—" on a Sunday with no whole-field slot, as an empty cell does today. When a schedule never uses the whole field, the field's row is a label only: the sides are listed under it.</p></div>
+      </div>
+    </div>
+    <div class="stage">
+      <div class="card">
+        <h3>The same answer goes to the slot window, By team and the exports</h3>
+        <ul>
+          <li><b>The slot window</b> names the place as the row does: "Sun, Jan 3 · 9:00 a.m. · Field 1, side A".</li>
+          <li><b>By team</b> lists a team's slots with the same place words.</li>
+          <li><b>The Facility filter</b> lists Field 1 once. Choosing it shows its whole-field row and both side rows.</li>
+          <li><b>The coaches portal and the family calendar</b> read the practice's place with its side: "Field 1, side A" at Milton Sports Dome, joined the way each surface joins a venue and a facility today.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═════════ 5 · BILL AND PDF ═════════ -->
+  <section class="pane" id="p-bill">
+    <p class="lede"><b>On the bill, a side is priced like any half: half the field's price.</b> The bill counts slots by what they cost, so one side of a full field reads "half", the same as a "Half cost" field, because it costs the same. The place word "side" goes where a place is named: the PDF's column headings.</p>
+    <div class="stage">
+      <div class="cap"><h3>Bill the teams</h3><button type="button" class="tag chg" data-say="The window and its table ship today. One hint changes (mark 1). The captions need no change: a side already falls into the half count by its price.">Restyled</button><span class="sw-note">Bill window (800 px) · Winter dome, a draft, with sides, sharing and a Half cost field together</span></div>
+      <div class="scroller"><div class="scrim"><div class="win wd">
+        <div class="dh"><div class="tt"><span class="eb">Winter dome</span><span class="tl">Bill the teams</span></div><span class="x"><svg width="16" height="16"><use href="#i-x"/></svg></span></div>
+        <div class="db" style="display:block">
+          <div class="pr2">
+            <div class="fld"><span class="lb">Bill from</span><div class="ctl pk"><span class="v">Dome rental 2027</span><svg class="ic" width="15" height="15"><use href="#i-chev"/></svg></div><span class="hnt">The permit's budget line · $18,000.00 planned, $18,000.00 left</span></div>
+            <div class="fld"><span class="lb">Bill the teams for</span><div class="ctl pk"><span class="v">The time at the permit's price · $12,000.00</span><svg class="ic" width="15" height="15"><use href="#i-chev"/></svg></div><span class="hnt">Or a part of it, when the club covers some</span></div>
+          </div>
+          <div class="pr2">
+            <div class="fld rel hl"><span class="lb">Split</span><p class="fixed" style="margin:0">By the time each team got</p><span class="hnt">Each field at the permit's price: a full field $80.00 an hour, a half field or one side $40.00</span><button class="mk" data-n="1" aria-label="Change 1">1</button></div>
+            <div class="pr2" style="gap:0 .6rem">
+              <div class="fld"><span class="lb">Payments</span><div class="ctl pk"><span class="v">Monthly</span><svg class="ic" width="15" height="15"><use href="#i-chev"/></svg></div></div>
+              <div class="fld"><span class="lb">First payment due</span><div class="ctl"><span class="v">Jan 15, 2027</span><svg class="ic" width="15" height="15"><use href="#i-cal"/></svg></div></div>
+            </div>
+          </div>
+          <p class="hnt" style="margin:-.5rem 0 .7rem">2 payments: the first due Jan 15, then every month.</p>
+          <div class="tframe"><table class="tk2" aria-label="Bill the teams">
+            <thead><tr><th>Team</th><th class="n">Share</th><th class="n">Jan 15</th><th class="n">Feb 15</th></tr></thead>
+            <tbody>
+              <tr class="two"><td>9U AA<small class="rel">30 half-field slots · 22.5 full-field hours<button class="mk" style="right:auto;left:250px;top:-4px" data-n="2" aria-label="Note 2">2</button></small></td><td class="n">$1,800.00</td><td class="n">$900.00</td><td class="n">$900.00</td></tr>
+              <tr class="two"><td>9U A<small>30 half-field slots · 22.5 full-field hours</small></td><td class="n">$1,800.00</td><td class="n">$900.00</td><td class="n">$900.00</td></tr>
+              <tr class="two"><td>11U AA<small>30 shared slots · 22.5 full-field hours</small></td><td class="n">$1,800.00</td><td class="n">$900.00</td><td class="n">$900.00</td></tr>
+              <tr class="two"><td>11U A<small>30 shared slots · 22.5 full-field hours</small></td><td class="n">$1,800.00</td><td class="n">$900.00</td><td class="n">$900.00</td></tr>
+              <tr class="two"><td>11U B<small class="rel">20 half-field slots · 15 full-field hours<button class="mk" style="right:auto;left:236px;top:-4px" data-n="3" aria-label="Note 3">3</button></small></td><td class="n">$1,200.00</td><td class="n">$600.00</td><td class="n">$600.00</td></tr>
+              <tr class="two"><td>15U AA<small>15 full-field slots · 22.5 full-field hours</small></td><td class="n">$1,800.00</td><td class="n">$900.00</td><td class="n">$900.00</td></tr>
+              <tr class="two"><td>15U A<small>15 full-field slots · 22.5 full-field hours</small></td><td class="n">$1,800.00</td><td class="n">$900.00</td><td class="n">$900.00</td></tr>
+              <tr class="grp"><td>7 teams</td><td class="n">$12,000.00</td><td class="n">$6,000.00</td><td class="n">$6,000.00</td></tr>
+            </tbody>
+          </table></div>
+          <p class="hnt" style="margin:-.3rem 0 .8rem">$6,000.00 less than the permit's $18,000.00: the 50 open slots.</p>
+          <div class="stmt"><b>The bill goes to the teams with the schedule.</b>Nothing is billed until you finalize. Then each team's share arrives on its Money › Club tab with its 2 payments, filed under Facility rental where the team's budget has it.</div>
+        </div>
+        <div class="df"><span class="btn">Cancel</span><span class="btn pri">Add the bill to the schedule</span></div>
+      </div></div></div>
+      <div class="expl"></div>
+      <div class="legend">
+        <div class="li" id="b-1"><button class="mk2" data-n="1" type="button">1</button><p><b>The only change on the bill:</b> the Split hint adds "or one side" beside the half field's price, shown only when the schedule has a side. Today it reads "…a full field $80.00 an hour, a half field $40.00". Everything else in this frame is the window as it ships, so no separate Today frame is drawn.</p></div>
+        <div class="li" id="b-2"><button class="mk2" data-n="2" type="button">2</button><p><b>9U AA practised on a side of Field 1 every time.</b> Its caption already reads "half-field slots", because the bill counts a slot by its price and a side costs half. 30 × 0.75 full-field hours = 22.5. This is the same money as 11U AA, which shared all 30 of its slots on Field 3: the two ways of putting two teams on one field bill alike (Ask 2 and Ask 6).</p></div>
+        <div class="li" id="b-3"><button class="mk2" data-n="3" type="button">3</button><p><b>11U B is on Field 5, which the permit holds at "Half cost"</b> (case C). It reads the same as a side, because it costs the same. A side of a "Half cost" field would cost a quarter and read "1 more", as the bill counts any other price today (Ask 3).</p></div>
+      </div>
+      <p class="note"><b>Why not a separate word on the bill.</b> The brief asks for side words that are not "half field". On the bill that would hide a fact: a side of a full field and a "Half cost" field cost the club the same. The bill keeps counting by price. The place word belongs where a place is named.</p>
+    </div>
+    <div class="stage">
+      <div class="cap"><h3>The schedule's PDF</h3><button type="button" class="tag chg" data-say="The PDF ships today with a column per facility. A side gets its own column, named for its side, which follows the row-per-side grid (Ask 8). Case C keeps its heading and its note.">Restyled</button><span class="sw-note">One day of the PDF at A4 width</span></div>
+      <div class="scroller"><div class="pdf">
+        <div class="lh"></div>
+        <div class="in">
+          <h4>Winter dome</h4>
+          <div class="ps">Milton Sports Dome · Jan 3 – Mar 7, 2027 · 10 Sundays · Final, sent Dec 14 by Jordan Reyes</div>
+          <div class="dayh">Sun, Jan 17, 2027 · 18 slots · Milton Sports Dome</div>
+          <table class="rel">
+            <thead><tr><th>Time</th><th class="rel" style="outline:2px dashed var(--doc-new);outline-offset:-2px">Field 1, side A<button class="mk" data-n="1" aria-label="Change 1">1</button></th><th style="outline:2px dashed var(--doc-new);outline-offset:-2px">Field 1, side B</th><th>Field 2</th><th>Field 3</th><th class="rel">Field 5 · half<button class="mk" data-n="2" aria-label="Note 2">2</button></th></tr></thead>
+            <tbody>
+              <tr><td>9:00–10:30 a.m.</td><td>9U AA</td><td>9U A</td><td>15U AA</td><td>11U AA · 11U A</td><td>11U B</td></tr>
+              <tr><td>10:30 a.m.–12:00 p.m.</td><td>9U B</td><td>9U Select</td><td>15U A</td><td>11U AA · 11U A</td><td class="o">Open</td></tr>
+              <tr><td>12:00–1:30 p.m.</td><td class="o">Open</td><td>9U AA</td><td>13U AA</td><td>13U A</td><td>11U B</td></tr>
+            </tbody>
+          </table>
+          <div class="fn2">Times in Eastern Time.<br>Field 5 is a half field.<br>A slot handed back after this was printed is open on the club's schedule and on the team's.</div>
+        </div>
+      </div></div>
+      <div class="expl"></div>
+      <div class="legend">
+        <div class="li" id="pd-1"><button class="mk2" data-n="1" type="button">1</button><p><b>Each side is its own column, and the PDF has to learn sides to draw it.</b> Today the PDF keys a column by its facility, so the two sides in one "Field 1" column would overwrite each other. Worse, it labels a column by its price share: left alone, a side would read "Field 1 · half" and add "Field 1 is a half field." under the table, the case-C words. The build gives the PDF a column per side, headed with the side's own words and no price word. A whole-field slot on a field with sides gets a "Field 1" column of its own, as the grid gets a row. The Excel export's Facility cell reads "Field 1, side A".</p></div>
+        <div class="li" id="pd-2"><button class="mk2" data-n="2" type="button">2</button><p><b>Case C is unchanged:</b> "Field 5 · half" in the heading and "Field 5 is a half field." under the table. Sharing is also unchanged: Field 3 shows "11U AA · 11U A" in one cell. Once the PDF learns sides, side and half never meet in one heading.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═════════ 6 · PERMIT USE ═════════ -->
+  <section class="pane" id="p-used">
+    <p class="lede"><b>What the permit's Used figure says, once the builder sees other schedules and a field has sides.</b> Used already counts every finalized practice, every program's bookings and every tournament game. Two things change: a practice on one side counts half the field's time, and a line names time a final schedule holds that no team has yet.</p>
+    <div class="viewrow"><b>View</b>
+      <div class="sw" role="group" aria-label="View"><button type="button" data-v="all" aria-pressed="true">Everything</button><button type="button" data-v="diff" aria-pressed="false">Show only what differs</button></div>
+    </div>
+    <div class="stage">
+      <div class="cap"><h3>The Permits page row</h3><button type="button" class="tag chg" data-say="The row ships today. Only the Used figure's arithmetic changes: a side counts half. Its words do not change.">Restyled</button><span class="sw-note">Permits page · club admin with money access · one row, at the table's width</span></div>
+      <div class="scroller"><div class="bare" style="width:1152px;background:var(--paper)">
+        <table class="ptbl">
+          <thead><tr><th>Permit</th><th>Where</th><th>Dates</th><th class="n">A week</th><th class="n">Used</th><th class="n">Cost</th><th style="width:28px"></th></tr></thead>
+          <tbody>
+            <tr class="band2"><td colspan="7">In use now</td></tr>
+            <tr><td class="same"><span class="nm">Dome, winter 2027</span><small>Milton Sports Dome Inc. · DOME-27-114</small></td><td class="same">Milton Sports Dome · every facility</td><td class="same">Jan 3 – Mar 7, 2027</td><td class="n same">27 h</td><td class="n rel hl">71%<small>191.25 of 270 h</small><button class="mk" data-n="1" aria-label="Change 1">1</button></td><td class="n same">$18,000.00</td><td class="same"><svg width="16" height="16" style="color:var(--dim)"><use href="#i-right"/></svg></td></tr>
+          </tbody>
+        </table>
+      </div></div>
+      <div class="expl"></div>
+      <div class="legend">
+        <div class="li" id="u-1"><button class="mk2" data-n="1" type="button">1</button><p><b>The row looks as it does today; only the arithmetic behind Used changes, so no Today frame is drawn. A practice on one side adds half its time.</b> A 90-minute practice on Field 1 side A adds 0.75 h; two teams on both sides add 1.5 h, the whole field. Without this, every side practice would count as the whole field and Used would read high: here it would say 82% (221.25 h) for the same Sundays. Held stays clock hours of whole fields, as today.</p></div>
+      </div>
+    </div>
+    <div class="stage">
+      <div class="cap"><h3>The permit window's Use section, before and after</h3><button type="button" class="tag new" data-say="The three tiles and the per-block rows ship today. New: one line under the rows naming time a final schedule holds that nobody has booked.">New</button><span class="sw-note">Permit window (640 px), the Use section only</span></div>
+      <div class="pair2 w640">
+        <div class="scroller"><div class="bare" style="width:592px">
+          <p class="cut">Today</p>
+          <p class="mono-h same" style="margin-top:0">Use</p>
+          <div class="band three same"><div><small>Held</small><b>270 h</b></div><div><small>Booked</small><b>191.25 h</b><span class="bc">71%</span></div><div><small>Unused</small><b>78.75 h</b></div></div>
+          <div class="urows same"><div class="urow"><span class="w">Milton Sports Dome · every facility<small>9U AA, 9U A, 11U AA and 11 more · Sun, 9:00 a.m.–1:30 p.m.</small></span><span class="f">191.25 of 270 h · 71%</span></div></div>
+          <span class="door">Hand out this time in a schedule ›</span>
+          <p class="hnt" style="margin:0">Winter dome, 9U and Winter dome, 11U hand this time out, so the permit stays.</p>
+        </div></div>
+        <div class="scroller"><div class="bare" style="width:592px">
+          <p class="cut">Proposed</p>
+          <p class="mono-h same" style="margin-top:0">Use</p>
+          <div class="band three same"><div><small>Held</small><b>270 h</b></div><div><small>Booked</small><b>191.25 h</b><span class="bc">71%</span></div><div><small>Unused</small><b>78.75 h</b></div></div>
+          <div class="urows same"><div class="urow"><span class="w">Milton Sports Dome · every facility<small>9U AA, 9U A, 11U AA and 11 more · Sun, 9:00 a.m.–1:30 p.m.</small></span><span class="f">191.25 of 270 h · 71%</span></div></div>
+          <p class="hnt rel hl" style="margin:.3rem 0 .5rem">Of the unused time, 9 h is open slots on Winter dome, 11U: the schedule holds it and no team has it yet.<button class="mk" data-n="2" aria-label="Change 2">2</button></p>
+          <span class="door same">Hand out this time in a schedule ›</span>
+          <p class="hnt same" style="margin:0">Winter dome, 9U and Winter dome, 11U hand this time out, so the permit stays.</p>
+        </div></div>
+      </div>
+      <div class="expl"></div>
+      <div class="legend">
+        <div class="li" id="w-2"><button class="mk2" data-n="2" type="button">2</button><p><b>Booked stays what teams actually booked.</b> A final schedule's open slots are not used: no team is on them. But no other schedule can have them either. So the figure stays honest for "how much of what we rent do we use?", and one line says how much of the unused time a schedule is sitting on. House-league time a final schedule hands to house league, not yet divided into practices, is named the same way ("…is house league's, not yet given to teams"). Drafts are not counted anywhere here: a draft holds nothing until it is finalized. This is Ask 9.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═════════ 7 · SAME-TIME RULE ═════════ -->
+  <section class="pane" id="p-rule">
+    <p class="lede"><b>"Teams at the same time" is one more entry in "Add a rule"</b> (R1), with "Never at the same time" offered in the same rule (R9). It names teams only (R10). The window is New schedule (also Tools › Settings…), with the other sections folded.</p>
+    <div class="viewrow"><b>View</b>
+      <div class="sw" role="group" aria-label="View"><button type="button" data-v="all" aria-pressed="true">Everything</button><button type="button" data-v="diff" aria-pressed="false">Show only what differs</button></div>
+    </div>
+    <div class="stage">
+      <div class="cap"><h3>Today</h3><button type="button" class="tag same" data-say="The Rules section as it ships: the rule rows as sentences with a pencil, Add a rule, and the three Always ticks.">Unchanged</button><span class="sw-note">New schedule · Rules open · desktop, club admin</span></div>
+      <div class="scroller"><div class="scrim"><div class="win">
+        <div class="dh same"><div class="tt"><span class="tl">New schedule</span><span class="st2">Step 1 of 2 · settings</span></div><span class="x"><svg width="16" height="16"><use href="#i-x"/></svg></span></div>
+        <div class="prog same"><span class="on"></span><span></span></div>
+        <div class="db">
+          <div class="cutm same">The time · cut from the drawing, unchanged</div>
+          <div class="cutm same">Who, and how much · cut from the drawing, unchanged</div>
+          <div class="sect">
+            <p class="sh">Rules <span class="cnt">5 on</span><svg width="16" height="16" style="color:var(--dim)"><use href="#i-chev"/></svg></p>
+            <div class="ruleList">
+              <div class="ruleLine same"><span class="s">9U A and 9U B share a facility, 2 at once</span><span class="pen"><svg width="15" height="15"><use href="#i-pen"/></svg></span></div>
+              <div class="ruleLine same"><span class="s">9U AA off Sun, Feb 14</span><span class="pen"><svg width="15" height="15"><use href="#i-pen"/></svg></span></div>
+            </div>
+            <span class="door same"><svg width="14" height="14"><use href="#i-plus"/></svg>Add a rule</span>
+            <p class="alwaysHead same">Always</p>
+            <div class="chk same"><span class="bx"><svg width="11" height="11"><use href="#i-check"/></svg></span><span>Never on a team's game day<small>Read from each team's whole schedule, away games included</small></span></div>
+            <div class="chk same"><span class="bx"><svg width="11" height="11"><use href="#i-check"/></svg></span><span>Never over a booking already on the books<small>The clash check's bookings: other teams, house league, tryout days, tournaments</small></span></div>
+            <div class="chk same"><span class="bx"><svg width="11" height="11"><use href="#i-check"/></svg></span><span>No back-to-back days for a team</span></div>
+          </div>
+        </div>
+        <div class="df same"><span class="fn">90 slots for 8 teams.</span><span class="btn">Cancel</span><span class="btn pri">Generate drafts</span></div>
+      </div></div></div>
+      <div class="expl"></div>
+    </div>
+    <div class="stage">
+      <div class="cap"><h3>Proposed</h3><button type="button" class="tag new" data-say="Two rules of the new kind, one open while being entered, and the sixth entry in Add a rule. Numbered on the drawing.">New</button><span class="sw-note">Two same-time rules: one closed, one being entered</span></div>
+      <div class="scroller"><div class="scrim"><div class="win">
+        <div class="dh same"><div class="tt"><span class="tl">New schedule</span><span class="st2">Step 1 of 2 · settings</span></div><span class="x"><svg width="16" height="16"><use href="#i-x"/></svg></span></div>
+        <div class="prog same"><span class="on"></span><span></span></div>
+        <div class="db">
+          <div class="cutm same">The time · cut from the drawing, unchanged</div>
+          <div class="cutm same">Who, and how much · cut from the drawing, unchanged</div>
+          <div class="sect">
+            <p class="sh">Rules <span class="cnt">7 on</span><svg width="16" height="16" style="color:var(--dim)"><use href="#i-chev"/></svg></p>
+            <div class="ruleList">
+              <div class="ruleLine same"><span class="s">9U A and 9U B share a facility, 2 at once</span><span class="pen"><svg width="15" height="15"><use href="#i-pen"/></svg></span></div>
+              <div class="ruleLine rel hl"><span class="s">13U AA and 9U AA at the same time</span><span class="pen"><svg width="15" height="15"><use href="#i-pen"/></svg></span><button class="mk" data-n="1" aria-label="Change 1">1</button></div>
+              <div class="ruleOpen rel hl">
+                <div class="rt"><span>Teams at the same time</span><span class="pen" style="flex:none"><svg width="15" height="15"><use href="#i-check"/></svg></span></div>
+                <div class="ruleFields two">
+                  <div class="fld"><span class="lb">Teams<i>*</i></span><div class="ctl pk"><span class="v">15U AA and 15U A</span><svg class="ic" width="15" height="15"><use href="#i-chev"/></svg></div></div>
+                  <div class="fld"><span class="lb">When</span><div class="ctl pk"><span class="v">Never at the same time</span><svg class="ic" width="15" height="15"><use href="#i-chev"/></svg></div></div>
+                </div>
+                <p class="ruleHint">The drafts keep these teams apart: never at the same start.</p>
+                <span class="recact"><svg width="14" height="14"><use href="#i-trash"/></svg>Remove this rule</span>
+                <button class="mk" data-n="2" aria-label="Change 2">2</button>
+              </div>
+              <div class="ruleLine same"><span class="s">9U AA off Sun, Feb 14</span><span class="pen"><svg width="15" height="15"><use href="#i-pen"/></svg></span></div>
+            </div>
+            <span class="door same"><svg width="14" height="14"><use href="#i-plus"/></svg>Add a rule</span>
+            <p class="alwaysHead same">Always</p>
+            <div class="chk same"><span class="bx"><svg width="11" height="11"><use href="#i-check"/></svg></span><span>Never on a team's game day<small>Read from each team's whole schedule, away games included</small></span></div>
+            <div class="chk same"><span class="bx"><svg width="11" height="11"><use href="#i-check"/></svg></span><span>Never over a booking already on the books<small>The clash check's bookings: other teams, house league, tryout days, tournaments</small></span></div>
+            <div class="chk same"><span class="bx"><svg width="11" height="11"><use href="#i-check"/></svg></span><span>No back-to-back days for a team</span></div>
+          </div>
+        </div>
+        <div class="df"><span class="fn same">90 slots for 8 teams.</span><span class="btn same">Cancel</span><span class="btn pri same">Generate drafts</span></div>
+      </div></div></div>
+      <div class="expl"></div>
+      <div class="legend">
+        <div class="li" id="s-1"><button class="mk2" data-n="1" type="button">1</button><p><b>A closed rule reads as a sentence</b>, like every rule in the list: "13U AA and 9U AA at the same time", or "15U AA and 15U A never at the same time". It sits after the sharing rules, because both are about which teams go together. It names teams or a group, never a reason (R10).</p></div>
+        <div class="li" id="s-2"><button class="mk2" data-n="2" type="button">2</button><p><b>Open, it has two fields:</b> Teams (the same picker as sharing's, groups first) and When ("At the same time" or "Never at the same time"). The line under them says what the drafts will do. For "At the same time" it reads: "The drafts try to put these teams at the same start, in the same building, each on its own facility or side. A team never gets more than its share to match another; the drafts say where they couldn't." Working words.</p></div>
+      </div>
+    </div>
+    <div class="stage">
+      <div class="cap"><h3>Add a rule, open</h3><button type="button" class="tag new" data-say="The shipped menu with one more entry at the end: the menu lists kinds in the order they were added.">New</button><span class="sw-note">The menu at its width</span></div>
+      <div class="scroller"><div class="narrow" style="width:340px">
+        <div class="menu">
+          <span class="ki"><b>Start and finish times</b><span>Teams that start after, or finish by, a time</span></span>
+          <span class="ki"><b>A team's day off</b><span>A date, or a day every week</span></span>
+          <span class="ki"><b>Facilities for a group</b><span>Facilities kept for some teams</span></span>
+          <span class="ki"><b>Sharing a facility</b><span>Teams that share a facility, 2 or more at once</span></span>
+          <span class="ki"><b>At most, a week</b><span>A weekly cap on any one team's slots</span></span>
+          <span class="ki rel hl" style="margin:3px"><b>Teams at the same time</b><span>Teams at one start, or never at once</span><button class="mk" data-n="1" aria-label="Note 1">1</button></span>
+        </div>
+      </div></div>
+      <div class="expl"></div>
+      <div class="legend"><div class="li" id="m-1"><button class="mk2" data-n="1" type="button">1</button><p><b>The sixth kind.</b> One entry covers both choices; the When field picks which. Offering "Never at the same time" as a seventh entry would put two near-identical lines in a short menu. The menu lists kinds in the order they were added, so the new one is last here, while the rule list groups by kind and puts it after sharing. That difference is on purpose, and it is how the shipped menu and list already differ.</p></div></div>
+    </div>
+    <div class="stage">
+      <div class="cap"><h3>When a group can never line up (R6), and a team in a sharing rule</h3><button type="button" class="tag new" data-say="Caught while the rule is entered, before the drafts are made. It stops Generate the way a half-filled rule does today: the button stays, and pressing it shows the reason.">New</button><span class="sw-note">The rule open, and the same rule closed</span></div>
+      <div class="scroller"><div class="bare" style="width:968px">
+        <p class="cut">Entered, and it can't be kept</p>
+        <div class="ruleOpen" style="border-top:1px solid var(--line)">
+          <div class="rt"><span>Teams at the same time</span><span class="pen" style="flex:none"><svg width="15" height="15"><use href="#i-check"/></svg></span></div>
+          <div class="ruleFields two">
+            <div class="fld"><span class="lb">Teams<i>*</i></span><div class="ctl pk"><span class="v">13U A and 11U B</span><svg class="ic" width="15" height="15"><use href="#i-chev"/></svg></div></div>
+            <div class="fld"><span class="lb">When</span><div class="ctl pk"><span class="v">At the same time</span><svg class="ic" width="15" height="15"><use href="#i-chev"/></svg></div></div>
+          </div>
+          <p class="ruleHint warn rel"><svg width="14" height="14"><use href="#i-warn"/></svg><span>13U A and 11U B can never be at the same time: 11U B is off every Sunday, and all of this schedule's time is on Sundays.</span><button class="mk" style="right:-14px" data-n="1" aria-label="Note 1">1</button></p>
+          <span class="recact"><svg width="14" height="14"><use href="#i-trash"/></svg>Remove this rule</span>
+        </div>
+        <p class="cut" style="margin-top:12px">Closed, after Generate drafts is pressed</p>
+        <div class="ruleList"><div class="ruleLine"><span class="s warn">Teams at the same time: 13U A and 11U B can never be at the same time. Change the rule, or remove it.</span><span class="pen"><svg width="15" height="15"><use href="#i-pen"/></svg></span></div></div>
+        <p class="ferr rel"><svg width="13" height="13"><use href="#i-warn"/></svg><span>13U A and 11U B can never be at the same time. Change the rule, or remove it.</span><button class="mk" style="right:auto;left:470px;top:-6px" data-n="2" aria-label="Note 2">2</button></p>
+        <div class="df" style="padding:.6rem 0 0;border:0"><span class="fn"></span><span class="btn">Cancel</span><span class="btn pri">Generate drafts</span></div>
+        <p class="cut" style="margin-top:14px">A team already in a sharing rule</p>
+        <div class="ruleOpen" style="border-top:1px solid var(--line)">
+          <div class="ruleFields two">
+            <div class="fld"><span class="lb">Teams<i>*</i></span><div class="ctl pk"><span class="v">9U A and 11U AA</span><svg class="ic" width="15" height="15"><use href="#i-chev"/></svg></div></div>
+            <div class="fld"><span class="lb">When</span><div class="ctl pk"><span class="v">At the same time</span><svg class="ic" width="15" height="15"><use href="#i-chev"/></svg></div></div>
+          </div>
+          <p class="ruleHint warn rel"><svg width="14" height="14"><use href="#i-warn"/></svg><span>9U A is in a sharing rule, so it can't be in a same-time rule too. Take it out of one.</span><button class="mk" style="right:-14px" data-n="3" aria-label="Note 3">3</button></p>
+        </div>
+      </div></div>
+      <div class="expl"></div>
+      <div class="legend">
+        <div class="li" id="n-1"><button class="mk2" data-n="1" type="button">1</button><p><b>Caught when it is entered (R6).</b> Today every rule refusal comes from the server when the form is sent. This one is worked out in the window, from what the form already holds, so it appears as you pick the teams. What it can know: a team off on every day of the time; start and finish times that never overlap; more teams than places free at any one start (counting sides as places, Ask 7); facilities kept for a group that keep the teams apart. What it can't know until the drafts run: game days, which change week to week. Those go in the report (tab 8).</p></div>
+        <div class="li" id="n-2"><button class="mk2" data-n="2" type="button">2</button><p><b>It stops Generate the way a half-filled rule does today.</b> The button is not greyed: pressing it shows the reason in the window's error line and opens Rules, with the rule's own row in amber ("{title}: …", the shipped pattern). The server refuses the same rule if it is ever sent.</p></div>
+        <div class="li" id="n-3"><button class="mk2" data-n="3" type="button">3</button><p><b>A team in a sharing rule can't join a same-time rule</b>, as a team can't be in two sharing rules today ("A team is in two sharing rules. Take it out of one."). This is Ask 11.</p></div>
+      </div>
+    </div>
+    <div class="stage">
+      <div class="cap"><h3>A hand move that breaks a group (R7)</h3><button type="button" class="tag new" data-say="The drag tooltip and the notice after the drop ship today. New: the group's reason in the tooltip, and the same fact said again in the notice.">New</button><span class="sw-note">Dragging 9U AA off its 9:00 a.m. start on Feb 21, on the grid</span></div>
+      <div class="scroller"><div class="bare" style="width:760px;position:relative;padding-top:64px">
+        <div class="tipbox" style="left:160px;top:10px">Sun, Feb 21 · 10:30 a.m.–12:00 p.m. · Field 3 · 13U AA stays at 9:00 a.m., so they are no longer at the same time<button class="mk" data-n="1" aria-label="Note 1">1</button></div>
+        <div style="display:grid;grid-template-columns:7.25rem 148px 148px;gap:0;border:1px solid var(--line);border-radius:8px;overflow:hidden;width:max-content">
+          <div style="padding:.5rem .7rem;font-weight:700;color:var(--ink);font-size:13px;border-bottom:1px solid var(--line)">Field 3<small style="display:block;font-weight:400;font-size:12px;color:var(--dim)">Milton Sports Dome</small></div>
+          <div style="padding:.35rem;border-left:1px solid var(--line);border-bottom:1px solid var(--line);display:flex;flex-direction:column;gap:.3rem"><div class="chip" style="--tc:#A0832B"><b>9:00–10:30 a.m.</b><span>13U AA</span></div><div class="chip open drop"><b>10:30 a.m.–12:00 p.m.</b><span>Open</span></div></div>
+          <div style="padding:.35rem;border-left:1px solid var(--line);border-bottom:1px solid var(--line);display:flex;flex-direction:column;gap:.3rem"><div class="chip" style="--tc:#A0832B"><b>9:00–10:30 a.m.</b><span>13U AA</span></div><div class="chip" style="--tc:#2E7D5B"><b>10:30 a.m.–12:00 p.m.</b><span>9U AA</span></div></div>
+        </div>
+        <p class="cut" style="margin-top:18px">After the drop: the notice at the screen's bottom-right corner</p>
+        <div class="vport"><div class="pill wrap"><span>9U AA moved to Sun, 10:30 a.m. · Field 3, Feb 21. It is no longer at the same time as 13U AA that Sunday.</span><span class="u">Undo</span><span class="cx"><svg width="13" height="13"><use href="#i-x"/></svg></span><button class="mk" data-n="2" aria-label="Note 2">2</button></div></div>
+      </div></div>
+      <div class="expl"></div>
+      <div class="legend">
+        <div class="li" id="h-1"><button class="mk2" data-n="1" type="button">1</button><p><b>While dragging, the amber outline and the tooltip say it</b>, the way every rule break is said today ("…kept for other teams", "…a day off"). The drop still goes through: R7 says a broken group warns, and the schedule's one refusal stays "a team twice at once".</p></div>
+        <div class="li" id="h-2"><button class="mk2" data-n="2" type="button">2</button><p><b>After the drop, the notice says it again.</b> Today a warning lives only in the tooltip, which is gone the moment you let go. A broken group moves another team's family's Sunday, so it is the one warning repeated, with Undo beside it. The shipped notice is one short line that fades; this sentence needs the notice's held, wrapping face (the one its error face already has: it stays until closed). That is a small addition to the shared notice, flagged for the build. For "This & later weeks" it reads "…that Sunday and 3 more." The keyboard path (Swap with… in the slot window) gets the same sentence in its which-weeks menu. This is Ask 12.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═════════ 8 · THE REPORT ═════════ -->
+  <section class="pane" id="p-report">
+    <p class="lede"><b>The report is per rule (R8), and it covers "Sharing a facility" too.</b> Today a sharing rule that could not pair says nothing. The report appears in three places: a line on each draft card, a line on the schedule page, and its own part in the "Open slots and short teams" window, which says why.</p>
+    <div class="viewrow"><b>View</b>
+      <div class="sw" role="group" aria-label="View"><button type="button" data-v="all" aria-pressed="true">Everything</button><button type="button" data-v="diff" aria-pressed="false">Show only what differs</button></div>
+    </div>
+    <div class="stage">
+      <div class="cap"><h3>The draft cards, before and after</h3><button type="button" class="tag chg" data-say="The card and its measure lines ship today. The sharing line gains a count; the same-time rules add a line each.">Restyled</button><span class="sw-note">New schedule, step 2: the chosen card and the team list beside it (true widths)</span></div>
+      <div class="pair2 w560">
+        <div class="scroller"><div class="bare" style="width:540px">
+          <p class="cut">Today</p>
+          <div class="drafts" style="grid-template-columns:15rem minmax(0,1fr)">
+            <div class="dcard on">
+              <div class="hd"><b>Best overall</b><span class="sc">91<small>/100</small></span></div>
+              <div class="ml">Every team gets its share</div>
+              <div class="ml">9U A and 9U B share a facility: half a facility each</div>
+              <div class="ml good"><svg width="12" height="12"><use href="#i-ok"/></svg>Each team on the same nights every week</div>
+              <div class="ml">6 slots left open</div>
+            </div>
+            <div class="tlist">
+              <div class="tr" style="--tc:#3B5BA5"><span class="sw2"></span><b>9U B</b><span>20 · 16 shared</span><span class="d">Sun</span></div>
+              <div class="tr" style="--tc:#2E7D5B"><span class="sw2"></span><b>9U AA</b><span>10 slots</span><span class="d">Sun</span></div>
+              <div class="tr" style="--tc:#A0832B"><span class="sw2"></span><b>13U AA</b><span>15 slots</span><span class="d">Sun</span></div>
+            </div>
+          </div>
+        </div></div>
+        <div class="scroller"><div class="bare" style="width:540px">
+          <p class="cut">Proposed</p>
+          <div class="drafts" style="grid-template-columns:15rem minmax(0,1fr)">
+            <div class="dcard on">
+              <div class="hd same"><b>Best overall</b><span class="sc">91<small>/100</small></span></div>
+              <div class="ml same">Every team gets its share</div>
+              <div class="ml amber rel hl"><svg width="12" height="12"><use href="#i-warn"/></svg>9U A and 9U B share a facility on 8 of 10 Sundays: half a facility each<button class="mk" data-n="1" aria-label="Change 1">1</button></div>
+              <div class="ml amber rel hl"><svg width="12" height="12"><use href="#i-warn"/></svg>13U AA and 9U AA at the same time on 8 of 10 Sundays<button class="mk" data-n="2" aria-label="Change 2">2</button></div>
+              <div class="ml good rel hl"><svg width="12" height="12"><use href="#i-ok"/></svg>15U AA and 15U A never at the same time<button class="mk" data-n="2" aria-label="Change 2">2</button></div>
+              <div class="ml good same"><svg width="12" height="12"><use href="#i-ok"/></svg>Each team on the same nights every week</div>
+              <div class="ml same">6 slots left open</div>
+            </div>
+            <div class="tlist same">
+              <div class="tr" style="--tc:#3B5BA5"><span class="sw2"></span><b>9U B</b><span>20 · 16 shared</span><span class="d">Sun</span></div>
+              <div class="tr" style="--tc:#2E7D5B"><span class="sw2"></span><b>9U AA</b><span>10 slots</span><span class="d">Sun</span></div>
+              <div class="tr" style="--tc:#A0832B"><span class="sw2"></span><b>13U AA</b><span>15 slots</span><span class="d">Sun</span></div>
+            </div>
+          </div>
+        </div></div>
+      </div>
+      <div class="expl"></div>
+      <div class="legend">
+        <div class="li" id="d-1"><button class="mk2" data-n="1" type="button">1</button><p><b>The sharing line gains a count</b>, and turns amber when it is short: "on 8 of 10 Sundays". Today the line lists a rule only if it was used at all, so a rule that never paired drops off the card. Now every sharing rule has a line: "9U A and 9U B never shared a facility" if it never paired.</p></div>
+        <div class="li" id="d-2"><button class="mk2" data-n="2" type="button">2</button><p><b>One line per same-time rule.</b> "Of 10" is the most the pair could share: the smaller team's practices (13U AA has 15, 9U AA has 10), because a team never gets extra time to match (R4). A green check when the group was together every time it could be; amber when not. "Never at the same time" is a check when kept. A rule broken every week reads "13U AA and 9U AA were never at the same time".</p></div>
+      </div>
+    </div>
+    <div class="stage">
+      <div class="cap"><h3>The schedule page line</h3><button type="button" class="tag chg" data-say="The season's one amber line between the toolbar and the grid ships today, with its See why door. It is ONE line by an owner ruling (2026-11-24). The rules join that sentence; they do not add a line.">Restyled</button><span class="sw-note">Between the toolbar and the grid</span></div>
+      <div class="scroller"><div class="bare" style="width:1152px">
+        <p class="cut">Today</p>
+        <div class="lines same" style="margin:0 0 .8rem"><div><svg width="13" height="13"><use href="#i-warn"/></svg><span>2 teams are 1 slot short of their share, and 6 slots are open, all on Sun, Mar 7. <span class="dr">See why ›</span></span></div></div>
+        <p class="cut">Proposed</p>
+        <div class="lines" style="margin:0"><div class="rel hl"><svg width="13" height="13"><use href="#i-warn"/></svg><span>2 teams are 1 slot short of their share, and 6 slots are open, all on Sun, Mar 7. 2 rules weren't kept every week. <span class="dr">See why ›</span></span><button class="mk" data-n="1" aria-label="Change 1">1</button></div></div>
+      </div></div>
+      <div class="expl"></div>
+      <div class="legend"><div class="li" id="pl-1"><button class="mk2" data-n="1" type="button">1</button><p><b>Still one line for the season</b> (owner ruling 2026-11-24): the rules add one short sentence to it, never a second line, and the one "See why" opens the window. With nobody short, the line is the rules' sentence alone: "2 rules weren't kept every week." With one rule: "13U AA and 9U AA weren't at the same time every week."</p></div></div>
+    </div>
+    <div class="stage">
+      <div class="cap"><h3>Open slots and short teams</h3><button type="button" class="tag chg" data-say="The window, its callouts and its tables ship today. New: a Rules part after the reasons, one callout per rule that was not kept every week, and one line in the free group (Ask 13).">Restyled</button><span class="sw-note">The why window (800 px), scrolled to its end</span></div>
+      <div class="scroller"><div class="scrim"><div class="win wd">
+        <div class="dh"><div class="tt"><span class="eb">Winter dome</span><span class="tl">Open slots and short teams</span><span class="st2">Jan 3 – Mar 7, 2027 · 90 slots to hand out</span></div><span class="x"><svg width="16" height="16"><use href="#i-x"/></svg></span></div>
+        <div class="db" style="display:block">
+          <div class="gapGroup">
+            <div class="co olive">
+              <b class="h same">2 slots are open that short teams can take</b>
+              <p class="same">A team that is short, free then and allowed there can have it.</p>
+              <p class="rel hl">On Sun, Feb 7 the drafts ran out of tries before placing 15U A. The slot is open, and 15U A can have it.<button class="mk" data-n="3" aria-label="Change 3">3</button></p>
+            </div>
+            <p class="lab same">Open slots</p>
+            <table class="tk2 gap same"><thead><tr><th>When</th><th>Where</th><th>Who could take it</th><th></th></tr></thead>
+              <tbody><tr><td>Sun, Feb 7 · 10:30 a.m.</td><td>Field 3</td><td>15U A</td><td><span class="btn">Give it to <svg width="13" height="13"><use href="#i-chev"/></svg></span></td></tr><tr><td>Sun, Mar 7 · 12:00 p.m.</td><td>Field 1, side B</td><td>9U Select</td><td><span class="btn">Give it to <svg width="13" height="13"><use href="#i-chev"/></svg></span></td></tr></tbody></table>
+          </div>
+          <div class="gapGroup rel hl">
+            <button class="mk" data-n="1" aria-label="Change 1">1</button>
+            <div class="co">
+              <b class="h">13U AA and 9U AA were at the same time on 8 of 10 Sundays</b>
+              <p>9U AA has 10 practices and 13U AA has 15, so 10 is the most they can be together: a team never gets extra time to match another. On 2 Sundays they were apart.</p>
+              <div class="drs"><span>Change the rules ›</span></div>
+            </div>
+            <p class="lab">Sundays apart</p>
+            <table class="tk2 gap"><thead><tr><th>When</th><th>Why</th></tr></thead>
+              <tbody><tr><td>Sun, Feb 14</td><td>9U AA is off that day</td></tr><tr><td>Sun, Feb 28</td><td>13U AA has a game day</td></tr></tbody></table>
+          </div>
+          <div class="gapGroup rel hl">
+            <div class="co">
+              <b class="h">9U A and 9U B shared a facility on 8 of 10 Sundays</b>
+              <p class="rel">On the other 2 each practised alone, and each is billed a whole facility for those slots.<button class="mk" style="right:-14px" data-n="2" aria-label="Change 2">2</button></p>
+              <div class="drs"><span>Change the rules ›</span></div>
+            </div>
+            <p class="lab">Sundays alone</p>
+            <table class="tk2 gap"><thead><tr><th>When</th><th>Why</th></tr></thead>
+              <tbody><tr><td>Sun, Jan 17</td><td>9U B is off that day: school trip</td></tr><tr><td>Sun, Mar 7</td><td>No facility was free for both at one start</td></tr></tbody></table>
+          </div>
+        </div>
+      </div></div></div>
+      <div class="expl"></div>
+      <div class="legend">
+        <div class="li" id="y-1"><button class="mk2" data-n="1" type="button">1</button><p><b>Each rule not kept every week is one more group of the window, in the shape every group already has</b>: a callout, then its table, with a hairline between groups. No new heading. The rule groups come after the open-slot and short-team groups, because those are about the shares (the hard rules) and these are about the arrangement. A rule kept every week is not listed; "never at the same time" appears only if a hand move broke it. Each miss has one reason, the first one found: a team off, a game day, start and finish times, not enough free places at one start, a share or a weekly cap used up, a field kept for another group.</p></div>
+        <div class="li" id="y-2"><button class="mk2" data-n="2" type="button">2</button><p><b>Sharing's money consequence is said once, here</b>: a team that practised alone is billed a whole facility for that slot. Today nothing says so (Stage 0's check).</p></div>
+        <div class="li" id="y-3"><button class="mk2" data-n="3" type="button">3</button><p><b>Placements the week dropped when its attempts ran out</b> (Stage 0's second check) show up today as one more open slot and one more short team, with no why. One plain sentence in the free group names it. A known gap to fix with it: the window doesn't read "no back-to-back days", so it may offer a seat to a team that rule keeps off it. This is Ask 13.</p></div>
+      </div>
+      <p class="note"><b>Reported, not changed here:</b> the shipped "Give it to" menu sits inside a table cell. It was ruled for this window, but it has no row on the table exception register, so the register should gain one saying it is not a precedent. The new rule groups add no control to any cell.</p>
+    </div>
+  </section>
+
+  <!-- ═════════ 9 · ASKS ═════════ -->
+  <section class="pane" id="p-asks">
+    <p class="lede"><b>Fourteen asks.</b> Each starts on my recommendation. Pick an answer for each, then copy the summary at the bottom and paste it back in the chat. The first nine are about sides; Asks 10 to 13 are the same-time rule; Ask 14 is house league.</p>
+    <div class="asks">
+      <div class="card">
+        <h3>What you already ruled (shown so it can be corrected)</h3>
+        <ul>
+          <li><b>P2, P3:</b> a schedule can run on half a field, both halves (a team on each) or one half (the other elsewhere). Case C ("Half cost") is unchanged.</li>
+          <li><b>R1–R10:</b> one more entry in Add a rule; it tries and reports; same start, same building, each team on its own field, at full price, the bill unchanged; a team's share is the limit; no "adjacent fields"; a group that can never line up is caught on entry; a hand move that breaks a group warns; the report is per rule and covers sharing; "never at the same time" is offered with it; teams only.</li>
+        </ul>
+      </div>
+
+      <div class="ask">
+        <h3>Ask 1 · How a field's two sides are kept</h3>
+        <ul>
+          <li><b>A · One field that splits in two</b> (drawn; the database review's proposal). The venue list keeps Field 1 as one facility and says it has sides A and B. Permits, house league, a coach's event, tryout days, tournaments and the venue table all still see one Field 1. Anything not yet taught about sides reads a side as the whole field: it may call a clash that isn't one, and never misses one.</li>
+          <li><b>B · Each side is its own facility.</b> The venue list gains "Field 1, side A" and "Field 1, side B". Every picker in the product offers them, a permit counts them as extra fields (its Held hours double), and every check that compares facilities must learn they overlap Field 1. One it misses double-books without a word, and the count found about twenty such places.</li>
+        </ul>
+        <p class="rec">Recommend A.</p>
+        <div class="pick" role="radiogroup" aria-label="Ask 1"><label><input type="radio" name="a1" id="a1a" value="A" checked> A</label><label><input type="radio" name="a1" id="a1b" value="B"> B</label></div>
+      </div>
+
+      <div class="ask">
+        <h3>Ask 2 · A practice on a side: one practice or half a practice toward a team's share?</h3>
+        <p class="why">This matters under "Evenly" and "By percentage" (under "A set number a week" a practice is always one practice). Today a shared slot counts half (ruled 2026-10-12: "a shared slot is half a facility wherever time is measured"), and a "Half cost" field counts one. <b>One picture:</b> Field 1 in two sides for 9U AA and 9U A, Field 2 whole for 15U AA and 15U A ("Facilities for a group" keeps each age on its field), 3 starts × 10 Sundays, Evenly, $120.00 a whole-field slot.</p>
+        <div class="tblwrap"><table class="own">
+          <thead><tr><th></th><th>9U AA</th><th>9U A</th><th>15U AA</th><th>15U A</th><th>Left open</th><th class="n">Billed</th></tr></thead>
+          <tbody>
+            <tr class="hi"><td><b>A · Half</b></td><td>30 on a side · $1,800</td><td>30 on a side · $1,800</td><td>15 · $1,800</td><td>15 · $1,800</td><td>Nothing</td><td class="n">$7,200 of $7,200</td></tr>
+            <tr><td><b>B · One</b></td><td>23 on a side · $1,380</td><td>22 on a side · $1,320</td><td>15 of 23: 8 short · $1,800</td><td>15 of 22: 7 short · $1,800</td><td>15 sides</td><td class="n">$6,300 of $7,200</td></tr>
+            <tr><td>Today, as "Sharing a facility"</td><td>30 shared · $1,800</td><td>30 shared · $1,800</td><td>15 · $1,800</td><td>15 · $1,800</td><td>Nothing</td><td class="n">$7,200 of $7,200</td></tr>
+          </tbody>
+        </table></div>
+        <ul>
+          <li><b>A · Half a practice</b>, like a shared slot. The same two teams on the same field get the same time and the same bill whether the club calls it sharing or sides. Every team has equal field time; the 9U teams get more, smaller practices.</li>
+          <li><b>B · One practice.</b> Counting a side as a whole practice makes the dome look like it has 90 practices for 4 teams. The 15U teams can't reach 22 or 23 on 30 whole-field slots, so they end short, and 15 sides go unused while the club still pays for them.</li>
+          <li><b>C · One practice, and change sharing to match.</b> Equal practice counts everywhere, but it reverses the 2026-10-12 ruling and gives the B row's shortfall to every sharing schedule too.</li>
+        </ul>
+        <p class="rec">Recommend A. Left as they are, "Half cost" fields still count one practice (case C is ruled unchanged). Noted, not asked: that is the one place a smaller space counts whole.</p>
+        <div class="pick" role="radiogroup" aria-label="Ask 2"><label><input type="radio" name="a2" id="a2a" value="A" checked> A</label><label><input type="radio" name="a2" id="a2b" value="B"> B</label><label><input type="radio" name="a2" id="a2c" value="C"> C</label></div>
+      </div>
+
+      <div class="ask">
+        <h3>Ask 3 · A side's price</h3>
+        <ul>
+          <li><b>A · The field's price ÷ 2, worked out, never typed.</b> A side of a full field is $40.00 an hour here; a side of a "Half cost" field is a quarter. The permit stays the one place prices live, and nothing is stored twice.</li>
+          <li><b>B · Worked out, and a club may set a different share per field</b> in the venue list (a side at 60%, say). A second place to set a price, which the permit's own price rows would not show.</li>
+        </ul>
+        <p class="rec">Recommend A. A club that pays differently for small fields already has "Half cost" and "A percent" on the permit.</p>
+        <div class="pick" role="radiogroup" aria-label="Ask 3"><label><input type="radio" name="a3" id="a3a" value="A" checked> A</label><label><input type="radio" name="a3" id="a3b" value="B"> B</label></div>
+      </div>
+
+      <div class="ask">
+        <h3>Ask 4 · How many sides, and what they are called</h3>
+        <ul>
+          <li><b>A · Two sides, lettered A and B</b> (drawn). The storage allows up to four, so quarters can come later with no database change.</li>
+          <li><b>B · Up to four, lettered A to D</b>, offered now ("Two sides" / "Four quarters").</li>
+          <li><b>C · Sides the club names</b> ("North half", "Infield"). Each field then needs its own list of names, which is the storage step up the review described.</li>
+        </ul>
+        <p class="rec">Recommend A. The ask came from halves; quarters are for very young age groups and nobody has asked for them.</p>
+        <div class="pick" role="radiogroup" aria-label="Ask 4"><label><input type="radio" name="a4" id="a4a" value="A" checked> A</label><label><input type="radio" name="a4" id="a4b" value="B"> B</label><label><input type="radio" name="a4" id="a4c" value="C"> C</label></div>
+      </div>
+
+      <div class="ask">
+        <h3>Ask 5 · How far sides reach</h3>
+        <ul>
+          <li><b>A · The club's rep schedules, and the practices they make.</b> A coach, a family and the calendar see "Field 1, side A" on the practice.</li>
+          <li><b>B · Also house-league time a schedule hands out</b>, practices and games (see Ask 14).</li>
+          <li><b>C · Also a coach's own event and tryout days</b>: the coaches portal's pickers offer sides.</li>
+          <li><b>D · Also tournaments.</b></li>
+        </ul>
+        <p class="why">Each step adds a kind of booking that must say which side, and everything that reads it. Under Ask 1 A, anything left out keeps booking whole fields, which is safe.</p>
+        <p class="rec">Recommend A.</p>
+        <div class="pick" role="radiogroup" aria-label="Ask 5"><label><input type="radio" name="a5" id="a5a" value="A" checked> A</label><label><input type="radio" name="a5" id="a5b" value="B"> B</label><label><input type="radio" name="a5" id="a5c" value="C"> C</label><label><input type="radio" name="a5" id="a5d" value="D"> D</label></div>
+      </div>
+
+      <div class="ask">
+        <h3>Ask 6 · Sharing, house league's "teams at once", and sides</h3>
+        <ul>
+          <li><b>A · Keep all three, counted alike</b> (tab 1). Sharing is a rule about teams and works on any field, divider or not. Sides are a fact about a field. "Teams at once" stays house league's own. Two teams on one field count and bill half each, whichever way they got there (Ask 2 A). A side is never shared. The help says when to use which.</li>
+          <li><b>B · Sides replace sharing for two at once.</b> Sharing stays only for 3 or 4 teams. A club with no divider loses the two-team case.</li>
+        </ul>
+        <p class="rec">Recommend A.</p>
+        <div class="pick" role="radiogroup" aria-label="Ask 6"><label><input type="radio" name="a6" id="a6a" value="A" checked> A</label><label><input type="radio" name="a6" id="a6b" value="B"> B</label></div>
+      </div>
+
+      <div class="ask">
+        <h3>Ask 7 · May a same-time group land on the two sides of one field?</h3>
+        <p class="why">R3 says "each on its own field, at full price; the bill does not change". It was ruled before sides existed.</p>
+        <ul>
+          <li><b>A · Yes: a side counts as a place.</b> 13U AA and 9U AA may be on Field 1 side A and side B at 9:00 a.m. Each team is billed for the place it got, exactly as it would be without the rule. The rule only picks the start; it never changes a price. For whole fields this changes nothing R3 ruled.</li>
+          <li><b>B · No: a group always takes whole fields.</b> On a dome where sides are most of the free time, groups line up less often.</li>
+        </ul>
+        <p class="rec">Recommend A. Read this way, R3's "full price" means the rule never makes a team share or pay less, which stays true.</p>
+        <div class="pick" role="radiogroup" aria-label="Ask 7"><label><input type="radio" name="a7" id="a7a" value="A" checked> A</label><label><input type="radio" name="a7" id="a7b" value="B"> B</label></div>
+      </div>
+
+      <div class="ask">
+        <h3>Ask 8 · The grid</h3>
+        <ul>
+          <li><b>A · One row per field, its cell split</b> (tab 4, second drawing). About 60 px a side: names are cut.</li>
+          <li><b>B · A row per side</b> (tab 4, third drawing), indented under its field. Every slot keeps its shipped look and drop target; a whole-field slot stays on the field's own row. The PDF follows with a column per side.</li>
+        </ul>
+        <p class="rec">Recommend B.</p>
+        <div class="pick" role="radiogroup" aria-label="Ask 8"><label><input type="radio" name="a8" id="a8a" value="A"> A</label><label><input type="radio" name="a8" id="a8b" value="B" checked> B</label></div>
+      </div>
+
+      <div class="ask">
+        <h3>Ask 9 · The permit's Used figure</h3>
+        <ul>
+          <li><b>A · Used stays what teams actually booked</b> (tab 6). A side counts half the field's time. One line under it names the unused time a final schedule holds that no team has yet: its open slots, and house-league time not yet given to teams.</li>
+          <li><b>B · Used counts that held time too.</b> The Permits page would read higher for time nobody practises on.</li>
+        </ul>
+        <p class="rec">Recommend A. Used is how a club decides what to rent next year; time with no team on it is not used, even when no other schedule can have it.</p>
+        <div class="pick" role="radiogroup" aria-label="Ask 9"><label><input type="radio" name="a9" id="a9a" value="A" checked> A</label><label><input type="radio" name="a9" id="a9b" value="B"> B</label></div>
+      </div>
+
+      <div class="ask">
+        <h3>Ask 10 · Where the same-time rule ranks</h3>
+        <ul>
+          <li><b>A · Below the hard rules, above the conveniences</b> (the plan's proposal). First: a team twice at once, days off, game days, shares, start and finish times, facilities kept for a group, the daily and weekly caps, no back-to-back days, bookings already on the books. Then the group. Then: the same field each week, the same nights, early and late taken in turn, prime time.</li>
+          <li><b>B · Below everything, conveniences included:</b> a group lines up only where nothing else would move. Groups would line up much less often.</li>
+        </ul>
+        <p class="rec">Recommend A. Prime time sits with the conveniences here; say so if it should rank above the group.</p>
+        <div class="pick" role="radiogroup" aria-label="Ask 10"><label><input type="radio" name="a10" id="a10a" value="A" checked> A</label><label><input type="radio" name="a10" id="a10b" value="B"> B</label></div>
+      </div>
+
+      <div class="ask">
+        <h3>Ask 11 · A team in both a sharing rule and a same-time rule</h3>
+        <ul>
+          <li><b>A · Refused when entered</b> (tab 7), as a team in two sharing rules is refused today.</li>
+          <li><b>B · Allowed:</b> the sharing pair moves as one member of the group. More to build and more ways for a week to fail.</li>
+        </ul>
+        <p class="rec">Recommend A. With sides, a club that wants 9U A and 9U B together and at the same time as 11U AA can put all three in one same-time rule on Field 1's sides and a second field.</p>
+        <div class="pick" role="radiogroup" aria-label="Ask 11"><label><input type="radio" name="a11" id="a11a" value="A" checked> A</label><label><input type="radio" name="a11" id="a11b" value="B"> B</label></div>
+      </div>
+
+      <div class="ask">
+        <h3>Ask 12 · The hand-move warning</h3>
+        <ul>
+          <li><b>A · The tooltip, and the notice after the drop</b> (tab 7). The one warning said twice, because it moves another family's Sunday. The notice needs its held, wrapping face for it (the face its errors already use).</li>
+          <li><b>B · The tooltip only</b>, like every other rule break today.</li>
+        </ul>
+        <p class="rec">Recommend A.</p>
+        <div class="pick" role="radiogroup" aria-label="Ask 12"><label><input type="radio" name="a12" id="a12a" value="A" checked> A</label><label><input type="radio" name="a12" id="a12b" value="B"> B</label></div>
+      </div>
+
+      <div class="ask">
+        <h3>Ask 13 · Naming the placements a week drops</h3>
+        <ul>
+          <li><b>A · Yes, one sentence in the window's free group</b> (tab 8): "On Sun, Feb 7 the drafts ran out of tries before placing 15U A." Fix the back-to-back gap with it.</li>
+          <li><b>B · No.</b> The slot already shows as open, with the team that can take it.</li>
+        </ul>
+        <p class="rec">Recommend A. A linked group makes a dropped week more likely, and R2 says the builder reports why.</p>
+        <div class="pick" role="radiogroup" aria-label="Ask 13"><label><input type="radio" name="a13" id="a13a" value="A" checked> A</label><label><input type="radio" name="a13" id="a13b" value="B"> B</label></div>
+      </div>
+
+      <div class="ask">
+        <h3>Ask 14 · House league</h3>
+        <p class="why">The open question asked whether both apply to a house-league schedule "unchanged". They can't: a club schedule's rules never name house-league teams, and house league divides its own practice time in its Practice time window, with "Teams at once".</p>
+        <ul>
+          <li><b>A · Rep schedules only, for this project.</b> Time a club schedule hands to house league stays whole fields. A same-time rule for house league (siblings are common there) goes to the ideas backlog as its own piece of work.</li>
+          <li><b>B · The same-time rule also reaches house league's Practice time</b>, built in that window. Sides stay rep only.</li>
+          <li><b>C · Both reach house league.</b> House-league practices and games carry a side too.</li>
+        </ul>
+        <p class="rec">Recommend A.</p>
+        <div class="pick" role="radiogroup" aria-label="Ask 14"><label><input type="radio" name="a14" id="a14a" value="A" checked> A</label><label><input type="radio" name="a14" id="a14b" value="B"> B</label><label><input type="radio" name="a14" id="a14c" value="C"> C</label></div>
+      </div>
+
+      <div class="card paste">
+        <h3>Your answers, to paste back</h3>
+        <textarea id="answers" readonly aria-label="Your answers"></textarea>
+        <button class="copy" id="copy" type="button">Copy my answers</button>
+        <span class="copied" id="copied" hidden>Copied. Paste it in the chat.</span>
+      </div>
+      <div class="card" id="design-card">
+        <h3>What the design check changed before you saw this</h3>
+        <ul id="design-list">
+          <li><b>The venue list:</b> "Two sides" is a tick, as every yes-or-no choice is, not a second select. The locked-sides message is said once under the heading. The window now shows all its fields, including Bookings contact and Notes, and the dome has the same six fields on every tab.</li>
+          <li><b>The tick list stays flat</b>, as it ships: "Field 1 (whole)", "Field 1, side A", "Field 1, side B". The first round drew an indented list with a half-ticked parent box, which could not tell "both sides" from "one side".</li>
+          <li><b>The grid:</b> a Today frame was added (the same teams, sharing). The side rows are indented under their field instead of joined by a dashed line (dashed already means "undecided" in this product). A whole-field slot stays on the field's row without hatching (hatching already means "a booking holds it"), and empty cells read "—". The toolbar is redrawn as it ships.</li>
+          <li><b>The PDF:</b> the first round said a side's heading would never read "half". The shipped PDF labels a column by its price, so it would, unless the build teaches it sides. The legend now says so.</li>
+          <li><b>The bill:</b> "Split" is the plain fixed value it is, the first payment's date is back, and the statement and the closing line are under the table, in its frame.</li>
+          <li><b>The rule:</b> a rule that can never line up stops Generate the way an unfinished rule does today (the reason shows when you press it), not by greying the button. The notice after a hand move is drawn as the shipped white notice.</li>
+          <li><b>The report:</b> the schedule page keeps its one line (owner ruling 2026-11-24); the rules join its sentence. In the why window the rule groups take the shape every group has, with no new heading.</li>
+          <li><b>Type and words:</b> table headings use the product's condensed display face; time ranges read "9:00 a.m.–1:30 p.m.", as the product writes them; the page no longer scrolls sideways on a phone; every highlight opens its note.</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3>After you rule</h3>
+        <p style="margin:0">The answers go into the plan as Stage 2's and Stage 3's rulings. Stage 2 starts with the database change on the ruled shape, then the venue list, the rows, the builder, every clash check, the grid, the PDF and permit use. Stage 3 needs no database change. The working words ("side", "Field 1 in two sides", the rule's names and its report sentences) go through one marketing pass per stage before the walk.</p>
+      </div>
+    </div>
+  </section>
+</div>
+
+<script>
+(function () {
+  /* ── the two grids, drawn from data so both read the same week ── */
+  var dates = ["Sun, Jan 3", "Sun, Jan 10", "Sun, Jan 17", "Sun, Jan 24", "Sun, Jan 31", "Sun, Feb 7", "Sun, Feb 14"];
+  var times = ["9:00–10:30 a.m.", "10:30 a.m.–12:00 p.m.", "12:00–1:30 p.m."];
+  var C = { "9U AA": "#2E7D5B", "9U A": "#B5541C", "9U B": "#3B5BA5", "9U Select": "#8A3FA0", "13U AA": "#A0832B", "13U A": "#2A8C99", "15U AA": "#6B6B2A", "15U A": "#9A3B5E" };
+  /* Field 1, by date then start: [side A, side B], or "W:team" for the whole field. */
+  function f1(d, t) {
+    if (t === 2 && d < 2) return "W:13U AA";
+    var a = [["9U AA", "9U A"], ["9U B", "9U Select"], ["9U A", "9U AA"]][t];
+    if (d % 2) a = [a[1], a[0]];
+    if (t === 2 && d === 4) a = [a[0], ""];
+    return a;
+  }
+  function f2(d, t) { return [["13U AA", "15U AA", "13U A"], ["15U A", "13U AA", "15U AA"], ["13U A", "15U A", "13U AA"]][t][d % 3]; }
+  function chip(team, time, cls) {
+    if (!team) return '<div class="chip open"><b>' + time + '</b><span>Open</span></div>';
+    return '<div class="chip ' + (cls || "") + '" style="--tc:' + C[team] + '"><b>' + time + '</b><span>' + team + '</span></div>';
+  }
+  function shell(id, gridHtml, note) {
+    var el = document.getElementById(id);
+    if (!el) return;
+    el.innerHTML =
+      '<div class="ptitle"><b>Winter dome, 9U</b><span>Milton Sports Dome · Jan 3 – Mar 7, 2027 · a draft</span></div>' +
+      '<div class="gcard"><div class="gh2">Read the schedule</div><div class="gsub">Choose a view to inspect this schedule.</div>' +
+      '<div class="tbar"><span class="lead">Grid<svg width="14" height="14"><use href="#i-chev"/></svg></span>' +
+      '<span class="rng"><i>‹</i>Jan 3 – Feb 14, 2027<i>›</i></span>' +
+      '<span class="grow"></span>' +
+      '<span class="quiet">Facility<svg width="13" height="13"><use href="#i-chev"/></svg></span>' +
+      '<span class="quiet">Group<svg width="13" height="13"><use href="#i-chev"/></svg></span>' +
+      '<span class="quiet">Team<svg width="13" height="13"><use href="#i-chev"/></svg></span>' +
+      '<span class="btn"><svg width="15" height="15"><use href="#i-dots"/></svg>Tools</span><span class="btn">Export</span><span class="btn pri">Send</span></div>' +
+      gridHtml + '</div>' + (note || "");
+  }
+  var cols = 'grid-template-columns:7.25rem repeat(' + dates.length + ',minmax(0,1fr))';
+  function head() { var h = '<div class="gh">Facility</div>'; dates.forEach(function (d) { h += '<div class="gh">' + d + '</div>'; }); return h; }
+  function label(name, sub, cls, mk) { return '<div class="fc ' + (cls || "") + (mk ? ' rel' : '') + '">' + name + '<small>' + sub + '</small>' + (mk || "") + '</div>'; }
+
+  function none() { return '<span class="none">—</span>'; }
+  /* Today: Field 1 whole, the same teams paired by "Sharing a facility" (names stacked, the edge split). */
+  var tg = '<div class="grid" style="' + cols + '">' + head() + label("Field 1", "Milton Sports Dome");
+  dates.forEach(function (_, d) {
+    tg += '<div class="cell">';
+    times.forEach(function (tm, t) {
+      var v = f1(d, t);
+      if (typeof v === "string") { tg += chip(v.slice(2), tm); return; }
+      if (!v[1]) { tg += chip(v[0], tm); return; }
+      tg += '<div class="chip shared" style="--tc:' + C[v[0]] + ';--tc2:' + C[v[1]] + '"><b>' + tm + '</b><span>' + v[0] + '</span><span>' + v[1] + '</span></div>';
+    });
+    tg += '</div>';
+  });
+  tg += label("Field 2", "Milton Sports Dome");
+  dates.forEach(function (_, d) { tg += '<div class="cell">'; times.forEach(function (tm, t) { tg += chip(f2(d, t), tm); }); tg += '</div>'; });
+  tg += '</div>';
+  shell("gridT", tg);
+
+  /* A: one row for Field 1, split cells */
+  var a = '<div class="grid" style="' + cols + '">' + head() + label("Field 1", "Milton Sports Dome");
+  dates.forEach(function (_, d) {
+    a += '<div class="cell">';
+    times.forEach(function (tm, t) {
+      var v = f1(d, t);
+      if (typeof v === "string") { a += chip(v.slice(2), tm); return; }
+      a += '<div class="chip2"><div class="t">' + tm + '</div><div class="hv">' +
+        (v[0] ? '<div style="--tc:' + C[v[0]] + '"><em>A</em>' + v[0] + '</div>' : '<div class="op"><em>A</em>Open</div>') +
+        (v[1] ? '<div style="--tc:' + C[v[1]] + '"><em>B</em>' + v[1] + '</div>' : '<div class="op"><em>B</em>Open</div>') + '</div></div>';
+    });
+    a += '</div>';
+  });
+  a += label("Field 2", "Milton Sports Dome");
+  dates.forEach(function (_, d) { a += '<div class="cell">'; times.forEach(function (tm, t) { a += chip(f2(d, t), tm); }); a += '</div>'; });
+  a += '</div>';
+  shell("gridA", a);
+
+  /* B: a row per side, plus a whole-field row only where it holds a slot */
+  var b = '<div class="grid" style="' + cols + '">' + head();
+  b += label("Field 1", "Whole field · Milton Sports Dome", "", '<button class="mk" style="right:4px;top:4px" data-n="2" aria-label="Note 2">2</button>');
+  dates.forEach(function (_, d) {
+    var inner = "";
+    times.forEach(function (tm, t) { var v = f1(d, t); if (typeof v === "string") inner += chip(v.slice(2), tm); });
+    b += '<div class="cell">' + (inner || none()) + '</div>';
+  });
+  [0, 1].forEach(function (s) {
+    b += label("Side " + "AB"[s], "Field 1 · Milton Sports Dome", "sub", s ? "" : '<button class="mk" style="right:4px;top:4px" data-n="1" aria-label="Note 1">1</button>');
+    dates.forEach(function (_, d) {
+      var inner = "";
+      times.forEach(function (tm, t) { var v = f1(d, t); if (typeof v !== "string") inner += chip(v[s], tm); });
+      b += '<div class="cell">' + (inner || none()) + '</div>';
+    });
+  });
+  b += label("Field 2", "Milton Sports Dome");
+  dates.forEach(function (_, d) { b += '<div class="cell">'; times.forEach(function (tm, t) { b += chip(f2(d, t), tm); }); b += '</div>'; });
+  b += '</div>';
+  shell("gridB", b);
+
+  /* ── tabs ── */
+  var names = ["idea", "venue", "rows", "grid", "bill", "used", "rule", "report", "asks"];
+  var tabs = document.querySelectorAll(".tab");
+  function show(name) {
+    tabs.forEach(function (t) { t.setAttribute("aria-selected", String(t.dataset.t === name)); });
+    document.querySelectorAll("section.pane").forEach(function (p) { p.classList.toggle("on", p.id === "p-" + name); });
+    try { history.replaceState(null, "", "#" + name); } catch (e) { /* hash only */ }
+    window.scrollTo(0, 0);
+  }
+  tabs.forEach(function (t) { t.addEventListener("click", function () { show(t.dataset.t); }); });
+  /* A numbered dot (on the drawing or in the legend) or a tag opens its explanation under that drawing. */
+  function say(stage, html, li) {
+    var ex = stage ? stage.querySelector(".expl") : null;
+    if (!ex) return;
+    ex.innerHTML = html; ex.classList.add("on");
+    stage.querySelectorAll(".li").forEach(function (x) { x.classList.toggle("flash", x === li); });
+    ex.scrollIntoView({ behavior: "smooth", block: "nearest" });
+  }
+  document.addEventListener("click", function (e) {
+    var b = e.target.closest ? e.target.closest(".mk, .mk2") : null;
+    if (b) {
+      var stage = b.closest(".stage"), li = null;
+      if (!stage) return;
+      stage.querySelectorAll(".legend .li").forEach(function (x) { if (x.id.split("-")[1] === String(b.dataset.n)) li = x; });
+      if (li) say(stage, li.querySelector("p").innerHTML, li);
+      return;
+    }
+    var tg = e.target.closest ? e.target.closest("button.tag") : null;
+    if (tg) { var holder = document.createElement("span"); holder.textContent = tg.dataset.say || ""; say(tg.closest(".stage"), holder.innerHTML, null); }
+  });
+  document.querySelectorAll(".viewrow").forEach(function (row) {
+    var pane = row.closest("section");
+    row.querySelectorAll("button[data-v]").forEach(function (b) {
+      b.addEventListener("click", function () {
+        row.querySelectorAll("button[data-v]").forEach(function (x) { x.setAttribute("aria-pressed", String(x === b)); });
+        pane.classList.toggle("show-diff", b.dataset.v === "diff");
+      });
+    });
+  });
+  /* The asks, said back as text to paste. */
+  var askNames = ["How sides are kept", "A side counts toward a share as", "A side's price", "How many sides and their names", "How far sides reach", "Sharing, teams at once and sides", "A same-time group on two sides of one field", "The grid", "The permit's Used figure", "Where the same-time rule ranks", "A team in a sharing and a same-time rule", "The hand-move warning", "Naming the dropped placements", "House league"];
+  var out = document.getElementById("answers");
+  function fill() {
+    var lines = ["Sides and same-time drawings, round 1: my answers"];
+    askNames.forEach(function (label, i) {
+      var picked = document.querySelector("input[name=a" + (i + 1) + "]:checked");
+      lines.push("Ask " + (i + 1) + " (" + label + "): " + (picked ? picked.value : "no answer"));
+    });
+    lines.push("Notes: ");
+    out.value = lines.join("\n");
+  }
+  document.querySelectorAll(".pick input").forEach(function (r) { r.addEventListener("change", fill); });
+  fill();
+  document.getElementById("copy").addEventListener("click", function () {
+    var done = function () { document.getElementById("copied").hidden = false; };
+    var fallback = function () { out.removeAttribute("readonly"); out.focus(); out.select(); out.setAttribute("readonly", ""); done(); };
+    if (navigator.clipboard && navigator.clipboard.writeText) { navigator.clipboard.writeText(out.value).then(done, fallback); } else { fallback(); }
+  });
+  var h = (location.hash || "").replace("#", "");
+  if (names.indexOf(h) > -1) show(h);
+  window.addEventListener("hashchange", function () { var n = (location.hash || "").replace("#", ""); if (names.indexOf(n) > -1) show(n); });
+})();
+</script>

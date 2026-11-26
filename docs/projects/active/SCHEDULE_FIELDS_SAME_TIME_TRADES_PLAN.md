@@ -59,13 +59,16 @@ Three asks came out of the owner's demo with Milton Bats (2026-11-25), all about
 - Schedule From/To are not held inside the permit's dates on a one-permit schedule (a To typed past the permit's end
   cuts slots past it).
 - The place-unique index is per schedule family, so two separate schedules can hold the same field at the same start;
-  the builder reads bookings, never another schedule's draft or open slots.
+  the builder reads bookings, never another schedule's draft or open slots. *(The index half is confirmed from the dev
+  snapshot by the Stage 2 census, 2026-11-25. It is the only double-booking floor in the database, and it matches the
+  same start only.)*
 - Coaches read only their own team's slots; the one cross-team glimpse is the venue clash check.
 - Hand back and take back need the schedule permission (assistants hold it by default); money asks need the team's
   money access; replying to a review is head coach only (`lib/coach-capabilities.ts`).
 - A loss on a team that has already paid becomes a request to pay rather than a credit (`lostTime`).
 - Coach notices from the scheduler are bell only; rep families are not messaged about a club slot change.
-- The venue list has no parent or part-of-a-field idea (rests on a missing column and a grep).
+- The venue list has no parent or part-of-a-field idea. *(Confirmed by the census, 2026-11-25: `org_venue_facilities`
+  has 8 columns in the dev snapshot, none of them a parent or a count.)*
 
 ## 2. Rulings (owner, 2026-11-25)
 
@@ -143,10 +146,94 @@ from a prompt this plan carries.
 - [x] Confirm the `holdable` drop is unreported. **Done 2026-11-25: it is unreported, and untested.** Whether the
       per-rule report names it is an ask for Stage 3's drawing. A helper lead, not yet opened: the "why" window does not
       model back-to-back days, so a seat dropped for that rule may be offered to the team that was just dropped from it.
-- [ ] Census every reader of a venue facility (permits, the builder, the clash checks, bookings, house league, tournaments,
-      the public site) for Stage 2. Hand it to `/dba` with the two storage shapes in §5.
-- [ ] Owner, in a browser: New schedule › "Find the time across every permit", tick two of a permit's fields, generate.
-      This is today's route to P1 and has only been read from code.
+- [x] Census every reader of a venue facility (permits, the builder, the clash checks, bookings, house league, tournaments,
+      the public site) for Stage 2. Hand it to `/dba` with the two storage shapes in §5. Prompt: §4a below. **Done
+      2026-11-25:** the census is under Stage 2 ("Census"). `/dba` proposes shape (B), reversing the earlier lean to
+      (A), in §5. Still a proposal: the owner rules it in the halves drawing.
+- [x] ~~Owner, in a browser: "Find the time" with two of a permit's fields~~ — superseded: Stage 1 built P1 on the form
+      itself, and the owner checked that build in a browser (2026-11-25).
+
+#### 4a. Prompt for the census session (fresh chat)
+
+> Census for the club schedules plan, Stage 0's last item. Plan: `docs/projects/active/SCHEDULE_FIELDS_SAME_TIME_TRADES_PLAN.md`
+> — read §1, §2c (P2, P3), Stage 2 and §5. No code and no migration in this session: the census, then `/dba`, then records.
+>
+> **The question.** P2/P3 let a club split a field into parts (one team on each half; or one half here and the other
+> elsewhere). Today a facility is one place: one slot, one booking, one clash. Find EVERY reader in the product that
+> treats a venue facility as a place, so the storage choice in §5 — (A) a part is its own facility row linked to its
+> field, or (B) a field carries a number of parts and a slot names which part — is made knowing its full reach.
+>
+> **Cover at least:** the venue library and its windows; permits (time blocks, facility shares, "Half cost", free time,
+> Used, the permit answer, dates off); the club schedule builder (`cutSlots`, `slotRoom`, sharing, value balancing,
+> keep, the place-unique index, Find the time); every clash check (`lib/venue-clash*.ts`, the database floor, house
+> league's and the coaches portal's); bookings and the club calendar; house league (fields, games, practices, its
+> schedules); rep-team events and the coaches portal's venue list; tournaments (diamonds/fields, the schedule
+> generator, brackets); the public site and exports; the demo seeds and UAT fixtures. Decide from the schema snapshots
+> and `docs/agents/db/DATA_DICTIONARY.md`, never from migration files.
+>
+> **Use helpers for the reading** (CLAUDE.md "Broad reading and searching go to a helper agent"): split the areas
+> across parallel Explore agents; open the cited lines yourself before recording anything as fact.
+>
+> **Produce** one table per area in a new section of the plan (Stage 2, "Census"): reader · file:line · what it reads
+> (a facility id, a venue's facility list, a facility name) · whether it assumes one facility = one place at a time ·
+> what shape (A) would need there · what shape (B) would need there. Then a short verdict: how many readers each shape
+> touches, and which ones are risky (money, clash floors, anything a customer is billed or double-booked by).
+>
+> **Then run `/dba`** on the two shapes with the census in hand, and record its finding in §5 (still a proposal, not a
+> ruling: the owner rules it in the halves drawing). Note any reader that makes "Sharing a facility" and halves give
+> two different bills for the same picture.
+>
+> **Records:** the plan (Stage 0 ticked, the census, §5), the board line `schedule-fields-trades` in
+> `docs/agents/strategy/OWNER_BRIEF_PROJECTS.json` (that file holds other sessions' edits: change only this block, and
+> commit only it). Commit at the owner's word. Finish with a product-owner summary: how far halves reach, the
+> recommended shape and why, and anything that changes what the halves drawing must show.
+
+#### 4b. Prompt for the halves and same-time drawing (fresh chat)
+
+> Drawing session for the club schedules plan, Stages 2 and 3 drawn together (halves of a field, and teams at the same
+> time). Plan: `docs/projects/active/SCHEDULE_FIELDS_SAME_TIME_TRADES_PLAN.md`. Read §1, §2a (R1–R10), §2c (P2, P3),
+> §3, Stage 2 with its Census, Stage 3, §5 and the Open questions. **No code and no migration in this session:**
+> drawings, `/design`, the asks, then records.
+>
+> **Why together.** The same-time rule counts free fields at one start, and two teams on the two halves of one field is
+> a case it must handle (§3). Draw them as one picture so neither is built and then redrawn.
+>
+> **Draw** one Claude Artifact page (house layout, whole-screen before and after at true size, every highlight
+> clickable). Draw each control from the component the product already ships, and use the coaches portal's written
+> formatting rules as the benchmark. Cover:
+> 1. **The venue list:** splitting a field into halves, and what a field with halves looks like there.
+> 2. **New schedule and its rows:** a row on a whole field, on one half (P3: the other half goes elsewhere), or on
+>    both halves (P2).
+> 3. **The schedule grid:** a field with halves (one row with a split cell, or a row per half; draw both).
+> 4. **The bill and the schedule's PDF:** what a half costs and how it is labelled, beside a "Half cost" field (case C,
+>    unchanged) and beside "Sharing a facility".
+> 5. **The permit's Used figure** once the builder sees other schedules' time (Stage 2's owed item), and what a booked
+>    half does to it.
+> 6. **The same-time rule (Stage 3's drawing list):** the rule row with "at the same time / never at the same time";
+>    the message when a group can never line up (R6); the per-rule report on the draft cards and in the "Open slots
+>    and short teams" window, covering "Sharing a facility" too (R8); the warning when a hand move breaks a group (R7).
+>
+> **The asks to put to the owner, each with a recommendation** (lettered choices, the plan's Ask style):
+> - The storage shape: (B), as `/dba` proposes in §5, or (A). Explain it in what the club sees, not in columns.
+> - Does a practice on half a field count as one practice or half a practice toward a team's share (Census, "the two
+>   bills")? Show the season's numbers for one picture under each answer.
+> - A half's price: derived as the field's price ÷ 2, and whether a club may change it.
+> - Halves only, or up to four parts? Named or numbered?
+> - How far halves reach: club schedules and the practices they make only, or also house-league games on club time,
+>   a coach's own event, tryout days, tournaments.
+> - How "Sharing a facility", house league's "teams at once" and halves relate.
+> - The same-time rule: where it ranks (§3); refusing a team that is in both a sharing rule and a same-time rule; and
+>   whether the report names the placements the week drops when its attempts run out (Stage 0).
+> - Whether halves and the same-time rule apply to a house-league schedule unchanged (Open questions).
+>
+> **Words:** working words only. Halves need words that are neither "half field" / "Half cost" (case C, already on the
+> bill and the PDF) nor "part" (already time added to a schedule). They go to the one `/marketing` pass per stage.
+>
+> **Before hand-off:** run `/design` on the page and apply its findings. **Records:** the plan (the drawing under
+> Stage 2 and Stage 3, the asks), and the board line `schedule-fields-trades` in
+> `docs/agents/strategy/OWNER_BRIEF_PROJECTS.json` (that file holds other sessions' edits: change only this block, and
+> commit only it). Commit at the owner's word. Finish with a product-owner summary: what the club would see, and each
+> ask with its recommendation.
 
 ### Stage 1 — Pick the fields (P1)
 No migration expected.
@@ -198,7 +285,22 @@ No migration expected.
 
 ### Stage 2 — A field in halves, and the builder sees other schedules (P2, P3)
 Migration first. Drawn together with Stage 3.
-- [ ] `/dba` on the storage shape (§5), then the migration; **update `docs/agents/db/DATA_DICTIONARY.md` and run
+- [x] `/dba` on the storage shape (§5): proposes (B), 2026-11-25; the owner rules it in the drawing.
+- [x] Drawing, round 1 (2026-11-25), Stages 2 and 3 together: [SCHEDULE_HALVES_SAME_TIME_DRAWINGS.html](SCHEDULE_HALVES_SAME_TIME_DRAWINGS.html),
+      artifact https://claude.ai/artifact/YTTYBE67znkupmwLYkLZRR. Through `/design` (20 findings, listed on its Asks tab;
+      all applied except: no separate Today frame where only one hint or the arithmetic changes (the bill, the Permits
+      row; said on the drawing), and one reported for the register owner, below). Its fourteen asks are below
+      ("Drawing, round 1: the asks"), **ruled by the owner 2026-11-25** (Ask 4 B and Ask 14 C against the recommendation).
+- [ ] Drawing, round 2: what the rulings add (four parts, halves of a quartered field, house league), with the two open
+      asks below. Then `/dba` on how a booking names a part, before the migration.
+- [ ] Reported by `/design`, not this project's to fix: the shipped "Give it to" menu inside a cell of the "Open slots and
+      short teams" window has no row on `docs/agents/design/TABLE_EXCEPTION_REGISTER.md` (it was ruled for that window;
+      a register row should say it is not a precedent).
+- Build notes from the drawing's design check (each a small addition to a shared piece): the tick list (`PickField`)
+  needs "a side unticks its whole field and the reverse", and new box words ("Field 1 in two sides, Field 2 side A") in
+  the field-list words; the notice pill needs a held, wrapping face for the R7 notice (its error face already has one);
+  the PDF needs a side-aware column key and no price word on a side's heading (`weightWords` would print "· half").
+- [ ] The migration on the ruled shape (§5's columns and floor; a `/dba` pass on the migration itself); **update `docs/agents/db/DATA_DICTIONARY.md` and run
       `npm run refresh:snapshots` (dev + prod) in the same unit of work** (`npm run check:dictionary`).
 - [ ] Venue list: split a field into parts (`VenueLibraryWindows.tsx`).
 - [ ] Permits: a permit holds a whole field or a part; "Half cost" stays for case C. Decide in the drawing how a part's
@@ -211,12 +313,251 @@ Migration first. Drawn together with Stage 3.
       the builder sees another schedule's draft (warn, as the finder does). Used is a number the Permits page shows: the
       change is said in the drawing.
 - [ ] What "Sharing a facility" means beside halves (a rule about teams) is an ask for the drawing; the two must not
-      give two different bills for the same picture.
+      give two different bills for the same picture. **The census found they do today (Census §E): settle the counting
+      rule in the drawing.**
+
+#### Drawing, round 1: the asks (Stages 2 and 3) — RULED by the owner 2026-11-25
+
+**Ruled (owner, 2026-11-25, pasted from the drawing):** "Ask 1 A, Ask 2 A, Ask 3 A, Ask 4 B, Ask 5 A, Ask 6 A, Ask 7 A,
+Ask 8 B, Ask 9 A, Ask 10 A, Ask 11 A, Ask 12 A, Ask 13 A, Ask 14 C." No notes. Two answers differ from the recommendation:
+**Ask 4 B** (up to four parts, lettered A–D, offered now: "Two sides" / "Four quarters") and **Ask 14 C** (sides and the
+same-time rule both reach house league).
+
+**Read together, two answers need the owner's word before the build (asked 2026-11-25, open below):**
+- **Ask 5 A and Ask 14 C.** 14 C has house-league practices and games carry a side, which is what Ask 5 B said. Recorded
+  as ruled; this plan reads 14 C as widening Ask 5 to house-league time a club schedule hands out, until the owner says
+  otherwise. Ask 5's C (a coach's own event, tryout days) and D (tournaments) stay out.
+- **Ask 4 B and Ask 1 A.** Ask 1 A stores one part per booking (0 = the whole field). If a quartered field may also be
+  used as halves (quarters A+B together), a booking must be able to name a half of a quartered field. The storage shape
+  holds, but how a booking names a part changes: a `/dba` pass before the migration.
+
+Working words in the drawing: a field's tick in the venue list reads "Two sides"; its parts are **"side A" and "side B"**;
+a row reads "Field 1 in two sides" or "Field 2 side A". With Ask 4 B a field may be in four parts, A–D: the words for
+quarters are new for the `/marketing` pass. None is settled. Each ask below carries the drawing's recommendation and the
+owner's answer.
+
+| # | Ask | Recommended |
+|---|---|---|
+| 1 | How sides are kept: **A** one field that splits in two (`/dba`'s shape (B)) · **B** each side its own facility (shape (A)) | A |
+| 2 | A side toward a share (Evenly, By percentage): **A** half a practice, like a shared slot · **B** one practice · **C** one, and sharing changes to match. The drawing's numbers: Field 1 in sides for two 9U teams, Field 2 whole for two 15U teams, 30 starts each, Evenly, $120 a slot. A: every team $1,800, nothing open, $7,200 billed. B: shares of 22–23, the 15U teams 7 and 8 short, 15 sides unused, $6,300 billed. | A |
+| 3 | A side's price: **A** the field's price ÷ 2, worked out, never typed (a side of a "Half cost" field is a quarter) · **B** worked out, and a club may set its own share per field | A |
+| 4 | How many and what names: **A** two sides, lettered A and B (storage allows four later) · **B** up to four, A–D · **C** names the club types | A |
+| 5 | How far sides reach: **A** rep schedules and the practices they make · **B** + house-league time a schedule hands out · **C** + a coach's event and tryout days · **D** + tournaments | A |
+| 6 | Sharing, "teams at once" and sides: **A** keep all three, counted and billed alike; a side is never shared · **B** sides replace sharing for two at once | A |
+| 7 | May a same-time group land on two sides of one field? R3 ("each on its own field, at full price") predates sides. **A** yes: a side is a place, each team billed for the place it got, as without the rule · **B** no: groups take whole fields | A |
+| 8 | The grid: **A** one row per field, its cell split (about 60 px a side: names cut) · **B** a row per side, indented under its field; a whole-field slot stays on the field's row; the PDF gets a column per side | B |
+| 9 | The permit's Used figure: **A** stays booked time, a side counts half; one line names unused time a final schedule holds that no team has (open slots, house-league time not yet given out) · **B** Used counts that held time too | A |
+| 10 | The same-time rule's rank: **A** below the hard rules, above the conveniences (§3; prime time with the conveniences) · **B** below everything | A |
+| 11 | A team in a sharing rule and a same-time rule: **A** refused on entry · **B** allowed, the pair moves as one member | A |
+| 12 | The hand-move warning (R7): **A** the drag tooltip, and the notice after the drop repeats it (the notice's held, wrapping face) · **B** the tooltip only, like every rule today | A |
+| 13 | Name the placements a week drops when its tries run out: **A** yes, one sentence in the why window's free group, and fix the back-to-back gap with it · **B** no | A |
+| 14 | House league: **A** rep schedules only for this project; a house-league same-time rule goes to the ideas backlog · **B** the rule also reaches house league's Practice time · **C** both reach house league | A |
+
+**The owner's answers:** 1 A · 2 A · 3 A · **4 B** · 5 A (widened by 14 C, above) · 6 A · 7 A · 8 B · 9 A · 10 A · 11 A ·
+12 A · 13 A · **14 C**.
+
+**What round 1 did not draw, and the rulings now need (round 2, before any build):**
+- **The venue list control for four parts.** Round 1 drew a "Two sides" tick; with Ask 4 B the choice has three answers
+  (whole only, two sides, four quarters), so it is a select again, not a tick (the design check's own rule: a tick is for
+  yes or no).
+- **A field in quarters** on the New schedule tick list, the grid (Ask 8 B: up to four rows under a field), the PDF's
+  columns and the bill's caption (a quarter of a full field costs a quarter and reads "1 more" today).
+- **Halves of a quartered field**, if the owner allows them (open question below).
+- **House league (Ask 14 C):** its Practice time window with a field in sides or quarters and its own "Teams at once";
+  the same-time rule built into that window (a club schedule's rules never name house league); house-league games on a
+  side or quarter (the game generator on club time, the public schedule pages, family emails and game-day reminders
+  carry the part in their place words). House league reads its seasons in place (CLAUDE.md, House League 9f·17): no
+  closed-season page question arises.
+- How Ask 2 A and Ask 3 A extend to quarters: a quarter counts a quarter of a practice toward a share and costs the
+  field's price ÷ 4. Recorded as how the rulings combine, for the owner to correct in round 2.
+
+**Facts the drawing rests on (opened in the code 2026-11-25):**
+- **The bill counts a slot by its price, not its place** (`BillWindow.tsx:138-150`, `billTeamCaption` in
+  `lib/club-schedule-words.ts:1337`): one team at weight 0.5 is "half", whatever made it 0.5. So a side reads "half-field
+  slots" on the bill with no caption change; only the Split hint gains "or one side". The drawing keeps the word "half"
+  there on purpose: a side of a full field and a "Half cost" field cost the club the same.
+- **Used already counts every finalized practice** (`permitUse` reads `readClubBookings`). What it misses is a final
+  schedule's open slots and house-league time not yet divided (`CLUB_SCHEDULE_SEVERAL_PERMITS_PLAN.md`, Session D note).
+  Hence Ask 9: the drawing says that time in a line, rather than counting it as used.
+- **A hand-move rule break is said only in the drag tooltip** (`dropVerdict`, `lib/club-schedule-view.ts:334-382`;
+  `ruleBroken` `:385`); nothing after the drop repeats it. Hence Ask 12.
+- **A club schedule's rules never name house league** (`lib/league-practice-time-server.ts:32`); house league divides its
+  own time with "Teams at once" (1–4 per facility). So the open question's "apply unchanged" cannot hold. Hence Ask 14.
+- **Every rule refusal is server-side today** (`readScheduleSettings`, `lib/club-schedule-settings.ts:387-407`). R6's
+  entry-time message is worked out in the window from what the form holds; game days can't be known there and go to the
+  report.
+- **Shares are a split of the whole supply** (`shareTargets`, `lib/club-schedule-engine.ts:19-21`), which is why counting
+  a side as one practice (Ask 2 B) inflates the supply and leaves whole-field teams short.
+
+#### Census — every reader of a venue facility (Stage 0, 2026-11-25)
+
+Four helper reads, one per area; this session opened every line marked ✓ and the schema in the dev snapshot. Unmarked
+rows are helper leads with their line numbers: open them at build. "One place?" = does it assume one facility is one
+place at a time. **(A)** = a part is its own `org_venue_facilities` row with a link to its field. **(B)** = a field
+carries a number of parts and a booking names which (0 = the whole field). 💲 = a figure a customer is billed or
+budgets by. 🛡 = a double-booking guard.
+
+**The schema (dev snapshot, ✓).** `org_venue_facilities` has 8 columns and no parent or parts idea. Eight foreign keys
+point at a club facility: `club_schedule_slots.facility_id`, `org_time_block_facilities.facility_id` (PK block +
+facility), `org_permit_facility_shares.facility_id` (PK permit + facility; the price share), `rep_team_events`,
+`rep_tryout_sessions`, `league_games` and `league_practices` (`.org_venue_facility_id` each), and
+`venue_facilities.source_org_facility_id` (a tournament's copy). **The only database floor against a double booking
+anywhere is `club_schedule_slots_family_place_start`** (family, venue, coalesce(facility), starts_at): one schedule
+family, the same start, the same facility. There is no exclusion constraint on any booking table; every other guard is
+in the app.
+
+**A. Venue library and pickers**
+
+| Reader | Where | Reads | One place? | (A) needs | (B) needs |
+|---|---|---|---|---|---|
+| Library read, save, update diff | `app/api/admin/org/venues/route.ts:61`, `:84`, `:177`, `:211` | a venue's facility list | yes, a flat list | parent column; save field then parts; diff a tree | the parts count |
+| Duplicate name check | `lib/venue-library.ts:190` (route `:228`) | names in one venue | yes | "North half" under two fields collides: unique per parent | nothing |
+| Remove refused while booked | `lib/venue-library-server.ts:186-189` | facility id → bookings | yes | also check its parts | refuse lowering the count below a booked part |
+| Remove refused while a permit or schedule holds it | route `:242`, `:244` | id in blocks / slots | yes | include the parts' ids | same, for a part a slot names |
+| Rename cascade to upcoming bookings | `lib/venue-library-server.ts:226`, `:235` | id → `field_number` / `location` | yes, one name per id | a field rename must rewrite its parts' bookings too | build the text from name + part |
+| Usage per facility ("In use", removable) | `lib/venue-library-server.ts:103-108` | bookings per id | yes | roll parts up to the field | per part, for lowering the count |
+| Venue window rows, library table | `VenueLibraryWindows.tsx:292-298`; `app/[orgSlug]/admin/org/venues/page.tsx:58-59` | the facility list | yes | parts appear as extra fields: nest or filter | a parts control per row |
+| Pickers for every booking form | `lib/venue-clash-lookup.ts:71`, `:84-86`; `lib/where-field.ts:180`; `components/venue/WhereField.tsx:282` | the facility list | yes | parts offered as fields in every picker (house league, coach events, tryouts) | nothing, unless a picker may book a part |
+
+**B. Permits (the time the club holds)**
+
+| Reader | Where | Reads | One place? | (A) needs | (B) needs |
+|---|---|---|---|---|---|
+| 💲 "No fields listed = every field" ✓ | `lib/permit-time.ts:118-121` (`blockUnits`) | the venue's list | yes | **parts become extra units**: leave them out | nothing |
+| The three lists that feed it | `lib/permit-lookup.ts:84-89`; `PermitWindows.tsx:77`; `lib/permit-free-time-server.ts:81` | every facility | yes | each must leave parts out | nothing |
+| Two more expansions that skip the shared one | `lib/permit-server.ts:305`; `PermitWindows.tsx:326` | the venue's list | yes | filter each separately | nothing |
+| 💲 Held hours ✓ | `lib/permit-time.ts:277` | units × the window | yes, sums per facility | a missed filter doubles Held | nothing (a permit holds whole fields, P2) |
+| 💲 An hour of each field ✓ | `lib/permit-time.ts:288`, `:305-315` (`shareOf`, `fieldPrices`) | share per unit; cost ÷ full-field hours | yes | a missed filter lowers every field's hour; a part with no share row is priced Full | nothing |
+| 💲 Held · Booked · Unused ✓ | `lib/permit-time.ts:453` | a booking's facility = the unit | yes | a booking on a part misses its field: Booked runs low | a half booking reads as the whole field booked (Booked high) until it unions per part |
+| 🛡 Two blocks over one field | `lib/permit-time.ts:543-544` | shared unit ids | yes | a field and its part never overlap: double-held | nothing (permit blocks are whole) |
+| The permit's answer ("outside the permit") | `lib/permit-time.ts:126`, `:198-220` | id ∈ units | yes | a part is outside a block that holds its field | nothing |
+| 💲 Permit window places, Permits page Used, workbook | `lib/permit-server.ts:212-217`, `:276-305`; `app/[orgSlug]/admin/permits/page.tsx:142`; `lib/permit-use-workbook.ts:57-77` | rows per unit | yes | parts as rows double the totals | nothing |
+| 💲 Price rows and sentences | `PermitWindows.tsx:488-504`; `lib/permit-words.ts:259`, `:271-317` | share per facility; "N full fields" | yes | a part gets a price row and counts as a "field" | nothing |
+| Field list words ("Fields 1–6") | `lib/permit-words.ts:85` | names | yes | part names break the ranges | nothing |
+| Save step and its trigger | mig 322 `org_permit_save` and the block-facility trigger | block facility ids | yes | a part passes the same-venue check | the part on a **schedule's** row (P3) |
+| Find the time, free cells ✓ | `lib/permit-free-time.ts:175`, `:192`, `:225-228` | a booking takes its facility | yes | field and halves offered as separate free places at once | a half booking takes the whole field (under-offers) until it learns parts |
+| Renew, payload, labels | `app/api/admin/org/permits/route.ts:314-318`; `lib/permit-form.ts:110-149`; `lib/permit-server.ts:137-152`, `:370` | ids, names | yes | works | the part on a schedule's row only |
+
+**C. The club schedule builder**
+
+| Reader | Where | Reads | One place? | (A) needs | (B) needs |
+|---|---|---|---|---|---|
+| Cutting the slots ✓ | `lib/club-schedule-engine.ts:121`, `:134-138` | `blockUnits` | yes | **cuts the field and both halves at one start** | cut N part slots for a split row |
+| 🛡 Slot key ✓ | engine `:93`, `:135`; rebuilt `lib/club-schedule-server.ts:312` | venue · facility · start | yes | works, but nothing makes a field and its part exclusive | the part in the key |
+| 💲 A slot's weight ✓ | engine `:141` → server `:376-380` → `shareOf`; also keep `:48`, server `:531`, coach `:305`, `[scheduleId]/route.ts:239` | the share row for the id | yes | **a part finds no row: priced as a full field** | the field's share ÷ parts |
+| 🛡 Already on the books ✓ | engine `:192` (`heldSlots`) | equal facility id | yes | a field booking holds its parts and the reverse | same facility and (either whole or the same part) |
+| 🛡 One seat per slot | engine `:980`, `:987`; `lastPass` `:1069-1101` | the slot key | yes | a field and its parts need one shared seat at a start | same |
+| 🛡 Room in a slot ✓ | `lib/club-schedule-settings.ts:184-189` (`slotRoom`) | weight under 1 = one team, never shared | yes | a part's weight decides it | same |
+| 🛡 Time added to a schedule ✓ | `lib/club-schedule-family.ts:65` | equal facility id | yes | a field and its part must clash | same facility, overlapping part |
+| 🛡 Kept slots ✓ | `lib/club-schedule-keep.ts:197` | facility id (none meets all) | partly | parent and part | a whole-field slot meets every part |
+| 🛡 Two rows on one place | `lib/club-schedule-permit-rows.ts:61`, `:91-96` | facility ids | yes | a field row and a part row must clash | nothing |
+| Inside the permit ✓ | `lib/club-schedule-permit-rows.ts:173` (`rowOffItsPermit`); `:138-146`; `:196-197` | the permit's units | yes | **a part row is refused** (its permit holds the field); the field reads "left off" | nothing: the field is held, the part is in it |
+| 🛡 The database floor ✓ | snapshot `club_schedule_slots_family_place_start`; save lookup mig 494 | coalesce(facility) at one start | yes | a field and its part at one start both pass: needs a trigger with a parent lookup | the part in the index; a whole and a part at one start both pass: needs a one-table trigger |
+| Same field each week, moved around | engine `:139`, `:756`, `:801-803`, `:943-951`; keep `:47`; `lib/club-schedule-view.ts:315` | facility id as "the same field" | yes | the two halves are two fields | the halves are one field unless the part is added (decide) |
+| 💲 Team results, fair shares | engine `:1362-1374`; `FairShares.tsx:71-72` | facilities used, priced minutes | yes | halves count as two fields | nothing |
+| 💲 Bill, corrections, hand-backs ✓ | `lib/club-schedule-bill.ts:105`; `lib/club-schedule-send.ts:421`, `:671-681`, `:715-739`; `lib/club-schedule-coach.ts:305` | weight ÷ teams | n/a | right once a part's weight is right | right once the weight is ÷ parts; hand-back key gains the part |
+| 💲 Bill window Full/Half label | `BillWindow.tsx:145-146`, `:204` | weight exactly 1 or 0.5 | yes | half of a "Half cost" field (0.25) is neither | same |
+| Grid rows and cells | `lib/club-schedule-view.ts:54-65`, `:182-189`; `ScheduleGrid.tsx:72-75`, `:153` | one row per facility | yes | the field and each part become rows | both halves land in one cell |
+| New schedule form | `NewScheduleWindow.tsx:176-177`, `:935-948`, `:1489-1490`, `:1670-1780` | the list; place keys | yes | "every field" pulls parts in; parts hidden (the permit holds the field) | a part picker on a row |
+| Settings and gaps "fields for a group" | `lib/club-schedule-settings.ts:378`; server `:1334`; `lib/club-schedule-gaps.ts:115`, `:154`; view `:396-399` | facility ids | yes | a rule on the field must reach its parts | nothing (the part is in its field) |
+| Send: the practice it writes | `lib/club-schedule-send.ts:387-393`; mig 326 `:579-581`; `lib/club-slot-event.ts:23-24` | facility id + name → the event | yes | the part's id and name flow through | **the practice needs the part** |
+| Generate summary, exports, PDF | `app/api/admin/schedules/generate/route.ts:92`, `:106`; `lib/export/club-schedule-export.ts:53-55`; `lib/club-schedule-document.ts:123-128` ✓, `:160` | facility id, weight, name | yes | parts as columns beside the field | the PDF cell (`:160`) is keyed by facility: one half overwrites the other |
+
+**D. Clash checks and bookings (rep events, tryouts, the coaches portal, the club calendar)**
+
+| Reader | Where | Reads | One place? | (A) needs | (B) needs |
+|---|---|---|---|---|---|
+| 🛡 THE cross-program rule ✓ | `lib/venue-clash.ts:270-276` (`clashKindOf`) | two different ids are never a clash | yes | **Field 1 against its own half reads "no clash": a silent double booking** until it learns the parent | same field and (either whole or the same part); a reader not yet taught calls the two halves a clash |
+| Everything that inherits it | `lib/venue-clash.ts:259`, `:284`; `lib/club-calendar.ts:295`; `lib/venue-clash-lookup.ts:390`, `:434`, `:532`, `:542-566` | the rule | inherits | nothing more | proposed bookings carry the part |
+| The pool of the club's bookings ✓ | `lib/venue-clash-lookup.ts:258-288` | four tables + tournament games | n/a | the parent with each facility name | **the part on every select** |
+| 🛡 Coach live check (event, tryout day) | `app/api/coaches/[orgSlug]/teams/[teamId]/venue-clashes/route.ts:59-67` | the body's facility | inherits | nothing | the part in the body |
+| 🛡 Tournament copy → club facility | `lib/venue-clash-lookup.ts:216-221`; `lib/club-calendar.ts:265`; `lib/tournament-venue-copy.ts:82`, `:202` | `source_org_facility_id` | yes, 1:1 | copy each part with its link, or map to the field | nothing (a tournament books whole fields) |
+| Words of a clash, calendar words, team ICS | `lib/venue-clash-words.ts:121-131`; `lib/club-calendar-view.ts:378`; `lib/export/team-feed-words.ts:134` | names, stored text | n/a | the part's own name | say the part |
+
+**E. House league**
+
+| Reader | Where | Reads | One place? | (A) needs | (B) needs |
+|---|---|---|---|---|---|
+| 🛡 THE per-program rule ✓ (house league and tournaments both) | `lib/venue-identity.ts:204-219` (`placementsShareSurface`) | equal ids; venue when one side has none | yes | parent and part (silent miss as above) | (facility, part) |
+| 🛡 Its callers | `lib/league-schedule-conflict.ts:173`; `lib/league-venue.ts:190`, `:198`; `lib/league-schedule-health.ts:298`; `lib/league-season-calendar.ts:203`; `…/venue-check/route.ts:101`; the refusals in `…/schedule/route.ts:235`, `…/practices/route.ts:144` | the rule | inherits | nothing more | the part on each booking |
+| Location words "Venue — Facility" | `lib/league-venue.ts:80` | id + name | yes | the field's name may be lost | a part argument |
+| Game and practice writes, edits, "moved?" | `lib/db.ts:2829`, `:2850`, `:2905`, `:2948`; `…/schedule/[gameId]/route.ts:199` | facility id | yes | nothing | write the part; a part change is a move |
+| Games generated on club time | `lib/league-generate-server.ts:52`; `lib/league-game-generator.ts:18`; mig 409 `:456` | the slot's facility | yes, "a slot is one facility at one time" | part slots arrive as extra fields | the game inherits the slot's part (`league_games` gains it) |
+| Practices handed out on club time | `lib/league-practice-time-server.ts:58`; mig 393 `:411-429` ("teams at once" 1–4) | slot facility; several teams on one slot | partly | nothing | the natural home for a part per team |
+| Linking, published changes, telling families, mail, public pages | `lib/league-game-place.ts:23`; `lib/league-game-changes-server.ts:66`; `lib/league-practice-tell.ts:195`; `lib/league-schedule-mail.ts:74`; `app/[orgSlug]/league/[seasonSlug]/schedule/page.tsx:104`; `lib/club-games-read.ts:157` | key, id, name | yes | the full name | the part in the key and the words |
+
+**F. Tournaments**
+
+| Reader | Where | Reads | One place? | (A) needs | (B) needs |
+|---|---|---|---|---|---|
+| Copy from the club library (three paths) | `lib/tournament-venue-copy.ts:73-109`, `:145`, `:193` | the venue's facility list | yes | parts copy as extra diamonds; a parent column remapped on `venue_facilities` | nothing |
+| 🛡 Generator picks every field by default ✓ | `app/[orgSlug]/admin/tournaments/schedule/Generator.tsx:215-216`; `GeneratorParts.tsx:45`, `:120` | the facility list | yes | **games on the field and its halves at one time** | nothing |
+| 🛡 Generator's used-slot guard ✓ | `lib/schedule-generator.ts:430-440` | facility id in the key | yes | nothing stops field + part | nothing |
+| 🛡 Overlap guard on every game save | `lib/tournament-overlap-guard.ts:50`, `:62`; `lib/schedule-conflict.ts:274` | `venue_facility_id` | yes | parent-aware | nothing |
+| Playoff fit check, bracket picker, lane resolve, timeline, import, counts | `PlayoffGenerator.tsx:156`, `:238`; `BracketBuilder.tsx:277`; `…/schedule-facility-lanes/route.ts:207`; `ScheduleTimeline.tsx:366`; `lib/import/tournament-schedule.ts:381`; `TournamentSetupWizard.tsx:399`; `…/tournament-dashboard/route.ts:215` | the facility list | yes | parts inflate lanes and counts, show as columns and picks | nothing |
+
+**G. The public site and exports**
+
+| Reader | Where | Reads | One place? | (A) needs | (B) needs |
+|---|---|---|---|---|---|
+| Public game label and detail | `lib/venue-label.ts:35`, `:63`; `lib/public-game-detail.ts:64` | the facility name | yes | the field's name with the part's | say the part |
+| Exports that read stored text | `lib/export/schedule-calendar.ts:86`, `:109`; `lib/team-calendar.ts:71`; `lib/game-day-reminders.ts:126`; `lib/export/schedule-document.ts:101` (splits at " - ") | `location` text | n/a | nothing | the text carries the part, keeping the separator |
+| Tournament CSV, house league CSV/XLSX | `useScheduleExport.ts:63`; house league schedule page `:1152` | names | yes | nothing | the part |
+
+**H. Demo seeds and test fixtures**
+
+| Reader | Where | Reads | One place? | (A) needs | (B) needs |
+|---|---|---|---|---|---|
+| The dome, Fields 1–6, two at "Half cost" ✓ | `scripts/seed-club-fixture.mjs:1346-1348`, `:1400`; `scripts/lib/prospect-demo-rep.mjs:424`, `:441`; `scripts/lib/dome-practice-split.mjs:14-16` ✓ | facilities; share 0.5 | yes | nothing | nothing |
+| Bookings on library facilities | `scripts/seed-club-fixture.mjs:1154`, `:1195`, `:1238`; `scripts/seed-prospect-demo.mjs:291`, `:544` | facility ids | yes | nothing | nothing (whole by default) |
+| Copies of the club's facilities | `scripts/seed-on-sale-pictures-extras.mjs:156`, `:184`, `:213` | every facility, with the link | yes | filter or remap parents | nothing |
+| Clone seeds that copy whole rows (nine scripts) | `scripts/seed-live-tournament.mjs:191` and eight more (helper list) | every column | yes | a copied parent id points at the source: remap in each | nothing |
+| 🛡 Demo sandbox check | `scripts/check-demo-sandbox.mjs:259` | game facility | yes | parent-aware | nothing |
+
+⚠ **The domes' "half fields" are case C, not P2/P3** (✓): Fields 5 and 6 are whole fields the permit pays "Half cost" for;
+the PDF already prints "Fields 5–6 are half fields" (`lib/club-schedule-document.ts:128`). A halves demo is new seed
+work under either shape.
+
+**Verdict.** Of the 69 rows above (many rows cover several readers), **(A) needs a change in 53 and (B) in 40**.
+(B)'s 40 count house league in full (7), so they assume house-league schedules may use halves (open question below).
+The count is not what decides it.
+What decides it is what happens to a reader a build misses:
+- **Under (A), a missed reader is silently wrong.** Two kinds. (1) **Lists:** about a dozen places expand "every field
+  at the venue" or list a venue's facilities, and each would count a part as one more field. That doubles a permit's
+  Held hours, lowers every field's hourly price, and has the tournament generator put games on a field and its halves
+  at once. (2) **Comparisons:** at least ten separate checks say "two different facility ids are no clash". Each
+  would let Field 1 and its own half be booked together without a word. There is no shared function to fix once:
+  two rule modules, `venue-clash.ts` and `venue-identity.ts`, plus about seven of the builder's own checks.
+- **Under (B), a missed reader errs on the safe side.** It sees the half as the whole field: two halves read as a
+  clash, free time is under-offered, Booked reads high. Every list, picker, copy and permit figure stays as it is,
+  because the field is still one row.
+- **Risky under both:** 💲 the slot's weight (a part's price), the bill's Full/Half label, Booked on a permit; 🛡 the
+  builder's seat, `heldSlots`, the family and kept-slot checks, and the database floor. Neither shape's index can say
+  "a whole field and its half at one start". Both need a trigger.
+
+**"Sharing a facility" and halves give two different bills for the same picture (✓).** The picture is two teams on
+Field 1 at 6:00 p.m.:
+1. **Each slot's money is the same.** Sharing bills each team the field's weight ÷ 2 (`lib/club-schedule-bill.ts:105`).
+   A half bills its own weight, and under (B) that is the field's share ÷ 2. Under (A) a half has no share row and
+   bills a **whole field each** (`shareOf` defaults to 1).
+2. **The season's money is not the same.** Under "Evenly" and "By percentage" a team's share counts practices. A shared
+   slot counts ½ toward each team (`lib/club-schedule-engine.ts:818`). A team alone on a half counts 1, because the
+   count ignores weight; a "Half cost" field already counts 1 today. So a team practising on halves reaches its share
+   with half as many slots as a team sharing whole fields. **The same picture, run as halves, hands out and bills half
+   the time it would as sharing.** This is a rule to settle in the drawing, not a storage question.
+3. **The correction's hours figure.** When the club sends changes, a gained shared slot's hours are recorded at the full
+   slot (`lib/club-schedule-send.ts:421` records `teamIds: [t]`; `:678`). A gained half records half. The amount is
+   right in both cases; the hours shown beside it differ. This exists today for sharing (see §5).
+4. **The bill's label.** Full or Half is read from the weight (`BillWindow.tsx:145-146`). A half of a full field reads
+   "Half", the same word as a "Half cost" field. A half of a "Half cost" field (0.25) reads neither.
 
 ### Stage 3 — Teams at the same time (R1–R10)
 No migration expected (the rule is one more entry in the schedule's settings).
-- [ ] Drawing: the rule row with its "at the same time / never at the same time" choice; the entry-time message (R6); the
-      per-rule report on the draft cards and in the "Open slots and short teams" window; the hand-move warning (R7).
+- [x] Drawing, round 1 (2026-11-25), drawn with Stage 2 (its tabs 7 and 8): the rule row with its "at the same time /
+      never at the same time" choice; the entry-time message (R6); the per-rule report on the draft cards, on the page
+      and in the "Open slots and short teams" window, covering sharing (R8); the hand-move warning (R7). Its asks (7, 10–14)
+      are under Stage 2, "Drawing, round 1: the asks". **Ruled 2026-11-25** (7 A, 10 A, 11 A, 12 A, 13 A, 14 C).
+      Ask 14 C adds the rule inside house league's Practice time window: drawn in round 2.
 - [ ] `lib/club-schedule-settings.ts`: the rule's shape, limits and validator beside `sharing`; `rulesOn`, `defaultRules`.
 - [ ] `lib/club-schedule-engine.ts`: a per-week step between `needsFor` and `planWeek` that picks starts where every
       member is eligible, free and still owed a slot, with enough free fields in one place, and hands the result to the
@@ -271,9 +612,54 @@ Migration only if Stage 4's record needs it.
   the quota and the violation check.
 - **Decision:** a trade is priced by the Send the changes arithmetic, never by new arithmetic. **Rationale:** a sent
   bill's terms never change; one place works out what a slot is worth.
-- **Open — halves, two shapes for `/dba`:** (A) a part is its own row in the venue's field list with a link to its
-  field; (B) a field carries a number of parts and a slot names which part. (A) keeps every "one field, one slot" reader
-  working and puts the new rule in the clash checks; (B) touches the slot key everywhere. Recommended to `/dba`: (A).
+- **Proposed by `/dba` (2026-11-25); RULED by the owner 2026-11-25 (round 1 Ask 1 A): halves are stored as shape
+  (B).** ⚠ Ask 4 B (up to four parts) and a possible "half of a quartered field" change how a booking names its part:
+  `/dba` re-passes that before the migration (Stage 2, round 2). Ask 14 C puts `league_games` in scope (the column
+  below is no longer conditional) and house league's practice time with it. A field carries a number of parts; a booking names one part, or 0 for the whole field. **This reverses the
+  plan's earlier lean to (A)**, whose reason ("(A) keeps every one-field-one-slot reader working") the census disproves.
+  (A) keeps the readers that only carry an id working. It breaks the two kinds that matter: every list of a venue's
+  fields and every "same id?" clash comparison, and it breaks them silently (Census, Verdict).
+  - **Reasons.** (1) **A reader the build misses fails safe under (B)**: it reads a half as the whole field, so it
+    over-reports a clash rather than missing one. Under (A) the same miss double-books, or doubles a permit's Held hours.
+    With ten separate clash comparisons and a dozen list expansions, some reader will be missed. (2) **Permits do not
+    change.** P2 has the club holding the whole field and case C stays "Half cost", so a permit never names a part.
+    Every 💲 permit figure (Held, the hour of a field, the price rows, the workbook) is untouched. Under (A) a part
+    row would need a share row or bill as a full field. (3) **Pickers, the tournament copy and generator, the library
+    and every count are untouched**, because the field stays one row. (4) **A half's price is derived:** the field's
+    share ÷ its parts, at the five places a slot's weight is read (✓ grep: engine `:141`, `lib/club-schedule-keep.ts:48`,
+    `lib/club-schedule-coach.ts:305`, `lib/club-schedule-server.ts:531`, `app/api/admin/schedules/[scheduleId]/route.ts:239`).
+    The cleanest form is one `weightOf(facility, section, permit)`, so none of the five can forget it. No price is stored twice.
+  - **Proposed columns (named for the migration session; not "part", which already means time added to a schedule
+    (mig 491) and a house-league time row (`lib/league-time.ts:46`); words for customers go to `/marketing`):**
+    `org_venue_facilities.sections smallint NOT NULL DEFAULT 1`, CHECK `org_venue_facilities_sections_range`
+    (1 to 4; the product offers 2 unless the drawing rules otherwise). Then
+    `facility_section smallint NOT NULL DEFAULT 0` (0 = the whole field), with a named CHECK `>= 0`, on
+    `club_schedule_slots`, `org_time_block_facilities` (a schedule's row, P3), `rep_team_events` and
+    `league_practices` (the practices Send the changes writes from a slot), and on `league_games` only if
+    house-league games may be generated on halves (an ask). A default of 0 means every existing row, and every reader
+    not yet taught, reads the whole field. No `org_id` question arises: each column sits on a table already scoped.
+  - **Proposed floor.** The unique index becomes (family, venue, coalesce(facility), facility_section, starts_at).
+    A trigger on `club_schedule_slots` (one table, no join) refuses a whole-field row and a section row of the same
+    field at an overlapping time in one family, and a section above the field's `sections`. A trigger on
+    `org_time_block_facilities` refuses a section on a permit-owned block (a permit holds whole fields) and one above
+    the count. `org_time_block_facilities`' primary key becomes (block, facility, facility_section). Lowering a field's
+    `sections` is refused while anything names a higher one (route and trigger). Across schedules there is no database
+    floor today and none is proposed. It stays the app's clash pool, which is Stage 2's owed "sees other schedules"
+    item.
+  - **What changes under (B).** The 40 census rows marked for (B). The bulk is in the builder: every place key
+    (`slotKeyOf`, `pos`, `facKey`, `placeKey`, the grid cells, the PDF cell at `lib/club-schedule-document.ts:160`),
+    the weight ÷ parts, the exclusivity guards (`heldSlots`, the seat, `familyClashes`, `slotsWithPinned`), the words,
+    and the Send step writing the section onto the practice. Outside the builder: the two clash rules
+    (`clashKindOf`, `placementsShareSurface`) compare (facility, section) with 0 meeting every section; the pool
+    selects the column; the library gets a parts control and the lower-the-count refusal. Permit use (Booked) and free
+    time learn sections, to stop over-counting.
+  - **Shape (A) would be the right call only if** halves needed their own names, prices or bookings outside the club
+    schedule (a coach booking "the north half" for a team event, a tournament on half a diamond). Then a small child
+    table of named sections, still referenced as (field, section), is the step up. It is still not a second facility
+    row.
+  - **Pre-existing, Low, logged when the owner rules:** the correction's hours figure counts a gained shared slot at
+    the full slot (`lib/club-schedule-send.ts:421`, `:678`); the amount is right. Fix it in Stage 2 so sharing and
+    halves read alike. Nothing is written to `docs/agents/db/DB_ARCHITECTURE_REVIEW.md` until the shape is ruled.
 - **No new plan gate proposed.** These live inside the club scheduler and the coaches portal as they are gated today;
   reconcile against `docs/agents/strategy/PLAN_PRICING_FACTS.md` at each build, and route any gate question to `/strategy`.
 - **`/accounting` is not triggered:** this is the product's customer bookkeeping, not FieldLogicHQ's own.
@@ -287,14 +673,46 @@ Migration only if Stage 4's record needs it.
 - [ ] The entry-time refusal for a group that can never line up — New schedule
 - [ ] The trade proposal, the answer and the club's notice — coaches and the schedule's builders
 - [ ] The per-schedule switch's label — the schedule's settings
-- [ ] The names for a field's parts — the venue list, permits, the schedule grid
+- [ ] The names for a field's parts — the venue list, the schedule's rows, the grid, the PDF. Working words: the "Two sides" tick
+      and its locked line, "Field 1 (whole)", "side A", "Field 1 in two sides", "Field 2 side A", the "holds … That time is left out." line,
+      the draft line "Whichever is finalized first keeps it", the Split hint's "a half field or one side"
+- [ ] The Used line: "Of the unused time, 9 h is open slots on {schedule}: the schedule holds it and no team has it yet."
 
 ## Open questions
 
-- [ ] Does drawing start now or does the project wait on the board? (Owner; asked 2026-11-25, not yet answered.)
-- [ ] Stage 0's two confirmations (the sharing rule's silence; the dropped placements).
+- [x] Does drawing start now or does the project wait on the board? The owner started the halves drawing session
+      (2026-11-25).
+- [x] Stage 0's two confirmations (the sharing rule's silence; the dropped placements). Done 2026-11-25 (Stage 0).
+- [x] **Asks the census adds to the halves drawing (2026-11-25):** all put to the owner in the round 1 drawing
+      (Stage 2, "Drawing, round 1: the asks", Asks 1–9 and 14) and ruled 2026-11-25.
+- [ ] **Does Ask 14 C widen Ask 5 to house-league time a club schedule hands out (practices and games)?** The plan reads
+      it so until the owner says otherwise. (Asked 2026-11-25.)
+- [ ] **On a field in four quarters, may a team also use half of it (two quarters together) and the whole?** Recommended:
+      yes, whole, either half, or a quarter, the way clubs run young age groups; it changes how a booking names its
+      part (`/dba`). (Asked 2026-11-25.)
+  - The storage shape: (B), as `/dba` proposes in §5, or (A).
+  - **Does a practice on half a field count as one practice or half a practice toward a team's share** (under "Evenly"
+    and "By percentage")? Today a shared slot counts ½ and a "Half cost" field counts 1. Left as it is, halves hand
+    out and bill half the time sharing does for the same picture (Census, the two bills).
+  - **A half's price:** the field's price ÷ 2, derived, as (B) proposes. The bill and the schedule should show it,
+    and the drawing decides whether a club may change it.
+  - **Halves only, or up to four parts?** Do the parts have names ("North half") or numbers? Names push toward a
+    small table of named parts (§5's step up).
+  - **Words.** "Half field" and "Half cost" already mean a price share (case C), on the bill and the PDF. "Part"
+    already means time added to a schedule, and a house-league time row. Halves need words that are neither
+    (`/marketing`).
+  - **How far halves reach.** Club schedule slots and the practices they make, only (as proposed)? Or also
+    house-league games generated on club time, a coach's own event, tryout days, tournaments? Each one widens the
+    migration by one table and its readers.
+  - **The grid:** one row per field with a split cell, or a row per half.
+  - **Permit use:** until permit use learns halves, a half booking shows the whole field as Booked at that time. The
+    drawing says what Used shows (already owed, Stage 2).
+  - **Three ways to put several teams on one field would exist:** "Sharing a facility" (rep), house league's "teams at
+    once" for practices, and halves. The drawing says how they relate.
 - [x] Do rows get their own dates on the form (Stage 1's drawing)? **No, not now (S5, 2026-11-25).**
-- [ ] What does "Sharing a facility" become beside halves (Stage 2's drawing)?
+- [x] What does "Sharing a facility" become beside halves (Stage 2's drawing)? **Ruled 2026-11-25 (Ask 6 A):** all three
+      kept, counted and billed alike; a side is never shared.
 - [ ] Does a trade tell families (Stage 4's drawing)?
-- [ ] House league: its schedules read in place and use the same builder. Whether the same-time rule and halves apply to
-      a house-league schedule unchanged is a check for Stages 2 and 3; coach trades are rep teams only unless ruled wider.
+- [x] House league: whether the same-time rule and halves apply to a house-league schedule. **Ruled 2026-11-25 (Ask 14
+      C): both reach house league** (drawn in round 2; not "unchanged": house league divides its own practice time).
+      Coach trades are rep teams only unless ruled wider.
