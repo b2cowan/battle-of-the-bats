@@ -447,10 +447,12 @@ export default function ClosePlaceWindow({ orgSlug, eyebrow, season, initialVenu
 
   // The calendar refuses days outside its limits, but a typed date (or some phones' own picker) can still hand one over:
   // the field keeps the day it had.
+  // Until moves with the Day while the two match (a one-day closure stays one day, owner 2026-11-26); a longer range the
+  // admin picked keeps its last day while the new Day still allows it.
   function chooseDay(d: string) {
     if (!frame || d < frame.today || d > lastCloseDay(frame.today)) return;
     setFirstDay(d);
-    if (!lastDay || lastDay < d || lastCloseDay(d) < lastDay) setLastDay(d);
+    if (!lastDay || lastDay === firstDay || lastDay < d || lastCloseDay(d) < lastDay) setLastDay(d);
   }
   function chooseLastDay(d: string) {
     if (d < firstDay || d > lastCloseDay(firstDay)) return;

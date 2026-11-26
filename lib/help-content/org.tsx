@@ -1849,7 +1849,7 @@ const orgHelp: HelpPageContent = {
             <>
               <p>Open <strong>Close a place</strong> from the Venue library&rsquo;s toolbar, from the top of the Overview, or from a house league season&rsquo;s Schedule page, which opens it on that season&rsquo;s next day with games, with the parks it uses that day already chosen. From the Venue library or the Overview nothing is chosen until you choose.</p>
               <ol>
-                <li>Pick the <strong>Day</strong> on the calendar, from today to 13 days ahead. <strong>Until the end of</strong> starts on that day; pick a later one to close for longer, up to two weeks.</li>
+                <li>Pick the <strong>Day</strong> on the calendar, from today to 13 days ahead. <strong>Until the end of</strong> shows that day, and moves with it; pick a later one to close for longer, up to two weeks.</li>
                 <li>Tick the parks in <strong>Places</strong>. Each one you tick gets a row underneath; press its <strong>&#x2715;</strong> to take it off. From a season&rsquo;s schedule, that season&rsquo;s parks that day are listed first.</li>
                 <li>On a park&rsquo;s row, its diamond list says <strong>All diamonds</strong>. To close only some, tick them, for example <strong>2 of 3 diamonds</strong>. Ticking every diamond is the whole park again.</li>
                 <li><strong>All our fields</strong>, the last choice in Places, closes every park at once (the owner&rsquo;s and admins&rsquo; choice). It stands in for the parks you ticked; take it off and they come back.</li>

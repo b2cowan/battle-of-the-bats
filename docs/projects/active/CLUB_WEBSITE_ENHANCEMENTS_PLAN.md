@@ -577,7 +577,9 @@ the demos follow the product and are curated with `/demos`, never as a build ste
     where it still appears (the older held Rainout's banner, help search words).
   - **K3's two lists became calendars, owner 2026-11-26** ("we don't need a time follow up, just do the calendar
     swap"): Day and Until are the product's date field, with the same limits and defaults; the second is labelled **"Until
-    the end of"**. A closure stays whole days; part-of-a-day closing is not wanted.
+    the end of"**. A closure stays whole days; part-of-a-day closing is not wanted. Then, "yes" the same day: while Until
+    matches the Day, changing the Day moves both; a longer range the admin picked keeps its last day while the new Day
+    allows it.
 - [x] **Stage 2 follow-up (close several places in one press) — 8 asks M1–M8, RULED 2026-11-26: all eight A** (owner:
   "all A, go ahead and get the build prompt"). Raised by the owner on the built window ("should this not be multi select
   for the parks?", then "did we cover the scenario if 2 out of 3 diamonds at a park are closed?"). Drawn 2026-11-26.
