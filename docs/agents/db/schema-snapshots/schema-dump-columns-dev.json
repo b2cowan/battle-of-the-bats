@@ -5917,7 +5917,7 @@
     "column_name": "reason",
     "data_type": "text",
     "udt_name": "text",
-    "is_nullable": "NO",
+    "is_nullable": "YES",
     "column_default": null,
     "ordinal_position": 10
   },
@@ -5998,7 +5998,7 @@
     "column_name": "created_by_name",
     "data_type": "text",
     "udt_name": "text",
-    "is_nullable": "NO",
+    "is_nullable": "YES",
     "column_default": null,
     "ordinal_position": 19
   },
@@ -6046,6 +6046,114 @@
     "is_nullable": "YES",
     "column_default": null,
     "ordinal_position": 24
+  },
+  {
+    "table_name": "club_sponsor_deal_refunds",
+    "column_name": "origin",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "NO",
+    "column_default": "'app'::text",
+    "ordinal_position": 25
+  },
+  {
+    "table_name": "club_sponsor_deal_refunds",
+    "column_name": "stripe_created_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 26
+  },
+  {
+    "table_name": "club_sponsor_deal_refunds",
+    "column_name": "stripe_reason",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 27
+  },
+  {
+    "table_name": "club_sponsor_deal_refunds",
+    "column_name": "fee_part",
+    "data_type": "numeric",
+    "udt_name": "numeric",
+    "is_nullable": "NO",
+    "column_default": "0",
+    "ordinal_position": 28
+  },
+  {
+    "table_name": "club_sponsor_deal_refunds",
+    "column_name": "fee_tax_part",
+    "data_type": "numeric",
+    "udt_name": "numeric",
+    "is_nullable": "NO",
+    "column_default": "0",
+    "ordinal_position": 29
+  },
+  {
+    "table_name": "club_sponsor_deal_refunds",
+    "column_name": "fee_refund_entry_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 30
+  },
+  {
+    "table_name": "club_sponsor_deal_refunds",
+    "column_name": "after_lost_dispute",
+    "data_type": "boolean",
+    "udt_name": "bool",
+    "is_nullable": "NO",
+    "column_default": "false",
+    "ordinal_position": 31
+  },
+  {
+    "table_name": "club_sponsor_deal_refunds",
+    "column_name": "finished_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 32
+  },
+  {
+    "table_name": "club_sponsor_deal_refunds",
+    "column_name": "finished_by",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 33
+  },
+  {
+    "table_name": "club_sponsor_deal_refunds",
+    "column_name": "finished_by_name",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 34
+  },
+  {
+    "table_name": "club_sponsor_deal_refunds",
+    "column_name": "outcome",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 35
+  },
+  {
+    "table_name": "club_sponsor_deal_refunds",
+    "column_name": "credit_on",
+    "data_type": "date",
+    "udt_name": "date",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 36
   },
   {
     "table_name": "club_sponsor_deals",
@@ -8071,6 +8179,33 @@
     "is_nullable": "YES",
     "column_default": null,
     "ordinal_position": 38
+  },
+  {
+    "table_name": "email_address_stops",
+    "column_name": "email",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 1
+  },
+  {
+    "table_name": "email_address_stops",
+    "column_name": "source",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 2
+  },
+  {
+    "table_name": "email_address_stops",
+    "column_name": "stopped_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "NO",
+    "column_default": "now()",
+    "ordinal_position": 3
   },
   {
     "table_name": "email_batches",
@@ -22975,6 +23110,96 @@
     "is_nullable": "NO",
     "column_default": "now()",
     "ordinal_position": 4
+  },
+  {
+    "table_name": "preview_email_consents",
+    "column_name": "id",
+    "data_type": "bigint",
+    "udt_name": "int8",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 1
+  },
+  {
+    "table_name": "preview_email_consents",
+    "column_name": "org_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 2
+  },
+  {
+    "table_name": "preview_email_consents",
+    "column_name": "org_name",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 3
+  },
+  {
+    "table_name": "preview_email_consents",
+    "column_name": "email",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 4
+  },
+  {
+    "table_name": "preview_email_consents",
+    "column_name": "role",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 5
+  },
+  {
+    "table_name": "preview_email_consents",
+    "column_name": "given_on",
+    "data_type": "date",
+    "udt_name": "date",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 6
+  },
+  {
+    "table_name": "preview_email_consents",
+    "column_name": "given_how",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "NO",
+    "column_default": "'in_person'::text",
+    "ordinal_position": 7
+  },
+  {
+    "table_name": "preview_email_consents",
+    "column_name": "recorded_by",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 8
+  },
+  {
+    "table_name": "preview_email_consents",
+    "column_name": "sent_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 9
+  },
+  {
+    "table_name": "preview_email_consents",
+    "column_name": "created_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "NO",
+    "column_default": "now()",
+    "ordinal_position": 10
   },
   {
     "table_name": "push_subscriptions",

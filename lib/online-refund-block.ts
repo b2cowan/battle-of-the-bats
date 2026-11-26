@@ -31,6 +31,10 @@ export interface RefundBlockInput {
   feeBackCents: number;
   /** The processing fee the payer paid on what is refunded, to name when it did NOT go back (0 when the club paid it). */
   feeKeptCents: number;
+  /** The whole fee the payer paid, when only part of it went back (a refund a club made in Stripe): the line says "X of the Y". */
+  feeOfCents?: number;
+  /** The email goes long after the money did (a refund made in Stripe, finished later): no "how long it takes to appear". */
+  alreadyArrived?: boolean;
 }
 
 const day = (v: string | null) => (v ? formatStoredDate(v.length > 10 ? orgDayKey(v) : v) : '');
@@ -48,9 +52,12 @@ export function refundBlockRows(i: RefundBlockInput): Array<[string, string]> {
 /** The lines under the block: the processing fee (when it went back, or when the payer paid one that didn't), then how long. */
 export function refundBlockFoot(i: RefundBlockInput): string[] {
   const out: string[] = [];
-  if (i.feeBackCents > 0) out.push(E.refundFeeIncluded(money(i.feeBackCents / 100)));
-  else if (i.feeKeptCents > 0) out.push(E.refundFeeKept(money(i.feeKeptCents / 100)));
-  out.push(B.arrives(i.bank));
+  if (i.feeBackCents > 0) {
+    out.push(i.feeOfCents && i.feeOfCents > i.feeBackCents
+      ? E.refundFeePartIncluded(money(i.feeBackCents / 100), money(i.feeOfCents / 100))
+      : E.refundFeeIncluded(money(i.feeBackCents / 100)));
+  } else if (i.feeKeptCents > 0) out.push(E.refundFeeKept(money(i.feeKeptCents / 100)));
+  if (!i.alreadyArrived) out.push(B.arrives(i.bank));
   return out;
 }
 

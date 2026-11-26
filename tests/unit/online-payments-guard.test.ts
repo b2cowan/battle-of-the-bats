@@ -25,7 +25,11 @@ const LANDING = 'lib/online-payment-landing.ts';
 const WEBHOOKS = ['app/api/payments/connect-webhook/route.ts', 'app/api/payments/connect-account-events/route.ts'];
 /** 12d-1 Part 4: the daily job acts only on money already taken (a dispute's due date, a plan ending), so,
  *  like the webhooks, it keeps running when the switch goes off. It opens no pay page and takes no money. */
-const AFTER_THE_MONEY = ['app/api/platform-admin/stripe-fees-daily/route.ts'];
+const AFTER_THE_MONEY = ['app/api/platform-admin/stripe-fees-daily/route.ts',
+  // Board Ready Stage 6 fixes Part A (RULED 2026-11-25): finishing a sponsor's refund made in Stripe. The money already left in
+  // the club's own dashboard and is already in the books; finishing never reaches Stripe (its reason, the credit note, the
+  // email), so a switch turned off in between must not leave the business without its credit note.
+  'app/api/admin/sponsorships/deals/[dealId]/refunds/[refundId]/finish/route.ts'];
 const MIG = 'supabase/migrations/358_a_club_takes_payments_online.sql';
 const MIG_12B = 'supabase/migrations/374_a_family_pays_house_league_fees_by_card.sql';
 /** Both landings and the refund functions: only the named landing module calls them. */
@@ -35,6 +39,8 @@ const LAND_RPCS = ['online_payment_land', 'online_payment_league_land', 'online_
   'online_payment_league_post_out', 'club_league_out_word',
   // 12b Part 5 (mig 375): a house-league refund's booking and its "sent another way".
   'online_payment_league_refund_book', 'online_payment_league_refund_resolve',
+  // Board Ready Stage 6 fixes Part A (mig 542): a sponsor refund made in Stripe is recorded, finished and settled by the landing only.
+  'club_sponsor_card_stripe_refund', 'club_sponsor_card_refund_finish', 'club_sponsor_card_twice_settle',
   // 12c Part 1 (mig 382): a team's part refund, and a bank debit clearing or coming back.
   'online_payment_team_refund_book', 'online_payment_clearing', 'online_payment_returned',
   // 12d-1 (migs 390–391): a dispute's state, the extra still standing on a team payment, and a payment reversed.

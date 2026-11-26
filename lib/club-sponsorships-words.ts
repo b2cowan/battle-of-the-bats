@@ -253,7 +253,8 @@ export const SPONSORSHIPS_WORDS = {
     clubPaysHint: 'The sponsor pays its invoice to the cent. The processing fee comes out of the payment and shows in your books as Payment processing. This is the default.',
     // /legal's re-check wording (owner ruled 2026-11-22, walk §560 call D1): the cost ceiling, and Québec's ban said plainly.
     capHint: 'Card networks limit what a business may add to a card payment: 2.4% in Canada, never more than the cost of accepting the card, and nothing at all in Québec. This fee can be more than that. Choosing it is your decision and your responsibility.',
-    refundHint: 'If you refund a sponsor, neither part of the processing fee comes back to you. Refund the fee line yourself if you want the sponsor made whole.',
+    // Stage 6 fixes Part A, ask 6: a refund from the deal never includes the fee; one made in Stripe can.
+    refundHint: 'Neither part of the processing fee ever comes back to the club. A refund from the deal also leaves out any fee the sponsor paid. To give them that back too, refund everything they paid in your Stripe dashboard, then finish it on the deal.',
     cardOnlyHint: 'Only a card payment carries a fee. A cheque or e-transfer never does.',
     read: { sponsor: 'The sponsor pays it: it’s added to what the sponsor pays by card', club: 'The club pays it: it comes out of each payment' },
     // Round 2 ask 9: the same limit on the registration row, a hint only (wording not drawn; DRAFT for /marketing).

@@ -3565,6 +3565,9 @@ export type NotificationEventType =
   | 'card_refund_whose'          // a part refund on a payment for two or more children: choose the child
   | 'card_refund_still_enrolled' // a child's fee went back in Stripe while the child is registered: withdraw, link or keep
   | 'card_refund_unmatched'      // a refund on a payment we haven't recorded yet (Stripe's events out of order)
+  // Board Ready Stage 6 fixes Part A (mig 542) — a sponsor's refund made in the club's own Stripe dashboard. Both clear themselves.
+  | 'sponsor_refund_to_finish'   // it is in the books: finish it on the deal (the reason, the credit note, the email)
+  | 'sponsor_refund_twice'       // made after the sponsor's bank already took the payment back: ask them to send it back
   // Club Tier Stage 12d-2 (mig 401) — to the owners, from the daily job. Both Needs attention; both clear themselves.
   | 'payments_terms_changed'     // FieldLogicHQ's payments terms changed: read and agree (payments stay on)
   | 'payments_ending'            // online payments stop through an ending the owner didn't choose (a comp, a failed payment)

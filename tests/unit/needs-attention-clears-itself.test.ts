@@ -22,10 +22,10 @@ import { registrationAmountDue, registrationFee } from '../../lib/registration-a
 const LIB = readCode('lib/needs-attention.ts');
 
 describe('1 · the rulebook is total over the Needs-attention kinds', () => {
-  it('names exactly the twenty-six kinds that wait on someone', () => {
+  it('names exactly the twenty-eight kinds that wait on someone', () => {
     assert.deepEqual([...NEEDS_ATTENTION_KINDS].sort(), [
       'assistant_coach_approval_requested', 'card_dispute_lost', 'card_disputed', 'card_refund_failed', 'card_refund_still_enrolled', 'card_refund_unmatched', 'card_refund_whose', 'club_hand_back_asked', 'club_hand_back_unasked', 'club_payment_handed_off',
-      'club_schedule_review', 'debit_returned', 'debit_reversed', 'house_league_withdraw_request', 'online_payment_not_recorded', 'online_payment_over', 'payment_failed', 'payments_ending', 'payments_terms_changed', 'payouts_need_attention', 'team_coach_payment_reminder',
+      'club_schedule_review', 'debit_returned', 'debit_reversed', 'house_league_withdraw_request', 'online_payment_not_recorded', 'online_payment_over', 'payment_failed', 'payments_ending', 'payments_terms_changed', 'payouts_need_attention', 'sponsor_refund_to_finish', 'sponsor_refund_twice', 'team_coach_payment_reminder',
       'team_money_sent', 'team_move_requested', 'team_no_show', 'team_request_filed', 'team_request_holding_payout',
     ]);
   });
@@ -97,9 +97,9 @@ describe('the /review fixes (2026-10-16)', () => {
     // mig 358 with online payments' three (Club Tier Stage 12a), mig 370 with a family's ask to withdraw (Club Tier 9b-2),
     // mig 384 with the three refunds made in Stripe (Club Tier 12c), mig 387 with a bank debit returned or reversed (12c),
     // mig 390 with a card dispute, a lost one, and a team paid past what it owed (12d-1), mig 403 with the owners' new
-    // terms and an ending they didn't choose (12d-2).
-    const sql = readCode('supabase/migrations/403_the_terms_and_an_ending_wait_on_the_owner.sql');
-    const lists = [...sql.matchAll(/on public\.notifications \([a-z_]+, event_type\)\s+where cleared_at is null\s+and event_type in \(([^)]*)\)/g)].map(m => m[1]);
+    // terms and an ending they didn't choose (12d-2), mig 542 with a sponsor's refund made in Stripe, to finish or paid back twice.
+    const sql = readCode('supabase/migrations/542_a_refund_made_in_stripe.sql');
+    const lists = [...sql.matchAll(/on public\.notifications \([a-z_]+, event_type\)\s+where cleared_at is null\s+and event_type in \(([^)]*)\)/gi)].map(m => m[1]);
     assert.equal(lists.length, 2);
     for (const list of lists) {
       assert.deepEqual([...list.matchAll(/'([a-z_]+)'/g)].map(m => m[1]).sort(), [...NEEDS_ATTENTION_KINDS].sort());

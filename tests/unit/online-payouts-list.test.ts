@@ -207,7 +207,8 @@ describe('Board Ready Stage 6 Part 3b: a sponsor’s card payment is read as a s
   it('the refund map and the bank check’s index both read the sponsor’s own tables, inside the club', () => {
     assert.match(code, /from\('club_sponsor_deal_refunds'\)\.select\('stripe_refund_id, online_payment_id'\)\.eq\('org_id', orgId\)/);
     assert.match(code, /from\('club_sponsor_deal_payments'\)\.select\('online_payment_id, income_entry_id, tax_entry_id, fee_income_entry_id'\)/);
-    assert.match(code, /from\('club_sponsor_deal_refunds'\)\.select\('stripe_refund_id, income_entry_id, tax_entry_id'\)/);
-    assert.match(code, /push\(refunds, r\.stripe_refund_id, r\.income_entry_id\); push\(refunds, r\.stripe_refund_id, r\.tax_entry_id\);/);
+    // Stage 6 fixes Part A (mig 542): a refund made in Stripe that returned the fee has its own fee line, listed with the refund.
+    assert.match(code, /from\('club_sponsor_deal_refunds'\)\.select\('stripe_refund_id, income_entry_id, tax_entry_id, fee_refund_entry_id'\)/);
+    assert.match(code, /push\(refunds, r\.stripe_refund_id, r\.income_entry_id\); push\(refunds, r\.stripe_refund_id, r\.tax_entry_id\); push\(refunds, r\.stripe_refund_id, r\.fee_refund_entry_id\);/);
   });
 });

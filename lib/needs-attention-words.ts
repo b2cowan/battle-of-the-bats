@@ -70,6 +70,10 @@ export const SETTLED_WORDS = {
   onlineItemRecorded: 'It’s on the registration now.',
   onlinePaymentGone: 'The payment’s record is gone.',
   refundRecorded: 'Refund recorded',
+  // Stage 6 fixes Part A (DRAFT for /marketing): a sponsor's refund made in Stripe, finished on its deal (the did() shape).
+  refundFinished: (who: string | null, you: boolean) => (you ? 'You finished it' : who ? `Finished by ${who}` : 'Finished'),
+  refundDidntGo: 'The refund didn’t go through.',
+  refundBookedAfterWin: 'The club won the dispute, so the refund is in the books now.',
   // 12c words §5: "whose was it?" answered; "still enrolled" answered (the did() shape).
   refundOnOne: (child: string) => `It’s on ${possessive(child)} registration.`,
   refundOnMany: 'It’s on their registrations.',

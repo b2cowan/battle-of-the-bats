@@ -2,13 +2,14 @@
 
 | | |
 |---|---|
-| **Version** | 0.1 (an addendum to the published Privacy Policy version 2026-11-24; becomes a whole new frozen text) |
-| **Status** | owner-approved 2026-11-25 (approval page, all five calls as recommended); not published. Not reviewed by a lawyer. The live Privacy page and every version constant are untouched. |
+| **Version** | 0.2 (an addendum to the published Privacy Policy version 2026-11-24; becomes a whole new frozen text) |
+| **Status** | draft, awaiting owner approval (0.1 was approved 2026-11-25, approval page, all five calls as recommended); not published. Not reviewed by a lawyer. The live Privacy page and every version constant are untouched. |
 | **Effective date** | none yet (the same date as the Payments Terms and Terms versions it publishes with; never reuse 2026-11-24) |
-| **Last reviewed** | 2026-11-25 (`/legal`, against the code on dev; production counts read the same day) |
+| **Last reviewed** | 2026-11-26 (`/legal`: §5's sponsor bullet against the refund code on dev); the rest 2026-11-25 (production counts read that day) |
 | **Seller** | the owner, trading as FieldLogicHQ, Ontario (`docs/agents/accounting/ACCOUNTING_FACTS.md`) |
 
 **Change log**
+- 0.2 (2026-11-26): §5's sponsor bullet adds what is kept for a refund the club makes in its own Stripe account: when it was made and Stripe's reason code (built on dev, migration 542). Drafted on the owner's ruling "Update drafts". No other published-page text moves.
 - 0.1 (2026-11-25): first draft. Sponsors (§1, §5, §9, §12), a sponsor paying by card (§6), the record of offers and stops including Offer again's payment date (§5), the sign-up files and health answers clean-up now that it runs (§9), and two things the code does that §4 did not say (error reports keep an internet address and the page's address; one more cookie).
 
 **How to read this.** Each block is the text to put in the published Privacy Policy. "Replaces" means the quoted part of the 2026-11-24 file is changed; "Adds" is new text. Everything not listed stays word for word.
@@ -40,7 +41,8 @@ Clubs, leagues, tournaments and coaches use FieldLogicHQ to manage their members
   questions and any files attached, a record of each document agreed to (the exact words, the version, who and when,
   with no internet (IP) address), and each sponsorship: what was offered, its price and tax, who at the club offered or
   withdrew it, its invoice, payments and refunds (with the reason the club gives for a refund), and, for a card payment,
-  the card's brand and last four digits, Stripe's reference numbers and any dispute.
+  the card's brand and last four digits, Stripe's reference numbers (and, for a refund the club makes in its own Stripe
+  account, when it was made and Stripe's reason code) and any dispute.
 
 ## §5 (adds two paragraphs after "Emails a club sends through FieldLogicHQ")
 
@@ -108,7 +110,8 @@ families.
 **When it publishes (owner 2026-11-25).** With the release that carries the sponsor's card payment and Offer again, on the same date as
 the Payments Terms (the build refuses a Privacy version older than the Payments Terms in force). Three sentences are only
 true from that release: the card, refund and dispute words in §5 and §6; Offer again's payment date; and "at every
-address the club has on its record" in §12 (on production today an unsubscribe stops one address).
+address the club has on its record" in §12 (on production today an unsubscribe stops one address). The 0.2 words about a
+refund made in the club's own Stripe account are true only from the release that carries that build (migration 542).
 
 **True on production already (2026-11-25):** everything else here, including the sign-up clean-up (the six-hourly sweep
 ran successfully on production on 2026-11-25; 0 sign-up files and 0 answers there, counts only).

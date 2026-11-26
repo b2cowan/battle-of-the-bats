@@ -426,7 +426,7 @@ function Thanks({ view }: { view: Open }) {
           <p className={css.invoiceTitle}>{view.refundedAway ? P.refundedReceiptTitle : P.paidTitle}</p>
           {/* A fee the sponsor paid never comes back (Payments Terms §4): said here, as the refund email says it (/legal 2026-11-24). */}
           {/* The fee with its tax, the figure the refund email gave (sponsor-invoice-email: feeCharged + feeTax). */}
-          {view.refundedAway && !!inv.cardFee && <p className={css.invoiceMeta}>{ONLINE_EMAIL_WORDS.refundFeeKept(money(Math.round((inv.cardFee + (inv.cardFeeTax ?? 0)) * 100) / 100))}</p>}
+          {view.refundedAway && !view.feeRefunded && !!inv.cardFee && <p className={css.invoiceMeta}>{ONLINE_EMAIL_WORDS.refundFeeKept(money(Math.round((inv.cardFee + (inv.cardFeeTax ?? 0)) * 100) / 100))}</p>}
           <p className={css.invoiceTo}>{P.paidLine(inv.total, view.club.name)}</p>
           {view.paidCard?.at
             ? <p className={css.invoiceMeta}>{C.paidWith(view.paidCard.label, `${formatStoredDate(orgDayKey(view.paidCard.at))}, ${clockOf(view.paidCard.at)}`, inv.number)}</p>
@@ -455,6 +455,7 @@ function Thanks({ view }: { view: Open }) {
             {inv.email && inv.emailed && <div className={css.invoiceFactWide}><dt>{P.emailedToLabel}</dt><dd>{inv.email}</dd></div>}
           </dl>
           {view.owing < inv.total && <p className={css.invoiceMeta}>{P.partPaid(inv.total - view.owing, view.owing)}</p>}
+          {view.owing > 0 && view.refunds.some(r => !r.pending) && <p className={css.invoiceMeta}>{C.stillOwingAfterRefund(view.club.name, money(view.owing), view.refunds.filter(r => !r.pending).length)}</p>}
           {view.refunds.length > 0 && (
             <dl className={css.receiptLines}>
               {view.refunds.map(r => (

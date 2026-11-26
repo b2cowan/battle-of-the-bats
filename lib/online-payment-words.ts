@@ -345,6 +345,7 @@ export const ONLINE_EMAIL_WORDS = {
   refundAmount: (amount: string, card: string, date: string) =>
     `${amount} refunded to ${card} on ${date}. It can take 5 to 10 business days to appear, depending on the card company.`,
   refundFeeIncluded: (fee: string) => `This includes the ${fee} processing fee.`,
+  refundFeePartIncluded: (part: string, fee: string) => `This includes ${part} of the ${fee} processing fee.`,
   refundFeeKept: (fee: string) => `The ${fee} processing fee isn’t part of this refund.`,
   refundQuestions: (contact: string | null) => (contact ? `Questions: ${contact}.` : ''),
   // 12c words §4 (refund visibility): without a club contact the line names the club instead of going silent.

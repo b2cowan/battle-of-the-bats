@@ -2461,6 +2461,26 @@
   },
   {
     "table_name": "club_sponsor_deal_refunds",
+    "constraint_name": "club_sponsor_deal_refunds_fee_entry_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "fee_refund_entry_id",
+    "foreign_table": "accounting_entries",
+    "foreign_column": "id",
+    "delete_rule": "SET NULL",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "club_sponsor_deal_refunds",
+    "constraint_name": "club_sponsor_deal_refunds_finished_by_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "finished_by",
+    "foreign_table": null,
+    "foreign_column": null,
+    "delete_rule": "SET NULL",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "club_sponsor_deal_refunds",
     "constraint_name": "club_sponsor_deal_refunds_income_entry_id_fkey",
     "constraint_type": "FOREIGN KEY",
     "column_name": "income_entry_id",
@@ -2994,6 +3014,16 @@
     "constraint_name": "early_access_leads_pkey",
     "constraint_type": "PRIMARY KEY",
     "column_name": "id",
+    "foreign_table": null,
+    "foreign_column": null,
+    "delete_rule": null,
+    "update_rule": null
+  },
+  {
+    "table_name": "email_address_stops",
+    "constraint_name": "email_address_stops_pkey",
+    "constraint_type": "PRIMARY KEY",
+    "column_name": "email",
     "foreign_table": null,
     "foreign_column": null,
     "delete_rule": null,
@@ -8042,6 +8072,26 @@
   {
     "table_name": "preview_claim_tries",
     "constraint_name": "preview_claim_tries_pkey",
+    "constraint_type": "PRIMARY KEY",
+    "column_name": "id",
+    "foreign_table": null,
+    "foreign_column": null,
+    "delete_rule": null,
+    "update_rule": null
+  },
+  {
+    "table_name": "preview_email_consents",
+    "constraint_name": "preview_email_consents_one_per_preview",
+    "constraint_type": "UNIQUE",
+    "column_name": "org_id",
+    "foreign_table": null,
+    "foreign_column": null,
+    "delete_rule": null,
+    "update_rule": null
+  },
+  {
+    "table_name": "preview_email_consents",
+    "constraint_name": "preview_email_consents_pkey",
     "constraint_type": "PRIMARY KEY",
     "column_name": "id",
     "foreign_table": null,

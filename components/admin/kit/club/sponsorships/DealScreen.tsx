@@ -33,13 +33,13 @@ import { copyWhenReady, OfferAgainOneWindow } from './OfferDealWindow';
 import shared from '@/app/[orgSlug]/coaches/coaches.module.css';
 import LoadingState from '@/components/shared/LoadingState';
 import { useIsPhone } from '@/lib/hooks/useIsPhone';
-import { formatStoredDate, orgDayKey } from '@/lib/timezone';
+import { daysBetweenDateStrings, formatStoredDate, orgDayKey, tournamentToday } from '@/lib/timezone';
 import { barSentence, DEAL_WORDS as D } from '@/lib/club-sponsorship-deal-words';
 import { SPONSORSHIPS_WORDS as W, sponsorshipMoney as money } from '@/lib/club-sponsorships-words';
 import { canRecordPayment, canRevise, canWithdraw, checklistOf, checklistOpen, deliveryCount, holdersOf, isOverdue, linkTakesForm, LOGO_ITEM, reasonHasClock } from '@/lib/club-sponsorship-deals';
 import { paymentMethodInSentence } from '@/lib/types';
-import { refundsEndedDeal, invoiceStanding, paymentHow, refundCounts, refundDay, refundedTotal, refundEndsDeal, type DealPayment } from '@/lib/club-sponsor-invoice';
-import { DealPayments, PaymentWindow, RecordPaymentWindow, RefundWindow, VoidPaymentQuestion } from './DealPaymentWindows';
+import { refundsEndedDeal, invoiceStanding, paymentHow, refundCounts, refundDay, refundedTotal, refundEndsDeal, refundMadeOn, refundToFinish, type DealPayment, type DealRefund } from '@/lib/club-sponsor-invoice';
+import { DealPayments, FinishRefundQuestion, PaymentWindow, RecordPaymentWindow, RefundWindow, VoidPaymentQuestion } from './DealPaymentWindows';
 import { send, sponsorshipsApi } from './api';
 import { placeLabel, useDeal, type DealRead } from './deals-api';
 import css from './Sponsorships.module.css';
@@ -47,10 +47,25 @@ import css from './Sponsorships.module.css';
 const day = (d: string) => formatStoredDate(d, { withYear: false });
 
 /** The callout (round 1 tab 5's table, ask 4): the state, then what the club does next. */
-function callout(r: DealRead): { title?: string; text: string; tone: 'olive' | 'warn' } {
+function callout(r: DealRead): { title?: string; text: string; tone: 'olive' | 'warn'; finish?: DealRefund } {
   const d = r.deal;
+  // A refund made in Stripe that is in the books and still needs the club (Part A, tab 1): said first, whatever the deal's state,
+  // with "Finish the refund" — the money already left, and only the club can say why.
+  const toFinish = r.refunds.filter(refundToFinish);
+  if (toFinish.length) {
+    // The one that has waited longest leads (its day in Stripe, not the day it was recorded here).
+    const first = toFinish.reduce((a, b) => (refundMadeOn(b) < refundMadeOn(a) ? b : a));
+    const on = refundMadeOn(first);
+    const waiting = daysBetweenDateStrings(on, tournamentToday());
+    const total = toFinish.reduce((s, x) => s + Math.round(x.amount * 100), 0) / 100;
+    return {
+      text: [toFinish.length > 1 ? D.card.calloutToFinishMany(toFinish.length, total) : D.card.calloutToFinish(first.amount, on),
+        waiting >= 14 ? D.card.calloutWaiting(waiting) : null].filter(Boolean).join(' '),
+      tone: 'warn', finish: first,
+    };
+  }
   if (d.band === 'withdrawn' && d.withdrawn) {
-    return { text: refundsEndedDeal(r.refunds) ? D.card.calloutRefundedWithdrawn(d.withdrawn.at, d.withdrawn.byName, d.withdrawn.reason) : D.callout.withdrawn(d.withdrawn.at, d.withdrawn.byName, d.withdrawn.reason), tone: 'olive' };
+    return { text: refundsEndedDeal(r.refunds.filter(x => x.origin === 'app')) ? D.card.calloutRefundedWithdrawn(d.withdrawn.at, d.withdrawn.byName, d.withdrawn.reason) : D.callout.withdrawn(d.withdrawn.at, d.withdrawn.byName, d.withdrawn.reason), tone: 'olive' };
   }
   if (r.unrecordedCard && d.state !== 'paid') return { title: D.card.unrecordedTitle, text: D.card.calloutUnrecorded(d.businessName, r.unrecordedCard.amount, r.unrecordedCard.reason), tone: 'warn' };
   if (r.lapsed) return { text: D.callout.lapsed, tone: 'warn' };
@@ -76,6 +91,8 @@ export default function DealScreen({ dealId }: { dealId: string }) {
   // Part 3b: the payment's own window, and the refund window over it.
   const [opened, setOpened] = useState<string | null>(null);
   const [refunding, setRefunding] = useState(false);
+  // Part A: a refund made in Stripe being finished (the question raised over the payment's window).
+  const [finishing, setFinishing] = useState<string | null>(null);
   const [notice, setNotice] = useNotice();
   const router = useRouter();
   // Offer again on this old deal (Part 4a, 12A): the ordinary Offer window, filled in.
@@ -164,7 +181,9 @@ export default function DealScreen({ dealId }: { dealId: string }) {
   const standing = d.invoice ? invoiceStanding(d.invoice.total, data.payments) : null;
   const lastIn = standing?.live.at(-1);
   const paidSub = lastIn ? paymentMethodInSentence(paymentHow(lastIn)) : undefined;
-  const owingSub = d.invoice && standing && standing.owing > 0 ? D.deal.figDue(d.invoice.dueOn) : undefined;
+  // A withdrawn deal owes nothing, as its paper says (refunded and ended, or withdrawn unpaid).
+  const owing = d.state === 'withdrawn' ? 0 : standing?.owing ?? 0;
+  const owingSub = d.invoice && owing > 0 ? D.deal.figDue(d.invoice.dueOn) : undefined;
   const back = refundedTotal(data.refunds);
   const lastBack = data.refunds.filter(refundCounts).at(-1);
   const backSub = !lastBack ? undefined : lastBack.status === 'pending' ? D.card.figRefundedSubPending
@@ -174,14 +193,14 @@ export default function DealScreen({ dealId }: { dealId: string }) {
       <ClubRow title={D.deal.figInvoiced} caption={d.invoice.taxKind ? D.deal.figInclTax(d.invoice.taxKind, d.invoice.tax) : undefined} trail={<span className={css.money}>{money(d.invoice.total)}</span>} />
       <ClubRow title={D.deal.figPaid} caption={paidSub} trail={<span className={css.money}>{money(standing.paid)}</span>} />
       {back > 0 && <ClubRow title={D.card.figRefunded} caption={backSub} trail={<span className={css.money}>{money(back)}</span>} />}
-      <ClubRow title={D.deal.figOwing} caption={owingSub} trail={<span className={css.money}>{money(standing.owing)}</span>} />
+      <ClubRow title={D.deal.figOwing} caption={owingSub} trail={<span className={css.money}>{money(owing)}</span>} />
     </ClubRowList>
   ) : (
     <MoneySummaryBand ariaLabel={d.businessName} tiles={[
       { key: 'invoiced', label: D.deal.figInvoiced, figure: money(d.invoice.total), caption: d.invoice.taxKind ? D.deal.figInclTax(d.invoice.taxKind, d.invoice.tax) : undefined },
       { key: 'paid', label: D.deal.figPaid, figure: money(standing.paid), caption: paidSub },
       ...(back > 0 ? [{ key: 'refunded', label: D.card.figRefunded, figure: money(back), caption: backSub }] : []),
-      { key: 'owing', label: D.deal.figOwing, figure: money(standing.owing), caption: owingSub },
+      { key: 'owing', label: D.deal.figOwing, figure: money(owing), caption: owingSub },
     ]} />
   ));
   const recordable = canRecordPayment(d) && !!standing && standing.owing > 0;
@@ -197,11 +216,16 @@ export default function DealScreen({ dealId }: { dealId: string }) {
     d.invoice ? (d.invoiceEmailedAt && !d.revisedOn ? D.deal.hInvoiceEmailed(d.invoice.issuedOn) : D.deal.hInvoice(d.invoice.issuedOn)) : null,
     d.revisedOn ? D.deal.hRevised(d.revisedOn) : null,
     d.paidOn ? D.deal.hPaid(d.paidOn) : null,
-    ...data.refunds.filter(x => x.status === 'succeeded' && !x.endsDeal).map(x => D.card.hRefunded(x.amount, refundDay(x), x.createdByName)),
-    d.withdrawn ? (refundsEndedDeal(data.refunds) ? D.card.hRefundedWhole(d.withdrawn.at, d.withdrawn.byName) : D.deal.hWithdrawn(d.withdrawn.at, d.withdrawn.byName)) : null,
+    // The refund from the deal that ended it is said by the "refunded and withdrawn" line; one made in Stripe keeps its own day.
+    ...data.refunds.filter(x => x.status === 'succeeded' && (!x.endsDeal || x.origin === 'stripe')).flatMap(x => x.origin === 'stripe'
+      // A refund made in Stripe (Part A, tab 1): "refunded $200.00 in Stripe Mar 20", then "finished Mar 22 by Dana Ruiz".
+      ? [D.card.hRefundedStripe(x.amount, refundMadeOn(x)), x.finished ? D.card.hFinished(orgDayKey(x.finished.at), x.finished.byName) : null]
+      : [D.card.hRefunded(x.amount, refundDay(x), x.createdByName ?? '')]),
+    d.withdrawn ? (refundsEndedDeal(data.refunds.filter(x => x.origin === 'app')) ? D.card.hRefundedWhole(d.withdrawn.at, d.withdrawn.byName) : D.deal.hWithdrawn(d.withdrawn.at, d.withdrawn.byName)) : null,
   ].filter(Boolean).join(' · ');
   const endedByRefund = d.state === 'withdrawn' && refundsEndedDeal(data.refunds) ? d.withdrawn?.at ?? null : null;
   const openedPayment = opened ? data.payments.find(x => x.id === opened) ?? null : null;
+  const finishingRefund = finishing ? data.refunds.find(x => x.id === finishing) ?? null : null;
   // Send the invoice (round 1 tab 5): a deal its business left at Form received — an unfinished card payment.
   const sendsInvoice = d.state === 'form_received' && !data.unrecordedCard && !data.lapsed;
 
@@ -215,7 +239,10 @@ export default function DealScreen({ dealId }: { dealId: string }) {
 
       <div className={css.dealGrid}>
         <Callout tone={c.tone} role="status" flush
-          action={linkMade && d.state === 'offered' && data.link
+          action={c.finish
+            // The callout's button opens the payment's window, where the refund sits "To finish" (Part A, tab 2).
+            ? <button type="button" className="btn btn-lime" aria-haspopup="dialog" onClick={() => setOpened(c.finish!.paymentId)}>{D.card.finishButton}</button>
+            : linkMade && d.state === 'offered' && data.link
             ? <button type="button" className="btn btn-lime" onClick={() => void copy()}>{copied ? D.deal.copied : D.deal.copy}</button>
             : recordable
               ? <button type="button" className="btn btn-lime" aria-haspopup="dialog" onClick={() => setAsking('record')}>{D.deal.record}</button>
@@ -224,7 +251,7 @@ export default function DealScreen({ dealId }: { dealId: string }) {
                 : data.offerAgain
                   ? <button type="button" className="btn btn-outline" aria-haspopup="dialog" onClick={() => setOfferingAgain(true)}>{D.again.oneButton}</button>
                   : undefined}>
-          {c.title && <strong>{c.title} </strong>}{isPhone && d.state === 'invoiced' && d.invoice ? D.callout.invoicedPhone(d.invoice.number, d.invoice.total, d.invoice.dueOn) : c.text}
+          {c.title && <strong>{c.title} </strong>}{isPhone && !c.finish && d.state === 'invoiced' && d.invoice ? D.callout.invoicedPhone(d.invoice.number, d.invoice.total, d.invoice.dueOn) : c.text}
         </Callout>
         {band}
         <DealPayments payments={data.payments} refunds={data.refunds} onOpen={x => setOpened(x.id)} />
@@ -391,7 +418,20 @@ export default function DealScreen({ dealId }: { dealId: string }) {
           business={d.businessName} businessEmail={b?.email ?? null} refundsOn={data.cardRefundsOn}
           canVoid={d.state === 'invoiced' || d.state === 'paid'}
           creditHref={id => api(`/refunds/${id}/credit-note`)}
-          onClose={() => setOpened(null)} onRefund={() => setRefunding(true)} onVoid={() => { setVoiding(openedPayment); setOpened(null); }} />
+          onClose={() => setOpened(null)} onRefund={() => setRefunding(true)} onVoid={() => { setVoiding(openedPayment); setOpened(null); }}
+          onFinish={r => { setFinishing(r.id); void reload(); }} />
+      )}
+      {openedPayment && finishingRefund && d.invoice && (
+          <FinishRefundQuestion url={api(`/refunds/${finishingRefund.id}/finish`)} refund={finishingRefund} payments={data.payments} refunds={data.refunds} dealState={d.state}
+            total={d.invoice.total} number={d.invoice.number} taxed={d.invoice.tax > 0} taxKind={d.invoice.taxKind} business={d.businessName} businessEmail={b?.email ?? null}
+            clubCanEmail={data.hasMailingAddress && data.hasContact}
+            onClose={() => setFinishing(null)}
+            onStale={async text => { setFinishing(null); setNotice({ tone: 'bad', text }); await reload(); }}
+            onDone={async res => {
+              setFinishing(null); setOpened(null);
+              setNotice({ tone: 'good', text: `${D.card.finishedToast(res.emailedTo)}${res.endsDeal ? ` ${D.card.doneEnded}` : ''}` });
+              await reload();
+            }} />
       )}
       {openedPayment?.card && refunding && d.invoice && (
         <RefundWindow url={api(`/payments/${openedPayment.id}/refund`)} payment={openedPayment} refunds={data.refunds}

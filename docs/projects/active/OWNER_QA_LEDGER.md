@@ -29003,6 +29003,19 @@ Committed 2026-11-26, ahead of the walk (owner: "simplify and commit"): `d3d1bcc
 **✅ PASSED 2026-11-26, 33 of 33** (owner paste-back; A 18/18, B 9/9, C 6/6; no notes came back). No owner calls in this walk.
 <!-- /§575 -->
 
+## §576 · Board Ready Stage 6 · Fixes, Part A · A refund made in the club’s Stripe dashboard — **a sponsor refund a club makes in Stripe lands in its books by itself; the deal and Needs attention ask the club to finish it with a reason, which emails the business and gives the credit note; on the last of the money the club says whether the deal ended or is still owed; Offer again holds a refunded business back**
+<!-- §576 -->
+**Walk published 2026-11-26.** [Interactive walk](https://claude.ai/artifact/WoaUgqxo7PhCAPxnsTHQu8) (walks A–F, 43 steps; 3 owner calls outside the count) · [repository HTML](BOARD_READY_STAGE6_FIXES_A_WALK.html). Migration 542 on dev. Plan: `BOARD_READY_PLAN.md` §5 Stage 6 (Part A). Drawing: `BOARD_READY_STAGE6_FIXES_A_DASHBOARD_REFUND_DRAWING.html` (all seven asks A, 2026-11-25).
+
+**Where:** staging, `https://dev.fieldlogichq.ca` (once its build after the push has finished), Dev Club Org, dev data, Stripe test mode (UAT Rep Club cannot take card payments). **Sign in:** `owner@dev.local` / `devpass123` (notifications paused for this login); Needs attention in a private window as `p3-treasurer@dev.local` / `devpass123` (ticks a Terms box once). Walk data is the six “Walk 542” deals (`.probe/fixes-a-walk.json`). Walks D and E use PowerShell in the project folder on this computer (`.probe/fixes-a-walk-stripe.mjs pendingready` | `again`).
+
+**Walks:** A part of the money went back: finish, credit note, Needs attention clears (10) · B all of it, still owed: deal, sponsor page, invoice (7) · C ended with the fee kept (7) · D a refund still on its way (3) · E a real refund in the club’s Stripe dashboard, then Offer again (9; whether the Express dashboard offers Refund is the one thing not yet proven) · F finishing at 390 wide, the credit note with fee rows (7).
+
+**Owner calls:** A the amber line’s “Finish the refund” opens the payment’s window or the question · B the sponsor page’s thank-you heading above an invoice owing again · C the processing-fee line on an invoice owing again.
+
+**Left out:** a deal that charges no tax; a club missing its mailing address; paying again after “They still owe it”; a refund the card’s bank sends back; a refund after a lost dispute.
+<!-- /§576 -->
+
 ## §577 · Club website · Stage 2 · Session 2D · Several places in one press — **one press closes several parks, or any set of a park’s diamonds; a rep game with no diamond recorded stays marked until the last of them reopens, and its coach is told once**
 <!-- §577 -->
 **Walk published 2026-11-26.** [Interactive walk](https://claude.ai/artifact/NSxAyvXrBcjaDXcsNxNSXr) (walks A–E, 45 steps; one open call shown outside the count) · [repository HTML](CLUB_WEBSITE_STAGE2_PLACES_WALK.html). Migration 549 on dev (owner’s word, 2026-11-26). Plan: `CLUB_WEBSITE_ENHANCEMENTS_PLAN.md` §7 (M1–M8, D1, “Session 2D”). Before the walk: /simplify, /review and /design run, their fixes applied. It supersedes §573’s single “Place” control (walk A2–A3 and A6 there describe the window as it was).

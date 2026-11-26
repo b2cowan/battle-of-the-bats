@@ -36,6 +36,9 @@ export interface DealPayment {
   voided: { at: string; byName: string; reason: string } | null;
   /** A card payment given back to the card in full (mig 531): it stays on record, and the money it held is owing again. */
   returned: boolean;
+  /** The sponsor's bank took it back (a dispute the club lost, mig 532): it holds nothing, and finishing a refund on it asks
+   *  nothing about the deal. Cleared if the dispute is later won. */
+  disputeLost?: boolean;
   /** A card payment (Part 3b, mig 530): it landed from an online payment, is never voided, and comes off only by a refund. */
   card: DealCardFacts | null;
 }
@@ -60,24 +63,41 @@ export interface DealCardFacts {
   disputed: boolean;
 }
 
-/** A refund to the card (Part 3b, mig 530): all of what was left or part of it, never the processing fee. */
+/** A refund to the card (Part 3b, mig 530): all of what was left or part of it. One made from the deal never includes the
+ *  processing fee; one made in the club's own Stripe dashboard (mig 542, Stage 6 fixes Part A) can, after all of the sponsorship. */
 export interface DealRefund {
   id: string;
   paymentId: string;
   amount: number;
-  /** The GST/HST share of it (the sponsorship's tax only). */
+  /** The GST/HST share of it (the sponsorship's tax, and on a Stripe refund that returned the fee, the fee's tax too: `feeTaxPart`). */
   taxPart: number;
   whole: boolean;
   /** It gave back the last of the deal's money, so the deal ended as Withdrawn (ask 3). */
   endsDeal: boolean;
-  reason: string;
+  /** Why (the business reads it in the refund email). A refund made in Stripe has none until the club finishes it (mig 542). */
+  reason: string | null;
+  /** Where it was made: from the deal ('app'), or in the club's own Stripe dashboard ('stripe', mig 542). */
+  origin: 'app' | 'stripe';
+  /** The part of `amount` / `taxPart` that is the processing fee the sponsor was charged (only a Stripe refund returns it; else 0). */
+  feePart: number;
+  feeTaxPart: number;
+  /** A Stripe refund: when Stripe made it, and Stripe's reason code ("requested_by_customer"). */
+  stripeCreatedAt: string | null;
+  stripeReason: string | null;
+  /** A Stripe refund the club finished (its reason given, its credit note issued, the business emailed). */
+  finished: { at: string; byName: string; outcome?: 'ended' | 'owing' | null } | null;
+  /** A Stripe refund made after the sponsor's bank already took the payment back (a dispute the club lost): returned twice. */
+  afterLostDispute: boolean;
+  /** The credit note's own date when it was issued later than the money left (a Stripe refund finished on a later day). */
+  creditOn: string | null;
   status: 'pending' | 'succeeded' | 'failed';
   failureReason: string | null;
   refundedOn: string | null;
   succeededAt: string | null;
   failedAt: string | null;
   createdAt: string;
-  createdByName: string;
+  /** Who refunded it from the deal; nobody here made a refund in Stripe (who finished it is `finished.byName`). */
+  createdByName: string | null;
   stripeRefundId: string | null;
   emailedAt: string | null;
   /** Its two ledger lines were written: a refund that failed with this false never moved anything, one that failed with it true had its lines voided. */
@@ -88,6 +108,34 @@ export interface DealRefund {
 
 /** A refund that moved money or is on its way (a failed one gave nothing back). */
 export const refundCounts = (r: Pick<DealRefund, 'status'>): boolean => r.status !== 'failed';
+
+/** A refund made in Stripe that went through and still needs the club: its reason, its credit note, its email (Part A, ask 1).
+ *  One made after a lost dispute has nothing to finish (the money was already out of the books). */
+export const refundToFinish = (r: Pick<DealRefund, 'origin' | 'status' | 'finished' | 'afterLostDispute'>): boolean =>
+  r.origin === 'stripe' && r.status === 'succeeded' && !r.finished && !r.afterLostDispute;
+
+/**
+ * A refund in its four parts, to the cent (mig 542's split; the payment's window, the finish question and the credit note all
+ * read these): the sponsorship before its tax, the sponsorship's tax, and — a Stripe refund that returned it — the processing
+ * fee before its tax and the fee's tax. `sponsorship` is the sponsorship with its tax (what "what is left" counts).
+ */
+export function refundParts(r: Pick<DealRefund, 'amount' | 'taxPart' | 'feePart' | 'feeTaxPart'>): {
+  sponsorship: number; sponsorshipPre: number; sponsorshipTax: number; feePre: number; feeTax: number;
+} {
+  const sponsorshipC = cents(r.amount) - cents(r.feePart);
+  const sponsorshipTaxC = cents(r.taxPart) - cents(r.feeTaxPart);
+  return {
+    sponsorship: sponsorshipC / 100, sponsorshipPre: (sponsorshipC - sponsorshipTaxC) / 100, sponsorshipTax: sponsorshipTaxC / 100,
+    feePre: (cents(r.feePart) - cents(r.feeTaxPart)) / 100, feeTax: cents(r.feeTaxPart) / 100,
+  };
+}
+
+/** A refund made in Stripe after the sponsor's bank already took the payment back: the money went back twice. */
+export const refundReturnedTwice = (r: Pick<DealRefund, 'afterLostDispute' | 'status'>): boolean => r.afterLostDispute && r.status === 'succeeded';
+
+/** The day a refund made in Stripe was made there (Stripe's day, in club time); a refund from the deal, its own day. */
+export const refundMadeOn = (r: Pick<DealRefund, 'stripeCreatedAt' | 'refundedOn' | 'createdAt'>): string =>
+  r.stripeCreatedAt ? orgDayKey(r.stripeCreatedAt) : refundDay(r);
 
 /** A refund that was booked (its credit note given), sent to the business, and then did not reach the card: its note is kept, cancelled. */
 export const refundNoteCancelled = (r: Pick<DealRefund, 'status' | 'booked'>): boolean => r.status === 'failed' && r.booked;
@@ -113,17 +161,17 @@ export const creditNoteNumber = (invoiceNumber: string, seq: number): string => 
 
 /**
  * What a card payment can still give back (the drawing's tab 2; mig 530's `club_sponsor_card_refund_left`, the same sums):
- * its amount less the fee the sponsor paid and that fee's tax, less every refund that hasn't failed. `taxLeft` is the
- * sponsorship's tax still on it.
+ * its amount less the fee the sponsor paid and that fee's tax, less the sponsorship part of every refund that hasn't failed
+ * (mig 542: a Stripe refund's fee part never came out of what the deal can give back). `taxLeft` is the sponsorship's tax still on it.
  */
-export function refundLeft(p: Pick<DealPayment, 'id' | 'amount' | 'taxPart' | 'card'>, refunds: readonly DealRefund[]): {
+export function refundLeft(p: Pick<DealPayment, 'id' | 'amount' | 'taxPart' | 'card'>, refunds: readonly Pick<DealRefund, 'paymentId' | 'status' | 'amount' | 'taxPart' | 'feePart' | 'feeTaxPart'>[]): {
   refundable: number; left: number; taxLeft: number;
 } {
   const feeC = cents(p.card?.feeCharged ?? 0) + cents(p.card?.feeTax ?? 0);
   const mine = refunds.filter(r => r.paymentId === p.id && refundCounts(r));
   const refundableC = cents(p.amount) - feeC;
-  const leftC = refundableC - mine.reduce((s, r) => s + cents(r.amount), 0);
-  const taxLeftC = cents(p.taxPart) - cents(p.card?.feeTax ?? 0) - mine.reduce((s, r) => s + cents(r.taxPart), 0);
+  const leftC = refundableC - mine.reduce((s, r) => s + cents(r.amount) - cents(r.feePart), 0);
+  const taxLeftC = cents(p.taxPart) - cents(p.card?.feeTax ?? 0) - mine.reduce((s, r) => s + cents(r.taxPart) - cents(r.feeTaxPart), 0);
   return { refundable: refundableC / 100, left: Math.max(0, leftC) / 100, taxLeft: Math.max(0, taxLeftC) / 100 };
 }
 
@@ -140,6 +188,63 @@ export function refundTaxPart(p: Pick<DealPayment, 'id' | 'amount' | 'taxPart' |
  *  (a cheque never comes back by card; a card payment already given back holds nothing). */
 export function refundEndsDeal(payments: readonly DealPayment[], refunds: readonly DealRefund[], paymentId: string): boolean {
   return payments.every(o => o.id === paymentId || !!o.voided || o.returned || (!!o.card && refundLeft(o, refunds).left <= 0));
+}
+
+/**
+ * Does finishing this refund made in Stripe ask what happens to the deal (Part A, ask 2)? Only when it gave back the last of the
+ * deal's money: every refundable dollar of its payment back by refunds that went through (mig 542's `club_sponsor_card_returned`),
+ * and no other payment still standing, on a deal not already withdrawn. The database asks the same and refuses a mismatch.
+ */
+export function finishAsksOutcome(payments: readonly DealPayment[], refunds: readonly DealRefund[], refund: Pick<DealRefund, 'paymentId'> & { id?: string }, dealState: string): boolean {
+  const p = payments.find(x => x.id === refund.paymentId);
+  if (!p?.card || p.disputeLost || dealState === 'withdrawn') return false;
+  // Asked once per payment: a later refund on it never asks again.
+  if (refunds.some(r => r.paymentId === p.id && r.id !== refund.id && r.status === 'succeeded' && r.finished?.outcome)) return false;
+  // Back means went through: "what is left" over the refunds that succeeded only (one on its way is not back yet).
+  return refundLeft(p, refunds.filter(r => r.status === 'succeeded')).left <= 0 && payments.every(o => o.id === p.id || !!o.voided || o.returned);
+}
+
+/**
+ * What a finish that asks nothing leaves the deal reading (mig 542): a paid deal whose standing money no longer covers the
+ * invoice, once a payment given back in full stops counting, owes again; a paid deal still covered stays paid. A deal already
+ * invoiced owes that payment's money too once it is all back (unless the bank took it: a lost dispute). Anything else is not
+ * moved, so nothing is said about it.
+ */
+export function finishLeavesDeal(payments: readonly DealPayment[], refunds: readonly DealRefund[], refund: Pick<DealRefund, 'paymentId'>, dealState: string, total: number): 'paid' | 'owing' | null {
+  const p = payments.find(x => x.id === refund.paymentId);
+  const full = !!p?.card && refundLeft(p, refunds.filter(r => r.status === 'succeeded')).left <= 0;
+  if (dealState !== 'paid' && !(dealState === 'invoiced' && full && !p?.disputeLost)) return null;
+  const standingC = payments.filter(o => !o.voided && !o.returned && !(full && o.id === p?.id)).reduce((s, o) => s + cents(o.amount), 0);
+  return standingC >= cents(total) ? 'paid' : 'owing';
+}
+
+/**
+ * Why "They still owe it" can't be chosen yet (mig 542, owner 2026-11-26), or null when it can. 'fee': part of what the
+ * sponsor paid on that payment (the processing fee) is still with the club, so owing it all again would charge it twice;
+ * `left` is how much. 'noted': an earlier refund on the payment already has a credit note, which reduced the invoice.
+ */
+export function owingBlock(payments: readonly DealPayment[], refunds: readonly DealRefund[], refund: Pick<DealRefund, 'paymentId'> & { id?: string }):
+  { why: 'fee'; left: number } | { why: 'noted' } | null {
+  const p = payments.find(x => x.id === refund.paymentId);
+  if (!p) return null;
+  const mine = refunds.filter(r => r.paymentId === p.id && r.status === 'succeeded');
+  if (mine.some(r => r.id !== refund.id && r.creditNumber)) return { why: 'noted' };
+  const leftC = cents(p.amount) - mine.reduce((s, r) => s + cents(r.amount), 0);
+  return leftC > 0 ? { why: 'fee', left: leftC / 100 } : null;
+}
+
+/** Does finishing leave the money owed again, so that no credit note is given (mig 542's `v_owed_again`)? `outcome` is the
+ *  club's choice when it is asked. */
+export function finishOwesAgain(payments: readonly DealPayment[], refunds: readonly DealRefund[], refund: Pick<DealRefund, 'paymentId'> & { id?: string }, dealState: string, total: number, outcome: 'ended' | 'owing' | null): boolean {
+  if (refunds.some(r => r.paymentId === refund.paymentId && r.id !== refund.id && r.status === 'succeeded' && r.finished?.outcome === 'owing')) return true;
+  return finishAsksOutcome(payments, refunds, refund, dealState) ? outcome === 'owing' : finishLeavesDeal(payments, refunds, refund, dealState, total) === 'owing';
+}
+
+/** The credit note a refund finished now would carry ("2027-014-C2"): the deal's next number, on a taxed invoice only. */
+export function nextCreditNumber(invoiceNumber: string, taxed: boolean, refunds: readonly Pick<DealRefund, 'creditNumber'>[]): string | null {
+  if (!taxed) return null;
+  const seqs = refunds.map(r => Number(/-C(\d+)$/.exec(r.creditNumber ?? '')?.[1] ?? 0));
+  return creditNoteNumber(invoiceNumber, Math.max(0, ...seqs) + 1);
 }
 
 /** What has gone back to the card on a deal (refunds on their way included; a failed one gave nothing back). */
@@ -238,7 +343,8 @@ export function clubInvoiceLayout(i: ClubInvoiceInput) {
     refunds: refunds.map(r => {
       const p = i.payments.find(x => x.id === r.paymentId);
       const to = p?.card ? `To ${cardLabel(p.card.brand, p.card.last4)}` : 'To the card';
-      return [formatStoredDate(refundDay(r)), r.status === 'pending' ? `${to} (on its way)` : to, `−${money(r.amount)}`];
+      // The day the money left: Stripe's own day for a refund made there.
+      return [formatStoredDate(refundMadeOn(r)), r.status === 'pending' ? `${to} (on its way)` : to, `−${money(r.amount)}`];
     }),
     // The coach builder prints "payable to {payee}"; a club that set its own cheque payee is that name.
     howToPay: { etransferEmail: i.howToPay.etransferTo, chequeAddress: mailed },
@@ -270,15 +376,24 @@ export function creditNoteLayout(i: ClubInvoiceInput, refund: DealRefund) {
   const row = (description: string) => (cancelled ? DEAL_WORDS.card.creditNoteCancelledRow(description) : description);
   // The day the note was ISSUED. A failed refund loses its booking day (the database clears it), so a cancelled note reads the day its
   // refund email went, which is the day it was booked and sent; never the day the refund was merely opened.
-  const issuedDay = cancelled && refund.emailedAt ? orgDayKey(refund.emailedAt) : refundDay(refund);
+  // A refund made in Stripe and finished on a later day carries that day (`creditOn`, mig 542); the money left on `refundedOn`.
+  const issuedDay: string = cancelled && refund.emailedAt ? orgDayKey(refund.emailedAt)
+    : refund.creditOn ?? (cancelled && refund.finished ? orgDayKey(refund.finished.at) : refundDay(refund));
+  // The day the money left: Stripe's own day for a refund made there (its booking day moves when that year is closed).
+  const madeOn = refundMadeOn(refund);
+  // A refund made in Stripe can return the processing fee too, after all of the sponsorship (Part A, ask 3): its own rows.
+  const parts = refundParts(refund);
   return {
     ...base,
     number,
     paidInFull: false,
     withdrawnLabel: null,
     rows: [
-      { description: row(`Refund of the sponsorship: ${what}`), amount: money((cents(refund.amount) - cents(refund.taxPart)) / 100) },
-      ...(refund.taxPart > 0 ? [{ description: row(`${kind} ${inv.taxRate}% refunded`), amount: money(refund.taxPart) }] : []),
+      // A refund made in Stripe that returned only the fee has no sponsorship row.
+      ...(parts.sponsorship > 0 ? [{ description: row(`Refund of the sponsorship: ${what}`), amount: money(parts.sponsorshipPre) }] : []),
+      ...(parts.sponsorshipTax > 0 ? [{ description: row(`${kind} ${inv.taxRate}% refunded`), amount: money(parts.sponsorshipTax) }] : []),
+      ...(refund.feePart > 0 ? [{ description: row(`Refund of the ${CARD_FEE_ROW.toLowerCase()}`), amount: money(parts.feePre) }] : []),
+      ...(parts.feeTax > 0 ? [{ description: row(`${kind} ${inv.taxRate}% on the fee refunded`), amount: money(parts.feeTax) }] : []),
     ],
     payments: [] as string[][],
     refunds: [] as string[][],
@@ -294,7 +409,13 @@ export function creditNoteLayout(i: ClubInvoiceInput, refund: DealRefund) {
         { n: money(refund.taxPart), label: cancelled ? `${kind} not refunded` : `${kind} refunded` },
         { n: money(Math.max(0, netPaidC) / 100), label: 'paid, after refunds' },
       ],
-      closing: cancelled ? DEAL_WORDS.card.creditNoteCancelledClosing(inv.number, money(refund.amount)) : `This credit note reduces invoice ${inv.number} by ${money(refund.amount)}, including ${money(refund.taxPart)} ${kind} at ${inv.taxRate}%. The amount went back to the card it was paid with. A refund never includes the processing fee.`,
+      closing: cancelled ? DEAL_WORDS.card.creditNoteCancelledClosing(inv.number, money(refund.amount))
+        : `This credit note reduces invoice ${inv.number} by ${money(refund.amount)}, including ${money(refund.taxPart)} ${kind} at ${inv.taxRate}%. ${
+          refund.origin === 'stripe' && madeOn !== issuedDay
+            ? `The amount went back on ${formatStoredDate(madeOn)} to the card it was paid with.`
+            : 'The amount went back to the card it was paid with.'} ${
+          // A refund made in Stripe CAN return some or all of the fee, so only one made from the deal says it never does.
+          refund.feePart > 0 ? `${money(refund.feePart)} of it is the processing fee you paid, tax included.` : refund.origin === 'stripe' ? '' : 'This refund doesn’t include the processing fee.'}`.trim(),
     },
   };
 }

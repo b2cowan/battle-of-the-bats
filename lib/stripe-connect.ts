@@ -255,6 +255,13 @@ export async function listDisputes(accountId: string, paymentIntentId: string): 
   return page.data;
 }
 
+/** A payment's metadata at Stripe (Stage 6 fixes Part A): a refund that arrives before its payment landed names no payment of
+ *  ours yet, and the metadata we set at checkout says which flow it belongs to. Read only. */
+export async function retrievePaymentIntentMetadata(accountId: string, paymentIntentId: string): Promise<Record<string, string>> {
+  const pi = await getStripe().paymentIntents.retrieve(paymentIntentId, {}, on(accountId));
+  return (pi.metadata ?? {}) as Record<string, string>;
+}
+
 /** A payment's refunds at Stripe (12c): a refund made in Stripe before its payment landed here is recorded once it lands. */
 export async function listRefunds(accountId: string, paymentIntentId: string): Promise<Stripe.Refund[]> {
   const page = await getStripe().refunds.list({ payment_intent: paymentIntentId, limit: 100 }, on(accountId));

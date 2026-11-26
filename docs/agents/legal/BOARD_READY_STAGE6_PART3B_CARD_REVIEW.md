@@ -1,5 +1,5 @@
 # Board Ready Stage 6 Part 3b: a business pays a club's sponsorship by card, and the club refunds it
-**Last verified:** 2026-11-23 (code read on dev; CASL s.1(2), s.6(1), s.6(2), s.6(6) re-read on laws-lois.justice.gc.ca today through a summarising fetch, with s.6(6)'s opening words confirmed on page 1 of the Act; Stripe's refund page read today; PIPEDA and Québec Law 25 not re-fetched)
+**Last verified:** 2026-11-23 (code read on dev; CASL s.1(2), s.6(1), s.6(2), s.6(6) re-read on laws-lois.justice.gc.ca today through a summarising fetch, with s.6(6)'s opening words confirmed on page 1 of the Act; Stripe's refund page read today; PIPEDA and Québec Law 25 not re-fetched). Addendum 2026-11-26 (the refund made in the club's Stripe account): the product only, no source re-read
 **Re-verify by:** the build is committed; the first club connects payouts on production; first Québec club or Québec business payer; Bill C-36; an edit to any of the five emails or the card words; the card rate or the default fee payer changes
 **Depends on facts:** `LEGAL_FACTS.md` § two privacy roles, § Payments; `ACCOUNTING_FACTS.md` (seller). Reuses `BOARD_READY_STAGE6_SPONSORSHIPS_DRAWING_REVIEW.md` (Parts 2 and 3a), `CARD_SURCHARGE_PAYER_FEE.md`, `RPAA_FINTRAC_MONEY_SERVICES_STATUS.md`, `ONTARIO_CONSUMER_INTERNET_AGREEMENTS.md`, `docs/agents/accounting/CREDIT_NOTES_ON_REFUNDS.md`. The draft text: `drafts/PAYMENTS_TERMS_SPONSORSHIP_CARD_ADDENDUM.md`.
 
@@ -61,6 +61,31 @@ Nothing found that promises the club is told of every dispute, that refunds are 
 **ANSWERED 2026-11-24 (owner: "do the O-S7 wording pass and drop the re_ row"): both done.** Every flat card-arrival line in the league, house-league, tournament and console words and help now reads "can take 5 to 10 business days… depending on the card company" (bank debits keep "about 3 business days"); the shared refund block no longer takes or prints a Stripe refund code, so none of the family, team or sponsor emails carries one (the club-side window keeps its own). O-S6 and O-S7 are closed.
 
 **Owner calls from this addendum (now answered):** O-S7 (one wording pass on the remaining flat "5 to 10 business days" lines; recommended yes); O-S6 (the `re_` row on family and team emails; recommended drop). No gate: the cancelled note and the tax reversal are "for an accountant when the owner chooses".
+
+## Addendum 2026-11-26: a refund the club makes in its own Stripe dashboard (Stage 6 fixes, Part A)
+**Reviewed:** the build on dev, 2026-11-26: `supabase/migrations/542_a_refund_made_in_stripe.sql`, `lib/online-payment-landing.ts` (`recordStripeSponsorRefund`, `finishStripeSponsorRefund`), `lib/sponsor-invoice-email.ts` (`emailDealRefund`), `lib/club-sponsor-invoice.ts`. The accounting half is in `docs/agents/accounting/CLUB_SPONSOR_INVOICE_REVIEW.md` (addendum 2026-11-26). No new legal source is cited. This replaces what the drafts through 0.3 and the earlier text above say about a dashboard refund not being recorded.
+
+**Findings.**
+1. **The drafts were no longer true.** Payments Terms draft 0.3 §6 said a refund in the club's Stripe account is not recorded, and its fee and email sentences covered only a refund from the deal.
+2. **Asking again without returning the fee.** A business that paid the processing fee, was refunded only the sponsorship and was marked "They still owe it" would have been asked for the fee a second time, beside a credit note saying the invoice was reduced. Closed by the first ruling below.
+3. **Silence about money still owed.** Neither the refund email nor the business's page said the invoice was owing again. Closed by the second ruling.
+4. **The email has conditions.** It goes only when the club has a mailing address and a contact email for sponsors (the sponsorship contact, else the club's public contact email: `offerContactOf`) and the business has an address on file. The finish window says when the club's details or the address are missing; the window for a refund from the deal says only that the business has no address.
+5. **A refund after the bank already took the payment back** (a lost dispute) is not booked and has no email; the club is told. A dispute won later books it.
+6. **New data:** for a refund made in the club's Stripe account, when it was made and Stripe's reason code (the code shows to the club only; the date reaches the business on its page, email and credit note), and the name of the member who finished it.
+
+**Owner rulings 2026-11-26.**
+- **"Fee first, no note":** "They still owe it" is offered only once everything the business paid on that payment, fee included, has been refunded and no earlier refund on it has a credit note. Money owed again gets no credit note (the price didn't change), whether chosen or because the remaining payments no longer cover the invoice.
+- **"Yes, say it":** the refund email and the business's page say when the invoice is still owing.
+- **"Update drafts":** next draft versions for his approval (Payments Terms addendum 0.4, Privacy addendum 0.2). Nothing published changes.
+
+**Open.**
+- An email that couldn't go has **no resend**, and **nothing retries** a finished Stripe refund's email (a second Finish answers "already"). To `/plan`.
+- Whether an **Express account can refund in its Stripe dashboard** is still unproved (the fee probe of 2026-11-25 refunded through the API as the account), and the club-facing Payouts hint tells clubs to do it. Prove it before the hint ships.
+- A refund **from the deal** beside another standing payment still reopens the deal and issues a credit note; and a Stripe finish that leaves money owed again *without being asked* does not look at an earlier credit note on the payment (accounting addendum 2026-11-26).
+- An invoice owing again keeps its **processing fee line**, payable by cheque (said in §4 of 0.4; a product question).
+- **A lawyer could look** at asking again for money that was refunded.
+
+**No lawyer gate** (owner 2026-10-31 and 2026-11-04): the owner decides when a lawyer looks.
 
 ## Sources
 - [Canada's Anti-spam Legislation, s.1(2), 6(1), 6(2), 6(6), 11](https://laws-lois.justice.gc.ca/eng/acts/E-1.6/FullText.html) — accessed 2026-11-23

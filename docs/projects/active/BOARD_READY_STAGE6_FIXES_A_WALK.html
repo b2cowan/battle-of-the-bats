@@ -1,0 +1,672 @@
+<title>Stage 6 fixes · Part A</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: one reading column; a walk index of cards, one walk open at a time; steps as Do / You should see rows with a tick. */
+:root {
+  --bg: #f4f6f5; --surface: #ffffff; --ink: #18211d; --muted: #5b6862; --line: #d5ddd9;
+  --accent: #1f6b4f; --accent-soft: #e2efe9; --warn: #9a5b00; --warn-soft: #fbefd9; --bad: #a3322b; --bad-soft: #f8e3e1;
+  --font-body: "Instrument Sans", "Segoe UI", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, "Cascadia Mono", Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #121715; --surface: #1a211e; --ink: #e5ece8; --muted: #9aa8a1; --line: #2e3833;
+  --accent: #6fcca4; --accent-soft: #1f3a2f; --warn: #f0b75c; --warn-soft: #3a2c14; --bad: #f08a80; --bad-soft: #3d1f1c; color-scheme: dark; } }
+:root[data-theme="dark"] {
+  --bg: #121715; --surface: #1a211e; --ink: #e5ece8; --muted: #9aa8a1; --line: #2e3833;
+  --accent: #6fcca4; --accent-soft: #1f3a2f; --warn: #f0b75c; --warn-soft: #3a2c14; --bad: #f08a80; --bad-soft: #3d1f1c; color-scheme: dark; }
+body { background: var(--bg); color: var(--ink); font: 15px/1.55 var(--font-body); padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 24px 64px; }
+.wrap { max-width: 860px; margin: 0 auto; display: grid; gap: 20px; }
+h1 { font-size: 30px; line-height: 1.15; margin: 0; text-wrap: balance; letter-spacing: -0.01em; }
+h2 { font-size: 19px; margin: 0; text-wrap: balance; }
+h3 { font-size: 13px; margin: 0; text-transform: uppercase; letter-spacing: 0.07em; color: var(--muted); font-weight: 600; }
+p { margin: 0; max-width: 68ch; }
+.eyebrow { font: 600 12px/1 var(--font-mono); letter-spacing: 0.08em; text-transform: uppercase; color: var(--accent); }
+.lead { color: var(--muted); }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 18px; display: grid; gap: 12px; min-width: 0; }
+.signin { border-color: var(--accent); }
+.kv { display: grid; grid-template-columns: max-content 1fr; gap: 6px 16px; }
+.kv dt { color: var(--muted); }
+.kv dd { margin: 0; min-width: 0; overflow-wrap: anywhere; }
+code, .mono { font-family: var(--font-mono); font-size: 0.92em; }
+pre { margin: 6px 0 0; padding: 10px 12px; background: var(--bg); border: 1px solid var(--line); border-radius: 8px; font: 12px/1.5 var(--font-mono); white-space: pre-wrap; overflow-wrap: anywhere; }
+.amt { font-family: var(--font-mono); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.note { background: var(--warn-soft); border-radius: 8px; padding: 10px 12px; }
+ul.plain { margin: 0; padding-left: 18px; display: grid; gap: 4px; }
+.index { display: grid; gap: 8px; }
+.wcard { display: grid; grid-template-columns: 1fr auto; gap: 4px 12px; align-items: center; text-align: left; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; font: inherit; color: inherit; cursor: pointer; }
+.wcard[aria-expanded="true"] { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent) inset; }
+.wcard:focus-visible, button:focus-visible, textarea:focus-visible, input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.wcard .t { font-weight: 600; }
+.wcard .j { grid-column: 1; color: var(--muted); font-size: 14px; }
+.chip { grid-row: 1 / span 2; grid-column: 2; font: 600 12px/1 var(--font-body); padding: 6px 9px; border-radius: 999px; background: var(--bg); color: var(--muted); border: 1px solid var(--line); white-space: nowrap; }
+.chip.prog { color: var(--accent); border-color: var(--accent); }
+.chip.pass { background: var(--accent-soft); color: var(--accent); border-color: transparent; }
+.chip.issue { background: var(--bad-soft); color: var(--bad); border-color: transparent; }
+.chip.call, .chip.thin { background: var(--warn-soft); color: var(--warn); border-color: transparent; }
+.walk { display: grid; gap: 14px; }
+.meta { display: grid; gap: 10px; }
+.meta div { display: grid; gap: 2px; }
+.steps { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+.step { display: grid; grid-template-columns: 28px 1fr; gap: 10px; padding: 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); }
+.step.done { border-color: var(--accent); background: var(--accent-soft); }
+.step.stop { border-style: dashed; border-color: var(--warn); }
+.step input[type="checkbox"] { width: 20px; height: 20px; margin: 2px 0 0; accent-color: var(--accent); }
+.step .body { display: grid; gap: 6px; min-width: 0; }
+.step .who { font: 600 11px/1 var(--font-mono); text-transform: uppercase; letter-spacing: 0.07em; color: var(--warn); }
+.step .lab { font-weight: 600; font-size: 12px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); }
+.opts { display: grid; gap: 6px; }
+.opts label { display: flex; gap: 8px; align-items: flex-start; }
+.step a { color: var(--accent); font-weight: 600; }
+.step code { overflow-wrap: anywhere; }
+.signin a { color: var(--accent); }
+.verdict { display: flex; flex-wrap: wrap; gap: 8px; }
+.verdict button, .btn { font: 600 14px/1 var(--font-body); padding: 10px 14px; border-radius: 8px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); cursor: pointer; }
+.verdict button.on[data-v="pass"] { background: var(--accent); color: var(--surface); border-color: var(--accent); }
+.verdict button.on[data-v="issue"] { background: var(--bad); color: var(--surface); border-color: var(--bad); }
+.verdict button.on[data-v="call"] { background: var(--warn); color: var(--surface); border-color: var(--warn); }
+textarea { width: 100%; box-sizing: border-box; min-height: 80px; font: 14px/1.5 var(--font-body); padding: 10px; border-radius: 8px; border: 1px solid var(--line); background: var(--bg); color: var(--ink); }
+.out { font: 13px/1.5 var(--font-mono); white-space: pre-wrap; }
+.row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.progress { font-weight: 600; }
+@media (max-width: 520px) { .kv { grid-template-columns: 1fr; } .kv dt { margin-top: 6px; } h1 { font-size: 25px; } }
+@media (prefers-reduced-motion: no-preference) { .step { transition: background-color 0.15s, border-color 0.15s; } }
+</style>
+
+<div class="wrap">
+  <header class="card" style="gap:8px">
+    <span class="eyebrow">Board Ready Stage 6 · Fixes · Part A</span>
+    <h1>A refund made in the club’s Stripe dashboard</h1>
+    <p class="lead">One purpose: a sponsor refund made in Stripe lands in the books by itself, and the club can finish it on the deal. 6 walks, 43 steps. Three owner calls sit below the walks and are not counted.</p>
+    <p class="lead">Written Nov 26, 2026, the day the walk’s refunds were made in Stripe. “Today” in a step means the day you press the button. It runs on staging (dev data, Stripe test mode), not on this computer.</p>
+    <p class="progress" id="progress">Checked 0 of 0</p>
+  </header>
+
+  <section class="card signin" aria-labelledby="signin-h">
+    <h2 id="signin-h">Sign in as</h2>
+    <dl class="kv">
+      <dt>Where</dt><dd><code>https://dev.fieldlogichq.ca/auth/login</code>, the staging site. <b>Not this computer.</b></dd>
+      <dt>Owner window</dt><dd><code>owner@dev.local</code> · password <code>devpass123</code> · Dev Club Org. Notifications are paused for this login.</dd>
+      <dt>Treasurer window</dt><dd>A <b>private window</b>: <code>p3-treasurer@dev.local</code> · password <code>devpass123</code> · Dev Club Org. Used for Needs attention.</dd>
+      <dt>The sponsor</dt><dd>Nobody signs in. Its page is a link.</dd>
+    </dl>
+    <p class="lead">UAT Rep Club can’t take card payments, so every walk here is on Dev Club Org. Dev-only sign-ins. Keep this page private.</p>
+  </section>
+
+  <section class="card" aria-labelledby="before-h">
+    <h2 id="before-h">Before you start</h2>
+    <p class="note"><b>These are not boxes.</b> If one is not true, stop and tell me.</p>
+    <ul class="plain">
+      <li><b>Staging shows this change</b>: its build after the push has finished (I will tell you).</li>
+      <li><b>The treasurer is signed in</b> in the private window, has ticked the Terms box (asked once) and pressed <b>Continue</b>.</li>
+      <li><b>PowerShell is open in the project folder on this computer</b> for walks D and E.</li>
+      <li>Each deal can be walked once: a finished refund stays finished.</li>
+    </ul>
+  </section>
+
+  <section aria-labelledby="index-h" style="display:grid;gap:10px">
+    <h2 id="index-h">The walks</h2>
+    <div class="index" id="index"></div>
+  </section>
+
+  <section id="walkHost"></section>
+
+  <section class="card" id="callsHost" aria-labelledby="calls-h" hidden>
+    <h2 id="calls-h">Owner calls</h2>
+  </section>
+
+  <section class="card" aria-labelledby="sum-h">
+    <h2 id="sum-h">Paste-back (all walks)</h2>
+    <div class="row">
+      <button class="btn" type="button" id="copyAll">Copy the summary</button>
+      <button class="btn" type="button" id="reset">Clear my ticks</button>
+      <span class="lead" id="copied" aria-live="polite"></span>
+    </div>
+    <div class="card out" id="out" tabindex="0"></div>
+  </section>
+</div>
+
+<script>
+(function () {
+  "use strict";
+  var KEY = "stage6-fixes-part-a-v1";
+  var PAGE = "Board Ready Stage 6 · Fixes, Part A";
+  var WALKS = [
+ {
+  "id": "A",
+  "title": "Part of the money went back",
+  "job": "Walk 542 Part Optical · owner window and treasurer window",
+  "forText": "A refund made in the club’s Stripe dashboard is already in the books. The club finishes it with a reason, and the sponsor gets an email and a credit note.",
+  "passes": "The deal asks to be finished, finishing keeps it paid and issues credit note 2026-008-C1 with no fee line, and the treasurer’s Needs attention item clears by itself.",
+  "notIn": "A refund on a deal that charges no tax (no credit note), and a club that is missing its mailing address.",
+  "who": "The owner (owner window) and the treasurer (treasurer window).",
+  "where": "The deal’s page, the payment’s window, Notifications.",
+  "steps": [
+   {
+    "stop": true,
+    "who": "Owner window",
+    "d": "Open <a href=\"https://dev.fieldlogichq.ca/dev-club-org/admin/sponsorships/9cc6f1d4-fa0a-4d73-bc10-47921affd0da\" target=\"_blank\" rel=\"noopener\">the Part Optical deal</a><br><code>https://dev.fieldlogichq.ca/dev-club-org/admin/sponsorships/9cc6f1d4-fa0a-4d73-bc10-47921affd0da</code>.",
+    "s": "An amber line reads <b>$200.00 was refunded in Stripe on Nov 26. Finish it on the deal.</b> with <b>Finish the refund</b>. <b>Stop if the line is missing.</b>"
+   },
+   {
+    "who": "Owner window",
+    "d": "Look at the money figures and the payment under them.",
+    "s": "<b>Refunded $200.00</b> (to the card, Nov 26) and <b>Still owing $0.00</b>. The payment reads <b>Refunded $200.00 in Stripe Nov 26</b> with a <b>To finish</b> chip."
+   },
+   {
+    "who": "Treasurer window",
+    "d": "Open <a href=\"https://dev.fieldlogichq.ca/dev-club-org/admin/notifications\" target=\"_blank\" rel=\"noopener\">Notifications</a><br><code>https://dev.fieldlogichq.ca/dev-club-org/admin/notifications</code>.",
+    "s": "Under <b>Needs attention</b>: <b>A refund made in Stripe needs finishing</b>, <b>$200.00 went back to Walk 542 Part Optical’s card from your Stripe dashboard on Nov 26. It’s in the books. Finish it on the deal.</b> Other walk deals have their own items there too."
+   },
+   {
+    "who": "Owner window",
+    "d": "Press <b>Finish the refund</b> on the amber line.",
+    "s": "The window <b>Walk 542 Part Optical’s payment</b> opens. Its <b>To the card</b> part is marked <b>To finish</b>: <b>Made in Stripe</b> Nov 26 at 1:16 p.m., from your Stripe dashboard, reason requested by the customer; <b>Credit note Not yet</b>; <b>Business emailed Not yet</b>. At the foot: <b>Finish the refund</b> and <b>Refund</b>."
+   },
+   {
+    "who": "Owner window",
+    "d": "Press <b>Finish the refund</b> at the foot of that window.",
+    "s": "<b>Finish Walk 542 Part Optical’s refund?</b> It says $200.00 went back to the card: <b>$176.99 of the sponsorship and $23.01 HST</b>. Then <b>Finishing gives Walk 542 Part Optical credit note 2026-008-C1, dated today, and emails them about the refund. The deal stays paid.</b> No choice to make: a <b>Reason</b> box and <b>Finish and email</b>."
+   },
+   {
+    "who": "Owner window",
+    "d": "Type a reason and press <b>Finish and email</b>.",
+    "s": "<b>Finished. We emailed pat@walk-542-part-optical.local.</b> Both windows close."
+   },
+   {
+    "who": "Owner window",
+    "d": "Look over the deal page.",
+    "s": "The amber line is gone and the deal still reads <b>Paid</b>, <b>Still owing $0.00</b>. The payment’s chip is <b>Partly refunded</b>. History ends <b>refunded $200.00 in Stripe Nov 26 · finished</b> today <b>by owner@dev.local</b>."
+   },
+   {
+    "who": "Owner window",
+    "d": "Press the payment row.",
+    "s": "The refund is marked <b>Refunded</b> and shows your <b>Reason</b>, <b>Finished</b> (owner@dev.local, today), <b>Credit note 2026-008-C1</b> and <b>Business emailed</b> with the address and today. The foot offers <b>Refund</b> only."
+   },
+   {
+    "who": "Owner window",
+    "d": "Press <b>2026-008-C1</b> and open the PDF.",
+    "s": "<b>Credit note</b> No. 2026-008-C1, issued today, for invoice 2026-008: <b>$200.00 refunded · $23.01 HST refunded · $976.39 paid, after refunds</b>. Two lines, <b>$176.99</b> and <b>$23.01</b>, and <b>no processing-fee line</b>. The closing line says it went back to the card; if today is after Nov 26 it also says <b>on Nov 26, 2026</b>."
+   },
+   {
+    "who": "Treasurer window",
+    "d": "Reload Notifications.",
+    "s": "Part Optical’s item has left <b>Needs attention</b> by itself. Further down it reads that it was finished, by the owner."
+   }
+  ]
+ },
+ {
+  "id": "B",
+  "title": "All of it went back, and they still owe it",
+  "job": "Walk 542 Whole Bakery · owner window and the sponsor’s page",
+  "forText": "The whole payment, fee included, went back. The club says the sponsor still owes the money.",
+  "passes": "Both choices are offered with nothing picked; “They still owe it” puts the invoice back to owing with no credit note, on the deal, the sponsor’s page and the PDF.",
+  "notIn": "Recording the cheque or paying again by card afterwards.",
+  "who": "The owner; the sponsor’s page needs no sign-in.",
+  "where": "The deal’s page, the finish question, the sponsor’s page and invoice.",
+  "steps": [
+   {
+    "who": "Owner window",
+    "d": "Open <a href=\"https://dev.fieldlogichq.ca/dev-club-org/admin/sponsorships/b2cf5b5a-a0e1-4b5f-8936-cac46ce1a62e\" target=\"_blank\" rel=\"noopener\">the Whole Bakery deal</a><br><code>https://dev.fieldlogichq.ca/dev-club-org/admin/sponsorships/b2cf5b5a-a0e1-4b5f-8936-cac46ce1a62e</code>.",
+    "s": "The amber line reads <b>$1,176.39 was refunded in Stripe on Nov 26. Finish it on the deal.</b>"
+   },
+   {
+    "who": "Owner window",
+    "d": "Press <b>Finish the refund</b> on the amber line, and the same button at the foot of the window that opens.",
+    "s": "It says <b>$1,130.00 of the sponsorship and $46.39 of the processing fee, tax included</b>, and that refunding the fee to the sponsor <b>doesn’t bring it back to the club</b>. Two choices, <b>It has ended</b> and <b>They still owe it</b>, nothing picked, no finish button, and <b>Choose what happens to the deal.</b>"
+   },
+   {
+    "who": "Owner window",
+    "d": "Pick <b>They still owe it</b>.",
+    "s": "Under it: <b>The deal reads owing again and their link lets them pay. No credit note, because they still owe the full invoice</b>. A <b>Reason</b> box and <b>Finish and email</b> appear."
+   },
+   {
+    "who": "Owner window",
+    "d": "Type a reason and press <b>Finish and email</b>.",
+    "s": "<b>Finished. We emailed pat@walk-542-whole-bakery.local.</b> Nothing about the deal ending."
+   },
+   {
+    "who": "Owner window",
+    "d": "Look over the deal page.",
+    "s": "Chip <b>Invoiced</b>. <b>Waiting for payment</b>: invoice 2026-009 for $1,176.39, due Dec 26, with <b>Record a payment</b>. <b>Paid $0.00 · Refunded $1,176.39 · Still owing $1,176.39</b>. The payment’s chip is <b>Refunded</b>."
+   },
+   {
+    "d": "Open <a href=\"https://dev.fieldlogichq.ca/dev-club-org/sponsorship/ss9bWqDhS1-JNsrEbOGmLg.JvwEvtVwexdeaBUWixAUgA\" target=\"_blank\" rel=\"noopener\">Whole Bakery’s sponsor page</a><br><code>https://dev.fieldlogichq.ca/dev-club-org/sponsorship/ss9bWqDhS1-JNsrEbOGmLg.JvwEvtVwexdeaBUWixAUgA</code>.",
+    "s": "<b>Dev Club Org shows $1,176.39 still owing after the refund.</b> The refund is listed, with <b>Pay $1,176.39 by card</b> and <b>How to pay</b>. <b>No credit note link.</b> (The heading still thanks them: call B.)"
+   },
+   {
+    "d": "Press <b>Download the invoice (PDF)</b>.",
+    "s": "<b>$1,176.39 invoiced · $0.00 paid · $1,176.39 balance due</b>, due Dec 26, 2026, with the payment and the refund listed and nothing saying paid in full. The processing-fee line is still on it (call C)."
+   }
+  ]
+ },
+ {
+  "id": "C",
+  "title": "It has ended, and the club keeps the fee",
+  "job": "Walk 542 NoFee Plumbing · owner window and the sponsor’s page",
+  "forText": "All the sponsorship money went back but the processing fee did not, so the sponsor can’t be asked to pay again yet.",
+  "passes": "Only “It has ended” can be picked, with the way to the other choice said under it; the deal ends and the credit note has no fee line.",
+  "notIn": "Actually refunding the other $46.39 first.",
+  "who": "The owner; the sponsor’s page needs no sign-in.",
+  "where": "The deal’s page, the finish question, the sponsor’s page and credit note.",
+  "steps": [
+   {
+    "who": "Owner window",
+    "d": "Open <a href=\"https://dev.fieldlogichq.ca/dev-club-org/admin/sponsorships/234a33d1-a4e0-4802-9170-53b7d5fc3c23\" target=\"_blank\" rel=\"noopener\">the NoFee Plumbing deal</a><br><code>https://dev.fieldlogichq.ca/dev-club-org/admin/sponsorships/234a33d1-a4e0-4802-9170-53b7d5fc3c23</code>.",
+    "s": "The amber line reads <b>$1,130.00 was refunded in Stripe on Nov 26. Finish it on the deal.</b>"
+   },
+   {
+    "who": "Owner window",
+    "d": "Press <b>Finish the refund</b> on the amber line, and the same button at the foot of the window.",
+    "s": "<b>all the sponsorship money in that payment ($1,000.00 plus $130.00 HST)</b>. The only choice is <b>It has ended</b>. Under it: <b>To have them still owe it, first refund the other $46.39 (the processing fee) in your Stripe dashboard, then finish.</b>"
+   },
+   {
+    "who": "Owner window",
+    "d": "Pick <b>It has ended</b>.",
+    "s": "A <b>Reason</b> box appears and the button reads <b>Finish, end the deal and email</b>."
+   },
+   {
+    "who": "Owner window",
+    "d": "Type a reason and press that button.",
+    "s": "<b>Finished. We emailed pat@walk-542-nofee-plumbing.local. The deal has ended and its place is free.</b>"
+   },
+   {
+    "who": "Owner window",
+    "d": "Look over the deal page.",
+    "s": "Chip <b>Withdrawn</b>; a line says withdrawn today by owner@dev.local, with your reason. <b>Paid $0.00 · Refunded $1,130.00 · Still owing $0.00</b>. Under the logo line: <b>Came down</b> today, <b>when the deal was refunded</b>."
+   },
+   {
+    "d": "Open <a href=\"https://dev.fieldlogichq.ca/dev-club-org/sponsorship/I0oz0aTgSAKRcFO31fw8Iw.LPPdzPzmHHFLbIPntT_HhQ\" target=\"_blank\" rel=\"noopener\">NoFee Plumbing’s sponsor page</a><br><code>https://dev.fieldlogichq.ca/dev-club-org/sponsorship/I0oz0aTgSAKRcFO31fw8Iw.LPPdzPzmHHFLbIPntT_HhQ</code>.",
+    "s": "<b>Your sponsorship has ended</b>. <b>The $46.39 processing fee isn’t part of this refund.</b> The $1,130.00 refund is listed, there is no pay button, and there is a link for <b>Credit note 2026-010-C1</b>."
+   },
+   {
+    "d": "Press <b>Credit note 2026-010-C1 (PDF)</b>.",
+    "s": "Issued today: <b>$1,130.00 refunded · $130.00 HST refunded · $46.39 paid, after refunds</b>. Lines <b>$1,000.00</b> and <b>$130.00</b>, and <b>no processing-fee line</b>."
+   }
+  ]
+ },
+ {
+  "id": "D",
+  "title": "A refund still on its way",
+  "job": "Walk 542 Pending Marina · owner window, PowerShell, treasurer window",
+  "forText": "A refund the card’s bank has not confirmed yet waits quietly, then asks to be finished.",
+  "passes": "While pending there is nothing to finish; once it goes through, the deal asks and a Needs attention item appears.",
+  "notIn": "A refund the bank sends back. Leave this one unfinished.",
+  "who": "The owner and the treasurer.",
+  "where": "The deal’s page, PowerShell in the project folder, Notifications.",
+  "steps": [
+   {
+    "who": "Owner window and PowerShell",
+    "d": "Have <a href=\"https://dev.fieldlogichq.ca/dev-club-org/admin/sponsorships/ddac3e46-bc30-408c-a042-76c6b673b5e5\" target=\"_blank\" rel=\"noopener\">the Pending Marina deal</a><br><code>https://dev.fieldlogichq.ca/dev-club-org/admin/sponsorships/ddac3e46-bc30-408c-a042-76c6b673b5e5</code> open. In PowerShell run <code>node --env-file=.env.local .probe/fixes-a-walk-stripe.mjs pendingready</code> (once only), and reload the page as soon as it prints <b>Recorded as on its way</b>.",
+    "s": "<b>Refunded $200.00</b>, <b>on its way to the card</b>. The payment reads <b>Refund of $200.00 from Stripe on its way</b>, chip <b>Pending</b>. No amber line and nothing to finish."
+   },
+   {
+    "who": "Owner window",
+    "d": "When PowerShell prints <b>Ready</b> (about 2 to 3 minutes), reload the page.",
+    "s": "An amber line: <b>$200.00 was refunded in Stripe on</b> today. The payment’s chip is <b>To finish</b>."
+   },
+   {
+    "who": "Treasurer window",
+    "d": "Reload Notifications.",
+    "s": "A new <b>Needs attention</b> item: <b>$200.00 went back to Walk 542 Pending Marina’s card from your Stripe dashboard</b>, dated today."
+   }
+  ]
+ },
+ {
+  "id": "E",
+  "title": "A real refund in the Stripe dashboard",
+  "job": "Walk 542 Again Dental · owner window and Stripe",
+  "forText": "The one thing not yet proven: that the club’s own Stripe dashboard offers Refund. It also shows that a refunded sponsor can no longer be offered again.",
+  "passes": "Stripe lets you refund, the deal asks to be finished, and Offer again holds Again Dental back with its reason.",
+  "notIn": "Finishing this refund, and sending any offer. Never press Send.",
+  "who": "The owner.",
+  "where": "The deal’s page, Organization settings, Stripe’s test dashboard, the Deals tab.",
+  "steps": [
+   {
+    "stop": true,
+    "who": "Owner window",
+    "d": "Open <a href=\"https://dev.fieldlogichq.ca/dev-club-org/admin/sponsorships/057fdfaa-7f7b-4faa-9739-19e81f884784\" target=\"_blank\" rel=\"noopener\">the Again Dental deal</a><br><code>https://dev.fieldlogichq.ca/dev-club-org/admin/sponsorships/057fdfaa-7f7b-4faa-9739-19e81f884784</code>. Do not press anything.",
+    "s": "The deal reads paid, and the line at the top offers <b>Offer again…</b>. <b>Stop if the button is missing.</b>"
+   },
+   {
+    "who": "Owner window",
+    "d": "Press the payment row, note the end of the Stripe reference, and close the window.",
+    "s": "The <b>Stripe reference</b> ends <b>1OM7hBD4</b>."
+   },
+   {
+    "who": "Owner window",
+    "d": "On <a href=\"https://dev.fieldlogichq.ca/dev-club-org/admin/org/settings\" target=\"_blank\" rel=\"noopener\">Organization settings</a><br><code>https://dev.fieldlogichq.ca/dev-club-org/admin/org/settings</code>, find the <b>Payouts</b> card and press <b>Open Stripe</b>.",
+    "s": "The card reads <b>Teams can pay online</b> with <b>Test mode</b>. Stripe opens in a new tab (allow pop-ups if asked)."
+   },
+   {
+    "who": "Stripe",
+    "d": "Pass Stripe’s human check, and its phone code if it asks.",
+    "s": "Dev Club Org’s Stripe dashboard."
+   },
+   {
+    "who": "Stripe",
+    "d": "Go to <b>Payments</b> and open the $1,176.39 payment for <b>pat@walk-542-again-dental.local</b>.",
+    "s": "Its reference ends <b>1OM7hBD4</b>. Several payments are $1,176.39, so check this before refunding."
+   },
+   {
+    "who": "Stripe",
+    "d": "Press <b>Refund</b> and refund all $1,176.39. If there is no Refund button, run <code>node --env-file=.env.local .probe/fixes-a-walk-stripe.mjs again</code> in PowerShell and wait for <b>Ready</b>.",
+    "s": "Stripe shows the payment as refunded, or PowerShell says Ready.",
+    "opts": [
+     [
+      "stripe",
+      "Stripe offered Refund, and I used it"
+     ],
+     [
+      "command",
+      "There was no Refund button, so I ran the command"
+     ]
+    ]
+   },
+   {
+    "who": "Owner window",
+    "d": "Wait about a minute, then reload the deal.",
+    "s": "<b>$1,176.39 was refunded in Stripe on</b> today, chip <b>To finish</b>. <b>Offer again…</b> is gone from the top line. Leave it unfinished."
+   },
+   {
+    "who": "Owner window",
+    "d": "Open <a href=\"https://dev.fieldlogichq.ca/dev-club-org/admin/sponsorships\" target=\"_blank\" rel=\"noopener\">Sponsorships › Deals</a><br><code>https://dev.fieldlogichq.ca/dev-club-org/admin/sponsorships</code> (year 2026) and press <b>Offer again…</b> on the card about 2025’s sponsors.",
+    "s": "The window <b>Offer again to 2025’s sponsors</b>."
+   },
+   {
+    "who": "Owner window",
+    "d": "Under <b>Can’t be emailed</b> press <b>Show</b>, read Again Dental’s row, then close with <b>Cancel</b>. <b>Never press Send.</b>",
+    "s": "Walk 542 Again Dental can’t be ticked: <b>Their payment is disputed or being refunded, or their bank is asking about it, so there’s no reason on record to email them. To give them a link in person, use Offer a deal.</b>"
+   }
+  ]
+ },
+ {
+  "id": "F",
+  "title": "Finishing from a phone",
+  "job": "Walk 542 Phone Hardware · owner at 390 wide",
+  "forText": "The same finish on a narrow screen, ending the deal when the fee went back too.",
+  "passes": "Nothing is squeezed, the question is a centred card, the Reason box stays in view while typing, and the credit note shows the fee lines.",
+  "notIn": "The sponsor’s page on a phone.",
+  "who": "The owner.",
+  "where": "A browser window 390 wide (press F12, then the phone-and-tablet button). A real phone also works: open <code>https://dev.fieldlogichq.ca/auth/login</code>, sign in as the owner, then open the link in step 1. Say in the notes which you used.",
+  "steps": [
+   {
+    "who": "390 wide",
+    "d": "Open <a href=\"https://dev.fieldlogichq.ca/dev-club-org/admin/sponsorships/5be390db-51b5-4fc9-9042-b36d9d894ff3\" target=\"_blank\" rel=\"noopener\">the Phone Hardware deal</a><br><code>https://dev.fieldlogichq.ca/dev-club-org/admin/sponsorships/5be390db-51b5-4fc9-9042-b36d9d894ff3</code>.",
+    "s": "<b>Finish the refund</b> sits under the amber line’s words. The money figures are rows. The <b>To finish</b> chip sits under the payment’s words, not squeezed beside them."
+   },
+   {
+    "who": "390 wide",
+    "d": "Press <b>Finish the refund</b> on the amber line, and the same button at the foot of the window.",
+    "s": "The question is a <b>centred card</b>, with both choices and nothing picked."
+   },
+   {
+    "who": "390 wide",
+    "d": "Pick <b>It has ended</b>.",
+    "s": "The button reads <b>Finish, end the deal and email</b>."
+   },
+   {
+    "who": "390 wide",
+    "d": "Tap <b>Reason</b> and type, with the phone keyboard up (in a computer browser, make the window about 470 tall first).",
+    "s": "The <b>Reason</b> box and your words stay in view. If they hide behind <b>Finish, end the deal and email</b>, say so in the notes."
+   },
+   {
+    "who": "390 wide",
+    "d": "Press <b>Finish, end the deal and email</b>.",
+    "s": "<b>Finished. We emailed pat@walk-542-phone-hardware.local. The deal has ended and its place is free.</b>"
+   },
+   {
+    "who": "390 wide",
+    "d": "Look over the deal page.",
+    "s": "Chip <b>Withdrawn</b>, <b>Still owing $0.00</b>, and the payment’s chip reads <b>Refunded</b>."
+   },
+   {
+    "d": "Press the payment row, then <b>2026-011-C1</b>, and open the PDF.",
+    "s": "Four lines: sponsorship <b>$1,000.00</b>, HST <b>$130.00</b>, <b>Refund of the processing fee $41.05</b>, HST on the fee <b>$5.34</b>. <b>$1,176.39 refunded · $135.34 HST refunded · $0.00 paid</b>. It ends <b>$46.39 of it is the processing fee you paid, tax included.</b>"
+   }
+  ]
+ }
+];
+  var CALLS = [
+ {
+  "id": "A",
+  "q": "What should “Finish the refund” on the amber line open?",
+  "why": "Today it opens the payment’s window, where the same button is pressed again to reach the question. The drawing says both.",
+  "opts": [
+   [
+    "keep",
+    "Keep it: the payment’s window first"
+   ],
+   [
+    "direct",
+    "Open the finish question straight away"
+   ],
+   [
+    "other",
+    "Something else (say in the notes)"
+   ]
+  ]
+ },
+ {
+  "id": "B",
+  "q": "After “They still owe it”, the sponsor’s page still thanks them",
+  "why": "It opens “Thank you … has your details.” above an invoice that is owing again.",
+  "opts": [
+   [
+    "keep",
+    "Keep it"
+   ],
+   [
+    "change",
+    "Change the heading and line"
+   ],
+   [
+    "other",
+    "Something else (say in the notes)"
+   ]
+  ]
+ },
+ {
+  "id": "C",
+  "q": "An invoice that is owing again keeps its processing-fee line",
+  "why": "A sponsor who then pays by cheque pays that fee to the club. If they pay by card, the club covers a new fee.",
+  "opts": [
+   [
+    "leave",
+    "Leave it"
+   ],
+   [
+    "plan",
+    "Plan a change"
+   ],
+   [
+    "other",
+    "Something else (say in the notes)"
+   ]
+  ]
+ }
+];
+  var state = { ticks: {}, verdict: {}, notes: {}, choice: {}, open: "A" };
+  try { var raw = localStorage.getItem(KEY); if (raw) { var got = JSON.parse(raw); state.ticks = got.ticks || {}; state.verdict = got.verdict || {}; state.notes = got.notes || {}; state.choice = got.choice || {}; state.open = got.open || "A"; } } catch (e) {}
+  function save() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} }
+  function el(tag, cls, html) { var n = document.createElement(tag); if (cls) n.className = cls; if (html != null) n.innerHTML = html; return n; }
+  function plain(html) { var d = document.createElement("div"); d.innerHTML = html; return d.textContent.replace(/\s+/g, " ").trim(); }
+  // A step added after the walk was published carries its own label ("7a"), so every other step keeps its number, and a
+  // tick already saved against it stays on the right step.
+  function num(w, i) { if (w.steps[i].n) return w.steps[i].n; var k = 0; for (var j = 0; j <= i; j++) if (!w.steps[j].n) k++; return String(k); }
+  function sid(w, i) { return w.id + "." + num(w, i); }
+  function counts(w) { var n = 0; w.steps.forEach(function (s, i) { if (state.ticks[sid(w, i)]) n++; }); return { done: n, all: w.steps.length }; }
+  var VWORD = { pass: "Passed", issue: "Issue", call: "Needs a call" };
+  function chipOf(w) {
+    var c = counts(w), v = state.verdict[w.id];
+    if (v === "pass" && c.done < c.all) return ["thin", "Passed · only " + c.done + " of " + c.all + " ticked"];
+    if (v) return [v, VWORD[v] + " · " + c.done + " of " + c.all];
+    if (c.done) return ["prog", "In progress · " + c.done + " of " + c.all];
+    return ["", "Not started · " + c.all + " steps"];
+  }
+
+  var index = document.getElementById("index"), host = document.getElementById("walkHost");
+  var cards = {};
+  WALKS.forEach(function (w, wi) {
+    var b = el("button", "wcard");
+    b.type = "button"; b.id = "card-" + w.id; b.setAttribute("aria-controls", "walk-" + w.id);
+    b.appendChild(el("span", "t", "Walk " + w.id + " · " + w.title));
+    b.appendChild(el("span", "j", w.job));
+    var chip = el("span", "chip"); b.appendChild(chip);
+    b.addEventListener("click", function () { state.open = w.id; save(); render(); document.getElementById("walk-" + w.id).scrollIntoView({ block: "start" }); });
+    index.appendChild(b);
+    cards[w.id] = { b: b, chip: chip };
+  });
+
+  function render() {
+    host.innerHTML = "";
+    WALKS.forEach(function (w, wi) {
+      var open = state.open === w.id;
+      cards[w.id].b.setAttribute("aria-expanded", open ? "true" : "false");
+      var ch = chipOf(w); cards[w.id].chip.className = "chip " + ch[0]; cards[w.id].chip.textContent = ch[1];
+      if (!open) return;
+      var sec = el("section", "card walk"); sec.id = "walk-" + w.id;
+      sec.appendChild(el("span", "eyebrow", "Walk " + w.id + " of " + WALKS.length + " · " + w.job));
+      sec.appendChild(el("h2", null, w.title));
+      var meta = el("div", "meta");
+      [["What this walk is for", w.forText], ["It passes when", w.passes], ["Not in this walk", w.notIn], ["Sign in as", w.who], ["Where and on what", w.where]].forEach(function (m) {
+        var d = el("div"); d.appendChild(el("h3", null, m[0])); d.appendChild(el("p", null, m[1])); meta.appendChild(d);
+      });
+      sec.appendChild(meta);
+      var ol = el("ol", "steps");
+      w.steps.forEach(function (s, i) {
+        var id = sid(w, i);
+        var li = el("li", "step" + (s.stop ? " stop" : "") + (state.ticks[id] ? " done" : ""));
+        var cb = el("input"); cb.type = "checkbox"; cb.id = "cb-" + id; cb.checked = !!state.ticks[id];
+        cb.setAttribute("aria-label", "Step " + num(w, i) + " done");
+        cb.addEventListener("change", function () { state.ticks[id] = cb.checked; save(); li.className = "step" + (s.stop ? " stop" : "") + (cb.checked ? " done" : ""); refresh(); });
+        li.appendChild(cb);
+        var body = el("div", "body");
+        if (s.stop || s.who) body.appendChild(el("span", "who", (s.stop ? "Stop check" : "") + (s.stop && s.who ? " · " : "") + (s.who || "")));
+        body.appendChild(el("span", "lab", num(w, i) + " · Do"));
+        body.appendChild(el("p", null, s.d));
+        body.appendChild(el("span", "lab", "You should see"));
+        body.appendChild(el("p", null, s.s));
+        if (s.opts) {
+          var so = el("div", "opts");
+          s.opts.forEach(function (op) {
+            var lb = el("label"), r = el("input"); r.type = "radio"; r.name = "step-" + id; r.id = "opt-" + id + "-" + op[0]; r.checked = state.choice[id] === op[0];
+            r.addEventListener("change", function () { state.choice[id] = op[0]; save(); refresh(); });
+            lb.appendChild(r); lb.appendChild(el("span", null, op[1])); so.appendChild(lb);
+          });
+          body.appendChild(so);
+        }
+        li.appendChild(body);
+        ol.appendChild(li);
+      });
+      sec.appendChild(ol);
+      sec.appendChild(el("h3", null, "Your verdict on this walk"));
+      var vs = el("div", "verdict");
+      [["pass", "Pass"], ["issue", "Issue"], ["call", "Needs a call"]].forEach(function (v) {
+        var btn = el("button", state.verdict[w.id] === v[0] ? "on" : "", v[1]); btn.type = "button"; btn.setAttribute("data-v", v[0]);
+        btn.setAttribute("aria-pressed", state.verdict[w.id] === v[0] ? "true" : "false");
+        btn.addEventListener("click", function () { state.verdict[w.id] = state.verdict[w.id] === v[0] ? "" : v[0]; save(); render(); });
+        vs.appendChild(btn);
+      });
+      sec.appendChild(vs);
+      var lab = el("label", null, "<h3>Notes</h3>"); lab.setAttribute("for", "notes-" + w.id);
+      sec.appendChild(lab);
+      var ta = el("textarea"); ta.id = "notes-" + w.id; ta.value = state.notes[w.id] || "";
+      ta.placeholder = "What you saw, a word you would change, a question for me";
+      ta.addEventListener("input", function () { state.notes[w.id] = ta.value; save(); refresh(); });
+      sec.appendChild(ta);
+      var row = el("div", "row");
+      var cp = el("button", "btn", "Copy this walk’s summary"); cp.type = "button";
+      var msg = el("span", "lead"); msg.setAttribute("aria-live", "polite");
+      var out = el("div", "card out"); out.tabIndex = 0; out.textContent = walkSummary(w);
+      cp.addEventListener("click", function () { copy(walkSummary(w), out, msg); });
+      row.appendChild(cp);
+      if (wi + 1 < WALKS.length) {
+        var nx = el("button", "btn", "Next: walk " + WALKS[wi + 1].id); nx.type = "button";
+        nx.addEventListener("click", function () { state.open = WALKS[wi + 1].id; save(); render(); document.getElementById("walk-" + WALKS[wi + 1].id).scrollIntoView({ block: "start" }); });
+        row.appendChild(nx);
+      }
+      row.appendChild(msg);
+      sec.appendChild(row);
+      sec.appendChild(out);
+      sec._out = out; sec._w = w;
+      host.appendChild(sec);
+    });
+    refresh();
+  }
+
+  // The owner calls sit in their own section, outside the step count; they are drawn once.
+  function renderCalls() {
+    var box = document.getElementById("callsHost");
+    CALLS.forEach(function (c) {
+      var card = el("div", "card"); card.appendChild(el("h3", null, "Call " + c.id + " · " + c.q)); card.appendChild(el("p", null, c.why));
+      var o = el("div", "opts");
+      c.opts.forEach(function (op) {
+        var lb = el("label"), r = el("input"); r.type = "radio"; r.name = "call-" + c.id; r.checked = state.choice[c.id] === op[0];
+        r.addEventListener("change", function () { state.choice[c.id] = op[0]; save(); refresh(); });
+        lb.appendChild(r); lb.appendChild(el("span", null, op[1])); o.appendChild(lb);
+      });
+      card.appendChild(o); box.appendChild(card);
+    });
+    var lab = el("label", null, "<h3>Notes on the calls</h3>"); lab.setAttribute("for", "notes-calls");
+    box.appendChild(lab);
+    var ta = el("textarea"); ta.id = "notes-calls"; ta.value = state.notes.calls || "";
+    ta.placeholder = "Anything you want to say about a call";
+    ta.addEventListener("input", function () { state.notes.calls = ta.value; save(); refresh(); });
+    box.appendChild(ta);
+  }
+
+  function callsSummary() {
+    var lines = ["Owner calls (outside the count)"];
+    CALLS.forEach(function (c) {
+      var a = state.choice[c.id], hit = c.opts.filter(function (o) { return o[0] === a; })[0];
+      lines.push("  Call " + c.id + " (" + c.q + "): " + (hit ? hit[0] + " — " + hit[1] : "NOT ANSWERED"));
+    });
+    var n = (state.notes.calls || "").trim();
+    if (n) lines.push("  Notes: " + n.replace(/\n+/g, " / "));
+    return lines.join("\n");
+  }
+
+  function walkSummary(w) {
+    var c = counts(w), v = state.verdict[w.id];
+    var lines = [w.id + " " + w.title + " · " + (v ? VWORD[v].toUpperCase() : "NO VERDICT") + " · " + c.done + " of " + c.all + " ticked"];
+    w.steps.forEach(function (s, i) {
+      lines.push("  " + (state.ticks[sid(w, i)] ? "[x] " : "[ ] ") + num(w, i) + ". " + plain(s.d.replace(/<br><code>[^<]*<\/code>/g, "")));
+      if (s.opts) { var a = state.choice[sid(w, i)], hit = s.opts.filter(function (o) { return o[0] === a; })[0]; lines.push("      Answer: " + (hit ? hit[1] : "NOT ANSWERED")); }
+    });
+    var n = (state.notes[w.id] || "").trim();
+    if (n) lines.push("  Notes: " + n.replace(/\n+/g, " / "));
+    return lines.join("\n");
+  }
+  function allSummary() {
+    var total = 0, done = 0;
+    WALKS.forEach(function (w) { var c = counts(w); total += c.all; done += c.done; });
+    return [PAGE, "Checked " + done + " of " + total, ""].concat(WALKS.map(walkSummary), ["", callsSummary()]).join("\n");
+  }
+  function refresh() {
+    var total = 0, done = 0;
+    WALKS.forEach(function (w) { var c = counts(w); total += c.all; done += c.done; var ch = chipOf(w); cards[w.id].chip.className = "chip " + ch[0]; cards[w.id].chip.textContent = ch[1]; });
+    document.getElementById("progress").textContent = "Checked " + done + " of " + total;
+    document.getElementById("out").textContent = allSummary();
+    var sec = host.querySelector(".walk"); if (sec && sec._out) sec._out.textContent = walkSummary(sec._w);
+  }
+  function copy(text, node, msg) {
+    function pick() { try { var r = document.createRange(); r.selectNodeContents(node); var s = window.getSelection(); s.removeAllRanges(); s.addRange(r); msg.textContent = "Selected: press Ctrl+C to copy."; } catch (e) {} }
+    try { navigator.clipboard.writeText(text).then(function () { msg.textContent = "Copied."; }, pick); } catch (e) { pick(); }
+  }
+  document.getElementById("copyAll").addEventListener("click", function () { copy(allSummary(), document.getElementById("out"), document.getElementById("copied")); });
+  var armed = false;
+  document.getElementById("reset").addEventListener("click", function () {
+    var b = document.getElementById("reset");
+    if (!armed) { armed = true; b.textContent = "Press again to clear every tick and note"; return; }
+    armed = false; b.textContent = "Clear my ticks";
+    state = { ticks: {}, verdict: {}, notes: {}, choice: {}, open: "A" }; save();
+    document.getElementById("callsHost").querySelectorAll(".card, label, textarea").forEach(function (n) { n.remove(); });
+    renderCalls(); render();
+  });
+  renderCalls();
+  render();
+})();
+</script>

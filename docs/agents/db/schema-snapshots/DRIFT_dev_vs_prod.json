@@ -1,12 +1,12 @@
 {
   "generated": "2026-11-26",
-  "total": 215,
+  "total": 262,
   "counts": {
-    "tables": 6,
-    "columns": 109,
-    "indexes": 30,
-    "constraints": 33,
-    "rls": 37
+    "tables": 8,
+    "columns": 134,
+    "indexes": 38,
+    "constraints": 38,
+    "rls": 44
   },
   "items": [
     {
@@ -46,6 +46,10 @@
       "sig": ""
     },
     {
+      "key": "check:only-dev:club_sponsor_deal_refunds.club_sponsor_deal_refunds_origin",
+      "sig": ""
+    },
+    {
       "key": "check:only-dev:club_sponsor_deal_refunds.club_sponsor_deal_refunds_reason_check",
       "sig": ""
     },
@@ -59,6 +63,14 @@
     },
     {
       "key": "check:only-dev:club_sponsor_deals.club_sponsor_deals_card_fee",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:email_address_stops.email_address_stops_email_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:email_address_stops.email_address_stops_source_check",
       "sig": ""
     },
     {
@@ -154,6 +166,22 @@
       "sig": ""
     },
     {
+      "key": "check:only-dev:preview_email_consents.preview_email_consents_email_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:preview_email_consents.preview_email_consents_given_how_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:preview_email_consents.preview_email_consents_org_name_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:preview_email_consents.preview_email_consents_role_check",
+      "sig": ""
+    },
+    {
       "key": "check:only-dev:rep_team_events.rep_team_events_section_mask_valid",
       "sig": ""
     },
@@ -206,6 +234,10 @@
       "sig": ""
     },
     {
+      "key": "column:only-dev:club_sponsor_deal_refunds.after_lost_dispute",
+      "sig": ""
+    },
+    {
       "key": "column:only-dev:club_sponsor_deal_refunds.amount",
       "sig": ""
     },
@@ -223,6 +255,10 @@
     },
     {
       "key": "column:only-dev:club_sponsor_deal_refunds.created_by_name",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:club_sponsor_deal_refunds.credit_on",
       "sig": ""
     },
     {
@@ -250,6 +286,30 @@
       "sig": ""
     },
     {
+      "key": "column:only-dev:club_sponsor_deal_refunds.fee_part",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:club_sponsor_deal_refunds.fee_refund_entry_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:club_sponsor_deal_refunds.fee_tax_part",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:club_sponsor_deal_refunds.finished_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:club_sponsor_deal_refunds.finished_by",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:club_sponsor_deal_refunds.finished_by_name",
+      "sig": ""
+    },
+    {
       "key": "column:only-dev:club_sponsor_deal_refunds.id",
       "sig": ""
     },
@@ -266,6 +326,14 @@
       "sig": ""
     },
     {
+      "key": "column:only-dev:club_sponsor_deal_refunds.origin",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:club_sponsor_deal_refunds.outcome",
+      "sig": ""
+    },
+    {
       "key": "column:only-dev:club_sponsor_deal_refunds.payment_id",
       "sig": ""
     },
@@ -279,6 +347,14 @@
     },
     {
       "key": "column:only-dev:club_sponsor_deal_refunds.status",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:club_sponsor_deal_refunds.stripe_created_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:club_sponsor_deal_refunds.stripe_reason",
       "sig": ""
     },
     {
@@ -307,6 +383,18 @@
     },
     {
       "key": "column:only-dev:club_sponsor_deals.card_fee_tax",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:email_address_stops.email",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:email_address_stops.source",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:email_address_stops.stopped_at",
       "sig": ""
     },
     {
@@ -538,6 +626,46 @@
       "sig": ""
     },
     {
+      "key": "column:only-dev:preview_email_consents.created_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:preview_email_consents.email",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:preview_email_consents.given_how",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:preview_email_consents.given_on",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:preview_email_consents.id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:preview_email_consents.org_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:preview_email_consents.org_name",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:preview_email_consents.recorded_by",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:preview_email_consents.role",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:preview_email_consents.sent_at",
+      "sig": ""
+    },
+    {
       "key": "column:only-dev:rep_event_closure_marks.closure_id",
       "sig": ""
     },
@@ -614,6 +742,14 @@
       "sig": ""
     },
     {
+      "key": "constraint:only-dev:club_sponsor_deal_refunds.club_sponsor_deal_refunds_fee_entry_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:club_sponsor_deal_refunds.club_sponsor_deal_refunds_finished_by_fkey",
+      "sig": ""
+    },
+    {
       "key": "constraint:only-dev:club_sponsor_deal_refunds.club_sponsor_deal_refunds_income_entry_id_fkey",
       "sig": ""
     },
@@ -635,6 +771,10 @@
     },
     {
       "key": "constraint:only-dev:club_sponsor_deal_refunds.club_sponsor_deal_refunds_tax_entry_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:email_address_stops.email_address_stops_pkey",
       "sig": ""
     },
     {
@@ -702,6 +842,14 @@
       "sig": ""
     },
     {
+      "key": "constraint:only-dev:preview_email_consents.preview_email_consents_one_per_preview",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:preview_email_consents.preview_email_consents_pkey",
+      "sig": ""
+    },
+    {
       "key": "constraint:only-dev:rep_event_closure_marks.rep_event_closure_marks_closure_id_fkey",
       "sig": ""
     },
@@ -726,11 +874,27 @@
       "sig": ""
     },
     {
+      "key": "index:changed:notifications_one_open_online_payments_notice",
+      "sig": "CREATE UNIQUE INDEX notifications_one_open_online_payments_notice ON public.notifications USING btree (org_id, user_id, event_type, COALESCE((metadata ->> 'onlineDisputeId'::text), (metadata ->> 'stripeAccountId'::text), (metadata ->> 'onlinePaymentItemId'::text), (metadata ->> 'onlinePaymentId'::text), (metadata ->> 'unassignedRefundId'::text), (metadata ->> 'enrolledRefundId'::text), (metadata ->> 'unmatchedStripeRefundId'::text), (metadata ->> 'termsVersion'::text), (metadata ->> 'endingFor'::text), (metadata ->> 'sponsorRefundId'::text))) WHERE ((cleared_at IS NULL) AND (event_type = ANY (ARRAY['payouts_need_attention'::text, 'online_payment_not_recorded'::text, 'card_refund_failed'::text, 'card_refund_whose'::text, 'card_refund_still_enrolled'::text, 'card_refund_unmatched'::text, 'debit_returned'::text, 'debit_reversed'::text, 'card_disputed'::text, 'card_dispute_lost'::text, 'online_payment_over'::text, 'payments_terms_changed'::text, 'payments_ending'::text, 'sponsor_refund_to_finish'::text, 'sponsor_refund_twice'::text]))) :: CREATE UNIQUE INDEX notifications_one_open_online_payments_notice ON public.notifications USING btree (org_id, user_id, event_type, COALESCE((metadata ->> 'onlineDisputeId'::text), (metadata ->> 'stripeAccountId'::text), (metadata ->> 'onlinePaymentItemId'::text), (metadata ->> 'onlinePaymentId'::text), (metadata ->> 'unassignedRefundId'::text), (metadata ->> 'enrolledRefundId'::text), (metadata ->> 'unmatchedStripeRefundId'::text), (metadata ->> 'termsVersion'::text), (metadata ->> 'endingFor'::text))) WHERE ((cleared_at IS NULL) AND (event_type = ANY (ARRAY['payouts_need_attention'::text, 'online_payment_not_recorded'::text, 'card_refund_failed'::text, 'card_refund_whose'::text, 'card_refund_still_enrolled'::text, 'card_refund_unmatched'::text, 'debit_returned'::text, 'debit_reversed'::text, 'card_disputed'::text, 'card_dispute_lost'::text, 'online_payment_over'::text, 'payments_terms_changed'::text, 'payments_ending'::text])))"
+    },
+    {
+      "key": "index:changed:notifications_org_needs_attention_idx",
+      "sig": "CREATE INDEX notifications_org_needs_attention_idx ON public.notifications USING btree (org_id, event_type) WHERE ((cleared_at IS NULL) AND (event_type = ANY (ARRAY['assistant_coach_approval_requested'::text, 'card_dispute_lost'::text, 'card_disputed'::text, 'card_refund_failed'::text, 'card_refund_still_enrolled'::text, 'card_refund_unmatched'::text, 'card_refund_whose'::text, 'club_hand_back_asked'::text, 'club_hand_back_unasked'::text, 'club_payment_handed_off'::text, 'club_schedule_review'::text, 'debit_returned'::text, 'debit_reversed'::text, 'house_league_withdraw_request'::text, 'online_payment_not_recorded'::text, 'online_payment_over'::text, 'payment_failed'::text, 'payments_ending'::text, 'payments_terms_changed'::text, 'payouts_need_attention'::text, 'sponsor_refund_to_finish'::text, 'sponsor_refund_twice'::text, 'team_coach_payment_reminder'::text, 'team_money_sent'::text, 'team_move_requested'::text, 'team_no_show'::text, 'team_request_filed'::text, 'team_request_holding_payout'::text]))) :: CREATE INDEX notifications_org_needs_attention_idx ON public.notifications USING btree (org_id, event_type) WHERE ((cleared_at IS NULL) AND (event_type = ANY (ARRAY['assistant_coach_approval_requested'::text, 'card_dispute_lost'::text, 'card_disputed'::text, 'card_refund_failed'::text, 'card_refund_still_enrolled'::text, 'card_refund_unmatched'::text, 'card_refund_whose'::text, 'club_hand_back_asked'::text, 'club_hand_back_unasked'::text, 'club_payment_handed_off'::text, 'club_schedule_review'::text, 'debit_returned'::text, 'debit_reversed'::text, 'house_league_withdraw_request'::text, 'online_payment_not_recorded'::text, 'online_payment_over'::text, 'payment_failed'::text, 'payments_ending'::text, 'payments_terms_changed'::text, 'payouts_need_attention'::text, 'team_coach_payment_reminder'::text, 'team_money_sent'::text, 'team_move_requested'::text, 'team_no_show'::text, 'team_request_filed'::text, 'team_request_holding_payout'::text])))"
+    },
+    {
+      "key": "index:changed:notifications_user_needs_attention_idx",
+      "sig": "CREATE INDEX notifications_user_needs_attention_idx ON public.notifications USING btree (user_id, event_type) WHERE ((cleared_at IS NULL) AND (event_type = ANY (ARRAY['assistant_coach_approval_requested'::text, 'card_dispute_lost'::text, 'card_disputed'::text, 'card_refund_failed'::text, 'card_refund_still_enrolled'::text, 'card_refund_unmatched'::text, 'card_refund_whose'::text, 'club_hand_back_asked'::text, 'club_hand_back_unasked'::text, 'club_payment_handed_off'::text, 'club_schedule_review'::text, 'debit_returned'::text, 'debit_reversed'::text, 'house_league_withdraw_request'::text, 'online_payment_not_recorded'::text, 'online_payment_over'::text, 'payment_failed'::text, 'payments_ending'::text, 'payments_terms_changed'::text, 'payouts_need_attention'::text, 'sponsor_refund_to_finish'::text, 'sponsor_refund_twice'::text, 'team_coach_payment_reminder'::text, 'team_money_sent'::text, 'team_move_requested'::text, 'team_no_show'::text, 'team_request_filed'::text, 'team_request_holding_payout'::text]))) :: CREATE INDEX notifications_user_needs_attention_idx ON public.notifications USING btree (user_id, event_type) WHERE ((cleared_at IS NULL) AND (event_type = ANY (ARRAY['assistant_coach_approval_requested'::text, 'card_dispute_lost'::text, 'card_disputed'::text, 'card_refund_failed'::text, 'card_refund_still_enrolled'::text, 'card_refund_unmatched'::text, 'card_refund_whose'::text, 'club_hand_back_asked'::text, 'club_hand_back_unasked'::text, 'club_payment_handed_off'::text, 'club_schedule_review'::text, 'debit_returned'::text, 'debit_reversed'::text, 'house_league_withdraw_request'::text, 'online_payment_not_recorded'::text, 'online_payment_over'::text, 'payment_failed'::text, 'payments_ending'::text, 'payments_terms_changed'::text, 'payouts_need_attention'::text, 'team_coach_payment_reminder'::text, 'team_money_sent'::text, 'team_move_requested'::text, 'team_no_show'::text, 'team_request_filed'::text, 'team_request_holding_payout'::text])))"
+    },
+    {
       "key": "index:changed:org_time_block_facilities_pkey",
       "sig": "CREATE UNIQUE INDEX org_time_block_facilities_pkey ON public.org_time_block_facilities USING btree (block_id, facility_id, section_mask) :: CREATE UNIQUE INDEX org_time_block_facilities_pkey ON public.org_time_block_facilities USING btree (block_id, facility_id)"
     },
     {
       "key": "index:only-dev:club_schedule_slots_family_place_overlap",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:club_schedule_slots_schedule_idx",
       "sig": ""
     },
     {
@@ -755,6 +919,14 @@
     },
     {
       "key": "index:only-dev:club_sponsor_deal_refunds_stripe_uniq",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:club_sponsor_deal_refunds_unfinished_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:email_address_stops_pkey",
       "sig": ""
     },
     {
@@ -822,6 +994,14 @@
       "sig": ""
     },
     {
+      "key": "index:only-dev:preview_email_consents_one_per_preview",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:preview_email_consents_pkey",
+      "sig": ""
+    },
+    {
       "key": "index:only-dev:rep_event_closure_marks_event_idx",
       "sig": ""
     },
@@ -850,6 +1030,10 @@
       "sig": ""
     },
     {
+      "key": "table:only-dev:email_address_stops",
+      "sig": ""
+    },
+    {
       "key": "table:only-dev:org_place_closures",
       "sig": ""
     },
@@ -863,6 +1047,10 @@
     },
     {
       "key": "table:only-dev:preview_claim_tries",
+      "sig": ""
+    },
+    {
+      "key": "table:only-dev:preview_email_consents",
       "sig": ""
     },
     {

@@ -79,6 +79,9 @@ export const NOTIFICATION_EVENT_LABELS: Record<NotificationEventType, string> = 
   card_refund_whose:                 'A refund in Stripe needs you to say whose it was',
   card_refund_still_enrolled:        'A refunded child is still enrolled',
   card_refund_unmatched:             'A refund in Stripe matches no payment we recorded',
+  // Board Ready Stage 6 fixes Part A (mig 542; DRAFT for /marketing): a sponsor's refund made in the club's Stripe dashboard.
+  sponsor_refund_to_finish:          'A refund made in Stripe needs finishing',
+  sponsor_refund_twice:              'A sponsor was paid back twice',
   // 12d-2 words §5.2 `terms.item.title`, §4.2 `ending.notice.title` (its own title carries the date).
   payments_terms_changed:            'New payments terms to agree to',
   payments_ending:                   'Online payments are about to stop',
@@ -167,6 +170,8 @@ export const NOTIFICATION_EVENT_DESCRIPTIONS: Record<NotificationEventType, stri
   card_refund_whose:                 'A part refund was made in Stripe on a payment for more than one child. Choose whose fee it was.',
   card_refund_still_enrolled:        'A child’s fee was refunded in Stripe, but the registration is still active. Withdraw them, email the pay link or keep them enrolled.',
   card_refund_unmatched:             'A refund was made in Stripe that isn’t in the books. Record it, then press Done.',
+  sponsor_refund_to_finish:          'A sponsor’s refund made in your Stripe dashboard is in the books. Finish it on the deal.',
+  sponsor_refund_twice:              'A refund made in Stripe went to a sponsor whose bank had already taken the payment back. Ask them to send it back.',
   payments_terms_changed:            'FieldLogicHQ’s payments terms changed. The owner reads and agrees on the Payouts card; online payments stay on.',
   payments_ending:                   'Online payments stop through an ending the owner didn’t choose: a comp running out, or a subscription payment that failed.',
   debit_returned:                    'A bank debit was returned while it was clearing. Nothing was taken. The family was emailed a way to pay.',
@@ -468,6 +473,9 @@ export const NOTIFICATION_CATEGORY = {
   card_refund_whose:                  'act',
   card_refund_still_enrolled:         'act',
   card_refund_unmatched:              'act',
+  // Stage 6 fixes Part A: finish it on the deal, or ask for the money back; both clear themselves.
+  sponsor_refund_to_finish:           'act',
+  sponsor_refund_twice:               'act',
   // 12d-2: the owner agrees (clears itself), or the ending passes or stops coming (clears itself).
   payments_terms_changed:             'act',
   payments_ending:                    'act',

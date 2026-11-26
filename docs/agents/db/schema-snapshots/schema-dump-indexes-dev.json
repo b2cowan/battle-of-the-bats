@@ -1091,6 +1091,11 @@
   },
   {
     "tablename": "club_schedule_slots",
+    "indexname": "club_schedule_slots_schedule_idx",
+    "indexdef": "CREATE INDEX club_schedule_slots_schedule_idx ON public.club_schedule_slots USING btree (schedule_id, org_venue_id, starts_at)"
+  },
+  {
+    "tablename": "club_schedule_slots",
     "indexname": "club_schedule_slots_venue_idx",
     "indexdef": "CREATE INDEX club_schedule_slots_venue_idx ON public.club_schedule_slots USING btree (org_venue_id)"
   },
@@ -1208,6 +1213,11 @@
     "tablename": "club_sponsor_deal_refunds",
     "indexname": "club_sponsor_deal_refunds_stripe_uniq",
     "indexdef": "CREATE UNIQUE INDEX club_sponsor_deal_refunds_stripe_uniq ON public.club_sponsor_deal_refunds USING btree (stripe_refund_id) WHERE (stripe_refund_id IS NOT NULL)"
+  },
+  {
+    "tablename": "club_sponsor_deal_refunds",
+    "indexname": "club_sponsor_deal_refunds_unfinished_idx",
+    "indexdef": "CREATE INDEX club_sponsor_deal_refunds_unfinished_idx ON public.club_sponsor_deal_refunds USING btree (org_id, deal_id) WHERE ((origin = 'stripe'::text) AND (status = 'succeeded'::text) AND (finished_at IS NULL) AND (NOT after_lost_dispute))"
   },
   {
     "tablename": "club_sponsor_deals",
@@ -1438,6 +1448,11 @@
     "tablename": "early_access_leads",
     "indexname": "idx_early_access_leads_status",
     "indexdef": "CREATE INDEX idx_early_access_leads_status ON public.early_access_leads USING btree (status, created_at DESC)"
+  },
+  {
+    "tablename": "email_address_stops",
+    "indexname": "email_address_stops_pkey",
+    "indexdef": "CREATE UNIQUE INDEX email_address_stops_pkey ON public.email_address_stops USING btree (email)"
   },
   {
     "tablename": "email_batches",
@@ -2697,7 +2712,7 @@
   {
     "tablename": "notifications",
     "indexname": "notifications_one_open_online_payments_notice",
-    "indexdef": "CREATE UNIQUE INDEX notifications_one_open_online_payments_notice ON public.notifications USING btree (org_id, user_id, event_type, COALESCE((metadata ->> 'onlineDisputeId'::text), (metadata ->> 'stripeAccountId'::text), (metadata ->> 'onlinePaymentItemId'::text), (metadata ->> 'onlinePaymentId'::text), (metadata ->> 'unassignedRefundId'::text), (metadata ->> 'enrolledRefundId'::text), (metadata ->> 'unmatchedStripeRefundId'::text), (metadata ->> 'termsVersion'::text), (metadata ->> 'endingFor'::text))) WHERE ((cleared_at IS NULL) AND (event_type = ANY (ARRAY['payouts_need_attention'::text, 'online_payment_not_recorded'::text, 'card_refund_failed'::text, 'card_refund_whose'::text, 'card_refund_still_enrolled'::text, 'card_refund_unmatched'::text, 'debit_returned'::text, 'debit_reversed'::text, 'card_disputed'::text, 'card_dispute_lost'::text, 'online_payment_over'::text, 'payments_terms_changed'::text, 'payments_ending'::text])))"
+    "indexdef": "CREATE UNIQUE INDEX notifications_one_open_online_payments_notice ON public.notifications USING btree (org_id, user_id, event_type, COALESCE((metadata ->> 'onlineDisputeId'::text), (metadata ->> 'stripeAccountId'::text), (metadata ->> 'onlinePaymentItemId'::text), (metadata ->> 'onlinePaymentId'::text), (metadata ->> 'unassignedRefundId'::text), (metadata ->> 'enrolledRefundId'::text), (metadata ->> 'unmatchedStripeRefundId'::text), (metadata ->> 'termsVersion'::text), (metadata ->> 'endingFor'::text), (metadata ->> 'sponsorRefundId'::text))) WHERE ((cleared_at IS NULL) AND (event_type = ANY (ARRAY['payouts_need_attention'::text, 'online_payment_not_recorded'::text, 'card_refund_failed'::text, 'card_refund_whose'::text, 'card_refund_still_enrolled'::text, 'card_refund_unmatched'::text, 'debit_returned'::text, 'debit_reversed'::text, 'card_disputed'::text, 'card_dispute_lost'::text, 'online_payment_over'::text, 'payments_terms_changed'::text, 'payments_ending'::text, 'sponsor_refund_to_finish'::text, 'sponsor_refund_twice'::text])))"
   },
   {
     "tablename": "notifications",
@@ -2707,7 +2722,7 @@
   {
     "tablename": "notifications",
     "indexname": "notifications_org_needs_attention_idx",
-    "indexdef": "CREATE INDEX notifications_org_needs_attention_idx ON public.notifications USING btree (org_id, event_type) WHERE ((cleared_at IS NULL) AND (event_type = ANY (ARRAY['assistant_coach_approval_requested'::text, 'card_dispute_lost'::text, 'card_disputed'::text, 'card_refund_failed'::text, 'card_refund_still_enrolled'::text, 'card_refund_unmatched'::text, 'card_refund_whose'::text, 'club_hand_back_asked'::text, 'club_hand_back_unasked'::text, 'club_payment_handed_off'::text, 'club_schedule_review'::text, 'debit_returned'::text, 'debit_reversed'::text, 'house_league_withdraw_request'::text, 'online_payment_not_recorded'::text, 'online_payment_over'::text, 'payment_failed'::text, 'payments_ending'::text, 'payments_terms_changed'::text, 'payouts_need_attention'::text, 'team_coach_payment_reminder'::text, 'team_money_sent'::text, 'team_move_requested'::text, 'team_no_show'::text, 'team_request_filed'::text, 'team_request_holding_payout'::text])))"
+    "indexdef": "CREATE INDEX notifications_org_needs_attention_idx ON public.notifications USING btree (org_id, event_type) WHERE ((cleared_at IS NULL) AND (event_type = ANY (ARRAY['assistant_coach_approval_requested'::text, 'card_dispute_lost'::text, 'card_disputed'::text, 'card_refund_failed'::text, 'card_refund_still_enrolled'::text, 'card_refund_unmatched'::text, 'card_refund_whose'::text, 'club_hand_back_asked'::text, 'club_hand_back_unasked'::text, 'club_payment_handed_off'::text, 'club_schedule_review'::text, 'debit_returned'::text, 'debit_reversed'::text, 'house_league_withdraw_request'::text, 'online_payment_not_recorded'::text, 'online_payment_over'::text, 'payment_failed'::text, 'payments_ending'::text, 'payments_terms_changed'::text, 'payouts_need_attention'::text, 'sponsor_refund_to_finish'::text, 'sponsor_refund_twice'::text, 'team_coach_payment_reminder'::text, 'team_money_sent'::text, 'team_move_requested'::text, 'team_no_show'::text, 'team_request_filed'::text, 'team_request_holding_payout'::text])))"
   },
   {
     "tablename": "notifications",
@@ -2717,7 +2732,7 @@
   {
     "tablename": "notifications",
     "indexname": "notifications_user_needs_attention_idx",
-    "indexdef": "CREATE INDEX notifications_user_needs_attention_idx ON public.notifications USING btree (user_id, event_type) WHERE ((cleared_at IS NULL) AND (event_type = ANY (ARRAY['assistant_coach_approval_requested'::text, 'card_dispute_lost'::text, 'card_disputed'::text, 'card_refund_failed'::text, 'card_refund_still_enrolled'::text, 'card_refund_unmatched'::text, 'card_refund_whose'::text, 'club_hand_back_asked'::text, 'club_hand_back_unasked'::text, 'club_payment_handed_off'::text, 'club_schedule_review'::text, 'debit_returned'::text, 'debit_reversed'::text, 'house_league_withdraw_request'::text, 'online_payment_not_recorded'::text, 'online_payment_over'::text, 'payment_failed'::text, 'payments_ending'::text, 'payments_terms_changed'::text, 'payouts_need_attention'::text, 'team_coach_payment_reminder'::text, 'team_money_sent'::text, 'team_move_requested'::text, 'team_no_show'::text, 'team_request_filed'::text, 'team_request_holding_payout'::text])))"
+    "indexdef": "CREATE INDEX notifications_user_needs_attention_idx ON public.notifications USING btree (user_id, event_type) WHERE ((cleared_at IS NULL) AND (event_type = ANY (ARRAY['assistant_coach_approval_requested'::text, 'card_dispute_lost'::text, 'card_disputed'::text, 'card_refund_failed'::text, 'card_refund_still_enrolled'::text, 'card_refund_unmatched'::text, 'card_refund_whose'::text, 'club_hand_back_asked'::text, 'club_hand_back_unasked'::text, 'club_payment_handed_off'::text, 'club_schedule_review'::text, 'debit_returned'::text, 'debit_reversed'::text, 'house_league_withdraw_request'::text, 'online_payment_not_recorded'::text, 'online_payment_over'::text, 'payment_failed'::text, 'payments_ending'::text, 'payments_terms_changed'::text, 'payouts_need_attention'::text, 'sponsor_refund_to_finish'::text, 'sponsor_refund_twice'::text, 'team_coach_payment_reminder'::text, 'team_money_sent'::text, 'team_move_requested'::text, 'team_no_show'::text, 'team_request_filed'::text, 'team_request_holding_payout'::text])))"
   },
   {
     "tablename": "notifications",
@@ -4103,6 +4118,16 @@
     "tablename": "preview_claim_tries",
     "indexname": "preview_claim_tries_visitor_idx",
     "indexdef": "CREATE INDEX preview_claim_tries_visitor_idx ON public.preview_claim_tries USING btree (visitor_key, tried_at DESC)"
+  },
+  {
+    "tablename": "preview_email_consents",
+    "indexname": "preview_email_consents_one_per_preview",
+    "indexdef": "CREATE UNIQUE INDEX preview_email_consents_one_per_preview ON public.preview_email_consents USING btree (org_id)"
+  },
+  {
+    "tablename": "preview_email_consents",
+    "indexname": "preview_email_consents_pkey",
+    "indexdef": "CREATE UNIQUE INDEX preview_email_consents_pkey ON public.preview_email_consents USING btree (id)"
   },
   {
     "tablename": "push_subscriptions",

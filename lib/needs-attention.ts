@@ -722,10 +722,42 @@ const cardRefundUnmatched: Resolver = async rows => {
   const waiting = new Set(ids.length
     ? (await rowsIn<{ stripe_refund_id: string }>('online_refunds_unassigned', 'stripe_refund_id', 'stripe_refund_id', ids)).map(f => f.stripe_refund_id)
     : []);
+  // A sponsor's refund made in Stripe (mig 542, Stage 6 fixes Part A) is recorded on its deal by itself: an older notice about it
+  // (raised before its payment landed, or before 542) is done, and the deal's own notice (`sponsor_refund_to_finish`) takes over.
+  const onDeal = new Set(ids.length
+    ? (await rowsIn<{ stripe_refund_id: string; status: string }>('club_sponsor_deal_refunds', 'stripe_refund_id, status', 'stripe_refund_id', ids))
+      .filter(f => f.status === 'succeeded').map(f => f.stripe_refund_id)
+    : []);
   for (const r of rows) {
     const id = meta(r, 'unmatchedStripeRefundId');
     if (!id) continue;
+    if (onDeal.has(id)) { out.set(r.id, said(W.refundRecorded)); continue; }
     out.set(r.id, recorded.has(id) || waiting.has(id) ? said(W.refundRecorded, { words: () => ({ outcome: W.refundRecorded, then: W.onlineItemRecorded }) }) : 'waiting');
+  }
+  return out;
+};
+
+/**
+ * A sponsor's refund made in the club's own Stripe dashboard (Board Ready Stage 6 fixes Part A, mig 542; `sponsorRefundId`, the
+ * refund row). "Needs finishing" is done when the club finished it, or when it didn't go through after all. "Paid back twice"
+ * stands while the sponsor's bank has the payment (the club asks for it back, then Done); a won dispute books it, and its own
+ * "needs finishing" goes up.
+ */
+const sponsorStripeRefund = (kind: 'finish' | 'twice'): Resolver => async rows => {
+  const out = new Map<string, Verdict>();
+  const ids = uniq(rows.map(r => meta(r, 'sponsorRefundId')));
+  type Row = { id: string; status: string; after_lost_dispute: boolean; finished_at: string | null; finished_by: string | null };
+  const byId = new Map((ids.length
+    ? await rowsIn<Row>('club_sponsor_deal_refunds', 'id, status, after_lost_dispute, finished_at, finished_by', 'id', ids)
+    : []).map(f => [f.id, f]));
+  for (const r of rows) {
+    const id = meta(r, 'sponsorRefundId');
+    if (!id) continue;
+    const s = byId.get(id);
+    if (!s) out.set(r.id, said(W.onlinePaymentGone, { link: null }));
+    else if (s.status === 'failed') out.set(r.id, said(W.refundDidntGo));
+    else if (kind === 'twice') out.set(r.id, s.after_lost_dispute ? 'waiting' : said(W.refundBookedAfterWin));
+    else out.set(r.id, s.finished_at ? { by: s.finished_by, at: s.finished_at, words: (who, you) => ({ outcome: W.refundFinished(who, you) }) } : 'waiting');
   }
   return out;
 };
@@ -861,6 +893,8 @@ export const NEEDS_ATTENTION_END: Record<NeedsAttentionKind, Resolver> = {
   card_refund_whose: cardRefundWhose,
   card_refund_still_enrolled: cardRefundStillEnrolled,
   card_refund_unmatched: cardRefundUnmatched,
+  sponsor_refund_to_finish: sponsorStripeRefund('finish'),
+  sponsor_refund_twice: sponsorStripeRefund('twice'),
   payments_terms_changed: paymentsTermsChanged,
   payments_ending: paymentsEnding,
   debit_returned: debitOwedAgain,

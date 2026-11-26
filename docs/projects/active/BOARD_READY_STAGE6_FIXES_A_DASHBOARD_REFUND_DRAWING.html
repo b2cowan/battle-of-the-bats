@@ -1,0 +1,761 @@
+<title>Sponsor Refund Made in Stripe</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+/* Layout: sticky numbered tabs (one decision each) → a View row where a tab compares → framed true-size specimens with their explanation beside them; the last tab is the owner's asks with a paste-back. */
+:root {
+  /* document chrome: a cool neutral, so the warm product frames read as specimens */
+  --doc-bg: #EDEFF1; --doc-panel: #FFFFFF; --doc-ink: #1C2127; --doc-soft: #4C5560; --doc-line: rgba(28,33,39,0.12);
+  --doc-accent: #2F5D8A; --doc-accent-soft: rgba(47,93,138,0.10); --doc-red: #A3261B; --doc-red-bg: rgba(163,38,27,0.10);
+  --tag-new: #2E6B2F; --tag-new-bg: rgba(46,107,47,0.12); --tag-re: #8A5A0B; --tag-re-bg: rgba(138,90,11,0.12); --tag-same: #4C5560; --tag-same-bg: rgba(76,85,96,0.10);
+  --font-ui: Inter, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-head: "Space Grotesk", Inter, system-ui, sans-serif;
+  --font-data: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+  /* the product's warm palette (globals.css warm block), fixed inside every frame */
+  --home-paper: #F8F4ED; --home-card: #FFFFFF; --home-ink: #241E15; --home-ink-soft: #4A4235; --home-dim: #615A54; --home-faint: #7A726A;
+  --home-line: rgba(70,55,30,0.12); --home-line-strong: rgba(70,55,30,0.20); --home-olive: #57651E; --home-olive-soft: rgba(87,101,30,0.10);
+  --lime: #D9F99D; --lime-ink: #241E15; --warn: #8A5A0B; --warn-bg: rgba(138,90,11,0.10); --amber: #F59E0B;
+  --danger-ink: #B91C1C; --danger-bg: rgba(239,68,68,0.08); --danger-line: rgba(239,68,68,0.35); --good: #2E6B2F; --good-bg: rgba(46,107,47,0.10); --err: #B03A22;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --doc-bg: #14171B; --doc-panel: #1C2026; --doc-ink: #E8ECF0; --doc-soft: #A9B2BC; --doc-line: rgba(232,236,240,0.12);
+  --doc-accent: #8DB6DE; --doc-accent-soft: rgba(141,182,222,0.14); --doc-red: #F19A8F; --doc-red-bg: rgba(241,154,143,0.14);
+  --tag-new: #8FD18F; --tag-new-bg: rgba(143,209,143,0.14); --tag-re: #E3B465; --tag-re-bg: rgba(227,180,101,0.14); --tag-same: #A9B2BC; --tag-same-bg: rgba(169,178,188,0.12);
+  color-scheme: dark } }
+:root[data-theme="dark"] {
+  --doc-bg: #14171B; --doc-panel: #1C2026; --doc-ink: #E8ECF0; --doc-soft: #A9B2BC; --doc-line: rgba(232,236,240,0.12);
+  --doc-accent: #8DB6DE; --doc-accent-soft: rgba(141,182,222,0.14); --doc-red: #F19A8F; --doc-red-bg: rgba(241,154,143,0.14);
+  --tag-new: #8FD18F; --tag-new-bg: rgba(143,209,143,0.14); --tag-re: #E3B465; --tag-re-bg: rgba(227,180,101,0.14); --tag-same: #A9B2BC; --tag-same-bg: rgba(169,178,188,0.12);
+  color-scheme: dark }
+* { box-sizing: border-box; }
+body { background: var(--doc-bg); color: var(--doc-ink); font-family: var(--font-ui); font-size: 14px; line-height: 1.5; }
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--doc-panel); }
+.wrap { max-width: 1280px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 20px 60px; }
+header.top { display: grid; gap: 6px; margin-bottom: 14px; }
+.eyebrow { font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--doc-soft); font-weight: 600; }
+h1 { font-family: var(--font-head); font-size: 26px; line-height: 1.2; margin: 0; text-wrap: balance; }
+.lead { margin: 0; color: var(--doc-soft); max-width: 84ch; }
+nav.tabs { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; background: var(--doc-panel); border: 1px solid var(--doc-line); border-radius: 10px; display: flex; gap: 4px; padding: 5px; overflow-x: auto; }
+nav.tabs button { flex: 0 0 auto; border: 0; background: none; color: var(--doc-soft); font: inherit; font-weight: 600; padding: 8px 12px; border-radius: 7px; cursor: pointer; white-space: nowrap; }
+nav.tabs button[aria-selected="true"] { background: var(--doc-accent-soft); color: var(--doc-accent); }
+nav.tabs button:focus-visible, .btnDoc:focus-visible, .mark:focus-visible, .tag:focus-visible, .fl:focus-visible, .seg button:focus-visible { outline: 2px solid var(--doc-accent); outline-offset: 2px; }
+.viewRow { display: flex; align-items: center; gap: 10px; margin: 14px 0 4px; flex-wrap: wrap; }
+.viewRow .lbl { font-size: 12px; font-weight: 600; color: var(--doc-soft); }
+/* ONE white track, two options (the kit's ViewSwitch look) */
+.seg { display: inline-flex; background: #FFFFFF; border: 1px solid rgba(70,55,30,0.20); border-radius: 999px; padding: 3px; }
+.seg button { border: 0; background: none; font: inherit; font-size: 13px; padding: 5px 12px; border-radius: 999px; color: #4A4235; cursor: pointer; }
+.seg button[aria-pressed="true"] { background: rgba(87,101,30,0.14); color: #3E4815; font-weight: 600; }
+section.pane { display: grid; gap: 18px; margin-top: 14px; }
+.pane h2 { font-family: var(--font-head); font-size: 20px; margin: 0; text-wrap: balance; }
+.pane > p { margin: 0; max-width: 88ch; color: var(--doc-soft); }
+.pair { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 460px), 1fr)); gap: 18px; align-items: start; }
+.stack { display: grid; gap: 18px; min-width: 0; }
+.spec { min-width: 0; display: grid; gap: 8px; }
+.specHead { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.specHead b { font-size: 13px; }
+.chrome { font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--doc-soft); }
+.scroll { overflow-x: auto; padding: 14px; background: var(--doc-panel); border: 1px solid var(--doc-line); border-radius: 10px; }
+.explain { background: var(--doc-panel); border: 1px solid var(--doc-line); border-radius: 10px; padding: 14px 16px; display: grid; gap: 8px; min-width: 0; }
+.explain h3 { margin: 0; font-size: 14px; display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+.explain p, .explain li { margin: 0; color: var(--doc-soft); }
+.explain ul, .explain ol { margin: 0; padding-left: 18px; display: grid; gap: 5px; }
+.explain b { color: var(--doc-ink); }
+.tag { display: inline-flex; align-items: center; font-size: 10px; font-weight: 700; letter-spacing: 0.06em; padding: 2px 6px; border-radius: 4px; cursor: pointer; border: 0; font-family: var(--font-ui); vertical-align: middle; }
+.tag.new { color: var(--tag-new); background: var(--tag-new-bg); }
+.tag.re { color: var(--tag-re); background: var(--tag-re-bg); }
+.tag.same { color: var(--tag-same); background: var(--tag-same-bg); }
+.mark { display: inline-grid; place-items: center; min-width: 20px; height: 20px; padding: 0 5px; border-radius: 10px; background: #2F5D8A; color: #fff; font-size: 11px; font-weight: 700; border: 0; cursor: pointer; vertical-align: middle; flex: 0 0 auto; font-family: var(--font-ui); }
+.fl { display: inline-flex; align-items: center; font-size: 10px; font-weight: 700; letter-spacing: 0.04em; padding: 2px 6px; border-radius: 4px; cursor: pointer; border: 0; font-family: var(--font-ui); color: var(--doc-red); background: var(--doc-red-bg); vertical-align: middle; }
+.diffs .same-part { opacity: 0.22; }
+.docTbl { width: 100%; border-collapse: collapse; font-size: 13px; }
+.docTbl th { text-align: left; font-size: 11px; letter-spacing: 0.05em; text-transform: uppercase; color: var(--doc-soft); padding: 6px 8px; border-bottom: 1px solid var(--doc-line); }
+.docTbl td { padding: 8px; border-bottom: 1px solid var(--doc-line); vertical-align: top; color: var(--doc-ink); }
+.docTbl td.s { color: var(--doc-soft); }
+
+/* ─── product specimens (warm, fixed look) ─── */
+.frame { background: var(--home-paper); color: var(--home-ink); font-family: system-ui, -apple-system, "Segoe UI", sans-serif; border-radius: 8px; }
+/* true size: the content box is the product's reading (960) or table (1200) width */
+.adm { box-sizing: content-box; width: 960px; padding: 22px 28px 28px; display: grid; gap: 16px; }
+.adm.wide { width: 1200px; }
+.adm.w620 { width: 620px; } .adm.w560 { width: 560px; } .adm.w700 { width: 700px; } .adm.w520 { width: 520px; }
+.fam { box-sizing: content-box; width: 640px; padding: 28px 40px; }
+.phone { width: 390px; overflow: hidden; border: 1px solid var(--home-line-strong); border-radius: 22px; }
+.phead { display: grid; gap: 2px; padding-bottom: 12px; border-bottom: 1px solid var(--home-line); }
+.phead .back { font-size: 13px; color: var(--home-ink-soft); }
+.phead .ttl { font-family: var(--font-head); font-size: 20px; font-weight: 700; margin: 0; }
+.phead .sub { font-size: 13px; color: var(--home-dim); }
+.lockLine { font-size: 13px; color: var(--home-ink-soft); padding: 9px 13px; background: var(--home-card); border: 1px solid var(--home-line); border-left: 3px solid var(--home-dim); border-radius: 8px; }
+.card { background: var(--home-card); border: 1px solid var(--home-line); border-radius: 8px; padding: 16px 20px; display: grid; gap: 12px; }
+.cardTop { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.cardH { font-size: 16px; font-weight: 700; margin: 0; flex: 1; }
+.cardSum { font-size: 13px; color: var(--home-dim); }
+.lede { font-size: 14px; color: var(--home-ink-soft); margin: 0; flex: 1; }
+.lineTop { display: flex; align-items: center; gap: 12px; }
+/* band / group labels: the display face, uppercase, secondary ink (RepKit .rowBand) — mono is only for readouts */
+.capL { font-family: var(--font-head); font-size: 12px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; color: var(--home-dim); }
+.btnOut { font: inherit; font-size: 14px; background: var(--home-card); color: var(--home-ink); border: 1px solid var(--home-line-strong); border-radius: 8px; padding: 7px 14px; white-space: nowrap; display: inline-flex; gap: 6px; align-items: center; }
+.btnLime { font: inherit; font-size: 14px; font-weight: 600; background: var(--lime); color: var(--lime-ink); border: 0; border-radius: 8px; padding: 8px 14px; white-space: nowrap; }
+.btnLime.big { font-size: 16px; padding: 12px 20px; display: block; text-align: center; }
+.door { font-size: 14px; font-weight: 650; color: var(--home-olive); }
+.rlist { border: 1px solid var(--home-line); border-radius: 8px; overflow: hidden; background: var(--home-card); }
+.band { display: flex; align-items: center; gap: 8px; padding: 6px 14px; background: var(--home-paper); border-top: 1px solid var(--home-line); border-bottom: 1px solid var(--home-line); font-family: var(--font-head); font-size: 12px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; color: var(--home-dim); }
+.band:first-child { border-top: 0; }
+.band .bc { font-family: var(--font-data); font-size: 12px; font-weight: 600; letter-spacing: 0.02em; text-transform: none; }
+.qrow { display: grid; grid-template-columns: 30px minmax(0,1fr) 22px; gap: 8px; align-items: center; padding: 9px 14px 9px 6px; min-height: 52px; background: var(--home-card); }
+.qrow + .qrow { border-top: 1px solid var(--home-line); }
+.qrow.nogrip { grid-template-columns: minmax(0,1fr) 22px; padding-left: 14px; }
+.grip { color: var(--home-dim); font-size: 16px; text-align: center; }
+.qt { font-size: 14px; font-weight: 650; color: var(--home-ink); }
+.qc { font-size: 12px; color: var(--home-dim); margin-top: 1px; }
+.chev { color: var(--home-dim); font-size: 18px; text-align: right; }
+.chipH { font-size: 10px; font-weight: 700; letter-spacing: 0.05em; padding: 1px 5px; border-radius: 4px; background: rgba(70,55,30,0.08); color: var(--home-dim); margin-left: 6px; vertical-align: 1px; white-space: nowrap; }
+.chip { font-size: 11px; font-weight: 700; padding: 2px 6px; border-radius: 4px; background: var(--home-olive-soft); color: var(--home-olive); letter-spacing: 0.03em; white-space: nowrap; }
+.chip.warn { background: var(--warn-bg); color: var(--warn); }
+.chip.good { background: var(--good-bg); color: var(--good); }
+.fixedGrid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; }
+.fixedGrid ul { margin: 4px 0 0; padding-left: 16px; font-size: 14px; color: var(--home-ink); display: grid; gap: 3px; }
+.small { font-size: 12px; color: var(--home-dim); margin: 0; }
+.empty { display: grid; gap: 4px; padding: 18px; border: 1px dashed var(--home-line-strong); border-radius: 8px; text-align: center; }
+.empty b { font-size: 14px; }
+.facts { display: grid; grid-template-columns: 170px minmax(0,1fr); gap: 10px 16px; margin: 0; font-size: 14px; }
+.facts dt { color: var(--home-dim); }
+.facts dd { margin: 0; color: var(--home-ink); }
+.facts dd .s { display: block; font-size: 12px; color: var(--home-dim); }
+/* windows */
+.dimmer { background: rgba(36,30,21,0.18); padding: 28px; border-radius: 8px; }
+.win { width: 600px; background: var(--home-card); border: 1px solid rgba(87,101,30,0.30); border-radius: 12px; display: flex; flex-direction: column; box-shadow: 0 6px 28px rgba(36,30,21,0.12); }
+.win.sm { width: 460px; }
+.whead { display: flex; gap: 8px; align-items: flex-start; padding: 17px 22px 6px; }
+.wtitle { font-size: 16px; font-weight: 700; line-height: 1.25; margin: 0; }
+.wmeta { font-size: 12px; color: var(--home-dim); margin-top: 3px; }
+.ico { width: 32px; height: 32px; display: inline-grid; place-items: center; border-radius: 8px; color: var(--home-ink-soft); font-size: 15px; flex: 0 0 auto; }
+.wbody { padding: 8px 22px 16px; display: grid; gap: 14px; }
+.wfoot { display: flex; gap: 10px; justify-content: flex-end; align-items: center; padding: 13px 22px; border-top: 1px solid var(--home-line); }
+.wfoot .fs { margin-right: auto; font-size: 13px; color: var(--home-dim); }
+.sec { border-top: 1px solid var(--home-line); padding-top: 12px; display: grid; gap: 10px; }
+.secH { font-size: 11px; font-weight: 700; letter-spacing: 0.07em; text-transform: uppercase; color: var(--home-dim); margin: 0; display: flex; gap: 8px; align-items: center; }
+.notDrawn { font-size: 12px; color: var(--home-faint); font-style: italic; }
+.recAct { font-size: 14px; color: var(--home-ink-soft); display: inline-flex; gap: 6px; align-items: center; }
+/* fields */
+.fld { display: grid; gap: 5px; }
+.fld .l { font-size: 13px; font-weight: 600; color: var(--home-ink); }
+.req { color: var(--home-ink); }
+.inp { border: 1px solid var(--home-line-strong); border-radius: 8px; padding: 8px 11px; font-size: 14px; background: #fff; color: var(--home-ink); min-height: 38px; }
+.inp.ta { min-height: 76px; }
+.inp.sel { display: flex; justify-content: space-between; align-items: center; }
+.inp.err { border-color: var(--err); }
+.inp.locked { background: #F6F3EE; color: var(--home-dim); }
+.hint { font-size: 12px; color: var(--home-dim); }
+.errL { font-size: 12px; color: var(--err); font-weight: 600; }
+.two { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.swRows { display: grid; }
+.sw { display: grid; grid-template-columns: minmax(0,1fr) 44px; gap: 12px; align-items: center; padding: 10px 0; }
+.sw + .sw { border-top: 1px solid var(--home-line); }
+.sw .t { font-size: 14px; color: var(--home-ink); font-weight: 600; }
+.sw .h { font-size: 12px; color: var(--home-dim); font-weight: 400; display: block; margin-top: 1px; }
+.sw.off { opacity: 0.5; }
+.tog { width: 44px; height: 26px; border-radius: 13px; background: rgba(70,55,30,0.22); position: relative; }
+.tog::after { content: ""; position: absolute; top: 3px; left: 3px; width: 20px; height: 20px; border-radius: 50%; background: #fff; }
+.tog.on { background: var(--home-olive); }
+.tog.on::after { left: 21px; }
+.nudge { font-size: 13px; color: var(--home-ink); background: #fff; border: 1px solid var(--home-line); border-left: 3px solid var(--home-olive); border-radius: 8px; padding: 8px 12px; }
+.radioRow { display: grid; grid-template-columns: 20px minmax(0,1fr); gap: 8px; padding: 10px 12px; border: 1px solid var(--home-line-strong); border-radius: 8px; }
+.radioRow.on { border-color: var(--home-olive); background: var(--home-olive-soft); }
+.dot { width: 16px; height: 16px; border-radius: 50%; border: 2px solid var(--home-line-strong); margin-top: 2px; }
+.radioRow.on .dot { border: 5px solid var(--home-olive); }
+.radioRow .t { font-size: 14px; font-weight: 600; }
+.radioRow .h { font-size: 12px; color: var(--home-dim); }
+.box { width: 18px; height: 18px; border: 1.5px solid var(--home-line-strong); border-radius: 4px; flex: 0 0 auto; background: #fff; display: inline-grid; place-items: center; font-size: 12px; color: #fff; }
+.box.on { background: var(--home-olive); border-color: var(--home-olive); }
+.box.off { opacity: 0.5; }
+.tick { display: flex; gap: 10px; align-items: flex-start; font-size: 14px; color: var(--home-ink); }
+.tick.off { color: var(--home-dim); }
+/* family page */
+.famH { font-family: var(--font-head); font-size: 26px; font-weight: 700; margin: 4px 0 2px; }
+.famSub { font-size: 14px; color: var(--home-dim); margin: 0; }
+.fsec { display: grid; gap: 12px; padding: 20px 0; border-top: 1px solid var(--home-line); }
+.fsecH { font-size: 18px; font-weight: 700; margin: 0; display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+.fsecH .rm { font-size: 13px; font-weight: 500; color: var(--home-olive); }
+.divLine { font-size: 14px; color: var(--home-ink); background: #fff; border: 1px solid var(--home-line); border-radius: 8px; padding: 10px 12px; }
+.divLine .s { display: block; font-size: 12px; color: var(--home-dim); }
+.friends { border-left: 2px solid var(--home-line-strong); padding-left: 12px; display: grid; gap: 4px; }
+.subH { font-size: 14px; font-weight: 700; margin: 0; }
+.club { display: grid; gap: 12px; }
+.notice { font-size: 13px; color: var(--home-ink-soft); background: #fff; border: 1px solid var(--home-line); border-left: 3px solid var(--home-olive); border-radius: 8px; padding: 10px 13px; line-height: 1.5; }
+.healthL { font-size: 12px; color: var(--home-faint); }
+.choices { display: flex; gap: 18px; flex-wrap: wrap; font-size: 14px; }
+.choices span { display: inline-flex; gap: 7px; align-items: center; }
+.rad { width: 16px; height: 16px; border: 1.5px solid var(--home-line-strong); border-radius: 50%; display: inline-block; background: #fff; }
+.rad.on { border: 5px solid var(--home-olive); }
+.fileGot { display: flex; gap: 10px; align-items: center; font-size: 14px; padding: 8px 11px; border: 1px solid var(--home-line); border-radius: 8px; background: #fff; flex-wrap: wrap; }
+.fileGot.bad { border-color: rgba(176,58,34,0.35); }
+.bar { flex: 1 1 120px; height: 6px; border-radius: 3px; background: rgba(70,55,30,0.12); position: relative; overflow: hidden; }
+.bar::after { content: ""; position: absolute; inset: 0 40% 0 0; background: var(--home-olive); }
+.pdf { font-size: 10px; font-weight: 800; color: #fff; background: #A13A2A; border-radius: 3px; padding: 2px 4px; letter-spacing: 0.04em; }
+.txtDoc { font-size: 10px; font-weight: 800; color: #fff; background: #6B6255; border-radius: 3px; padding: 2px 4px; letter-spacing: 0.04em; }
+.docBlock { display: grid; gap: 10px; padding: 14px; border: 1px solid var(--home-line); border-radius: 8px; background: #fff; }
+.docName { display: flex; gap: 8px; align-items: center; font-size: 15px; font-weight: 700; }
+.waiverBox { max-height: 96px; overflow: hidden; font-size: 13px; color: var(--home-ink-soft); border: 1px solid var(--home-line); border-radius: 6px; padding: 8px 10px; background: #FBF9F5; }
+.globalErr { font-size: 14px; color: var(--home-ink); background: #fff; border: 1px solid rgba(176,58,34,0.35); border-left: 3px solid var(--err); border-radius: 8px; padding: 10px 13px; }
+.collapsedSec { font-size: 13px; color: var(--home-dim); padding: 12px 0; border-top: 1px solid var(--home-line); }
+/* phone */
+.pbar { display: flex; align-items: center; gap: 8px; padding: 10px 16px; border-bottom: 1px solid var(--home-line); background: var(--home-card); font-size: 15px; font-weight: 700; }
+.pbar .sm { display: block; font-size: 12px; font-weight: 400; color: var(--home-dim); }
+.pbody { padding: 14px 16px 20px; display: grid; gap: 12px; }
+.phone .qrow { grid-template-columns: 44px minmax(0,1fr) 22px; padding-left: 4px; min-height: 60px; }
+.phone .grip { width: 44px; height: 44px; border: 1px solid var(--home-line-strong); border-radius: 8px; display: grid; place-items: center; }
+.phone .card { padding: 14px 14px; }
+/* table */
+.toolbar { display: flex; align-items: center; gap: 8px; }
+.toolbar .sp { flex: 1; }
+.pill { font-size: 14px; border: 1px solid var(--home-line-strong); background: #fff; border-radius: 999px; padding: 6px 12px; display: inline-flex; gap: 6px; align-items: center; white-space: nowrap; }
+.pill.olive { border-color: rgba(87,101,30,0.45); color: var(--home-olive); font-weight: 600; }
+.amberN { background: #FDE9C4; color: #7A4B05; border-radius: 999px; font-size: 12px; font-weight: 700; padding: 0 7px; }
+.search { width: 16rem; border: 1px solid var(--home-line-strong); border-radius: 999px; padding: 6px 12px; font-size: 14px; color: #8F877E; background: #fff; }
+.sq { font-size: 14px; border: 1px solid var(--home-line-strong); background: #fff; border-radius: 8px; padding: 6px 12px; white-space: nowrap; }
+.sq.on { border-color: var(--home-olive); color: var(--home-olive); font-weight: 600; }
+.tbl { width: 100%; border-collapse: collapse; font-size: 14px; background: #fff; border: 1px solid var(--home-line); border-radius: 8px; overflow: hidden; }
+.tbl th { font-family: var(--font-head); text-transform: uppercase; font-size: 11px; letter-spacing: 0.06em; color: var(--home-dim); text-align: left; padding: 9px 12px; border-bottom: 1px solid var(--home-line); font-weight: 700; }
+.tbl td { padding: 10px 12px; border-bottom: 1px solid var(--home-line); vertical-align: top; }
+.tbl td .s { display: block; font-size: 12px; color: var(--home-dim); }
+.tbl .nm { font-weight: 650; }
+.tbl th.new, .tbl td.new { background: rgba(46,107,47,0.05); }
+.menuWrap { position: relative; }
+.menu { position: absolute; right: 0; top: 42px; width: 330px; background: #fff; border: 1px solid var(--home-line-strong); border-radius: 9px; box-shadow: 0 8px 26px rgba(36,30,21,0.16); padding: 6px; z-index: 2; display: grid; gap: 1px; }
+.mi { padding: 7px 10px; border-radius: 7px; display: grid; gap: 1px; font-size: 14px; }
+.mi .h { font-size: 12px; color: var(--home-dim); }
+.mi.g { font-family: var(--font-head); font-size: 11px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; color: var(--home-dim); padding-top: 10px; }
+.mi.ck { display: flex; gap: 8px; align-items: center; }
+.mdiv { height: 1px; background: var(--home-line); margin: 4px 6px; }
+.boardRow { display: grid; grid-template-columns: 44px minmax(0,1fr) 90px 40px 40px 44px; gap: 8px; align-items: center; padding: 8px 12px; font-size: 14px; background: #fff; border: 1px solid var(--home-line); border-radius: 8px; }
+.noteMk { width: 32px; height: 32px; border-radius: 8px; display: grid; place-items: center; background: var(--home-olive-soft); color: var(--home-olive); font-size: 14px; }
+.pop { width: 340px; background: #fff; border: 1px solid var(--home-line-strong); border-radius: 10px; box-shadow: 0 8px 26px rgba(36,30,21,0.16); padding: 12px 14px; display: grid; gap: 8px; margin: 6px 0 0 auto; }
+.popTitle { font-size: 14px; font-weight: 700; margin: 0; }
+.popQuote { font-size: 14px; color: var(--home-ink-soft); margin: 0; }
+.popFoot { font-size: 12px; color: var(--home-dim); margin: 0; border-top: 1px solid var(--home-line); padding-top: 8px; }
+/* asks */
+.ask { background: var(--doc-panel); border: 1px solid var(--doc-line); border-radius: 10px; padding: 14px 16px; display: grid; gap: 10px; }
+.ask h3 { margin: 0; font-size: 15px; display: flex; gap: 8px; align-items: center; text-wrap: balance; }
+.ask .why { margin: 0; color: var(--doc-soft); max-width: 90ch; }
+.opt { display: flex; gap: 10px; align-items: flex-start; padding: 8px 10px; border-radius: 8px; border: 1px solid var(--doc-line); cursor: pointer; }
+.opt:has(input:checked) { border-color: var(--doc-accent); background: var(--doc-accent-soft); }
+.opt input { margin-top: 3px; accent-color: var(--doc-accent); }
+.opt .rec { font-size: 11px; font-weight: 700; color: var(--doc-accent); margin-left: 6px; }
+textarea { width: 100%; min-height: 54px; font: inherit; padding: 8px; border-radius: 8px; border: 1px solid var(--doc-line); background: var(--doc-bg); color: var(--doc-ink); }
+.btnDoc { font: inherit; font-weight: 600; padding: 8px 14px; border-radius: 8px; border: 1px solid var(--doc-line); background: var(--doc-panel); color: var(--doc-ink); cursor: pointer; }
+.btnDoc.primary { background: var(--doc-accent); border-color: var(--doc-accent); color: #fff; }
+:root[data-theme="dark"] .btnDoc.primary { color: #0B1520; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .btnDoc.primary { color: #0B1520; } }
+pre.out { white-space: pre-wrap; background: var(--doc-bg); border: 1px solid var(--doc-line); border-radius: 8px; padding: 12px; font-size: 13px; min-height: 80px; overflow-x: auto; }
+dialog.note { max-width: min(620px, calc(100vw - 32px)); border: 1px solid var(--doc-line); border-radius: 12px; background: var(--doc-panel); color: var(--doc-ink); padding: 18px 20px; }
+dialog.note::backdrop { background: rgba(0,0,0,0.35); }
+dialog.note h3 { margin: 0 0 8px; font-size: 15px; }
+dialog.note p { margin: 0 0 10px; color: var(--doc-soft); }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+/* ─── Stage 6 additions ─── */
+/* the portal's joined money band (MoneySummaryBand): one frame, a hairline between figures */
+.mband { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0,1fr); background: var(--home-card); border: 1px solid var(--home-line); border-radius: 8px; }
+.mband > div { padding: 11px 16px; display: grid; gap: 2px; }
+.mband > div + div { border-left: 1px solid var(--home-line); }
+.mband .ml { font-size: 12px; color: var(--home-dim); }
+.mband .mv { font-size: 22px; font-weight: 700; font-variant-numeric: tabular-nums; color: var(--home-ink); }
+.mband .mc { font-size: 12px; color: var(--home-dim); }
+/* on a phone: figure ROWS, never tiles */
+.frows { background: var(--home-card); border: 1px solid var(--home-line); border-radius: 8px; }
+.frow { display: grid; grid-template-columns: minmax(0,1fr) auto 14px; gap: 10px; align-items: center; padding: 11px 14px; min-height: 52px; }
+.frow + .frow { border-top: 1px solid var(--home-line); }
+.frow .fl1 { font-size: 14px; font-weight: 600; } .frow .fc { display: block; font-size: 12px; color: var(--home-dim); font-weight: 400; }
+.frow .fv { font-size: 17px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.num { font-variant-numeric: tabular-nums; text-align: right; white-space: nowrap; }
+.tbl th.num { text-align: right; }
+.ptabs { display: flex; gap: 22px; border-bottom: 1px solid var(--home-line); font-size: 14px; }
+.ptabs span { padding: 8px 0 9px; color: var(--home-ink-soft); }
+.ptabs span.on { color: var(--home-ink); font-weight: 700; box-shadow: inset 0 -2px 0 var(--home-olive); }
+.stP { font-size: 12px; font-weight: 700; padding: 2px 8px; border-radius: 999px; background: rgba(70,55,30,0.08); color: var(--home-ink-soft); white-space: nowrap; }
+.stP.paid { background: var(--good-bg); color: var(--good); }
+.stP.inv { background: var(--warn-bg); color: var(--warn); }
+.stP.off { background: var(--home-olive-soft); color: var(--home-olive); }
+.callout { font-size: 14px; color: var(--home-ink); background: #fff; border: 1px solid var(--home-line); border-left: 3px solid var(--home-olive); border-radius: 8px; padding: 12px 14px; display: flex; gap: 14px; align-items: center; flex-wrap: wrap; }
+.callout .ct { flex: 1 1 260px; display: grid; gap: 2px; }
+.callout .ct b { font-size: 15px; }
+.callout .ct span { font-size: 13px; color: var(--home-ink-soft); }
+.ck { display: grid; grid-template-columns: 22px minmax(0,1fr) auto; gap: 10px; align-items: start; padding: 10px 0; }
+.ck + .ck { border-top: 1px solid var(--home-line); }
+.ck .t { font-size: 14px; font-weight: 600; } .ck .h { display: block; font-size: 12px; color: var(--home-dim); font-weight: 400; }
+.ck .when { font-size: 12px; color: var(--home-dim); white-space: nowrap; }
+.logoT { width: 64px; height: 32px; border: 1px solid var(--home-line); border-radius: 5px; display: grid; place-items: center; font-size: 10px; font-weight: 800; letter-spacing: 0.02em; background: #fff; color: var(--home-ink); flex: 0 0 auto; text-align: center; line-height: 1.1; padding: 0 3px; }
+.logoT.none { border-style: dashed; color: var(--home-faint); font-weight: 600; }
+.lg1 { color: #1F5E8C; } .lg2 { color: #8A3B12; } .lg3 { color: #2E6B2F; } .lg4 { color: #6B2E7A; }
+.srow { display: grid; grid-template-columns: 64px minmax(0,1fr) auto 22px; gap: 12px; align-items: center; padding: 10px 14px; min-height: 56px; background: var(--home-card); }
+.srow + .srow { border-top: 1px solid var(--home-line); }
+.srow .nm { font-size: 14px; font-weight: 650; } .srow .cap { display: block; font-size: 12px; color: var(--home-dim); }
+.srow.ended { opacity: 0.55; }
+.place { display: inline-flex; gap: 5px; align-items: center; font-size: 12px; color: var(--home-ink-soft); }
+.place::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: var(--home-olive); }
+/* the business's page */
+.pub { box-sizing: content-box; width: 640px; padding: 0 0 28px; }
+.pubBand { background: #2B3A1C; color: #F4F1E6; padding: 14px 40px; display: flex; gap: 12px; align-items: center; border-radius: 8px 8px 0 0; }
+.pubBand .crest { width: 34px; height: 34px; border-radius: 50%; background: #D9F99D; color: #2B3A1C; display: grid; place-items: center; font-weight: 800; font-size: 13px; }
+.pubBand b { font-size: 16px; }
+.pubIn { padding: 22px 40px 0; display: grid; gap: 18px; }
+.phone .pubBand { padding: 12px 16px; border-radius: 0; }
+.phone .pubIn { padding: 16px 16px 0; }
+.pkg { border: 1px solid var(--home-line); border-radius: 8px; background: #fff; padding: 16px; display: grid; gap: 10px; }
+.pkg .pr { font-size: 24px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.pkg ul { margin: 0; padding-left: 18px; display: grid; gap: 4px; font-size: 14px; }
+.sumT { width: 100%; border-collapse: collapse; font-size: 14px; }
+.sumT td { padding: 6px 0; border-top: 1px solid var(--home-line); }
+.sumT tr:first-child td { border-top: 0; }
+.sumT tr.tot td { font-weight: 700; border-top: 1px solid var(--home-line-strong); }
+.payOpt { display: grid; grid-template-columns: 20px minmax(0,1fr); gap: 8px; padding: 12px; border: 1px solid var(--home-line-strong); border-radius: 8px; background: #fff; }
+.payOpt.on { border-color: var(--home-olive); background: var(--home-olive-soft); }
+.payOpt .t { font-size: 15px; font-weight: 650; } .payOpt .h { font-size: 13px; color: var(--home-dim); }
+.receipt { border: 1px solid var(--home-line); border-radius: 8px; background: #fff; padding: 16px; display: grid; gap: 8px; }
+.receipt .rt { font-size: 18px; font-weight: 700; margin: 0; }
+/* email */
+.mail { width: 600px; background: #fff; border: 1px solid var(--home-line); border-radius: 8px; overflow: hidden; color: #241E15; }
+.mailHd { padding: 12px 18px; border-bottom: 1px solid var(--home-line); font-size: 13px; display: grid; gap: 2px; background: #FBF9F5; }
+.mailHd span { color: var(--home-dim); }
+.mailBd { padding: 22px 28px; display: grid; gap: 12px; font-size: 15px; line-height: 1.55; }
+.mailBd p { margin: 0; }
+.mailBtn { justify-self: start; background: #2B3A1C; color: #F4F1E6; font-weight: 700; padding: 11px 18px; border-radius: 8px; font-size: 15px; }
+.mailFt { padding: 14px 28px 20px; border-top: 1px solid var(--home-line); font-size: 12px; color: var(--home-dim); display: grid; gap: 4px; }
+/* invoice paper: Letter at 96 dpi is 816 px wide */
+.paper { width: 816px; background: #fff; color: #1d1d1d; font-family: Helvetica, Arial, sans-serif; border: 1px solid #d6d2ca; box-shadow: 0 2px 10px rgba(0,0,0,0.06); }
+.paper .acc { height: 8px; background: #2B3A1C; }
+.paper .pin { padding: 34px 56px 40px; display: grid; gap: 18px; font-size: 13px; }
+.paper .idb { display: flex; justify-content: space-between; gap: 20px; }
+.paper .idb b { font-size: 16px; display: block; }
+.paper h4 { font-size: 26px; margin: 0; letter-spacing: 0.01em; }
+.paper .subl { color: #555; margin-top: 2px; }
+.paper .pfig { display: grid; grid-template-columns: repeat(3, 1fr); border: 1px solid #d6d2ca; border-radius: 4px; }
+.paper .pfig > div { padding: 10px 14px; } .paper .pfig > div + div { border-left: 1px solid #d6d2ca; }
+.paper .pfig span { display: block; font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; color: #666; }
+.paper .pfig b { font-size: 18px; font-variant-numeric: tabular-nums; }
+.paper .lab { font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em; color: #666; font-weight: 700; margin-bottom: 4px; }
+.paper table { width: 100%; border-collapse: collapse; }
+.paper th { text-align: left; font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; color: #666; border-bottom: 1px solid #bbb; padding: 6px 0; }
+.paper td { padding: 8px 0; border-bottom: 1px solid #e3e0da; vertical-align: top; }
+.paper td.r, .paper th.r { text-align: right; font-variant-numeric: tabular-nums; }
+.paper .inc { margin: 4px 0 0; padding-left: 16px; color: #444; }
+.paper .tt td { border-bottom: 0; padding: 4px 0; }
+.paper .tt tr.big td { font-weight: 700; font-size: 15px; border-top: 1px solid #bbb; padding-top: 8px; }
+.paper .stamp { display: inline-block; border: 2px solid #2E6B2F; color: #2E6B2F; font-weight: 800; letter-spacing: 0.08em; padding: 4px 10px; border-radius: 4px; font-size: 13px; }
+.paper .foot { color: #777; font-size: 11px; display: flex; justify-content: space-between; border-top: 1px solid #e3e0da; padding-top: 8px; }
+.paper.mini { width: 816px; }
+/* public club site */
+.site { box-sizing: content-box; width: 960px; padding: 0 0 22px; }
+.siteBar { background: #2B3A1C; color: #F4F1E6; padding: 12px 28px; display: flex; gap: 22px; align-items: center; font-size: 14px; border-radius: 8px 8px 0 0; }
+.siteBar b { font-size: 16px; margin-right: auto; }
+.siteIn { padding: 20px 28px 0; display: grid; gap: 14px; }
+.strip { display: grid; grid-template-columns: repeat(auto-fill, 184px); gap: 12px; }
+.strip > div { min-height: 72px; border: 1px solid var(--home-line); border-radius: 8px; background: #fff; display: grid; place-items: center; font-weight: 800; font-size: 15px; text-align: center; padding: 6px; }
+.byLine { display: inline-flex; gap: 10px; align-items: center; font-size: 13px; color: var(--home-dim); border: 1px solid var(--home-line); background: #fff; border-radius: 8px; padding: 6px 10px; }
+.pcard { background: #fff; border: 1px solid var(--home-line); border-radius: 8px; padding: 12px 14px; display: grid; grid-template-columns: minmax(0,1fr) 18px; gap: 4px 8px; }
+.pcard .nm { font-size: 15px; font-weight: 650; } .pcard .s { font-size: 13px; color: var(--home-dim); grid-column: 1; }
+.pcard .chev { grid-row: 1 / span 3; grid-column: 2; align-self: start; }
+.pband { font-family: var(--font-head); font-size: 12px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; color: var(--home-dim); display: flex; gap: 8px; padding-top: 4px; }
+.lockedRow { opacity: 0.6; }
+.planTbl td.y { color: var(--tag-new); font-weight: 700; }
+.planTbl td.n { color: var(--doc-soft); }
+.chip.q { background: rgba(70,55,30,0.08); color: var(--home-dim); }
+.phone .btnLime, .phone .btnOut { min-height: 44px; display: inline-flex; align-items: center; justify-content: center; }
+.phone .ptabs span { padding: 12px 0; }
+.phone .ck { min-height: 44px; align-items: center; }
+.tap44 { min-width: 44px; min-height: 44px; padding: 0 10px; }
+.bandBtn { display: flex; gap: 8px; align-items: center; }
+</style>
+
+<style>
+/* ─── Part 3b additions ─── */
+.win.w520 { width: 520px; }
+.prows { border-top: 1px solid var(--home-line); }
+.prow { display: grid; grid-template-columns: minmax(0,1fr) auto 18px; gap: 10px; align-items: center; padding: 10px 0; min-height: 48px; font-size: 14px; }
+.prow + .prow { border-top: 1px solid var(--home-line); }
+.prow .pm { font-weight: 600; } .prow .ps { display: block; font-size: 12px; color: var(--home-dim); font-weight: 400; }
+.prow .pv { font-variant-numeric: tabular-nums; font-weight: 600; white-space: nowrap; }
+.prow.void .pm, .prow.void .pv { color: var(--home-faint); text-decoration: line-through; }
+.chip.info { background: rgba(47,93,138,0.10); color: #2F5D8A; }
+.wfoot.two { justify-content: space-between; }
+.wfoot.two .l { display: flex; gap: 8px; }
+.rblock { border: 1px solid var(--home-line); border-radius: 8px; padding: 12px 14px; display: grid; gap: 8px; background: #FBF9F5; }
+.rblock h4 { margin: 0; font-size: 14px; display: flex; gap: 8px; align-items: center; }
+.rblock .facts { grid-template-columns: 150px minmax(0,1fr); gap: 6px 14px; font-size: 13px; }
+.cutLine { font-size: 12px; color: var(--home-dim); text-align: center; padding: 4px; border: 1px dashed var(--home-line-strong); border-radius: 6px; }
+.ledg { width: 100%; border-collapse: collapse; font-size: 13px; background: #fff; border: 1px solid var(--home-line); border-radius: 8px; overflow: hidden; }
+.ledg th { font-family: var(--font-head); text-transform: uppercase; font-size: 11px; letter-spacing: 0.06em; color: var(--home-dim); text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--home-line); }
+.ledg td { padding: 8px 10px; border-bottom: 1px solid var(--home-line); }
+.ledg td.num, .ledg th.num { text-align: right; font-variant-numeric: tabular-nums; }
+.ledg tr.newRow td { background: rgba(46,107,47,0.05); }
+</style>
+<style>
+/* ─── Part A additions ─── */
+.callout.amber { border-left-color: var(--amber); }
+.chip.amb { background: #FDE9C4; color: #7A4B05; }
+.oddT { width: 100%; border-collapse: collapse; font-size: 13px; background: var(--doc-panel); border: 1px solid var(--doc-line); border-radius: 10px; overflow: hidden; }
+.oddT th { text-align: left; font-size: 11px; letter-spacing: 0.05em; text-transform: uppercase; color: var(--doc-soft); padding: 8px 10px; border-bottom: 1px solid var(--doc-line); }
+.oddT td { padding: 9px 10px; border-bottom: 1px solid var(--doc-line); vertical-align: top; color: var(--doc-ink); }
+.oddT td:first-child { font-weight: 600; width: 20%; }
+.oddT td .s { display: block; color: var(--doc-soft); font-size: 12px; margin-top: 2px; }
+.oddT tr.chg td { background: rgba(46,107,47,0.05); }
+.nrow { display: grid; grid-template-columns: 10px minmax(0,1fr) auto; gap: 12px; align-items: start; padding: 12px 14px; background: var(--home-card); }
+.nrow + .nrow { border-top: 1px solid var(--home-line); }
+.nrow .dotA { width: 8px; height: 8px; border-radius: 50%; background: var(--amber); margin-top: 6px; }
+.nrow .nt { font-size: 14px; font-weight: 650; } .nrow .nb { display: block; font-size: 13px; color: var(--home-ink-soft); margin-top: 2px; } .nrow .nw { font-size: 12px; color: var(--home-dim); white-space: nowrap; }
+.wordsT td:nth-child(2) { color: var(--doc-soft); }
+.wordsT td:nth-child(3) { font-weight: 500; }
+/* the shipped RepChip: data face, uppercase, a bordered pill */
+.rchip { display: inline-flex; align-items: center; font-family: var(--font-data); font-size: 11px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; padding: 2px 8px; border-radius: 999px; border: 1px solid rgba(70,55,30,0.20); color: var(--home-ink-soft); background: var(--home-olive-soft); white-space: nowrap; line-height: 1.4; }
+.rchip.warn { color: #7A4B05; background: rgba(217,119,6,0.08); border-color: rgba(217,119,6,0.30); }
+/* the shipped Callout: one run of words, the warn edge; actions to the right on desktop, under the words on a phone */
+.calloutS { display: flex; align-items: center; gap: 16px; padding: 13px 16px; background: var(--home-card); border: 1px solid var(--home-line); border-left: 3px solid #D97706; border-radius: 8px; font-size: 14px; line-height: 1.45; color: var(--home-ink); }
+.calloutS .w { flex: 1; min-width: 0; }
+.phone .calloutS { display: block; }
+.phone .calloutS .btnLime { margin-top: 11px; min-height: 44px; display: inline-flex; align-items: center; }
+/* the shipped question window: 26rem, raised over the payment window */
+.win.q { width: 416px; }
+.choiceRow { display: flex; gap: 10px; align-items: flex-start; min-height: 44px; }
+.choiceRow .rad { margin-top: 3px; flex: 0 0 auto; }
+.choiceRow .cn { font-size: 14px; font-weight: 650; color: var(--home-ink); display: block; }
+.choiceRow .ch { font-size: 12px; color: var(--home-dim); display: block; }
+.footLine { margin-right: auto; font-size: 13px; color: var(--home-dim); }
+.btnLime.off { display: none; }
+.phone .dimmer { padding: 120px 12px 40px; border-radius: 0; }
+.phone .win.q { width: auto; }
+.phone .facts { grid-template-columns: 110px minmax(0,1fr); gap: 8px 12px; font-size: 14px; }
+.phone .wfoot .btnLime, .phone .wfoot .btnOut { min-height: 44px; }
+.phone .prow { grid-template-columns: minmax(0,1fr) 18px; }
+.phone .prow .pend { grid-column: 1 / -1; justify-self: end; display: flex; gap: 10px; align-items: center; }
+.nrow { grid-template-columns: 10px minmax(0,1fr) auto 14px; }
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <span class="eyebrow">Board Ready · Stage 6 fixes · Part A · drawn Nov 25, 2026 · drawn before anything is built</span>
+    <h1>A refund the club makes in its own Stripe dashboard: the books take it at once, and the club finishes it on the deal</h1>
+    <p class="lead">Today a refund made in Stripe’s own dashboard only raises a notice: the deal still reads paid, the books still hold the money, and the deal’s Refund button would offer the same money again. This page draws the fix, built from the shipped deal page and its refund window (as committed Nov 24). The example is the same as the card-refund drawing: Harbour Dental’s U9 division sponsorship, $1,000.00 plus 13% HST, $1,130.00, paid by card on Mar 3. On Mar 20 the club gives $200.00 back from its Stripe dashboard; on Mar 22 Dana Ruiz finishes it on the deal. Click any tag to read the build rule behind it, and any blue number to jump to its ask. Words marked DRAFT go through /marketing and /legal. The accounting review behind it is dated Nov 25.</p>
+  </header>
+
+  <nav class="tabs" role="tablist" aria-label="Sections">
+    <button role="tab" id="t1" aria-selected="true" data-pane="p1">1 · The deal while it waits</button>
+    <button role="tab" id="t2" aria-selected="false" data-pane="p2">2 · Finish the refund</button>
+    <button role="tab" id="t3" aria-selected="false" data-pane="p3">3 · The fee given back</button>
+    <button role="tab" id="t4" aria-selected="false" data-pane="p4">4 · The books and the note</button>
+    <button role="tab" id="t5" aria-selected="false" data-pane="p5">5 · The odd cases</button>
+    <button role="tab" id="t6" aria-selected="false" data-pane="p6">6 · On a phone</button>
+    <button role="tab" id="t7" aria-selected="false" data-pane="p7">7 · The notice and the words</button>
+    <button role="tab" id="t8" aria-selected="false" data-pane="p8">8 · Your asks</button>
+  </nav>
+
+  <!-- ─────────────── 1 ─────────────── -->
+  <section class="pane" id="p1" role="tabpanel" aria-labelledby="t1">
+    <div class="viewRow"><span class="lbl">View</span><div class="seg" data-seg="p1"><button type="button" aria-pressed="true" data-v="all">Everything</button><button type="button" aria-pressed="false" data-v="diff">Show only what differs</button></div></div>
+    <h2>The moment Stripe says the refund went through, the deal shows it, the books take it, and one step is left for the club</h2>
+    <p>Left: the deal today, two days after a $200.00 refund was made in Stripe. Nothing on it says so, and Refund would still offer the full $1,130.00. Right: the same deal once this is built. The deal stays Paid and the logo stays up. The refund is in the books, dated the day the money left. What still needs a person is the credit note and the email to Harbour Dental, because only the club knows why it refunded. The history line gains “refunded $200.00 in Stripe Mar 20”, and “finished Mar 22 by Dana Ruiz” once it is finished (DRAFT). <button class="mark" type="button" data-ask="1">1</button> <button class="mark" type="button" data-ask="2">2</button></p>
+    <div class="pair">
+      <div class="spec"><div class="specHead"><b>Today · Mar 22</b><span class="chrome">960 · shipped</span><button class="tag same" type="button" data-note="THE DEAL PAGE AS SHIPPED (Part 3b, committed). A refund made in the dashboard reaches the club only as a notice (&quot;A refund made in Stripe isn’t in your books … Record it in the Ledger, and refund from the deal’s payment next time&quot;). The Ledger has no way to write the GST/HST part, and the deal’s own Refund still offers what Stripe already gave back.">TODAY</button></div><div class="scroll"><div class="frame adm">
+        <div class="phead"><span class="back">← Deals │</span><div style="display:flex;align-items:center;gap:10px"><p class="ttl" style="flex:1">Harbour Dental <span class="stP paid">Paid</span></p></div><span class="sub">Division sponsor · U9 division · 2027</span></div>
+        <div class="callout same-part"><div class="ct"><span style="font-size:14px;color:var(--home-ink)">Paid Mar 3. 1 of 3 delivered. Tick each one as it happens.</span></div></div>
+        <div class="mband">
+          <div class="same-part"><span class="ml">Invoiced</span><span class="mv">$1,130.00</span><span class="mc">incl. HST $130.00</span></div>
+          <div class="same-part"><span class="ml">Paid</span><span class="mv">$1,130.00</span><span class="mc">card visa •••• 4242</span></div>
+          <div class="same-part"><span class="ml">Still owing</span><span class="mv">$0.00</span><span class="mc">&nbsp;</span></div>
+        </div>
+        <div class="card">
+          <div class="cardTop"><p class="cardH">Payments</p></div>
+          <div class="prows"><div class="prow"><span><span class="pm">Mar 3 · Card, Visa •••• 4242</span><span class="ps">Recorded by itself when the card payment landed</span></span><span style="display:flex;gap:10px;align-items:center"><span class="pv">$1,130.00</span></span><span class="chev">›</span></div></div>
+        </div>
+        <div class="card same-part"><div class="cardTop"><p class="cardH">The deal</p><span class="ico">✎</span></div><span class="notDrawn">Package, shows on, amount, Charge HST, invoice · unchanged, not drawn</span></div>
+        <div class="card same-part"><div class="cardTop"><p class="cardH">Delivery</p><span class="cardSum">1 of 3 delivered</span></div><span class="notDrawn">Checklist · unchanged, not drawn</span></div>
+        <div class="collapsedSec same-part">History · offered Feb 26 by Dana Ruiz · details and logo Mar 2 · invoice emailed Mar 2 · paid in full Mar 3</div>
+      </div></div></div>
+
+      <div class="spec"><div class="specHead"><b>After · Mar 22</b><span class="chrome">960</span><button class="tag same" type="button" data-note="THE DEAL’S STATE DOES NOT MOVE while the refund waits (ask 2 A). A part refund keeps a deal Paid, as a part refund from the deal does today. A full one also stays where it is until the club picks what happens (tab 2): the logo stays up, and the business’s page and its pay button do not change. The accounting review suggested the deal read owing again at once, as after a lost dispute; that is ask 2 B.">STAYS PAID</button><button class="mark" type="button" data-ask="2">2</button><button class="tag new" type="button" data-note="THE SHIPPED CALLOUT (warn edge, one run of words, its button at the right; under the words on a phone) takes the place of the normal one while a refund made in Stripe is unfinished. Amber, like every refund-trouble surface on the deal (/ux decision 4, Nov 24). Its lime opens the payment’s window with the finish question raised over it (tab 2). After 14 days it adds &quot;Waiting 14 days.&quot;: the accounting review asks for a nudge, since the note should go out within a reasonable time. Two unfinished refunds read &quot;2 refunds totalling $300.00 were made in Stripe&quot;, and the button opens the first. DRAFT words.">CALLOUT · DRAFT</button><button class="mark" type="button" data-ask="1">1</button><button class="tag new" type="button" data-note="THE ROW’S LINE AND CHIP. The line is the shipped &quot;Refunded {amount} {day}&quot; with &quot;in Stripe&quot; added. The chip is the shipped warn chip with a new word, TO FINISH, until the club finishes it, then the shipped PARTLY REFUNDED. Two other warn chips already exist (REFUND DIDN’T REACH THE CARD, TAKEN BACK), so the words carry the difference. The band’s Refunded figure is unchanged, shipped words included: the money did go to the card. Refund in the payment’s window now offers only $930.00: a refund made in Stripe counts against what can go back from the moment Stripe accepts it, even while it is on its way.">ROW · NEW CHIP</button></div><div class="scroll"><div class="frame adm">
+        <div class="phead"><span class="back">← Deals │</span><div style="display:flex;align-items:center;gap:10px"><p class="ttl" style="flex:1">Harbour Dental <span class="stP paid">Paid</span></p></div><span class="sub">Division sponsor · U9 division · 2027</span></div>
+        <div class="calloutS"><span class="w"><b>$200.00 was refunded in Stripe on Mar 20.</b> Finish it to give Harbour Dental a credit note.</span><span class="btnLime">Finish the refund</span></div>
+        <div class="mband">
+          <div class="same-part"><span class="ml">Invoiced</span><span class="mv">$1,130.00</span><span class="mc">incl. HST $130.00</span></div>
+          <div class="same-part"><span class="ml">Paid</span><span class="mv">$1,130.00</span><span class="mc">card visa •••• 4242</span></div>
+          <div><span class="ml">Refunded</span><span class="mv">$200.00</span><span class="mc">$200.00 to the card, Mar 20</span></div>
+          <div class="same-part"><span class="ml">Still owing</span><span class="mv">$0.00</span><span class="mc">&nbsp;</span></div>
+        </div>
+        <div class="card">
+          <div class="cardTop"><p class="cardH">Payments</p></div>
+          <div class="prows"><div class="prow"><span><span class="pm">Mar 3 · Card, Visa •••• 4242</span><span class="ps">Refunded $200.00 in Stripe Mar 20</span></span><span style="display:flex;gap:10px;align-items:center"><span class="rchip warn">To finish</span><span class="pv">$1,130.00</span></span><span class="chev">›</span></div></div>
+        </div>
+        <div class="card same-part"><div class="cardTop"><p class="cardH">The deal</p><span class="ico">✎</span></div><span class="notDrawn">Package, shows on, amount, Charge HST, invoice · unchanged, not drawn</span></div>
+        <div class="card same-part"><div class="cardTop"><p class="cardH">Delivery</p><span class="cardSum">1 of 3 delivered</span></div><span class="notDrawn">Checklist · unchanged, not drawn</span></div>
+        <div class="collapsedSec">History · offered Feb 26 by Dana Ruiz · details and logo Mar 2 · invoice emailed Mar 2 · paid in full Mar 3 · <b>refunded $200.00 in Stripe Mar 20</b></div>
+      </div></div></div>
+    </div>
+  </section>
+
+  <!-- ─────────────── 2 ─────────────── -->
+  <section class="pane" id="p2" role="tabpanel" aria-labelledby="t2" hidden>
+    <h2>Finish the refund: the amount is Stripe’s, the reason is the club’s, and the button says what happens</h2>
+    <p>The callout’s button, or the payment row, opens the payment’s window. The refund made in Stripe sits in it as the shipped refund block, and “Finish the refund” sits at its foot beside Refund. Finishing is a question raised over that window, built like the shipped refund question: Stripe’s amount and date are fixed, and the club writes the reason the business reads. Finishing issues the credit note, dated today, and emails it with the shipped refund email. On a full refund the club also says what happens to the deal. Whoever may refund on a deal may finish one. <button class="mark" type="button" data-ask="1">1</button> <button class="mark" type="button" data-ask="2">2</button></p>
+    <div class="pair">
+      <div class="spec"><div class="specHead"><b>The payment’s window</b><span class="chrome">window · 520 · shipped, one block and one button added</span><button class="tag re" type="button" data-note="THE SHIPPED PAYMENT WINDOW. The refund made in Stripe is the shipped &quot;To the card&quot; block with its warn chip TO FINISH; its rows say where it was made and Stripe’s own reason, and Credit note and Business emailed read &quot;Not yet&quot; until it is finished. &quot;Finish the refund&quot; is an outline button in the foot’s left slot beside Refund (now up to $930.00). The page keeps one lime: the callout’s.">BLOCK + BUTTON</button></div><div class="scroll"><div class="frame dimmer"><div class="win w520">
+        <div class="whead"><div style="flex:1"><div class="wmeta">Invoice 2027-014</div><p class="wtitle">Harbour Dental’s payment</p></div><span class="ico">✕</span></div>
+        <div class="wbody"><dl class="facts" style="grid-template-columns:140px minmax(0,1fr)"><dt>Amount</dt><dd>$1,130.00 <span class="s">Of it, HST $130.00</span></dd><dt>Paid</dt><dd>Mar 3 at 9:14 a.m.</dd><dt>Paid with</dt><dd>Visa •••• 4242</dd><dt>Processing fee</dt><dd>$41.05, paid by the club</dd><dt>Recorded</dt><dd>By itself when the card payment landed</dd></dl>
+          <div class="rblock"><h4>To the card <span class="rchip warn">To finish</span></h4>
+            <dl class="facts">
+              <dt>Amount</dt><dd>$200.00 to Visa •••• 4242 <span class="s">$176.99 of the sponsorship and $23.01 HST</span></dd>
+              <dt>Made in Stripe</dt><dd>Mar 20 at 4:12 p.m. <span class="s">From your Stripe dashboard. Stripe’s reason: requested by the customer.</span></dd>
+              <dt>Stripe reference</dt><dd>re_3QbX…9kLm <span class="door" style="font-weight:500">Copy</span></dd>
+              <dt>Credit note</dt><dd>Not yet</dd>
+              <dt>Business emailed</dt><dd>Not yet</dd>
+            </dl></div>
+        </div>
+        <div class="wfoot two"><span class="l"><span class="btnOut">Finish the refund</span><span class="btnOut">Refund</span></span><span class="btnOut">Close</span></div>
+      </div></div></div></div>
+
+      <div class="spec"><div class="specHead"><b>Finish it · a part refund</b><span class="chrome">question · 416 · raised</span><button class="tag new" type="button" data-note="A QUESTION RAISED OVER THE PAYMENT WINDOW, as the shipped refund question is (26rem, raised, follows the keyboard on a phone). Cancel returns to the payment window. Its first line is Stripe’s refund, fixed; its second says what finishing does before the press. The reason is the shipped single-line field (300 characters). No email address on file: the foot reads the shipped &quot;No email address on file. Tell them yourself.&quot; and the button drops &quot;and email&quot;. DRAFT words.">NEW · DRAFT</button></div><div class="scroll"><div class="frame dimmer"><div class="win q">
+        <div class="whead"><div style="flex:1"><p class="wtitle">Finish Harbour Dental’s refund?</p></div></div>
+        <div class="wbody">
+          <p class="hint" style="font-size:13px;margin:0">$200.00 went back to Visa •••• 4242 from your Stripe dashboard on Mar 20: $176.99 of the sponsorship and $23.01 HST.</p>
+          <p class="hint" style="font-size:13px;margin:0">Finishing gives Harbour Dental credit note 2027-014-C1, dated today, and emails it to them. The deal stays paid.</p>
+          <div class="fld"><span class="l">Reason <span class="req">*</span></span><div class="inp">The banner went up a month late.</div><span class="hint">Harbour Dental reads this in the refund email.</span></div>
+        </div>
+        <div class="wfoot"><span class="btnOut">Cancel</span><span class="btnLime">Finish and email</span></div>
+      </div></div></div></div>
+    </div>
+
+    <div class="pair">
+      <div class="spec"><div class="specHead"><b>Finish it · a full refund, as it opens</b><span class="chrome">question · 416 · raised</span><button class="tag new" type="button" data-note="ONLY ON A FULL REFUND (ask 2 A). A full refund from the deal always ends it; a refund made in Stripe may be a mistake fixed later, so the club says which. The shipped radios (a name and a grey line), nothing picked, and no lime until a choice, as the shipped refund question opens. The reason field appears once a choice is made. DRAFT words.">NEW · DRAFT</button><button class="mark" type="button" data-ask="2">2</button></div><div class="scroll"><div class="frame dimmer"><div class="win q">
+        <div class="whead"><div style="flex:1"><p class="wtitle">Finish Harbour Dental’s refund?</p></div></div>
+        <div class="wbody">
+          <p class="hint" style="font-size:13px;margin:0">$1,130.00 went back to Visa •••• 4242 from your Stripe dashboard on Mar 20: all of the payment, $1,000.00 and $130.00 HST.</p>
+          <div style="display:grid;gap:10px">
+            <span class="choiceRow"><span class="rad"></span><span><span class="cn">It has ended</span><span class="ch">The logo comes down and the place is free</span></span></span>
+            <span class="choiceRow"><span class="rad"></span><span><span class="cn">They still owe it</span><span class="ch">The deal reads owing again and their link lets them pay</span></span></span>
+          </div>
+        </div>
+        <div class="wfoot"><span class="footLine">Choose what happens to the deal.</span><span class="btnOut">Cancel</span></div>
+      </div></div></div></div>
+
+      <div class="spec"><div class="specHead"><b>… with “They still owe it” picked</b><span class="chrome">question · 416 · raised</span><button class="tag new" type="button" data-note="THE BUTTON NAMES WHAT HAPPENS. They still owe it: &quot;Finish and email&quot;, and the deal goes back to Invoiced with $1,130.00 owing (the business’s page shows the invoice again). It has ended: the shipped &quot;This ends the deal. The logo comes down from the U9 division pages and the place is free for another sponsor.&quot; under the choice, and the shipped button &quot;Refund, end the deal and email&quot; reworded &quot;Finish, end the deal and email&quot;. DRAFT words.">BUTTONS · DRAFT</button></div><div class="scroll"><div class="frame dimmer"><div class="win q">
+        <div class="whead"><div style="flex:1"><p class="wtitle">Finish Harbour Dental’s refund?</p></div></div>
+        <div class="wbody">
+          <p class="hint" style="font-size:13px;margin:0">$1,130.00 went back to Visa •••• 4242 from your Stripe dashboard on Mar 20: all of the payment, $1,000.00 and $130.00 HST.</p>
+          <div style="display:grid;gap:10px">
+            <span class="choiceRow"><span class="rad"></span><span><span class="cn">It has ended</span><span class="ch">The logo comes down and the place is free</span></span></span>
+            <span class="choiceRow"><span class="rad on"></span><span><span class="cn">They still owe it</span><span class="ch">The deal reads owing again and their link lets them pay</span></span></span>
+          </div>
+          <div class="fld"><span class="l">Reason <span class="req">*</span></span><div class="inp">It went back to the wrong card.</div><span class="hint">Harbour Dental reads this in the refund email.</span></div>
+        </div>
+        <div class="wfoot"><span class="btnOut">Cancel</span><span class="btnLime">Finish and email</span></div>
+      </div></div></div></div>
+    </div>
+    <div class="explain"><h3>If nobody finishes it <button class="mark" type="button" data-ask="1">1</button></h3><p>The books are already right. With no credit note the club’s GST/HST is not reduced, which is the safe side for its return. The business hears nothing from FieldLogicHQ. The callout and the notice stay until someone finishes it. Pressing Done on the notice hides the notice only; the deal still shows the refund as “To finish”.</p></div>
+  </section>
+
+  <!-- ─────────────── 3 ─────────────── -->
+  <section class="pane" id="p3" role="tabpanel" aria-labelledby="t3" hidden>
+    <h2>When the sponsor paid the processing fee, a refund in Stripe can return the fee too, and the deal says so</h2>
+    <p>The same deal, but Harbour Dental paid the $41.05 fee and its $5.34 HST: they were charged $1,176.39. A refund from the deal never returns the fee. A refund in Stripe can be any amount up to $1,176.39. The rule: <b>the sponsorship goes back first, and the fee only once all of the sponsorship has gone back</b>. The tax is the same either way, since the fee carries the same 13%. The club’s own processing cost does not change: Stripe keeps its fee, and FieldLogicHQ keeps its fee (to be confirmed by a test before the build). <button class="mark" type="button" data-ask="3">3</button> <button class="mark" type="button" data-ask="7">7</button></p>
+    <div class="pair">
+      <div class="spec"><div class="specHead"><b>All of it, $1,176.39, fee included</b><span class="chrome">question · 416 · raised</span><button class="tag new" type="button" data-note="SAID ONCE, quietly, only when a refund in Stripe returned some of the fee: the sentence under the amount. The refund email drops its shipped &quot;The $X processing fee isn’t part of this refund.&quot; line in this case, and the credit note shows the fee as its own row (tab 4). The two choices and the reason are as tab 2. DRAFT words.">FEE LINE · DRAFT</button></div><div class="scroll"><div class="frame dimmer"><div class="win q">
+        <div class="whead"><div style="flex:1"><p class="wtitle">Finish Harbour Dental’s refund?</p></div></div>
+        <div class="wbody">
+          <p class="hint" style="font-size:13px;margin:0">$1,176.39 went back to Visa •••• 4242 from your Stripe dashboard on Mar 20: the $1,130.00 sponsorship with its tax, and the $46.39 processing fee with its tax.</p>
+          <p class="hint" style="font-size:13px;margin:0">The processing fee went back too. The club still pays Stripe’s fee and FieldLogicHQ’s fee on this payment.</p>
+          <span class="notDrawn">What happens to the deal, and the reason · as tab 2</span>
+        </div>
+        <div class="wfoot"><span class="btnOut">Cancel</span><span class="btnLime">Finish, end the deal and email</span></div>
+      </div></div></div></div>
+      <div class="explain"><h3>How each amount splits <button class="tag new" type="button" data-note="SPONSORSHIP FIRST (ask 3 A), the accounting review’s recommendation. It matches what the deal’s Refund already treats as refundable. Pro rata over the whole charge (ask 3 B) gives the same tax and a second rule to explain.">RULE</button></h3>
+        <table class="docTbl"><thead><tr><th>Refunded in Stripe</th><th>Sponsorship (with HST)</th><th>Fee (with HST)</th><th>Refund left on the deal</th></tr></thead><tbody>
+          <tr><td>$200.00</td><td>$200.00</td><td>$0.00</td><td>$930.00</td></tr>
+          <tr><td>$1,130.00</td><td>$1,130.00</td><td>$0.00</td><td>$0.00 · the fee stays</td></tr>
+          <tr><td>$1,176.39</td><td>$1,130.00</td><td>$46.39</td><td>$0.00</td></tr>
+          <tr><td>$200.00 from the deal, then $976.39 in Stripe</td><td>$930.00 of the rest</td><td>$46.39</td><td>$0.00</td></tr>
+        </tbody></table>
+        <p>The last row is the case today’s code gets wrong: the deal’s Refund would still offer $930.00 after Stripe already gave it back.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ─────────────── 4 ─────────────── -->
+  <section class="pane" id="p4" role="tabpanel" aria-labelledby="t4" hidden>
+    <h2>Two dates: the books take the day the money left, the credit note takes the day it is issued</h2>
+    <p>The General ledger lines are written by themselves when Stripe says the refund went through, dated Mar 20, the day the money left. That keeps the books, Payouts and the bank check on the same day as Stripe. The credit note is issued on Mar 22, when Dana finishes it, and says the card was refunded on Mar 20. If Mar 20 falls in a year already closed, the lines take today, as every sponsor line already does. <button class="mark" type="button" data-ask="1">1</button></p>
+    <div class="pair">
+      <div class="spec"><div class="specHead"><b>The books</b><span class="chrome">General ledger · 700</span><button class="tag new" type="button" data-note="THE SAME TWO LINES a refund from the deal writes (sponsorship and GST/HST collected, split in proportion), written by themselves on Stripe’s word. Until the refund is finished, the description says &quot;credit note owed&quot;; finishing replaces it with the note’s number, as the shipped tax line carries today. When the fee went back too (tab 3), a third line reverses the fee income and the GST/HST line takes its tax too. The Payment processing line never moves.">NEW LINES</button></div><div class="scroll"><div class="frame adm w700">
+        <p class="capL" style="margin:0">General ledger · Harbour Dental’s lines</p>
+        <table class="ledg"><thead><tr><th>Date</th><th>Description</th><th>Filed under</th><th class="num">Amount</th></tr></thead><tbody>
+          <tr><td>Mar 3</td><td>Harbour Dental · invoice 2027-014</td><td>Club sponsorship</td><td class="num">$1,000.00</td></tr>
+          <tr><td>Mar 3</td><td>Harbour Dental · invoice 2027-014</td><td>GST/HST collected</td><td class="num">$130.00</td></tr>
+          <tr><td>Mar 3</td><td>Card processing fee · invoice 2027-014</td><td>Payment processing</td><td class="num">−$41.05</td></tr>
+          <tr class="newRow"><td>Mar 20</td><td>Refund in Stripe to Harbour Dental · invoice 2027-014 · <b>credit note owed</b></td><td>Club sponsorship</td><td class="num">−$176.99</td></tr>
+          <tr class="newRow"><td>Mar 20</td><td>Refund in Stripe to Harbour Dental · invoice 2027-014 · <b>credit note owed</b></td><td>GST/HST collected</td><td class="num">−$23.01</td></tr>
+        </tbody></table>
+        <p class="small">Green rows are new, and appear on Mar 20 without anyone pressing anything. On Mar 22 “credit note owed” becomes “credit note 2027-014-C1”.</p>
+      </div></div></div>
+      <div class="spec"><div class="specHead"><b>The credit note, fee included (tab 3’s case)</b><span class="chrome">PDF · excerpt</span><button class="tag re" type="button" data-note="THE SHIPPED CREDIT NOTE (Part 3b), with two changes: a line saying the day the card was refunded, when it differs from the issue date, and, only when the fee went back, the fee as its own row at the same rate, so the note’s tax equals the tax the books reversed. DRAFT words for /legal.">RESTYLED · DRAFT</button><button class="mark" type="button" data-ask="3">3</button></div><div class="scroll"><div class="paper" style="width:560px"><div class="acc"></div><div class="pin" style="padding:24px 32px 28px">
+        <div class="idb"><div><b>UAT Rep Club</b><span class="subl">GST/HST 12345 6789 RT0001</span></div><div style="text-align:right"><h4 style="font-size:20px">Credit note</h4><div class="subl">2027-014-C1 · issued Mar 22, 2027</div><div class="subl">For invoice 2027-014, Mar 2, 2027</div></div></div>
+        <div><div class="lab">To</div>Harbour Dental</div>
+        <table><thead><tr><th>Refunded</th><th class="r">Amount</th></tr></thead><tbody>
+          <tr><td>Division sponsor · U9 division</td><td class="r">$1,000.00</td></tr>
+          <tr><td>HST 13%</td><td class="r">$130.00</td></tr>
+          <tr style="background:rgba(46,107,47,0.06)"><td>Processing fee</td><td class="r">$41.05</td></tr>
+          <tr style="background:rgba(46,107,47,0.06)"><td>HST 13% on the fee</td><td class="r">$5.34</td></tr>
+        </tbody></table>
+        <table class="tt"><tbody><tr class="big"><td>Total refunded</td><td class="r">$1,176.39</td></tr></tbody></table>
+        <p style="margin:0;background:rgba(46,107,47,0.06);padding:4px 0">Refunded to Visa •••• 4242 on Mar 20, 2027.</p>
+      </div></div></div></div>
+    </div>
+  </section>
+
+  <!-- ─────────────── 5 ─────────────── -->
+  <section class="pane" id="p5" role="tabpanel" aria-labelledby="t5" hidden>
+    <h2>The odd cases: what Stripe says, what the deal shows, and what the books do</h2>
+    <p>Green rows change what happens today. None of them draws a new screen: each uses the deal page and the payment’s window from tabs 1 and 2. <button class="mark" type="button" data-ask="4">4</button> <button class="mark" type="button" data-ask="5">5</button></p>
+    <table class="oddT"><thead><tr><th>What happens in Stripe</th><th>The deal shows</th><th>The books</th><th>The notice</th></tr></thead><tbody>
+      <tr class="chg"><td>A refund is on its way<span class="s">Stripe accepted it; the card’s bank hasn’t confirmed</span></td><td>The row reads “Refund of $200.00 from Stripe on its way”, the shipped Pending chip. Refund now offers only what is left.</td><td>Nothing yet, as a refund from the deal books nothing while pending.</td><td>None yet.</td></tr>
+      <tr class="chg"><td>…then it fails or is cancelled<span class="s">Stripe can hold one for up to 45 days, then fail it</span></td><td>The line goes. Nothing to finish. Refund offers the full amount again.</td><td>Nothing was booked.</td><td>None. (Today a notice stays up saying money went back when it didn’t.)</td></tr>
+      <tr class="chg"><td>A refund that went through later bounces<span class="s">The card’s bank sends it back</span></td><td>The shipped “Refund didn’t reach the card”.</td><td>The two lines are voided. If it was finished, its credit note is marked cancelled and the business gets the shipped correction email.</td><td>The shipped failed-refund notice. An unfinished one clears.</td></tr>
+      <tr class="chg"><td>A refund arrives before the payment was recorded<span class="s">Stripe sent the refund’s event first</span></td><td>Once the payment lands: the payment, then the refund “To finish”.</td><td>The payment on its day, then the refund on the later of its own day and the payment’s. Never netted.</td><td>The sponsor’s notice. (Today the family-worded “goes on the registration” one, which also blocks the sponsor one.)</td></tr>
+      <tr class="chg"><td>Part of a payment the app couldn’t record<span class="s">“A sponsor’s card payment isn’t on its deal”</span></td><td>As the row above, once the payment is recorded.</td><td>As the row above.</td><td>The shipped “isn’t on its deal” notice stays until the payment is recorded.</td></tr>
+      <tr><td>All of a payment the app couldn’t record</td><td>As today: marked refunded, nothing to finish.</td><td>None existed, none written.</td><td>Both clear by themselves (as today).</td></tr>
+      <tr class="chg"><td>A refund after the sponsor’s bank took the payment back<span class="s">A dispute the club lost</span></td><td>“Returned twice: the sponsor’s bank already took this payment back.” Nothing to finish.</td><td>None: the lost dispute already took the money out of the books.</td><td>A notice: ask Harbour Dental to send it back. DRAFT words.</td></tr>
+      <tr><td>A refund while a dispute is open</td><td colspan="3">Stripe refuses it (“you can’t issue a refund outside the dispute process while the dispute is open”), so it never arrives.</td></tr>
+    </tbody></table>
+    <div class="explain"><h3>A trap the build must keep shut</h3><p>The daily retry asks Stripe again about any refund from the deal that has been waiting over 15 minutes without Stripe’s reference. A refund made in Stripe arrives with its reference already, and the build keeps it out of that retry, so it is never sent twice.</p></div>
+  </section>
+
+  <!-- ─────────────── 6 ─────────────── -->
+  <section class="pane" id="p6" role="tabpanel" aria-labelledby="t6" hidden>
+    <h2>On a phone: the same callout at the top, and the finish question as the shipped refund question shows on a phone</h2>
+    <p>At 390 the money band becomes figure rows (the house rule), the callout’s button sits under its words, and the payment row’s chip, money and chevron wrap together under the line. The finish question is a card in the middle of the screen, as the shipped refund question is on a phone (a question never fills the screen; only a form does), and it rises above the keyboard while the reason is typed. True size: open this page on a phone to judge it.</p>
+    <div class="pair">
+      <div class="spec"><div class="specHead"><b>The deal · 390</b><span class="chrome">phone</span></div><div class="scroll"><div class="frame phone">
+        <div class="pbar">← Harbour Dental <span class="stP paid" style="margin-left:auto">Paid</span></div>
+        <div class="pbody">
+          <div class="calloutS"><span class="w"><b>$200.00 was refunded in Stripe on Mar 20.</b> Finish it to give them a credit note.</span><span class="btnLime">Finish the refund</span></div>
+          <div class="frows">
+            <div class="frow"><span class="fl1">Invoiced<span class="fc">incl. HST $130.00</span></span><span class="fv">$1,130.00</span><span></span></div>
+            <div class="frow"><span class="fl1">Paid<span class="fc">card visa •••• 4242</span></span><span class="fv">$1,130.00</span><span></span></div>
+            <div class="frow"><span class="fl1">Refunded<span class="fc">$200.00 to the card, Mar 20</span></span><span class="fv">$200.00</span><span></span></div>
+            <div class="frow"><span class="fl1">Still owing</span><span class="fv">$0.00</span><span></span></div>
+          </div>
+          <div class="card"><p class="cardH">Payments</p>
+            <div class="prows"><div class="prow" style="min-height:56px"><span><span class="pm">Mar 3 · Card, Visa •••• 4242</span><span class="ps">Refunded $200.00 in Stripe Mar 20</span></span><span class="pend"><span class="rchip warn">To finish</span><span class="pv">$1,130.00</span><span class="chev">›</span></span></div></div>
+          </div>
+          <span class="notDrawn">The deal, Delivery, History · unchanged, not drawn</span>
+        </div>
+      </div></div></div>
+      <div class="spec"><div class="specHead"><b>Finish it · a full refund · 390</b><span class="chrome">question · phone</span><button class="tag same" type="button" data-note="THE TALL CASE. The shipped refund question on a phone: a card with the side margins, its foot one row with the buttons at the right at 44px, and it follows the keyboard (the shipped followKeyboard). Drawn after a choice, with the reason typed.">SHIPPED SHAPE</button></div><div class="scroll"><div class="frame phone"><div class="dimmer"><div class="win q">
+        <div class="whead"><div style="flex:1"><p class="wtitle">Finish Harbour Dental’s refund?</p></div></div>
+        <div class="wbody">
+          <p class="hint" style="font-size:13px;margin:0">$1,130.00 went back to Visa •••• 4242 from your Stripe dashboard on Mar 20: all of the payment, $1,000.00 and $130.00 HST.</p>
+          <div style="display:grid;gap:10px">
+            <span class="choiceRow"><span class="rad on"></span><span><span class="cn">It has ended</span><span class="ch">The logo comes down and the place is free</span></span></span>
+            <span class="choiceRow"><span class="rad"></span><span><span class="cn">They still owe it</span><span class="ch">The deal reads owing again and their link lets them pay</span></span></span>
+          </div>
+          <div class="fld"><span class="l">Reason <span class="req">*</span></span><div class="inp">The tournament was cancelled.</div><span class="hint">Harbour Dental reads this in the refund email.</span></div>
+        </div>
+        <div class="wfoot"><span class="btnOut">Cancel</span><span class="btnLime">Finish, end the deal and email</span></div>
+      </div></div></div></div></div>
+    </div>
+  </section>
+
+  <!-- ─────────────── 7 ─────────────── -->
+  <section class="pane" id="p7" role="tabpanel" aria-labelledby="t7" hidden>
+    <h2>The notice opens the deal and clears by itself; three other places stop telling the club to do it by hand</h2>
+    <div class="pair">
+      <div class="spec"><div class="specHead"><b>Needs attention</b><span class="chrome">rail · 520</span><button class="tag re" type="button" data-note="THE SHIPPED NOTICE KIND, new words. It opens the deal, not the Ledger. It clears by itself when the refund is finished, when it fails before going through, or when it turns out to be the &quot;returned twice&quot; case (which raises its own). Its label no longer says &quot;Record it, then press Done&quot;. DRAFT words.">RE-WORDED · DRAFT</button></div><div class="scroll"><div class="frame adm w520"><div class="rlist">
+        <div class="nrow"><span class="dotA"></span><span><span class="nt">A refund made in Stripe needs finishing</span><span class="nb">$200.00 went back to Harbour Dental’s card from your Stripe dashboard on Mar 20. It’s in the books. Finish it on the deal to give them a credit note.</span></span><span class="nw">Mar 20</span><span class="chev">›</span></div>
+      </div><p class="small" style="margin-top:8px">Today: “A refund made in Stripe isn’t in your books … Record it in the Ledger, and refund from the deal’s payment next time.”</p></div></div></div>
+      <div class="explain"><h3>Words that change with it <button class="mark" type="button" data-ask="6">6</button></h3>
+        <table class="docTbl wordsT"><thead><tr><th>Where</th><th>Today</th><th>After (DRAFT)</th></tr></thead><tbody>
+          <tr><td>Payouts, the “who pays the fee” hint</td><td>If you refund a sponsor, neither part of the processing fee comes back to you. Refund the fee line yourself if you want the sponsor made whole.</td><td>A refund from the deal never includes the processing fee, and neither part of the fee comes back to the club. To give the sponsor the fee back too, refund the whole payment in your Stripe dashboard, then finish it on the deal.</td></tr>
+          <tr><td>Help · “Refunded in Stripe itself?”</td><td>…isn’t recorded on the deal, so that business still reads as paid here. Untick it, and don’t use Offer again…</td><td>It’s recorded on the deal by itself and goes in the books. Finish it on the deal to give the business a credit note.</td></tr>
+          <tr><td>Help · the refund terms and the FAQ</td><td>That refund is not booked in FieldLogicHQ… record it in the Ledger</td><td>Rewritten to match, by /docs at the build.</td></tr>
+          <tr><td>Offer again</td><td>Counts a payment refunded in Stripe as still paid</td><td>Counts what is left after every refund, wherever it was made.</td></tr>
+        </tbody></table>
+      </div>
+    </div>
+  </section>
+
+  <!-- ─────────────── 8 ─────────────── -->
+  <section class="pane" id="p8" role="tabpanel" aria-labelledby="t8" hidden>
+    <h2>Your asks</h2>
+    <p>Seven asks. The first answer to each is my recommendation and is already selected. Add a note if you want something changed, then press Build the summary and paste it into the chat. Your picks are kept in this browser only.</p>
+    <div id="asks" style="display:grid;gap:14px"></div>
+    <div class="ask">
+      <h3>Paste-back</h3>
+      <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btnDoc primary" id="build" type="button">Build the summary</button><button class="btnDoc" id="copy" type="button">Copy</button></div>
+      <pre class="out" id="out">Press Build the summary.</pre>
+    </div>
+  </section>
+</div>
+
+<dialog class="note" id="note"><h3 id="noteT"></h3><div id="noteB"></div><div style="display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap"><button class="btnDoc primary" id="noteX" type="button">Close</button></div></dialog>
+<script>
+(function(){
+var ASKS = [{"n":1,"t":"When the books take a refund made in Stripe","why":"The accounting review (Nov 25): the club’s books follow cash, and Payouts and the bank check match Stripe by date, so a refund left out of the books overstates income, GST/HST collected and cash on hand. A credit note is a tax document in the club’s name and the app doesn’t know why the club refunded, so it should wait for a person. Tabs 1, 2 and 4.","o":["Build as drawn: the books take it by themselves when Stripe says it went through, dated that day; the credit note, the email and, on a full refund, what happens to the deal wait for the club to finish it","Everything waits: nothing goes in the books until the club finishes it (the build prompt’s first lean; the books overstate the club’s cash meanwhile)","Everything by itself, credit note and email included, as family refunds record themselves (the business gets a note and an email with no reason the club wrote)"]},{"n":2,"t":"The deal while it waits, and after a full refund","why":"A part refund from the deal keeps the deal Paid. A full refund from the deal always ends it. A refund made in Stripe may be a mistake fixed later, and the accounting review points out that ending a deal (the logo down) is the club’s call. It suggested a full one put the deal back to owing at once; I disagree, because that tells the business they owe money the club chose to give back and puts the card button back on their page. Tabs 1 and 2.","o":["Build as drawn: the deal stays where it is until it is finished; finishing a full refund asks “It has ended” or “They still owe it”","A full refund puts the deal back to owing at once, as after a lost dispute; the club withdraws it if it has ended","A full refund ends the deal at once, as a full refund from the deal does"]},{"n":3,"t":"A refund in Stripe that returns the processing fee too","why":"Only possible when the sponsor paid the fee. The tax is the same either way (13% on both). The club’s processing cost never moves: Stripe keeps its fee and FieldLogicHQ keeps its fee. Tabs 3 and 4.","o":["Sponsorship first, the fee only after all of the sponsorship has gone back; the fee is its own row on the credit note; the email drops its “the fee isn’t part of this refund” line","Split every refund in proportion across the sponsorship and the fee"]},{"n":4,"t":"The odd cases","why":"A refund still on its way, one that fails, one that bounces after going through, one that arrives before the payment was recorded, part of a payment the app couldn’t record, and one after a lost dispute (“returned twice”). Tab 5.","o":["Build every green row as drawn","Change it (say which row in the note)"]},{"n":5,"t":"Refunds already sitting as a notice when this ships","why":"Dev has some from testing. Production should have none if this ships before sponsor cards do; that is counted (counts only) before the promote.","o":["A one-time catch-up reads each open “refund made in Stripe” notice’s refund back from Stripe and records it the new way (the same code, safe to run twice); run on dev at the build, where production finds nothing","None: press Done on dev’s; production has none"]},{"n":6,"t":"The words on Payouts and in help","why":"/legal asked for the Payouts hint to change: it says “Refund the fee line yourself”, which only Stripe’s dashboard can do. Tab 7.","o":["As drawn (DRAFT for /marketing and /legal): the hint says a refund from the deal never includes the fee, and that a refund in Stripe can, then finished on the deal","Add “and the processing fee” as a choice in the deal’s own refund window instead, and point the hint there (a bigger build)"]},{"n":7,"t":"A test before the database change","why":"Stripe’s documents say its own fee never comes back on a refund and FieldLogicHQ’s fee only comes back if FieldLogicHQ asks; they say nothing about a refund the club makes in its own dashboard. The answer decides whether the club’s processing cost line ever moves.","o":["Yes: on a dev test account, make a card payment and refund it from the club’s side, then read whether FieldLogicHQ’s fee came back, before writing the database change","Skip it and assume it never comes back"]}];
+var KEY = "br-stage6-fixes-a-dashboard-refund-v1";
+var S = { pick:{}, note:{}, tab:"p1", seg:{} };
+try { var raw = localStorage.getItem(KEY); if (raw) { var got = JSON.parse(raw); if (got && typeof got === "object") S = Object.assign(S, got); } } catch (e) {}
+function save(){ try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} }
+var host = document.getElementById("asks");
+function pickOf(a){ return S.pick[a.n] != null ? S.pick[a.n] : 0; }
+function txt(s){ var d = document.createElement("div"); d.textContent = s; return d.innerHTML; }
+ASKS.forEach(function(a){
+  var box = document.createElement("div"); box.className = "ask"; box.id = "ask" + a.n;
+  var h = "<h3><span class=\"mark\" aria-hidden=\"true\" style=\"cursor:default\">" + a.n + "</span>" + txt(a.t) + "</h3><p class=\"why\">" + txt(a.why) + "</p>";
+  a.o.forEach(function(o, i){
+    var id = "a" + a.n + "o" + i;
+    h += "<label class=\"opt\" for=\"" + id + "\"><input type=\"radio\" name=\"a" + a.n + "\" id=\"" + id + "\" value=\"" + i + "\"><span><b>" + String.fromCharCode(65 + i) + ".</b> " + txt(o) + (i === 0 ? "<span class=\"rec\">RECOMMENDED</span>" : "") + "</span></label>";
+  });
+  h += "<label for=\"n" + a.n + "\" style=\"font-size:12px;color:var(--doc-soft)\">Note</label><textarea id=\"n" + a.n + "\"></textarea>";
+  box.innerHTML = h; host.appendChild(box);
+  var r = document.getElementById("a" + a.n + "o" + pickOf(a)); if (r) r.checked = true;
+  var ta = document.getElementById("n" + a.n); ta.value = S.note[a.n] || "";
+  box.addEventListener("change", function(ev){ if (ev.target.name === "a" + a.n) { S.pick[a.n] = Number(ev.target.value); save(); } });
+  ta.addEventListener("input", function(){ S.note[a.n] = ta.value; save(); });
+});
+function build(){
+  var L = ["Board Ready Stage 6 fixes Part A, a refund made in Stripe (drawn Nov 25, 2026)", ""];
+  ASKS.forEach(function(a){
+    var p = pickOf(a);
+    L.push(a.n + String.fromCharCode(65 + p) + " · " + a.t + ": " + a.o[p] + (p === 0 ? " (recommended)" : ""));
+    var n = (S.note[a.n] || "").trim(); if (n) L.push("   note: " + n);
+  });
+  document.getElementById("out").textContent = L.join("\n");
+}
+document.getElementById("build").addEventListener("click", build);
+document.getElementById("copy").addEventListener("click", function(){
+  build(); var t = document.getElementById("out").textContent; var btn = this;
+  function sel(){ var r = document.createRange(); r.selectNodeContents(document.getElementById("out")); var s = window.getSelection(); s.removeAllRanges(); s.addRange(r); btn.textContent = "Selected, press Ctrl+C"; }
+  try { navigator.clipboard.writeText(t).then(function(){ btn.textContent = "Copied"; }, sel); } catch (e) { sel(); }
+});
+var tabs = Array.prototype.slice.call(document.querySelectorAll("nav.tabs button"));
+function show(id){
+  tabs.forEach(function(b){ var on = b.getAttribute("data-pane") === id; b.setAttribute("aria-selected", on ? "true" : "false"); document.getElementById(b.getAttribute("data-pane")).hidden = !on; });
+  S.tab = id; save();
+}
+tabs.forEach(function(b){ b.addEventListener("click", function(){ show(b.getAttribute("data-pane")); }); });
+show(S.tab && document.getElementById(S.tab) ? S.tab : "p1");
+Array.prototype.forEach.call(document.querySelectorAll(".seg"), function(seg){
+  var pane = document.getElementById(seg.getAttribute("data-seg"));
+  function set(v){ Array.prototype.forEach.call(seg.querySelectorAll("button"), function(b){ b.setAttribute("aria-pressed", b.getAttribute("data-v") === v ? "true" : "false"); }); pane.classList.toggle("diffs", v === "diff"); S.seg[seg.getAttribute("data-seg")] = v; save(); }
+  seg.addEventListener("click", function(ev){ var b = ev.target.closest("button"); if (b) set(b.getAttribute("data-v")); });
+  set(S.seg[seg.getAttribute("data-seg")] || "all");
+});
+var dlg = document.getElementById("note");
+function open(title, paras){
+  document.getElementById("noteT").textContent = title;
+  var b = document.getElementById("noteB"); b.innerHTML = "";
+  paras.forEach(function(t){ var p = document.createElement("p"); p.textContent = t; b.appendChild(p); });
+  if (dlg.showModal) dlg.showModal(); else dlg.setAttribute("open", "");
+}
+document.getElementById("noteX").addEventListener("click", function(){ dlg.close ? dlg.close() : dlg.removeAttribute("open"); });
+document.addEventListener("click", function(ev){
+  var m = ev.target.closest(".mark[data-ask]");
+  if (m) { var n = Number(m.getAttribute("data-ask")); show("p8"); var el = document.getElementById("ask" + n); if (el) el.scrollIntoView({ block: "start" }); return; }
+  var t = ev.target.closest(".tag[data-note]");
+  if (t) { ev.preventDefault(); open(t.textContent.trim(), [t.getAttribute("data-note")]); }
+});
+})();
+</script>

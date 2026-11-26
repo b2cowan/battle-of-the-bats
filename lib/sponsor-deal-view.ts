@@ -123,6 +123,8 @@ export type SponsorPageView =
     /** The deal was refunded in full and ended (`refundedAway`): the page keeps its receipt, refund and credit note, but says the
      *  sponsorship ended instead of "Thank you" and "Paid, thank you" (/ux 390, decision 3, owner 2026-11-24). */
     refundedAway: boolean;
+    /** A refund made in Stripe gave some or all of the processing fee back (mig 542): the page then doesn't say it was kept. */
+    feeRefunded: boolean;
     /** A card payment was taken for this deal and could not be recorded on it: the page says so and takes no second payment. */
     received: boolean;
     /** What is still owing on the invoice (Part 3a); less than the total means a payment has arrived. */
@@ -239,6 +241,7 @@ export async function buildSponsorPageView(orgSlug: string, token: string, opts:
     received,
     paid: deal.state === 'paid' || (ended && refundedAway(deal)),
     refundedAway: ended && refundedAway(deal),
+    feeRefunded: deal.refunds.some(r => r.status === 'succeeded' && r.feePart > 0),
     owing: ended ? 0 : standing?.owing ?? 0,
     paidOn: deal.paidOn ?? standing?.paidOn ?? null,
     card: facts && !received ? { sponsorPays: open && facts.feePayer === 'sponsor', refundPolicy: facts.refundPolicy } : null,

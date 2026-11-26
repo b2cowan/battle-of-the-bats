@@ -148,8 +148,8 @@ async function entryIndex(orgId: string, payments: readonly PaymentRowForEntries
       supabaseAdmin.from('club_sponsor_deal_payments').select('online_payment_id, income_entry_id, tax_entry_id, fee_income_entry_id')
         .eq('org_id', orgId).in('online_payment_id', c).order('id').range(a, b)),
     // A refund only has book lines once Stripe said it succeeded (a failed one has its lines voided); the Stripe id is set before then.
-    fetchAllIn<{ stripe_refund_id: string; income_entry_id: string | null; tax_entry_id: string | null }>(refundIds, (c, a, b) =>
-      supabaseAdmin.from('club_sponsor_deal_refunds').select('stripe_refund_id, income_entry_id, tax_entry_id')
+    fetchAllIn<{ stripe_refund_id: string; income_entry_id: string | null; tax_entry_id: string | null; fee_refund_entry_id: string | null }>(refundIds, (c, a, b) =>
+      supabaseAdmin.from('club_sponsor_deal_refunds').select('stripe_refund_id, income_entry_id, tax_entry_id, fee_refund_entry_id')
         .eq('org_id', orgId).in('stripe_refund_id', c).order('stripe_refund_id').range(a, b)),
   ]);
   // A child's debit reversed after it landed: the child's `registration_returned` line (keyed by the registration).
@@ -188,7 +188,7 @@ async function entryIndex(orgId: string, payments: readonly PaymentRowForEntries
   }
   const refunds: Record<string, string[]> = {};
   for (const r of refundRows) { push(refunds, r.stripe_refund_id, r.refund_entry_id); push(refunds, r.stripe_refund_id, r.processing_cost_entry_id); }
-  for (const r of sponsorRefundRows) { push(refunds, r.stripe_refund_id, r.income_entry_id); push(refunds, r.stripe_refund_id, r.tax_entry_id); }
+  for (const r of sponsorRefundRows) { push(refunds, r.stripe_refund_id, r.income_entry_id); push(refunds, r.stripe_refund_id, r.tax_entry_id); push(refunds, r.stripe_refund_id, r.fee_refund_entry_id); }
   const reversals: Record<string, string[]> = {};
   for (const e of teamReturned) push(reversals, e.source_entity_id, e.id);
   for (const e of leagueReturned) { const op = regOf.get(e.source_entity_id); if (op) push(reversals, op, e.id); }

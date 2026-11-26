@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import {
-  clubInvoiceLayout, creditNoteLayout, invoiceStanding, paymentHow, refundEndsDeal, refundHasNote, refundNoteCancelled, refundedAway, refundLeft, refundTaxPart, refundedTotal,
+  clubInvoiceLayout, creditNoteLayout, finishAsksOutcome, finishLeavesDeal, finishOwesAgain, owingBlock, invoiceStanding, nextCreditNumber, paymentHow, refundEndsDeal, refundHasNote, refundNoteCancelled, refundedAway, refundLeft, refundTaxPart, refundToFinish, refundedTotal,
   type DealPayment, type DealRefund,
 } from '../../lib/club-sponsor-invoice.ts';
 import { sponsorCardFee } from '../../lib/online-payment-fee.ts';
@@ -37,7 +37,8 @@ const refund = (over: Partial<DealRefund> = {}): DealRefund => ({
   id: 'r1', paymentId: 'p1', amount: 200, taxPart: 23.01, whole: false, endsDeal: false, reason: 'The banner went up a month late.',
   status: 'succeeded', failureReason: null, refundedOn: '2027-03-20', succeededAt: '2027-03-24T10:40:00Z', failedAt: null,
   createdAt: '2027-03-20T18:05:00Z', createdByName: 'Dana Ruiz', stripeRefundId: 're_3QbX9kLm', emailedAt: '2027-03-20T18:06:00Z', booked: true,
-  creditNumber: '2027-014-C1', ...over,
+  creditNumber: '2027-014-C1',
+  origin: 'app', feePart: 0, feeTaxPart: 0, stripeCreatedAt: null, stripeReason: null, finished: null, afterLostDispute: false, creditOn: null, ...over,
 });
 const invoice: DealInvoice = { number: '2027-014', issuedOn: '2027-03-03', dueOn: '2027-03-03', taxKind: 'HST', taxRate: 13, tax: 130, total: 1130 };
 const input = (payments: DealPayment[], refunds: DealRefund[] = [], inv: DealInvoice = invoice, withdrawnAt: string | null = null) => ({
@@ -640,7 +641,7 @@ describe('Part 3b — the phone check at 390', () => {
 
   it('the deal page\u2019s text buttons are thumb targets, and a long chip drops under the row instead of squeezing it', () => {
     assert.match(css, /@media \(max-width: 768px\) \{\s+\.recordActions \.linkButton \{ min-height: 44px; \}/);
-    assert.match(css, /\.paymentRow \{ flex-wrap: wrap; row-gap: 0\.25rem; \}\s+\.paymentMain \{ flex: 1 1 7rem; \}\s+\.paymentEnd \{ margin-left: auto; \}/);
+    assert.match(css, /\.paymentRow \{ flex-wrap: wrap; row-gap: 0\.25rem; \}\s+\.paymentMain \{ flex: 1 1 12rem; \}\s+\.paymentEnd \{ margin-left: auto; \}/);
   });
 });
 
@@ -683,7 +684,7 @@ describe('Part 3b — the six /ux decisions', () => {
       // Never the processor, never "voided", never thanks; never "in full" (/legal: a fee the sponsor paid is never refunded).
       assert.doesNotMatch(w, /stripe|void|thank|in full/i, w);
     }
-    assert.match(page, /view\.refundedAway && !!inv\.cardFee && <p className=\{css\.invoiceMeta\}>\{ONLINE_EMAIL_WORDS\.refundFeeKept\(money\(Math\.round\(\(inv\.cardFee \+ \(inv\.cardFeeTax \?\? 0\)\) \* 100\) \/ 100\)\)\}/);
+    assert.match(page, /view\.refundedAway && !view\.feeRefunded && !!inv\.cardFee && <p className=\{css\.invoiceMeta\}>\{ONLINE_EMAIL_WORDS\.refundFeeKept\(money\(Math\.round\(\(inv\.cardFee \+ \(inv\.cardFeeTax \?\? 0\)\) \* 100\) \/ 100\)\)\}/);
   });
 
   it('4 · red only for a field the club got wrong; the card company’s refusal and a dispute wear the amber callout', () => {
@@ -703,5 +704,192 @@ describe('Part 3b — the six /ux decisions', () => {
   it('6 · "Confirming your payment" opens with "Don’t pay again", sponsor page only (the shared poll is unchanged)', () => {
     assert.match(page, /slow \? PAY_WORDS\.confirmingSlow\(view\.business\.email \|\| null\) : PAY_WORDS\.confirmingBody/);
     assert.equal('confirmingBody' in DEAL_WORDS.card, false);
+  });
+});
+
+/**
+ * ══════════════════════════════════════════════════════════════════════════════════════════════
+ * STAGE 6 FIXES, PART A — A REFUND MADE IN THE CLUB'S OWN STRIPE DASHBOARD (mig 542; the drawing, RULED 2026-11-25, all seven
+ * asks A). The books take it by themselves; the club finishes it for the credit note and the email. Sponsorship first, the fee
+ * only after all of the sponsorship. The drawn deal: $1,176.39 with the sponsor paying the $41.05 fee and its $5.34 HST.
+ * ══════════════════════════════════════════════════════════════════════════════════════════════
+ */
+describe('Stage 6 fixes Part A — a refund made in Stripe', () => {
+  const MIG_542 = 'supabase/migrations/542_a_refund_made_in_stripe.sql';
+  const sponsorPay = pay({ amount: 1176.39, taxPart: 135.34, card: card({ feePaidBy: 'sponsor', feeCharged: 41.05, feeTax: 5.34 }) });
+  const stripe = (over: Partial<DealRefund> = {}) => refund({
+    origin: 'stripe', reason: null, createdByName: null, emailedAt: null, creditNumber: null, stripeCreatedAt: '2027-03-20T20:12:00Z', stripeReason: 'requested_by_customer', ...over,
+  });
+
+  it('what is left counts only the sponsorship part a refund gave back (the drawing’s tab 3 table)', () => {
+    assert.equal(refundLeft(sponsorPay, [stripe({ amount: 200, taxPart: 23.01 })]).left, 930);
+    // $200 from the deal, then $976.39 in Stripe: $930 of the rest and $46.39 of the fee; nothing is left.
+    const both = [refund({ amount: 200, taxPart: 23.01 }), stripe({ id: 'r2', amount: 976.39, taxPart: 112.33, feePart: 46.39, feeTaxPart: 5.34 })];
+    assert.deepEqual(refundLeft(sponsorPay, both), { refundable: 1130, left: 0, taxLeft: 0 });
+    // A refund on its way already holds what it gives back; a failed one gave nothing back.
+    assert.equal(refundLeft(sponsorPay, [stripe({ amount: 50, status: 'pending' })]).left, 1080);
+    assert.equal(refundLeft(sponsorPay, [stripe({ amount: 50, status: 'failed' })]).left, 1130);
+  });
+
+  it('"To finish" is a refund made in Stripe that went through and isn’t finished; never one after a lost dispute', () => {
+    assert.equal(refundToFinish(stripe()), true);
+    assert.equal(refundToFinish(stripe({ status: 'pending' })), false);
+    assert.equal(refundToFinish(stripe({ finished: { at: '2027-03-22T15:00:00Z', byName: 'Dana Ruiz' } })), false);
+    assert.equal(refundToFinish(stripe({ afterLostDispute: true })), false);
+    assert.equal(refundToFinish(refund()), false);
+  });
+
+  it('finishing asks what happens to the deal only on the last of its money (ask 2), as the database does', () => {
+    const one = pay();
+    assert.equal(finishAsksOutcome([one], [stripe({ amount: 200 })], { paymentId: 'p1' }, 'paid'), false);
+    assert.equal(finishAsksOutcome([one], [stripe({ amount: 1130, taxPart: 130 })], { paymentId: 'p1' }, 'paid'), true);
+    // On its way is not back yet; a withdrawn deal has no question; a cheque still standing beside it keeps the deal.
+    assert.equal(finishAsksOutcome([one], [stripe({ amount: 1130, status: 'pending' })], { paymentId: 'p1' }, 'paid'), false);
+    assert.equal(finishAsksOutcome([one], [stripe({ amount: 1130 })], { paymentId: 'p1' }, 'withdrawn'), false);
+    const cheque = pay({ id: 'p2', method: 'cheque', card: null });
+    assert.equal(finishAsksOutcome([one, cheque], [stripe({ amount: 1130 })], { paymentId: 'p1' }, 'paid'), false);
+    // The fee the sponsor paid never counts toward "all of it": the sponsorship coming back is what ends it.
+    assert.equal(finishAsksOutcome([sponsorPay], [stripe({ amount: 1130, taxPart: 130 })], { paymentId: 'p1' }, 'paid'), true);
+    assert.match(readSource(MIG_542), /v_full := club_sponsor_card_returned\(p\.id\) >= p\.amount - p\.fee_charged - p\.fee_tax;/);
+  });
+
+  it('the next credit note is the deal’s next number, on a taxed invoice only', () => {
+    assert.equal(nextCreditNumber('2027-014', true, []), '2027-014-C1');
+    assert.equal(nextCreditNumber('2027-014', true, [refund({ creditNumber: '2027-014-C1' }), refund({ creditNumber: '2027-014-C2' })]), '2027-014-C3');
+    assert.equal(nextCreditNumber('2027-014', false, [refund()]), null);
+  });
+
+  it('the credit note gives the fee its own rows, and takes the day it was finished (tab 4)', () => {
+    const whole = stripe({ amount: 1176.39, taxPart: 135.34, feePart: 46.39, feeTaxPart: 5.34, whole: true, refundedOn: '2027-03-20', creditOn: '2027-03-22', creditNumber: '2027-014-C1' });
+    const note = creditNoteLayout(input([sponsorPay], [whole]), whole);
+    assert.deepEqual(note.rows.map(r => r.amount), ['$1,000.00', '$130.00', '$41.05', '$5.34']);
+    assert.match(note.credit.subtitle.join(' '), /Issued Mar 22, 2027/);
+    assert.match(note.credit.closing, /went back on Mar 20, 2027 to the card it was paid with\. \$46\.39 of it is the processing fee you paid, tax included\./);
+    // A refund from the deal still says it never includes the fee; one made in Stripe that didn't return it says nothing either way.
+    assert.match(creditNoteLayout(input([pay()], [refund()]), refund()).credit.closing, /This refund doesn’t include the processing fee\.$/);
+    const part = stripe({ creditNumber: '2027-014-C1' });
+    assert.doesNotMatch(creditNoteLayout(input([pay()], [part]), part).credit.closing, /processing fee/);
+  });
+
+  it('the email waits for the finish, and drops "the fee isn’t part of this refund" when the fee went back (ask 3)', () => {
+    const email = readCode('lib/sponsor-invoice-email.ts');
+    assert.match(email, /\.or\('origin\.eq\.app,finished_at\.not\.is\.null'\)/);
+    assert.match(email, /feeBackCents: Math\.round\(refund\.feePart \* 100\)/);
+    assert.match(email, /feeKeptCents: refund\.feePart === 0 && payment\.card\.feePaidBy === 'sponsor'/);
+  });
+
+  it('⚠ the daily retry never asks Stripe about a refund made in Stripe (it would refund the sponsor twice)', () => {
+    const landing = readCode(LANDING);
+    // The app's own refunds settle only as the app's: a row made in Stripe is never handed to the settle that books an app refund.
+    const apply = landing.slice(landing.indexOf('async function applySponsorRefundEvent'), landing.indexOf('type StripeSponsorRefundOutcome'));
+    assert.match(apply, /from\('club_sponsor_deal_refunds'\)\.select\('id, status, stripe_refund_id'\)\.eq\('online_payment_id', op\.id\)\.eq\('origin', 'app'\)/);
+    // A failed read is never "none of ours" (the app's refund would be recorded twice).
+    assert.match(apply, /if \(oursError\) throw new Error\(oursError\.message\);/);
+    // The UUID guard on the metadata stays (review 2026-10-26).
+    assert.match(apply, /const ourId = isUuid\(metaId\) \? metaId : null;/);
+    // And the database answers "ours" for an app refund's Stripe id, never records it twice.
+    assert.match(readSource(MIG_542), /IF r\.origin = 'app' THEN RETURN jsonb_build_object\('ours', true, 'refundId', r\.id\); END IF;/);
+  });
+
+  it('a refund made in Stripe is recorded on the deal by itself, and an early one no longer raises the family-worded notice (ask 4)', () => {
+    const landing = readCode(LANDING);
+    assert.match(landing, /await recordStripeSponsorRefund\(op, refund\);/);
+    assert.match(landing, /supabaseAdmin\.rpc\('club_sponsor_card_stripe_refund', \{/);
+    // Asked only where the payment is unknown (a league or team payment already says its flow).
+    // One that beats its payment is not answered as done, so Stripe sends it again.
+    assert.match(landing, /if \(await isSponsorshipIntent\(stripeAccountId, intent\)\) \{\s*throw new Error/);
+    const unmatched = landing.slice(landing.indexOf('async function raiseUnmatched'), landing.indexOf('async function isSponsorshipIntent'));
+    assert.doesNotMatch(unmatched, /isSponsorshipIntent/);
+    // The intent's metadata is the club's to edit: only a real id, a sponsorship payment on THIS account.
+    assert.match(landing, /if \(!isUuid\(meta\.online_payment_id\)\) return false;/);
+    assert.match(landing, /return data\?\.flow === 'sponsorship' && data\.stripe_account_id === stripeAccountId && !data\.stripe_payment_intent_id;/);
+    // Recorded from Stripe's state now, never the event's snapshot.
+    assert.match(landing, /const refund = await retrieveRefund\(op\.stripe_account_id, event\.id\);/);
+    // A won dispute books the refund it held back, and the club is told to finish it.
+    assert.match(landing, /supabaseAdmin\.rpc\('club_sponsor_card_twice_settle', \{ p_online_payment: op\.id \}\)/);
+  });
+
+  it('the notice clears itself: finished, failed, or booked after a win; an older notice clears once its refund is on the deal', () => {
+    const na = readCode('lib/needs-attention.ts');
+    assert.match(na, /s\.finished_at \? \{ by: s\.finished_by, at: s\.finished_at, words: \(who, you\) => \(\{ outcome: W\.refundFinished\(who, you\) \}\) \}/);
+    assert.match(na, /sponsor_refund_to_finish: sponsorStripeRefund\('finish'\),/);
+    assert.match(na, /sponsor_refund_twice: sponsorStripeRefund\('twice'\),/);
+    // An older notice about a refund now on its deal clears itself.
+    assert.match(na, /if \(onDeal\.has\(id\)\) \{ out\.set\(r\.id, said\(W\.refundRecorded\)\); continue; \}/);
+    // Their own kinds, keyed on the refund row (mig 542 §8), raised once ever per refund and kind.
+    assert.match(readCode(LANDING), /hasRecentNotification\(orgId, kind, \{ sponsorRefundId: refundId \}, '1970-01-01T00:00:00Z'\)/);
+    assert.match(readCode(LANDING), /eventType: kind, subjectKey: 'sponsorRefundId', subjectId: refundId,/);
+    assert.match(readSource(MIG_542), /metadata->>'endingFor',\s+metadata->>'sponsorRefundId'\)\)\)/);
+    // The fee line's column never borrows the house league's name (its money guard).
+    assert.doesNotMatch(readSource(MIG_542), /\bfee_entry_id\b/);
+  });
+
+  it('the books: dated the later of Stripe’s day and the payment’s (a closed year moves to today); the fee only after the sponsorship', () => {
+    const sql = readSource(MIG_542);
+    assert.match(sql, /club_sponsor_book_day\(/);
+    assert.match(sql, /v_spons := least\(p_amount, v_left\);/);
+    assert.match(sql, /IF v_fee > v_fee_left THEN RAISE EXCEPTION USING ERRCODE = 'SP002', MESSAGE = 'club_sponsor_stripe_refund_over'; END IF;/);
+  });
+
+  it('finishing never reaches Stripe, so it is the one sponsorship door after the money that does not read the switch', () => {
+    const route = readCode('app/api/admin/sponsorships/deals/[dealId]/refunds/[refundId]/finish/route.ts');
+    assert.match(route, /requireSponsorships\(req\)/);
+    // The refund is this club's, on this deal, and made in Stripe before anything runs.
+    assert.match(route, /\.eq\('id', refundId\)\.eq\('deal_id', dealId\)\.eq\('org_id', org\.id\)\.eq\('origin', 'stripe'\)/);
+    assert.match(route, /finishStripeSponsorRefund\(/);
+    assert.doesNotMatch(route, /refundToCard|stripe-connect/);
+  });
+
+  // ── The /review of 2026-11-26 ──
+  it('"They still owe it" waits for the whole payment, fee included; money owed again gets no credit note', () => {
+    const back = stripe({ id: 'r1', amount: 1130, taxPart: 130 });
+    assert.deepEqual(owingBlock([sponsorPay], [back], back), { why: 'fee', left: 46.39 });
+    const fee = stripe({ id: 'r2', amount: 46.39, taxPart: 5.34, feePart: 46.39, feeTaxPart: 5.34 });
+    assert.equal(owingBlock([sponsorPay], [back, fee], back), null);
+    assert.deepEqual(owingBlock([pay()], [refund({ id: 'a', amount: 200, creditNumber: '2027-014-C1' }), stripe({ id: 'b', amount: 930 })], { id: 'b', paymentId: 'p1' }), { why: 'noted' });
+    assert.equal(finishOwesAgain([pay()], [back], back, 'paid', 1130, 'owing'), true);
+    assert.equal(finishOwesAgain([pay()], [back], back, 'paid', 1130, 'ended'), false);
+    const answered = stripe({ id: 'r1', amount: 930, finished: { at: '2027-03-22T15:00:00Z', byName: 'Dana Ruiz', outcome: 'owing' } });
+    const later = stripe({ id: 'r2', amount: 200 });
+    assert.equal(finishOwesAgain([pay()], [answered, later], later, 'invoiced', 1130, null), true);
+    const sql = readSource(MIG_542);
+    assert.match(sql, /MESSAGE = 'club_sponsor_refund_owing_needs_fee'/);
+    assert.match(sql, /IF coalesce\(d\.tax_amount, 0\) > 0 AND NOT v_owed_again THEN/);
+    assert.match(readCode('lib/sponsor-invoice-email.ts'), /C\.emailStillOwing\(org\.name, deal\.invoice\.number, money\(owing\)\)/);
+  });
+
+  it('asks once per payment, and the database says the same; a paid deal still covered stays paid in both refund paths', () => {
+    const answered = stripe({ id: 'r1', amount: 930, finished: { at: '2027-03-22T15:00:00Z', byName: 'Dana Ruiz', outcome: 'owing' } });
+    const later = stripe({ id: 'r2', amount: 200 });
+    assert.equal(finishAsksOutcome([pay()], [answered, later], later, 'invoiced'), false);
+    const sql = readSource(MIG_542);
+    assert.match(sql, /x\.payment_id = p\.id AND x\.id <> r\.id AND x\.status = 'succeeded' AND x\.outcome IS NOT NULL/);
+    // Three: the finish, its no-credit-note rule, and the refund from the deal.
+    assert.equal(sql.match(/d\.total > \(SELECT coalesce\(sum\(o\.amount\), 0\)/g)?.length, 3);
+    assert.match(sql, /'wasBooked', NOT r\.after_lost_dispute/);
+  });
+
+  it('a lost dispute asks nothing, and a finish that asks nothing says what the deal will read', () => {
+    const lost = pay({ returned: true, disputeLost: true });
+    assert.equal(finishAsksOutcome([lost], [stripe({ amount: 1130 })], { paymentId: 'p1' }, 'invoiced'), false);
+    const cheque = pay({ id: 'p2', method: 'cheque', card: null });
+    // Paid again by cheque, then the old card payment's refund is finished: the deal is still covered.
+    assert.equal(finishLeavesDeal([pay({ returned: true }), cheque], [stripe({ amount: 1130 })], { paymentId: 'p1' }, 'paid', 1130), 'paid');
+    // This payment given back in full beside a part cheque: owing again. A part refund leaves it paid.
+    assert.equal(finishLeavesDeal([pay({ amount: 630 }), pay({ id: 'p2', amount: 500, method: 'cheque', card: null })], [stripe({ amount: 630 })], { paymentId: 'p1' }, 'paid', 1130), 'owing');
+    assert.equal(finishLeavesDeal([pay()], [stripe({ amount: 200 })], { paymentId: 'p1' }, 'paid', 1130), 'paid');
+    assert.equal(finishLeavesDeal([pay()], [stripe({ amount: 200 })], { paymentId: 'p1' }, 'invoiced', 1130), null);
+    // An invoiced deal whose card payment is all back owes it too (so no credit note); not when the bank took it.
+    const part = pay({ amount: 630 });
+    assert.equal(finishLeavesDeal([part], [stripe({ amount: 630 })], { paymentId: 'p1' }, 'invoiced', 1130), 'owing');
+    assert.equal(finishLeavesDeal([pay({ amount: 630, returned: true, disputeLost: true })], [stripe({ amount: 630 })], { paymentId: 'p1' }, 'invoiced', 1130), null);
+    assert.match(readSource(MIG_542), /d\.state IN \('paid', 'invoiced'\) AND d\.total >/);
+  });
+
+  it('a refund of only the fee has no sponsorship row, and the note names the day the money left', () => {
+    const feeOnly = stripe({ amount: 46.39, taxPart: 5.34, feePart: 46.39, feeTaxPart: 5.34, stripeCreatedAt: '2027-03-20T20:12:00Z', refundedOn: '2027-04-02', creditOn: '2027-04-05', creditNumber: '2027-014-C2' });
+    const note = creditNoteLayout(input([sponsorPay], [feeOnly]), feeOnly);
+    assert.deepEqual(note.rows.map(r => r.amount), ['$41.05', '$5.34']);
+    assert.match(note.credit.closing, /on Mar 20, 2027 to the card/);
   });
 });

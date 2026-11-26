@@ -201,12 +201,14 @@ registered with ServiceOntario 2026-11-06** (renewal date still to be read off t
   kind, a BUSINESS that pays a club's sponsorship deal by card from its own link (no sign-in, no FieldLogicHQ terms shown to it). Data
   held: the email typed on its sponsor form, card brand and last four, Stripe session, payment-intent and refund ids, receipt and invoice
   numbers, amounts, and the club's free-text refund reason (shown to the business, up to 300 characters) with the name of the refunding
-  member; no full card number, no IP. **A sponsor's card dispute is recorded and booked** (since migrations 532 and 534, walk §564;
+  member; no full card number, no IP. For a refund the club makes in its own Stripe account (built on dev 2026-11-26, migration
+  542) also: when Stripe made it (shown to the business), Stripe's reason code (shown to the club only), and the
+  name of the member who finished it on the deal. **A sponsor's card dispute is recorded and booked** (since migrations 532 and 534, walk §564;
   re-read 2026-11-25, `lib/online-payment-landing.ts` `applyCardDispute`): a dispute row, a notice to whoever opens Sponsorships, a loss
   reversed in the club's books with no credit note and the deal back to owing, a win put back; there is no "Copy the facts" screen for a
   sponsorship. Until the 2026-11-23 build it was silent. Possibly stale because of the sponsor card payment: the published Payments Terms
-  2026-11-24 §1/§2/§4/§6/§7/§9/§11 and Privacy 2026-11-24 §5/§6/§9/§12 (drafts: `drafts/PAYMENTS_TERMS_SPONSORSHIP_CARD_ADDENDUM.md`,
-  `drafts/PRIVACY_POLICY_SPONSORSHIP_ADDENDUM.md`).
+  2026-11-24 §1/§2/§4/§6/§7/§9/§11 and Privacy 2026-11-24 §5/§6/§9/§12 (drafts: `drafts/PAYMENTS_TERMS_SPONSORSHIP_CARD_ADDENDUM.md`
+  0.4 and `drafts/PRIVACY_POLICY_SPONSORSHIP_ADDENDUM.md` 0.2, both awaiting owner approval 2026-11-26).
 
 ## Consent and email mechanics that exist today
 - **Payments terms:** a checkbox an owner ticks in "Before you set up payouts" (and again in the card's "new payments terms"

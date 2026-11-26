@@ -1853,33 +1853,109 @@ in the card-network sentence); Privacy §5 (who sent an offer is kept with its r
   storage answers correctly for a stored and a missing file. Pinned in `club-stage4d-guard`.
 - **Walk §570 published 2026-11-25** (https://claude.ai/artifact/FR713RKu5wxYxopDMDSfW5; walks A–C, 38 steps; no owner calls).
   - **Walk §570 PASSED 2026-11-25, 38 of 38** (owner paste-back; A 12, B 7, C 19; no notes).
-- **Four fixes before sponsor card payments go live, Part B BUILT on dev 2026-11-26; calls B1–B5 all ruled A 2026-11-25** (owner: "all A"; B5 added from the build's
-  census). (B1) Private-link secrets and unsubscribe addresses are removed from error reports and feedback before they
-  are stored or logged, every page and route shape, pinned by `private-link-redaction`; dev's 14 reports and 8 groups
-  cleaned (recount 0); production held none (counts only). (B2) "Send the link again" reads **Make a new link** whenever
-  the press would email nothing, from one plan the page and the press share (`againPlan`); an invoiced or paid deal says
-  nothing was emailed; a replaced link's page mentions a newer email only when one went. (B3, B4) A bank only asking
-  never reads as a dispute: the sponsor's own notice, family and team titles, chips, copied facts, emails, the closed
-  line and the leaving-payments counts; a question that becomes a dispute clears its notice so the dispute's can be
-  raised. (B5) A club's own web address passes the pay doors, and Stripe's return survives the forward to it (no club
-  web address exists on production or dev; proved by tests). `/review` (four lenses; two small faults fixed from each of
-  two, three redactor gaps fixed), `/marketing` (four words changed), `/docs`, walk §572 published
-  (https://claude.ai/artifact/JK1NstHfhR75WCKSYa5yjn; walks A–C, 34 steps).
-  Committed 2026-11-26 as three commits (owner: "commit now, three commits"): error reports; sponsor links and bank
-  questions; paying on a club's own web address, with these records.
-- **Open for the owner from Part B** (2026-11-26): (a) the grouped summary of an error outlives the policy's 30 days —
-  `/legal` recommends the daily sweep clear a group's sample after 30 days, with new §4/§8/§9 words
-  (`drafts/PRIVACY_POLICY_SPONSORSHIP_ADDENDUM.md` finding 1); (b) a bank's question that the owner ANSWERED and that
-  then becomes a dispute leaves the family or team record "answered", raises no notice for the owner, and sends no
-  reminder or second email (the database keeps "answered" and the once-only stamps per dispute: `mig 534`; older than
-  this change, needs a database change); (c) with the family tier on, "Email me" and "Sign in" on the sign-up page do not
-  work on a club's own web address; (d) `/legal`: the next Payments Terms version, §10, should name "an open dispute
-  (including a bank's question about a payment)"; nothing blocks the release.
-- **Found by the Part B reviews, not built** (for `/plan`): the platform console's open-dispute figures still count a
-  bank's question; the refund timing words still say "card company"; a help line on the cancel window counts differently
-  from the window; the forward to a club's own address keeps a query only on the two pay pages; a team paying from a
-  club's address comes back on ours; a failed clear could leave no open dispute notice until Stripe's next event; an
-  email address written with %40 is not removed from error reports.
+- **Four fixes before sponsor card payments go live: build prompt written 2026-11-25** (owner: "yes, write the build prompt
+  for the four items"): `BOARD_READY_STAGE6_FIXES_BUILD_PROMPT.md`. Part A, the Stripe-dashboard refund (`/accounting` and a
+  drawing first; asks A1–A5). Part B, private links in error reports, "Send the link again" and the card inquiry (calls
+  B1–B4, none ruled). Found while writing it: an open or ignored error group keeps a private link past the 30 days the
+  privacy policy states, and server errors store the query string too.
+  - **Part A: `/accounting` RUN and drawn 2026-11-25; all seven asks RULED A the same day** (owner paste-back). Accounting:
+    addendum 2026-11-25 in `docs/agents/accounting/CLUB_SPONSOR_INVOICE_REVIEW.md` (two dates: the books take Stripe's
+    refund day, the credit note its issue day; the note is never automatic; sponsorship first, then the fee; no lines after
+    a lost dispute). Drawing: https://claude.ai/artifact/59e8zBT9RYsFGFPzwJ4kZX (source
+    `BOARD_READY_STAGE6_FIXES_A_DASHBOARD_REFUND_DRAWING.html`; `/design` run before hand-off, its seven must-fixes
+    applied). **Ruled:** (1) the books take a dashboard refund by themselves when Stripe says succeeded, dated that day
+    (today if its year is closed); the credit note, the business's email and a full refund's outcome wait for the club to
+    *Finish the refund* on the deal, with a reason; (2) the deal's state does not move while it waits; finishing a full
+    refund asks "It has ended" or "They still owe it" (the accounting review's "owing at once" was offered as B and not
+    taken); (3) sponsorship first, the fee only after all of the sponsorship, the fee its own row on the credit note, the
+    email drops the "fee isn't part of this refund" line; (4) every changed odd case as drawn (pending counts against what
+    can go back and books nothing; pending then failed clears itself; a booked one that bounces takes the shipped bounce
+    path; a refund before the landing books after it, never netted, with the sponsor's notice; after a lost dispute no
+    lines and a "returned twice" notice); (5) a one-time catch-up records the refunds already sitting as notices, run on
+    dev at the build; (6) the Payouts hint and help words as drawn, DRAFT for `/marketing` and `/legal`; (7) a test-mode
+    probe of whether FieldLogicHQ's application fee comes back on a refund the club makes itself, before the database
+    change. Found while checking the prompt against the code: the connect webhook hears only `refund.created/updated/failed`
+    (not `charge.refunded`); a dashboard refund that fails leaves the "refund made in Stripe" notice standing; the early
+    family-worded notice DOES block the sponsor one (same subject key, the open-notice unique index); a refund booked after
+    a lost dispute reverses the same money twice today.
+  - **Part A ask 7 probe RUN 2026-11-25 (test mode, Dev Club Org's test account, `.probe/fixes-a-appfee-refund.cjs`):** a
+    $11.30 direct charge with a $0.50 application fee, refunded in full as the connected account with no
+    `refund_application_fee`: the application fee's `amount_refunded` stayed 0 and the club's refund balance transaction
+    was -$11.30 with no fee back. So the club's Payment processing line never moves on a dashboard refund. Caveat: refunded
+    through the API as the account (an Express-dashboard account), not a click in its dashboard; the build's closing probe
+    makes the real click.
+  - **Migration 542 written 2026-11-25, applied to dev 2026-11-26** (owner: "yes, write 542", then "yes, apply 542 to dev"; production apply goes with the promote; `542_a_refund_made_in_stripe.sql`): the refund
+    row learns `origin` (app | stripe), Stripe's moment and reason, `fee_part`/`fee_tax_part`/`fee_entry_id`,
+    `after_lost_dispute`, `finished_*`, `outcome`, `credit_on`; `reason`/`created_by_name` may be NULL only on a stripe row,
+    and a stripe row always carries Stripe's id (so the daily retry never re-asks it). New: `club_sponsor_card_stripe_refund`
+    (record/book/fail, keyed on Stripe's id, any order), `club_sponsor_card_refund_finish`, `club_sponsor_card_twice_settle`
+    (a won dispute books a "returned twice" refund), the internal `_stripe_refund_lines`. Changed: `_refund_left` and
+    `_returned` count the sponsorship part only; `_refund_failed` voids the fee line too. **Proved by a rolled-back dry run
+    on dev** (`.probe/fixes-a-542-cases.sql`, on dev's sponsor-paid-fee payment of $1,176.39): pending counts against what is
+    left and books nothing; success books $176.99 + $23.01 on the payment's day when Stripe's was earlier; a repeat is
+    "already"; finishing refuses an outcome on a part refund and a blank reason, gives C1 dated today and relabels the tax
+    line; pending then failed releases it; a failed one never seen is ignored; the rest ($976.39) splits $930.00 + $46.39 fee
+    with $112.33 tax over three lines; one cent more is refused; the last one needs an outcome and "ended" withdraws the
+    deal; a bounce after finishing voids all three lines and keeps C2; a refund from the deal answers "ours"; after a lost
+    dispute nothing books and nothing can be finished, and a later win books it.
+  - **542 revised after /simplify and re-applied to dev 2026-11-26** (owner: "yes, make both database changes on dev"): the fee line's column is `fee_refund_entry_id` (the shorter name is a house-league registration's, which its money guard watches; the guard is back as it was), and a refund made in Stripe raises two Needs-attention kinds of its own, `sponsor_refund_to_finish` and `sponsor_refund_twice`, keyed on the refund row (§8 of 542 rebuilds mig 403's three notice indexes; no two open copies existed on dev or production first). Dev was brought in line by renaming the column and re-running the revised 542, proved first by a rolled-back run. The family's "matches no payment we recorded" notice keeps its own meaning and words.
+  - **Part A reviewed 2026-11-26:** `/review` (four lenses, then a re-review of the fixes), `/dba` (finding in
+    `docs/agents/db/DB_ARCHITECTURE_REVIEW.md`), `/marketing`, `/legal` with an `/accounting` re-check (addenda
+    2026-11-26), `/ux` at 390 and `/docs`. Built with it, the two ruled-drawing items that were missing: the 14-day
+    "Waiting" line and the wording for the total of several refunds.
+  - **Owner rulings from the reviews (2026-11-26):** **"All five"** database fixes (a finish puts a paid deal back to owing
+    only when what still stands no longer covers the invoice, the same fault fixed in the older refund from the deal; the
+    deal question is asked once per payment; a refund on its way when a dispute is lost or won is judged when it succeeds;
+    a bounced "paid back twice" refund reports that nothing was booked); **"Fee first, no note"** ("They still owe it" only
+    once everything paid on the payment, the fee included, has been refunded and no earlier refund on it has a credit
+    note; money owed again gets no credit note); **"Yes, say it"** (the refund email and the sponsor's page say the invoice
+    is still owing); **"Update drafts"** (Payments Terms sponsorship addendum 0.4 and privacy addendum 0.2 written, for the
+    owner's approval); and a follow-up **"Apply to dev"** for the already-invoiced case (a deal already reading Invoiced
+    owes a fully refunded payment's money too, so no credit note). Dev test data and clearing the stray test notice:
+    approved.
+  - **Migration 542 revised and applied to dev 2026-11-26**; production gets it with the promote, after a recount of
+    duplicate open notices there (its unique index fails, and the migration rolls back, if any exist).
+  - **Live test on Dev Club Org 2026-11-26**, API refunds standing in for the dashboard click.
+  - **Walk §576 published 2026-11-26** (https://claude.ai/artifact/WoaUgqxo7PhCAPxnsTHQu8; walks A–F, 43 steps; 3 owner
+    calls). Walk E is where the club's own Stripe dashboard is tried.
+  - **Staging, until it runs Part A:** it shares the dev database and can stamp an unfinished Stripe refund as emailed.
+  - **Part A follow-ups, for `/plan`** (found 2026-11-26): (1) an email that couldn't send is never retried and can't be
+    resent; (2) whether an Express account shows Refund in its dashboard is proved only by the walk; (3) a refund from the
+    deal on a card part-payment beside another payment still issues a credit note while reopening the deal; (4) an invoice
+    owing again keeps its processing-fee line (owner call in the walk); (5) automatic owing after an earlier credit note
+    leaves that note; (6) a bounced fee refund after "They still owe it" leaves the fee in the amount owed; (7) the
+    sponsorship and fee split can be wrong if a refund from the deal is still on its way when a dashboard refund arrives;
+    (8) the "ends the deal" promise can miss in one two-card case with an unfinished refund; (9) the Copy control beside
+    Stripe references is under 44px on phones. Walk calls, besides (4): whether the callout's button opens the payment's
+    window or the finish question, and the sponsor page's "Thank you" heading when the invoice is owing.
+  - **Part B BUILT on dev 2026-11-26; calls B1–B5 all ruled A 2026-11-25** (owner: "all A"; B5 added from the build's
+    census). (B1) Private-link secrets and unsubscribe addresses are removed from error reports and feedback before they
+    are stored or logged, every page and route shape, pinned by `private-link-redaction`; dev's 14 reports and 8 groups
+    cleaned (recount 0); production held none (counts only). (B2) "Send the link again" reads **Make a new link** whenever
+    the press would email nothing, from one plan the page and the press share (`againPlan`); an invoiced or paid deal says
+    nothing was emailed; a replaced link's page mentions a newer email only when one went. (B3, B4) A bank only asking
+    never reads as a dispute: the sponsor's own notice, family and team titles, chips, copied facts, emails, the closed
+    line and the leaving-payments counts; a question that becomes a dispute clears its notice so the dispute's can be
+    raised. (B5) A club's own web address passes the pay doors, and Stripe's return survives the forward to it (no club
+    web address exists on production or dev; proved by tests). `/review` (four lenses; two small faults fixed from each of
+    two, three redactor gaps fixed), `/marketing` (four words changed), `/docs`, walk §572 published
+    (https://claude.ai/artifact/JK1NstHfhR75WCKSYa5yjn; walks A–C, 34 steps).
+    Committed 2026-11-26 as three commits (owner: "commit now, three commits"): error reports; sponsor links and bank
+    questions; paying on a club's own web address, with these records. **Walk §572 PASSED 2026-11-26, 34 of 34** (no
+    notes); Part B goes live with the release.
+  - **Open for the owner from Part B** (2026-11-26): (a) the grouped summary of an error outlives the policy's 30 days —
+    `/legal` recommends the daily sweep clear a group's sample after 30 days, with new §4/§8/§9 words
+    (`drafts/PRIVACY_POLICY_SPONSORSHIP_ADDENDUM.md` finding 1); (b) a bank's question that the owner ANSWERED and that
+    then becomes a dispute leaves the family or team record "answered", raises no notice for the owner, and sends no
+    reminder or second email (the database keeps "answered" and the once-only stamps per dispute: `mig 534`; older than
+    this change, needs a database change); (c) with the family tier on, "Email me" and "Sign in" on the sign-up page do not
+    work on a club's own web address; (d) `/legal`: the next Payments Terms version, §10, should name "an open dispute
+    (including a bank's question about a payment)"; nothing blocks the release.
+  - **Found by the Part B reviews, not built** (for `/plan`): the platform console's open-dispute figures still count a
+    bank's question; the refund timing words still say "card company"; a help line on the cancel window counts differently
+    from the window; the forward to a club's own address keeps a query only on the two pay pages; a team paying from a
+    club's address comes back on ours; a failed clear could leave no open dispute notice until Stripe's next event; an
+    email address written with %40 is not removed from error reports.
 - ~~The per-deal "Charge HST" switch carries no words telling a club WHEN to turn it on.~~ **Added 2026-11-22 (owner: "add
   the hint")**, words checked against CRA RC4081 then set in brand voice (`docs/agents/accounting/BOARD_READY_STAGE6_SPONSOR_PAYMENT_FEE_REVIEW.md`
   addendum): the switch's hint reads **"13% for an Ontario address, added to the amount. A sponsorship that shows a name or

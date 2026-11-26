@@ -20,7 +20,8 @@ import { supabaseAdmin } from './supabase-admin';
 import { readSettings } from './club-sponsorships-server';
 import { readDeal, readDealBusiness } from './club-sponsorship-deals-server';
 import { dealLinkUrl, offerContactOf } from './club-sponsorship-deal-actions';
-import { clubCanEmailInvoice, invoiceStanding } from './club-sponsor-invoice';
+import { clubCanEmailInvoice, invoiceStanding, refundLeft, refundMadeOn, refundParts } from './club-sponsor-invoice';
+import { daysBetweenDateStrings, tournamentToday } from './timezone';
 import { DEAL_WORDS } from './club-sponsorship-deal-words';
 import { refundBlockHtml } from './online-refund-block';
 import { ONLINE_EMAIL_WORDS, REFUND_BLOCK_WORDS, money } from './online-payment-words';
@@ -136,8 +137,10 @@ function refundEmailTail(i: { org: { name: string }; settings: { contactEmail: s
 export async function emailDealRefund(orgId: string, refundId: string): Promise<string | null> {
   let release: (() => Promise<void>) | null = null;
   try {
+    // A refund made in Stripe is emailed only once the club FINISHED it (its reason given, its credit note issued: Part A, ask 1).
     const { data: claimed } = await supabaseAdmin.from('club_sponsor_deal_refunds').update({ emailed_at: new Date().toISOString() })
-      .eq('id', refundId).eq('org_id', orgId).is('emailed_at', null).eq('status', 'succeeded').select('deal_id').maybeSingle();
+      .eq('id', refundId).eq('org_id', orgId).is('emailed_at', null).eq('status', 'succeeded')
+      .or('origin.eq.app,finished_at.not.is.null').select('deal_id').maybeSingle();
     const dealId = (claimed as { deal_id: string } | null)?.deal_id;
     if (!dealId) return null;
     release = async () => { await supabaseAdmin.from('club_sponsor_deal_refunds').update({ emailed_at: null }).eq('id', refundId); };
@@ -152,18 +155,30 @@ export async function emailDealRefund(orgId: string, refundId: string): Promise<
     }
     const facts = await clubEmailFacts(org);
     const p = refundEmailP;
+    const owing = deal.state === 'invoiced' ? invoiceStanding(deal.invoice.total, deal.payments).owing : 0;
     const html = warmEmailDocument([
       `<div style="display:none;max-height:0;overflow:hidden;">${escText(REFUND_BLOCK_WORDS.preheader(money(refund.amount), false))}</div>`,
       p(E.greeting(business?.contactName || business?.name || deal.businessName)),
-      p(refund.endsDeal ? C.emailLeadWhole(org.name, deal.invoice.number) : C.emailLead(org.name, deal.invoice.number)),
-      p(ONLINE_EMAIL_WORDS.refundReason(org.name, refund.reason)),
+      p(refund.endsDeal ? C.emailLeadWhole(org.name, deal.invoice.number)
+        // A refund made in Stripe can give back a payment's whole sponsorship on a deal that stays: never "part of" it.
+        : refund.origin === 'stripe' && refundParts(refund).sponsorship >= refundLeft(payment, []).refundable
+          ? C.emailLeadAll(org.name, deal.invoice.number)
+          : C.emailLead(org.name, deal.invoice.number)),
+      p(ONLINE_EMAIL_WORDS.refundReason(org.name, refund.reason ?? '')), // a refund made in Stripe is emailed only once finished, with its reason
       refundBlockHtml({
         refundCents: Math.round(refund.amount * 100), bank: false, cardBrand: payment.card.brand, cardLast4: payment.card.last4, bankLast4: null,
-        refundedAt: refund.succeededAt ?? refund.createdAt, receiptNo: null, paidOn: payment.receivedOn,
-        feeBackCents: 0,
-        feeKeptCents: payment.card.feePaidBy === 'sponsor' ? Math.round((payment.card.feeCharged + payment.card.feeTax) * 100) : 0,
+        // The day the money left: Stripe's own moment for a refund made there (it may be recorded and finished weeks later).
+        refundedAt: refund.stripeCreatedAt ?? refund.succeededAt ?? refund.createdAt, receiptNo: null, paidOn: payment.receivedOn,
+        // A refund made in Stripe can give the fee back too (Part A, ask 3): the block then says so, and drops "the fee isn't part of this refund".
+        feeBackCents: Math.round(refund.feePart * 100),
+        feeKeptCents: refund.feePart === 0 && payment.card.feePaidBy === 'sponsor' ? Math.round((payment.card.feeCharged + payment.card.feeTax) * 100) : 0,
+        feeOfCents: Math.round((payment.card.feeCharged + payment.card.feeTax) * 100),
+        // Finished more than two weeks after the money left (10 business days): it is no longer on its way.
+        alreadyArrived: refund.origin === 'stripe' && daysBetweenDateStrings(refundMadeOn(refund), tournamentToday()) > 14,
       }),
       refund.creditNumber ? p(C.emailCreditNote(refund.creditNumber)) : '',
+      // The refund left the invoice owing (the club's choice, or what else stands no longer covers it): said, with how to check.
+      owing > 0 ? p(C.emailStillOwing(org.name, deal.invoice.number, money(owing))) : '',
       ...refundEmailTail({ ...inputs, org, contactEmail }),
     ].join('\n'), facts);
     const result = await sendEmail(to, ONLINE_EMAIL_WORDS.refundSubject(org.name), html, {

@@ -995,6 +995,15 @@ Migration N+3 — DROP tournaments.organization_id (after N verified in prod)
 
 ---
 
+### [2026-11-26] — A refunded sponsor card payment could put a covered deal back to owing; a pending Stripe refund kept its first dispute flag
+**Severity:** High
+**Finding:** `club_sponsor_card_refund_finish` (mig 542) and `club_sponsor_card_refund_book` (mig 534) set a paid deal to invoiced whenever the refunded payment came back in full, even when other standing payments covered the invoice. 542 also asked the deal question again on a second refund of one payment, judged `after_lost_dispute` when a pending refund was first seen rather than when it succeeded, and reported a bounced after-lost-dispute refund as booked. Locking (deal → payment → refund), SECURITY DEFINER grants, the CHECK, the fiscal-year lock, re-runnability and the notification index rebuild were reviewed and hold. Advisory: `fee_refund_entry_id` and `finished_by` have no index (small table, same as the sibling entry columns). Before applying 542 to prod, recount open duplicate notices: its unique index fails (and the migration rolls back) if any exist.
+**Tables affected:** club_sponsor_deal_refunds, club_sponsor_deal_payments, club_sponsor_deals, notifications
+**Recommendation:** Compare the standing sum with the invoice total before moving a deal; ask once per payment; judge the dispute flag at success; return wasBooked false for after-lost rows.
+**Status:** Addressed — mig 542 revised and applied to dev 2026-11-26 after a rolled-back case run (.probe/fixes-a-542-cases2.sql); production gets it with the promote.
+
+---
+
 ## Trigger checklist — when to re-run `/dba`
 
 - [ ] Before merging any migration that adds a new table

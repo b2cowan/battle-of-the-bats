@@ -597,6 +597,7 @@ export const DEAL_WORDS = {
     // The paid receipt's card line (round 2 tab 1: "Visa ••4242 · Mar 3, 2027, 2:14 p.m. · invoice 2027-014").
     paidWith: (card: string, when: string, number: string) => `${card} · ${when} · invoice ${number}`,
     feeRow: 'Processing fee',
+    stillOwingAfterRefund: (club: string, owing: string, count: number) => `${club} shows ${owing} still owing after the ${count > 1 ? 'refunds' : 'refund'}.`,
     refundedRow: (on: string) => `Refunded ${dayYear(on)}`,
     refundedOnWay: 'Refund on its way to the card',
     creditNote: (number: string) => `Credit note ${number} (PDF)`,
@@ -664,6 +665,8 @@ export const DEAL_WORDS = {
     reason: 'Reason',
     reasonHint: (business: string) => `${business} reads this in the refund email.`,
     footNoEmail: 'No email address on file. Tell them yourself.',
+    // DRAFT: the club's own sender details are missing, so no refund email can go (the business may well have an address).
+    footClubCantEmail: 'It won’t be emailed: your sponsorships need a mailing address and a contact email.',
     buttonEnd: 'Refund, end the deal and email',
     buttonAll: (amount: number) => `Refund ${money(amount)} and email`,
     errAmount: (left: number) => `Enter an amount above $0 and up to ${money(left)}.`,
@@ -680,7 +683,7 @@ export const DEAL_WORDS = {
     failedBody: 'The card company refused the refund. Nothing was refunded and nothing changed.',
     // The "To the card" block in the payment's window (the shipped block's words: CARD_REFUND_WORDS.record).
     refundSplit: (pre: number, tax: number, kind: string) =>
-      tax > 0 ? `${money(pre)} of the sponsorship and ${money(tax)} ${kind}. A refund never includes the processing fee.` : 'A refund never includes the processing fee.',
+      tax > 0 ? `${money(pre)} of the sponsorship and ${money(tax)} ${kind}. This refund doesn’t include the processing fee.` : 'This refund doesn’t include the processing fee.',
     reachedSub: 'It can take 5 to 10 business days to appear on the statement.',
     statusPending: (on: string, time: string) => `Stripe accepted it ${day(on)} at ${time} and is waiting on the card’s bank. It goes in the books when it reaches the card.`,
     whatFailed: (sent: string, back: string) => `Sent ${day(sent)}. The card’s bank sent it back ${day(back)}, for example because the card was closed. Its lines in the books are voided, so the money shows as still with the club. Send it another way, then record that in the Ledger.`,
@@ -712,6 +715,11 @@ export const DEAL_WORDS = {
     // The refund email (the shipped refund email's subject and block).
     emailLead: (club: string, number: string) => `${club} refunded part of your sponsorship payment for invoice ${number}.`,
     emailLeadWhole: (club: string, number: string) => `${club} refunded your sponsorship payment for invoice ${number}, and the sponsorship has ended.`,
+    // /legal 2026-11-26 (owner: "Yes, say it"): a refund that leaves the invoice owing says so, and how to check.
+    emailStillOwing: (club: string, number: string, owing: string) =>
+      `${club} shows invoice ${number} as still owing: ${owing}. Your sponsorship page shows how to pay. If you didn’t expect this, ask ${club} before you pay.`,
+    // DRAFT: a refund made in Stripe that gave back all of a payment's sponsorship, on a deal the club kept.
+    emailLeadAll: (club: string, number: string) => `${club} refunded your sponsorship payment for invoice ${number}.`,
     emailCreditNote: (number: string) => `Your credit note ${number} is on your sponsorship page.`,
     emailButton: 'See your sponsorship',
     // DRAFT for /marketing: the correction when a refund the business was told about did not reach their card.
@@ -722,8 +730,81 @@ export const DEAL_WORDS = {
     // Needs attention (the rail's notices, in the sponsorship's words).
     notRecordedTitle: 'A sponsor’s card payment isn’t on its deal',
     dashboardRefundTitle: 'A refund made in Stripe isn’t in your books',
+    // Kept for the one case the books can't take by themselves: a refund in Stripe larger than the payment holds (drifted data).
     dashboardRefundBody: (amount: string, on: string) => `${amount} went back to a sponsor’s card from your Stripe dashboard on ${on}. Record it in the Ledger, and refund from the deal’s payment next time.`,
     theSponsor: 'The sponsor',
+
+    // ── A refund made in the club's own Stripe dashboard (Stage 6 fixes Part A, RULED 2026-11-25; every line DRAFT for /marketing and /legal) ──
+    // Needs attention: it is in the books by itself; the club finishes it for the credit note and the email (ask 1).
+    finishNoticeTitle: 'A refund made in Stripe needs finishing',
+    // No line here promises a credit note: an untaxed invoice gets none, and neither does money the sponsor still owes.
+    finishNoticeBody: (amount: string, business: string, on: string) =>
+      `${amount} went back to ${possessive(business)} card from your Stripe dashboard on ${on}. It’s in the books. Finish it on the deal.`,
+    // A refund on a payment the sponsor's bank already took back (a dispute the club lost): the money went back twice.
+    twiceNoticeTitle: (business: string) => `${business} was paid back twice`,
+    twiceNoticeBody: (amount: string, business: string, on: string) =>
+      `${amount} went back to their card from your Stripe dashboard on ${on}, but their bank had already taken this payment back. Ask ${business} to send it back.`,
+    // The deal page's callout (tab 1): one refund to finish, or several.
+    calloutToFinish: (amount: number, on: string) => `${money(amount)} was refunded in Stripe on ${day(on)}. Finish it on the deal.`,
+    calloutToFinishMany: (count: number, total: number) => `${count} refunds totalling ${money(total)} were made in Stripe. Finish each one on the deal.`,
+    // The drawing's nudge (tab 1, /accounting: the note should go out within a reasonable time): said after 14 days.
+    calloutWaiting: (days: number) => `Waiting ${days} days.`,
+    finishButton: 'Finish the refund',
+    // The payment row (tab 1) and the history line.
+    lineRefundedStripe: (amount: number, on: string) => `Refunded ${money(amount)} in Stripe ${day(on)}`,
+    lineRefundStripePending: (amount: number) => `Refund of ${money(amount)} from Stripe on its way`,
+    lineReturnedTwice: 'Returned twice: the sponsor’s bank already took this payment back.',
+    chipToFinish: 'To finish',
+    chipReturnedTwice: 'Returned twice',
+    hRefundedStripe: (amount: number, on: string) => `refunded ${money(amount)} in Stripe ${day(on)}`,
+    hFinished: (on: string, by: string) => `finished ${day(on)} by ${by}`,
+    // The "To the card" block for a refund made in Stripe (tab 2).
+    madeInStripe: 'Made in Stripe',
+    madeInStripeValue: (on: string, time: string, reason: string | null) =>
+      `${day(on)} at ${time}, from your Stripe dashboard.${reason ? ` Stripe’s reason: ${reason}.` : ''}`,
+    refundSplitStripe: (pre: number, tax: number, kind: string, fee: number, feeTax: number) => {
+      const spons = pre > 0 ? `${money(pre)} of the sponsorship${tax > 0 ? ` and ${money(tax)} ${kind}` : ''}` : '';
+      const back = fee > 0 ? `${money(fee)} of the processing fee${feeTax > 0 ? ' with its tax' : ''}` : '';
+      return [spons, back].filter(Boolean).join(', plus ') + '.';
+    },
+    // Stripe's refund reason codes, in words (a code not listed shows as Stripe sent it, its underscores as spaces).
+    stripeReasons: { requested_by_customer: 'requested by the customer', duplicate: 'a duplicate payment', fraudulent: 'fraudulent', expired_uncaptured_charge: 'the payment was never completed' },
+    notYet: 'Not yet',
+    finishedLabel: 'Finished',
+    finishedValue: (by: string, on: string) => `${by}, ${day(on)}`,
+    // The finish question (tab 2): Stripe's amount and day are fixed; the club gives the reason.
+    finishAsk: (business: string) => `Finish ${possessive(business)} refund?`,
+    finishLeadPart: (amount: number, card: string, on: string, pre: number, tax: number, kind: string) =>
+      `${money(amount)} went back to ${card} from your Stripe dashboard on ${day(on)}: ${tax > 0 ? `${money(pre)} of the sponsorship and ${money(tax)} ${kind}` : 'part of the sponsorship'}.`,
+    finishLeadAll: (amount: number, card: string, on: string, pre: number, tax: number, kind: string) =>
+      `${money(amount)} went back to ${card} from your Stripe dashboard on ${day(on)}: all the sponsorship money in that payment${tax > 0 ? ` (${money(pre)} plus ${money(tax)} ${kind})` : ''}.`,
+    finishLeadFee: (amount: number, card: string, on: string, sponsorship: number, fee: number, taxed: boolean) =>
+      `${money(amount)} went back to ${card} from your Stripe dashboard on ${day(on)}: ${money(sponsorship)} of the sponsorship and ${money(fee)} of the processing fee${taxed ? ', tax included' : ''}.`,
+    finishLeadFeeOnly: (amount: number, card: string, on: string) =>
+      `${money(amount)} went back to ${card} from your Stripe dashboard on ${day(on)}: processing fee only.`,
+    finishFeeBack: 'Refunding the processing fee to the sponsor doesn’t bring it back to the club. The club still pays Stripe’s fee and FieldLogicHQ’s fee on this payment.',
+    // `after`: what the deal reads once finished (null when finishing doesn't move it, so nothing is said).
+    finishPartBody: (business: string, note: string | null, emailed: boolean, after: 'paid' | 'owing' | null) =>
+      `Finishing ${note ? `gives ${business} credit note ${note}, dated today${emailed ? ', and emails them about the refund' : ''}` : emailed ? `emails ${business} that it was refunded` : 'records why it was refunded'}.${
+        after === 'paid' ? ' The deal stays paid.' : after === 'owing' ? ' The deal reads owing again and their link lets them pay.' : ''}`,
+    choiceEnded: 'It has ended',
+    choiceEndedSub: 'The logo comes down and the place is free',
+    choiceOwing: 'They still owe it',
+    choiceOwingSub: (taxed: boolean) => `The deal reads owing again and their link lets them pay${taxed ? '. No credit note, because they still owe the full invoice' : ''}`,
+    owingNeedsFee: (left: number) => `To have them still owe it, first refund the other ${money(left)} (the processing fee) in your Stripe dashboard, then finish.`,
+    owingNoted: 'Part of this payment already has a credit note, so the full invoice can’t be owed again.',
+    chooseFirst: 'Choose what happens to the deal.',
+    // Finishing moves no money: never "Refunding…".
+    finishWorking: 'Finishing…',
+    // The money already left: the finish asks why it went, not why "you’re" refunding.
+    finishErrReason: 'Say why it was refunded.',
+    buttonFinish: (emailed: boolean) => (emailed ? 'Finish and email' : 'Finish'),
+    buttonFinishEnd: (emailed: boolean) => (emailed ? 'Finish, end the deal and email' : 'Finish and end the deal'),
+    errOutcome: 'Choose what happens to the deal.',
+    errFinishedAlready: 'Someone already finished this refund. The page has been refreshed.',
+    errNothingToFinish: 'This refund has nothing to finish any more. The page has been refreshed.',
+    errOutcomeChanged: 'The deal changed since this opened. The page has been refreshed, so open the refund and finish it again.',
+    finishedToast: (email: string | null) => (email ? `Finished. We emailed ${email}.` : 'Finished.'),
   },
 } as const;
 

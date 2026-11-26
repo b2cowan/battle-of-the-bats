@@ -26,7 +26,7 @@ import {
   type ClubDeal, type DealState, type OfferReason, stopsFollowingBusiness,
 } from './club-sponsorship-deals';
 import type { PackageItem, SponsorPlaceKind } from './club-sponsorships';
-import { creditNoteNumber, invoiceStanding, type DealPayment, type DealRefund } from './club-sponsor-invoice';
+import { creditNoteNumber, invoiceStanding, refundLeft, type DealPayment, type DealRefund } from './club-sponsor-invoice';
 import { DUES_PAYMENT_METHOD_LABEL, paymentMethodInSentence, type DuesPaymentMethod } from './types';
 import { blocksRefund, disputeOutcome } from './online-payment-dispute';
 
@@ -96,13 +96,13 @@ async function doneFor(dealIds: string[]): Promise<Map<string, ClubDeal['done']>
 
 type PaymentRow = {
   id: string; deal_id: string; amount: number | string; tax_part: number | string; received_on: string; method: DuesPaymentMethod;
-  reference: string | null; note: string | null; recorded_by_name: string; recorded_at: string; voided_at: string | null; voided_by_name: string | null; void_reason: string | null; returned_at: string | null;
+  reference: string | null; note: string | null; recorded_by_name: string; recorded_at: string; voided_at: string | null; voided_by_name: string | null; void_reason: string | null; returned_at: string | null; dispute_lost_at: string | null;
   // Part 3b (mig 530): a card payment.
   online_payment_id: string | null; card_brand: string | null; card_last4: string | null; fee_paid_by: 'club' | 'sponsor' | null;
   fee_amount: number | string | null; fee_charged: number | string; fee_tax: number | string;
   online_payments: { paid_at: string | null; stripe_payment_intent_id: string | null } | { paid_at: string | null; stripe_payment_intent_id: string | null }[] | null;
 };
-const PAYMENT_COLUMNS = 'id, deal_id, amount, tax_part, received_on, method, reference, note, recorded_by_name, recorded_at, voided_at, voided_by_name, void_reason, returned_at, '
+const PAYMENT_COLUMNS = 'id, deal_id, amount, tax_part, received_on, method, reference, note, recorded_by_name, recorded_at, voided_at, voided_by_name, void_reason, returned_at, dispute_lost_at, '
   + 'online_payment_id, card_brand, card_last4, fee_paid_by, fee_amount, fee_charged, fee_tax, online_payments(paid_at, stripe_payment_intent_id)';
 const paymentOf = (r: PaymentRow, disputed: ReadonlySet<string> = new Set()): DealPayment => {
   const op = Array.isArray(r.online_payments) ? r.online_payments[0] : r.online_payments;
@@ -111,6 +111,7 @@ const paymentOf = (r: PaymentRow, disputed: ReadonlySet<string> = new Set()): De
     recordedByName: r.recorded_by_name, recordedAt: r.recorded_at,
     voided: r.voided_at ? { at: r.voided_at, byName: r.voided_by_name ?? '', reason: r.void_reason ?? '' } : null,
     returned: r.returned_at != null,
+    disputeLost: r.dispute_lost_at != null,
     card: r.online_payment_id ? {
       brand: r.card_brand, last4: r.card_last4, paidAt: op?.paid_at ?? null, reference: op?.stripe_payment_intent_id ?? null,
       feePaidBy: r.fee_paid_by ?? 'club', fee: num(r.fee_amount), feeCharged: num(r.fee_charged), feeTax: num(r.fee_tax),
@@ -123,15 +124,25 @@ const paymentOf = (r: PaymentRow, disputed: ReadonlySet<string> = new Set()): De
 
 type RefundRow = {
   id: string; deal_id: string; payment_id: string; amount: number | string; tax_part: number | string; whole: boolean; ends_deal: boolean;
-  reason: string; status: DealRefund['status']; failure_reason: string | null; refunded_on: string | null; succeeded_at: string | null;
-  failed_at: string | null; created_at: string; created_by_name: string; stripe_refund_id: string | null; emailed_at: string | null; credit_seq: number | null; income_entry_id: string | null;
+  reason: string | null; status: DealRefund['status']; failure_reason: string | null; refunded_on: string | null; succeeded_at: string | null;
+  failed_at: string | null; created_at: string; created_by_name: string | null; stripe_refund_id: string | null; emailed_at: string | null; credit_seq: number | null; income_entry_id: string | null;
+  // Mig 542: a refund made in the club's own Stripe dashboard.
+  origin: 'app' | 'stripe'; fee_part: number | string; fee_tax_part: number | string; fee_refund_entry_id: string | null; stripe_created_at: string | null; stripe_reason: string | null;
+  finished_at: string | null; finished_by_name: string | null; outcome: 'ended' | 'owing' | null; after_lost_dispute: boolean; credit_on: string | null;
 };
-const REFUND_COLUMNS = 'id, deal_id, payment_id, amount, tax_part, whole, ends_deal, reason, status, failure_reason, refunded_on, succeeded_at, failed_at, created_at, created_by_name, stripe_refund_id, emailed_at, credit_seq, income_entry_id';
+const REFUND_COLUMNS = 'id, deal_id, payment_id, amount, tax_part, whole, ends_deal, reason, status, failure_reason, refunded_on, succeeded_at, failed_at, created_at, created_by_name, stripe_refund_id, emailed_at, credit_seq, income_entry_id, '
+  + 'origin, fee_part, fee_tax_part, fee_refund_entry_id, stripe_created_at, stripe_reason, finished_at, finished_by_name, outcome, after_lost_dispute, credit_on';
 const refundOf = (r: RefundRow, invoiceNo: string | null): DealRefund => ({
   id: r.id, paymentId: r.payment_id, amount: num(r.amount), taxPart: num(r.tax_part), whole: r.whole, endsDeal: r.ends_deal, reason: r.reason,
   status: r.status, failureReason: r.failure_reason, refundedOn: r.refunded_on, succeededAt: r.succeeded_at, failedAt: r.failed_at,
-  createdAt: r.created_at, createdByName: r.created_by_name, stripeRefundId: r.stripe_refund_id, emailedAt: r.emailed_at, booked: r.income_entry_id != null,
+  // A refund made in Stripe was nobody's here (no maker, no reason until it is finished; who finished it is `finished`).
+  createdAt: r.created_at, createdByName: r.created_by_name, stripeRefundId: r.stripe_refund_id, emailedAt: r.emailed_at,
+  // Booked: its lines were written (a Stripe refund that returned only the fee has a fee line and no sponsorship line).
+  booked: r.income_entry_id != null || r.fee_refund_entry_id != null,
   creditNumber: r.credit_seq != null && invoiceNo ? creditNoteNumber(invoiceNo, r.credit_seq) : null,
+  origin: r.origin, feePart: num(r.fee_part), feeTaxPart: num(r.fee_tax_part), stripeCreatedAt: r.stripe_created_at, stripeReason: r.stripe_reason,
+  finished: r.finished_at ? { at: r.finished_at, byName: r.finished_by_name ?? '', outcome: r.outcome } : null,
+  afterLostDispute: r.after_lost_dispute, creditOn: r.credit_on,
 });
 
 /** Every refund on these deals, oldest first (a failed one stays on record: "Refund didn't reach the card"). */
@@ -141,7 +152,7 @@ async function refundsFor(orgId: string, dealIds: string[], numbers: Map<string,
     const { data, error } = await supabaseAdmin.from('club_sponsor_deal_refunds').select(REFUND_COLUMNS)
       .eq('org_id', orgId).in('deal_id', dealIds.slice(i, i + 200)).order('created_at');
     if (error) throw error;
-    for (const r of (data ?? []) as RefundRow[]) out.set(r.deal_id, [...(out.get(r.deal_id) ?? []), refundOf(r, numbers.get(r.deal_id) ?? null)]);
+    for (const r of (data ?? []) as unknown as RefundRow[]) out.set(r.deal_id, [...(out.get(r.deal_id) ?? []), refundOf(r, numbers.get(r.deal_id) ?? null)]);
   }
   return out;
 }
@@ -185,7 +196,7 @@ async function openDisputesOn(orgId: string, onlinePaymentIds: string[]): Promis
  * (paged): a payment missed here is a reason missed, and one counted wrongly is an email sent without one.
  */
 export async function readStandingPaidOn(orgId: string, today: string): Promise<Map<string, string>> {
-  const [deals, payments, ending] = await Promise.all([
+  const [deals, payments, ending, givenBack] = await Promise.all([
     fetchAll<{ id: string; sponsor_id: string }>((from, to) =>
       supabaseAdmin.from('club_sponsor_deals').select('id, sponsor_id').eq('org_id', orgId).neq('state', 'withdrawn').order('id').range(from, to)),
     fetchAll<{ id: string; deal_id: string; received_on: string; online_payment_id: string | null }>((from, to) =>
@@ -193,6 +204,7 @@ export async function readStandingPaidOn(orgId: string, today: string): Promise<
         .is('voided_at', null).is('returned_at', null).lte('received_on', today).order('id').range(from, to)),
     fetchAll<{ deal_id: string }>((from, to) =>
       supabaseAdmin.from('club_sponsor_deal_refunds').select('deal_id').eq('org_id', orgId).eq('status', 'pending').eq('ends_deal', true).order('id').range(from, to)),
+    givenBackInStripe(orgId),
   ]);
   // Unlike the refund flag, a failed dispute read fails the whole read: a reason must never be guessed.
   const disputes = await fetchAllIn<{ online_payment_id: string; status: string }>(
@@ -206,11 +218,37 @@ export async function readStandingPaidOn(orgId: string, today: string): Promise<
   const out = new Map<string, string>();
   for (const p of payments) {
     const sponsor = sponsorOf.get(p.deal_id);
-    if (!sponsor || endingDeals.has(p.deal_id) || (p.online_payment_id && disputed.has(p.online_payment_id))) continue;
+    if (!sponsor || endingDeals.has(p.deal_id) || givenBack.has(p.id) || (p.online_payment_id && disputed.has(p.online_payment_id))) continue;
     const was = out.get(sponsor);
     if (!was || p.received_on > was) out.set(sponsor, p.received_on);
   }
   return out;
+}
+
+/**
+ * Card payments given back in full by refunds made in Stripe that the club hasn't finished yet (Stage 6 fixes Part A: "Offer again
+ * counts what is left after every refund, wherever it was made"). Finishing sets `returned_at`, which the read above already
+ * filters; until then the payment row still reads as standing, so it is found here. A part refund keeps the payment counting.
+ */
+async function givenBackInStripe(orgId: string): Promise<Set<string>> {
+  const waiting = await fetchAll<{ payment_id: string }>((from, to) =>
+    supabaseAdmin.from('club_sponsor_deal_refunds').select('payment_id').eq('org_id', orgId).eq('origin', 'stripe')
+      .is('finished_at', null).neq('status', 'failed').order('id').range(from, to));
+  const ids = [...new Set(waiting.map(w => w.payment_id))];
+  if (!ids.length) return new Set();
+  const [pays, refunds] = await Promise.all([
+    fetchAllIn<{ id: string; amount: number | string; tax_part: number | string; fee_charged: number | string; fee_tax: number | string }>(ids, (chunk, from, to) =>
+      supabaseAdmin.from('club_sponsor_deal_payments').select('id, amount, tax_part, fee_charged, fee_tax').eq('org_id', orgId).in('id', chunk).order('id').range(from, to)),
+    fetchAllIn<{ payment_id: string; status: DealRefund['status']; amount: number | string; tax_part: number | string; fee_part: number | string; fee_tax_part: number | string }>(ids, (chunk, from, to) =>
+      supabaseAdmin.from('club_sponsor_deal_refunds').select('payment_id, status, amount, tax_part, fee_part, fee_tax_part').eq('org_id', orgId).in('payment_id', chunk)
+        .order('id').range(from, to)),
+  ]);
+  // The one "what is left" sum (`refundLeft`, the payment window's and mig 542's): given back in full is nothing left.
+  const shaped = refunds.map(r => ({ paymentId: r.payment_id, status: r.status, amount: num(r.amount), taxPart: num(r.tax_part), feePart: num(r.fee_part), feeTaxPart: num(r.fee_tax_part) }));
+  return new Set(pays.filter(p => refundLeft({
+    id: p.id, amount: num(p.amount), taxPart: num(p.tax_part),
+    card: { feeCharged: num(p.fee_charged), feeTax: num(p.fee_tax) } as DealPayment['card'],
+  }, shaped).left <= 0).map(p => p.id));
 }
 
 /** Has this business any payment on record other than voided ones, standing or not? */
