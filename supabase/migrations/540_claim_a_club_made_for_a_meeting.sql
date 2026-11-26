@@ -108,6 +108,7 @@ CREATE INDEX IF NOT EXISTS preview_claim_tries_org_idx ON public.preview_claim_t
 CREATE INDEX IF NOT EXISTS preview_claim_tries_visitor_idx ON public.preview_claim_tries (visitor_key, tried_at DESC);
 ALTER TABLE public.preview_claim_tries ENABLE ROW LEVEL SECURITY;
 REVOKE ALL ON public.preview_claim_tries FROM anon, authenticated;
+-- no-service-role-grant: preview_claim_tries — granted SELECT, INSERT and DELETE only: a wrong try is never edited
 GRANT SELECT, INSERT, DELETE ON public.preview_claim_tries TO service_role;
 COMMENT ON TABLE public.preview_claim_tries IS
   'Track P (mig 540, T7): one row per wrong claim code. Five in an hour for a club, or for a visitor (a one-way hash, never an address) across clubs, rests the door for an hour. Pruned after a day. "Let them try again" in the room window deletes a club''s rows.';

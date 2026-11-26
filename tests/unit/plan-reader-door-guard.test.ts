@@ -60,6 +60,7 @@ const ALLOWED: Record<string, [Klass, string]> = {
   'lib/fan-follows.ts': ['through', 'selects status, the door decides cancelled'],
   'lib/platform-online-payments.ts': ['through', 'the console’s Online payments tab (Club Tier 12d-2) names a suspension from the stored status; the plan it reads is the door’s (effectiveOrgFactsForId)'],
   'lib/scores-feed.ts': ['through', 'selects status, the door decides cancelled'],
+  'lib/tournament-online-payments.ts': ['through', "the anonymous card-payment yes/no's public-site check selects status, the door decides canceled"],
   'lib/user-contexts.ts': ['through', 'membership reads fold through withEffectiveOrgs'],
   'lib/invite-acceptance.ts': ['through', 'folds through withEffectiveOrgs before routing'],
   // ── writers ──
@@ -98,6 +99,7 @@ const ALLOWED: Record<string, [Klass, string]> = {
   'app/api/platform-admin/product-catalog/change-requests/route.ts': ['writer', 'plan catalogue changes'],
   'lib/platform-events.ts': ['writer', 'event rows carry the plan and status columns'],
   // ── stored on purpose ──
+  'lib/preview-claim-server.ts': ['stored', "Prospect clubs (platform admin, owner only): a claimed preview's row names the plan the club HOLDS, its billing status and whether it reached checkout; nothing is gated on it"],
   'lib/platform-metrics.ts': ['stored', 'revenue and customer counts: free time is never revenue (/billing 2026-10-25)'],
   'lib/legal-acceptance-plans.ts': ['stored', "the Terms screen's cancel door (6.3, §20 (5e)) names the plans a person PAYS Stripe for — free time has nothing to cancel"],
   // Plans & pricing Stage 2 Part 4: Renewals lists what renews or ends from the club's OWN record (status, period end, price
@@ -114,7 +116,6 @@ const ALLOWED: Record<string, [Klass, string]> = {
   'lib/platform-people-lookup.ts': ['stored', 'the console shows the stored plan'],
   'app/api/platform-admin/find/route.ts': ['stored', 'Find shows the stored plan'],
   'app/platform-admin/orgs/page.tsx': ['stored', 'the clubs list shows the stored plan'],
-  'app/platform-admin/orgs/OrgsClient.tsx': ['stored', 'the clubs list shows the stored plan'],
   'app/platform-admin/orgs/[id]/page.tsx': ['stored', 'the record shows the stored plan beside free time'],
   'app/platform-admin/customer-users/people-rows.ts': ['stored', 'the console shows the stored plan'],
   'app/platform-admin/customer-users/[id]/page.tsx': ['stored', 'the console shows the stored plan'],
@@ -161,7 +162,7 @@ const COLUMNS = /\b(plan_id|tournament_limit|team_limit|subscription_status|enab
 function stripComments(src: string): string {
   return src
     .replace(/\/\*[\s\S]*?\*\//g, '')
-    .split('\n')
+    .split(/\r?\n/) // a CRLF working copy left a \r that `.*$` cannot cross, so its comments read as code
     .map(l => l.replace(/(^|[^:'"`])\/\/.*$/, '$1'))
     .join('\n');
 }

@@ -5,6 +5,7 @@ import { factsFromRow, takesPayments, PAYOUTS_ACCOUNT_COLUMNS, type PayoutsAccou
 import { tournamentTracksPayments } from '@/lib/tournament-payments-tracked';
 import { getOrganizationBySlugForServer } from '@/lib/server-organizations';
 import { isPublicTournamentStatus } from '@/lib/public-pages';
+import { effectiveStatuses } from '@/lib/entitlement-grants';
 
 /**
  * Does this tournament have a public site a stranger can reach: a live (active or completed) event of an organization that
@@ -16,8 +17,9 @@ export async function tournamentHasPublicSite(tournamentId: string): Promise<boo
     if (!/^[0-9a-f-]{36}$/i.test(tournamentId)) return false;
     const { data: t } = await supabaseAdmin.from('tournaments').select('org_id, status').eq('id', tournamentId).maybeSingle();
     if (!t || !isPublicTournamentStatus(t.status as string)) return false;
-    const { data: org } = await supabaseAdmin.from('organizations').select('subscription_status').eq('id', t.org_id as string).maybeSingle();
-    return !!org && org.subscription_status !== 'canceled';
+    const { data: org } = await supabaseAdmin.from('organizations').select('id, subscription_status').eq('id', t.org_id as string).maybeSingle();
+    // The door decides "canceled", as the public site does: free time holding an ended club open counts.
+    return !!org && (await effectiveStatuses([org])).get(org.id) !== 'canceled';
   } catch {
     return false;
   }

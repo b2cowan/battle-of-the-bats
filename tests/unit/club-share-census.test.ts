@@ -57,6 +57,7 @@ const STAYS_ON_FIELDLOGICHQ: Record<string, string> = {
   'components/public/TeamSubscribeButton.tsx': 'a PUBLIC page\'s calendar subscribe: runs on the visitor\'s own address already',
   'components/public/RegisterContent.tsx': 'a PUBLIC page\'s Add to calendar: runs on the visitor\'s own address already',
   'lib/team-calendar.ts': 'the calendar file a visitor downloads from a PUBLIC tournament page: the visitor\'s own address',
+  'app/platform-admin/prospect-clubs/RoomWindow.tsx': 'the meeting room\'s link and QR code for an unclaimed preview (platform admin): a preview has no web address of its own',
 };
 
 function walk(dir: string, out: string[]) {

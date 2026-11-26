@@ -15,6 +15,8 @@ const FOOT_DOORS: Array<[string, number]> = [
   ['components/auth/TwoStepCodeStep.tsx', 1],
   ['app/(consumer)/auth/signup/AccountOnlySignup.tsx', 1],
   ['app/(consumer)/start/StartDoorForm.tsx', 3],
+  // The claim page (Club Website Track P): its code step and its refused frame.
+  ['app/(consumer)/start/claim/[slug]/ClaimDoor.tsx', 2],
   ['app/team/TeamSignupClient.tsx', 3],
   ['app/coaches/join/page.tsx', 4],
   ['app/(consumer)/auth/accept-invite/AcceptInviteForm.tsx', 1],

@@ -76,6 +76,6 @@ describe('the card-payment yes/no for a tournament', () => {
   it('the public-site check refuses a canceled organization and a malformed id', () => {
     const lib = readCode('lib/tournament-online-payments.ts');
     assert.match(lib, /if \(!\/\^\[0-9a-f-\]\{36\}\$\/i\.test\(tournamentId\)\) return false;/);
-    assert.match(lib, /org\.subscription_status !== 'canceled'/);
+    assert.match(lib, /\(await effectiveStatuses\(\[org\]\)\)\.get\(org\.id\) !== 'canceled'/);
   });
 });
