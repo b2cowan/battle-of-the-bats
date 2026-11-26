@@ -25,6 +25,7 @@ import {
 } from '@/lib/coach-schedule-view';
 import type { RepTeamEvent, RepTryoutSession } from '@/lib/types';
 import { homeAwayWord } from '@/lib/game-clock-labels';
+import { MARK_WORDS } from '@/lib/place-closures';
 
 /**
  * THE SCHEDULE'S THREE CALENDAR VIEWS — List, Week and Month — and the three row kinds they draw
@@ -66,6 +67,11 @@ export interface ScheduleRowDecor {
    * answers (the club admin's read-only copy of a rep schedule stays exactly as it is).
    */
   headcountFor?: (e: RepTeamEvent) => { words: string; short: boolean } | null;
+  /**
+   * The club closed these games' places (Club Website Stage 2, K9): "Place closed" in the Moved chip's place, until the
+   * coach moves or cancels the game or the club reopens. Absent: a page that doesn't read closure marks.
+   */
+  closureMarks?: Record<string, unknown>;
 }
 
 /** The data all three views draw from. */
@@ -218,7 +224,7 @@ function TournamentGameChip({ game, dayKey, listRow }: { game: CoachScheduleTour
   );
 }
 
-function EventChip({ event, onClick, dayKey, mismatch, awardCount, moved, bookRecord, gameDayHref, listRow, clubSource, headcount }: { event: RepTeamEvent; onClick: () => void; dayKey?: string; mismatch?: boolean; awardCount?: number; moved?: boolean; bookRecord?: string | null; gameDayHref?: string | null; listRow?: boolean; clubSource?: { scheduleName: string; handedBack: boolean; ask?: { id: string; late?: boolean } | null } | null; headcount?: { words: string; short: boolean } | null }) {
+function EventChip({ event, onClick, dayKey, mismatch, awardCount, moved, bookRecord, gameDayHref, listRow, clubSource, headcount, placeClosed }: { event: RepTeamEvent; onClick: () => void; dayKey?: string; mismatch?: boolean; awardCount?: number; moved?: boolean; placeClosed?: boolean; bookRecord?: string | null; gameDayHref?: string | null; listRow?: boolean; clubSource?: { scheduleName: string; handedBack: boolean; ask?: { id: string; late?: boolean } | null } | null; headcount?: { words: string; short: boolean } | null }) {
   const color = EVENT_COLORS[event.eventType];
   const Icon = EVENT_ICONS[event.eventType];
   const cancelled = event.status === 'cancelled';
@@ -260,6 +266,10 @@ function EventChip({ event, onClick, dayKey, mismatch, awardCount, moved, bookRe
           and attendance came with it — this only exists so they know the time changed. */}
       {moved && !cancelled && (
         <span className={styles.eventChipMoved} title="The organizer moved this game">Moved</span>
+      )}
+      {/* Club Website Stage 2 (K9): the club closed this game's place; it waits for the coach to give it a new date. */}
+      {placeClosed && !cancelled && (
+        <span className={styles.eventChipClosed} title={MARK_WORDS.chipTitle}>{MARK_WORDS.coachPill}</span>
       )}
       {/* Scouting book glance: your record vs this opponent, upcoming games only (the
           caller passes null once a score exists — the trail slot is the score's then). */}
@@ -376,6 +386,7 @@ export function ScheduleEventChip({ event, decor, dayKey, listRow }: { event: Re
       listRow={listRow}
       clubSource={decor.clubSourceOf?.(event) ?? null}
       headcount={decor.headcountFor?.(event) ?? null}
+      placeClosed={!!decor.closureMarks?.[event.id]}
     />
   );
 }

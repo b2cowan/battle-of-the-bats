@@ -3422,6 +3422,8 @@ const coachesHelp: HelpPageContent = {
         // Club Tier Stage 6a — the clash line under the venue.
         // Club Tier Stage 6b — the club renames or archives one of its venues.
         'venue renamed', 'new venue name', 'archived venue', 'venue missing from list',
+        // Club Website Stage 2 — the club closes one of its places.
+        'needs a new date', 'place closed', 'field closed', 'park closed', 'diamond closed', 'club closed the field', 'club closes a field', 'closed field email', 'reopened',
         'clash', 'double booked', 'double-booked', 'already booked', 'booked by', 'diamond taken', 'busy then', 'not checked for clashes', 'two teams same diamond', 'address', 'google maps', 'map link', 'recent locations', 'links', 'attach link', 'resources', 'tags', 'tag a game', 'game tags', 'manage tags', 'merge tags', 'rename tag', 'filter by tag', 'record by tag', 'awards', 'give an award', 'mvp', 'best hitter', 'hustle award', 'award types', 'manage awards', 'retire award',
         // Chunk D Slice 3 — printable certificates live off the awards report.
         'certificate', 'certificates', 'print certificate', 'print certificates', 'print awards',
@@ -3473,6 +3475,21 @@ const coachesHelp: HelpPageContent = {
                 <li><strong>Outside the club&rsquo;s permit?</strong> When the club holds a permit at that venue and your time falls outside it, a quiet grey line says so under Venue, for example <em>&ldquo;Outside the club&rsquo;s permit for Diamond 2. It covers Tue and Thu, 5:30&ndash;9:00 p.m., until Oct 29.&rdquo;</em> It never turns amber and never stops you saving. A weekly series groups its dates outside the permit under one note and says how many; a date off says so. If the club&rsquo;s last permit at that venue ended before your date, the line says <em>&ldquo;Outside the club&rsquo;s permit for Diamond 2: the permit ended Sep 30, 2026.&rdquo;</em> At a venue the club holds no permit at, nothing appears.</li>
               </ul>
               <p>Editing a repeating series: tap the pencil and choose <strong>This &amp; future</strong> or <strong>All practices</strong>. The form lists every date it will change, grouped the same way, and moves the venue and diamond with all of them when you save.</p>
+            </>
+          ),
+        },
+        {
+          id: 'event-details-club-closed',
+          title: 'When the club closes a field',
+          content: (
+            <>
+              <p>When your club closes one of its venues, or one diamond there, your games at it on those days aren&rsquo;t moved. They are marked, and you set the new date. The club emails the team&rsquo;s head coach, saying which place is closed and which games it holds. When the team has no head coach on file, every coach on the team gets it. Reply to it to reach the person at the club who closed the place.</p>
+              <ul>
+                <li><strong>On your schedule</strong>, the game shows <strong>Needs a new date</strong>. Open it and a note says, for example, <em>From Kestrel Bay Softball Association &middot; Lions Park closed on Sat, Nov 28. Give this game a new date with Edit, or cancel it.</em></li>
+                <li><strong>Families</strong> see the game marked <strong>Place closed</strong> in the family app and, when the team&rsquo;s schedule is set to Public, on the team&rsquo;s public page and the club&rsquo;s home page. A strip at the top of the club&rsquo;s site says the place is closed.</li>
+                <li><strong>The mark goes</strong> when you move or cancel the game. If the club reopens the place first, the mark goes and you get one line saying so; the game is where it was, so keep it or move it.</li>
+                <li><strong>A game played anyway</strong> shows its score, not the mark.</li>
+              </ul>
             </>
           ),
         },

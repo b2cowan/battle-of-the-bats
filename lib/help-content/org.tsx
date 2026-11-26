@@ -1794,6 +1794,16 @@ const orgHelp: HelpPageContent = {
             </HelpDefs>
           ),
         },
+        {
+          id: 'venue-library-t-closed',
+          title: 'A closed place at the top of the library',
+          content: (
+            <>
+              <p>While a place is closed, the owner, admins and league admins see a <strong>Closed</strong> row at the top of the Venue library, above the table. It names the place (<em>Lions Park &middot; all diamonds</em>, or one diamond, or <em>All our fields</em>) and says when it was closed and what changed, for example <em>Sat, Nov 28 &middot; closed 7:10 a.m. by Dana Reyes &middot; 4 postponed, 1 rep game marked</em>. <strong>Reopen</strong> is on that row. In the table, the place&rsquo;s own row reads <strong>Closed today</strong>.</p>
+              <p><strong>Close a place</strong> is in the library&rsquo;s toolbar. See <a href="#close-a-place">Close a place</a>.</p>
+            </>
+          ),
+        },
       ],
       faqs: [
         {
@@ -1813,6 +1823,89 @@ const orgHelp: HelpPageContent = {
           ),
           answerText: 'Yes. League admins can add and change venues in the Venue library, the list house league’s “Set up your diamonds once” link opens.',
           keywords: ['league admin', 'add diamonds', 'refused', 'venue library'],
+        },
+      ],
+    },
+    {
+      id: 'close-a-place',
+      heading: 'Close a place — when a park or a diamond is closed',
+      summary: 'Close a park, one diamond or all your fields for a day or a few days: your site says so at once, house league games are postponed or cancelled and families emailed, rep games are marked for their coaches, and Reopen takes the strip off your site.',
+      keywords: [
+        'close a place', 'closed place', 'place closed', 'close a park', 'close a diamond', 'close a field', 'field closed', 'fields closed',
+        'park closed', 'diamond closed', 'all our fields', 'flooded', 'wet fields', 'rain', 'rainout', 'rain out', 'weather', 'call off games', // spelling-ok: a search synonym ("Rainout" is the one spelling, K15)
+        'reopen', 'reopen a place', 'closed by mistake', 'needs a new date', 'marked for the coach', 'rep game marked', 'strip on the site',
+        'closed today', 'closed tomorrow', 'tell families the field is closed', 'places closed', 'rain delay', 'typed place', 'link both',
+      ],
+      searchText: 'close a place venue library toolbar overview this morning house league schedule rainout button opens close a place pick a place one diamond all diamonds all our fields owner admin only day until the end of that day up to two weeks what happens to house league games postpone them cancel them needs a new date struck through what is at that place that day tick untick game started tick it to call it off mid-game draft division not listed a line for the families email 120 characters not shown on your site nothing changes until you press the button close lions park and email 58 families your site says lions park is closed today closed tomorrow closed through at once until the end of the day goes by itself top of every club page not on tournament pages house league families emailed one email per family per division coaches get a copy does not count toward today’s limit public schedule needs a new date at the top for a week rep games marked not moved place closed waits for a new date team page club home family app head coach emailed coaches emailed no head coach on file no coach to email let the team know yourself mark clears when the coach moves or cancels the game played anyway shows its score tournament not changed here open its rain delay diamonds picked practices not changed typed by hand place typed by hand link both link it so they match next time families are not told some emails didn’t go changes to send emails can’t be taken back give them new dates reopen keep it closed reopen and email coaches your site stops saying it’s closed postponed games stay under needs a new date league admin rep games as a count league plus club',
+      content: (
+        <p><strong>Close a place</strong> tells your site, your house league families and your rep coaches that a park, one diamond or all your fields are closed, in one press: your public site says so at once, the day&rsquo;s house league games are postponed or cancelled and their families emailed, and rep games there are marked for their coaches. It comes with League Plus and Club, for the owner, admins and league admins.</p>
+      ),
+      subtopics: [
+        {
+          id: 'close-a-place-t-how',
+          title: 'Closing a place',
+          content: (
+            <>
+              <p>Open <strong>Close a place</strong> from the Venue library&rsquo;s toolbar, from the Overview beside <strong>This morning</strong>, or with <strong>Rainout</strong> on a house league season&rsquo;s Schedule page, which opens on that season&rsquo;s places on its next day with games.</p>
+              <ol>
+                <li>Pick the <strong>Place</strong>: one park with <strong>All diamonds</strong>, or one of its <strong>Diamonds</strong>. <strong>All our fields</strong> is the owner&rsquo;s and admins&rsquo; choice.</li>
+                <li>Pick the <strong>Day</strong> and <strong>Until</strong>: one day, or up to two weeks.</li>
+                <li>Choose <strong>Postpone them</strong> or <strong>Cancel them</strong> for the house league games.</li>
+                <li>Read <strong>What&rsquo;s at Lions Park that day</strong> and untick any game that is still being played.</li>
+                <li>Add a line for the families&rsquo; email if you want one (120 characters at most; it isn&rsquo;t shown on your site).</li>
+                <li>Press the button. It says what it does, for example <strong>Close Lions Park and email 58 families</strong>. Nothing changes until you press it.</li>
+              </ol>
+              <HelpNote variant="warning" title="Emails can’t be taken back">There is no hold and no undo for the emails. To change a postponed game afterwards, give it a new date; its families are told again.</HelpNote>
+            </>
+          ),
+        },
+        {
+          id: 'close-a-place-t-what',
+          title: 'What changes, program by program',
+          content: (
+            <HelpDefs>
+              <HelpDef term="Your site">From the moment you press, a strip across the top of every club page says, for example, <em>Lions Park is closed today.</em> or <em>Lions Park is closed tomorrow (Sat, Nov 28).</em> It goes by itself at the end of the last day. A tournament&rsquo;s pages don&rsquo;t show it.</HelpDef>
+              <HelpDef term="House league">The ticked games are postponed (they wait under <strong>Needs a new date</strong>) or cancelled (struck through). Each family gets one email per division, the teams&rsquo; coaches get a copy, and it doesn&rsquo;t count toward the day&rsquo;s email limit. For a week after postponements are sent, the public schedule shows Needs a new date at the top.</HelpDef>
+              <HelpDef term="Rep teams">Their games aren&rsquo;t moved. Each is marked <strong>Place closed</strong> in the family app and, when the team&rsquo;s schedule is set to Public, on its team page and the club&rsquo;s home page, and the team&rsquo;s head coach is emailed to set a new date (its coaches, when it has no head coach on file). The mark goes when the coach moves or cancels the game, or when you reopen. A game played anyway shows its score.</HelpDef>
+              <HelpDef term="Tournaments">Not changed here. After you close, <strong>Open its Rain delay</strong> opens the tournament&rsquo;s own Rain delay with the closed place&rsquo;s diamonds picked.</HelpDef>
+              <HelpDef term="Practices">Named in the window, never changed.</HelpDef>
+              <HelpDef term="A place typed by hand">A game whose place was typed, not picked from the Venue library, is listed unticked under <strong>Place typed by hand</strong>. Tick it to call it off too. <strong>Link both to Lions Park</strong> links those games to the library&rsquo;s place so they match next time; families aren&rsquo;t told.</HelpDef>
+            </HelpDefs>
+          ),
+        },
+        {
+          id: 'close-a-place-t-reopen',
+          title: 'Reopening a place',
+          content: (
+            <>
+              <p>While a place is closed, it has a <strong>Closed</strong> row at the top of the Venue library, and the Overview shows a <strong>Places closed</strong> card. Press <strong>Reopen</strong> on the row.</p>
+              <ul>
+                <li>Your site stops saying it&rsquo;s closed, at once.</li>
+                <li>Rep games lose their marks, and their coaches get one line: the place reopened and the game wasn&rsquo;t moved.</li>
+                <li>House league games stay as they are. Postponed games stay under Needs a new date: give each a new date from the schedule, and its families are told again.</li>
+              </ul>
+            </>
+          ),
+        },
+      ],
+      faqs: [
+        {
+          id: 'faq-close-a-place-league-admin',
+          question: 'I’m the league admin. Why don’t I see the rep teams’ names?',
+          answer: (
+            <p>A league admin sees the rep games at the place as a count. They are still marked for their coaches when you close. Only the owner and admins see the rep teams by name, close all the fields at once, or open a tournament&rsquo;s Rain delay from the window.</p>
+          ),
+          answerText: 'A league admin sees the rep games at the place as a count. They are still marked for their coaches when you close. Only the owner and admins see the rep teams by name, close all the fields at once, or open a tournament’s Rain delay from the window.',
+          keywords: ['league admin', 'rep games count', 'rep team names', 'all our fields', 'close a place'],
+        },
+        {
+          id: 'faq-close-a-place-some-emails',
+          question: 'The result says some emails didn’t go. What now?',
+          answer: (
+            <p>Those divisions&rsquo; changes wait in <strong>Changes to send</strong> on the house league schedule, under a banner that starts <em>A closed place on</em>. Send them from there. A closed place&rsquo;s games can&rsquo;t be put back: your site already says the place is closed.</p>
+          ),
+          answerText: 'Those divisions’ changes wait in Changes to send on the house league schedule, under a banner that starts “A closed place on”. Send them from there. A closed place’s games can’t be put back: your site already says the place is closed.',
+          keywords: ['emails didn’t go', 'some emails', 'changes to send', 'a closed place on', 'put all back', 'close a place'],
         },
       ],
     },
@@ -2205,12 +2298,12 @@ const orgHelp: HelpPageContent = {
           id: 'faq-public-site-field-closure',
           question: 'How do I tell families the fields are closed tonight?',
           popular: true,
-          answerText: 'In Public site, press Post a notice at the top. Write the notice, add more detail if you like, choose when it ends (tonight, tomorrow night, or a date and time) and press Post notice. It shows at the top of every public page and every team page until it ends, or until you press End now.',
-          keywords: ['field closure', 'fields closed', 'rain out', 'cancelled tonight', 'club notice', 'post notice', 'announcement'], // spelling-ok: a search synonym ("Rainout" is the one spelling, K15)
+          answerText: 'On League Plus and Club, use Close a place in the Venue library: your site says the place is closed and the day’s games change in the same press. For anything else, in Public site, press Post a notice at the top. Write the notice, add more detail if you like, choose when it ends (tonight, tomorrow night, or a date and time) and press Post notice. It shows at the top of every public page and every team page until it ends, or until you press End now.',
+          keywords: ['field closure', 'fields closed', 'rain out', 'cancelled tonight', 'club notice', 'post notice', 'announcement', 'close a place'], // spelling-ok: a search synonym ("Rainout" is the one spelling, K15)
           answer: (
             <>
-              <p>In <strong>Public site</strong>, press <strong>Post a notice</strong> at the top. Write the notice, add more detail if you like, choose when it <strong>Ends</strong> (tonight, tomorrow night, or a date and time) and press <strong>Post notice</strong>.</p>
-              <p>It shows at the top of every public page and every team page until it ends, or until you press <strong>End now</strong>.</p>
+              <p>On League Plus and Club, use <a href="#close-a-place">Close a place</a> in the Venue library: your site says the place is closed and the day&rsquo;s games change in the same press.</p>
+              <p>For anything else, in <strong>Public site</strong>, press <strong>Post a notice</strong> at the top. Write the notice, add more detail if you like, choose when it <strong>Ends</strong> (tonight, tomorrow night, or a date and time) and press <strong>Post notice</strong>. It shows at the top of every public page and every team page until it ends, or until you press <strong>End now</strong>.</p>
             </>
           ),
         },

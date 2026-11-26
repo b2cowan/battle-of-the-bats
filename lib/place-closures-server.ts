@@ -2,11 +2,11 @@ import 'server-only';
 import { supabaseAdmin } from './supabase-admin';
 import { fetchAll, fetchAllIn } from './supabase-paging';
 import { getLeagueSeasons } from './db';
-import { addCalendarDays, zonedWallClockToUtc } from './timezone';
+import { addCalendarDays, formatShortWeekdayDate, orgDayKey, zonedWallClockToUtc } from './timezone';
 import { COACH_GAME_EVENT_TYPES } from './coach-tournament-games';
 import {
-  STRIP_CLOSURE_COLUMNS, firstClosureMatch, markStanding, repTypedText, stripClosureOf,
-  type ClosedPlace, type ClosureScope, type ClosureVerb, type MarkedEventNow, type PlaceMatch, type RepMark, type StripClosure,
+  STRIP_CLOSURE_COLUMNS, firstClosureMatch, markPlaceWords, markStanding, repTypedText, stripClosureOf,
+  type ClosedPlace, type MarkWords, type ClosureScope, type ClosureVerb, type MarkedEventNow, type PlaceMatch, type RepMark, type StripClosure,
 } from './place-closures';
 
 /**
@@ -146,6 +146,24 @@ export async function standingRepMarks(orgId: string, eventIds: readonly string[
       mark, closure: { id: r.closure_id, scope: c.scope, placeName: c.place_name, facilityName: c.facility_name, firstDay: c.first_day },
     };
     (out.get(r.event_id) ?? out.set(r.event_id, []).get(r.event_id)!).push(entry);
+  }
+  return out;
+}
+
+/**
+ * The mark's words on each of these rep games (Session 2C, K9): `{ place, day }` per event id, for the games whose mark
+ * still stands; the first mark pressed when two stand. ⚖ The same fence as `standingRepMarks`: ids the caller's own read
+ * already decided may be shown. ⚠ A failed read is no mark, never a broken page (the strip's rule): a surface reads as it
+ * did before the closure.
+ */
+export async function repMarkWords(orgId: string, eventIds: readonly string[]): Promise<Record<string, MarkWords>> {
+  const out: Record<string, MarkWords> = {};
+  if (!eventIds.length) return out;
+  const marks = await standingRepMarks(orgId, eventIds).catch(() => new Map<string, StandingMark[]>());
+  for (const [eventId, list] of marks) {
+    const first = list[0];
+    if (!first) continue;
+    out[eventId] = { place: markPlaceWords(first.closure), day: formatShortWeekdayDate(orgDayKey(first.mark.markedStartsAt)) };
   }
   return out;
 }

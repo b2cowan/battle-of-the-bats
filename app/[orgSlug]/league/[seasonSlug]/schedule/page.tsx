@@ -7,7 +7,7 @@ import {
   getTeamsForSeason,
   getOrgPlaceNames,
 } from '@/lib/db';
-import { isPublicLeagueSeason, publicSeasonGames } from '@/lib/league-game-changes-server';
+import { isPublicLeagueSeason, postponedLately, publicSeasonGames } from '@/lib/league-game-changes-server';
 import { SCHEDULE_PUBLIC_WORDS as P } from '@/lib/league-schedule-words';
 import { resolvePublicLeagueContext } from '@/lib/public-league';
 import { clubPageMetadata, getClubSeason } from '@/lib/club-page-meta';
@@ -90,7 +90,8 @@ export default async function PublicSchedulePage({
   // A draft division has no public games; one division only and still a draft reads the same.
   const coming = !!activeDivision && !published.has(activeDivision.id);
   // Board Ready Stage 6 (ask 1): the active division's sponsors, a quiet line under its tab. A failed read draws no line.
-  const sponsoredBy = activeDivision ? (await divisionSponsorsFor(org.id, [activeDivision.id]).catch((): Record<string, never[]> => ({})))[activeDivision.id] ?? [] : [];
+  // Started here, awaited beside K17's read below (neither waits on the other).
+  const sponsorsRead = activeDivision ? divisionSponsorsFor(org.id, [activeDivision.id]).catch((): Record<string, never[]> => ({})) : null;
 
   const { bookings, needsDate } = seasonCalendar({
     seasonName: season.name,
@@ -111,6 +112,23 @@ export default async function PublicSchedulePage({
   const hasGames = bookings.length + needsDate.length > 0;
   const teamName = new Map(teams.map(t => [t.id, t.name]));
   const nameOf = (id: string | null) => (id && teamName.get(id)) || 'A team';
+  // K17 (Club Website Stage 2): "Needs a new date" moves to the top while it holds a game postponed in the last 7 days, so
+  // a parent looking for this morning's game finds it first, not six weeks down. Otherwise it stays at the foot (shipped).
+  const [sponsors, needsDateOnTop] = await Promise.all([
+    sponsorsRead,
+    !coming
+      ? postponedLately(season.id, needsDate.flatMap(b => (b.source.kind === 'game' ? [b.source.game.id] : [])), renderedAt)
+      : false,
+  ]);
+  const sponsoredBy = activeDivision ? sponsors?.[activeDivision.id] ?? [] : [];
+  const needsDateSection = needsDate.length > 0 && (
+    <section className={kit.section}>
+      <PublicSectionHead title={SEASON_SCHEDULE_WORDS.needsDate} />
+      <ul className={`${kit.list} ${parts.gameList}`}>
+        {needsDate.map(b => <GameRow key={b.key} booking={b} nameOf={nameOf} nowMs={nowMs} />)}
+      </ul>
+    </section>
+  );
 
   // The light ground, bar and footer come from the club's frame (Club Tier Stage 4b-1).
   // The club page column (club round C2 + C5): on the logo edge, 960 at most (it was 800), 24 between sections.
@@ -156,6 +174,7 @@ export default async function PublicSchedulePage({
         <div>
           <p className={column.zone}>{timesInZoneSentence()}</p>
           <div className={column.weeks}>
+            {needsDateOnTop && needsDateSection}
             {earlier.length > 0 && (
               <details className={column.earlier}>
                 <summary>{SEASON_SCHEDULE_WORDS.earlierWeeks(earlier.length)}</summary>
@@ -165,14 +184,7 @@ export default async function PublicSchedulePage({
               </details>
             )}
             {ahead.map(w => <Week key={w.monday} week={w} today={today} nameOf={nameOf} nowMs={nowMs} />)}
-            {needsDate.length > 0 && (
-              <section className={kit.section}>
-                <PublicSectionHead title={SEASON_SCHEDULE_WORDS.needsDate} />
-                <ul className={`${kit.list} ${parts.gameList}`}>
-                  {needsDate.map(b => <GameRow key={b.key} booking={b} nameOf={nameOf} nowMs={nowMs} />)}
-                </ul>
-              </section>
-            )}
+            {!needsDateOnTop && needsDateSection}
           </div>
         </div>
       )}

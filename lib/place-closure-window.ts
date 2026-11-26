@@ -267,7 +267,7 @@ export const CLOSE_WORDS = {
   /** Build words: the link is chosen and happens at the press. */
   linkOn: (n: number, places: readonly ClosedPlace[]) =>
     `${n === 1 ? 'It is' : `${n} are`} linked to ${places.length === 1 ? placeWord(places[0]) : 'their places'} when you close. Families aren’t told.`,
-  linkUndo: 'Don’t link them',
+  linkUndo: 'Don’t link',
   started: (iso: string) => `Started at ${closeClock(iso)}`,
   startedTick: 'Tick it to call it off mid-game.',
   draft: (division: string) => `${division} is a draft, so none of its games are listed.`,
@@ -352,7 +352,7 @@ export const CLOSE_WORDS = {
   errFinished: 'A season finished while the window was open, so nothing was changed. Look again.',
   errNotFound: 'A game or place isn’t there any more. Nothing was changed. Look again.',
   errInvalid: 'The request was not understood',
-  errNetwork: 'The closure didn’t reach us. Check your connection, then press again: it closes once, however many times you press.',
+  errNetwork: 'We couldn’t tell if the closure went through. Check your connection, then press again: it closes once, however many times you press.',
 
   // The result (drawing tab 3).
   doneTitle: (places: readonly ClosedPlace[]) => `${cap(placesWord(places))} closed`,
@@ -405,15 +405,15 @@ export const CLOSE_WORDS = {
   reopenTitle: (place: string) => `Reopen ${place}?`,
   reopenSite: 'Your site stops saying it’s closed, at once.',
   reopenMarks: (marks: number, oneTeam: string | null, place: string) => marks === 1
-    ? `${oneTeam ? `The ${possessive(oneTeam)} game` : 'The rep game'} loses its mark, and its head coach gets one line: ${place} reopened, the game wasn’t moved, keep it or move it.`
-    : `${marks} rep games lose their marks, and their head coaches get one line: ${place} reopened, the game wasn’t moved, keep it or move it.`,
+    ? `${oneTeam ? `The ${possessive(oneTeam)} game` : 'The rep game'} loses its mark, and its coach gets one line: ${place} reopened, the game wasn’t moved, keep it or move it.`
+    : `${marks} rep games lose their marks, and their coaches get one line: ${place} reopened, the game wasn’t moved, keep it or move it.`,
   reopenStill: (n: number) => (n === 1 ? 'The 1 postponed game stays under “Needs a new date”.' : `The ${n} postponed games stay under “Needs a new date”.`),
   reopenStillRest: ' Their families were emailed, so give each a new date from the schedule and they’re told again.',
   reopenKeep: 'Keep it closed',
   reopenGo: (coaches: number) => (coaches === 0 ? 'Reopen' : `Reopen and email ${pluralize(coaches, 'coach', 'coaches')}`),
   reopened: (place: string) => `${place} reopened`,
   reopenedSite: (coaches: number, team: string | null) =>
-    `Your site no longer says it’s closed.${coaches === 0 ? '' : team && coaches === 1 ? ` The ${possessive(team)} head coach was emailed.` : ` ${pluralize(coaches, 'coach', 'coaches')} were emailed.`}`,
+    `Your site no longer says it’s closed.${coaches === 0 ? '' : team && coaches === 1 ? ` The ${possessive(team)} coach was emailed.` : ` ${pluralize(coaches, 'coach', 'coaches')} were emailed.`}`,
   reopenedStill: (n: number) => (n === 1 ? '1 game still needs a new date.' : `${n} games still need new dates.`),
   reopenedStillRest: (n: number) => (n === 1 ? ' Its families are told when you give it one.' : ' Their families are told when you give each one.'),
 

@@ -33,5 +33,7 @@ export function leagueEntries(events: readonly FeedTeamEvent[], now: number): Fa
     live: false,
     hasScore: false,
     isNextUp: e.id === next,
+    // A closure marks rep games only (Club Website Stage 2, K9): a house league game is postponed or cancelled itself.
+    mark: null,
   }));
 }

@@ -1,8 +1,9 @@
 import 'server-only';
 import { familyLayerTeamIds, isFamilyLayerEnabled, isPubliclyVisible } from './family-access';
-import { getClubRepTeamsForSchedule, getFamilyTeamView, getTeamGameEntriesBetween, type FamilyScheduleEntry, type FamilyTeamView } from './family-view';
+import { getClubRepTeamsForSchedule, getFamilyTeamView, getTeamGameEntriesBetween, markShown, type FamilyScheduleEntry, type FamilyTeamView } from './family-view';
 import { isOrgBillingSuspended } from './org-billing-access';
 import { orgHref } from './club-base';
+import { repMarkWords } from './place-closures-server';
 import type { Organization, RepTeam } from './types';
 
 /**
@@ -64,14 +65,15 @@ export async function getPublicTeamGamesBetween(params: {
   const { teams, shown } = await clubPublicTeams(params.org);
   if (shown.length === 0) return { publicTeams: 0, allTeams: teams.length, games: [] };
   const byId = new Map(shown.map(t => [t.id, { id: t.id, name: t.name, slug: t.slug }]));
-  const entries = await getTeamGameEntriesBetween([...byId.keys()], params.fromIso, params.toIso, params.now);
+  const entries = (await getTeamGameEntriesBetween([...byId.keys()], params.fromIso, params.toIso, params.now))
+    .filter(({ teamId }) => byId.has(teamId));
+  // The closure marks (Club Website Stage 2, K9) on the games this answer already decided anyone may see, on the entry as
+  // `getFamilyTeamView` carries them.
+  const marks = await repMarkWords(params.org.id, entries.map(({ entry }) => entry.id));
   return {
     publicTeams: shown.length,
     allTeams: teams.length,
-    games: entries.flatMap(({ teamId, entry }) => {
-      const team = byId.get(teamId);
-      return team ? [{ team, entry }] : [];
-    }),
+    games: entries.map(({ teamId, entry }) => ({ team: byId.get(teamId)!, entry: { ...entry, mark: markShown(marks[entry.id], entry) } })),
   };
 }
 

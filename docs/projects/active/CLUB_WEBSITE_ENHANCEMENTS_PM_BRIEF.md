@@ -68,6 +68,17 @@ is counted in the season report. One photo question serves every sign-up, camps 
 sign-up is on the club home the day it opens, a champs day never floods the home, and a family never answers the
 photo question twice in two different ways. Drawn and ruled the same day, all as recommended: club events on the schedules people already read. A champs day is named over its games on the house league schedule; a club can list an event on a house league season's or its rep teams' schedules without making it public; and a club event sits, read-only, on a rep coach's schedule beside the club's practices. The photo question's legal review came back the same day and its five calls were ruled as recommended: the question is optional and a blank answer means No; one Yes covers the club's website and its own social media pages, never posters or sponsors; a camp answer and a team answer are separate; a family can change its answer later, even after teams are made; and every club asks it in the same fixed words.
 
+**Close a place (Stage 2, ruled 2026-11-25, built 2026-11-25 to 2026-11-26; the walk is the owner's).** An owner,
+admin or house league admin closes a park, one diamond or all the club's fields for a day or up to two weeks, from the
+Venue library, the Overview or the house league's Rainout button. In one press: a strip at the top of every club page
+says so (never on a tournament's pages) and goes by itself at the end of the last day; house league games there are
+postponed or cancelled and their families emailed; a rep game there is marked "Place closed" for families (the family
+app, and the team page and club home when its schedule is Public) and "Needs a new date" for its coach, who is emailed
+and moves it; a tournament is handed to its own Rain delay. Reopen takes the strip down at once and tells the marked
+coaches. It comes with League Plus and both Club plans. Success looks like: on a wet Saturday the admin closes the park
+once, a parent learns it from the club's site before driving there, and no rep game is moved by anyone but its coach.
+One owner call stays open: what a club with no places listed meets from the Rainout button.
+
 **Added from Milton Bats' meeting (2026-11-24, proposed, not drawn or ruled): the club's own feed.** The club wants to
 promote wins and tournament trips on its site and already posts to Instagram. Proposed: a coach sends photos from a
 phone after a game or a trip; they reach the club already sorted by team, event and date because the schedule knows

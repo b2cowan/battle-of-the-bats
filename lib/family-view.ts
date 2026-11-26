@@ -5,6 +5,8 @@ import { COACH_GAME_EVENT_TYPES } from './coach-tournament-games';
 import { repEntryState } from './club-game-live';
 import { fetchAll } from './supabase-paging';
 import { LIVE_SEASON_STATUSES } from './season-live';
+import { repMarkWords } from './place-closures-server';
+import type { MarkWords } from './place-closures';
 import {
   isPubliclyVisible,
   isVisibleToFamilies,
@@ -70,6 +72,12 @@ export interface FamilyScheduleEntry {
   hasScore: boolean;
   /** The row the list opens at. Exactly one entry carries this. */
   isNextUp: boolean;
+  /**
+   * The club closed this game's place (Club Website Stage 2, K9): the closed place's words and the game's day while the
+   * mark stands, else null. Read HERE, beside the rule that decides who may see the team's games, so a mark reaches exactly
+   * the readers its game does (a private team's only its own families) and no page reads it a second way.
+   */
+  mark: MarkWords | null;
 }
 
 export interface FamilyTeamView {
@@ -139,7 +147,7 @@ function hasScore(row: EventRow): boolean {
   return row.team_score !== null && row.opponent_score !== null;
 }
 
-function toEntry(row: EventRow, nextUpId: string | null, now: number): FamilyScheduleEntry {
+function toEntry(row: EventRow, nextUpId: string | null, now: number, mark: MarkWords | null = null): FamilyScheduleEntry {
   const { completed, live } = entryState(row, now);
   // A score is drawn only on a game that is over or live: a score saved before the start (Game-Day Mode opens early) is
   // not a result, and an upcoming row carrying one would read as a game already played.
@@ -167,7 +175,16 @@ function toEntry(row: EventRow, nextUpId: string | null, now: number): FamilySch
     result: completed ? row.result : null,
     status: row.status,
     isNextUp: row.id === nextUpId,
+    mark: markShown(mark, { live, completed, hasScore: scored }),
   };
+}
+
+/**
+ * A mark shows only on a game still waiting (K9): one played anyway (live, over, or scored) reads as its score on every
+ * surface, never "Place closed". The one rule, so the team page, the family schedule and the club home agree.
+ */
+export function markShown(mark: MarkWords | null | undefined, e: { live: boolean; completed: boolean; hasScore: boolean }): MarkWords | null {
+  return mark && !e.live && !e.completed && !e.hasScore ? mark : null;
 }
 
 /**
@@ -278,6 +295,12 @@ export async function getFamilyTeamView(params: {
   const rows = (eventRows ?? []) as unknown as EventRow[];
   const now = Date.now();
   const nextUpId = findNextUpId(rows, now);
+  // The closure marks on these games (K9): one small indexed read; a failed read is no mark (`repMarkWords`).
+  // Only games still waiting can carry one (a press marks games; a cancelled or played game never shows it), so a season
+  // mostly played asks about few ids, and one with none asks nothing.
+  const marks = await repMarkWords(org.id, rows
+    .filter(r => COACH_GAME_EVENT_TYPES.includes(r.event_type) && r.status !== 'cancelled' && !entryState(r, now).completed)
+    .map(r => r.id));
 
   return {
     repTeamId: team.id,
@@ -290,7 +313,7 @@ export async function getFamilyTeamView(params: {
     seasonName: year.name,
     seasonYear: year.year,
     scheduleVisibility: visibility,
-    entries: rows.map(row => toEntry(row, nextUpId, now)),
+    entries: rows.map(row => toEntry(row, nextUpId, now, marks[row.id] ?? null)),
     record: computeRecord(rows),
   };
 }

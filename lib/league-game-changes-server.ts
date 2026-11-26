@@ -160,6 +160,33 @@ export async function publicSeasonGames(
   return { games: asLastSent(games.filter(g => published.has(g.divisionId)), held), published };
 }
 
+/** K17's "the last 7 days" (Club Website Stage 2): how long a fresh postponement holds "Needs a new date" at the top. */
+export const NEEDS_DATE_ON_TOP_DAYS = 7;
+
+/**
+ * Whether any of these games — the public schedule's "Needs a new date", as families last heard it — was postponed in the
+ * last 7 days (K17, for every Rainout and every one-off postponement alike). "Postponed" is the moment FAMILIES heard: the
+ * postponement's change row SENT since then. Nothing else records when a game was postponed (no column holds it), and a
+ * held postponement still reads as on to the public, so the sent time is the honest clock. ⚠ A failed read is false: the
+ * section stays where it was, never a broken page.
+ */
+export async function postponedLately(seasonId: string, gameIds: readonly string[], now: Date = new Date()): Promise<boolean> {
+  if (!gameIds.length) return false;
+  const since = new Date(now.getTime() - NEEDS_DATE_ON_TOP_DAYS * 86_400_000).toISOString();
+  // By the listed games (the game index serves it), the season a second fence; in chunks, so a big Rainout's list never
+  // outgrows a request — the day K17 matters most. The first hit answers.
+  const ids = [...gameIds];
+  for (let i = 0; i < ids.length; i += 100) {
+    const { data, error } = await supabaseAdmin.from('league_game_changes')
+      .select('id')
+      .in('game_id', ids.slice(i, i + 100)).eq('season_id', seasonId).eq('kind', 'postponed').gte('sent_at', since)
+      .limit(1);
+    if (error) return false;
+    if ((data ?? []).length > 0) return true;
+  }
+  return false;
+}
+
 /**
  * The same rule over a window of time, [fromIso, toIso) — "today and the two days before" for the club home (Stage 1 G2)
  * — reading the window (by start, and by the day a game was moved off, which the database keeps on every re-date) and the

@@ -11,7 +11,8 @@ import { clubFace, clubSocials } from '@/lib/club-site';
 import { orgHref } from '@/lib/club-base';
 import { getClubSiteContent } from '@/lib/club-page-meta';
 import { getLiveClubNotice } from '@/lib/db';
-import { noticeSmallLine } from '@/lib/club-notice';
+import { closureStrip, noticeSmallLine } from '@/lib/club-notice';
+import { closuresShowing } from '@/lib/place-closures-server';
 import { clubAboutPageShows } from '@/lib/club-about';
 import { resolveOrgSections } from '@/lib/org-section-availability';
 import { isFreePlan } from '@/lib/plan-config';
@@ -29,10 +30,13 @@ export async function loadClubFrame(org: Organization, orgSlug: string, base?: {
   // The club notice (Stage 4c-1, Ask 16) rides the same gate: a club page shows it under the bar until it ends. One small
   // indexed read; a failed read is no notice, never a broken page.
   const nowIso = new Date().toISOString();
-  const [siteContent, sections, liveNotice] = await Promise.all([
+  // The closed places (Club Website Stage 2, K4) ride the same gate and the same rule: the closures showing now, said in
+  // the club's day; a failed read is no strip, never a broken page (the read throws: the page decides, and this is it).
+  const [siteContent, sections, liveNotice, closures] = await Promise.all([
     siteContentRead,
     resolveOrgSections(org, siteContentRead),
     clubSiteOn ? getLiveClubNotice(org.id, nowIso) : Promise.resolve(null),
+    clubSiteOn ? closuresShowing(org.id, new Date(nowIso)).catch(() => []) : Promise.resolve([]),
   ]);
   return {
     slug: orgSlug,
@@ -53,6 +57,7 @@ export async function loadClubFrame(org: Organization, orgSlug: string, base?: {
       smallLine: noticeSmallLine(liveNotice, nowIso),
       endsAt: liveNotice.endsAt,
     } : null,
+    closures: closureStrip(closures, nowIso),
     aboutHref: clubAboutPageShows(siteContent) ? orgHref({ slug: orgSlug, ownHost: !!base?.ownHost }, '/about') : null,
   };
 }

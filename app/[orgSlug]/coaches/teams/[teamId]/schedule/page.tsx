@@ -56,6 +56,7 @@ import ScheduleEventForm, {
   type EventForm, type ScheduleFormInit,
 } from '@/components/coaches/ScheduleEventForm';
 import { seriesReach, type SeriesScope } from '@/lib/coach-series-scope';
+import type { MarkWords } from '@/lib/place-closures';
 import type { ClubVenueOption,
   RepTeamEvent,
   RepTeamEventAttendance,
@@ -197,6 +198,8 @@ export default function CoachesSchedulePage({
   /** Each CLUB practice's schedule, by its slot (Club Tier 11a — `clubSources` on the events read): "From {schedule}",
    *  and the team that handed the slot back. */
   const [clubSources, setClubSources] = useState<Record<string, { scheduleId: string; scheduleName: string; handedBackTeamId: string | null; ask?: ClubSourceAskView | null; handBack?: PracticeHandBack | null; handedBack?: boolean }>>({});
+  /** The club closed these games' places (Club Website Stage 2, K9; `closureMarks` on the events read). */
+  const [closureMarks, setClosureMarks] = useState<Record<string, MarkWords>>({});
   /** The duplicate notice's "Remove my copy" in flight. */
   const [saving, setSaving] = useState(false);
   // Game event ids whose saved lineup disagrees with attendance (server-computed) — badges the list.
@@ -379,6 +382,7 @@ export default function CoachesSchedulePage({
       setTeamTags(data.tags ?? []);
       setTagsByEventId(data.tagsByEventId ?? {});
       setClubSources(data.clubSources ?? {});
+      setClosureMarks(data.closureMarks ?? {});
       setPlaces(Array.isArray(data.places) ? data.places : []);
       setClubVenues(data.clubVenues?.inClub ? { inClub: true, venues: data.clubVenues.venues ?? [] } : { inClub: false, venues: [] });
       setUsualFacilityByVenue(data.usualFacilityByVenue ?? {});
@@ -777,7 +781,7 @@ export default function CoachesSchedulePage({
     return words ? { words, short } : null;
   };
   const rowDecor: ScheduleRowDecor = {
-    mismatchIds, awardCountByEventId, movedEventIds, bookRecordFor, gameDayHrefById, openEvent, clubSourceOf, headcountFor,
+    mismatchIds, awardCountByEventId, movedEventIds, bookRecordFor, gameDayHrefById, openEvent, clubSourceOf, headcountFor, closureMarks,
   };
   const viewData: ScheduleViewData = {
     events, tryoutSessions, unmirroredGames, sport: sportPack.id, tryoutsHref: `${base}/tryouts`, decor: rowDecor,
@@ -1057,6 +1061,8 @@ export default function CoachesSchedulePage({
           familyAnswersOn={familyHeadcounts !== null}
           seriesReach={selectedReach}
           clubSource={clubSourceOf(selectedEvent)}
+          closureMark={closureMarks[selectedEvent.id] ?? null}
+          clubName={currentOrg?.name ?? ''}
           onHandedBack={text => setImportToast(text)}
           onClose={() => setSelectedEvent(null)}
           onEdit={openEditForm}

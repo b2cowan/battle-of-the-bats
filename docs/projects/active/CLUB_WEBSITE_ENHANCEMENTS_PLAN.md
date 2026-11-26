@@ -316,6 +316,10 @@ prompt → the build → `/simplify`, `/review`, `/legal` or `/accounting` where
   *(Session 2B built 2026-11-25: the window, the result, Reopen, the rep coach email, the Rain delay hand-off, the places
   gate, the Rainout button opening it, "Rainout" one word; /billing, /strategy, /legal heard; /review run and applied.
   Progress 2026-11-25 "Stage 2 Session 2B". Commit at the owner's word. Next: 2C.)*
+  *(Session 2C built 2026-11-26: the strip on every club page, the rep mark on the five surfaces, "Needs a new date" on
+  top of the public house league schedule for a week, the help, the walk's day; /simplify, /review, /docs, /marketing,
+  /design, /legal run and applied. Walk §573 published. Progress 2026-11-26 "Stage 2 Session 2C". Commit at the
+  owner's word; the stage closes when the walk passes and the owner says so.)*
 - [ ] **Stage 3 — The site's face (idea 7; F4).** `/legal` and the consent question first. Before news, so a news post
   is built with its photo from the start. *(Club events, E9: the one photo question is this stage's; camps ask it in
   the same words. P1–P5 ruled 2026-11-25: optional, blank = No; one Yes names the website and the club's own social
@@ -1406,6 +1410,35 @@ the demos follow the product and are curated with `/demos`, never as a build ste
   Email the link (now a titled box, with Their role its own field), then the removal date and Remove now (the record
   Delete's look, no rule above it); the score is locked until the start; doubled spacing fixed. Walk A steps 7, 8, 10,
   13 and 19 reworded and republished.
+- 2026-11-26 — **Stage 2 Session 2C built (what families and coaches see, the help, the walk). Nothing committed at
+  writing.** Start condition held (2B committed `26f69ab8e`). **Landed:** the strip (K3, K4, K12, K16) on `stripSentence`,
+  not a second sentence: `closureStrip` (`lib/club-notice.ts`) over `closuresShowing`, read by the club frame on every
+  club page and only while the club site is on, never on a tournament's (the frame's own `wearsClubFrame`); at most four
+  lines ("And N more places are closed." past four), the small line "Posted 7:10 a.m. by the club" (two times, or "by the
+  club" for three or more) with " · ends tonight" only when every line does; it carries place words, days and two
+  instants only, and takes an ended line down at its end time without a reload (`ClubClosureStrip`, no motion, no
+  control), above the club notice. The rep mark (K9) on the five surfaces: the entry carries it (`FamilyScheduleEntry.mark`,
+  read by `getFamilyTeamView` for its waiting games only, after the rule that made the view public), so the public team
+  page, the club home's games part, the family schedule and the family home's Up next all read one field; a played,
+  live or scored game shows its score, never the mark (`markShown`); the coach's schedule route returns the marks for
+  the "Needs a new date" chip (list and week) and the amber note on the game's sheet. K17: `postponedLately` puts
+  "Needs a new date" first on the public house league schedule for seven days after a postponement is SENT (the change
+  rows' `sent_at`; nothing records the postponing itself). The old window's pure plan retired from
+  `lib/league-rainout.ts` (`/simplify`: only its tests read it). The walk's day: `--closure-walk` on the extras seed
+  (Lions Park, three house league games, one typed; the Ospreys' game; a Fall Classic game; daytime guard).
+  **Heard:** `/simplify` (the mark onto the entry; one rule for played-anyway); `/review`, four lenses, high-risk (8
+  fixed: played-anyway, the coach word, the extra read narrowed to waiting games, K17 chunked, the strip timer on the
+  real clock, the empty "From ·", the dictionary; 4 rejected with reasons; footer in the hand-off); `/docs` (a "Close a
+  place" topic in the club's guide, the Venue library's closed row, the house league Rainout article and its "by
+  mistake" FAQ rewritten to point at it, the coach's "When the club closes a field", a role-path link, the popular
+  "fields are closed tonight" answer pointing at Close a place); `/marketing` (§10, the 2B list settled with 2C's words;
+  one proposal not applied with reason); `/design` at 390 and 1280 (the coach's week chip wrapped; the mark line made
+  the row's second line under the title and the pill, after it wrapped to three lines beside the pill on a phone; four
+  findings to §9); `/legal` (holds; the help now says the mark shows on the team page and the club home only when the
+  team's schedule is Public). **Proof:** typecheck clean in scope; the closure, Rainout, guard and help suites green
+  (`place-closures-2c.test.ts` new, 22 tests); `check:spelling` green; focused lint warnings only; the full suite's
+  other failures are other sessions' files. `check:layout --changed` not run (§9). **Walk:** Owner QA Ledger §573,
+  four walks, 34 steps. **For the owner:** §9's no-places call is still open; nothing was built for it.
 
 ## 8. Census questions for Stage 0 (answer from code, not from this plan)
 
@@ -1528,9 +1561,36 @@ Answered 2026-11-24 (Stage 0 Part 1); evidence in the Progress block.
   has one place; a house league admin cannot (K1/K15). Built as ruled. Options for the owner: (A) as built; (B) the
   no-places state also offers "All our fields" to an owner or admin; (C) B, and a house league admin may close every
   place from the Rainout button only. Pre-customer, so the reach today is the demos and any trial club.
-- [ ] **The old Rainout's help is stale until 2C's `/docs` pass (Session 2B, 2026-11-25).** `lib/help-content/house-league.tsx`'s
+- [x] **The old Rainout's help is stale until 2C's `/docs` pass (Session 2B, 2026-11-25).** `lib/help-content/house-league.tsx`'s
   Rainout article and its "I pressed Rainout by mistake" FAQ still describe "Email the families now" and "Put all back".
-  2C rewrites them to point at the new "Close a place" topic (build prompt 2C step 6).
+  2C rewrites them to point at the new "Close a place" topic (build prompt 2C step 6). *(Done in 2C, 2026-11-26: both
+  rewritten; Put all back is described only for an older held Rainout; the club's guide gained the topic.)*
+- [ ] **A server read for house league games' closure words is built and unused (Session 2C, 2026-11-26).**
+  `leagueClosureReasons` (`lib/place-closures-server.ts`, 2B) has no caller: the drawing's club home shows a closed
+  place's house league games as a plain "Postponed", which is what ships. Remove it, or give it a surface, in a later
+  stage. Low.
+- [ ] **Calendar feeds don't carry the rep mark (Session 2C, 2026-11-26).** K9's five surfaces are the screens; a
+  subscribed calendar keeps the game at its time until the coach moves it. Named, not ruled. Low.
+- [ ] **A page left open keeps the strip after a Reopen until it reloads (Session 2C, 2026-11-26).** The strip takes
+  an ended line down by itself at its end time, but a Reopen is only seen on the next load, as the club notice's
+  End now is. Low.
+- [ ] **The strip's small line repeats the day for a several-day closure pressed earlier (`/marketing`, 2C,
+  2026-11-26).** "Posted Fri, Nov 27 at 7:10 a.m. and Fri, Nov 27 at 9:05 a.m. by the club": honest and rare; saying the
+  day once is a code change. Low.
+- [ ] **`check:layout --changed` was not run for Stage 2 (Sessions 2B and 2C).** Shared files widen it to the whole
+  product, which doesn't run on the dev server. `/design` checked the stage's screens by capture at 390 and 1280
+  instead; the release sweep owes the rest.
+- [ ] **The Overview's "Close a place" door is under the phone tap floor (`/design`, 2C, 2026-11-26).** 104 × 26 px:
+  it is the club kit's shared text link (`ck.link`, `ClubHubKit.tsx`), the same height as the Overview's other text
+  links ("Continue setup", 19 px). A kit-wide fix, not this stage's. Low.
+- [ ] **"Give them new dates" is a secondary button on the close result and the primary green on the Reopen result
+  (`/design`, 2C, 2026-11-26).** Check against the drawing's tab 3 and settle one. Low.
+- [ ] **The coach's month view shows no "Needs a new date" chip (`/design`, 2C, 2026-11-26).** The list and the week
+  show it, and the game's sheet carries the note; the month cell is a dot-and-title cell with no chips today. Named, not
+  ruled. Low.
+- [ ] **The family app's mark has not been seen in a browser (2C, 2026-11-26).** No made-up family follows the U13
+  Ospreys, so neither `/design` nor the walk can reach it; tests pin its words and its rule. A fixture guardian on the
+  Ospreys would let a later walk see it. Low.
 
 ## 10. Words for /marketing
 
@@ -1572,7 +1632,24 @@ Answered 2026-11-24 (Stage 0 Part 1); evidence in the Progress block.
   no coach to email, so let the team know yourself." Kept: "Close a place", "Not now" (shipped in 8 files), "Reopen",
   "Place closed", "Closed", "Closed today", "All our fields are closed today." **"Rainout"** one word (6 coach strings
   to change at build). The Reopen line to the coach is a full coach email (same sender, reason and reply lines).
-- [ ] **Stage 2 (build, Session 2B, 2026-11-25): words the drawing did not word, for 2C's `/marketing` pass** (all in
+- [x] **Stage 2 (build, Sessions 2B + 2C), settled by `/marketing` in one pass, 2026-11-26.** Everything listed below
+  is KEPT except: "The closure didn't reach us…" → **"We couldn't tell if the closure went through. Check your connection,
+  then press again: it closes once, however many times you press."** (a lost answer can follow a closure that was made);
+  "Don't link them" → **"Don't link"** (the label says "Link it to…" for one game); Reopen's "its head coach gets one line"
+  / "their head coaches…" / "The {Team}'s head coach was emailed." → **"coach" / "coaches"** (with no head coach on file
+  the Reopen email goes to the team's other coaches; the close side already says this through who is reached); the coach
+  chip's hover title → **"The club closed this place. Give the game a new date."** 2C's own words KEPT: "And N more places
+  are closed." (N is always 2 or more), "Posted 7:10 a.m. by the club" / "Posted 7:10 a.m. and 9:05 a.m. by the club" /
+  "Posted by the club" with " · ends tonight" / " · both end tonight" / " · all end tonight", "All our fields closed ·
+  waits for a new date". The help copy for Close a place got three voice fixes (Reopen takes the strip off the site, not
+  "it all"; the tool tells the site, house league families and rep coaches, not "everyone"; the coach's email comes from
+  the club, not "as the head coach") and one consistency fix ("the day's email limit", not a hard-coded "3 a day").
+  **Not applied, with reason:** `/marketing` proposed rewording the window's malformed-request answer "The request was
+  not understood"; it is the house string across eight routes and only a broken request meets it, so it stays one
+  string. Noted, not changed: a several-day closure pressed on an earlier day words its small line "Posted Fri, Nov 27 at
+  7:10 a.m. and Fri, Nov 27 at 9:05 a.m. by the club" (honest, rare; saying the day once is a code change for later).
+  `check:spelling` green.
+- [x] **Stage 2 (build, Session 2B, 2026-11-25): words the drawing did not word, for 2C's `/marketing` pass** (all in
   `CLOSE_WORDS`, `lib/place-closure-window.ts`, and `COACH_MAIL`, `lib/place-closure-mail-words.ts`): the refusals
   ("Some games changed while the window was open. Nothing was changed. Look again.", "That day has passed…", the draft,
   finished and not-found lines, "The closure didn't reach us. Check your connection, then press again: it closes once,

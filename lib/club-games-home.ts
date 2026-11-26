@@ -204,7 +204,7 @@ function bandOf(r: ClubGameRow, today: string): GamesBandKey | null {
   if (r.state === 'live') return 'live';
   if (!isToday) return null;
   if (r.state === 'coming') return 'later';
-  if (r.state === 'postponed' || r.state === 'cancelled' || r.state === 'moved') return 'off';
+  if (r.state === 'postponed' || r.state === 'cancelled' || r.state === 'moved' || r.state === 'placeClosed') return 'off';
   // A house league game past its window with no score stays in its slot saying so (G7); a rep game with nothing saved
   // says nothing (a rep coach need not keep a score). Only today: a day-old gap is the schedule's to show.
   return r.state === 'noScore' && r.program === 'league' ? 'results' : null;

@@ -25,6 +25,8 @@ import type { ClubSocialKind } from '@/lib/club-site';
 import ClubBar from './ClubBar';
 import ClubFooter from './ClubFooter';
 import ClubNoticeBanner, { type ClubFrameNotice } from './ClubNoticeBanner';
+import ClubClosureStrip from './ClubClosureStrip';
+import type { ClosureStrip } from '@/lib/club-notice';
 import { usePublicClub } from './PublicClubContext';
 import styles from './ClubFrame.module.css';
 import PreviewFootLine from './PreviewFootLine';
@@ -44,6 +46,10 @@ export interface ClubFrameClub {
   face: 'warm' | 'dm-serif' | 'inter';
   /** The club's live notice (Stage 4c-1), already said in the club's zone; null when none is showing. */
   notice: ClubFrameNotice | null;
+  /** The closed places (Club Website Stage 2, K4), already said in the club's zone; null when none is closed. It sits above
+   *  the notice in its own box: a closure never ends or replaces the club's notice. Never on a tournament's pages (K12):
+   *  those wear no club frame. */
+  closures: ClosureStrip | null;
   /** The About page, when it has contacts, documents or questions: the footer's "Contacts and documents" door. */
   aboutHref: string | null;
   /** A preview club's footer line (Track P): the band's words and the removal route. Null on every real club. A page that
@@ -70,6 +76,7 @@ export default function ClubFrame({ club, preview = false, children }: { club: C
       <a href="#club-content" className="skip-link">Skip to content</a>
       <ClubBar club={club} preview={preview} />
       <div id="club-content" tabIndex={-1} className={styles.page}>
+        {club.closures && <ClubClosureStrip strip={club.closures} />}
         {club.notice && <ClubNoticeBanner notice={club.notice} />}
         {children}
       </div>

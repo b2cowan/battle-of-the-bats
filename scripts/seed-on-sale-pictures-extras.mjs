@@ -14,6 +14,10 @@
  *       Compare › Against last year fills. Entries go on the club's own General book; the house-league fees already on the season
  *       books (made by seed-prospect-demo.mjs) are budgeted against, not re-typed.
  *
+ *   (e) ONLY with --closure-walk (Club Website Stage 2, Session 2C's walk): Lions Park (Diamonds 1 and 2) added to the club's
+ *       places, and later today three house league games there (two on its diamonds, one typed by hand), the Ospreys' Public
+ *       game there and one Fall Classic game on a Lions Park diamond. Without the switch the pictures are unchanged.
+ *
  * RUN ORDER (always in this order; each step re-runs safely):
  *   1. node --env-file=.env.local scripts/seed-prospect-demo.mjs --club=kestrel      (the club, its season, its books' fee words)
  *   2. node --env-file=.env.local scripts/seed-on-sale-pictures-extras.mjs            (this file)
@@ -472,7 +476,83 @@ die('house league games', (await db.from('league_games').insert(hlGames)).error)
 die('added changes', (await db.from('league_game_changes').delete().eq('org_id', ORG).in('game_id', GAME_DAY_IDS).is('sent_at', null)).error);
 ok(`${hlGames.length} house league games today in U11 and U15: a final, one past its window with no score, two live, one later, one postponed (as published)`);
 
+// ══ (e) CLOSE A PLACE'S WALK (Club Website Stage 2, Session 2C) — only with --closure-walk ═════════════════════════
+// The walk closes Lions Park today and checks every program hears it: house league games there (linked), one typed by
+// hand ("Lions Park — Diamond 2", no place link: the window's typed group), the U13 Ospreys' Public game there (marked for
+// its coach), and one Fall Classic game on a Lions Park diamond (its own Rain delay). Lions Park is not one of the
+// pictures club's places, so it is added only for the walk: without the switch nothing here runs and the pictures are
+// unchanged. Daytime only: every game is later today, so none has started when the walk opens the window. A re-run
+// removes the walk's closures (and their marks and Rainout records) and its house league games by fixed id; the rep game
+// and the Fall Classic's Lions Park diamond and game go with their team and tournament, which (a) and (b) remake each run.
+// The place stays (the prospect reset keeps places too), so a second run finds it. This is a walk task, not a demo step.
+const WALK_IDS = Array.from({ length: 3 }, (_, i) => `5a1e0000-0000-4000-8000-0000000e00${String(i + 1).padStart(2, '0')}`);
+const CLOSURE_WALK = process.argv.includes('--closure-walk');
+if (CLOSURE_WALK) {
+  head('(e) Close a place walk · Lions Park today');
+  die('old walk rainouts', (await db.from('league_rainouts').delete().eq('org_id', ORG).not('closure_id', 'is', null)).error);
+  die('old walk closures', (await db.from('org_place_closures').delete().eq('org_id', ORG)).error);
+  die('old walk changes', (await db.from('league_game_changes').delete().eq('org_id', ORG).in('game_id', WALK_IDS)).error);
+  die('old walk games', (await db.from('league_games').delete().eq('org_id', ORG).in('id', WALK_IDS)).error);
+  ok('previous walk closures, their marks and Rainout records, and the walk\'s house league games removed');
+
+  if (wall(NOW.getTime() + 390 * MIN).date !== TODAY) die('walk', { message: 'the walk\'s games would fall on tomorrow: run this before about 5:30 p.m.' });
+  if (wall(NOW.getTime()).time < '06:00:00') die('walk', { message: 'run the walk\'s seed after about 6:00 a.m.' });
+
+  let lions = await one('Lions Park', db.from('org_venues').select('id, name').eq('org_id', ORG).eq('name', 'Lions Park').maybeSingle());
+  if (!lions) lions = await one('add Lions Park', db.from('org_venues').insert({ org_id: ORG, name: 'Lions Park', address: '40 Lions Park Rd, Kestrel Bay', notes: null, is_active: true }).select('id, name').single());
+  const lionsFac = {};
+  const haveFacs = await one('Lions Park diamonds', db.from('org_venue_facilities').select('id, name').eq('org_venue_id', lions.id));
+  for (const [i, name] of ['Diamond 1', 'Diamond 2'].entries()) {
+    lionsFac[name] = haveFacs.find(f => f.name === name)?.id
+      ?? (await one(`add Lions Park ${name}`, db.from('org_venue_facilities').insert({ org_venue_id: lions.id, org_id: ORG, name, facility_type: 'diamond', display_order: i }).select('id').single())).id;
+  }
+  ok(`Lions Park (${lions.id}) with Diamond 1 and Diamond 2`);
+
+  // House league: two linked games and one typed by hand, in the published divisions, later today.
+  const walkGames = [
+    { div: 'U11', home: 'Lynx', away: 'Foxes', inMin: 240, at: { org_venue_id: lions.id, org_venue_facility_id: lionsFac['Diamond 1'], location: 'Lions Park · Diamond 1' } },
+    { div: 'U15', home: 'Tides', away: 'Ravens', inMin: 240, at: { org_venue_id: lions.id, org_venue_facility_id: lionsFac['Diamond 2'], location: 'Lions Park · Diamond 2' } },
+    { div: 'U11', home: 'Mariners', away: 'Ospreys', inMin: 300, at: { org_venue_id: null, org_venue_facility_id: null, location: 'Lions Park — Diamond 2' } },
+  ].map((g, i) => {
+    const start = NOW.getTime() + g.inMin * MIN;
+    return {
+      id: WALK_IDS[i], org_id: ORG, season_id: hlSeason.id, division_id: divId(g.div), home_team_id: teamId(g.home), away_team_id: teamId(g.away),
+      scheduled_at: new Date(start).toISOString(), ends_at: new Date(start + 90 * MIN).toISOString(), ...g.at, status: 'scheduled',
+      home_score: null, away_score: null,
+    };
+  });
+  die('walk house league games', (await db.from('league_games').insert(walkGames)).error);
+  // As (d): invented games that stand for ones published with the schedule — remove the unsent "added" rows, never send.
+  die('walk added changes', (await db.from('league_game_changes').delete().eq('org_id', ORG).in('game_id', WALK_IDS).is('sent_at', null)).error);
+  ok('3 house league games at Lions Park later today: U11 and U15 on its diamonds, and one U11 typed "Lions Park — Diamond 2"');
+
+  // Rep: the Ospreys' Public game at Lions Park, after its away game ends.
+  const repStart = NOW.getTime() + 330 * MIN;
+  die('walk rep game', (await db.from('rep_team_events').insert({
+    org_id: ORG, team_id: team.id, program_year_id: py.id, event_type: 'league_game', name: 'vs Marlow Heights',
+    starts_at: repAt(repStart), ends_at: repAt(repStart + 90 * MIN), location: 'Lions Park · Diamond 1', location_address: '40 Lions Park Rd, Kestrel Bay',
+    org_venue_id: lions.id, org_venue_facility_id: lionsFac['Diamond 1'],
+    opponent: 'Marlow Heights', home_away: 'home', team_score: null, opponent_score: null, result: null, status: 'scheduled', arrival_time: null,
+  })).error);
+  ok('the U13 Ospreys vs Marlow Heights at Lions Park · Diamond 1 later today (Public: the mark reaches the team page and the home)');
+
+  // Tournament: one Fall Classic U11 game on a Lions Park diamond (the diamond copied from the club's place, as (a) does).
+  const lionsDiamond = await one('Fall Classic Lions Park', db.from('diamonds').insert({ tournament_id: TID, name: 'Lions Park', address: '40 Lions Park Rd, Kestrel Bay', source_org_venue_id: lions.id }).select('id').single());
+  const lionsTf = await one('Fall Classic Lions Park Diamond 1', db.from('venue_facilities').insert({ venue_id: lionsDiamond.id, tournament_id: TID, name: 'Diamond 1', facility_type: 'diamond', display_order: 0, source_org_facility_id: lionsFac['Diamond 1'] }).select('id').single());
+  const u11 = await one('Fall Classic U11', db.from('divisions').select('id').eq('tournament_id', TID).eq('name', 'U11').single());
+  const u11Teams = await one('Fall Classic U11 teams', db.from('teams').select('id, name').eq('division_id', u11.id));
+  const tTeam = (name) => u11Teams.find(t => t.name === name)?.id ?? die('Fall Classic team', { message: `no ${name}` });
+  const tw = wall(NOW.getTime() + 240 * MIN);
+  die('Fall Classic Lions Park game', (await db.from('games').insert({
+    tournament_id: TID, division_id: u11.id, home_team_id: tTeam('Cedar Hollow Cardinals'), away_team_id: tTeam('Briar Ridge Bandits'),
+    game_date: tw.date, game_time: tw.time, duration_minutes: LENGTH, is_playoff: false,
+    location: 'Lions Park — Diamond 1', diamond_id: lionsDiamond.id, venue_facility_id: lionsTf.id, status: 'scheduled', home_score: null, away_score: null,
+  })).error);
+  ok('one Fall Classic U11 game on Lions Park · Diamond 1 later today (moved only by its own Rain delay)');
+}
+
 head('Done');
 console.log(`  Tournament   /${SLUG}/${TOURNAMENT_SLUG}   ("Live now" holds until about ${wall(NOW.getTime() + (LENGTH + 30 - Math.max(...LIVE_AGO)) * MIN).time.slice(0, 5)} ${TZ}: capture before then)`);
 console.log(`  Roster       /${SLUG}/coaches/teams/${team.id}/roster   (sign in as ${COACH.email})`);
 console.log(`  Books        /${SLUG}/admin/accounting/budget-vs-actual   (sign in as president@${D})`);
+if (CLOSURE_WALK) console.log(`  Close a place  /${SLUG}/admin/org/venues   (sign in as president@${D} or league@${D}; the coach side as ${COACH.email})`);

@@ -650,6 +650,14 @@
 .rowChipOk { background: rgba(var(--home-win-rgb), 0.12); color: var(--home-win); }
 .rowChipDue { background: rgba(var(--home-amber-rgb), 0.14); color: var(--home-amber); }
 
+/* A closed place's mark on a rep game (Club Website Stage 2, K9): the amber of a waiting row, under its day and place. */
+.rowMark {
+  margin-top: 0.15rem;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--home-amber);
+}
+
 .rowAnchor {
   color: inherit;
   text-decoration: none;

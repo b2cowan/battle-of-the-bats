@@ -32,7 +32,7 @@ function entry(over: Partial<RepGameFacts>, now: number): FamilyScheduleEntry {
     id: 'e1', eventType: 'league_game', name: '', startsAt: g.startsAt, endsAt: g.endsAt, location: null,
     locationAddress: null, fieldNumber: null, arrivalTime: null, opponent: 'Falcons', homeAway: 'home',
     teamScore: scored ? g.teamScore : null, opponentScore: scored ? g.opponentScore : null,
-    result: completed ? g.result : null, status: 'scheduled', completed, live, hasScore: scored, isNextUp: false,
+    result: completed ? g.result : null, status: 'scheduled', completed, live, hasScore: scored, isNextUp: false, mark: null,
   };
 }
 

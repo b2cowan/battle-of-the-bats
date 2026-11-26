@@ -3,6 +3,7 @@ import { useCallback, useEffect, useLayoutEffect, useRef, useState, type SetStat
 import { ArrowLeft, ChevronRight, ClipboardList, ExternalLink, Eye, FileText, Link2, ListOrdered, MapPin, Pencil, Trash2, Trophy, Users, Video, X } from 'lucide-react';
 import { EVENT_ICONS, EVENT_COLORS } from '@/components/coaches/eventTypeMark';
 import UnsavedChangesGuard from '@/components/coaches/UnsavedChangesGuard';
+import { MARK_WORDS, type MarkWords } from '@/lib/place-closures';
 import { useConfirm } from '@/components/coaches/ConfirmProvider';
 import { useDialogFloor } from '@/components/coaches/useDialogFloor';
 import { useBackStep } from '@/components/coaches/useBackStep';
@@ -155,7 +156,7 @@ export async function deleteEventRequest(orgSlug: string, teamId: string, eventI
 export default function ScheduleEventSheet({
   orgSlug, teamId, base, event: ev, initialView, isPhone, nowMs, sportPack, capabilities, drawerDoors,
   places, teamTags, tagIds, teamAwards, awardTypes, awardPlayers, moved: selectedMoved, mirroredGameSource,
-  bookEntry, gameDayLive, familiesSeeSchedule, seriesReach, clubSource = null, familyAnswersOn = false,
+  bookEntry, gameDayLive, familiesSeeSchedule, seriesReach, clubSource = null, familyAnswersOn = false, closureMark = null, clubName = '',
   onClose, onEdit, onAddGame, onEventChanged, onDeleted, refresh, onBookChanged, onAwardsChanged, onHandedBack,
 }: {
   orgSlug: string;
@@ -202,6 +203,10 @@ export default function ScheduleEventSheet({
    * or Delete — the club owns whether it happens (the server refuses them too, `CLUB_OWNED_API_FIELDS`).
    */
   clubSource?: ClubSource | null;
+  /** The club closed this game's place (Club Website Stage 2, K9): its words and the club, while the mark stands. */
+  closureMark?: MarkWords | null;
+  /** The club that closed it, for the note's "From {club} · …". */
+  clubName?: string;
   /** Handed back (the coach's own act): the sentence the page says once. */
   onHandedBack?: (text: string) => void;
   onClose: () => void;
@@ -924,6 +929,16 @@ export default function ScheduleEventSheet({
     )
   ) : null;
 
+  /* The club closed this game's place (Club Website Stage 2, K9; drawing tab 6): one fixed sentence from the club, the
+     place and the day — no free text from the admin (K16, /legal call 2). Marked, not moved: the coach gives it a new date
+     with Edit or cancels it, and the mark goes. */
+  const closedBlock = closureMark && ev.status !== 'cancelled' ? (
+    <div className={`${styles.infoBanner} ${styles.sourceNote}`} role="status">
+      <ClipboardList size={13} aria-hidden style={{ flexShrink: 0 }} />
+      <span><strong>{MARK_WORDS.sheetTitle}</strong> {MARK_WORDS.sheetNote(clubName, closureMark)}</span>
+    </div>
+  ) : null;
+
   /* The organizer moved it since this device last showed it. Nothing was lost — the
       point is that the coach knows. Attendance is only worth re-checking when the DAY
       changed; a clock nudge doesn't invalidate anyone's reply. */
@@ -1372,7 +1387,7 @@ export default function ScheduleEventSheet({
   // THE TWO ORDERS — JSX order, never CSS `order` (see the block above), the same at every width.
   // A started non-game's awards sit above its rows — where a started game's sit (owner, 2026-09-25:
   // "why is give awards in a different place in practices vs. games?" — one place on every event).
-  const summary = <>{titleBlock}{whenLine}{whereBlock}{placeNote}{sourceBlock}{movedBlock}</>;
+  const summary = <>{titleBlock}{whenLine}{closedBlock}{whereBlock}{placeNote}{sourceBlock}{movedBlock}</>;
   // A phone (Stage 11d, owner 2026-10-13): a waiting ask's status ends the body — it is the record's state, not an action —
   // and the pinned foot keeps Withdraw the ask and the club's sentence, Hand back's own weight.
   // (A LATE ask waits on a handed-back practice, whose own end says it — part C — so this is the ticked ask's alone.)

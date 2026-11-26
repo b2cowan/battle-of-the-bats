@@ -6460,6 +6460,18 @@ a.noteAbout:hover, a.noteAbout:focus-visible { color: var(--text-primary); borde
   color: var(--evt-league-game);
   background: color-mix(in srgb, var(--evt-league-game) 12%, transparent);
 }
+/* "Place closed" (Club Website Stage 2, K9): the club closed the game's place. The Moved chip's place and shape, in the
+   club's amber (the source note's), so a coach reads it as "the club did something to this game". */
+.eventChipClosed {
+  composes: eventChipMoved;
+  /* Three words, so it is wider than "Moved": in a week cell (about 100 px of room) a no-wrap chip ran out of the card.
+     It wraps to two lines there and stays one line wherever it has room. */
+  white-space: normal;
+  max-width: 100%;
+  line-height: 1.25;
+  color: var(--warning);
+  background: color-mix(in srgb, var(--warning) 12%, transparent);
+}
 /* "Scrimmage" — the WORD for a ticked Game, in the same trail slot (mig 306, owner ruling D6
    2026-09-20). Deliberately MUTED and outlined, never a colour: it says "left out of the record",
    not a result, and the mark beside the row stays the game's own. Also worn by the event drawer's

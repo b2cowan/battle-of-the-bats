@@ -15,6 +15,7 @@ import TeamSubscribeButton from './TeamSubscribeButton';
 import { splitPublicSchedule, teamScheduleShows } from '@/lib/club-team-page';
 import PublicSectionHead from './PublicSectionHead';
 import { LIVE_NOW } from '@/lib/club-game-live';
+import { MARK_WORDS } from '@/lib/place-closures';
 
 /**
  * The standing public team schedule (Chunk D 1.9).
@@ -48,10 +49,15 @@ const TONE_CLASS: Record<'win' | 'loss' | 'neutral', string> = {
 function Row({ entry, link }: { entry: FamilyScheduleEntry; link?: string }) {
   const cancelled = entry.status === 'cancelled';
   const score = scheduleScoreText(entry);
-  const directions = entry.isNextUp && !cancelled ? directionsHref(entry.locationAddress) : null;
+  // A marked game (Club Website Stage 2, K9): the club closed its place; it waits for its coach to give it a new date. Its
+  // status is still scheduled (A5: marked, not moved), so the mark is its own line and pill, and no Directions to a closed
+  // place. It clears when the coach moves or cancels the game, or on Reopen (`repMarkWords` reads only standing marks, so
+  // never a cancelled game's). The entry carries it (`getFamilyTeamView`), read beside the rule that made this view public.
+  const mark = entry.mark;
+  const directions = entry.isNextUp && !cancelled && !mark ? directionsHref(entry.locationAddress) : null;
 
   return (
-    <div className={`${styles.row} ${entry.isNextUp ? styles.next : ''} ${cancelled ? styles.cancelled : ''}`}>
+    <div className={`${styles.row} ${entry.isNextUp ? styles.next : ''} ${cancelled ? styles.cancelled : ''} ${mark ? styles.marked : ''}`}>
       <div className={styles.when}>
         {scheduleDayLabel(entry.startsAt)}<br />{scheduleTimeLabel(entry.startsAt)}
       </div>
@@ -63,6 +69,7 @@ function Row({ entry, link }: { entry: FamilyScheduleEntry; link?: string }) {
         {entry.location && <div className={styles.where}>{entry.location}</div>}
       </div>
       {cancelled ? <span className={styles.cancelChip}>Cancelled</span>
+        : mark ? <span className={`${kit.chip} ${kit.chipWarn}`}>{MARK_WORDS.pill}</span>
         : entry.live ? (
           // Live (Stage 1 G7): the club's status green, never the club colour; the coach's running score, no letter.
           <span className={styles.live}>
@@ -78,6 +85,7 @@ function Row({ entry, link }: { entry: FamilyScheduleEntry; link?: string }) {
             <span className={styles.directionsLabel}>Directions</span>
           </a>
         ) : null}
+      {mark && <div className={styles.markLine}>{MARK_WORDS.line(mark)}</div>}
     </div>
   );
 }
@@ -95,6 +103,7 @@ export default function RepTeamPublicSchedule({ view, subscribe, tournamentLinks
   // What already happened folds above Up next (C3); the next few show; the rest of the season is on demand. A season
   // that is all played lists its games plainly — a fold over everything would hide the whole section.
   const { earlier, upcoming, later } = splitPublicSchedule(view.entries);
+  const row = (e: FamilyScheduleEntry) => <Row key={e.id} entry={e} link={tournamentLinks[e.id]} />;
 
   return (
     <section className={kit.section} aria-labelledby="schedule">
@@ -102,17 +111,17 @@ export default function RepTeamPublicSchedule({ view, subscribe, tournamentLinks
       <PublicSectionHead id="schedule" title="Schedule"
         action={subscribe && <TeamSubscribeButton feedPath={subscribe.feedPath} calendarName={subscribe.calendarName} />} />
       <div className={kit.list}>
-        {upcoming.length === 0 ? earlier.map(e => <Row key={e.id} entry={e} link={tournamentLinks[e.id]} />) : earlier.length > 0 && (
+        {upcoming.length === 0 ? earlier.map(row) : earlier.length > 0 && (
           <details className={styles.fold}>
             <summary className={styles.foldTop}>Earlier this season ({earlier.length})</summary>
-            {earlier.map(e => <Row key={e.id} entry={e} link={tournamentLinks[e.id]} />)}
+            {earlier.map(row)}
           </details>
         )}
-        {upcoming.map(e => <Row key={e.id} entry={e} link={tournamentLinks[e.id]} />)}
+        {upcoming.map(row)}
         {later.length > 0 && (
           <details className={styles.fold}>
             <summary className={styles.foldBottom}>Show the rest of the season ({later.length} more)</summary>
-            {later.map(e => <Row key={e.id} entry={e} link={tournamentLinks[e.id]} />)}
+            {later.map(row)}
           </details>
         )}
       </div>

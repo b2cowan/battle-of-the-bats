@@ -28957,3 +28957,16 @@ Committed 2026-11-25 as two commits (owner: "commit the sweep and the data chang
 
 **Left out (pinned by tests or probes):** private links in error reports (a dev probe, 2026-11-26); paying on a club’s own web address (no such address on dev); family and team chips, emails and records for a bank question; a reason that has run out and a missing mailing address.
 <!-- /§572 -->
+
+## §573 · Club website · Stage 2 · Session 2C · Close a place, what families and coaches see — **while a place is closed, a strip at the top of every club page says so (never a tournament's) and goes by itself at the end of the day; the rep game there reads "Place closed" for families and "Needs a new date" for its coach until the coach moves it or the place reopens; the public house league schedule puts "Needs a new date" first for a week; the help explains it all**
+<!-- §573 -->
+**Walk published 2026-11-26.** [Interactive walk](https://claude.ai/artifact/NST9fVpaqJ7n9TGoUVsJ4v) (walks A–D, 34 steps; no owner calls in the walk; §9's no-places call stays open) · [repository HTML](CLUB_WEBSITE_STAGE2_WALK.html). Built on dev, no new migration (539 is 2A's). Plan: `CLUB_WEBSITE_ENHANCEMENTS_PLAN.md` §6 Stage 2 and Progress 2026-11-26 "Stage 2 Session 2C"; the walk covers 2B's window, result and Reopen too.
+
+**Where:** `http://localhost:3000`, club **Kestrel Bay** (`/kestrel-bay`). **Sign in:** house league admin `league@kestrel-bay.example.test`, club president `president@kestrel-bay.example.test`, the U13 Ospreys' head coach `rep.coach@kestrel-bay.example.test`, password `UATPassword2026!`; a private window for every public page.
+
+**Data:** `node --env-file=.env.local scripts/seed-on-sale-pictures-extras.mjs --closure-walk` (between 6:00 a.m. and 5:30 p.m.; it clears any earlier closure, so it also restarts the walk). Lions Park (Diamond 1 and 2) with two house league games on its diamonds, one typed "Lions Park — Diamond 2", the Ospreys v Marlow Heights, and a Fall Classic game, all four to five and a half hours after the run.
+
+**Walks:** A close Lions Park, the house league admin's view then the president's (15) · B what families see, computer then phone (7) · C the coach gives the game a new date (5) · D Reopen, the site and the help (7).
+
+**Left out (pinned by tests):** the family app's mark (no made-up family follows the Ospreys), the coach's emails (made-up addresses), "And N more places are closed." and two places at once, a closure for a later day, Cancel them, Link it, a failed send.
+<!-- /§573 -->

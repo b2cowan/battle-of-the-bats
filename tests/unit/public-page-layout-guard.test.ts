@@ -466,7 +466,7 @@ describe('Public page layout standard, club round Part 4 — the house league\'s
     // Postponed and Moved are pills in the one set, amber like Unofficial.
     assert.match(readCode('components/public/PublicGameRow.tsx'), /postponed: 'Postponed', moved: 'Moved'/);
     assert.match(readSource('components/public/PublicSchedule.module.css'),
-      /\.gameStatus:is\(\[data-state='unofficial'\], \[data-state='postponed'\], \[data-state='moved'\]\) \{ color: var\(--club-warn\); \}/);
+      /\.gameStatus:is\(\[data-state='unofficial'\], \[data-state='postponed'\], \[data-state='moved'\], \[data-state='placeClosed'\]\) \{ color: var\(--club-warn\); \}/);
   });
   it('a played game keeps its start time on a phone where the game has no page of its own (owner 2026-11-05); the tournament Schedule still drops it', () => {
     const css = readSource('components/public/PublicSchedule.module.css');

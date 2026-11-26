@@ -162,6 +162,8 @@ export default function AdminHelpHubPage() {
         ...(hasOrgVenueLibrary(currentOrg?.planId) ? [
           { label: 'See the whole club’s week', href: `${helpBase}/org#club-calendar` },
           { label: 'Set up the club’s venues', href: `${helpBase}/org#venue-library` },
+          // Club Website Stage 2: Close a place rides the same plans as the Venue library (K14).
+          { label: 'Close a park or a diamond', href: `${helpBase}/org#close-a-place` },
         ] : []),
         // Club Tier Stage 11a: Schedules, where the plan carries it (the page's own gate).
         ...(clubSchedulerOn(currentOrg?.planId) ? [{ label: 'Hand the club’s time out to its teams', href: `${helpBase}/org#club-schedules` }] : []),

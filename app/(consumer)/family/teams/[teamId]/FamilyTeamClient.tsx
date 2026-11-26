@@ -18,6 +18,7 @@ import { possessive } from '@/lib/utils';
 import type { FamilyAnswersView } from '@/lib/family-availability';
 import { useFamilyAnswers } from './FamilyAnswers';
 import answerStyles from './FamilyAnswers.module.css';
+import { MARK_WORDS } from '@/lib/place-closures';
 import { LIVE_NOW } from '@/lib/club-game-live';
 
 /**
@@ -203,6 +204,9 @@ export default function FamilyTeamClient({
             const cancelled = entry.status === 'cancelled';
             // A rained-out game keeps its day (not its time, which no longer holds) and says it will move.
             const postponed = entry.status === 'postponed';
+            // The club closed this game's place (K9): marked, not moved; it waits for the coach to give it a new date.
+            const mark = entry.mark;
+            const markChip = mark && <span className={styles.rowChipDue}>{MARK_WORDS.pill}</span>;
             const body = (
               <div className={styles.rowMain}>
                 <div className={`${styles.rowTitle} ${cancelled ? styles.rowCancelled : ''}`}>
@@ -215,6 +219,7 @@ export default function FamilyTeamClient({
                   {cancelled && ` · ${W.team.cancelled}`}
                   {postponed && ` · ${W.team.postponed}`}
                 </div>
+                {mark && <div className={styles.rowMark}>{MARK_WORDS.line(mark)}</div>}
               </div>
             );
 
@@ -222,7 +227,8 @@ export default function FamilyTeamClient({
             const anchor = entry.id === anchorId ? nextUpRef : undefined;
 
             if (entry.isNextUp) {
-              const directions = directionsHref(entry.locationAddress);
+              // No Directions to a closed place: the mark's pill takes the row's right instead.
+              const directions = mark ? null : directionsHref(entry.locationAddress);
               const directionsLink = directions && (
                 <a className={`${styles.rowLink} ${a?.pill ? answerStyles.directions : ''}`} href={directions} target="_blank" rel="noopener noreferrer">
                   {W.team.directions}
@@ -234,7 +240,7 @@ export default function FamilyTeamClient({
                   <div className={styles.row}>
                     {body}
                     {/* With an answer pill the row's right is the pill's; Directions moves under the row (drawing tab 7). */}
-                    {a?.pill ?? directionsLink}
+                    {a?.pill ?? markChip ?? directionsLink}
                   </div>
                   {a?.pill && directionsLink}
                   {a?.below}
@@ -248,7 +254,7 @@ export default function FamilyTeamClient({
                 <div className={`${styles.row} ${completed ? styles.rowDone : ''}`}>
                   {body}
                   <ScoreCell entry={entry} />
-                  {a?.pill}
+                  {a?.pill ?? markChip}
                 </div>
                 {a?.below}
               </div>

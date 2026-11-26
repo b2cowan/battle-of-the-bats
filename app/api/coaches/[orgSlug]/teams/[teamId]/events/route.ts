@@ -23,6 +23,7 @@ import { resolveValidTagIds } from '@/lib/rep-event-tags';
 import { resolveRepEventWhere } from '@/lib/rep-event-where';
 import { clashesForSavedRepEvents, getClubVenuesForTeam } from '@/lib/venue-clash-lookup';
 import { withObservability } from '@/lib/observability';
+import { repMarkWords } from '@/lib/place-closures-server';
 import { denyUnless, canViewSchedule, canManageSchedule, canViewMoney } from '@/lib/coach-capabilities';
 import { syncTournamentGameMirrorSafely } from '@/lib/rep-tournament-game-mirror';
 import {
@@ -114,7 +115,7 @@ export const GET = withObservability(async (req: Request,
   // The club's venues (Club Tier Stage 6a, Ask 1) ride the same read: the Venue field lists them above the team's
   // places, read-only, and only in a club with a Venue library — `inClub: false` keeps a team outside a club's
   // picker exactly as built. The usual facility per venue is the dropdown's opening pick (Ask 2) — read only in a club.
-  const [[lineupMismatchEventIds, lineupReadiness], [tags, tagsByEventId, awardCountByEventId, places, clubBook, clubSources, familyHeadcounts]] = await Promise.all([lineupReads, Promise.all([
+  const [[lineupMismatchEventIds, lineupReadiness], [tags, tagsByEventId, awardCountByEventId, places, clubBook, clubSources, familyHeadcounts, closureMarks]] = await Promise.all([lineupReads, Promise.all([
     getRepTeamTagLibrary(teamId, 'game', ctx.org.id),
     getRepTeamEventTagsMap(events.map(e => e.id)),
     getRepEventAwardCountsMap(events.map(e => e.id)),
@@ -127,6 +128,9 @@ export const GET = withObservability(async (req: Request,
     // the schedule (ask 11). Null (omitted) while the guardian tier, the team's switch or family visibility is off.
     // A finished season (this read serves the working season even then) shows no availability: live season only.
     programYear.status === 'active' ? scheduleHeadcounts({ teamId, programYearId: programYear.id, events, team }) : null,
+    // Club Website Stage 2 (K9): the club closed a game's place — "Place closed" on the chip, "Needs a new date" on its
+    // sheet. Read for this team's own events; it clears when the coach moves or cancels the game, or the club reopens.
+    repMarkWords(ctx.org.id, events.map(e => e.id)),
   ])]);
   const lineupStatusByEvent = lineupReadiness?.statusByEvent ?? null;
   // D11: beside the badge, how many innings still need a decision — a Ready lineup may carry open
@@ -155,6 +159,8 @@ export const GET = withObservability(async (req: Request,
     // Whether a cancel / restore reaches families (`notifyFamiliesOfGameUpdate`'s own gate): the event window asks
     // once before it tells them, and says nothing extra when nobody is told (owner, 2026-10-09).
     familiesSeeSchedule: isVisibleToFamilies(team.scheduleVisibility),
+    // Event id → the closed place and the game's day (the chip, and the sheet's "From {club} · …" note).
+    closureMarks,
     // Omitted while families can't answer on this team: every coach screen is then exactly as before.
     ...(familyHeadcounts ? { familyHeadcounts } : {}),
     ...(lineupStatusByEvent ? { lineupStatusByEvent } : {}),

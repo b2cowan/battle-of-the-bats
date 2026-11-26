@@ -111,7 +111,8 @@ describe('4 · it returns its own short list of fields', () => {
   it('a game row', () => {
     assert.deepEqual(fieldsOf(code, 'ClubGameRow'), [
       'key', 'program', 'day', 'startsAt', 'endsAt', 'group', 'groupOrder', 'home', 'away', 'homeAway', 'place', 'address', 'state',
-      'score', 'movedTo', 'path', 'seasonName', 'seasonSlug', 'decided',
+      // closedPlace: a rep game's closed place while its closure mark stands (Club Website Stage 2, K9) — place words only.
+      'score', 'movedTo', 'closedPlace', 'path', 'seasonName', 'seasonSlug', 'decided',
     ]);
   });
   it('a tournament row, and the read', () => {

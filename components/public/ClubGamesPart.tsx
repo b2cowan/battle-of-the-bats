@@ -8,6 +8,7 @@ import {
   type HomeGameItem, type HomeGamesBand,
 } from '@/lib/club-games-home';
 import { orgHref } from '@/lib/club-base';
+import { MARK_WORDS } from '@/lib/place-closures';
 import { directionsHref } from '@/lib/family-schedule-format';
 import { sideResult } from '@/lib/public-game-row';
 import { fetchClubGames, useClubGamesCheck } from '@/lib/hooks/useClubGamesCheck';
@@ -159,6 +160,7 @@ function GameRow({ row, today, href }: { row: ClubGameRow; today: string; href: 
   const noScore = live && !rep ? W.scoreAfter
     : (live && !score) || row.state === 'noScore' ? W.noScoreYet
       : row.state === 'moved' ? movedLine(row) ?? undefined
+        : row.closedPlace ? MARK_WORDS.line({ place: row.closedPlace })
         : undefined;
   // The field on a game still to play or on now; Directions only on Live now and only to a real address (tab 3).
   const showPlace = row.place && (live || row.state === 'coming' || row.state === 'postponed' || row.state === 'cancelled');

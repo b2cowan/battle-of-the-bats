@@ -42,6 +42,17 @@
   color: var(--club-dim);
 }
 
+/* A closed place's mark (Club Website Stage 2, K9): the club notice's amber, under the place. It is the row's second
+   line, running under the title AND the pill: inside the title's column it was squeezed beside the pill to three lines on
+   a phone (`/design`, 390). The date and time stand beside both lines. */
+.marked { row-gap: 2px; }
+.marked > .when { grid-row: 1 / span 2; }
+.markLine {
+  grid-column: 2 / -1;
+  font: 600 0.75rem/1.4 var(--club-text-face);
+  color: var(--club-warn);
+}
+
 /* Up next: the club's edge down its left side, and the words in the club's ink. */
 .next {
   box-shadow: inset 3px 0 0 var(--club-edge);

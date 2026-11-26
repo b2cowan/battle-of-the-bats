@@ -37,9 +37,10 @@ export const CLUB_GAMES_DAYS_BACK = 2;
 /**
  * Where a game stands on the home. `live` is the one live rule (G7): a house-league game reads "Score after the game",
  * a rep game the coach's running score. `noScore`: a house-league game whose window has passed with no score yet.
- * `moved`: a house-league game moved off this day (it says where to).
+ * `moved`: a house-league game moved off this day (it says where to). `placeClosed`: a rep game whose place the club closed
+ * (Club Website Stage 2, K9): marked, not moved — it waits for its coach to give it a new date.
  */
-export type ClubGameState = 'coming' | 'live' | 'final' | 'noScore' | 'postponed' | 'cancelled' | 'moved';
+export type ClubGameState = 'coming' | 'live' | 'final' | 'noScore' | 'postponed' | 'cancelled' | 'moved' | 'placeClosed';
 
 export interface ClubGameRow {
   /** Stable for the same game between a page and its check; made of what the row shows, never an internal id. */
@@ -71,6 +72,8 @@ export interface ClubGameRow {
   score: { home: number; away: number } | null;
   /** A moved game's new start (an instant), else null. */
   movedTo: string | null;
+  /** Rep: the closed place's words while the club's closure mark stands ("Lions Park"), else null (K9). */
+  closedPlace: string | null;
   /** The page it opens, inside the club's site (house league: the season's schedule on this division; rep: the team's
    *  page). The page adds the club's own address (`orgHref`), so one answer serves either web address. */
   path: string;
@@ -171,6 +174,7 @@ export async function readClubGames(
         state: phase === 'cancelled' || phase === 'postponed' || !moved ? phase : 'moved' as const,
         score: phase === 'final' ? { home: g.homeScore!, away: g.awayScore! } : null,
         movedTo: moved ? g.scheduledAt : null,
+        closedPlace: null,
         path: `/league/${s.season.slug}/schedule?d=${encodeURIComponent(g.divisionId)}`,
         seasonName: s.season.name,
         seasonSlug: s.season.slug,
@@ -181,11 +185,14 @@ export async function readClubGames(
   }
 
   for (const { team, entry } of rep?.games ?? []) {
+    const closedPlace = entry.mark?.place ?? null;
     // The rep rule already decided live and over (`repEntryState`, the team page's own facts): a running score is live;
     // over is End game, or a score whose window has passed; past its window with nothing saved, a result still owed.
+    // A standing closure mark (K9) calls the game off on the home until its coach moves or cancels it, or the club reopens.
     const state: ClubGameState = entry.status === 'cancelled' ? 'cancelled'
       : entry.live ? 'live'
         : entry.completed ? 'final'
+          : closedPlace ? 'placeClosed'
           : Date.parse(entry.startsAt) <= nowMs ? 'noScore'
             : 'coming';
     const row = {
@@ -204,6 +211,7 @@ export async function readClubGames(
       score: entry.hasScore && entry.teamScore !== null && entry.opponentScore !== null
         ? { home: entry.teamScore, away: entry.opponentScore } : null,
       movedTo: null,
+      closedPlace: state === 'placeClosed' ? closedPlace : null,
       path: `/teams/${team.slug}`,
       seasonName: null,
       seasonSlug: null,
@@ -229,7 +237,7 @@ export async function readClubGames(
 
   // Today's timed games, every program, decide when a page checks again (a game postponed, cancelled or moved away
   // keeps no window). A tournament's last game runs the platform's booking length (its own length is the tournament's).
-  const played = rows.filter(r => r.day === today && r.state !== 'cancelled' && r.state !== 'postponed' && r.state !== 'moved');
+  const played = rows.filter(r => r.day === today && r.state !== 'cancelled' && r.state !== 'postponed' && r.state !== 'moved' && r.state !== 'placeClosed');
   const tournamentEnds = tournamentDays.flatMap(t => {
     const d = t.days[today];
     return d?.first && d.last ? [

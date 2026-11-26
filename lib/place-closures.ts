@@ -125,10 +125,42 @@ export function markStanding(mark: RepMark, event: MarkedEventNow | null | undef
   return !closure.reopenedAt && !markSpent(mark, event);
 }
 
+/**
+ * What a surface may know of a standing mark (K9; Session 2C): the closed place's words and the game's own club day,
+ * nothing else — no closure id, no team, no person, no admin line (K16 holds for the mark as for the strip).
+ */
+export interface MarkWords {
+  /** "Lions Park" · "Diamond 2 at Lions Park" · "All our fields". */
+  place: string;
+  /** The game's club day as said: "Sat, Nov 28". */
+  day: string;
+}
+
+/** The mark's fixed words on every surface (K9, the drawing's tabs 4–6). */
+export const MARK_WORDS = {
+  /** The pill, on the public team page, the family schedule and the club home's band. */
+  pill: 'Place closed',
+  /** The coach's schedule chip, in the Moved chip's place (/marketing 2026-11-25: the coach reads what to DO). */
+  coachPill: 'Needs a new date',
+  /** The row's line, under the game (public team page, family schedule, the home's band). */
+  line: (m: Pick<MarkWords, 'place'>) => `${m.place} closed · waits for a new date`,
+  /** The coach's game sheet: a title and the club's one fixed sentence (no free text from the admin, /legal call 2). */
+  sheetTitle: 'Needs a new date',
+  sheetNote: (club: string, m: MarkWords) =>
+    `${club ? `From ${club} · ` : ''}${m.place} closed on ${m.day}. Give this game a new date with Edit, or cancel it.`,
+  /** The chip's hover words in the coach's calendar, beside the Moved chip's "The organizer moved this game". */
+  chipTitle: 'The club closed this place. Give the game a new date.',
+} as const;
+
+/** The place words of a mark: the closed place, or "All our fields" when every place closed. */
+export function markPlaceWords(c: { scope: ClosureScope; placeName: string | null; facilityName: string | null }): string {
+  return closedPlaceName(c) ?? 'All our fields';
+}
+
 // ── The strip ──────────────────────────────────────────────────────────────────────────────────────────────────────
 
-/** What a public page may know of a closure (K16): place words and days, nothing else. */
-export interface StripClosure {
+/** A closed place and its days: all the strip's sentence says (K16). */
+export interface StripPlaceDays {
   scope: ClosureScope;
   placeName: string | null;
   facilityName: string | null;
@@ -137,12 +169,25 @@ export interface StripClosure {
   lastDay: string;
 }
 
-/** The fields of a closure row the strip reads; a guard pins the server's select to exactly these. */
-export const STRIP_CLOSURE_COLUMNS = 'scope, place_name, facility_name, first_day, last_day' as const;
+/**
+ * What a public page may know of a closure (K16): place words and days, and the two instants its small line says
+ * ("Posted 7:10 a.m. by the club · ends tonight", the notice's own words; Session 2C). Nothing else: no count, division,
+ * person, team or admin line.
+ */
+export interface StripClosure extends StripPlaceDays {
+  /** The press (K3: the strip shows from it). */
+  showsFrom: string;
+  /** Midnight after Until: the line takes itself down then, with no job. */
+  endsAt: string;
+}
 
-/** The one door from a closure row to a public page: it copies place words and days and NOTHING else. */
+/** The fields of a closure row the strip reads; a guard pins the server's select to exactly these. */
+export const STRIP_CLOSURE_COLUMNS = 'scope, place_name, facility_name, first_day, last_day, shows_from, ends_at' as const;
+
+/** The one door from a closure row to a public page: it copies place words, days and two instants, and NOTHING else. */
 export function stripClosureOf(row: {
   scope: ClosureScope; place_name: string | null; facility_name: string | null; first_day: string; last_day: string;
+  shows_from: string; ends_at: string;
 }): StripClosure {
   return {
     scope: row.scope,
@@ -150,6 +195,8 @@ export function stripClosureOf(row: {
     facilityName: row.scope === 'diamond' ? row.facility_name : null,
     firstDay: row.first_day,
     lastDay: row.last_day,
+    showsFrom: row.shows_from,
+    endsAt: row.ends_at,
   };
 }
 
@@ -158,7 +205,7 @@ export function isClosureShowing(c: { showsFrom: string; endsAt: string; reopene
   return !c.reopenedAt && Date.parse(c.showsFrom) <= nowMs && nowMs < Date.parse(c.endsAt);
 }
 
-// ── The place's words, and the strip's sentence (Session 2B; the strip itself is 2C) ───────────────────────────────
+// ── The place's words, and the strip's sentence (Session 2B; the strip's box is `closureStrip`, lib/club-notice.ts)────────────────────────────
 
 /** "Lions Park" · "Diamond 2 at Lions Park" · null for every place. The one name of a closed place in every sentence. */
 export function closedPlaceName(c: { scope: ClosureScope; placeName: string | null; facilityName: string | null }): string | null {
@@ -179,7 +226,7 @@ function nextDay(day: string): string {
  * closed today.", "All our fields are closed today." Fixed words over place words and days only. `say` formats a club
  * day ("Sat, Nov 28"): passed in, so this file stays free of the zone module.
  */
-export function stripSentence(c: StripClosure, today: string, say: (day: string) => string): string {
+export function stripSentence(c: StripPlaceDays, today: string, say: (day: string) => string): string {
   const name = closedPlaceName(c);
   const subject = name ? `${name} is` : 'All our fields are';
   const oneDay = c.firstDay === c.lastDay;

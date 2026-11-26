@@ -41,7 +41,8 @@ a.matchLink:hover .gameName { text-decoration: underline; }
 .gameContext { color: var(--club-dim); font: 400 0.875rem/1.25 var(--club-text-face); overflow-wrap: anywhere; }
 .gameStatus { padding: 4px 8px; border: 1px solid var(--club-line); border-radius: 20px; background: var(--club-ground); color: var(--club-soft); white-space: nowrap; font: 600 0.75rem/1.2 var(--club-text-face); }
 .gameStatus[data-state='live'] { color: var(--club-ok); background: var(--club-ok-bg); border-color: var(--club-ok-bg); }
-.gameStatus:is([data-state='unofficial'], [data-state='postponed'], [data-state='moved']) { color: var(--club-warn); }
+/* placeClosed: a closed place's rep game on the club home (Club Website Stage 2, K9), amber as Postponed. */
+.gameStatus:is([data-state='unofficial'], [data-state='postponed'], [data-state='moved'], [data-state='placeClosed']) { color: var(--club-warn); }
 .gameStatus[data-state='cancelled'] { color: var(--danger); }
 .gameTeams { display: flex; flex-direction: column; gap: 4px; margin-top: 4px; min-width: 0; }
 .gameSide { display: grid; grid-template-columns: minmax(0, 1fr) auto; column-gap: 8px; align-items: first baseline; min-width: 0; }

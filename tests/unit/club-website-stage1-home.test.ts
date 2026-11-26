@@ -21,7 +21,7 @@ function row(p: Partial<ClubGameRow> & Pick<ClubGameRow, 'state'>): ClubGameRow 
   const base: ClubGameRow = {
     key: `k${n}`, program: 'league', day, startsAt, endsAt: null, group: 'U11', groupOrder: 1,
     home: `Home ${n}`, away: `Away ${n}`, homeAway: null, place: 'Harbourview Park · Diamond 1', address: null,
-    score: null, movedTo: null, path: '/league/2026-house-league/schedule?d=div-u11', seasonName: '2026 House League', seasonSlug: '2026-house-league', decided: false, state: 'coming',
+    score: null, movedTo: null, closedPlace: null, path: '/league/2026-house-league/schedule?d=div-u11', seasonName: '2026 House League', seasonSlug: '2026-house-league', decided: false, state: 'coming',
   };
   return { ...base, ...p, day, startsAt };
 }

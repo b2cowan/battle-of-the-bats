@@ -4,16 +4,20 @@ import type { GameRowView } from '@/lib/public-game-row';
 import type { PublicGameState } from '@/lib/game-status';
 import scheduleStyles from './PublicSchedule.module.css';
 import RollingNumber from './RollingNumber';
+import { MARK_WORDS } from '@/lib/place-closures';
 
 /**
  * A row's state: a tournament game's public state, plus the two only the house league's Schedule has (club round Part 4,
  * C7) — a game Postponed (it waits for a new date) and a game Moved (re-dated since families first heard, once the change
- * was sent). Both are amber, the warning ink the house league said them in.
+ * was sent) — and the club home's Place closed (a rep game whose place the club closed; Club Website Stage 2, K9). All
+ * three are amber, the warning ink the house league said them in.
  */
-export type GameRowState = PublicGameState | 'postponed' | 'moved';
+export type GameRowState = PublicGameState | 'postponed' | 'moved' | 'placeClosed';
 
 const STATUS_WORD: Partial<Record<GameRowState, string>> = {
   live: 'Live now', final: 'Final', unofficial: 'Unofficial', cancelled: 'Cancelled', postponed: 'Postponed', moved: 'Moved',
+  // A rep game whose place the club closed (Club Website Stage 2, K9), on the club home's band: amber, as Postponed.
+  placeClosed: MARK_WORDS.pill,
 };
 
 /**
