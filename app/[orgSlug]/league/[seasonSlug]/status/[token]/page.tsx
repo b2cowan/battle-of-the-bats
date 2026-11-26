@@ -47,7 +47,7 @@ export default async function YourSignupPage({
 }) {
   const { orgSlug, seasonSlug, token } = await params;
   const { paid, left } = await searchParams;
-  await forwardToOwnAddress(orgSlug, `/league/${seasonSlug}/status/${token}`);
+  await forwardToOwnAddress(orgSlug, `/league/${seasonSlug}/status/${token}`, { paid, left });
   const href = await orgLinks(orgSlug);
 
   const org = await resolvePublicLeagueContext(orgSlug);

@@ -144,13 +144,15 @@ const PUBLIC_SECTIONS = new Set(['about', 'archives', 'league', 'news', 'registe
 const OPERATOR_SECTIONS = new Set(['admin', 'check-in', 'coaches', 'official', 'scorekeeper']);
 /**
  * The ONLY API paths a club's own host forwards: the public pages' own data and forms, the registration a visitor files, the
- * public follow and feedback doors, and the two sign-up calls a registration makes. Everything else is a 404 (an ALLOW-list:
+ * public follow and feedback doors, the two sign-up calls a registration makes, and the pay doors (a family's and a team's
+ * signed pay link, and the Register page's "can I pay online" answer: without them Pay couldn't open on a club's own
+ * address, B-5, owner 2026-11-25). Everything else is a 404 (an ALLOW-list:
  * a new operator or signed-in API is closed here by default). A club's host has no session, but "no session" is a fact about
  * cookies today, not a gate.
  */
 const ALLOWED_API = [
   '/api/public', '/api/register', '/api/registrations', '/api/league', '/api/events', '/api/calendar', '/api/client',
-  '/api/feedback', '/api/consumer', '/api/auth/coach-signup', '/api/auth/resend-verification',
+  '/api/feedback', '/api/consumer', '/api/auth/coach-signup', '/api/auth/resend-verification', '/api/pay',
 ];
 
 export type ClubHostRoute =

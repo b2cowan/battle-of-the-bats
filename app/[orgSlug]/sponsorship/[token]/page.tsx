@@ -23,9 +23,13 @@ export async function generateMetadata({ params }: { params: Promise<{ orgSlug: 
  * 'sponsorship')`, the one question every public club page asks); the site's own switch never stops it. A business is not a
  * family, so the 2026-10-31 family-links rule doesn't apply — but the page shows nothing of any other deal or business.
  */
-export default async function SponsorshipPage({ params }: { params: Promise<{ orgSlug: string; token: string }> }) {
-  const { orgSlug, token } = await params;
-  await forwardToOwnAddress(orgSlug, `/sponsorship/${token}`);
+export default async function SponsorshipPage({ params, searchParams }: {
+  params: Promise<{ orgSlug: string; token: string }>;
+  /** Stripe's return: the page waits for the record, or says the payer left (read in the browser by SponsorDealContent). */
+  searchParams: Promise<{ paid?: string; left?: string }>;
+}) {
+  const [{ orgSlug, token }, { paid, left }] = await Promise.all([params, searchParams]);
+  await forwardToOwnAddress(orgSlug, `/sponsorship/${token}`, { paid, left });
   const club = await resolvePublicClub(orgSlug, 'sponsorship');
   const view = club ? await buildSponsorPageView(orgSlug, token, { markOpened: true }) : { state: 'notFound' as const };
   return (

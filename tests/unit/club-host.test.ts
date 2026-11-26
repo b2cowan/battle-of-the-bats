@@ -5,6 +5,7 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
+import { readFileSync } from 'node:fs';
 import { NextRequest } from 'next/server';
 import { createClubHostCache, routeClubHostPath, type ClubHostEntry } from '../../lib/club-host.ts';
 import { clubHostResponse } from '../../lib/club-host-response.ts';
@@ -139,6 +140,30 @@ describe('what a path on a club\'s own address means', () => {
     for (const p of ['/api/public/club-origin', '/api/register', '/api/registrations', '/api/league/x', '/api/events/x', '/api/calendar/x',
       '/api/client/error-capture', '/api/feedback', '/api/consumer/follows', '/api/auth/coach-signup', '/api/auth/resend-verification']) {
       assert.deepEqual(r(p), { kind: 'pass' }, p);
+    }
+  });
+
+  it('paying works on a club’s own address: the pay doors pass, Stripe’s own doors stay shut (B-5)', () => {
+    for (const p of ['/api/pay/league/x', '/api/pay/league/x/status', '/api/pay/team/x', '/api/pay/team/x/status', '/api/pay/tournament/x']) {
+      assert.deepEqual(r(p), { kind: 'pass' }, p);
+    }
+    for (const p of ['/api/payments/connect-webhook', '/api/payments/connect-account-events', '/api/payout']) {
+      assert.deepEqual(r(p), { kind: 'notfound' }, p);
+    }
+  });
+
+  it('every data route a public pay block asks for is one the club’s address passes', () => {
+    for (const file of ['components/public/LeaguePayBlock.tsx', 'components/public/TeamPayContent.tsx', 'components/public/SponsorDealContent.tsx', 'components/public/RegisterContent.tsx']) {
+      const asked = [...readFileSync(file, 'utf8').matchAll(/[`'](\/api\/(?:pay|public)\/[a-z-]+)/g)].map(m => m[1]);
+      assert.ok(asked.length, file);
+      for (const p of asked) assert.deepEqual(r(`${p}/x`), { kind: 'pass' }, `${file}: ${p}`);
+    }
+  });
+
+  it('the forward to a club’s own address keeps Stripe’s return on the two pay pages that forward', () => {
+    assert.match(readFileSync('lib/club-forward.ts', 'utf8'), /permanentRedirect\(`https:\/\/\$\{club\.host\}\$\{path \|\| '\/'\}\$\{kept \? `\?\$\{kept\}` : ''\}`\);/);
+    for (const f of ['app/[orgSlug]/sponsorship/[token]/page.tsx', 'app/[orgSlug]/league/[seasonSlug]/status/[token]/page.tsx']) {
+      assert.match(readFileSync(f, 'utf8'), /await forwardToOwnAddress\(orgSlug, `[^`]+`, \{ paid, left \}\);/, f);
     }
   });
 

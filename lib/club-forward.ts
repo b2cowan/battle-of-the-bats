@@ -24,12 +24,16 @@ import { requestHost } from './request-host';
  * without its own address costs one in-memory lookup (the host cache is read at most every few minutes per server).
  *
  * `path` is the page's path WITHOUT the club's name (`'/teams/13u-aa'`, `''` for the club's home).
+ *
+ * `query`: what the forward must carry. A pay page passes Stripe's return (`?paid=`, `?left=`): dropped, a payer coming back
+ * saw neither "confirming your payment" nor "you left before paying" (B-5, owner 2026-11-25).
  */
-export async function forwardToOwnAddress(orgSlug: string, path: string): Promise<void> {
+export async function forwardToOwnAddress(orgSlug: string, path: string, query?: Record<string, string | undefined>): Promise<void> {
   if (!isOwnHost(await requestHost())) return; // already on the club's own address
   const club = await clubHosts.forSlug(orgSlug);
   if (!club || club === 'unavailable' || !usesOwnAddress(club.status)) return;
   const jar = await cookies();
   if (jar.getAll().some(c => isSupabaseAuthCookieName(c.name))) return; // a signed-in visitor stays
-  permanentRedirect(`https://${club.host}${path || '/'}`);
+  const kept = new URLSearchParams(Object.entries(query ?? {}).filter((e): e is [string, string] => typeof e[1] === 'string')).toString();
+  permanentRedirect(`https://${club.host}${path || '/'}${kept ? `?${kept}` : ''}`);
 }

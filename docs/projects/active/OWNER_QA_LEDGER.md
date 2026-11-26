@@ -28946,3 +28946,14 @@ Committed 2026-11-25 as two commits (owner: "commit the sweep and the data chang
 
 **After the walk:** Oakridge stays on dev as a claimed club on a Stripe test trial; cancel the trial, then Delete it from Clubs & portals.
 <!-- /§571 -->
+
+## §572 · Board Ready Stage 6 · Fixes, Part B · Sponsor links and bank questions — **a sponsor link button says whether an email will go, and a bank only asking about a card payment no longer reads as a dispute**
+<!-- §572 -->
+**Walk published 2026-11-26.** [Interactive walk](https://claude.ai/artifact/JK1NstHfhR75WCKSYa5yjn) (walks A–C, 34 steps; no owner calls inside it) · [repository HTML](BOARD_READY_STAGE6_FIXES_B_WALK.html). No migration. Plan: `BOARD_READY_PLAN.md` §5 Stage 6 (Part B). Committed 2026-11-26 as three commits, ahead of the walk (owner: "commit now, three commits").
+
+**Where:** `http://localhost:3000`, dev data, Stripe test mode. **Sign in:** walk A `uat-club-owner@uat-rep-club.local` / `UATPassword2026!` (UAT Rep Club); walks B and C `owner@dev.local` / `devpass123` (Dev Club Org); the business in a private window. Walks B and C need the Stripe listen window and `.probe/stage6b-answer-inquiry.cjs`; the test card for a bank question is `4000 0000 0000 1976`.
+
+**Walks:** A "Send the link again" when nothing will be emailed, and the old link’s page (18) · B the sponsor’s bank asks, then disputes (10) · C the bank closes its question (6).
+
+**Left out (pinned by tests or probes):** private links in error reports (a dev probe, 2026-11-26); paying on a club’s own web address (no such address on dev); family and team chips, emails and records for a bank question; a reason that has run out and a missing mailing address.
+<!-- /§572 -->

@@ -1,0 +1,480 @@
+<title>Stage 6 fixes · Part B</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: one reading column; a walk index of cards, one walk open at a time; steps as Do / You should see rows with a tick. */
+:root {
+  --bg: #f4f6f5; --surface: #ffffff; --ink: #18211d; --muted: #5b6862; --line: #d5ddd9;
+  --accent: #1f6b4f; --accent-soft: #e2efe9; --warn: #9a5b00; --warn-soft: #fbefd9; --bad: #a3322b; --bad-soft: #f8e3e1;
+  --font-body: "Instrument Sans", "Segoe UI", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, "Cascadia Mono", Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #121715; --surface: #1a211e; --ink: #e5ece8; --muted: #9aa8a1; --line: #2e3833;
+  --accent: #6fcca4; --accent-soft: #1f3a2f; --warn: #f0b75c; --warn-soft: #3a2c14; --bad: #f08a80; --bad-soft: #3d1f1c; color-scheme: dark; } }
+:root[data-theme="dark"] {
+  --bg: #121715; --surface: #1a211e; --ink: #e5ece8; --muted: #9aa8a1; --line: #2e3833;
+  --accent: #6fcca4; --accent-soft: #1f3a2f; --warn: #f0b75c; --warn-soft: #3a2c14; --bad: #f08a80; --bad-soft: #3d1f1c; color-scheme: dark; }
+body { background: var(--bg); color: var(--ink); font: 15px/1.55 var(--font-body); padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 24px 64px; }
+.wrap { max-width: 860px; margin: 0 auto; display: grid; gap: 20px; }
+h1 { font-size: 30px; line-height: 1.15; margin: 0; text-wrap: balance; letter-spacing: -0.01em; }
+h2 { font-size: 19px; margin: 0; text-wrap: balance; }
+h3 { font-size: 13px; margin: 0; text-transform: uppercase; letter-spacing: 0.07em; color: var(--muted); font-weight: 600; }
+p { margin: 0; max-width: 68ch; }
+.eyebrow { font: 600 12px/1 var(--font-mono); letter-spacing: 0.08em; text-transform: uppercase; color: var(--accent); }
+.lead { color: var(--muted); }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 18px; display: grid; gap: 12px; min-width: 0; }
+.signin { border-color: var(--accent); }
+.kv { display: grid; grid-template-columns: max-content 1fr; gap: 6px 16px; }
+.kv dt { color: var(--muted); }
+.kv dd { margin: 0; min-width: 0; overflow-wrap: anywhere; }
+code, .mono { font-family: var(--font-mono); font-size: 0.92em; }
+pre { margin: 6px 0 0; padding: 10px 12px; background: var(--bg); border: 1px solid var(--line); border-radius: 8px; font: 12px/1.5 var(--font-mono); white-space: pre-wrap; overflow-wrap: anywhere; }
+.amt { font-family: var(--font-mono); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.note { background: var(--warn-soft); border-radius: 8px; padding: 10px 12px; }
+ul.plain { margin: 0; padding-left: 18px; display: grid; gap: 4px; }
+.index { display: grid; gap: 8px; }
+.wcard { display: grid; grid-template-columns: 1fr auto; gap: 4px 12px; align-items: center; text-align: left; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; font: inherit; color: inherit; cursor: pointer; }
+.wcard[aria-expanded="true"] { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent) inset; }
+.wcard:focus-visible, button:focus-visible, textarea:focus-visible, input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.wcard .t { font-weight: 600; }
+.wcard .j { grid-column: 1; color: var(--muted); font-size: 14px; }
+.chip { grid-row: 1 / span 2; grid-column: 2; font: 600 12px/1 var(--font-body); padding: 6px 9px; border-radius: 999px; background: var(--bg); color: var(--muted); border: 1px solid var(--line); white-space: nowrap; }
+.chip.prog { color: var(--accent); border-color: var(--accent); }
+.chip.pass { background: var(--accent-soft); color: var(--accent); border-color: transparent; }
+.chip.issue { background: var(--bad-soft); color: var(--bad); border-color: transparent; }
+.chip.call, .chip.thin { background: var(--warn-soft); color: var(--warn); border-color: transparent; }
+.walk { display: grid; gap: 14px; }
+.meta { display: grid; gap: 10px; }
+.meta div { display: grid; gap: 2px; }
+.steps { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+.step { display: grid; grid-template-columns: 28px 1fr; gap: 10px; padding: 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); }
+.step.done { border-color: var(--accent); background: var(--accent-soft); }
+.step.stop { border-style: dashed; border-color: var(--warn); }
+.step input[type="checkbox"] { width: 20px; height: 20px; margin: 2px 0 0; accent-color: var(--accent); }
+.step .body { display: grid; gap: 6px; min-width: 0; }
+.step .who { font: 600 11px/1 var(--font-mono); text-transform: uppercase; letter-spacing: 0.07em; color: var(--warn); }
+.step .lab { font-weight: 600; font-size: 12px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); }
+.opts { display: grid; gap: 6px; }
+.opts label { display: flex; gap: 8px; align-items: flex-start; }
+.verdict { display: flex; flex-wrap: wrap; gap: 8px; }
+.verdict button, .btn { font: 600 14px/1 var(--font-body); padding: 10px 14px; border-radius: 8px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); cursor: pointer; }
+.verdict button.on[data-v="pass"] { background: var(--accent); color: var(--surface); border-color: var(--accent); }
+.verdict button.on[data-v="issue"] { background: var(--bad); color: var(--surface); border-color: var(--bad); }
+.verdict button.on[data-v="call"] { background: var(--warn); color: var(--surface); border-color: var(--warn); }
+textarea { width: 100%; box-sizing: border-box; min-height: 80px; font: 14px/1.5 var(--font-body); padding: 10px; border-radius: 8px; border: 1px solid var(--line); background: var(--bg); color: var(--ink); }
+.out { font: 13px/1.5 var(--font-mono); white-space: pre-wrap; }
+.row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.progress { font-weight: 600; }
+@media (max-width: 520px) { .kv { grid-template-columns: 1fr; } .kv dt { margin-top: 6px; } h1 { font-size: 25px; } }
+@media (prefers-reduced-motion: no-preference) { .step { transition: background-color 0.15s, border-color 0.15s; } }
+</style>
+
+<div class="wrap">
+  <header class="card" style="gap:8px">
+    <span class="eyebrow">Board Ready Stage 6 · Fixes · Part B</span>
+    <h1>Sponsor links and bank questions</h1>
+    <p class="lead">Two changes you can see: what “Send the link again” promises, and how a bank that is only asking about a card payment reads. Three walks, 34 steps. Private links in error reports and paying on a club’s own web address are proved by checks, not walked.</p>
+    <p class="lead">Written Nov 26, 2026. Everything runs on this computer, dev data, Stripe test mode.</p>
+    <p class="progress" id="progress">Checked 0 of 0</p>
+  </header>
+
+  <section class="card signin" aria-labelledby="signin-h">
+    <h2 id="signin-h">Sign in as</h2>
+    <dl class="kv">
+      <dt>Where</dt><dd><code>http://localhost:3000/auth/login</code> on this computer. <b>Not the staging site.</b></dd>
+      <dt>Walk A</dt><dd><code>uat-club-owner@uat-rep-club.local</code> · password <code>UATPassword2026!</code> · UAT Rep Club</dd>
+      <dt>Walks B and C</dt><dd><code>owner@dev.local</code> · password <code>devpass123</code> · Dev Club Org (the club with test payouts connected)</dd>
+      <dt>The business</dt><dd>Nobody signs in. Its page is a link, opened in a <b>private window</b>.</dd>
+      <dt>Your inbox</dt><dd>A real address of yours. An address ending <code>.local</code> delivers nothing.</dd>
+    </dl>
+    <p class="lead">Dev-only sign-ins and test cards. Keep this page private.</p>
+  </section>
+
+  <section class="card" aria-labelledby="before-h">
+    <h2 id="before-h">Before you start</h2>
+    <p class="note"><b>These are not boxes.</b> If one is not true, stop and tell me.</p>
+    <ul class="plain">
+      <li><b>The dev server is restarted on this code</b> (ask me; another chat is also working in this folder).</li>
+      <li><b>For walks B and C the Stripe listen window is running.</b> In PowerShell:
+        <pre>C:\tools\stripe\stripe.exe listen --events-from '@accounts' --events "checkout.session.completed,checkout.session.async_payment_succeeded,checkout.session.async_payment_failed,checkout.session.expired,charge.dispute.created,charge.dispute.updated,charge.dispute.closed,charge.dispute.funds_withdrawn,charge.dispute.funds_reinstated,refund.created,refund.updated,refund.failed" --forward-to localhost:3000/api/payments/connect-webhook</pre></li>
+      <li>The two <code>.probe</code> commands answer the newest open bank question on Dev Club Org’s Stripe <b>test</b> account and refuse a live key.</li>
+    </ul>
+  </section>
+
+  <section aria-labelledby="index-h" style="display:grid;gap:10px">
+    <h2 id="index-h">The walks</h2>
+    <div class="index" id="index"></div>
+  </section>
+
+  <section id="walkHost"></section>
+
+  <section class="card" id="callsHost" aria-labelledby="calls-h" hidden>
+    <h2 id="calls-h">Owner calls</h2>
+  </section>
+
+  <section class="card" aria-labelledby="sum-h">
+    <h2 id="sum-h">Paste-back (all walks)</h2>
+    <div class="row">
+      <button class="btn" type="button" id="copyAll">Copy the summary</button>
+      <button class="btn" type="button" id="reset">Clear my ticks</button>
+      <span class="lead" id="copied" aria-live="polite"></span>
+    </div>
+    <div class="card out" id="out" tabindex="0"></div>
+  </section>
+</div>
+
+<script>
+(function () {
+  "use strict";
+  var KEY = "stage6-fixes-part-b-v1";
+  var PAGE = "Board Ready Stage 6 · Fixes, Part B";
+  var WALKS = [
+ {
+  "id": "A",
+  "title": "Send the link again, when nothing will be emailed",
+  "job": "UAT Rep Club · owner window and a private window",
+  "forText": "A button that says “Send” only when an email will go, a confirm and an after-notice that say what happens, and an old link’s page that mentions a newer email only when there is one.",
+  "passes": "On an invoiced deal and a stopped business the button reads Make a new link and nothing claims an email; on an open emailed deal it still sends; each old link’s page matches what really happened.",
+  "notIn": "A reason to email that has run out and a missing mailing address (same button, pinned by tests).",
+  "who": "UAT Rep Club’s owner (owner window), then nobody (a private window), then your inbox.",
+  "where": "Sponsorships → Deals, and the business’s links.",
+  "steps": [
+   {
+    "stop": true,
+    "d": "In the <b>owner window</b> sign in as <code>uat-club-owner@uat-rep-club.local</code>, open <b>Sponsorships</b> → <b>Deals</b> and open <b>Walk Pizza</b>.",
+    "s": "The chip reads <b>Invoiced</b>. At the foot the button reads <b>Make a new link (the old link stops working)</b>, not “Send the link again”. <b>Stop if the deal is missing.</b>"
+   },
+   {
+    "d": "Press <b>Copy the link</b>, and paste it somewhere to keep (this is the old link).",
+    "s": "The button reads <b>Copied</b>."
+   },
+   {
+    "d": "Press <b>Make a new link (the old link stops working)</b>.",
+    "s": "A window asks <b>Make a new link?</b> and reads <b>The old link stops working. Nothing is emailed, so copy the new link and give it to them.</b>"
+   },
+   {
+    "d": "Press <b>Make a new link</b>.",
+    "s": "A window reads <b>The new link is made. Nothing was emailed, so give it to them in person.</b> It does <b>not</b> say it couldn’t be emailed."
+   },
+   {
+    "d": "Press <b>Copy the link</b> in that window, and keep it apart from the old one.",
+    "s": "The window closes and the link is on the clipboard."
+   },
+   {
+    "d": "In the <b>private window</b> open the <b>old</b> link.",
+    "s": "It reads <b>This link has been replaced. Contact UAT Rep Club.</b> No mention of a newer email, and no business details."
+   },
+   {
+    "d": "In the private window open the <b>new</b> link.",
+    "s": "Walk Pizza’s page opens with its invoice."
+   },
+   {
+    "d": "In the owner window go to <b>Deals</b> and open <b>Walk Harbour Dental</b>.",
+    "s": "Its button reads <b>Make a new link (the old link stops working)</b>."
+   },
+   {
+    "d": "Press that button and read the window, then press <b>Cancel</b>.",
+    "s": "It reads <b>The old link stops working. Nothing is emailed.</b> (a deal never emailed keeps its words)."
+   },
+   {
+    "d": "Go to <b>Deals</b> and press <b>+ Offer a deal</b>. New business <b>Walk Link Two</b>; Email: <b>your inbox</b>; Package <b>Walk club partner</b>; reason <b>They gave us this address</b>. Send the offer.",
+    "s": "The deal opens with the chip <b>Offered</b> and its button reads <b>Send the link again (the old link stops working)</b>. The offer email arrives."
+   },
+   {
+    "d": "Press <b>Copy the link</b>, and keep it (this is link 1).",
+    "s": "The button reads <b>Copied</b>."
+   },
+   {
+    "d": "Press <b>Send the link again (the old link stops working)</b>.",
+    "s": "The window asks <b>Send the link again?</b> and reads <b>A new link goes to the business by email. The old link stops working.</b>"
+   },
+   {
+    "d": "Press <b>Send the link again</b>.",
+    "s": "A green notice says the new link was sent to your address, and the email arrives."
+   },
+   {
+    "d": "In the private window open <b>link 1</b>.",
+    "s": "It reads <b>This link has been replaced. Look for the club’s newer email, or contact UAT Rep Club.</b>"
+   },
+   {
+    "d": "In the owner window press <b>Copy the link</b> and keep it (link 2), then press <b>Do not offer again</b> and confirm.",
+    "s": "The page says <b>Not offered again since</b> today, and the link button now reads <b>Make a new link (the old link stops working)</b>."
+   },
+   {
+    "d": "Press <b>Make a new link (the old link stops working)</b>.",
+    "s": "The window reads <b>…Nothing is emailed, so copy the new link and give it to them.</b>"
+   },
+   {
+    "d": "Press <b>Make a new link</b>.",
+    "s": "It reads <b>The new link is made. Nothing was emailed, so give it to them in person.</b> No email arrives."
+   },
+   {
+    "d": "In the private window open <b>link 2</b>.",
+    "s": "It reads <b>This link has been replaced. Contact UAT Rep Club.</b>"
+   }
+  ]
+ },
+ {
+  "id": "B",
+  "title": "The sponsor’s bank asks, then disputes",
+  "job": "Dev Club Org · owner window, a private window, PowerShell, the Stripe listen window",
+  "forText": "A bank only asking about a card payment says so, takes nothing and leaves the refund open. When it becomes a dispute, the question’s notice gives way to the dispute’s.",
+  "passes": "The question’s notice never says disputed and never says not to refund; Disconnect counts it as a question; after it escalates there is one dispute notice that says not to refund, and no Refund button.",
+  "notIn": "Family and team payments (their chips, emails and record use the same rule and are pinned by tests). A club owner who ANSWERED a family’s or team’s question gets no new notice if it escalates: a known fault, not part of this change.",
+  "who": "Dev Club Org’s owner (owner window), then nobody (a private window).",
+  "where": "Sponsorships → Deals, the business’s link, Stripe’s test page, the bell, Organization → Settings → Payouts, PowerShell.",
+  "steps": [
+   {
+    "stop": true,
+    "d": "Sign in (owner window) as <code>owner@dev.local</code>, open <b>Sponsorships</b> → <b>Deals</b> → <b>+ Offer a deal</b>. New business <b>Walk Asking</b>; Email: your inbox; Package <b>Walk card partner</b>. Press <b>Make the link only</b>.",
+    "s": "The deal opens with the chip <b>Offered</b> and the link is copied. <b>Stop if the package is missing.</b>"
+   },
+   {
+    "d": "In the private window open the link, fill the form (Frank Walker, your inbox, 41 Harbour Street, Oakville, ON, L6K 1A1) and press the <b>pay by card</b> button.",
+    "s": "Stripe’s test page opens."
+   },
+   {
+    "d": "Pay with <code>4000 0000 0000 1976</code>, any future expiry, any CVC, and press <b>Pay</b>.",
+    "s": "You land back on the business’s page, which shows the deal as paid."
+   },
+   {
+    "d": "In the owner window wait a minute, reload, and open the <b>bell</b>.",
+    "s": "A notice reads <b>Walk Asking’s bank is asking about a card payment</b>: <b>The sponsor’s bank is asking about</b> the amount. <b>No money has been taken. Answer it in Stripe by</b> a date. <b>If the money should go back, you can refund the payment.</b> Nothing says disputed."
+   },
+   {
+    "d": "Open that deal and press its card payment row.",
+    "s": "The window offers <b>Refund</b>."
+   },
+   {
+    "d": "Close it. Open <b>Organization</b> → <b>Settings</b> → <b>Payouts</b> and press <b>Disconnect</b>. Read the window.",
+    "s": "One line reads <b>A bank is asking about a card payment. Answer it in Stripe by</b> a date. <b>No money has been taken.</b> This payment is not counted as a card dispute."
+   },
+   {
+    "d": "<b>Press Cancel. Do not disconnect.</b>",
+    "s": "The window closes and payouts stay connected."
+   },
+   {
+    "d": "In PowerShell in the project folder run <code>node .probe\\stage6b-answer-inquiry.cjs escalate</code>",
+    "s": "It prints <b>Answered … to escalate</b>."
+   },
+   {
+    "d": "Wait a minute, reload the owner window and open the bell.",
+    "s": "A new notice reads <b>Walk Asking’s card payment is disputed</b> and ends <b>Don’t refund this sponsor while it is open, or they get the money back twice.</b> The “asking” notice is cleared, reading <b>The bank opened a dispute.</b>"
+   },
+   {
+    "d": "Open the deal and press its card payment row.",
+    "s": "There is no <b>Refund</b> button, and the window says the sponsor disputed the payment."
+   }
+  ]
+ },
+ {
+  "id": "C",
+  "title": "The bank closes its question",
+  "job": "Dev Club Org · owner window, a private window, PowerShell",
+  "forText": "A question the bank closes says that no money was taken, instead of “The club won the dispute”.",
+  "passes": "The notice clears with the closing sentence, the deal stays paid and Refund is still offered.",
+  "notIn": "Nothing else.",
+  "who": "Dev Club Org’s owner, then nobody (a private window).",
+  "where": "The same screens as walk B.",
+  "steps": [
+   {
+    "d": "Offer a second deal the same way: new business <b>Walk Asking Two</b>, package <b>Walk card partner</b>, <b>Make the link only</b>.",
+    "s": "The deal opens <b>Offered</b> and the link is copied."
+   },
+   {
+    "d": "In the private window open the link, fill the same form and pay with <code>4000 0000 0000 1976</code>.",
+    "s": "The page shows the deal as paid."
+   },
+   {
+    "d": "Wait a minute, reload the owner window and open the bell.",
+    "s": "A notice reads <b>Walk Asking Two’s bank is asking about a card payment</b>."
+   },
+   {
+    "d": "In PowerShell run <code>node .probe\\stage6b-answer-inquiry.cjs close</code>",
+    "s": "It prints <b>Answered … to close</b>."
+   },
+   {
+    "d": "Wait a minute, reload, and open the bell.",
+    "s": "That notice is cleared and reads <b>The bank closed its question without taking any money.</b>"
+   },
+   {
+    "d": "Open Walk Asking Two’s deal and press its card payment row.",
+    "s": "The deal is <b>Paid</b> and the window offers <b>Refund</b>."
+   }
+  ]
+ }
+];
+  var CALLS = [];
+  var state = { ticks: {}, verdict: {}, notes: {}, choice: {}, open: "A" };
+  try { var raw = localStorage.getItem(KEY); if (raw) { var got = JSON.parse(raw); state.ticks = got.ticks || {}; state.verdict = got.verdict || {}; state.notes = got.notes || {}; state.choice = got.choice || {}; state.open = got.open || "A"; } } catch (e) {}
+  function save() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} }
+  function el(tag, cls, html) { var n = document.createElement(tag); if (cls) n.className = cls; if (html != null) n.innerHTML = html; return n; }
+  function plain(html) { var d = document.createElement("div"); d.innerHTML = html; return d.textContent.replace(/\s+/g, " ").trim(); }
+  // A step added after the walk was published carries its own label ("7a"), so every other step keeps its number, and a
+  // tick already saved against it stays on the right step.
+  function num(w, i) { if (w.steps[i].n) return w.steps[i].n; var k = 0; for (var j = 0; j <= i; j++) if (!w.steps[j].n) k++; return String(k); }
+  function sid(w, i) { return w.id + "." + num(w, i); }
+  function counts(w) { var n = 0; w.steps.forEach(function (s, i) { if (state.ticks[sid(w, i)]) n++; }); return { done: n, all: w.steps.length }; }
+  var VWORD = { pass: "Passed", issue: "Issue", call: "Needs a call" };
+  function chipOf(w) {
+    var c = counts(w), v = state.verdict[w.id];
+    if (v === "pass" && c.done < c.all) return ["thin", "Passed · only " + c.done + " of " + c.all + " ticked"];
+    if (v) return [v, VWORD[v] + " · " + c.done + " of " + c.all];
+    if (c.done) return ["prog", "In progress · " + c.done + " of " + c.all];
+    return ["", "Not started · " + c.all + " steps"];
+  }
+
+  var index = document.getElementById("index"), host = document.getElementById("walkHost");
+  var cards = {};
+  WALKS.forEach(function (w, wi) {
+    var b = el("button", "wcard");
+    b.type = "button"; b.id = "card-" + w.id; b.setAttribute("aria-controls", "walk-" + w.id);
+    b.appendChild(el("span", "t", "Walk " + w.id + " · " + w.title));
+    b.appendChild(el("span", "j", w.job));
+    var chip = el("span", "chip"); b.appendChild(chip);
+    b.addEventListener("click", function () { state.open = w.id; save(); render(); document.getElementById("walk-" + w.id).scrollIntoView({ block: "start" }); });
+    index.appendChild(b);
+    cards[w.id] = { b: b, chip: chip };
+  });
+
+  function render() {
+    host.innerHTML = "";
+    WALKS.forEach(function (w, wi) {
+      var open = state.open === w.id;
+      cards[w.id].b.setAttribute("aria-expanded", open ? "true" : "false");
+      var ch = chipOf(w); cards[w.id].chip.className = "chip " + ch[0]; cards[w.id].chip.textContent = ch[1];
+      if (!open) return;
+      var sec = el("section", "card walk"); sec.id = "walk-" + w.id;
+      sec.appendChild(el("span", "eyebrow", "Walk " + w.id + " of " + WALKS.length + " · " + w.job));
+      sec.appendChild(el("h2", null, w.title));
+      var meta = el("div", "meta");
+      [["What this walk is for", w.forText], ["It passes when", w.passes], ["Not in this walk", w.notIn], ["Sign in as", w.who], ["Where and on what", w.where]].forEach(function (m) {
+        var d = el("div"); d.appendChild(el("h3", null, m[0])); d.appendChild(el("p", null, m[1])); meta.appendChild(d);
+      });
+      sec.appendChild(meta);
+      var ol = el("ol", "steps");
+      w.steps.forEach(function (s, i) {
+        var id = sid(w, i);
+        var li = el("li", "step" + (s.stop ? " stop" : "") + (state.ticks[id] ? " done" : ""));
+        var cb = el("input"); cb.type = "checkbox"; cb.id = "cb-" + id; cb.checked = !!state.ticks[id];
+        cb.setAttribute("aria-label", "Step " + num(w, i) + " done");
+        cb.addEventListener("change", function () { state.ticks[id] = cb.checked; save(); li.className = "step" + (s.stop ? " stop" : "") + (cb.checked ? " done" : ""); refresh(); });
+        li.appendChild(cb);
+        var body = el("div", "body");
+        if (s.stop || s.who) body.appendChild(el("span", "who", (s.stop ? "Stop check" : "") + (s.stop && s.who ? " · " : "") + (s.who || "")));
+        body.appendChild(el("span", "lab", num(w, i) + " · Do"));
+        body.appendChild(el("p", null, s.d));
+        body.appendChild(el("span", "lab", "You should see"));
+        body.appendChild(el("p", null, s.s));
+        li.appendChild(body);
+        ol.appendChild(li);
+      });
+      sec.appendChild(ol);
+      sec.appendChild(el("h3", null, "Your verdict on this walk"));
+      var vs = el("div", "verdict");
+      [["pass", "Pass"], ["issue", "Issue"], ["call", "Needs a call"]].forEach(function (v) {
+        var btn = el("button", state.verdict[w.id] === v[0] ? "on" : "", v[1]); btn.type = "button"; btn.setAttribute("data-v", v[0]);
+        btn.setAttribute("aria-pressed", state.verdict[w.id] === v[0] ? "true" : "false");
+        btn.addEventListener("click", function () { state.verdict[w.id] = state.verdict[w.id] === v[0] ? "" : v[0]; save(); render(); });
+        vs.appendChild(btn);
+      });
+      sec.appendChild(vs);
+      var lab = el("label", null, "<h3>Notes</h3>"); lab.setAttribute("for", "notes-" + w.id);
+      sec.appendChild(lab);
+      var ta = el("textarea"); ta.id = "notes-" + w.id; ta.value = state.notes[w.id] || "";
+      ta.placeholder = "What you saw, a word you would change, a question for me";
+      ta.addEventListener("input", function () { state.notes[w.id] = ta.value; save(); refresh(); });
+      sec.appendChild(ta);
+      var row = el("div", "row");
+      var cp = el("button", "btn", "Copy this walk’s summary"); cp.type = "button";
+      var msg = el("span", "lead"); msg.setAttribute("aria-live", "polite");
+      var out = el("div", "card out"); out.tabIndex = 0; out.textContent = walkSummary(w);
+      cp.addEventListener("click", function () { copy(walkSummary(w), out, msg); });
+      row.appendChild(cp);
+      if (wi + 1 < WALKS.length) {
+        var nx = el("button", "btn", "Next: walk " + WALKS[wi + 1].id); nx.type = "button";
+        nx.addEventListener("click", function () { state.open = WALKS[wi + 1].id; save(); render(); document.getElementById("walk-" + WALKS[wi + 1].id).scrollIntoView({ block: "start" }); });
+        row.appendChild(nx);
+      }
+      row.appendChild(msg);
+      sec.appendChild(row);
+      sec.appendChild(out);
+      sec._out = out; sec._w = w;
+      host.appendChild(sec);
+    });
+    refresh();
+  }
+
+  // The owner calls sit in their own section, outside the step count; they are drawn once.
+  function renderCalls() {
+    var box = document.getElementById("callsHost");
+    CALLS.forEach(function (c) {
+      var card = el("div", "card"); card.appendChild(el("h3", null, "Call " + c.id + " · " + c.q)); card.appendChild(el("p", null, c.why));
+      var o = el("div", "opts");
+      c.opts.forEach(function (op) {
+        var lb = el("label"), r = el("input"); r.type = "radio"; r.name = "call-" + c.id; r.checked = state.choice[c.id] === op[0];
+        r.addEventListener("change", function () { state.choice[c.id] = op[0]; save(); refresh(); });
+        lb.appendChild(r); lb.appendChild(el("span", null, op[1])); o.appendChild(lb);
+      });
+      card.appendChild(o); box.appendChild(card);
+    });
+    var lab = el("label", null, "<h3>Notes on the calls</h3>"); lab.setAttribute("for", "notes-calls");
+    box.appendChild(lab);
+    var ta = el("textarea"); ta.id = "notes-calls"; ta.value = state.notes.calls || "";
+    ta.placeholder = "Anything you want to say about a call";
+    ta.addEventListener("input", function () { state.notes.calls = ta.value; save(); refresh(); });
+    box.appendChild(ta);
+  }
+
+  function callsSummary() {
+    var lines = ["Owner calls (outside the count)"];
+    CALLS.forEach(function (c) {
+      var a = state.choice[c.id], hit = c.opts.filter(function (o) { return o[0] === a; })[0];
+      lines.push("  Call " + c.id + " (" + c.q + "): " + (hit ? hit[0] + " — " + hit[1] : "NOT ANSWERED"));
+    });
+    var n = (state.notes.calls || "").trim();
+    if (n) lines.push("  Notes: " + n.replace(/\n+/g, " / "));
+    return lines.join("\n");
+  }
+
+  function walkSummary(w) {
+    var c = counts(w), v = state.verdict[w.id];
+    var lines = [w.id + " " + w.title + " · " + (v ? VWORD[v].toUpperCase() : "NO VERDICT") + " · " + c.done + " of " + c.all + " ticked"];
+    w.steps.forEach(function (s, i) { lines.push("  " + (state.ticks[sid(w, i)] ? "[x] " : "[ ] ") + num(w, i) + ". " + plain(s.d)); });
+    var n = (state.notes[w.id] || "").trim();
+    if (n) lines.push("  Notes: " + n.replace(/\n+/g, " / "));
+    return lines.join("\n");
+  }
+  function allSummary() {
+    var total = 0, done = 0;
+    WALKS.forEach(function (w) { var c = counts(w); total += c.all; done += c.done; });
+    return [PAGE, "Checked " + done + " of " + total, ""].concat(WALKS.map(walkSummary)).join("\n");
+  }
+  function refresh() {
+    var total = 0, done = 0;
+    WALKS.forEach(function (w) { var c = counts(w); total += c.all; done += c.done; var ch = chipOf(w); cards[w.id].chip.className = "chip " + ch[0]; cards[w.id].chip.textContent = ch[1]; });
+    document.getElementById("progress").textContent = "Checked " + done + " of " + total;
+    document.getElementById("out").textContent = allSummary();
+    var sec = host.querySelector(".walk"); if (sec && sec._out) sec._out.textContent = walkSummary(sec._w);
+  }
+  function copy(text, node, msg) {
+    function pick() { try { var r = document.createRange(); r.selectNodeContents(node); var s = window.getSelection(); s.removeAllRanges(); s.addRange(r); msg.textContent = "Selected: press Ctrl+C to copy."; } catch (e) {} }
+    try { navigator.clipboard.writeText(text).then(function () { msg.textContent = "Copied."; }, pick); } catch (e) { pick(); }
+  }
+  document.getElementById("copyAll").addEventListener("click", function () { copy(allSummary(), document.getElementById("out"), document.getElementById("copied")); });
+  var armed = false;
+  document.getElementById("reset").addEventListener("click", function () {
+    var b = document.getElementById("reset");
+    if (!armed) { armed = true; b.textContent = "Press again to clear every tick and note"; return; }
+    armed = false; b.textContent = "Clear my ticks";
+    state = { ticks: {}, verdict: {}, notes: {}, choice: {}, open: "A" }; save();
+    document.getElementById("callsHost").querySelectorAll(".card, label, textarea").forEach(function (n) { n.remove(); });
+    renderCalls(); render();
+  });
+  renderCalls();
+  render();
+})();
+</script>

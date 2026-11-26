@@ -1853,6 +1853,33 @@ in the card-network sentence); Privacy §5 (who sent an offer is kept with its r
   storage answers correctly for a stored and a missing file. Pinned in `club-stage4d-guard`.
 - **Walk §570 published 2026-11-25** (https://claude.ai/artifact/FR713RKu5wxYxopDMDSfW5; walks A–C, 38 steps; no owner calls).
   - **Walk §570 PASSED 2026-11-25, 38 of 38** (owner paste-back; A 12, B 7, C 19; no notes).
+- **Four fixes before sponsor card payments go live, Part B BUILT on dev 2026-11-26; calls B1–B5 all ruled A 2026-11-25** (owner: "all A"; B5 added from the build's
+  census). (B1) Private-link secrets and unsubscribe addresses are removed from error reports and feedback before they
+  are stored or logged, every page and route shape, pinned by `private-link-redaction`; dev's 14 reports and 8 groups
+  cleaned (recount 0); production held none (counts only). (B2) "Send the link again" reads **Make a new link** whenever
+  the press would email nothing, from one plan the page and the press share (`againPlan`); an invoiced or paid deal says
+  nothing was emailed; a replaced link's page mentions a newer email only when one went. (B3, B4) A bank only asking
+  never reads as a dispute: the sponsor's own notice, family and team titles, chips, copied facts, emails, the closed
+  line and the leaving-payments counts; a question that becomes a dispute clears its notice so the dispute's can be
+  raised. (B5) A club's own web address passes the pay doors, and Stripe's return survives the forward to it (no club
+  web address exists on production or dev; proved by tests). `/review` (four lenses; two small faults fixed from each of
+  two, three redactor gaps fixed), `/marketing` (four words changed), `/docs`, walk §572 published
+  (https://claude.ai/artifact/JK1NstHfhR75WCKSYa5yjn; walks A–C, 34 steps).
+  Committed 2026-11-26 as three commits (owner: "commit now, three commits"): error reports; sponsor links and bank
+  questions; paying on a club's own web address, with these records.
+- **Open for the owner from Part B** (2026-11-26): (a) the grouped summary of an error outlives the policy's 30 days —
+  `/legal` recommends the daily sweep clear a group's sample after 30 days, with new §4/§8/§9 words
+  (`drafts/PRIVACY_POLICY_SPONSORSHIP_ADDENDUM.md` finding 1); (b) a bank's question that the owner ANSWERED and that
+  then becomes a dispute leaves the family or team record "answered", raises no notice for the owner, and sends no
+  reminder or second email (the database keeps "answered" and the once-only stamps per dispute: `mig 534`; older than
+  this change, needs a database change); (c) with the family tier on, "Email me" and "Sign in" on the sign-up page do not
+  work on a club's own web address; (d) `/legal`: the next Payments Terms version, §10, should name "an open dispute
+  (including a bank's question about a payment)"; nothing blocks the release.
+- **Found by the Part B reviews, not built** (for `/plan`): the platform console's open-dispute figures still count a
+  bank's question; the refund timing words still say "card company"; a help line on the cancel window counts differently
+  from the window; the forward to a club's own address keeps a query only on the two pay pages; a team paying from a
+  club's address comes back on ours; a failed clear could leave no open dispute notice until Stripe's next event; an
+  email address written with %40 is not removed from error reports.
 - ~~The per-deal "Charge HST" switch carries no words telling a club WHEN to turn it on.~~ **Added 2026-11-22 (owner: "add
   the hint")**, words checked against CRA RC4081 then set in brand voice (`docs/agents/accounting/BOARD_READY_STAGE6_SPONSOR_PAYMENT_FEE_REVIEW.md`
   addendum): the switch's hint reads **"13% for an Ontario address, added to the amount. A sponsorship that shows a name or
