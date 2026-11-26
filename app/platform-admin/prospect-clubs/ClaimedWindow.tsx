@@ -7,7 +7,9 @@
  */
 import { useState } from 'react';
 import Link from 'next/link';
+import { Undo2 } from 'lucide-react';
 import KitDialog, { DialogCancel, DialogReason } from '@/components/shared/KitDialog';
+import { repKit } from '@/components/admin/kit/club/RepKit';
 import { CLAIMED_WORDS } from '@/lib/preview-claim';
 import type { ProspectRow } from '@/lib/prospect-clubs';
 import type { ClaimedFacts } from './ProspectClubsScreen';
@@ -69,8 +71,11 @@ export default function ClaimedWindow({ row, facts, onClose, onUndone }: {
             {facts?.planStarted ? (
               <p className={kit.hint}>{CLAIMED_WORDS.undoGone}</p>
             ) : (
-              <div className={styles.rare}>
-                <button type="button" className="btn btn-danger" onClick={() => setAsking(true)}>{CLAIMED_WORDS.undo}</button>
+              <div className={styles.end}>
+                {/* The record Delete's look with an undo arrow: it takes the club off the claimant, but deletes nothing. */}
+                <button type="button" className={repKit.recordDelete} onClick={() => setAsking(true)} data-record-door="">
+                  <Undo2 size={13} aria-hidden /> {CLAIMED_WORDS.undo}
+                </button>
               </div>
             )}
           </>

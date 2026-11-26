@@ -6,6 +6,9 @@
   flex-direction: column;
   gap: 16px;
 }
+/* The window spaces its own lines with `gap`: the kit body's paragraph margin would stack on top of it (this selector
+   has to outrank the kit's). */
+.body.body p { margin: 0; }
 
 .codeRow {
   display: flex;
@@ -40,7 +43,7 @@
 }
 .buttons :global(.btn) { min-height: 44px; }
 
-/* The live game: a bordered group with its uppercase head band. */
+/* The live game and Email the link: a bordered group with its uppercase head band, so each button belongs to one. */
 .group {
   border: 1px solid var(--border);
   border-radius: 10px;
@@ -88,6 +91,8 @@
   appearance: textfield;
   -moz-appearance: textfield;
 }
+/* Locked (before the start, or final): the box reads as not for typing. */
+.score:disabled { background: var(--home-fill); cursor: default; }
 .score::-webkit-outer-spin-button,
 .score::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
 
@@ -100,44 +105,48 @@
 }
 .actionsEnd :global(.btn) { min-height: 44px; }
 
-.email {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
+/* Email the link: the address and their role side by side, stacked on a phone. */
+.emailFields {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 10px;
 }
-.tickRow {
+@media (max-width: 640px) { .emailFields { grid-template-columns: minmax(0, 1fr); } }
+.emailFields input,
+.emailFields select { min-height: 44px; }
+
+/* The line about the email shares a row with its Send; the button keeps the right edge when it wraps. */
+.sendRow {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 8px;
+  gap: 8px 12px;
 }
-.tickRow select { width: auto; min-height: 44px; }
+.sendRow p { flex: 1 1 14rem; }
+.sendRow :global(.btn) { min-height: 44px; margin-left: auto; }
 
-.meeting {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
 .meetingLine {
-  margin: 0;
   min-height: 44px;
   display: flex;
   align-items: center;
   flex-wrap: wrap;
-  gap: 4px;
+  column-gap: 6px;
 }
+.meetingName { margin-right: 6px; }
 .meetingEdit {
   display: flex;
   flex-direction: column;
   gap: 8px;
 }
 
-/* The rare door ends the body (the room window's lone Remove now, /design 2026-11-25). */
-.rare {
-  padding-top: 12px;
-  border-top: 1px solid var(--border);
+/* A window's rare door ends its body: the removal date and Remove now, or the claimed window's Undo the claim
+   (ClaimedWindow.tsx shares this sheet). No rule above it: that read as a pinned foot (owner, 2026-11-26). */
+.end {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
 }
-.rare :global(.btn) { min-height: 44px; }
 
 /* Show the QR code full screen: the phone becomes the code for the table. Tap anywhere to close. */
 .full {
@@ -174,4 +183,5 @@
 .doorTap { display: inline-flex; align-items: center; min-height: var(--tap-min, 44px); }
 
 /* The consent tick is read before it is ticked: body size, primary ink. */
-.consent { font-size: var(--type-body); color: var(--text-primary); line-height: 1.4; }
+.consent { align-items: flex-start; font-size: var(--type-body); color: var(--text-primary); line-height: 1.4; }
+.consent input { flex-shrink: 0; margin-top: 3px; }

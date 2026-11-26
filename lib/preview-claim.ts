@@ -130,7 +130,6 @@ export const ROOM_WORDS = {
   liveGroupBare: 'The live game',
   liveNow: 'Live now',
   final: 'Final',
-  notStarted: 'Starts at the meeting',
   markFinal: 'Mark final',
   finalAsk: (home: string, away: string) => `Mark the game final at ${home}–${away}?`,
   finalBody: 'The score can’t be changed in the room after this. Phones in the room show it as final.',
@@ -143,7 +142,9 @@ export const ROOM_WORDS = {
   finalErr: 'This game is marked final.',
   noGame: 'The live game isn’t on this preview any more. Change the meeting to make it again.',
   emailLabel: 'Email the link',
-  emailTick: 'They gave me this address at the meeting and asked for the link. Their role:',
+  emailAddress: 'Email address',
+  emailRole: 'Their role',
+  emailTick: 'They gave me this address at the meeting and asked for the link.',
   /** /legal P3 review item 3: P3 keeps nothing; Session P4 says what its consent record keeps. */
   emailHelp: 'One email, to the person you met. It never carries the code. Nothing is kept yet.',
   send: 'Send',

@@ -1402,6 +1402,10 @@ the demos follow the product and are curated with `/demos`, never as a build ste
   on production, P4's removal must be live there, or the owner removes each one by hand (Prospect clubs › the room window ›
   Remove now).** Walk: [CLUB_WEBSITE_TRACK_P_P3_WALK.html](CLUB_WEBSITE_TRACK_P_P3_WALK.html),
   https://claude.ai/artifact/4VxedNNBxzvLdKUToKKtV9, Owner QA Ledger §571 (3 walks, 47 steps).
+  **Room window relaid out (owner, 2026-11-26, during the walk; replaces the drawn order):** code, Meeting, live game,
+  Email the link (now a titled box, with Their role its own field), then the removal date and Remove now (the record
+  Delete's look, no rule above it); the score is locked until the start; doubled spacing fixed. Walk A steps 7, 8, 10,
+  13 and 19 reworded and republished.
 
 ## 8. Census questions for Stage 0 (answer from code, not from this plan)
 

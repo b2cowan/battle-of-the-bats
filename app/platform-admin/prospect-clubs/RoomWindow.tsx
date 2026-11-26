@@ -1,8 +1,9 @@
 'use client';
 /**
  * The room window (Club Website Track P, Session P3; owner rulings T5, T7, T13; drawing tab 4A). Opened from an open row
- * of Prospect clubs, on the owner's phone in the meeting. In the order the room needs them: the code to scan, the live
- * game's score, Email the link, then the meeting and its removal date; Remove now ends the body (a rare door).
+ * of Prospect clubs, on the owner's phone in the meeting. In the order the room needs them: the code to scan, the meeting
+ * (it sets the game's start, so it sits above the game), the live game's score, Email the link; the removal date and
+ * Remove now (a rare door) end the body (layout, owner 2026-11-26).
  *
  * Staff write one thing in a preview: the live game's score, through this window, never a club seat (T3: nobody signs in
  * to a preview). Every write goes through `/api/platform-admin/prospect-clubs/{orgId}` (owner only) and one database
@@ -10,6 +11,7 @@
  */
 import { useCallback, useEffect, useRef, useState } from 'react';
 import KitDialog, { DialogCancel, DialogReason } from '@/components/shared/KitDialog';
+import { RecordDelete } from '@/components/admin/kit/club/RepKit';
 import DateTimeInput from '@/components/shared/DateTimeInput';
 import { isGameLive } from '@/lib/game-status';
 import { formatShortWeekdayDate, orgDayKey, utcToZonedInputs, zonedWallClockToUtc } from '@/lib/timezone';
@@ -170,18 +172,19 @@ export default function RoomWindow({ orgId, name, onClose, onChanged }: {
               </div>
             )}
 
+            {/* ── The meeting ── */}
+            <Meeting orgId={orgId} room={room} onMoved={async () => { await load(); onChanged(); }} />
+
             {/* ── The live game ── */}
             <LiveGame key={room.meetingAt} orgId={orgId} room={room} onSaved={refresh} />
 
             {/* ── Email the link (T13: refused while our mailing address is blank) ── */}
             <EmailTheLink canEmail={room.canEmail} />
 
-            {/* ── The meeting and the removal date ── */}
-            <Meeting orgId={orgId} room={room} onMoved={async () => { await load(); onChanged(); }} />
-            <p className={kit.hint}>{ROOM_WORDS.removal(removalDateLabel(room.meetingAt, true))}</p>
-
-            <div className={styles.rare}>
-              <button type="button" className="btn btn-danger" onClick={() => setAsk('remove')}>{ROOM_WORDS.removeNow}</button>
+            {/* ── The removal date and its rare door ── */}
+            <div className={styles.end}>
+              <p className={kit.hint}>{ROOM_WORDS.removal(removalDateLabel(room.meetingAt, true))}</p>
+              <RecordDelete onClick={() => setAsk('remove')}>{ROOM_WORDS.removeNow}</RecordDelete>
             </div>
           </div>
         )}
@@ -215,9 +218,9 @@ function LiveGame({ orgId, room, onSaved }: { orgId: string; room: RoomView; onS
   // Mark final can't be taken back in the room (/review 2026-11-25): it asks first.
   const [askFinal, setAskFinal] = useState(false);
   const [error, setError] = useState('');
-  // The clock, so "Live now" turns on at the meeting time without a reload.
+  // The clock, so the score unlocks and "Live now" turns on at the meeting time without a reload.
   const [now, setNow] = useState(() => new Date());
-  useEffect(() => { const t = setInterval(() => setNow(new Date()), 30_000); return () => clearInterval(t); }, []);
+  useEffect(() => { const t = setInterval(() => setNow(new Date()), 5_000); return () => clearInterval(t); }, []);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(() => () => { if (timer.current) clearTimeout(timer.current); }, []);
 
@@ -232,8 +235,9 @@ function LiveGame({ orgId, room, onSaved }: { orgId: string; room: RoomView; onS
   const final = g.status === 'completed';
   const live = isGameLive({ status: g.status, date: g.date, time: g.time }, g.durationMinutes, now);
   const startIso = zonedWallClockToUtc(g.date, g.time);
-  const started = startIso ? Date.parse(startIso) <= now.getTime() : false;
-  const state = final ? ROOM_WORDS.final : live ? ROOM_WORDS.liveNow : started ? '' : ROOM_WORDS.notStarted;
+  // The database refuses a score before the start, so the window doesn't offer one.
+  const waiting = !final && startIso != null && Date.parse(startIso) > now.getTime();
+  const state = final ? ROOM_WORDS.final : live ? ROOM_WORDS.liveNow : '';
   const line = [g.division, formatTime(g.time), state].filter(Boolean).join(' · ');
 
   async function send(action: 'score' | 'final') {
@@ -266,25 +270,25 @@ function LiveGame({ orgId, room, onSaved }: { orgId: string; room: RoomView; onS
           <label className={styles.scoreRow}>
             <span>{g.home}</span>
             <input type="number" inputMode="numeric" min={0} max={999} className={`${kit.field} ${styles.score}`} value={home}
-              onChange={e => setHome(e.target.value)} disabled={final} aria-label={`${g.home} score`} />
+              onChange={e => setHome(e.target.value)} disabled={final || waiting} aria-label={`${g.home} score`} />
           </label>
           <label className={styles.scoreRow}>
             <span>{g.away}</span>
             <input type="number" inputMode="numeric" min={0} max={999} className={`${kit.field} ${styles.score}`} value={away}
-              onChange={e => setAway(e.target.value)} disabled={final} aria-label={`${g.away} score`} />
+              onChange={e => setAway(e.target.value)} disabled={final || waiting} aria-label={`${g.away} score`} />
           </label>
         </div>
         {error && <p className={kit.fieldError} role="alert">{error}</p>}
         {!final && (
           <div className={styles.actionsEnd}>
             {save === 'saved' && <span className={kit.hint} role="status">{ROOM_WORDS.saved}</span>}
-            <button type="button" className="btn btn-secondary" onClick={() => setAskFinal(true)} disabled={save === 'saving'}>{ROOM_WORDS.markFinal}</button>
-            <button type="button" className="btn btn-primary" onClick={() => void send('score')} disabled={save === 'saving'}>
+            <button type="button" className="btn btn-secondary" onClick={() => setAskFinal(true)} disabled={waiting || save === 'saving'}>{ROOM_WORDS.markFinal}</button>
+            <button type="button" className="btn btn-primary" onClick={() => void send('score')} disabled={waiting || save === 'saving'}>
               {save === 'saving' ? ROOM_WORDS.saving : ROOM_WORDS.saveScore}
             </button>
           </div>
         )}
-        <p className={kit.hint}>{ROOM_WORDS.scoreHelp}</p>
+        <p className={kit.hint}>{waiting ? ROOM_WORDS.notStartedErr : ROOM_WORDS.scoreHelp}</p>
       </div>
       {askFinal && (
         <KitDialog kind="question" title={ROOM_WORDS.finalAsk(home || '0', away || '0')} onClose={() => setAskFinal(false)}
@@ -305,28 +309,34 @@ function EmailTheLink({ canEmail }: { canEmail: boolean }) {
   const [ticked, setTicked] = useState(false);
   const [refused, setRefused] = useState(false);
   return (
-    <section className={styles.email}>
-      <label className={kit.fieldGroup}>
-        <span className={kit.label}>{ROOM_WORDS.emailLabel}</span>
-        <input type="email" className={kit.field} value={address} onChange={e => setAddress(e.target.value)} autoComplete="off"
-          placeholder="name@club.ca" />
-      </label>
-      <div className={styles.tickRow}>
+    <section className={styles.group} aria-label={ROOM_WORDS.emailLabel}>
+      <h3 className={styles.groupHead}>{ROOM_WORDS.emailLabel}</h3>
+      <div className={styles.groupBody}>
+        <div className={styles.emailFields}>
+          <label className={kit.fieldGroup}>
+            <span className={kit.label}>{ROOM_WORDS.emailAddress}</span>
+            <input type="email" className={kit.field} value={address} onChange={e => setAddress(e.target.value)} autoComplete="off"
+              placeholder="name@club.ca" />
+          </label>
+          <label className={kit.fieldGroup}>
+            <span className={kit.label}>{ROOM_WORDS.emailRole}</span>
+            <select className={kit.select} value={role} onChange={e => setRole(e.target.value)}>
+              {ROOM_WORDS.roles.map(r => <option key={r} value={r}>{r}</option>)}
+            </select>
+          </label>
+        </div>
         <label className={`${kit.check} ${styles.consent}`}>
           <input type="checkbox" checked={ticked} onChange={e => setTicked(e.target.checked)} />
           {ROOM_WORDS.emailTick}
         </label>
-        <select className={kit.select} value={role} onChange={e => setRole(e.target.value)} aria-label="Their role">
-          {ROOM_WORDS.roles.map(r => <option key={r} value={r}>{r}</option>)}
-        </select>
-      </div>
-      <p className={kit.hint}>{ROOM_WORDS.emailHelp}</p>
-      {/* T13: built and tested in Session P4; until then, and until our mailing address exists, nothing is sent. */}
-      {refused && <p className={kit.fieldError} role="alert">{canEmail ? ROOM_WORDS.sendNotYet : ROOM_WORDS.sendRefused}</p>}
-      <div className={styles.actionsEnd}>
-        <button type="button" className="btn btn-secondary" onClick={() => setRefused(true)} disabled={!address.trim() || !ticked}>
-          {ROOM_WORDS.send}
-        </button>
+        {/* T13: built and tested in Session P4; until then, and until our mailing address exists, nothing is sent. */}
+        {refused && <p className={kit.fieldError} role="alert">{canEmail ? ROOM_WORDS.sendNotYet : ROOM_WORDS.sendRefused}</p>}
+        <div className={styles.sendRow}>
+          <p className={kit.hint}>{ROOM_WORDS.emailHelp}</p>
+          <button type="button" className="btn btn-secondary" onClick={() => setRefused(true)} disabled={!address.trim() || !ticked}>
+            {ROOM_WORDS.send}
+          </button>
+        </div>
       </div>
     </section>
   );
@@ -352,15 +362,16 @@ function Meeting({ orgId, room, onMoved }: { orgId: string; room: RoomView; onMo
   }
 
   return (
-    <section className={styles.meeting}>
-      <span className={kit.label}>{ROOM_WORDS.meeting}</span>
+    <section aria-label={ROOM_WORDS.meeting}>
       {!open ? (
         <p className={styles.meetingLine}>
-          {meetingLabel(room.meetingAt)} ·{' '}
+          <span className={`${kit.label} ${styles.meetingName}`}>{ROOM_WORDS.meeting}</span>
+          {meetingLabel(room.meetingAt)} ·
           <button type="button" className={`${kit.door} ${styles.doorTap}`} onClick={() => { setValue(room.meetingInput); setOpen(true); }}>{ROOM_WORDS.change}</button>
         </p>
       ) : (
         <div className={styles.meetingEdit}>
+          <span className={kit.label}>{ROOM_WORDS.meeting}</span>
           <DateTimeInput aria-label={ROOM_WORDS.changeTitle} className={kit.field} value={value} onChange={setValue} />
           <p className={kit.hint}>{ROOM_WORDS.changeHelp}</p>
           {error && <p className={kit.fieldError} role="alert">{error}</p>}

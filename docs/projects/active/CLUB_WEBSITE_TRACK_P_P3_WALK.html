@@ -171,19 +171,19 @@ textarea { width: 100%; box-sizing: border-box; min-height: 80px; font: 14px/1.5
    },
    {
     "d": "Read the live game box.",
-    "s": "“THE LIVE GAME · SAMPLE INDOOR CLASSIC”, then “U11 · {the meeting time} · Starts at the meeting”, <b>Brindlewood Foxes</b> and <b>Marrowvale Mavericks</b> with an empty score box each, Mark final and Save score."
+    "s": "“THE LIVE GAME · SAMPLE INDOOR CLASSIC”, then “U11 · {the meeting time}”, <b>Brindlewood Foxes</b> and <b>Marrowvale Mavericks</b> with an empty, shaded score box each, Mark final and Save score greyed out, and “The game hasn’t started yet. It starts at the meeting time.”"
    },
    {
-    "d": "Before the meeting time, type <code>1</code> and <code>0</code> and press <b>Save score</b>.",
-    "s": "In red: “The game hasn’t started yet. It starts at the meeting time.” Your 1 and 0 are still in the boxes."
+    "d": "Before the meeting time, try to type a score, then try <b>Save score</b> and <b>Mark final</b>.",
+    "s": "Nothing happens: the boxes take no typing and neither button can be pressed."
    },
    {
     "d": "Under <b>Email the link</b>, type your own address, tick the box, and press <b>Send</b>.",
     "s": "In red: “This email can’t go yet. Every email like it must carry our mailing address, and ours isn’t set.” Nothing is sent."
    },
    {
-    "d": "Read the Meeting line and the line under it.",
-    "s": "“{today} at {the time} · Change”, then “Removed on {today plus 30, with the year}, 30 days after the meeting, unless the club claims it.”, then a red <b>Remove now</b> at the bottom."
+    "d": "Read the Meeting line above the live game, then the end of the window.",
+    "s": "One line: “Meeting”, then “{today} at {the time} · Change”. At the end, below the <b>Email the link</b> box: “Removed on {today plus 30, with the year}, 30 days after the meeting, unless the club claims it.”, then a red <b>Remove now</b> with a trash icon, with no dividing line above it and the sections evenly spaced."
    },
    {
     "d": "In a <b>private window</b> open <code>http://localhost:3000/oakridge-minor-softball/sample-indoor-classic</code>.",
@@ -196,7 +196,7 @@ textarea { width: 100%; box-sizing: border-box; min-height: 80px; font: 14px/1.5
    },
    {
     "d": "Look at the room window (no reload).",
-    "s": "Within 30 seconds the game line reads “U11 · {time} · <b>Live now</b>” in green."
+    "s": "Within 30 seconds the game line reads “U11 · {time} · <b>Live now</b>” in green, the score boxes open and both buttons can be pressed."
    },
    {
     "d": "Type <code>2</code> and <code>1</code> and press <b>Save score</b>.",
@@ -220,7 +220,7 @@ textarea { width: 100%; box-sizing: border-box; min-height: 80px; font: 14px/1.5
    },
    {
     "d": "Press <b>Change</b> on the Meeting line, set it to <b>tomorrow at 7:00 p.m.</b>, and press <b>Move the meeting</b>.",
-    "s": "The Meeting line reads tomorrow at 7:00 p.m., the removal date moves one day later, and the live game box is back to “Starts at the meeting” with empty boxes."
+    "s": "The Meeting line reads tomorrow at 7:00 p.m., the removal date moves one day later, and the live game box is locked again, with empty boxes and “The game hasn’t started yet. It starts at the meeting time.”"
    }
   ]
  },
