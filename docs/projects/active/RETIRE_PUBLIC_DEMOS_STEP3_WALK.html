@@ -1,0 +1,370 @@
+<title>Retire the public demos · Step 3 walk</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: one reading column; a walk index of cards, one walk open at a time; steps as Do / You should see rows with a tick. */
+:root {
+  --bg: #f4f6f5; --surface: #ffffff; --ink: #18211d; --muted: #5b6862; --line: #d5ddd9;
+  --accent: #1f6b4f; --accent-soft: #e2efe9; --warn: #9a5b00; --warn-soft: #fbefd9; --bad: #a3322b; --bad-soft: #f8e3e1;
+  --font-body: "Instrument Sans", "Segoe UI", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, "Cascadia Mono", Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #121715; --surface: #1a211e; --ink: #e5ece8; --muted: #9aa8a1; --line: #2e3833;
+  --accent: #6fcca4; --accent-soft: #1f3a2f; --warn: #f0b75c; --warn-soft: #3a2c14; --bad: #f08a80; --bad-soft: #3d1f1c; color-scheme: dark; } }
+:root[data-theme="dark"] {
+  --bg: #121715; --surface: #1a211e; --ink: #e5ece8; --muted: #9aa8a1; --line: #2e3833;
+  --accent: #6fcca4; --accent-soft: #1f3a2f; --warn: #f0b75c; --warn-soft: #3a2c14; --bad: #f08a80; --bad-soft: #3d1f1c; color-scheme: dark; }
+body { background: var(--bg); color: var(--ink); font: 15px/1.55 var(--font-body); padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 24px 64px; }
+.wrap { max-width: 860px; margin: 0 auto; display: grid; gap: 20px; }
+h1 { font-size: 30px; line-height: 1.15; margin: 0; text-wrap: balance; letter-spacing: -0.01em; }
+h2 { font-size: 19px; margin: 0; text-wrap: balance; }
+h3 { font-size: 13px; margin: 0; text-transform: uppercase; letter-spacing: 0.07em; color: var(--muted); font-weight: 600; }
+p { margin: 0; max-width: 68ch; }
+.eyebrow { font: 600 12px/1 var(--font-mono); letter-spacing: 0.08em; text-transform: uppercase; color: var(--accent); }
+.lead { color: var(--muted); }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 18px; display: grid; gap: 12px; min-width: 0; }
+.signin { border-color: var(--accent); }
+.kv { display: grid; grid-template-columns: max-content 1fr; gap: 6px 16px; }
+.kv dt { color: var(--muted); }
+.kv dd { margin: 0; min-width: 0; overflow-wrap: anywhere; }
+code, .mono { font-family: var(--font-mono); font-size: 0.92em; }
+pre { margin: 6px 0 0; padding: 10px 12px; background: var(--bg); border: 1px solid var(--line); border-radius: 8px; font: 12px/1.5 var(--font-mono); white-space: pre-wrap; overflow-wrap: anywhere; }
+.amt { font-family: var(--font-mono); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.note { background: var(--warn-soft); border-radius: 8px; padding: 10px 12px; }
+ul.plain { margin: 0; padding-left: 18px; display: grid; gap: 4px; }
+.index { display: grid; gap: 8px; }
+.wcard { display: grid; grid-template-columns: 1fr auto; gap: 4px 12px; align-items: center; text-align: left; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; font: inherit; color: inherit; cursor: pointer; }
+.wcard[aria-expanded="true"] { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent) inset; }
+.wcard:focus-visible, button:focus-visible, textarea:focus-visible, input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.wcard .t { font-weight: 600; }
+.wcard .j { grid-column: 1; color: var(--muted); font-size: 14px; }
+.chip { grid-row: 1 / span 2; grid-column: 2; font: 600 12px/1 var(--font-body); padding: 6px 9px; border-radius: 999px; background: var(--bg); color: var(--muted); border: 1px solid var(--line); white-space: nowrap; }
+.chip.prog { color: var(--accent); border-color: var(--accent); }
+.chip.pass { background: var(--accent-soft); color: var(--accent); border-color: transparent; }
+.chip.issue { background: var(--bad-soft); color: var(--bad); border-color: transparent; }
+.chip.call, .chip.thin { background: var(--warn-soft); color: var(--warn); border-color: transparent; }
+.walk { display: grid; gap: 14px; }
+.meta { display: grid; gap: 10px; }
+.meta div { display: grid; gap: 2px; }
+.steps { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+.step { display: grid; grid-template-columns: 28px 1fr; gap: 10px; padding: 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); }
+.step.done { border-color: var(--accent); background: var(--accent-soft); }
+.step.stop { border-style: dashed; border-color: var(--warn); }
+.step input[type="checkbox"] { width: 20px; height: 20px; margin: 2px 0 0; accent-color: var(--accent); }
+.step .body { display: grid; gap: 6px; min-width: 0; }
+.step .who { font: 600 11px/1 var(--font-mono); text-transform: uppercase; letter-spacing: 0.07em; color: var(--warn); }
+.step .lab { font-weight: 600; font-size: 12px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); }
+.opts { display: grid; gap: 6px; }
+.opts label { display: flex; gap: 8px; align-items: flex-start; }
+.verdict { display: flex; flex-wrap: wrap; gap: 8px; }
+.verdict button, .btn { font: 600 14px/1 var(--font-body); padding: 10px 14px; border-radius: 8px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); cursor: pointer; }
+.verdict button.on[data-v="pass"] { background: var(--accent); color: var(--surface); border-color: var(--accent); }
+.verdict button.on[data-v="issue"] { background: var(--bad); color: var(--surface); border-color: var(--bad); }
+.verdict button.on[data-v="call"] { background: var(--warn); color: var(--surface); border-color: var(--warn); }
+textarea { width: 100%; box-sizing: border-box; min-height: 80px; font: 14px/1.5 var(--font-body); padding: 10px; border-radius: 8px; border: 1px solid var(--line); background: var(--bg); color: var(--ink); }
+.out { font: 13px/1.5 var(--font-mono); white-space: pre-wrap; }
+.row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.progress { font-weight: 600; }
+@media (max-width: 520px) { .kv { grid-template-columns: 1fr; } .kv dt { margin-top: 6px; } h1 { font-size: 25px; } }
+@media (prefers-reduced-motion: no-preference) { .step { transition: background-color 0.15s, border-color 0.15s; } }
+</style>
+
+<div class="wrap">
+  <header class="card" style="gap:8px">
+    <span class="eyebrow">Retire the public demos · Step 3</span>
+    <h1>Signing in and out, with the demo code gone</h1>
+    <p class="lead">Step 3 took out the code that used to treat two shared demo accounts differently. Nothing should look different to you. This walk checks the screens that code used to change: the public pages, an old demo address, signing in and out on each portal, setting up two-step sign-in, and the account menu on a phone. Four walks, 17 steps.</p>
+    <p class="lead">Written Nov 26, 2026. Everything runs on this computer, on dev data.</p>
+    <p class="progress" id="progress">Checked 0 of 0</p>
+  </header>
+
+  <section class="card signin" aria-labelledby="signin-h">
+    <h2 id="signin-h">Sign in as</h2>
+    <dl class="kv">
+      <dt>Where</dt><dd><code>http://localhost:3000</code> on this computer. <b>Not the staging site.</b></dd>
+      <dt>Walk A</dt><dd>Nobody. Use a <b>private window</b>, signed out.</dd>
+      <dt>Tournament admin</dt><dd><code>uat-owner@uat-test-org.local</code> · password <code>UATPassword2026!</code> · UAT Test Org</dd>
+      <dt>Club admin</dt><dd><code>uat-club-owner@uat-rep-club.local</code> · password <code>UATPassword2026!</code> · UAT Rep Club</dd>
+      <dt>Coaches portal</dt><dd><code>uat-coach@uat-test-org.local</code> · password <code>UATPassword2026!</code> (walks B, C and D)</dd>
+      <dt>Platform admin</dt><dd>Your own staff login, <code>fieldlogichq@gmail.com</code>, with your authenticator code · sign in at <code>/platform-admin/login</code>. (The <code>uat-platform@</code> fixture has two-step on with an authenticator nobody holds.)</dd>
+    </dl>
+    <p class="lead">Dev-only sign-ins. Keep this page private.</p>
+  </section>
+
+  <section class="card" aria-labelledby="before-h">
+    <h2 id="before-h">Before you start</h2>
+    <p class="note"><b>These are not boxes.</b> If one is not true, stop and tell me.</p>
+    <ul class="plain">
+      <li><b>The dev server is restarted on this code</b> (ask me; another chat may also be working in this folder).</li>
+      <li>In walk C you <b>start</b> setting up two-step sign-in and stop at the scan screen. Don’t finish it: the coach account is shared by other walks.</li>
+    </ul>
+  </section>
+
+  <section aria-labelledby="index-h" style="display:grid;gap:10px">
+    <h2 id="index-h">The walks</h2>
+    <div class="index" id="index"></div>
+  </section>
+
+  <section id="walkHost"></section>
+
+  <section class="card" id="callsHost" aria-labelledby="calls-h" hidden>
+    <h2 id="calls-h">Owner calls</h2>
+  </section>
+
+  <section class="card" aria-labelledby="sum-h">
+    <h2 id="sum-h">Paste-back (all walks)</h2>
+    <div class="row">
+      <button class="btn" type="button" id="copyAll">Copy the summary</button>
+      <button class="btn" type="button" id="reset">Clear my ticks</button>
+      <span class="lead" id="copied" aria-live="polite"></span>
+    </div>
+    <div class="card out" id="out" tabindex="0"></div>
+  </section>
+</div>
+
+<script>
+(function () {
+  "use strict";
+  var KEY = "retire-demos-step3-v1";
+  var PAGE = "Retire the public demos · Step 3";
+  var WALKS = [
+ {
+  "id": "A",
+  "title": "The public pages and an old demo address",
+  "job": "Signed out · a private window",
+  "forText": "No demo link or demo wording on the front pages, and an old demo address still lands somewhere useful.",
+  "passes": "Home and pricing show no demo, both old addresses land on pricing still signed out, and an old demo club’s address says it is not found.",
+  "notIn": "The three persona pages and the walkthroughs (checked in step 1, unchanged since).",
+  "who": "Nobody. A private window.",
+  "where": "Home, pricing, and three old addresses typed into the address bar.",
+  "steps": [
+   { "stop": true, "d": "In a <b>private window</b> open <code>http://localhost:3000/</code> and scroll to the foot.", "s": "The home page loads. No “See it live” link on any card, and the footer has no <b>Live demos</b> link. <b>Stop if the page does not load.</b>" },
+   { "d": "Open <code>http://localhost:3000/pricing</code>.", "s": "The plans show. Under a card, the “Not ready?” line points at the <b>90-second walkthrough</b>, not a live demo." },
+   { "d": "Type <code>http://localhost:3000/see-it-live</code> into the address bar.", "s": "You land on <b>pricing</b>. The top right still says <b>Sign in</b>: nothing signed you in." },
+   { "d": "Type <code>http://localhost:3000/demos</code>.", "s": "You land on <b>pricing</b> again." },
+   { "d": "Type <code>http://localhost:3000/riverdale-ridge</code>.", "s": "A <b>not found</b> page. (The old coach demo club is gone, and its name stays reserved so nobody else can take it.)" }
+  ]
+ },
+ {
+  "id": "B",
+  "title": "Sign in and sign out on each portal",
+  "job": "Four logins, one after another, in one ordinary window",
+  "forText": "Signing in lands where it always did, and Sign out signs you out, on every portal.",
+  "passes": "Each of the four accounts signs in to its own place, and each Sign out leaves you signed out.",
+  "notIn": "Passwords and invitations (their demo refusals came out, and a real account never hit them).",
+  "who": "Tournament admin, club admin, coach, then your own staff login (logins in the card above).",
+  "where": "<code>/auth/login</code>, and <code>/platform-admin/login</code> for the last one.",
+  "steps": [
+   { "d": "Open <code>http://localhost:3000/auth/login</code> and sign in as <code>uat-owner@uat-test-org.local</code>.", "s": "UAT Test Org’s admin opens on its tournaments. No demo banner or tour anywhere." },
+   { "d": "Open the account menu and press <b>Sign out</b>.", "s": "You are signed out: the page offers <b>Sign in</b>." },
+   { "d": "Sign in as <code>uat-club-owner@uat-rep-club.local</code>.", "s": "UAT Rep Club’s club admin opens." },
+   { "d": "Open the account menu and press <b>Sign out</b>.", "s": "You are signed out." },
+   { "d": "Sign in as <code>uat-coach@uat-test-org.local</code>.", "s": "The Coaches Portal opens on the coach’s team." },
+   { "d": "Open the account menu and press <b>Sign out</b>.", "s": "You are signed out." },
+   { "d": "Open <code>http://localhost:3000/platform-admin/login</code> and sign in with your own staff login and its code.", "s": "The platform console opens." },
+   { "d": "Press <b>Sign out</b> in the console.", "s": "You are back on the platform sign-in page." }
+  ]
+ },
+ {
+  "id": "C",
+  "title": "Two-step sign-in set-up",
+  "job": "The coach account · Account › Sign-in &amp; security",
+  "forText": "The security page offers every button, and starting two-step set-up opens the scan screen.",
+  "passes": "All three cards carry their buttons, and Turn on opens the scan screen with a QR code.",
+  "notIn": "Finishing set-up and turning it off (unchanged code; it would also lock the shared coach account).",
+  "who": "<code>uat-coach@uat-test-org.local</code>",
+  "where": "<code>/account/security</code>",
+  "steps": [
+   { "d": "Sign in as <code>uat-coach@uat-test-org.local</code> and open <code>http://localhost:3000/account/security</code>.", "s": "Three cards: <b>Two-step sign-in</b> with <b>Turn on two-step sign-in</b>, <b>Signed in on other devices</b> with <b>Sign out everywhere else</b>, and <b>Password</b> with <b>Change password</b>. No “Not available on the demo” line." },
+   { "d": "Press <b>Turn on two-step sign-in</b>.", "s": "The set-up screen shows a <b>QR code</b> and a key to type. It does not say “Not on the demo”. Leave it here without finishing." }
+  ]
+ },
+ {
+  "id": "D",
+  "title": "The account menu on a phone",
+  "job": "The coach account · the Coaches Portal at phone width",
+  "forText": "On a phone, the Coaches Portal’s More sheet ends with Help, Send feedback, Download app and Sign out, and Sign out works.",
+  "passes": "The four rows are there in that order, and Sign out leaves you signed out.",
+  "notIn": "The installed app.",
+  "who": "<code>uat-coach@uat-test-org.local</code>, still signed in from walk C.",
+  "where": "The Coaches Portal on a phone, or a browser window about 390 px wide.",
+  "steps": [
+   { "d": "On a phone (or a window about 390 px wide) open <code>http://localhost:3000/auth/login</code>, sign in as <code>uat-coach@uat-test-org.local</code> if asked, and tap <b>More</b> in the bottom bar.", "s": "The More sheet opens. Its last rows read <b>Help</b>, <b>Send feedback</b>, <b>Download app</b> and <b>Sign out</b>." },
+   { "d": "Tap <b>Sign out</b>.", "s": "You are signed out: the sign-in page shows." }
+  ]
+ }
+  ];
+  var CALLS = [];
+  var state = { ticks: {}, verdict: {}, notes: {}, choice: {}, open: "A" };
+  try { var raw = localStorage.getItem(KEY); if (raw) { var got = JSON.parse(raw); state.ticks = got.ticks || {}; state.verdict = got.verdict || {}; state.notes = got.notes || {}; state.choice = got.choice || {}; state.open = got.open || "A"; } } catch (e) {}
+  function save() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} }
+  function el(tag, cls, html) { var n = document.createElement(tag); if (cls) n.className = cls; if (html != null) n.innerHTML = html; return n; }
+  function plain(html) { var d = document.createElement("div"); d.innerHTML = html; return d.textContent.replace(/\s+/g, " ").trim(); }
+  // A step added after the walk was published carries its own label ("7a"), so every other step keeps its number, and a
+  // tick already saved against it stays on the right step.
+  function num(w, i) { if (w.steps[i].n) return w.steps[i].n; var k = 0; for (var j = 0; j <= i; j++) if (!w.steps[j].n) k++; return String(k); }
+  function sid(w, i) { return w.id + "." + num(w, i); }
+  function counts(w) { var n = 0; w.steps.forEach(function (s, i) { if (state.ticks[sid(w, i)]) n++; }); return { done: n, all: w.steps.length }; }
+  var VWORD = { pass: "Passed", issue: "Issue", call: "Needs a call" };
+  function chipOf(w) {
+    var c = counts(w), v = state.verdict[w.id];
+    if (v === "pass" && c.done < c.all) return ["thin", "Passed · only " + c.done + " of " + c.all + " ticked"];
+    if (v) return [v, VWORD[v] + " · " + c.done + " of " + c.all];
+    if (c.done) return ["prog", "In progress · " + c.done + " of " + c.all];
+    return ["", "Not started · " + c.all + " steps"];
+  }
+
+  var index = document.getElementById("index"), host = document.getElementById("walkHost");
+  var cards = {};
+  WALKS.forEach(function (w, wi) {
+    var b = el("button", "wcard");
+    b.type = "button"; b.id = "card-" + w.id; b.setAttribute("aria-controls", "walk-" + w.id);
+    b.appendChild(el("span", "t", "Walk " + w.id + " · " + w.title));
+    b.appendChild(el("span", "j", w.job));
+    var chip = el("span", "chip"); b.appendChild(chip);
+    b.addEventListener("click", function () { state.open = w.id; save(); render(); document.getElementById("walk-" + w.id).scrollIntoView({ block: "start" }); });
+    index.appendChild(b);
+    cards[w.id] = { b: b, chip: chip };
+  });
+
+  function render() {
+    host.innerHTML = "";
+    WALKS.forEach(function (w, wi) {
+      var open = state.open === w.id;
+      cards[w.id].b.setAttribute("aria-expanded", open ? "true" : "false");
+      var ch = chipOf(w); cards[w.id].chip.className = "chip " + ch[0]; cards[w.id].chip.textContent = ch[1];
+      if (!open) return;
+      var sec = el("section", "card walk"); sec.id = "walk-" + w.id;
+      sec.appendChild(el("span", "eyebrow", "Walk " + w.id + " of " + WALKS.length + " · " + w.job));
+      sec.appendChild(el("h2", null, w.title));
+      var meta = el("div", "meta");
+      [["What this walk is for", w.forText], ["It passes when", w.passes], ["Not in this walk", w.notIn], ["Sign in as", w.who], ["Where and on what", w.where]].forEach(function (m) {
+        var d = el("div"); d.appendChild(el("h3", null, m[0])); d.appendChild(el("p", null, m[1])); meta.appendChild(d);
+      });
+      sec.appendChild(meta);
+      var ol = el("ol", "steps");
+      w.steps.forEach(function (s, i) {
+        var id = sid(w, i);
+        var li = el("li", "step" + (s.stop ? " stop" : "") + (state.ticks[id] ? " done" : ""));
+        var cb = el("input"); cb.type = "checkbox"; cb.id = "cb-" + id; cb.checked = !!state.ticks[id];
+        cb.setAttribute("aria-label", "Step " + num(w, i) + " done");
+        cb.addEventListener("change", function () { state.ticks[id] = cb.checked; save(); li.className = "step" + (s.stop ? " stop" : "") + (cb.checked ? " done" : ""); refresh(); });
+        li.appendChild(cb);
+        var body = el("div", "body");
+        if (s.stop || s.who) body.appendChild(el("span", "who", (s.stop ? "Stop check" : "") + (s.stop && s.who ? " · " : "") + (s.who || "")));
+        body.appendChild(el("span", "lab", num(w, i) + " · Do"));
+        body.appendChild(el("p", null, s.d));
+        body.appendChild(el("span", "lab", "You should see"));
+        body.appendChild(el("p", null, s.s));
+        li.appendChild(body);
+        ol.appendChild(li);
+      });
+      sec.appendChild(ol);
+      sec.appendChild(el("h3", null, "Your verdict on this walk"));
+      var vs = el("div", "verdict");
+      [["pass", "Pass"], ["issue", "Issue"], ["call", "Needs a call"]].forEach(function (v) {
+        var btn = el("button", state.verdict[w.id] === v[0] ? "on" : "", v[1]); btn.type = "button"; btn.setAttribute("data-v", v[0]);
+        btn.setAttribute("aria-pressed", state.verdict[w.id] === v[0] ? "true" : "false");
+        btn.addEventListener("click", function () { state.verdict[w.id] = state.verdict[w.id] === v[0] ? "" : v[0]; save(); render(); });
+        vs.appendChild(btn);
+      });
+      sec.appendChild(vs);
+      var lab = el("label", null, "<h3>Notes</h3>"); lab.setAttribute("for", "notes-" + w.id);
+      sec.appendChild(lab);
+      var ta = el("textarea"); ta.id = "notes-" + w.id; ta.value = state.notes[w.id] || "";
+      ta.placeholder = "What you saw, a word you would change, a question for me";
+      ta.addEventListener("input", function () { state.notes[w.id] = ta.value; save(); refresh(); });
+      sec.appendChild(ta);
+      var row = el("div", "row");
+      var cp = el("button", "btn", "Copy this walk’s summary"); cp.type = "button";
+      var msg = el("span", "lead"); msg.setAttribute("aria-live", "polite");
+      var out = el("div", "card out"); out.tabIndex = 0; out.textContent = walkSummary(w);
+      cp.addEventListener("click", function () { copy(walkSummary(w), out, msg); });
+      row.appendChild(cp);
+      if (wi + 1 < WALKS.length) {
+        var nx = el("button", "btn", "Next: walk " + WALKS[wi + 1].id); nx.type = "button";
+        nx.addEventListener("click", function () { state.open = WALKS[wi + 1].id; save(); render(); document.getElementById("walk-" + WALKS[wi + 1].id).scrollIntoView({ block: "start" }); });
+        row.appendChild(nx);
+      }
+      row.appendChild(msg);
+      sec.appendChild(row);
+      sec.appendChild(out);
+      sec._out = out; sec._w = w;
+      host.appendChild(sec);
+    });
+    refresh();
+  }
+
+  // The owner calls sit in their own section, outside the step count; they are drawn once.
+  function renderCalls() {
+    var box = document.getElementById("callsHost");
+    CALLS.forEach(function (c) {
+      var card = el("div", "card"); card.appendChild(el("h3", null, "Call " + c.id + " · " + c.q)); card.appendChild(el("p", null, c.why));
+      var o = el("div", "opts");
+      c.opts.forEach(function (op) {
+        var lb = el("label"), r = el("input"); r.type = "radio"; r.name = "call-" + c.id; r.checked = state.choice[c.id] === op[0];
+        r.addEventListener("change", function () { state.choice[c.id] = op[0]; save(); refresh(); });
+        lb.appendChild(r); lb.appendChild(el("span", null, op[1])); o.appendChild(lb);
+      });
+      card.appendChild(o); box.appendChild(card);
+    });
+    var lab = el("label", null, "<h3>Notes on the calls</h3>"); lab.setAttribute("for", "notes-calls");
+    box.appendChild(lab);
+    var ta = el("textarea"); ta.id = "notes-calls"; ta.value = state.notes.calls || "";
+    ta.placeholder = "Anything you want to say about a call";
+    ta.addEventListener("input", function () { state.notes.calls = ta.value; save(); refresh(); });
+    box.appendChild(ta);
+  }
+
+  function callsSummary() {
+    var lines = ["Owner calls (outside the count)"];
+    CALLS.forEach(function (c) {
+      var a = state.choice[c.id], hit = c.opts.filter(function (o) { return o[0] === a; })[0];
+      lines.push("  Call " + c.id + " (" + c.q + "): " + (hit ? hit[0] + " — " + hit[1] : "NOT ANSWERED"));
+    });
+    var n = (state.notes.calls || "").trim();
+    if (n) lines.push("  Notes: " + n.replace(/\n+/g, " / "));
+    return lines.join("\n");
+  }
+
+  function walkSummary(w) {
+    var c = counts(w), v = state.verdict[w.id];
+    var lines = [w.id + " " + w.title + " · " + (v ? VWORD[v].toUpperCase() : "NO VERDICT") + " · " + c.done + " of " + c.all + " ticked"];
+    w.steps.forEach(function (s, i) { lines.push("  " + (state.ticks[sid(w, i)] ? "[x] " : "[ ] ") + num(w, i) + ". " + plain(s.d)); });
+    var n = (state.notes[w.id] || "").trim();
+    if (n) lines.push("  Notes: " + n.replace(/\n+/g, " / "));
+    return lines.join("\n");
+  }
+  function allSummary() {
+    var total = 0, done = 0;
+    WALKS.forEach(function (w) { var c = counts(w); total += c.all; done += c.done; });
+    return [PAGE, "Checked " + done + " of " + total, ""].concat(WALKS.map(walkSummary)).join("\n");
+  }
+  function refresh() {
+    var total = 0, done = 0;
+    WALKS.forEach(function (w) { var c = counts(w); total += c.all; done += c.done; var ch = chipOf(w); cards[w.id].chip.className = "chip " + ch[0]; cards[w.id].chip.textContent = ch[1]; });
+    document.getElementById("progress").textContent = "Checked " + done + " of " + total;
+    document.getElementById("out").textContent = allSummary();
+    var sec = host.querySelector(".walk"); if (sec && sec._out) sec._out.textContent = walkSummary(sec._w);
+  }
+  function copy(text, node, msg) {
+    function pick() { try { var r = document.createRange(); r.selectNodeContents(node); var s = window.getSelection(); s.removeAllRanges(); s.addRange(r); msg.textContent = "Selected: press Ctrl+C to copy."; } catch (e) {} }
+    try { navigator.clipboard.writeText(text).then(function () { msg.textContent = "Copied."; }, pick); } catch (e) { pick(); }
+  }
+  document.getElementById("copyAll").addEventListener("click", function () { copy(allSummary(), document.getElementById("out"), document.getElementById("copied")); });
+  var armed = false;
+  document.getElementById("reset").addEventListener("click", function () {
+    var b = document.getElementById("reset");
+    if (!armed) { armed = true; b.textContent = "Press again to clear every tick and note"; return; }
+    armed = false; b.textContent = "Clear my ticks";
+    state = { ticks: {}, verdict: {}, notes: {}, choice: {}, open: "A" }; save();
+    document.getElementById("callsHost").querySelectorAll(".card, label, textarea").forEach(function (n) { n.remove(); });
+    renderCalls(); render();
+  });
+  renderCalls();
+  render();
+})();
+</script>

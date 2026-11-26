@@ -28973,6 +28973,17 @@ Committed 2026-11-25 as two commits (owner: "commit the sweep and the data chang
 **Left out (pinned by tests):** the family app's mark (no made-up family follows the Ospreys), the coach's emails (made-up addresses), "And N more places are closed." and two places at once, a closure for a later day, Cancel them, Link it, a failed send.
 <!-- /§573 -->
 
+## §574 · Retire the public demos · Step 3 · The demo code is gone — **signing in and out, two-step set-up and the phone menu work as before, and an old demo address still lands on pricing**
+<!-- §574 -->
+**Walk published 2026-11-26.** [Interactive walk](https://claude.ai/artifact/UJaijzC43zEVqjQSbJyvz3) (walks A–D, 17 steps; no owner calls inside it) · [repository HTML](RETIRE_PUBLIC_DEMOS_STEP3_WALK.html). No migration. Plan: `RETIRE_PUBLIC_DEMOS_PLAN.md` Phase 3. Not committed (the owner's word first).
+
+**Where:** `http://localhost:3000`, dev data, after the dev server restart on this code. **Sign in:** tournament admin `uat-owner@uat-test-org.local`, club admin `uat-club-owner@uat-rep-club.local`, coach `uat-coach@uat-test-org.local`, all `UATPassword2026!`; platform console with the owner's own staff login and authenticator code (the `uat-platform@` fixture has two-step on with no held authenticator). Walk A in a private window, signed out.
+
+**Walks:** A the public pages and an old demo address (5) · B sign in and sign out on each portal (8) · C two-step set-up, started not finished (2) · D the Coaches Portal's More sheet on a phone (2).
+
+**Left out (pinned by tests or probes):** the five old addresses' 308 to `/pricing` with no cookie (probe on the restarted dev server, 2026-11-26); the three portals' sign-in and sign-out through the request layer and the two-step status (a browserless probe); the reserved names and robots lines (`retired-public-demos-gone.test.ts`).
+<!-- /§574 -->
+
 ## §575 · Club website · Track P · Session P4 · The removal, the ended page and the one email — **a preview nobody claims removes itself 30 days after the meeting and says "This preview has ended" for 90 days; Today warns the day before and says so if it is late; the one email is built but stays refused until we have a mailing address; its unsubscribe follows the address**
 <!-- §575 -->
 **Walk published 2026-11-26.** [Interactive walk](https://claude.ai/artifact/FEDVf85o1pc1j81gBQgzJB) (walks A–C, 33 steps; no owner calls in the count; T11–T13 ruled 2026-11-25; the nightly job, the overdue line and the stop on every promotional send ruled in the session 2026-11-26) · [repository HTML](CLUB_WEBSITE_TRACK_P_P4_WALK.html). Migrations 547 and 548 on dev (owner's word, 2026-11-26). Plan: `CLUB_WEBSITE_ENHANCEMENTS_PLAN.md` §6 Track P and Progress ("Track P Session P4").

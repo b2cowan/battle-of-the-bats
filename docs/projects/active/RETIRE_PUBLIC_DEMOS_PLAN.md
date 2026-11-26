@@ -2,6 +2,7 @@
 
 > **Status:** Building. Phase 1 committed `89814487a` (+ `2bb98904f`) 2026-11-25. Phase 2 committed `ecbc17aed` (migration) + `c5dc00592` (automation) + the script commit 2026-11-26, after `/review`;
 > its production run waits on Step 1 and Phase 2 being live on production (see Phase 2 "As built").
+> Phase 3 built on dev 2026-11-26, reviewed, **not committed** (the owner's word first); walk §574. ⚠ Its promote carries a binding RELEASE ORDER (Phase 3 "As built").
 > **Created:** 2026-11-25
 > **Branch:** dev
 > **Ruling:** `docs/agents/strategy/BUSINESS_DECISIONS.md`, "2026-11-25 — Both public demos are RETIRED" (owner: *"Remove both,
@@ -65,7 +66,7 @@ The visitor-facing half. One `/marketing` pass settles the replacement words (se
 - [x] **Tests.** Update `tests/unit/demo-sandbox-door-and-chrome.test.ts` and `tests/unit/public-face-s4-marketing*` (or
       whichever assert the doors render) to assert the doors are absent and the door routes redirect without signing in. The
       Phase 3 deletion removes the demo-only tests; Phase 1 must not leave them red.
-- [ ] `/docs`: `lib/help-content/platform-admin.tsx:255,338,368-370,1933,1969` ("a demo club" as a reason a button is absent)
+- [x] `/docs`: `lib/help-content/platform-admin.tsx:255,338,368-370,1933,1969` ("a demo club" as a reason a button is absent)
       leaves the help text in Phase 3, when the reason stops existing. It is listed here so the `/docs` pass is scheduled once.
 - [x] Verify: `npm run verify:changed`; a quick local check that the home page, pricing, the three persona pages, the footer, a
       walkthrough and a pitch page show no demo, and that `/see-it-live` lands on the D2 page signed out.
@@ -168,69 +169,82 @@ Migration first, per the planning rules. Each automation change gets its own com
 One unit of work, which may land as several commits. Grep for `demo-org`, `demo-guard`, `demo-session`, `sandbox-`,
 `isDemoOrgSlug`, `isDemoOrganizerEmail`, `flhq-in-sandbox` and `data-sandbox-tour` until the only hits are the reserved slugs and history.
 
-- [ ] **Delete the core modules:**
+- [x] **Delete the core modules:**
       - `lib/demo-org.ts`, `lib/demo-org-server.ts`, `lib/demo-guard.ts`, `lib/demo-session.ts`, `lib/demo-tournament.ts`;
       - `lib/demo-moments.ts`, `lib/demo-coach.ts`, `lib/demo-reconcile*.ts`, `lib/demo-coach-reconcile*.ts`, `lib/demo-sandbox-heartbeat.ts`;
       - `lib/sandbox-chrome.ts`, `lib/sandbox-exit.ts`, `lib/sandbox-exit-rule.ts`, `lib/sandbox-door.ts`, `lib/sandbox-curation.ts`;
       - `lib/coach-sandbox-refusal.ts`, `components/sandbox/*`.
-- [ ] **Delete the routes:**
+- [x] **Delete the routes:**
       - `app/see-it-live/**` and `app/api/sandbox/**`;
       - `app/api/platform-admin/demo-sandbox-tick/route.ts` and `coach-sandbox-tick/route.ts` (the jobs were unscheduled in Phase 2);
       - `app/demos/page.tsx`. The D2 redirects for `/demos` and `/see-it-live*` move to `next.config` redirects, so the
         old addresses keep landing somewhere.
-- [ ] **`proxy.ts`:** remove the demo imports (:5-9), the write block (:62-73), the exit-and-short-circuit (:85-109), the anonymous
+- [x] **`proxy.ts`:** remove the demo imports (:5-9), the write block (:62-73), the exit-and-short-circuit (:85-109), the anonymous
       demo-admin redirect (:284-294) and the `flhq-in-sandbox` matcher entry (:372-391). `proxy.ts` is a restart-required change.
-- [ ] **Sign-in special cases:**
+- [x] **Sign-in special cases:**
       - `app/(consumer)/auth/login/page.tsx:147-161`;
       - `app/(consumer)/account/security/page.tsx` and `SecurityClient.tsx`, `app/(consumer)/auth/two-step/page.tsx:173-174`;
       - `app/api/auth/{password,password-reset-notice,sign-out-others,accept-invite,invitations,two-step/*}`;
       - `lib/use-client-signed-in.ts`, `lib/supabase-server.ts`, `lib/club-forward.ts`, `lib/legal-acceptance-exempt.ts:17-26`,
         `lib/two-step-club-reset.ts`;
       - `components/consumer/ConsumerNav.tsx` (Sign out shows for everyone again).
-- [ ] **Demo-guard calls:**
+- [x] **Demo-guard calls:**
       - all `app/api/billing/*` routes, `app/api/admin/payouts{,/return}`, `consumer/follows`, `register`, `tryout-score/[token]`;
       - `org/create`, `coaches/teams`, `coaches/basic-teams`, `app/coaches/start/page.tsx:28-44`;
       - the platform-admin delete's demo refusal (`orgs/[id]/delete/route.ts:20,123,162-165`).
-- [ ] **Exclusions (no demo org left to exclude):**
+- [x] **Exclusions (no demo org left to exclude):**
       - `lib/notify.ts`, `email-sender.ts`, `fan-notify.ts`, `team-coach-notices.ts`, `notify-recipients.ts`, `insights-digest.ts`, `dues-reminders.ts`;
       - `lib/platform-metrics.ts`, `free-time-*.ts`, `lead-book.ts`, `lead-writes.ts`, `platform-people-lookup.ts`, `purchase-details-server.ts`;
       - `lib/observability/capture.ts:165`;
       - `app/api/platform-admin/find`, `orgs/[id]/money` and its refund route.
       - **Check each one:** an exclusion that also leaves out *test* orgs keeps its test-org half (`is_test_organization`).
-- [ ] **UI that reads the sandbox context:**
+- [x] **UI that reads the sandbox context:**
       - `app/[orgSlug]/layout.tsx:72-136` (robots tag and chrome mount), `[tournamentSlug]/layout.tsx`, `ClubBar`, `TournamentBand`, `TournamentFooter`;
       - `AdminTopStrip`, `DeskNamedPage`, `useAdminKitNav`, `kit-tournament-groups.ts`, `CoachTopStrip`, `CoachesBottomNav`, `CoachesSidebar`, `MoreSheetFoot`, `BrandLockup`;
       - `MessageComposer`, `ScheduleHealthPanel`, the schedule page, `useScheduleHealthRules`, the five coach money panels;
       - `app/[orgSlug]/coaches/layout.tsx:22,94-97`, `app/[orgSlug]/admin/tournaments/summary/page.tsx:29,100-131`, `lib/tournament-context.tsx`.
-- [ ] **Tour anchors:** remove every `data-sandbox-tour` attribute (about 21 files). `tests/uat/scenarios/coach-development-metrics.spec.ts:221`
+- [x] **Tour anchors:** remove every `data-sandbox-tour` attribute (about 21 files). `tests/uat/scenarios/coach-development-metrics.spec.ts:221`
       selects on one: give that element a `data-testid` and retarget the test (Decision D5).
-- [ ] **Robots:** drop `/see-it-live` from `lib/robots-rules.ts`. Keep the two slugs disallowed (cheap, and consistent with D3).
-- [ ] **Scripts:**
+- [x] **Robots:** drop `/see-it-live` from `lib/robots-rules.ts`. Keep the two slugs disallowed (cheap, and consistent with D3).
+- [x] **Scripts:**
       - delete `seed-demo-tournament.mjs`, `seed-demo-coach.mjs`, `check-demo-sandbox.mjs`, `check-demo-coach.mjs`, `check-demos.mjs`;
       - delete `reseed-demos-if-stale.mjs`, `lib/demo-world-fingerprint.mjs`, `sweep-demo-sandbox.mjs`, `tick-demo-sandbox.mjs`, `tick-demo-coach.mjs`;
       - (the `package.json` scripts `check:demos*`, `tick:demos` and `reseed:demos{,:dry}` all went in Phase 2);
-      - delete `retire-public-demos.mjs` and `tests/unit/retire-public-demos-script.test.ts` once production has run it;
+      - delete `retire-public-demos.mjs` and `tests/unit/retire-public-demos-script.test.ts` once production has run it (KEPT, owner 2026-11-26: production has not run it);
       - `capture-marketing-shots.mjs`'s `seedHint` still names the removed `npm run check:demos` (it prints only in capture
         mode, which this phase removes).
-- [ ] **Screenshots (Decision D6):**
+- [x] **Screenshots (Decision D6):**
       - keep the images in `public/marketing/**` and the help images, and whatever registry the pages read;
       - remove the demo page addresses and the demo capture mode from `lib/marketing-shots.ts`, `lib/help-shots.ts`,
         `scripts/lib/shot-capture.mjs`, `capture-marketing-shots.mjs`, `capture-help-shots.mjs` and `capture-on-sale-pictures.mjs`;
       - keep `capture-marketing-shots.mjs --check` (file existence) if it still guards the images;
       - remove the demo path column from the pitch deck studio (`app/platform-admin/pitch-deck-studio/report.ts`, `SlideCard.tsx`, `page.tsx`).
-- [ ] **Tests:**
+- [x] **Tests:**
       - delete `demo-destinations-guard`, `demo-sandbox-write-guard`, `demo-sandbox-door-and-chrome`, `demo-sandbox-moments`,
         `demo-sandbox-exit`, `demo-coach-world` and `demo-create-doors-guard`;
       - edit the roughly 20 tests that import demo symbols (`legal-acceptance-doors`, `preview-org-guard`, `public-face-s4-marketing`,
         `two-step-server-check-guard`, `support-console-stage*-guard`, `org-storage-purge`, `plan-billing-*`, `workspace-move-money`,
         and the rest found by grep);
       - leave tests that only use "Riverdale" as a made-up name alone (about 90 files).
-- [ ] **Help text** (`/docs`): the platform-admin articles stop naming "a demo club".
-- [ ] Verify: `npm run typecheck`, `npm run verify:changed`, `npm run lint:focused` on the touched files. Restart the dev server
+- [x] **Help text** (`/docs`): the platform-admin articles stop naming "a demo club".
+- [x] Verify: `npm run typecheck`, `npm run verify:changed`, `npm run lint:focused` on the touched files. Restart the dev server
       (`proxy.ts` and shared modules changed).
-- [ ] `/review` on the diff: auth, request-layer and billing-guard edits are substantive.
-- **Walk:** one short walk (§ at build): sign in and sign out on each portal; two-step setup; the account menu on a phone; the
+- [x] `/review` on the diff: auth, request-layer and billing-guard edits are substantive.
+- **Walk:** §574 ([interactive](https://claude.ai/artifact/UJaijzC43zEVqjQSbJyvz3), 17 steps): sign in and sign out on each portal; two-step setup; the account menu on a phone; the
   home and pricing pages; an old `/see-it-live` address. About 15 boxes. These are the screens the demo special cases bent.
+- **As built (2026-11-26, not committed):**
+  - **Owner yeses, this session:** "go, yes to the script fix" (the UX summary, and the kept script reading its slugs from the reserved list instead of the deleted demo registry).
+  - **Open question answered first:** no exclusion used the demo list *instead of* `is_test_organization`; none of them reads that flag at all, and the demo list only ever held the two retired clubs and their two accounts. What rode along was the **Track P preview half** (notify, email, fan pushes, team-coach notices, platform metrics, the free-time list, the lead book and lead links), kept in every file, fail-closed as before.
+  - **New homes** for the three general pieces that lived in demo files (as the /simplify below left them): the session-cookie match in `lib/supabase-auth-cookie.ts`; the path decode, one caller left, inside `proxy.ts`; the failed-write sentence is the existing `refusalText` (`lib/money-fetch.ts`). **D3:** `RETIRED_DEMO_ORG_SLUGS` in `lib/reserved-slugs.ts`, read by `isReservedOrgSlug` (kept OUT of `RESERVED_ORG_SLUGS`, which callers read as "a real top-level route"); robots disallows both forms of both names from that list. **D2:** `next.config.ts` redirects `/demos` and `/see-it-live/:path*` (own hosts) permanently to `/pricing`; proven 308 with no cookie for all five old addresses on the restarted dev server. **D5:** `data-testid="development-sessions"`. **D6:** images and registries kept; capture modes and demo addresses gone.
+  - **Wider than the plan listed:** the platform-admin delete's preflight reader (`ClubRecord.tsx`), the refund gate end to end (`lib/console-money*.ts`, `MoneyTab.tsx`), the club-domain `demo` refusal (`lib/own-address-words.ts`), the free-time give blocks (`lib/free-time.ts`, `lib/portal-free-time.ts`), the bank check's sandbox note, `TournamentHealthWindow`, `GenerateInstallmentsModal`, `AdminKitRail`'s sandbox-only Help row, `lib/coach-billing-access.ts`, the orphaned `TournamentFlipPill` default export, `team-coach-notice-plan`'s set renamed `previewOrgIds`, the stale "the proxy refuses a demo club's POST" safety notes in three send paths, `scripts/check-public-type.mjs`, and the dictionary's `is_preview` / `is_test_organization` rows. The legal exemption list is now `['staff']`.
+  - **Found at /review:** a coach's new team workspace took its web address from the team name with no reserved-name check (`lib/team-workspace-provisioning.ts`; the demo club's own row had been what blocked `riverdale-ridge`, and a team named "Pricing" was already shadowed by `/pricing`). Now refused, next suffix.
+  - **/simplify, then /review of its edits (2026-11-26, before the commit):** the two helpers above folded away; `club-forward` calls `hasSupabaseSessionCookie`; a column and a field only the demo exclusions read are no longer read; `platform-metrics` names say preview; single-branch markup leftovers and stale comments removed. /review found one break, fixed: a guard test pinned a renamed variable (`support-console-stage4b-inforce-guard.test.ts`). The security lens found nothing.
+  - **Open, the owner's call (seen at the commit, not changed):** (1) renaming a club checks "taken" but not the reserved list (`app/api/admin/org-settings/route.ts`, `lib/club-record-changes.ts`), so once production's demo rows are deleted a rename could claim a D3 name (route names were already claimable this way); (2) leftovers that need files outside this work: `lib/use-scroll-collapsed.ts` has no importer; `lib/renewals.ts` and its help article still say "Sandbox clubs"; the lead book's `demo` field now means preview; `TournamentFlipDoor`'s `look` has one value; demo wording in comments of about a dozen untouched files; (3) older and unrelated: the dark contrast pass in `scripts/check-layout-invariants.mjs` strips a session cookie's chunk suffix with `/.d+$/` (backslashes missing).
+  - **Left alone on purpose:** `lib/preview-org.ts:27` and `scripts/lib/prospect-demo-rep.mjs:15-18` still name the deleted file in comments (Track P and the prospect demo are out of scope); `lib/platform-audit-reason.ts` keeps `demo_sandbox_tick` / `coach_sandbox_tick` (old audit rows); `package.json`'s `capture:help-shots` / `capture:marketing-shots` now print "nothing to run" (a package-script change is the owner's); `scripts/.layout-baseline.json` keeps five stale `mkt-demos` rows.
+  - **Legal (`/legal`, recorded in `LEGAL_INDEX.md` carry-forward):** Terms §12 "Demo sandboxes" and Privacy §4's "marking a visit to one of our public demos" are inert, not broken promises; drop both in the next versions (folded into the sponsorship addenda's release), a minor change: no notice, no re-acceptance. Keep the Terms paragraph until production's demo clubs are deleted.
+  - **Verify:** `tsc` 0 errors (8 GB heap); `lint:focused` clean on 254 touched code files; `verify:changed` stops at `npm test`: 42 failures, all other sessions' in-flight work (125 before the test pass); the later gates run one by one: green apart from other sessions' files, with this work's two ratchet drops (`schedule-admin.module.css`) locked in. `check:layout --changed` widened to the whole product (370 screens, a release-step sweep) and could not start: a saved UAT session had expired, and `auth-setup` signs other sessions out. **SKIPPED.** Dev server restarted (`.next` cleared): home, pricing, the three persona pages, sign-in and the platform login 200; the two demo club addresses 404; a browserless probe signed in and out on the tournament, club and coach portals (200 signed in, 307 to sign-in after); two-step status carries no demo field; 0 `EACCES`. The kept script's dev dry run reports both clubs and accounts already gone.
+  - **Verify at the commit (2026-11-26), on a clean copy of exactly what was committed:** `tsc` 0 errors; the unit suite fails only tests that fail the same way on the untouched base (none new); `eslint` 0 errors on the 243 listed script files; every later `verify:changed` gate passes or fails identically on the base; the commit hook passes; `check:layout` SKIPPED (a staging release step).
+  - **⚠⚠ RELEASE ORDER (owner 2026-11-26, binding; also in the release-history record and the board line).** The promote that first carries this phase must be preceded, IN THAT RELEASE SESSION, by (1) migration **543** applied to production (the two demo jobs call the tick routes this phase deletes), then (2) `node scripts/retire-public-demos.mjs --prod` dry run, its counts shown to the owner, the owner's yes **in that session**, then `--apply`, recorded in the release history. The guards must not reach production while the demo data is still there. `.claude/commands/release.md` is NOT edited for this (owner: not without his yes).
 
 ### Phase 4 — The records
 
@@ -311,6 +325,7 @@ One unit of work, which may land as several commits. Grep for `demo-org`, `demo-
       `/start/tournament`; the coach walkthrough says "Start now" → `/coaches/start?source=coach_walkthrough`, the
       `/for-coaches` button word for word, and becomes the same express-interest button while the Premium plan is off sale
       (the route reads the live gate). Pinned in `pitch-slide-library.test.ts`.
-- [ ] Does any exclusion in Phase 3 depend on the demo list *instead of* `is_test_organization` for an org that is not a demo?
-      (Check `platform-metrics.ts` and `free-time-*.ts` first.)
-- [ ] Whether `capture-marketing-shots.mjs --check` still earns its place in `verify:changed` once the capture mode is gone.
+- [x] Does any exclusion in Phase 3 depend on the demo list *instead of* `is_test_organization` for an org that is not a demo?
+      **Answered 2026-11-26: no.** None reads that flag; the half that rode along was the preview clubs', kept (Phase 3 "As built").
+- [x] Whether `capture-marketing-shots.mjs --check` still earns its place in `verify:changed` once the capture mode is gone.
+      **Answered 2026-11-26: yes.** It still guards that every declared picture exists with alt text, caption and size (14 + 2 pass).
