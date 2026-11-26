@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getAuthContextWithRole, getAuthenticatedUser } from '@/lib/api-auth';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { redactContext, withObservability } from '@/lib/observability';
-import { scrubEmails } from '@/lib/observability/redact'; // scrubEmails is NOT re-exported from the barrel
+import { scrubText } from '@/lib/observability/redact'; // scrubText is NOT re-exported from the barrel
 import { sendEmail, ADMIN_EMAIL } from '@/lib/email';
 import { feedbackAdminNotifyHtml, feedbackConfirmationHtml } from '@/lib/feedback-email';
 import { validateFeedbackInput, isThrottled } from '@/lib/feedback-shared';
@@ -102,8 +102,9 @@ export const POST = withObservability(async (req: NextRequest) => {
     evictOldest(ipLast);
   }
 
-  // Redact before write. Free-text title/body → scrubEmails (already length-capped in validation).
-  // Structured context blob → full key-name redactor.
+  // Redact before write. Free-text title/body → scrubText (emails and private links; already length-capped in validation).
+  // Structured context blob → full key-name redactor, whose strings lose private links too (`context.route` is the page the
+  // window was opened on, which can be a no-sign-in page).
   const safeContext = redactContext({
     ...context,
     ip,
@@ -111,8 +112,8 @@ export const POST = withObservability(async (req: NextRequest) => {
     role: auth?.role ?? null,
     org_slug: auth?.org.slug ?? null,
   });
-  const safeTitle = title ? scrubEmails(title) : null;
-  const safeBody = scrubEmails(body);
+  const safeTitle = title ? scrubText(title) : null;
+  const safeBody = scrubText(body);
 
   const meta = (user?.user_metadata ?? null) as Record<string, unknown> | null;
   const submitterName =

@@ -102,7 +102,10 @@ registered with ServiceOntario 2026-11-06** (renewal date still to be read off t
   sender's name) and a stop list no club seat can clear. **No time limit on any of it**: kept while the organization
   exists and deleted with it (row delete checked on dev 2026-11-25, rolled back; files go with the org file sweep). Only
   never-attached form uploads are swept; a waiting logo is not. A shown logo stays publicly reachable. Error reports keep
-  the page address (on a sponsor page, its private link) and the IP for 30 days. Draft:
+  the page address and the IP for 30 days. A private link's secret and unsubscribe addresses are removed before storing
+  (Part B-1, built on dev 2026-11-26; production held none, counted that day). The grouped summary of each error (page
+  address, technical trace, latest context) is deleted only 90 days after it is resolved; open ones have no end date
+  (open item, see the draft's finding 1). Draft:
   `drafts/PRIVACY_POLICY_SPONSORSHIP_ADDENDUM.md`.
 - **Sign-up form clean-up is running on production** (`club_form_files_sweep` last ran `ok` 2026-11-25): health answers
   and file answers removed 90 days after the season is finished or 120 days after its last day (a reopened season waits);

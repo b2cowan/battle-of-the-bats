@@ -18,7 +18,8 @@ import { isKnownDemoOrgId } from '../demo-org-server';
 import { maybeSendCriticalAlert, type RecordErrorFlags } from './alerts';
 import { observabilityEnv } from './env';
 import { fingerprint } from './fingerprint';
-import { redactContext, scrubEmails } from './redact';
+import { redactContext, scrubText } from './redact';
+import { redactPrivateLinks } from './redact-links';
 import { getRequestContext, markRequestCaptured } from './request-context';
 
 export type Severity = 'critical' | 'error' | 'warning' | 'info';
@@ -112,10 +113,17 @@ export async function captureError(err: unknown, opts: CaptureOptions = {}): Pro
     // won't also capture a generic fallback for the same failure. No-op outside a request context.
     if (opts.marksRequestCaptured !== false) markRequestCaptured();
     const reqCtx = getRequestContext();
-    const route = opts.route ?? reqCtx?.route;
+    // THE ONE PLACE a private link's secret is taken out (Board Ready Stage 6 fixes, B-1): everything below, the stored
+    // route and title, the fingerprint, the log line and the alert email, reads these redacted values, never the raw ones.
+    const rawRoute = opts.route ?? reqCtx?.route;
+    const route = rawRoute === undefined ? undefined : scrubText(rawRoute);
     const method = opts.method ?? reqCtx?.method;
     const source = opts.source ?? reqCtx?.source ?? 'server';
-    const { name, message, stack } = toError(err);
+    const raw = toError(err);
+    const name = scrubText(raw.name);
+    const message = raw.message;
+    const stack = raw.stack === undefined ? undefined : redactPrivateLinks(raw.stack);
+    const title = opts.title ? scrubText(opts.title) : `${name}${route ? ` @ ${route}` : ''}`;
 
     const orgId = opts.ctx?.org?.id ?? opts.org?.id ?? reqCtx?.orgId ?? null;
     const orgSlug = opts.ctx?.org?.slug ?? opts.org?.slug ?? reqCtx?.orgSlug ?? null;
@@ -126,10 +134,10 @@ export async function captureError(err: unknown, opts: CaptureOptions = {}): Pro
     const severity = classifySeverity(route, opts.severity);
     const fp = fingerprint({ route, errorName: name, stack });
     const env = observabilityEnv();
-    // Defense-in-depth: scrub email VALUES out of the free-text message/stack before storage
+    // Defense-in-depth: scrub email VALUES (and private links) out of the free-text message/stack before storage
     // (the dedicated user_email attribution column is set separately and intentionally).
-    const safeStack = stack ? scrubEmails(stack).slice(0, MAX_STACK) : null;
-    const safeMessage = message ? scrubEmails(message).slice(0, MAX_MESSAGE) : null;
+    const safeStack = stack ? scrubText(stack).slice(0, MAX_STACK) : null;
+    const safeMessage = message ? scrubText(message).slice(0, MAX_MESSAGE) : null;
     const requestId = opts.requestId ?? reqCtx?.requestId ?? null;
     const context = redactContext({ ...(opts.requestContext ?? {}), requestId });
 
@@ -140,7 +148,7 @@ export async function captureError(err: unknown, opts: CaptureOptions = {}): Pro
 
     const { data, error } = await supabaseAdmin.rpc('record_error_event', {
       p_fingerprint: fp,
-      p_title: opts.title ?? `${name}${route ? ` @ ${route}` : ''}`,
+      p_title: title,
       p_error_name: name,
       p_route: route ?? null,
       p_http_method: method ?? null,
@@ -177,7 +185,7 @@ export async function captureError(err: unknown, opts: CaptureOptions = {}): Pro
       // first-occurrence email (the entire point of the alert) would never be sent. The cost is
       // one-time email latency on the rare critical error path (de-noised to one send per issue).
       await maybeSendCriticalAlert(data as RecordErrorFlags, source, env, {
-        title: opts.title ?? `${name}${route ? ` @ ${route}` : ''}`,
+        title,
         errorName: name,
         message: safeMessage,
         route,

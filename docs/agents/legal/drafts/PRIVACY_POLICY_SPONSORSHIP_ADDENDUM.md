@@ -121,9 +121,20 @@ and adds no company and no new use of an account holder's information. No notice
 photos. Each carries its own sentences with its own release.
 
 **Product findings, for `/plan` (the text is written true without them):**
-1. (Owner 2026-11-25: fix soon, as its own small fix.) An error report keeps the page's web address as typed, and on a sponsor's page that address contains the private
-   link. The report is kept 30 days and staff can read it. The same reporter runs on other no-sign-in link pages (not
-   checked page by page). Strip the link's secret before the report is stored.
+1. (Owner 2026-11-25: fix soon, as its own small fix.) **Private links in error reports: fixed in code (Part B-1,
+   built on dev 2026-11-26; true on production once released).** Every private-link shape (the no-sign-in pages, their
+   data routes, the calendar feeds, and a secret after `?`) and unsubscribe addresses are removed before an error report
+   or feedback note is stored or logged. Dev's stored rows were cleaned; production held none (counted 2026-11-26).
+   **Open, for the owner (`/legal` 2026-11-26): the 30-day sentence does not hold for the grouped summary.** Single
+   reports are deleted after 30 days; each group keeps the latest sample (technical trace and context) until 90 days
+   after it is marked resolved, and an open or ignored group has no end date. `/legal` recommends the daily sweep clear
+   a group's sample after 30 days (a change to a job that runs on production: only on the owner's ask, in its own
+   commit), then in the next version: §4 "These reports are deleted automatically after 30 days; a short entry for each
+   kind of error is kept longer (§9)." · §9 "**Error reports**, including each error's technical details, are deleted
+   after 30 days. We keep a short entry for each kind of error (its type, the page's address with any private link's
+   secret removed, and how often and when it happened) to tell if it returns; some have no set end date." · §8 "our
+   error reports remove email addresses, and details labelled as a date of birth or a phone number." Not yet applied to
+   the approved §4 text above.
 2. A logo that has been shown stays reachable by its address, and a withdrawn deal keeps the logo the business sent.
 3. A club can't delete a business that ever had a deal, or its attached files; there is no screen for a removal request.
 4. The sponsor page shows the club's privacy link only while the form is open, not on its later or closed states.

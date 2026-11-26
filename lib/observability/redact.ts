@@ -6,6 +6,8 @@
  * The dedicated attribution columns (user_email, user_id, org_id) are set explicitly by the
  * caller — this redactor only governs the free-form request_context JSONB blob.
  */
+import { redactPrivateLinks } from './redact-links';
+
 // Substring match (no \b) so compound keys redact too: email, user_email, emailAddress, etc.
 const SENSITIVE_KEY =
   /(authorization|cookie|set-cookie|token|password|passwd|secret|api[-_]?key|private|dob|date_of_birth|birth|ssn|sin|guardian|phone|email)/i;
@@ -19,10 +21,15 @@ export function scrubEmails(s: string): string {
   return s.replace(EMAIL_RE, '[redacted-email]');
 }
 
+/** A free-text string as it may be stored: no private link's secret, no email address. */
+export function scrubText(s: string): string {
+  return scrubEmails(redactPrivateLinks(s));
+}
+
 export function redactValue(value: unknown, depth = 0): unknown {
   if (value === null || value === undefined) return value;
   if (typeof value === 'string') {
-    const scrubbed = scrubEmails(value);
+    const scrubbed = scrubText(value);
     return scrubbed.length > MAX_STRING ? scrubbed.slice(0, MAX_STRING) + '…[truncated]' : scrubbed;
   }
   if (typeof value === 'number' || typeof value === 'boolean') return value;
