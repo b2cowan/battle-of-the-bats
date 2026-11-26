@@ -137,6 +137,15 @@ sizes at 769 and 1440 unchanged (data-driven rows aside); no toolbar gained a li
 showing, all expected: 26 tick boxes (the sweep measures the box; its label or tap area is 44), 14 demo tour bar, 15
 links inside sentences (one of them, "See why" on a club schedule, shipped after the 23 Nov run).
 
+**Demo tour bar: option B ruled and built on 2026-11-25.** Same look, a 44px tap area at ≤768 in both coats; on a
+tablet a tour longer than four steps narrows its circles (44px tall) and drops the "Guided tour" words. The sweep's
+`pubt-overview` reads 0 findings at 361 / 768 / 1440 on dev.
+
+**Accepted list, ruled 2026-11-25:** at the release's full staging run, remove the entries that no longer happen and
+accept, with a written reason, the tick boxes whose tap area or label is 44px and the links inside sentences. The demo
+bar is not accepted (it is fixed). `--init` records everything a run finds, so the owner sees the full new list before
+anything is recorded. Making the sweep measure a tick box's real tap area is a change to a check: not ruled.
+
 **The accepted list was not touched.** It still holds old 38px admin entries (97 by its own wording) that this change
 should stop producing; clearing them is `--prune`, on the owner's word only.
 

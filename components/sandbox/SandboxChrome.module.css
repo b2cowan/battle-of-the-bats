@@ -300,6 +300,8 @@
   margin-left: auto;
 }
 
+/* The button holds the tap area and the ink; the circle it draws is `.dotFace` (the same 20px at every width, while
+   the button grows to 44px at 768 and below). */
 .dot {
   display: inline-flex;
   align-items: center;
@@ -307,25 +309,37 @@
   width: 20px;
   height: 20px;
   padding: 0;
+  border: 0;
   border-radius: 50%;
-  border: 1px solid rgba(255, 255, 255, 0.11);
-  background: rgba(255, 255, 255, 0.04);
+  background: none;
   color: var(--data-gray);
   font-family: var(--font-data);
   font-size: 0.6rem;
   font-weight: 800;
   cursor: pointer;
-  transition: border-color 0.15s ease, color 0.15s ease;
+  transition: color 0.15s ease;
 }
 
-.dot:hover { border-color: rgba(var(--logic-lime-rgb), 0.6); color: var(--fl-text); }
-.dot:focus-visible { outline: 2px solid var(--logic-lime); outline-offset: 2px; }
-.dot[data-done='true'] { border-color: var(--logic-lime); color: var(--logic-lime); }
-.dot[aria-current='step'] {
-  background: var(--logic-lime);
-  border-color: var(--logic-lime);
-  color: var(--pitch-black);
+.dotFace {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.11);
+  background: rgba(255, 255, 255, 0.04);
+  transition: border-color 0.15s ease;
 }
+
+.dot:hover { color: var(--fl-text); }
+.dot:hover .dotFace { border-color: rgba(var(--logic-lime-rgb), 0.6); }
+.dot:focus-visible { outline: 2px solid var(--logic-lime); outline-offset: 2px; }
+.dot[data-done='true'] { color: var(--logic-lime); }
+.dot[data-done='true'] .dotFace { border-color: var(--logic-lime); }
+.dot[aria-current='step'] { color: var(--pitch-black); }
+.dot[aria-current='step'] .dotFace { background: var(--logic-lime); border-color: var(--logic-lime); }
 
 /* The single primary control. It carries the step's own label, so there is never a generic
    button whose effect the visitor has to guess at. */
@@ -661,20 +675,18 @@
 .chrome[data-kind='coach'] .stepperLabel { color: var(--sandbox-warm-dim); }
 .chrome[data-kind='coach'] .stepCount { color: var(--sandbox-warm-gold); }
 
-.chrome[data-kind='coach'] .dot {
+.chrome[data-kind='coach'] .dot { color: var(--sandbox-warm-dim); }
+.chrome[data-kind='coach'] .dot .dotFace {
   border-color: rgba(var(--sandbox-warm-line-rgb), 0.3);
-  color: var(--sandbox-warm-dim);
   background: none;
 }
-.chrome[data-kind='coach'] .dot[data-done='true'] {
+.chrome[data-kind='coach'] .dot[data-done='true'] { color: var(--sandbox-warm-paper); }
+.chrome[data-kind='coach'] .dot[data-done='true'] .dotFace {
   background: var(--sandbox-warm-blue);
   border-color: var(--sandbox-warm-blue);
-  color: var(--sandbox-warm-paper);
 }
-.chrome[data-kind='coach'] .dot[aria-current='step'] {
-  border-color: var(--sandbox-warm-ink);
-  color: var(--sandbox-warm-ink);
-}
+.chrome[data-kind='coach'] .dot[aria-current='step'] { color: var(--sandbox-warm-ink); }
+.chrome[data-kind='coach'] .dot[aria-current='step'] .dotFace { border-color: var(--sandbox-warm-ink); }
 .chrome[data-kind='coach'] .dot:focus-visible { outline-color: var(--sandbox-warm-blue); }
 
 .chrome[data-kind='coach'] .stepGo {
@@ -745,4 +757,88 @@
   /* One fold, one meaning. The coach dock already stood down while the strip was speaking; now
      that the whole guidance layer folds on scroll, that rule is the same behaviour reached by a
      different route — so it stays exactly as it was, inside the layer rather than beside it. */
+}
+
+/* ── Phone and tablet: a 44px tap area behind the same look ─────────────────────
+   Owner pick 2026-11-25 (drawing B, `DEMO_TOUR_BAR_44_MOCKUPS.html`). Each pill's box is 44px and its paint stops
+   short of it: a see-through border above and below, with the fill clipped to what is inside. The radius is written as
+   two values (across / up-and-down) so the painted corner keeps the shape it had. The bands give up the padding the
+   taller boxes now cover. ⚠ These stay LAST and carry the coats' weight (`[data-kind]`): a coat's `background`
+   shorthand on hover would otherwise paint the whole box. */
+@media (max-width: 768px) {
+  .chrome[data-kind] .banner { padding-block: 3px; }
+  .chrome[data-kind] .stepper { padding-block: 0; }
+  /* If the row wraps on a narrow phone, the counter still clears the band above it. */
+  .chrome[data-kind] .stepCount { padding-block: 0.375rem; }
+
+  .chrome[data-kind] .cta,
+  .chrome[data-kind] .stepGo,
+  .chrome[data-kind] .restart,
+  .chrome[data-kind] .saidBack {
+    box-sizing: border-box;
+    height: var(--tap-min, 44px);
+    padding-block: 0;
+    border-style: solid;
+    border-color: transparent;
+    background-clip: padding-box;
+  }
+  .chrome[data-kind] .cta:hover,
+  .chrome[data-kind] .stepGo:hover,
+  .chrome[data-kind] .restart:hover,
+  .chrome[data-kind] .saidBack:hover { background-clip: padding-box; }
+
+  .chrome[data-kind] .cta { border-width: 5.5px 0; line-height: 33px; border-radius: 2px / 7.5px; }
+  .chrome[data-kind='coach'] .cta { border-radius: 16.5px / 22px; }
+
+  /* The outlined pills draw their edge inside the painted area. */
+  .chrome[data-kind] .stepGo {
+    border-width: 8px 0; line-height: 28px; border-radius: 14px / 22px;
+    box-shadow: inset 0 0 0 1px var(--logic-lime);
+  }
+  .chrome[data-kind] .restart {
+    border-width: 8px 0; line-height: 28px; border-radius: 14px / 22px;
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.11);
+  }
+  .chrome[data-kind] .saidBack {
+    border-width: 9.5px 0; line-height: 25px; border-radius: 12.5px / 22px;
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.11);
+  }
+  .chrome[data-kind] .restart:hover,
+  .chrome[data-kind] .saidBack:hover { box-shadow: inset 0 0 0 1px var(--data-gray); }
+  .chrome[data-kind='coach'] .stepGo { box-shadow: none; }
+  .chrome[data-kind='coach'] .restart { box-shadow: inset 0 0 0 1px rgba(var(--sandbox-warm-line-rgb), 0.32); }
+  .chrome[data-kind='coach'] .restart:hover { box-shadow: inset 0 0 0 1px var(--sandbox-warm-ink); }
+
+  .chrome[data-kind] .moment { min-height: var(--tap-min, 44px); justify-content: center; }
+  /* The coach coat's chips keep their size: the margin around them becomes part of the tap box. */
+  .chrome[data-kind='coach'] .moment {
+    margin-block: 0;
+    border-style: solid;
+    border-color: transparent;
+    border-width: 4px 0;
+    border-radius: 9px / 13px;
+  }
+  .chrome[data-kind='coach'] .moment,
+  .chrome[data-kind='coach'] .moment:hover,
+  .chrome[data-kind='coach'] .moment[aria-current='true'] { background-clip: padding-box; }
+
+}
+
+/* Between the phone (which hides the circles) and the desk. */
+@media (min-width: 641px) and (max-width: 768px) {
+  /* The step circles sit a full tap apart where the row has room (four steps). A longer tour (the coach's eight) takes
+     its width back from the circles first, each still 44px tall, and drops the "Guided tour" words as a phone does; the
+     step's button gives way last, with its ellipsis, rather than pushing the row off the screen. */
+  .dots { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(28px, var(--tap-min, 44px)); gap: 0; flex: 0 100 auto; }
+  .chrome[data-kind] .dot { width: 100%; height: var(--tap-min, 44px); }
+  .chrome[data-kind] .stepGo { flex-shrink: 1; min-width: 0; }
+  .stepper:has(.dot:nth-child(7)) .stepperLabel { display: none; }
+}
+
+@media (max-width: 640px) {
+  .chrome[data-kind] .banner { padding-block: 1px; }
+  .chrome[data-kind] .cta { border-width: 8.5px 0; line-height: 27px; border-radius: 2px / 10.5px; }
+  .chrome[data-kind='coach'] .cta { border-radius: 13.5px / 22px; }
+  .chrome[data-kind] .stepGo,
+  .chrome[data-kind] .restart { border-width: 8.5px 0; line-height: 27px; border-radius: 13.5px / 22px; }
 }

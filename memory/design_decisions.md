@@ -11132,3 +11132,17 @@ Newest entries first. All decisions here are binding in future sessions unless e
 **Decision (owner):** Every admin and staff-console control is 44px tall at 768px and below, in either density. Computer widths do not change. The coaches portal is not changed by this. With it: a staff-console name in a table is 44px tall between 641 and 768px (rows grow); the tournament bracket EDITOR opens full size on a phone or tablet and scrolls sideways instead of shrinking to fit (the read-only bracket still opens fitted); links inside sentences stay as they are; the demo sandbox's tour bar is drawn for approval before it is changed.
 **Replaces:** the 38px touch value (A-08 / K-18, 2026-09-07) and the touch half of the 2026-10-03 "one control height" ruling. The 34px computer height stands.
 **Applies to:** `--admin-control-h` in `app/globals.css`; admin and platform-admin controls that set their own height.
+
+---
+
+### 2026-11-25 — Demo tour bar on a phone and a tablet: the same look, a 44px tap area (option B)
+**Decision (owner):** The demo sandboxes' tour bar keeps its look at 768px and below; each button answers a 44px tap area around it. Not the bigger visible buttons (option A).
+**Rationale:** The product underneath is what a demo is for, so the bar takes the least height. Accepted cost: a button looks smaller than the area that answers a tap.
+**Build note:** a tour longer than four steps (the coach's eight) narrows its step circles on a tablet before anything else gives, each still 44px tall, and drops the "Guided tour" words there.
+**Applies to:** `components/sandbox/SandboxChrome`, both coats.
+
+---
+
+### 2026-11-25 — Coaches portal dialog-footer buttons are 44px on a phone and a tablet
+**Decision (owner):** Dialog-footer buttons in the coaches portal are 44px at 768px and below. The shared window already gives this; the older sheets that draw their own footer are brought to it as their own small fix, after the coming release, measured first.
+**Applies to:** coaches portal dialog and sheet footers.

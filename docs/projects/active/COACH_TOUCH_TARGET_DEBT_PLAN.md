@@ -158,6 +158,11 @@ re-shaping should — they belong with this file's debt, not with a project that
   gave ONE dialog — the skill observation dialog — a 56px docked foot at ≤640; every other sheet's Save
   and Cancel is still ~33px. Fixing it moves every dialog in the product, which is why it wants an owner
   ruling of its own rather than a quiet sweep.
+  - **Ruled 2026-11-25 (owner): 44px at 768px and below.** Read from the styles that day, not measured: the shared
+    window (`KitDialog`) already floors its foot's buttons there, so what is left is the older sheets that draw their
+    own footer (the dues schedule form, two in the practice plan editor, the practice groups room, the depth chart
+    sheet; the staff sheet floors its own on a phone, check its tablet width). Its own small fix after the coming
+    release, measured first.
 - **The lineup builder's toolbar at tablet widths** (phone plan §13.6 #6): *Call up a player* is 40px from
   641 up (it takes the toolbar row's shared 40px control height, deliberately), and *Game rules* is 16px at
   768. The first is a trade-off — the floor against one control height across the row — for the owner.

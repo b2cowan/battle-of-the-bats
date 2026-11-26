@@ -868,7 +868,7 @@ export default function SandboxChrome({
                   aria-label={`Step ${step.n}: ${step.label}${tour.done.includes(step.n) ? ' (done)' : ''}`}
                   onClick={() => jumpTo(step.n)}
                 >
-                  {tour.done.includes(step.n) ? '✓' : step.n}
+                  <span className={styles.dotFace}>{tour.done.includes(step.n) ? '✓' : step.n}</span>
                 </button>
               ))}
             </span>
