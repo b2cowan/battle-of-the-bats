@@ -311,6 +311,8 @@ prompt → the build → `/simplify`, `/review`, `/legal` or `/accounting` where
   written 2026-11-25: [CLUB_WEBSITE_STAGE2_BUILD_PROMPT.md](CLUB_WEBSITE_STAGE2_BUILD_PROMPT.md), three sessions: 2A
   the migration and the press (nothing anyone sees), 2B the window, the result and Reopen, 2C what families and coaches
   see, then the close.)*
+  *(Session 2A built 2026-11-25: migration 539 (applied to dev at the owner's word), the press, Reopen, "Link both" not
+  news, the reads; /review run and applied. Progress 2026-11-25 "Stage 2 Session 2A". Next: 2B.)*
 - [ ] **Stage 3 — The site's face (idea 7; F4).** `/legal` and the consent question first. Before news, so a news post
   is built with its photo from the start. *(Club events, E9: the one photo question is this stage's; camps ask it in
   the same words. P1–P5 ruled 2026-11-25: optional, blank = No; one Yes names the website and the club's own social
@@ -1264,6 +1266,44 @@ the demos follow the product and are curated with `/demos`, never as a build ste
   at hand-off: K15's "one word everywhere" adds a "Rainout" rule to `check:spelling` (not watched automation;
   AGENCY_RULES needs a ruling to widen it, and this is it); K14 is a gate change, so `/strategy` logs it and fixes
   `PLAN_PRICING_FACTS.md:128` in the gate's commit (2B).
+- 2026-11-25 — **Stage 2 Session 2A built (the database half of Close a place; nothing anyone sees).** Start conditions
+  held (K1–K17 ticked; Milton's answers still "not in yet"; club events still not in code, so E7 waits for 2B's check).
+  **Landed:** migration `539_a_closed_place_closes_for_every_program.sql` — `org_place_closures` (one row per closed place
+  per press: place / one diamond / every place, by id and name, Day and Until, shows from the press to midnight after
+  Until, postpone or cancel, the families' line, who closed and reopened), `league_rainouts.closure_id` + `org_venue_id`
+  (one Rainout row per closure, season and day; unique, the retry guard), `rep_event_closure_marks` (the mark beside the
+  game, its time and place when marked; "the coach moved it" is read); `org_place_closure_press` (one step: places held,
+  divisions locked in id order, rows locked, every refusal before the first write, a retried press key replays) and
+  `org_place_closure_reopen` (stamps only; no game moves, K11 A); the recorder learns "Link both" is not news, ONLY while
+  the press's transaction-local `league.quiet_link` is on around its own link step. Server: `lib/place-closures.ts` (the
+  one matching rule mirrored, the mark rule, the strip's place-words-only shape) and `lib/place-closures-server.ts` (the
+  press and Reopen wrappers; `closuresShowing`, `standingRepMarks(orgId, ids)`, `leagueClosureReasons(orgId, ids)`,
+  `placeClosureSource` for 2B's window: house league, rep, tournaments K13, practices). The send's net effect reads the
+  quiet link from the gap it leaves between held rows (`quietLinkOf` in `lib/league-game-changes.ts`), so the claim, the
+  email's Now and its "Was" all agree, with no extra read. **How rep's own places are read (the prompt's "say how"):** a
+  team place (`rep_team_events.place_id` → `rep_team_places.name`) is typed text — searched beside the game's own typed
+  place, "maybe" at most, never ticked. **Proof:** `scripts/club-website-stage2-closure-check.sql` (rolled back, dev):
+  T1–T15, 31 checks, all pass on the applied schema — all or nothing across two seasons, a retry runs once, "Link both"
+  records no row while any other writer's link still does, the strip's window, a second closure keeps the first mark,
+  Reopen moves nothing, draft / finished / another club / a gone game, one diamond, two places, the matching cases.
+  Unit: `tests/unit/place-closures.test.ts`, `tests/unit/place-closures-guard.test.ts` (83 with the change-log and Rainout
+  suites, all pass); typecheck and focused lint clean. Dictionary: both tables, the two columns, and the stale lines
+  (house league "postponed" called dead; the place columns called dev-only — on production, schema read 2026-11-25).
+  Production step: `MANUAL_PROD_STEPS.json` 539, pending (safe to apply ahead of the code: nothing turns the quiet link on).
+  **/review (four lenses) found no Critical or High; applied:** the quiet rule had been on for EVERY writer (the club
+  schedule's time move keeps old typed text, so a real move to a place whose name sat inside it would have gone
+  unheard) — now the press's switch only; the email's "Was" line would have called a quietly linked game's place
+  changed — the net now carries the place with the link; places held FOR SHARE first (a rename or delete mid-press);
+  "finished" read after the locks; rep rows locked only when games (a practice id could have taken a lock in the club
+  schedule's opposite order); a game gone since named as changed, not "not found"; a link must be on and unscored; the
+  two id readers fenced by club; more lock errors read as "try again"; the window read refuses a place twice; indexes on
+  the mark's team and the Rainout's place. **Accepted, recorded:** Undo of an OLDER held change unlinks a quietly linked
+  game (families' place unchanged); a malformed id is a 500, not a refusal (2B's route validates, as the Rainout's does);
+  a typed game naming two closed places is filed under the first. **For the owner (named, not ruled):** once a typed
+  game is linked, family pages label it with the place's name ("Lions Park"), not the typed words ("Lions Park —
+  Diamond 2") — how every linked game reads today; and a tournament diamond links to a place, never one diamond, so a
+  one-diamond closure lists the tournament by its place. **For 2B:** make a press key per window open; the route maps
+  refusals to words and validates ids.
 
 ## 8. Census questions for Stage 0 (answer from code, not from this plan)
 

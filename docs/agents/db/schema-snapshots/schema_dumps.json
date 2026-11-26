@@ -12665,6 +12665,24 @@
         "column_default": null
       },
       {
+        "table_name": "league_rainouts",
+        "pos": 14,
+        "column_name": "closure_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "league_rainouts",
+        "pos": 15,
+        "column_name": "org_venue_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
         "table_name": "league_registration_price_changes",
         "pos": 1,
         "column_name": "id",
@@ -17955,6 +17973,177 @@
         "udt_name": "timestamptz",
         "is_nullable": "NO",
         "column_default": "now()"
+      },
+      {
+        "table_name": "org_place_closures",
+        "pos": 1,
+        "column_name": "id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": "gen_random_uuid()"
+      },
+      {
+        "table_name": "org_place_closures",
+        "pos": 2,
+        "column_name": "org_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "org_place_closures",
+        "pos": 3,
+        "column_name": "press_key",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "org_place_closures",
+        "pos": 4,
+        "column_name": "press_seq",
+        "data_type": "smallint",
+        "udt_name": "int2",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "org_place_closures",
+        "pos": 5,
+        "column_name": "scope",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "org_place_closures",
+        "pos": 6,
+        "column_name": "org_venue_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "org_place_closures",
+        "pos": 7,
+        "column_name": "org_venue_facility_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "org_place_closures",
+        "pos": 8,
+        "column_name": "place_name",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "org_place_closures",
+        "pos": 9,
+        "column_name": "facility_name",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "org_place_closures",
+        "pos": 10,
+        "column_name": "first_day",
+        "data_type": "date",
+        "udt_name": "date",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "org_place_closures",
+        "pos": 11,
+        "column_name": "last_day",
+        "data_type": "date",
+        "udt_name": "date",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "org_place_closures",
+        "pos": 12,
+        "column_name": "shows_from",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "org_place_closures",
+        "pos": 13,
+        "column_name": "ends_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "org_place_closures",
+        "pos": 14,
+        "column_name": "verb",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "org_place_closures",
+        "pos": 15,
+        "column_name": "line",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "org_place_closures",
+        "pos": 16,
+        "column_name": "closed_by",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "org_place_closures",
+        "pos": 17,
+        "column_name": "created_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
+        "table_name": "org_place_closures",
+        "pos": 18,
+        "column_name": "reopened_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "org_place_closures",
+        "pos": 19,
+        "column_name": "reopened_by",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
       },
       {
         "table_name": "org_public_site_content",
@@ -24250,6 +24439,123 @@
       {
         "table_name": "rep_evaluation_not_assessed",
         "pos": 9,
+        "column_name": "created_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
+        "table_name": "rep_event_closure_marks",
+        "pos": 1,
+        "column_name": "id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": "gen_random_uuid()"
+      },
+      {
+        "table_name": "rep_event_closure_marks",
+        "pos": 2,
+        "column_name": "org_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_event_closure_marks",
+        "pos": 3,
+        "column_name": "closure_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_event_closure_marks",
+        "pos": 4,
+        "column_name": "event_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_event_closure_marks",
+        "pos": 5,
+        "column_name": "team_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_event_closure_marks",
+        "pos": 6,
+        "column_name": "marked_starts_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_event_closure_marks",
+        "pos": 7,
+        "column_name": "marked_org_venue_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_event_closure_marks",
+        "pos": 8,
+        "column_name": "marked_facility_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_event_closure_marks",
+        "pos": 9,
+        "column_name": "marked_place_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_event_closure_marks",
+        "pos": 10,
+        "column_name": "marked_location",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_event_closure_marks",
+        "pos": 11,
+        "column_name": "coach_emailed_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_event_closure_marks",
+        "pos": 12,
+        "column_name": "reopen_told_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_event_closure_marks",
+        "pos": 13,
         "column_name": "created_at",
         "data_type": "timestamp with time zone",
         "udt_name": "timestamptz",
@@ -37175,6 +37481,13 @@
       },
       {
         "table_name": "league_rainouts",
+        "column_name": "closure_id",
+        "foreign_table": "org_place_closures",
+        "foreign_column": "id",
+        "constraint_name": "league_rainouts_closure_id_fkey"
+      },
+      {
+        "table_name": "league_rainouts",
         "column_name": "created_by",
         "foreign_table": null,
         "foreign_column": null,
@@ -37186,6 +37499,13 @@
         "foreign_table": "organizations",
         "foreign_column": "id",
         "constraint_name": "league_rainouts_org_id_fkey"
+      },
+      {
+        "table_name": "league_rainouts",
+        "column_name": "org_venue_id",
+        "foreign_table": "org_venues",
+        "foreign_column": "id",
+        "constraint_name": "league_rainouts_org_venue_id_fkey"
       },
       {
         "table_name": "league_rainouts",
@@ -38161,6 +38481,41 @@
         "constraint_name": "org_person_reattachments_to_person_id_fkey"
       },
       {
+        "table_name": "org_place_closures",
+        "column_name": "closed_by",
+        "foreign_table": null,
+        "foreign_column": null,
+        "constraint_name": "org_place_closures_closed_by_fkey"
+      },
+      {
+        "table_name": "org_place_closures",
+        "column_name": "org_id",
+        "foreign_table": "organizations",
+        "foreign_column": "id",
+        "constraint_name": "org_place_closures_org_id_fkey"
+      },
+      {
+        "table_name": "org_place_closures",
+        "column_name": "org_venue_facility_id",
+        "foreign_table": "org_venue_facilities",
+        "foreign_column": "id",
+        "constraint_name": "org_place_closures_org_venue_facility_id_fkey"
+      },
+      {
+        "table_name": "org_place_closures",
+        "column_name": "org_venue_id",
+        "foreign_table": "org_venues",
+        "foreign_column": "id",
+        "constraint_name": "org_place_closures_org_venue_id_fkey"
+      },
+      {
+        "table_name": "org_place_closures",
+        "column_name": "reopened_by",
+        "foreign_table": null,
+        "foreign_column": null,
+        "constraint_name": "org_place_closures_reopened_by_fkey"
+      },
+      {
         "table_name": "org_public_site_content",
         "column_name": "org_id",
         "foreign_table": "organizations",
@@ -39013,6 +39368,34 @@
         "foreign_table": "rep_team_measurable_types",
         "foreign_column": "team_id",
         "constraint_name": "rep_evaluation_not_assessed_type_team_fkey"
+      },
+      {
+        "table_name": "rep_event_closure_marks",
+        "column_name": "closure_id",
+        "foreign_table": "org_place_closures",
+        "foreign_column": "id",
+        "constraint_name": "rep_event_closure_marks_closure_id_fkey"
+      },
+      {
+        "table_name": "rep_event_closure_marks",
+        "column_name": "event_id",
+        "foreign_table": "rep_team_events",
+        "foreign_column": "id",
+        "constraint_name": "rep_event_closure_marks_event_id_fkey"
+      },
+      {
+        "table_name": "rep_event_closure_marks",
+        "column_name": "org_id",
+        "foreign_table": "organizations",
+        "foreign_column": "id",
+        "constraint_name": "rep_event_closure_marks_org_id_fkey"
+      },
+      {
+        "table_name": "rep_event_closure_marks",
+        "column_name": "team_id",
+        "foreign_table": "rep_teams",
+        "foreign_column": "id",
+        "constraint_name": "rep_event_closure_marks_team_id_fkey"
       },
       {
         "table_name": "rep_fundraiser_credit_plan",
@@ -44065,6 +44448,16 @@
       },
       {
         "tablename": "league_rainouts",
+        "indexname": "league_rainouts_closure_day_uq",
+        "indexdef": "CREATE UNIQUE INDEX league_rainouts_closure_day_uq ON public.league_rainouts USING btree (closure_id, season_id, day) WHERE (closure_id IS NOT NULL)"
+      },
+      {
+        "tablename": "league_rainouts",
+        "indexname": "league_rainouts_closure_games_idx",
+        "indexdef": "CREATE INDEX league_rainouts_closure_games_idx ON public.league_rainouts USING gin (game_ids) WHERE (closure_id IS NOT NULL)"
+      },
+      {
+        "tablename": "league_rainouts",
         "indexname": "league_rainouts_org_idx",
         "indexdef": "CREATE INDEX league_rainouts_org_idx ON public.league_rainouts USING btree (org_id)"
       },
@@ -44077,6 +44470,11 @@
         "tablename": "league_rainouts",
         "indexname": "league_rainouts_season_idx",
         "indexdef": "CREATE INDEX league_rainouts_season_idx ON public.league_rainouts USING btree (season_id) WHERE (put_back_at IS NULL)"
+      },
+      {
+        "tablename": "league_rainouts",
+        "indexname": "league_rainouts_venue_idx",
+        "indexdef": "CREATE INDEX league_rainouts_venue_idx ON public.league_rainouts USING btree (org_venue_id) WHERE (org_venue_id IS NOT NULL)"
       },
       {
         "tablename": "league_registration_price_changes",
@@ -45067,6 +45465,31 @@
         "tablename": "org_person_reattachments",
         "indexname": "org_person_reattachments_to_idx",
         "indexdef": "CREATE INDEX org_person_reattachments_to_idx ON public.org_person_reattachments USING btree (to_person_id)"
+      },
+      {
+        "tablename": "org_place_closures",
+        "indexname": "org_place_closures_org_id_idx",
+        "indexdef": "CREATE INDEX org_place_closures_org_id_idx ON public.org_place_closures USING btree (org_id)"
+      },
+      {
+        "tablename": "org_place_closures",
+        "indexname": "org_place_closures_pkey",
+        "indexdef": "CREATE UNIQUE INDEX org_place_closures_pkey ON public.org_place_closures USING btree (id)"
+      },
+      {
+        "tablename": "org_place_closures",
+        "indexname": "org_place_closures_press_once",
+        "indexdef": "CREATE UNIQUE INDEX org_place_closures_press_once ON public.org_place_closures USING btree (press_key, press_seq)"
+      },
+      {
+        "tablename": "org_place_closures",
+        "indexname": "org_place_closures_showing_idx",
+        "indexdef": "CREATE INDEX org_place_closures_showing_idx ON public.org_place_closures USING btree (org_id, ends_at) WHERE (reopened_at IS NULL)"
+      },
+      {
+        "tablename": "org_place_closures",
+        "indexname": "org_place_closures_venue_idx",
+        "indexdef": "CREATE INDEX org_place_closures_venue_idx ON public.org_place_closures USING btree (org_venue_id) WHERE (org_venue_id IS NOT NULL)"
       },
       {
         "tablename": "org_public_site_content",
@@ -46127,6 +46550,31 @@
         "tablename": "rep_evaluation_not_assessed",
         "indexname": "rep_evaluation_not_assessed_uniq",
         "indexdef": "CREATE UNIQUE INDEX rep_evaluation_not_assessed_uniq ON public.rep_evaluation_not_assessed USING btree (session_id, player_id, measurable_type_id)"
+      },
+      {
+        "tablename": "rep_event_closure_marks",
+        "indexname": "rep_event_closure_marks_event_idx",
+        "indexdef": "CREATE INDEX rep_event_closure_marks_event_idx ON public.rep_event_closure_marks USING btree (event_id)"
+      },
+      {
+        "tablename": "rep_event_closure_marks",
+        "indexname": "rep_event_closure_marks_once",
+        "indexdef": "CREATE UNIQUE INDEX rep_event_closure_marks_once ON public.rep_event_closure_marks USING btree (closure_id, event_id)"
+      },
+      {
+        "tablename": "rep_event_closure_marks",
+        "indexname": "rep_event_closure_marks_org_id_idx",
+        "indexdef": "CREATE INDEX rep_event_closure_marks_org_id_idx ON public.rep_event_closure_marks USING btree (org_id)"
+      },
+      {
+        "tablename": "rep_event_closure_marks",
+        "indexname": "rep_event_closure_marks_pkey",
+        "indexdef": "CREATE UNIQUE INDEX rep_event_closure_marks_pkey ON public.rep_event_closure_marks USING btree (id)"
+      },
+      {
+        "tablename": "rep_event_closure_marks",
+        "indexname": "rep_event_closure_marks_team_idx",
+        "indexdef": "CREATE INDEX rep_event_closure_marks_team_idx ON public.rep_event_closure_marks USING btree (team_id)"
       },
       {
         "tablename": "rep_fundraiser_credit_plan",
@@ -52422,6 +52870,60 @@
       },
       {
         "kind": "CHECK",
+        "table_name": "org_place_closures",
+        "detail": "org_place_closures_all_has_no_name",
+        "check_clause": "((scope = 'all'::text) = (place_name IS NULL))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "org_place_closures",
+        "detail": "org_place_closures_days",
+        "check_clause": "((last_day >= first_day) AND ((last_day - first_day) <= 13))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "org_place_closures",
+        "detail": "org_place_closures_diamond_named",
+        "check_clause": "((scope = 'diamond'::text) = (facility_name IS NOT NULL))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "org_place_closures",
+        "detail": "org_place_closures_line_check",
+        "check_clause": "((line IS NULL) OR ((char_length(line) >= 1) AND (char_length(line) <= 120)))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "org_place_closures",
+        "detail": "org_place_closures_press_seq_check",
+        "check_clause": "((press_seq >= 1) AND (press_seq <= 10))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "org_place_closures",
+        "detail": "org_place_closures_scope_check",
+        "check_clause": "(scope = ANY (ARRAY['place'::text, 'diamond'::text, 'all'::text]))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "org_place_closures",
+        "detail": "org_place_closures_shows",
+        "check_clause": "(ends_at > shows_from)"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "org_place_closures",
+        "detail": "org_place_closures_verb_check",
+        "check_clause": "(verb = ANY (ARRAY['postponed'::text, 'cancelled'::text]))"
+      },
+      {
+        "kind": "RLS",
+        "table_name": "org_place_closures",
+        "detail": "ENABLED",
+        "check_clause": null
+      },
+      {
+        "kind": "CHECK",
         "table_name": "org_public_site_content",
         "detail": "org_public_site_content_contacts_cap",
         "check_clause": "((jsonb_typeof(contacts) = 'array'::text) AND (jsonb_array_length(contacts) <= 12))"
@@ -53893,6 +54395,12 @@
       {
         "kind": "RLS",
         "table_name": "rep_evaluation_not_assessed",
+        "detail": "ENABLED",
+        "check_clause": null
+      },
+      {
+        "kind": "RLS",
+        "table_name": "rep_event_closure_marks",
         "detail": "ENABLED",
         "check_clause": null
       },

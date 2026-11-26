@@ -4841,6 +4841,16 @@
   },
   {
     "table_name": "league_rainouts",
+    "constraint_name": "league_rainouts_closure_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "closure_id",
+    "foreign_table": "org_place_closures",
+    "foreign_column": "id",
+    "delete_rule": "SET NULL",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "league_rainouts",
     "constraint_name": "league_rainouts_created_by_fkey",
     "constraint_type": "FOREIGN KEY",
     "column_name": "created_by",
@@ -4857,6 +4867,16 @@
     "foreign_table": "organizations",
     "foreign_column": "id",
     "delete_rule": "CASCADE",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "league_rainouts",
+    "constraint_name": "league_rainouts_org_venue_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "org_venue_id",
+    "foreign_table": "org_venues",
+    "foreign_column": "id",
+    "delete_rule": "SET NULL",
     "update_rule": "NO ACTION"
   },
   {
@@ -6837,6 +6857,86 @@
     "foreign_table": "org_people",
     "foreign_column": "id",
     "delete_rule": "CASCADE",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "org_place_closures",
+    "constraint_name": "org_place_closures_closed_by_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "closed_by",
+    "foreign_table": null,
+    "foreign_column": null,
+    "delete_rule": "SET NULL",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "org_place_closures",
+    "constraint_name": "org_place_closures_org_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "org_id",
+    "foreign_table": "organizations",
+    "foreign_column": "id",
+    "delete_rule": "CASCADE",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "org_place_closures",
+    "constraint_name": "org_place_closures_org_venue_facility_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "org_venue_facility_id",
+    "foreign_table": "org_venue_facilities",
+    "foreign_column": "id",
+    "delete_rule": "SET NULL",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "org_place_closures",
+    "constraint_name": "org_place_closures_org_venue_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "org_venue_id",
+    "foreign_table": "org_venues",
+    "foreign_column": "id",
+    "delete_rule": "SET NULL",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "org_place_closures",
+    "constraint_name": "org_place_closures_pkey",
+    "constraint_type": "PRIMARY KEY",
+    "column_name": "id",
+    "foreign_table": null,
+    "foreign_column": null,
+    "delete_rule": null,
+    "update_rule": null
+  },
+  {
+    "table_name": "org_place_closures",
+    "constraint_name": "org_place_closures_press_once",
+    "constraint_type": "UNIQUE",
+    "column_name": "press_key",
+    "foreign_table": null,
+    "foreign_column": null,
+    "delete_rule": null,
+    "update_rule": null
+  },
+  {
+    "table_name": "org_place_closures",
+    "constraint_name": "org_place_closures_press_once",
+    "constraint_type": "UNIQUE",
+    "column_name": "press_seq",
+    "foreign_table": null,
+    "foreign_column": null,
+    "delete_rule": null,
+    "update_rule": null
+  },
+  {
+    "table_name": "org_place_closures",
+    "constraint_name": "org_place_closures_reopened_by_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "reopened_by",
+    "foreign_table": null,
+    "foreign_column": null,
+    "delete_rule": "SET NULL",
     "update_rule": "NO ACTION"
   },
   {
@@ -8937,6 +9037,76 @@
     "foreign_table": "rep_team_measurable_types",
     "foreign_column": "team_id",
     "delete_rule": "RESTRICT",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "rep_event_closure_marks",
+    "constraint_name": "rep_event_closure_marks_closure_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "closure_id",
+    "foreign_table": "org_place_closures",
+    "foreign_column": "id",
+    "delete_rule": "CASCADE",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "rep_event_closure_marks",
+    "constraint_name": "rep_event_closure_marks_event_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "event_id",
+    "foreign_table": "rep_team_events",
+    "foreign_column": "id",
+    "delete_rule": "CASCADE",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "rep_event_closure_marks",
+    "constraint_name": "rep_event_closure_marks_once",
+    "constraint_type": "UNIQUE",
+    "column_name": "closure_id",
+    "foreign_table": null,
+    "foreign_column": null,
+    "delete_rule": null,
+    "update_rule": null
+  },
+  {
+    "table_name": "rep_event_closure_marks",
+    "constraint_name": "rep_event_closure_marks_once",
+    "constraint_type": "UNIQUE",
+    "column_name": "event_id",
+    "foreign_table": null,
+    "foreign_column": null,
+    "delete_rule": null,
+    "update_rule": null
+  },
+  {
+    "table_name": "rep_event_closure_marks",
+    "constraint_name": "rep_event_closure_marks_org_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "org_id",
+    "foreign_table": "organizations",
+    "foreign_column": "id",
+    "delete_rule": "CASCADE",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "rep_event_closure_marks",
+    "constraint_name": "rep_event_closure_marks_pkey",
+    "constraint_type": "PRIMARY KEY",
+    "column_name": "id",
+    "foreign_table": null,
+    "foreign_column": null,
+    "delete_rule": null,
+    "update_rule": null
+  },
+  {
+    "table_name": "rep_event_closure_marks",
+    "constraint_name": "rep_event_closure_marks_team_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "team_id",
+    "foreign_table": "rep_teams",
+    "foreign_column": "id",
+    "delete_rule": "CASCADE",
     "update_rule": "NO ACTION"
   },
   {

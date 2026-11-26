@@ -8143,7 +8143,7 @@ The **intra-org recreational house-league** module (`league_*`) — sign-ups, di
 - **Fees are INTERNAL accounting, never Stripe.** Stage 7a writes one posted income line (`source_module='league_registration'`) only when an admin marks the registration fee paid; approval and waitlist promotion write no pending line. Undo or decline/withdrawal voids the live line atomically. `fee_entry_id` is a loose uuid with no FK; the durable history is `accounting_entries.source_module` + `source_entity_id`. No `stripe_*` column exists in the domain.
 - **`league_notification_log` is DEAD/legacy.** Created in mig 020 as the original broadcast log, it has **zero reads/writes** in current code and was **superseded by `league_email_log`**. Naming trap: the admin "Notifications" page (`notifications/page.tsx`) actually writes `league_email_log` via the `/email` route. Different schema (`audience_type`/`audience_label`/`recipient_count` vs `scope`/`audience`/`count_sent`+`count_skipped`).
 - **RLS is ENABLED on all 8 tables and mig 020 defines real org-member + public-read policies — but every code path uses `supabaseAdmin` (service role, RLS-bypassing); enforcement is app-layer.** Admin routes gate on `hasCapability(role, caps, 'module_house_league')` **+** `hasModuleEntitlement(org, 'module_house_league')` (the League/Club plan gate) **+**, for writes, role `owner`/`league_admin` (registrar can manage regs but not place/reassign). The lone exception: the **practices** POST/PATCH routes gate on capability+role but **NOT** `hasModuleEntitlement` — a slightly weaker gate than the sibling routes.
-- **UK spelling `'cancelled'`** is the CHECK value on both `league_games` and `league_practices` (and `'postponed'` on games is allowed-but-dead) — never US `'canceled'`, which would fail the CHECK. Cancels are **soft** (status flips, row persists); `deleteLeagueTeam` is a hard delete but its FKs SET-NULL registrations and CASCADE games.
+- **UK spelling `'cancelled'`** is the CHECK value on both `league_games` and `league_practices` (and `'postponed'`, on games only, is written by the game window's Postpone, the Rainout, a closure (Close a place, mig 539) and mig 411's time move) — never US `'canceled'`, which would fail the CHECK. Cancels are **soft** (status flips, row persists); `deleteLeagueTeam` is a hard delete but its FKs SET-NULL registrations and CASCADE games.
 - **The `league_practices` recurrence model is the symmetric-`recurrence_group_id` kind, NOT a parent-anchor — so it has NO orphan/anchor bug** (the `rep_team_events` parent-anchor defect this once contrasted was fixed 2026-06-29). All occurrences in a series share one `recurrence_group_id`; `cancelPractice('all')` keys off it alone (catches every member), `'remaining'` adds `scheduled_at >= clicked`. Verified by reading the helper; stated explicitly so a future reader doesn't assume the rep defect exists here.
 - **Dev/prod:** all 8 tables are **column-, constraint-, and CHECK-identical** dev↔prod. The **only** divergence is **`league_practices` indexes** (the domain's headline drift): mig `077_league_practices_dev_sync.sql` is **dev-only**, so dev has hand-named indexes incl. a **PARTIAL** recurrence index (`WHERE recurrence_group_id IS NOT NULL`) and a dev-only `schedule_idx(season_id, scheduled_at)`, while prod has auto-named indexes, a **FULL** recurrence index, and **no schedule index**. The `DRIFT_dev_vs_prod.md` "Definition changed (0)" line **masks** this — it diffs by index *name*, so the partial-vs-full difference shows up only as separate add/drop entries. (mig 078's `org_id` + `org_idx` was applied to both.)
 
@@ -8358,6 +8358,7 @@ The **intra-org recreational house-league** module (`league_*`) — sign-ups, di
 1. **The line is read at SEND time**, through `change_ids`: whichever press sends those rows (the window's own send, or Changes to send a day later) finds this row by its change ids and puts `line` at the top of the Games changed email and the coaches' copy. An email is rebuilt from the stamped rows when it goes, so the line cannot live in memory.
 2. **Put all back is NOT `league_game_undo`.** Undo returns a game to what families last heard, discarding an older held change on it; Put all back returns each game's **status** to its rainout row's `before` and deletes that row and the put-back's own row, keeping an older held change. One rule decides when it works — `league_rainout_refusal(r)`: null = yes; `back` = already put back; `gone` = one of its changes was sent; `refused` = a change was undone, a later held change exists on one of its games, or a game's status is no longer the verb. `league_rainouts_waiting(org, season, division?)` lists the rows the rule allows, with their `division_ids` (the banner at the top of Changes to send, one division's when named).
 3. **A draft division's game is never in a rainout** (a draft records no change and emails nobody).
+4. **A closure writes Rainout rows too (Close a place, mig 539).** `org_place_closure_press` writes one row per closure, season and day (a closure "until Sunday" over two seasons is four rows), with `closure_id` and `org_venue_id` set; unique `(closure_id, season_id, day)` where `closure_id` is set (the retry guard). The send, the line and the waiting banner read them exactly as a Rainout window press. A closure sends at once (K5), so its rows are not meant to be put back.
 
 <!-- dict:col:league_rainouts.id -->
 <!-- dict:col:league_rainouts.org_id -->
@@ -8381,6 +8382,87 @@ The **intra-org recreational house-league** module (`league_*`) — sign-ups, di
 <!-- dict:col:league_rainouts.put_back_at -->
 <!-- dict:col:league_rainouts.put_back_by -->
 **`created_by`** / **`put_back_by`** (FK → `auth.users` ON DELETE SET NULL) / **`created_at`** / **`put_back_at`** (null = not put back) — who pressed, and whether and when Put all back restored every game.
+
+<!-- dict:col:league_rainouts.closure_id -->
+<!-- dict:col:league_rainouts.org_venue_id -->
+**`closure_id`** (FK → `org_place_closures` ON DELETE SET NULL; mig 539) — the closure that made this row; null for a Rainout window press. Partial GIN index on `game_ids` where set ("why was this game called off?", `leagueClosureReasons`). / **`org_venue_id`** (FK → `org_venues` ON DELETE SET NULL; partial index; mig 539) — the closed place; null for "All our fields", a Rainout window press, or a place deleted since.
+
+---
+
+## `org_place_closures`
+<!-- dict:table:org_place_closures -->
+
+**Purpose:** **Close a place** (Club Website Stage 2, rulings K1–K17, **mig 539**): one row per closed place per press — a whole place, one diamond of it, or every place the club has. The press postpones or cancels the house league games there (as Rainout rows, `league_rainouts.closure_id`), MARKS the rep games for their coaches (`rep_event_closure_marks`, never moved), and links the typed-in games the admin chose. The site's strip reads the rows showing now. RLS on, no policies, **service role only**. ⚠ **Written only by `org_place_closure_press`**; `reopened_*` stamped only by `org_place_closure_reopen`.
+
+**Gotchas (read first):**
+1. **One step, all or nothing.** `org_place_closure_press(org, actor, press_key, places, first_day, last_day, verb, line, league, rep, links)` holds the closed places (`FOR SHARE`, first), locks the division of every house league game it names in id order (the send's `league_schedule:` lock), then the game rows (rep rows only when they are games), then decides EVERY refusal before its first write: `invalid`, `past` (Day before the club's today), `not_found` (another club's game), `finished` (read after the locks), `draft` (a draft division or season), `changed` (names the games: moved, called off, scored, removed, edited since the window read them, or no longer at the place; a link must still be on, unscored and typed with the place's name). After the first write a failure raises and the call rolls back whole. It does NOT call `league_rainout_press` (which returns its refusals, so one season would be written when the next refused).
+2. **A retried press runs once.** `press_key` is the window's uuid for one press; under its advisory lock a key already used answers with what it wrote (`replay`). Unique `(press_key, press_seq)`.
+3. **No job ends a closure.** It shows from `shows_from` (the press) to `ends_at` (midnight after `last_day`, club zone) unless reopened; the strip's read is that predicate (`closuresShowing`, [lib/place-closures-server.ts](../../../lib/place-closures-server.ts)). Reopen moves no game (K11 A).
+4. **The strip reads place words only** (`STRIP_CLOSURE_COLUMNS`: scope, place_name, facility_name, first_day, last_day). `line` is the families' email's, never the site's (K16).
+5. **The one matching rule** (K7) is `place_closure_match` / `place_name_in_typed`, mirrored by [lib/place-closures.ts](../../../lib/place-closures.ts): the place id first (a one-diamond closure lists a game on the place with no diamond as `maybe`), then the place's name inside a game's typed text, any case (`maybe`, listed unticked). A rep game's typed text is its `location` and its team place's (`rep_team_places`) name together.
+6. Tournament games are never touched; the window lists each tournament playing and hands off to its own Rain delay (K13).
+
+<!-- dict:col:org_place_closures.id -->
+<!-- dict:col:org_place_closures.org_id -->
+**`id`** / **`org_id`** (FK → `organizations` CASCADE) — whose closure.
+
+<!-- dict:col:org_place_closures.press_key -->
+<!-- dict:col:org_place_closures.press_seq -->
+**`press_key`** (uuid NOT NULL) / **`press_seq`** (smallint 1–10) — the press, and the place's position in the window's order (two places closed together share a key). Unique together.
+
+<!-- dict:col:org_place_closures.scope -->
+<!-- dict:col:org_place_closures.org_venue_id -->
+<!-- dict:col:org_place_closures.org_venue_facility_id -->
+<!-- dict:col:org_place_closures.place_name -->
+<!-- dict:col:org_place_closures.facility_name -->
+**`scope`** (CHECK `place` · `diamond` · `all`) / **`org_venue_id`** (FK → `org_venues` SET NULL) / **`org_venue_facility_id`** (FK → `org_venue_facilities` SET NULL) / **`place_name`** (null exactly when `all`) / **`facility_name`** (set exactly when `diamond`) — what is closed, by id and by name at the press, so a closure still reads after its place is deleted.
+
+<!-- dict:col:org_place_closures.first_day -->
+<!-- dict:col:org_place_closures.last_day -->
+<!-- dict:col:org_place_closures.shows_from -->
+<!-- dict:col:org_place_closures.ends_at -->
+**`first_day`** / **`last_day`** (date; CHECK `last_day >= first_day`, at most 13 days after) — the Day and Until, club days. **`shows_from`** (the press) / **`ends_at`** (midnight after Until, America/Toronto; CHECK after `shows_from`) — when the strip shows.
+
+<!-- dict:col:org_place_closures.verb -->
+<!-- dict:col:org_place_closures.line -->
+**`verb`** (CHECK `postponed` · `cancelled`) — what the press did to the house league games. **`line`** (text 1–120; null = none) — the admin's line for the families' email, verbatim, also on each Rainout row (where the send reads it). Never on the site.
+
+<!-- dict:col:org_place_closures.closed_by -->
+<!-- dict:col:org_place_closures.created_at -->
+<!-- dict:col:org_place_closures.reopened_at -->
+<!-- dict:col:org_place_closures.reopened_by -->
+**`closed_by`** / **`reopened_by`** (FK → `auth.users` SET NULL) / **`created_at`** / **`reopened_at`** (null = not reopened) — who closed it, and whether and when Reopen took the strip and the marks down. Partial index `(org_id, ends_at) WHERE reopened_at IS NULL` (the strip's read).
+
+---
+
+## `rep_event_closure_marks`
+<!-- dict:table:rep_event_closure_marks -->
+
+**Purpose:** **The rep mark** (Club Website Stage 2, K9, **mig 539**): a rep game a closure marked for its coach — marked, not moved (Stage 0 A5). One row per closure per game (unique `(closure_id, event_id)`), so a second closure over the same game never clears the first's mark. RLS on, no policies, **service role only**. Written only by `org_place_closure_press`.
+
+**Gotchas (read first):**
+1. **"The coach moved it" is READ, never written.** A mark STANDS while its closure is not reopened and the game still has the time and every place field it had when marked and is not cancelled (`markStanding`, [lib/place-closures.ts](../../../lib/place-closures.ts)). A place deleted since sets the game's `org_venue_id` null (its FK), which reads as moved.
+2. **A mark reaches a public page only through the reads that already decide what is public**: `standingRepMarks(orgId, eventIds)` takes ids the caller has already read (the club is a second fence, never the selector) (a private team's events never reach a public caller).
+3. A club tournament's rep copy (`source_tournament_game_id` set) is never marked: only its tournament's Rain delay moves it.
+
+<!-- dict:col:rep_event_closure_marks.id -->
+<!-- dict:col:rep_event_closure_marks.org_id -->
+<!-- dict:col:rep_event_closure_marks.closure_id -->
+<!-- dict:col:rep_event_closure_marks.event_id -->
+<!-- dict:col:rep_event_closure_marks.team_id -->
+**`id`** / **`org_id`** (FK → `organizations` CASCADE; index) / **`closure_id`** (FK → `org_place_closures` CASCADE) / **`event_id`** (FK → `rep_team_events` CASCADE; index) / **`team_id`** (FK → `rep_teams` CASCADE; index) — which game, marked by which closure.
+
+<!-- dict:col:rep_event_closure_marks.marked_starts_at -->
+<!-- dict:col:rep_event_closure_marks.marked_org_venue_id -->
+<!-- dict:col:rep_event_closure_marks.marked_facility_id -->
+<!-- dict:col:rep_event_closure_marks.marked_place_id -->
+<!-- dict:col:rep_event_closure_marks.marked_location -->
+**`marked_starts_at`** (NOT NULL) / **`marked_org_venue_id`** / **`marked_facility_id`** / **`marked_place_id`** / **`marked_location`** — the game's time and place when marked (after any "Link" in the same press). Snapshots, no foreign keys.
+
+<!-- dict:col:rep_event_closure_marks.coach_emailed_at -->
+<!-- dict:col:rep_event_closure_marks.reopen_told_at -->
+<!-- dict:col:rep_event_closure_marks.created_at -->
+**`coach_emailed_at`** (null = not yet, or no coach) / **`reopen_told_at`** (Reopen's one line, K11) — the coach emails, stamped by Session 2B's send. **`created_at`**.
 
 ---
 
@@ -8689,7 +8771,7 @@ Sent and By).
 
 **Gotchas (read first):**
 1. **`org_id` write-blocking bug — ✓ FIXED 2026-06-10.** `org_id` is `NOT NULL`, no default, **no trigger** (live probe); at commit `6deac4a` `createLeagueGame` ([lib/db.ts:3465](../../../lib/db.ts#L3465)), the `schedule/generate` save ([generate/route.ts:105-117](../../../app/api/admin/house-league/seasons/[seasonId]/schedule/generate/route.ts#L105-L117)), and the dev seed all **omitted** it → NOT-NULL violation on every game create. **Fixed:** all three now write `org_id` from `ctx.org.id` (via `LeagueGameInput.orgId`). The column exists for the 1-hop org-member RLS policy (mig 075) and was backfilled once at migration time.
-2. **Status enum is UK-spelled** `scheduled|completed|cancelled|postponed` (CHECK). Code matches exactly; `invalidGamePatch` ([lib/league-game-patch.ts](../../../lib/league-game-patch.ts)) refuses any other value with a 400. **Postpone and Cancel are doors in the game window** (its `act()`: a PATCH carrying only the new status, plus "tell families now" on a published division), not a dropdown; **Put it back on** sends `scheduled`. Never set on create (`createLeagueGame` ignores `status`); no automated writer. US `'canceled'` would fail the CHECK.
+2. **Status enum is UK-spelled** `scheduled|completed|cancelled|postponed` (CHECK). Code matches exactly; `invalidGamePatch` ([lib/league-game-patch.ts](../../../lib/league-game-patch.ts)) refuses any other value with a 400. **Postpone and Cancel are doors in the game window** (its `act()`: a PATCH carrying only the new status, plus "tell families now" on a published division), not a dropdown; **Put it back on** sends `scheduled`. Never set on create (`createLeagueGame` ignores `status`). Also written in bulk by the Rainout (`league_rainout_press`, mig 427), a closure (`org_place_closure_press`, mig 539) and Send the changes' time move (mig 411, POSTPONED onto Needs a new date). No background job writes it. US `'canceled'` would fail the CHECK.
 3. **DELETE hard-deletes a DRAFT division's game and refuses a published one** (9d2·9, the PATCH route file's `DELETE`): a published game was told to families, so it is cancelled instead (409 `published`). `getGamesForSeason` excludes cancelled but `getGamesForDivision` does not — the standings count only games that count (gotcha 4).
 4. **The score rule (House League 9e-1): a game COUNTS once it is `completed` AND both scores are in** (`gameCounts`, [lib/league-standings.ts](../../../lib/league-standings.ts)) — the one definition the table, the coach line and the server use. The game PATCH merges the stored row with the patch and then: both scores cleared on a `completed` game with no explicit `status` → `scheduled` (a postponed or cancelled game keeps its status); both in with no explicit `status` → `completed`; a patch that sets the status or a score and would leave the game `completed` without both scores → **400** ("A game counts once both scores are in. Enter both scores, or neither."). One score alone and a non-whole score are refused earlier by `invalidGamePatch`. **No database constraint** ties status to scores: a row written outside the route can still be completed with a null score, and the standings simply don't count it (dev and prod held 0 such rows on 2026-11-01). The helper `enterGameResult` in `lib/db.ts` appears **dead** (no route caller).
 5. **`scheduled_at` is built from `new Date(\`${date}T${time}\`)`** ([schedule/route.ts:96-97](../../../app/api/admin/house-league/seasons/[seasonId]/schedule/route.ts#L96-L97)) — uses the **server's** timezone, so the stored UTC instant depends on server TZ, not the org's (DST/offset trap; shared with practices).
@@ -8714,13 +8796,13 @@ Sent and By).
 **`location`** (text, nullable) — venue **display cache**, same demoted role as tournament `games.location` (mig 229): when `org_venue_id` is set the server DERIVES this string (`Venue — Facility`) and client text is ignored; free text survives only for games with no picked venue ("off-site / not a configured field"). Never match on it when a structured ref exists.
 
 <!-- dict:col:league_games.org_venue_id -->
-**`org_venue_id`** (FK → `org_venues.id` ON DELETE **SET NULL**, nullable; index `idx_league_games_org_venue`; mig 229, dev-only) — the picked venue, referencing the **org venue library DIRECTLY** (owner decision 2026-08-08 — no per-season copies, unlike tournament `diamonds`). SET NULL so deleting a library venue never fails or eats the schedule (the migration-202 lesson). Written only through `resolveLeagueVenueSelection` ([lib/league-venue.ts](../../../lib/league-venue.ts)), which validates org ownership and derives `location`.
+**`org_venue_id`** (FK → `org_venues.id` ON DELETE **SET NULL**, nullable; index `idx_league_games_org_venue`; mig 229, on production) — the picked venue, referencing the **org venue library DIRECTLY** (owner decision 2026-08-08 — no per-season copies, unlike tournament `diamonds`). SET NULL so deleting a library venue never fails or eats the schedule (the migration-202 lesson). Written through `resolveLeagueVenueSelection` ([lib/league-venue.ts](../../../lib/league-venue.ts)), which validates org ownership and derives `location`; and by a closure's **"Link both"** (`org_place_closure_press`, mig 539), which sets ONLY this id on a game with no place id whose typed `location` holds the place's name, and keeps the typed text. ⚖ **That link is not news** (K7): the press turns the transaction-local `league.quiet_link` on around its link step only, and while it is on the recorder writes no `league_game_changes` row for such a link; every other writer (the game window, mig 411's time move, which also keeps typed text) records exactly as before. The send reads the gap the quiet link leaves between held rows (`quietLinkOf`, [lib/league-game-changes.ts](../../../lib/league-game-changes.ts)). ⚠ Undo of an OLDER held change restores that change's `before`, which unlinks the game again (the families' place is unchanged either way). ⚠ Once linked, public pages label the game with the place's name, not the typed words (the label prefers the place).
 
 <!-- dict:col:league_games.org_venue_facility_id -->
-**`org_venue_facility_id`** (FK → `org_venue_facilities.id` ON DELETE **SET NULL**, nullable; index `idx_league_games_org_venue_facility`; mig 229, dev-only) — the specific surface; must belong to `org_venue_id` (server-enforced, no DB constraint). Preferred granularity for clash detection via `lib/venue-identity.ts`.
+**`org_venue_facility_id`** (FK → `org_venue_facilities.id` ON DELETE **SET NULL**, nullable; index `idx_league_games_org_venue_facility`; mig 229, on production) — the specific surface; must belong to `org_venue_id` (server-enforced, no DB constraint). Preferred granularity for clash detection via `lib/venue-identity.ts`.
 
 <!-- dict:col:league_games.ends_at -->
-**`ends_at`** (timestamptz, nullable; mig 229, dev-only) — optional game end, making game windows comparable with practices in the one-booking-pool clash check; the league conflict engine falls back to a 90-minute default when null ([lib/league-schedule-conflict.ts](../../../lib/league-schedule-conflict.ts)).
+**`ends_at`** (timestamptz, nullable; mig 229, on production) — optional game end, making game windows comparable with practices in the one-booking-pool clash check; the league conflict engine falls back to a 90-minute default when null ([lib/league-schedule-conflict.ts](../../../lib/league-schedule-conflict.ts)).
 
 <!-- dict:col:league_games.home_score -->
 <!-- dict:col:league_games.away_score -->
@@ -8997,10 +9079,10 @@ See `org_children` for the rules (confirm joins, undo splits, live name edits wr
 **`location`** (text, nullable) — venue display cache, same rules as `league_games.location` (mig 229): server-derived when `org_venue_id` is set, free text only otherwise.
 
 <!-- dict:col:league_practices.org_venue_id -->
-**`org_venue_id`** (FK → `org_venues.id` ON DELETE **SET NULL**, nullable; index `idx_league_practices_org_venue`; mig 229, dev-only) — picked venue from the org library; see `league_games.org_venue_id` for the model. Practices share ONE booking pool with games — a practice on a surface blocks a game on it (owner decision 2026-08-08).
+**`org_venue_id`** (FK → `org_venues.id` ON DELETE **SET NULL**, nullable; index `idx_league_practices_org_venue`; mig 229, on production) — picked venue from the org library; see `league_games.org_venue_id` for the model. Practices share ONE booking pool with games — a practice on a surface blocks a game on it (owner decision 2026-08-08).
 
 <!-- dict:col:league_practices.org_venue_facility_id -->
-**`org_venue_facility_id`** (FK → `org_venue_facilities.id` ON DELETE **SET NULL**, nullable; index `idx_league_practices_org_venue_facility`; mig 229, dev-only) — the specific surface; must belong to `org_venue_id` (server-enforced).
+**`org_venue_facility_id`** (FK → `org_venue_facilities.id` ON DELETE **SET NULL**, nullable; index `idx_league_practices_org_venue_facility`; mig 229, on production) — the specific surface; must belong to `org_venue_id` (server-enforced).
 
 <!-- dict:col:league_practices.notes -->
 **`notes`** (text, nullable) — free-text admin notes.

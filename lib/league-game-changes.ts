@@ -68,13 +68,36 @@ export const sameMs = (a: string | null, b: string | null) => (a == null || b ==
 export const placeDiffers = (a: GameSnapshot, b: GameSnapshot) =>
   (a.location ?? null) !== (b.location ?? null) || (a.venueId ?? null) !== (b.venueId ?? null) || (a.facilityId ?? null) !== (b.facilityId ?? null);
 
+/**
+ * ⚖ "LINK BOTH" IS NOT NEWS (Club Website Stage 2, K7). The closure press links a typed-in game to the place named in its
+ * typed text with the recorder told to keep quiet (mig 539, `league.quiet_link`), so that link has NO held row. It shows
+ * as a GAP: from one row's `after` to the next row's `before` (or to the game now), the place id appears and nothing
+ * else changed. Every other link is a recorded row and stays news. Read from the rows themselves, so no place name is
+ * needed and a place renamed since changes nothing.
+ */
+export const isQuietLink = (a: GameSnapshot, b: GameSnapshot) =>
+  a.venueId == null && a.facilityId == null && b.venueId != null && b.facilityId == null && (a.location ?? null) === (b.location ?? null);
+
+/** The place a game gained by a quiet link between its held rows (sorted) or after the last of them, or null. */
+export function quietLinkOf(sorted: readonly HeldChange[], now: GameSnapshot): string | null {
+  for (let i = 0; i < sorted.length; i++) {
+    const next = i + 1 < sorted.length ? sorted[i + 1].before : now;
+    if (next && isQuietLink(sorted[i].after, next)) return next.venueId;
+  }
+  return null;
+}
+
 const byCreated = (a: HeldChange, b: HeldChange) => a.createdAt.localeCompare(b.createdAt) || a.id.localeCompare(b.id);
 
 /** One game's net effect, from its held rows (any order) and the game now; null when families have nothing to hear. */
 export function netChangeOf(rows: readonly HeldChange[], now: GameSnapshot): NetChange | null {
   if (!rows.length) return null;
   const held = [...rows].sort(byCreated);
-  const before = held[0].before;
+  const heard = held[0].before;
+  // A quiet link since (K7) is no part of the news: compare against the place families heard WITH the link, so neither
+  // the kind nor the email's "Was" line says the place changed. Only when the typed text is still what they heard.
+  const linked = heard && heard.venueId == null && (heard.location ?? null) === (now.location ?? null) ? quietLinkOf(held, now) : null;
+  const before = heard && linked ? { ...heard, venueId: linked } : heard;
   const base = {
     gameId: held[0].gameId, before, now, byClub: held.some(r => r.source === 'club'), changeIds: held.map(r => r.id),
   };

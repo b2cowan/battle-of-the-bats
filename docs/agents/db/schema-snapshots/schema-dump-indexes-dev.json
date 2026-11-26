@@ -2381,6 +2381,16 @@
   },
   {
     "tablename": "league_rainouts",
+    "indexname": "league_rainouts_closure_day_uq",
+    "indexdef": "CREATE UNIQUE INDEX league_rainouts_closure_day_uq ON public.league_rainouts USING btree (closure_id, season_id, day) WHERE (closure_id IS NOT NULL)"
+  },
+  {
+    "tablename": "league_rainouts",
+    "indexname": "league_rainouts_closure_games_idx",
+    "indexdef": "CREATE INDEX league_rainouts_closure_games_idx ON public.league_rainouts USING gin (game_ids) WHERE (closure_id IS NOT NULL)"
+  },
+  {
+    "tablename": "league_rainouts",
     "indexname": "league_rainouts_org_idx",
     "indexdef": "CREATE INDEX league_rainouts_org_idx ON public.league_rainouts USING btree (org_id)"
   },
@@ -2393,6 +2403,11 @@
     "tablename": "league_rainouts",
     "indexname": "league_rainouts_season_idx",
     "indexdef": "CREATE INDEX league_rainouts_season_idx ON public.league_rainouts USING btree (season_id) WHERE (put_back_at IS NULL)"
+  },
+  {
+    "tablename": "league_rainouts",
+    "indexname": "league_rainouts_venue_idx",
+    "indexdef": "CREATE INDEX league_rainouts_venue_idx ON public.league_rainouts USING btree (org_venue_id) WHERE (org_venue_id IS NOT NULL)"
   },
   {
     "tablename": "league_registration_price_changes",
@@ -3383,6 +3398,31 @@
     "tablename": "org_person_reattachments",
     "indexname": "org_person_reattachments_to_idx",
     "indexdef": "CREATE INDEX org_person_reattachments_to_idx ON public.org_person_reattachments USING btree (to_person_id)"
+  },
+  {
+    "tablename": "org_place_closures",
+    "indexname": "org_place_closures_org_id_idx",
+    "indexdef": "CREATE INDEX org_place_closures_org_id_idx ON public.org_place_closures USING btree (org_id)"
+  },
+  {
+    "tablename": "org_place_closures",
+    "indexname": "org_place_closures_pkey",
+    "indexdef": "CREATE UNIQUE INDEX org_place_closures_pkey ON public.org_place_closures USING btree (id)"
+  },
+  {
+    "tablename": "org_place_closures",
+    "indexname": "org_place_closures_press_once",
+    "indexdef": "CREATE UNIQUE INDEX org_place_closures_press_once ON public.org_place_closures USING btree (press_key, press_seq)"
+  },
+  {
+    "tablename": "org_place_closures",
+    "indexname": "org_place_closures_showing_idx",
+    "indexdef": "CREATE INDEX org_place_closures_showing_idx ON public.org_place_closures USING btree (org_id, ends_at) WHERE (reopened_at IS NULL)"
+  },
+  {
+    "tablename": "org_place_closures",
+    "indexname": "org_place_closures_venue_idx",
+    "indexdef": "CREATE INDEX org_place_closures_venue_idx ON public.org_place_closures USING btree (org_venue_id) WHERE (org_venue_id IS NOT NULL)"
   },
   {
     "tablename": "org_public_site_content",
@@ -4443,6 +4483,31 @@
     "tablename": "rep_evaluation_not_assessed",
     "indexname": "rep_evaluation_not_assessed_uniq",
     "indexdef": "CREATE UNIQUE INDEX rep_evaluation_not_assessed_uniq ON public.rep_evaluation_not_assessed USING btree (session_id, player_id, measurable_type_id)"
+  },
+  {
+    "tablename": "rep_event_closure_marks",
+    "indexname": "rep_event_closure_marks_event_idx",
+    "indexdef": "CREATE INDEX rep_event_closure_marks_event_idx ON public.rep_event_closure_marks USING btree (event_id)"
+  },
+  {
+    "tablename": "rep_event_closure_marks",
+    "indexname": "rep_event_closure_marks_once",
+    "indexdef": "CREATE UNIQUE INDEX rep_event_closure_marks_once ON public.rep_event_closure_marks USING btree (closure_id, event_id)"
+  },
+  {
+    "tablename": "rep_event_closure_marks",
+    "indexname": "rep_event_closure_marks_org_id_idx",
+    "indexdef": "CREATE INDEX rep_event_closure_marks_org_id_idx ON public.rep_event_closure_marks USING btree (org_id)"
+  },
+  {
+    "tablename": "rep_event_closure_marks",
+    "indexname": "rep_event_closure_marks_pkey",
+    "indexdef": "CREATE UNIQUE INDEX rep_event_closure_marks_pkey ON public.rep_event_closure_marks USING btree (id)"
+  },
+  {
+    "tablename": "rep_event_closure_marks",
+    "indexname": "rep_event_closure_marks_team_idx",
+    "indexdef": "CREATE INDEX rep_event_closure_marks_team_idx ON public.rep_event_closure_marks USING btree (team_id)"
   },
   {
     "tablename": "rep_fundraiser_credit_plan",

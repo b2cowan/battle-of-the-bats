@@ -1,12 +1,12 @@
 {
   "generated": "2026-11-26",
-  "total": 97,
+  "total": 169,
   "counts": {
-    "tables": 2,
-    "columns": 54,
-    "indexes": 9,
-    "constraints": 15,
-    "rls": 17
+    "tables": 4,
+    "columns": 88,
+    "indexes": 22,
+    "constraints": 30,
+    "rls": 25
   },
   "items": [
     {
@@ -55,6 +55,38 @@
     },
     {
       "key": "check:only-dev:club_sponsor_deals.club_sponsor_deals_card_fee",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:org_place_closures.org_place_closures_all_has_no_name",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:org_place_closures.org_place_closures_days",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:org_place_closures.org_place_closures_diamond_named",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:org_place_closures.org_place_closures_line_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:org_place_closures.org_place_closures_press_seq_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:org_place_closures.org_place_closures_scope_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:org_place_closures.org_place_closures_shows",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:org_place_closures.org_place_closures_verb_check",
       "sig": ""
     },
     {
@@ -226,6 +258,14 @@
       "sig": ""
     },
     {
+      "key": "column:only-dev:league_rainouts.closure_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:league_rainouts.org_venue_id",
+      "sig": ""
+    },
+    {
       "key": "column:only-dev:online_payments.sponsor_deal_id",
       "sig": ""
     },
@@ -235,6 +275,82 @@
     },
     {
       "key": "column:only-dev:online_payments.sponsor_invoice",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:org_place_closures.closed_by",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:org_place_closures.created_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:org_place_closures.ends_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:org_place_closures.facility_name",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:org_place_closures.first_day",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:org_place_closures.id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:org_place_closures.last_day",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:org_place_closures.line",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:org_place_closures.org_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:org_place_closures.org_venue_facility_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:org_place_closures.org_venue_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:org_place_closures.place_name",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:org_place_closures.press_key",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:org_place_closures.press_seq",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:org_place_closures.reopened_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:org_place_closures.reopened_by",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:org_place_closures.scope",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:org_place_closures.shows_from",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:org_place_closures.verb",
       "sig": ""
     },
     {
@@ -294,6 +410,58 @@
       "sig": ""
     },
     {
+      "key": "column:only-dev:rep_event_closure_marks.closure_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_event_closure_marks.coach_emailed_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_event_closure_marks.created_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_event_closure_marks.event_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_event_closure_marks.id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_event_closure_marks.marked_facility_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_event_closure_marks.marked_location",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_event_closure_marks.marked_org_venue_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_event_closure_marks.marked_place_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_event_closure_marks.marked_starts_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_event_closure_marks.org_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_event_closure_marks.reopen_told_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_event_closure_marks.team_id",
+      "sig": ""
+    },
+    {
       "key": "constraint:only-dev:club_sponsor_deal_payments.club_sponsor_deal_payments_fee_cost_entry_id_fkey",
       "sig": ""
     },
@@ -338,7 +506,43 @@
       "sig": ""
     },
     {
+      "key": "constraint:only-dev:league_rainouts.league_rainouts_closure_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:league_rainouts.league_rainouts_org_venue_id_fkey",
+      "sig": ""
+    },
+    {
       "key": "constraint:only-dev:online_payments.online_payments_sponsor_deal_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:org_place_closures.org_place_closures_closed_by_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:org_place_closures.org_place_closures_org_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:org_place_closures.org_place_closures_org_venue_facility_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:org_place_closures.org_place_closures_org_venue_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:org_place_closures.org_place_closures_pkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:org_place_closures.org_place_closures_press_once",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:org_place_closures.org_place_closures_reopened_by_fkey",
       "sig": ""
     },
     {
@@ -351,6 +555,30 @@
     },
     {
       "key": "constraint:only-dev:organization_previews.organization_previews_pkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:rep_event_closure_marks.rep_event_closure_marks_closure_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:rep_event_closure_marks.rep_event_closure_marks_event_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:rep_event_closure_marks.rep_event_closure_marks_once",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:rep_event_closure_marks.rep_event_closure_marks_org_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:rep_event_closure_marks.rep_event_closure_marks_pkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:rep_event_closure_marks.rep_event_closure_marks_team_id_fkey",
       "sig": ""
     },
     {
@@ -378,7 +606,39 @@
       "sig": ""
     },
     {
+      "key": "index:only-dev:league_rainouts_closure_day_uq",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:league_rainouts_closure_games_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:league_rainouts_venue_idx",
+      "sig": ""
+    },
+    {
       "key": "index:only-dev:online_payments_one_open_per_deal",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:org_place_closures_org_id_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:org_place_closures_pkey",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:org_place_closures_press_once",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:org_place_closures_showing_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:org_place_closures_venue_idx",
       "sig": ""
     },
     {
@@ -390,11 +650,39 @@
       "sig": ""
     },
     {
+      "key": "index:only-dev:rep_event_closure_marks_event_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:rep_event_closure_marks_once",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:rep_event_closure_marks_org_id_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:rep_event_closure_marks_pkey",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:rep_event_closure_marks_team_idx",
+      "sig": ""
+    },
+    {
       "key": "table:only-dev:club_sponsor_deal_refunds",
       "sig": ""
     },
     {
+      "key": "table:only-dev:org_place_closures",
+      "sig": ""
+    },
+    {
       "key": "table:only-dev:organization_previews",
+      "sig": ""
+    },
+    {
+      "key": "table:only-dev:rep_event_closure_marks",
       "sig": ""
     }
   ]
