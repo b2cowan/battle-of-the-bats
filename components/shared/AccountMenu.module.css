@@ -192,11 +192,7 @@
   line-height: 1.5;
 }
 
-.signOut,
-.signOut svg {
-  color: var(--danger);
-}
-
+/* Sign out takes no colour of its own: it reads as every other row does, in every skin (owner 2026-11-26). */
 .signOut:disabled {
   opacity: 0.6;
   cursor: default;
@@ -227,8 +223,6 @@
   background: var(--home-olive-soft);
   color: var(--home-ink);
 }
-/* --danger remaps to --home-live under the warm marker, so .signOut needs no warm override. */
-
 /* ═══ THE PHONE'S SHEET (≤900 px; Account sheet on a phone, owner 2026-11-01) ═══════════════════════════════════
    The shared BottomSheet attaches inside .sheetHost, a layout-less element in the menu's wrapper, so it reads the host
    bar's own tokens (the club's, the tournament frame's) like the popover does. Sizes are the drawing's: rows 48 px, the
@@ -244,8 +238,7 @@
 :global(:root) :global(:is(header, nav)):has(.sheetHost [aria-modal='true']) { z-index: 600; }
 
 /* A warm host (the marketing bar and the support console) keeps its tokens on the bar's own element; the sheet reads the
-   handful below, so remap exactly those onto the --home-* set. --danger is left alone (it remaps itself under the warm
-   marker, and the dark map points --home-live back at it). */
+   handful below, so remap exactly those onto the --home-* set. */
 .warm .sheetHost {
   --hud-surface: var(--home-card);
   --fl-text: var(--home-ink);
@@ -309,8 +302,3 @@
   padding: 0;
   font-size: var(--type-body);
 }
-
-/* Sign out is the danger colour in the sheet. On a warm host the generic warm row rule (ink) would outrank .signOut, so say it
-   again with the warm set's own live red (the dark map points --home-live back at --danger). */
-.warm .sheetList .signOut,
-.warm .sheetList .signOut svg { color: var(--home-live); }

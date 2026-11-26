@@ -327,11 +327,6 @@
     margin: 0.2rem 0;
   }
 
-  .dropLogout { color: var(--danger-light); }
-  @media (hover: hover) {
-    .dropLogout:hover { background: rgba(var(--danger-rgb), 0.1); color: var(--danger-light); }
-  }
-
   @keyframes slideUpMenu {
     from { opacity: 0; transform: translateY(12px); }
     to   { opacity: 1; transform: translateY(0); }
@@ -443,8 +438,8 @@
   .dropSectionLabel { padding: 0.45rem 0.5rem 0.1rem; }
 
   /* ── Warm portal overrides (gated) ──────────────────────────────────────────
-     The globals.css token flip warms every var()-driven colour (active tab, dots, logout
-     text). These rules cover the bar's LITERAL rgba() values — the bespoke near-black sheet,
+     The globals.css token flip warms every var()-driven colour (active tab, dots). These
+     rules cover the bar's LITERAL rgba() values — the bespoke near-black sheet,
      the hand-copied blueprint-blue tints, and the white-alpha text/dividers — which a token
      remap can't reach. Additive + warm-gated → dark is untouched. */
   :global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .bottomNav {
@@ -475,12 +470,8 @@
   :global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .dropSectionLabel { color: var(--text-tertiary); }
   :global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .dropItemMeta { color: var(--text-tertiary); }
   :global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .dropItem { color: var(--text-secondary); }
-  /* ⚠ The rule above (0,3,1) outranks \`.dropLogout\`'s red, so Warm drew Sign out in plain ink while Dark drew it red
-     (the nav design pass, 2026-10-17). Red in both, at its own weight — the theme-aware red for words. */
-  :global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .dropLogout { color: var(--danger-text, var(--danger)); }
   @media (hover: hover) {
     :global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .dropItem:hover { background: var(--home-olive-soft); }
-    :global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .dropLogout:hover { background: var(--home-live-soft); }
   }
   /* The page you are on is NAMED BY COLOUR as well as tinted — the bar's current tab's olive (slice 6).
      Before 2026-10-01 the warm `.dropItem` rule above outranked `.dropActive`'s ink, so the current

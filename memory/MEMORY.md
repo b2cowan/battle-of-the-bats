@@ -2,6 +2,8 @@
 
 > **Project status lives on the board** (owner ruling 2026-11-17): `docs/agents/strategy/OWNER_BRIEF_PROJECTS.json`, shown as the Owner Morning Brief. Entries here keep lessons and rulings and point at the board for where a project stands; never write a project's status here.
 
+- [Sign out is black everywhere](design_decisions.md) — owner 2026-11-26: no red on any sign-out control; it takes the ink of its neighbours. Rule: nav standard N4.
+
 - [Bank check novice UX evaluation](bank-check-novice-ux-evaluation.md) — Codex evaluated both portals on dev at 1440/390 on 2026-11-08, with a source-checked comparison with Claude; the revised drawings and eight owner asks live in the local HTML artifact. Status on the board.
 
 - [Public tournament Stage 6](../docs/projects/active/PUBLIC_TOURNAMENT_STAGE6_BUILD_PROMPT.md) — shared first-paint tab facts, the current-publication crown gate and the empty-withheld-division fix; [owner walk §435](https://fieldlogichq-stage6-owner-walk.b2cowan.chatgpt.site). Status on the board.

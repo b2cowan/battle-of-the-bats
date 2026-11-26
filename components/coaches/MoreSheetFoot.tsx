@@ -71,7 +71,7 @@ export default function MoreSheetFoot({ idPrefix, helpHref, onClose, onFeedback,
       )}
       {!inSandbox && (
         // "Sign out", not "Logout": one name for one action everywhere a customer reads it (2026-09-01).
-        <button type="button" className={`${styles.dropItem} ${styles.dropLogout}`} role="menuitem" id={`${idPrefix}-logout`} onClick={handleSignOut}>
+        <button type="button" className={styles.dropItem} role="menuitem" id={`${idPrefix}-logout`} onClick={handleSignOut}>
           <LogOut size={17} aria-hidden /><span>Sign out</span>
         </button>
       )}

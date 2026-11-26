@@ -35,8 +35,9 @@
  * the portal's sidebar door did before it retired into this menu). A PUBLIC page passes
  * `signOutTo="here"` and reloads in place: nothing on it is protected, and a fan following an
  * event should still be looking at it afterwards. No confirm step: opening the menu is
- * already the soft confirm, and the row is visually set apart (`--danger`) so it isn't hit
- * reaching for a neighbor. The consumer account page's own sign-out keeps its Discover
+ * already the soft confirm, and the row is set apart by coming last, under its own separator,
+ * so it isn't hit reaching for a neighbor. It is never red: it reads as the other rows do
+ * (owner 2026-11-26; signing out destroys nothing). The consumer account page's own sign-out keeps its Discover
  * landing — fan-side convention, deliberately not unified.
  *
  * ON A PHONE (≤900 px, Account sheet on a phone, owner 2026-11-01; `docs/projects/active/ACCOUNT_SHEET_PHONE_BUILD_PROMPT.md`) the

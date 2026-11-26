@@ -7,6 +7,12 @@ a date does not, and "we decided this before" is never an argument. Many entries
 side-clauses of a larger decision, context-specific, or the assistant's own inference recorded as
 binding — weight them accordingly, and say so when citing one.
 
+### 2026-11-26 — SIGN OUT IS BLACK EVERYWHERE (owner: "yes, make it black everywhere and build it now")
+
+**Decision:** Sign out wears no red anywhere: it takes the ink of the rows or buttons around it (dark text on Warm, light text on Dark), in the account menu, the phone sheets and on pages. An invite screen's "Sign out & continue" keeps the primary button. Held by `sign-out-ink-guard`; rule text in `docs/agents/design/NAV_STANDARD.md` N4.
+**Rationale (as recommended):** nothing is lost by signing out, and elsewhere red mostly means something is wrong or about to be destroyed; the row is already set apart (last, under a separator, own icon); red made the least-used row the loudest. It had been red on some surfaces and ink on others, partly by a styling clash on warm headers.
+**Applies to:** every sign-out control.
+
 ### 2026-11-22 — THE BANK CHECK'S "CHECKING" STRIP IS THE WHITE OLIVE-EDGED FORM AND SHOWS THE DATE ONLY (owner, every ask of `claude.ai/artifact/9hVJGaufeWfuG8mBjp1Meh` as recommended; source `docs/projects/active/BANK_CHECK_NOVICE_UX_S7_DRAWINGS.html`; plan `BANK_CHECK_NOVICE_UX_PLAN.md` §0 A18)
 
 **Decision:** After "Start checking this statement" the balance-check card's top is a strip in the house callout form — a white card with a 3px olive left edge, not a tinted panel — reading "CHECKING {date} · Change" (plus the coach's cash when typed). It does NOT repeat the bank balance: the band's first tile, directly under it, already shows it. The Change step opens the fields in place with ONE lime action ("Use these") and a text "Keep {date}"; the work, the foot and the add-entry button dim while it is open. The card's foot is a rule, the notes, a "Start over" link, then Save for later (outline) + Save this check (lime); on a phone they stack, Save this check first. Start over confirms in one line inside the card only when lines are marked.
