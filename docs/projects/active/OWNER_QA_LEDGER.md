@@ -28982,6 +28982,8 @@ Committed 2026-11-25 as two commits (owner: "commit the sweep and the data chang
 **Walks:** A the public pages and an old demo address (5) · B sign in and sign out on each portal (8) · C two-step set-up, started not finished (2) · D the Coaches Portal's More sheet on a phone (2).
 
 **Left out (pinned by tests or probes):** the five old addresses' 308 to `/pricing` with no cookie (probe on the restarted dev server, 2026-11-26); the three portals' sign-in and sign-out through the request layer and the two-step status (a browserless probe); the reserved names and robots lines (`retired-public-demos-gone.test.ts`).
+
+**✅ PASSED 2026-11-26, 17 of 17** (owner paste-back; A 5/5, B 8/8, C 2/2, D 2/2; no notes came back). No owner calls in this walk. The code was committed before the walk. Next: the one release that carries Steps 1–3, in the plan's release order.
 <!-- /§574 -->
 
 ## §575 · Club website · Track P · Session P4 · The removal, the ended page and the one email — **a preview nobody claims removes itself 30 days after the meeting and says "This preview has ended" for 90 days; Today warns the day before and says so if it is late; the one email is built but stays refused until we have a mailing address; its unsubscribe follows the address**

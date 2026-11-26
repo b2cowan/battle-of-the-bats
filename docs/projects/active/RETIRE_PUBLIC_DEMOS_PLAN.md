@@ -2,7 +2,7 @@
 
 > **Status:** Building. Phase 1 committed `89814487a` (+ `2bb98904f`) 2026-11-25. Phase 2 committed `ecbc17aed` (migration) + `c5dc00592` (automation) + the script commit 2026-11-26, after `/review`;
 > its production run happens inside the one release that carries Steps 1–3 (Phase 3 "RELEASE ORDER", owner 2026-11-26).
-> Phase 3 committed `2c8ead6b7` (code) + `494b298b9` (records) 2026-11-26, after `/simplify` and `/review`; walk §574. ⚠ Its promote carries a binding RELEASE ORDER (Phase 3 "As built").
+> Phase 3 committed `2c8ead6b7` (code) + `494b298b9` (records) 2026-11-26, after `/simplify` and `/review`; walk §574 passed 17 of 17 on 2026-11-26. ⚠ Its promote carries a binding RELEASE ORDER (Phase 3 "As built").
 > **Created:** 2026-11-25
 > **Branch:** dev
 > **Ruling:** `docs/agents/strategy/BUSINESS_DECISIONS.md`, "2026-11-25 — Both public demos are RETIRED" (owner: *"Remove both,
@@ -234,6 +234,7 @@ One unit of work, which may land as several commits. Grep for `demo-org`, `demo-
 - [x] `/review` on the diff: auth, request-layer and billing-guard edits are substantive.
 - **Walk:** §574 ([interactive](https://claude.ai/artifact/UJaijzC43zEVqjQSbJyvz3), 17 steps): sign in and sign out on each portal; two-step setup; the account menu on a phone; the
   home and pricing pages; an old `/see-it-live` address. About 15 boxes. These are the screens the demo special cases bent.
+  **Passed 17 of 17, owner 2026-11-26** (A 5/5, B 8/8, C 2/2, D 2/2; no notes).
 - **As built (2026-11-26; committed `2c8ead6b7` code + `494b298b9` records):**
   - **Owner yeses, this session:** "go, yes to the script fix" (the UX summary, and the kept script reading its slugs from the reserved list instead of the deleted demo registry).
   - **Open question answered first:** no exclusion used the demo list *instead of* `is_test_organization`; none of them reads that flag at all, and the demo list only ever held the two retired clubs and their two accounts. What rode along was the **Track P preview half** (notify, email, fan pushes, team-coach notices, platform metrics, the free-time list, the lead book and lead links), kept in every file, fail-closed as before.
