@@ -13125,10 +13125,10 @@ The platform-admin **error-tracking + in-app feedback** store (the "notification
 **`snooze_until`** (tstz, nullable) — snooze expiry (clamped 1h–720h by the route, no DB CHECK). The dashboard derives "expired = open" at read time; the nightly sweep does the real `→open` + null-out.
 
 <!-- dict:col:error_groups.sample_stack -->
-**`sample_stack`** (text, nullable) — most-recent redacted stack (overwritten each occurrence). **Selected but not rendered** — the detail page shows the per-`error_events` stack instead.
+**`sample_stack`** (text, nullable) — most-recent redacted stack (overwritten each occurrence). The nightly `obs_retention_sweep` clears it once the group has not been seen for 30 days (mig 555, the Privacy Policy's limit). **Selected but not rendered** — the detail page shows the per-`error_events` stack instead.
 
 <!-- dict:col:error_groups.sample_context -->
-**`sample_context`** (jsonb, NN, default `{}`) — most-recent redacted `request_context` (overwritten each occurrence). Same as `sample_stack` — selected into the detail type but not rendered.
+**`sample_context`** (jsonb, NN, default `{}`) — most-recent redacted `request_context` (overwritten each occurrence). Reset to `{}` by the same sweep step (mig 555). Same as `sample_stack` — selected into the detail type but not rendered.
 
 ## `error_events`
 <!-- dict:table:error_events -->
