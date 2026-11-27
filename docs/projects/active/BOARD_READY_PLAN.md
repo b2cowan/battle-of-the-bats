@@ -1957,6 +1957,13 @@ in the card-network sentence); Privacy §5 (who sent an offer is kept with its r
     the processing fee in the amount owed and saying so. Found on the way, for `/plan`: revising an invoice after "They
     still owe it" keeps the old fee figure, so the PDF and a later receipt still show a fee row inside the new total (the
     page no longer says the fee there).
+  - **After the owing-again commit, built on dev 2026-11-27** (owner: "sure"): the double click is fixed (the finish
+    question ignores a close in its first half second); the help says what the owing-again page, the fee line, the refund
+    policy label and the "They still owe it" choice show; **walk §580 published** (https://claude.ai/artifact/NCUFh7Fd8Tc9pfJs66Zg6g;
+    walks A–E, 39 steps; on this computer; made one reversed-card test deal on dev, Walk 580 Reversed Roofing). Found
+    while writing it and fixed (owner: "sure"): on a revised invoice the club's finish question named the old processing
+    fee; it now names none, as the sponsor's page does. Walk §576's page never showed its three owner calls (its calls
+    section stayed hidden), so its paste-back read them unanswered.
   - **Part B BUILT on dev 2026-11-26; calls B1–B5 all ruled A 2026-11-25** (owner: "all A"; B5 added from the build's
     census). (B1) Private-link secrets and unsubscribe addresses are removed from error reports and feedback before they
     are stored or logged, every page and route shape, pinned by `private-link-redaction`; dev's 14 reports and 8 groups

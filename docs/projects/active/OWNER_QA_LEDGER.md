@@ -29068,3 +29068,16 @@ Committed 2026-11-26, ahead of the walk (owner: "simplify and commit"): `d3d1bcc
 
 **Open call (outside the count):** “Already marked” rows repeat the heading’s words and show no game time.
 <!-- /§579 -->
+
+## §580 · Board Ready Stage 6 · An invoice that is owing again — **the sponsor’s page leads with the amount owing and shows how it got there, naming the processing fee and the club’s refund policy; the club’s “They still owe it” choice names the amount and fee; Finish the refund on the deal’s amber line opens the question in one press**
+<!-- §580 -->
+**Walk published 2026-11-27.** [Interactive walk](https://claude.ai/artifact/NCUFh7Fd8Tc9pfJs66Zg6g) (walks A–E, 39 steps; no owner calls) · [repository HTML](BOARD_READY_STAGE6_OWING_PAGE_WALK.html). No database change. Plan: `BOARD_READY_PLAN.md` §5 Stage 6. Drawing: `BOARD_READY_STAGE6_SPONSOR_OWING_PAGE_DRAWING.html` (asks 1–7 ruled 2026-11-27).
+
+**Where:** this computer, `http://localhost:3000`, Dev Club Org (dev data, Stripe test mode). **Sign in:** `owner@dev.local` / `devpass123`; the sponsor pages are links.
+
+**Data:** Walk 542 Whole Bakery, Walk Card Two, Walk 580 Reversed Roofing (`.probe/owing-walk-make.mjs`), and the two unfinished refunds on Walk 542 Pending Marina and Again Dental. Walk D finishes Again Dental’s refund, once.
+
+**Walks:** A owing again after a card refund (5) · B part owing, and a reversed card (7) · C finish the refund in one press, double click and Back (14) · D “They still owe it”, then the sponsor’s side (8) · E Payouts hint and help (5).
+
+**Left out:** a refund still on its way (the page shows no sum; a test covers it); paying again by card; the invoice PDF and emails.
+<!-- /§580 -->

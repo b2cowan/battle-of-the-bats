@@ -1,0 +1,537 @@
+<title>Sponsor Owing-Again Walk</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: one reading column; a walk index of cards, one walk open at a time; steps as Do / You should see rows with a tick. */
+:root {
+  --bg: #f4f6f5; --surface: #ffffff; --ink: #18211d; --muted: #5b6862; --line: #d5ddd9;
+  --accent: #1f6b4f; --accent-soft: #e2efe9; --warn: #9a5b00; --warn-soft: #fbefd9; --bad: #a3322b; --bad-soft: #f8e3e1;
+  --font-body: "Instrument Sans", "Segoe UI", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, "Cascadia Mono", Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #121715; --surface: #1a211e; --ink: #e5ece8; --muted: #9aa8a1; --line: #2e3833;
+  --accent: #6fcca4; --accent-soft: #1f3a2f; --warn: #f0b75c; --warn-soft: #3a2c14; --bad: #f08a80; --bad-soft: #3d1f1c; color-scheme: dark; } }
+:root[data-theme="dark"] {
+  --bg: #121715; --surface: #1a211e; --ink: #e5ece8; --muted: #9aa8a1; --line: #2e3833;
+  --accent: #6fcca4; --accent-soft: #1f3a2f; --warn: #f0b75c; --warn-soft: #3a2c14; --bad: #f08a80; --bad-soft: #3d1f1c; color-scheme: dark; }
+body { background: var(--bg); color: var(--ink); font: 15px/1.55 var(--font-body); padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 24px 64px; }
+.wrap { max-width: 860px; margin: 0 auto; display: grid; gap: 20px; }
+h1 { font-size: 30px; line-height: 1.15; margin: 0; text-wrap: balance; letter-spacing: -0.01em; }
+h2 { font-size: 19px; margin: 0; text-wrap: balance; }
+h3 { font-size: 13px; margin: 0; text-transform: uppercase; letter-spacing: 0.07em; color: var(--muted); font-weight: 600; }
+p { margin: 0; max-width: 68ch; }
+.eyebrow { font: 600 12px/1 var(--font-mono); letter-spacing: 0.08em; text-transform: uppercase; color: var(--accent); }
+.lead { color: var(--muted); }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 18px; display: grid; gap: 12px; min-width: 0; }
+.signin { border-color: var(--accent); }
+.kv { display: grid; grid-template-columns: max-content 1fr; gap: 6px 16px; }
+.kv dt { color: var(--muted); }
+.kv dd { margin: 0; min-width: 0; overflow-wrap: anywhere; }
+code, .mono { font-family: var(--font-mono); font-size: 0.92em; }
+pre { margin: 6px 0 0; padding: 10px 12px; background: var(--bg); border: 1px solid var(--line); border-radius: 8px; font: 12px/1.5 var(--font-mono); white-space: pre-wrap; overflow-wrap: anywhere; }
+.amt { font-family: var(--font-mono); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.note { background: var(--warn-soft); border-radius: 8px; padding: 10px 12px; }
+ul.plain { margin: 0; padding-left: 18px; display: grid; gap: 4px; }
+.index { display: grid; gap: 8px; }
+.wcard { display: grid; grid-template-columns: 1fr auto; gap: 4px 12px; align-items: center; text-align: left; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; font: inherit; color: inherit; cursor: pointer; }
+.wcard[aria-expanded="true"] { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent) inset; }
+.wcard:focus-visible, button:focus-visible, textarea:focus-visible, input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.wcard .t { font-weight: 600; }
+.wcard .j { grid-column: 1; color: var(--muted); font-size: 14px; }
+.chip { grid-row: 1 / span 2; grid-column: 2; font: 600 12px/1 var(--font-body); padding: 6px 9px; border-radius: 999px; background: var(--bg); color: var(--muted); border: 1px solid var(--line); white-space: nowrap; }
+.chip.prog { color: var(--accent); border-color: var(--accent); }
+.chip.pass { background: var(--accent-soft); color: var(--accent); border-color: transparent; }
+.chip.issue { background: var(--bad-soft); color: var(--bad); border-color: transparent; }
+.chip.call, .chip.thin { background: var(--warn-soft); color: var(--warn); border-color: transparent; }
+.walk { display: grid; gap: 14px; }
+.meta { display: grid; gap: 10px; }
+.meta div { display: grid; gap: 2px; }
+.steps { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+.step { display: grid; grid-template-columns: 28px 1fr; gap: 10px; padding: 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); }
+.step.done { border-color: var(--accent); background: var(--accent-soft); }
+.step.stop { border-style: dashed; border-color: var(--warn); }
+.step input[type="checkbox"] { width: 20px; height: 20px; margin: 2px 0 0; accent-color: var(--accent); }
+.step .body { display: grid; gap: 6px; min-width: 0; }
+.step .who { font: 600 11px/1 var(--font-mono); text-transform: uppercase; letter-spacing: 0.07em; color: var(--warn); }
+.step .lab { font-weight: 600; font-size: 12px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); }
+.opts { display: grid; gap: 6px; }
+.opts label { display: flex; gap: 8px; align-items: flex-start; }
+.step a { color: var(--accent); font-weight: 600; }
+.step code { overflow-wrap: anywhere; }
+.signin a { color: var(--accent); }
+.verdict { display: flex; flex-wrap: wrap; gap: 8px; }
+.verdict button, .btn { font: 600 14px/1 var(--font-body); padding: 10px 14px; border-radius: 8px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); cursor: pointer; }
+.verdict button.on[data-v="pass"] { background: var(--accent); color: var(--surface); border-color: var(--accent); }
+.verdict button.on[data-v="issue"] { background: var(--bad); color: var(--surface); border-color: var(--bad); }
+.verdict button.on[data-v="call"] { background: var(--warn); color: var(--surface); border-color: var(--warn); }
+textarea { width: 100%; box-sizing: border-box; min-height: 80px; font: 14px/1.5 var(--font-body); padding: 10px; border-radius: 8px; border: 1px solid var(--line); background: var(--bg); color: var(--ink); }
+.out { font: 13px/1.5 var(--font-mono); white-space: pre-wrap; }
+.row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.progress { font-weight: 600; }
+@media (max-width: 520px) { .kv { grid-template-columns: 1fr; } .kv dt { margin-top: 6px; } h1 { font-size: 25px; } }
+@media (prefers-reduced-motion: no-preference) { .step { transition: background-color 0.15s, border-color 0.15s; } }
+</style>
+
+<div class="wrap">
+  <header class="card" style="gap:8px">
+    <span class="eyebrow">Board Ready Stage 6 · Owing again</span>
+    <h1>An invoice that is owing again</h1>
+    <p class="lead">One purpose: when sponsor money is owed again, the sponsor and the club are both told plainly. 5 walks, 39 steps. No owner calls.</p>
+    <p class="lead">Written Nov 27, 2026. It runs on this computer (dev data, Stripe test mode). Staging doesn’t have this work yet.</p>
+    <p class="progress" id="progress">Checked 0 of 0</p>
+  </header>
+
+  <section class="card signin" aria-labelledby="signin-h">
+    <h2 id="signin-h">Sign in as</h2>
+    <dl class="kv">
+      <dt>Where</dt><dd><code>http://localhost:3000/auth/login</code>, <b>this computer</b>.</dd>
+      <dt>Owner</dt><dd><code>owner@dev.local</code> · password <code>devpass123</code> · Dev Club Org.</dd>
+      <dt>The sponsor</dt><dd>Nobody signs in. Its page is a link.</dd>
+    </dl>
+    <p class="lead">UAT Rep Club can’t take card payments, so every walk here is on Dev Club Org. Dev-only sign-in. Keep this page private.</p>
+  </section>
+
+  <section class="card" aria-labelledby="before-h">
+    <h2 id="before-h">Before you start</h2>
+    <p class="note"><b>These are not boxes.</b> If one is not true, stop and tell me.</p>
+    <ul class="plain">
+      <li><b>The app is running on this computer</b> at the address above.</li>
+      <li>Walk D can be done once.</li>
+    </ul>
+  </section>
+
+  <section aria-labelledby="index-h" style="display:grid;gap:10px">
+    <h2 id="index-h">The walks</h2>
+    <div class="index" id="index"></div>
+  </section>
+
+  <section id="walkHost"></section>
+
+  <section class="card" id="callsHost" aria-labelledby="calls-h" hidden>
+    <h2 id="calls-h">Owner calls</h2>
+  </section>
+
+  <section class="card" aria-labelledby="sum-h">
+    <h2 id="sum-h">Paste-back (all walks)</h2>
+    <div class="row">
+      <button class="btn" type="button" id="copyAll">Copy the summary</button>
+      <button class="btn" type="button" id="reset">Clear my ticks</button>
+      <span class="lead" id="copied" aria-live="polite"></span>
+    </div>
+    <div class="card out" id="out" tabindex="0"></div>
+  </section>
+</div>
+
+<script>
+(function () {
+  "use strict";
+  var KEY = "stage6-owing-again-v1";
+  var PAGE = "Board Ready Stage 6 · Owing again";
+  var WALKS = [
+ {
+  "id": "A",
+  "title": "Owing again after a card refund",
+  "job": "Walk 542 Whole Bakery · the sponsor’s page",
+  "forText": "A sponsor whose payment was refunded, and who still owes it, can see what they owe and how it got there.",
+  "passes": "The page leads with the amount owing, the sum adds up, the processing fee is named and the refund policy is labelled.",
+  "notIn": "Paying again by card, the invoice PDF and the emails.",
+  "who": "Nobody. The sponsor’s page is a link.",
+  "where": "The sponsor’s page, on a computer and then at phone width.",
+  "steps": [
+   {
+    "stop": true,
+    "d": "Open <a href=\"http://localhost:3000/dev-club-org/sponsorship/ss9bWqDhS1-JNsrEbOGmLg.JvwEvtVwexdeaBUWixAUgA\" target=\"_blank\" rel=\"noopener\">Whole Bakery’s sponsor page</a><br><code>http://localhost:3000/dev-club-org/sponsorship/ss9bWqDhS1-JNsrEbOGmLg.JvwEvtVwexdeaBUWixAUgA</code>.",
+    "s": "The heading reads <b>$1,176.39 still owing</b>, with no thank-you. Under it: <b>Dev Club Org shows this invoice as still owing after the refund.</b> <b>Stop if it still says Thank you.</b>"
+   },
+   {
+    "d": "Read the figures on the invoice card.",
+    "s": "<b>Invoice 2026-009</b> (no amount in that title), Issued Nov 26, Due Dec 26. <b>Invoice total $1,176.39</b> · Paid by card Nov 26, 2026 <b>−$1,176.39</b> · Refunded Nov 26, 2026 <b>+$1,176.39</b> · <b>Still owing $1,176.39</b>."
+   },
+   {
+    "d": "Read the line under the figures.",
+    "s": "<b>Still owing includes the $46.39 processing fee (tax included) from your refunded card payment.</b>"
+   },
+   {
+    "d": "Look under <b>Pay $1,176.39 by card</b>.",
+    "s": "A label, <b>Dev Club Org’s refund policy</b>, then <b>Refunded in full until Dec 15, then not refunded.</b>"
+   },
+   {
+    "d": "Make the browser window phone-wide (or press F12, then Ctrl+Shift+M, and choose a 390 width).",
+    "s": "Nothing scrolls sideways. Each amount stays on its row, and Still owing stands out."
+   }
+  ]
+ },
+ {
+  "id": "B",
+  "title": "Part owing, and a reversed card",
+  "job": "Walk Card Two and Walk 580 Reversed Roofing · the sponsor’s page",
+  "forText": "The same page when only part is owed again, and when the card issuer took the payment back.",
+  "passes": "Both sums add up to what is owing, and the reversed one asks the sponsor to contact the club before paying.",
+  "notIn": "A refund still on its way (the page then shows no sum; a test covers it).",
+  "who": "Nobody. Both are links.",
+  "where": "The two sponsor pages.",
+  "steps": [
+   {
+    "stop": true,
+    "d": "Open <a href=\"http://localhost:3000/dev-club-org/sponsorship/V4XezusgQJeAqxM3QQ1oVg.AEANL662aibC4vNLO1ENRw\" target=\"_blank\" rel=\"noopener\">Card Two’s sponsor page</a><br><code>http://localhost:3000/dev-club-org/sponsorship/V4XezusgQJeAqxM3QQ1oVg.AEANL662aibC4vNLO1ENRw</code>.",
+    "s": "The heading reads <b>$630.00 still owing</b>, and the line says <b>after the refund</b>."
+   },
+   {
+    "d": "Read the figures.",
+    "s": "Invoice total $1,130.00 · Paid by cheque Nov 24, 2026 −$500.00 · Paid by card Nov 24, 2026 −$630.00 · Refunded Nov 24, 2026 +$630.00 · <b>Still owing $630.00</b>. No processing-fee line."
+   },
+   {
+    "d": "Look under the figures.",
+    "s": "<b>Download the invoice (PDF)</b> and <b>Credit note 2026-002-C1 (PDF)</b>. The credit note beside money still owed is a known fault, already on the follow-up list."
+   },
+   {
+    "d": "Open <a href=\"http://localhost:3000/dev-club-org/sponsorship/ddey3OjIQY633iZlfgeHZA.U3P4w0xpaS3nmODoGzSIWA\" target=\"_blank\" rel=\"noopener\">Reversed Roofing’s sponsor page</a><br><code>http://localhost:3000/dev-club-org/sponsorship/ddey3OjIQY633iZlfgeHZA.U3P4w0xpaS3nmODoGzSIWA</code>.",
+    "s": "The heading reads <b>$1,176.39 still owing</b>. Under it: <b>Dev Club Org shows this invoice as still owing after the card payment was reversed. Questions? Contact Dev Club Org before you pay.</b>"
+   },
+   {
+    "d": "Read the figures.",
+    "s": "Invoice total $1,176.39 · Paid by card Nov 27, 2026 −$1,176.39 · <b>Card payment reversed by the card issuer +$1,176.39</b> · Still owing $1,176.39."
+   },
+   {
+    "d": "Read the line under the figures.",
+    "s": "<b>Still owing includes the $46.39 processing fee (tax included) shown on this invoice.</b>"
+   },
+   {
+    "d": "Look below that.",
+    "s": "<b>Pay $1,176.39 by card</b> is still offered, with the cheque and e-transfer details under it."
+   }
+  ]
+ },
+ {
+  "id": "C",
+  "title": "Finish the refund in one press",
+  "job": "Walk 542 Pending Marina · the club’s deal page",
+  "forText": "The amber line’s button goes straight to the question, and every way out lands where you expect.",
+  "passes": "One press asks the question, a double click keeps it open, and Cancel and Back step out one window at a time.",
+  "notIn": "Finishing it. Nothing in this walk changes data.",
+  "who": "The owner.",
+  "where": "Walk 542 Pending Marina’s deal.",
+  "steps": [
+   {
+    "stop": true,
+    "d": "Open <a href=\"http://localhost:3000/dev-club-org/admin/sponsorships/ddac3e46-bc30-408c-a042-76c6b673b5e5\" target=\"_blank\" rel=\"noopener\">the Pending Marina deal</a><br><code>http://localhost:3000/dev-club-org/admin/sponsorships/ddac3e46-bc30-408c-a042-76c6b673b5e5</code>.",
+    "s": "An amber line reads <b>$200.00 was refunded in Stripe on Nov 27. Finish it on the deal.</b> with <b>Finish the refund</b>. <b>Stop if the line is missing.</b>"
+   },
+   {
+    "d": "Press <b>Finish the refund</b> once.",
+    "s": "The question <b>Finish Walk 542 Pending Marina’s refund?</b> appears straight away, with the payment’s window behind it."
+   },
+   {
+    "d": "Press <b>Cancel</b>.",
+    "s": "You are on <b>Walk 542 Pending Marina’s payment</b>, with its refund marked <b>To finish</b>."
+   },
+   {
+    "d": "Press <b>Close</b>.",
+    "s": "You are on the deal page."
+   },
+   {
+    "d": "Double click <b>Finish the refund</b> on the amber line.",
+    "s": "The question opens and stays open."
+   },
+   {
+    "d": "Press <b>Cancel</b>.",
+    "s": "The payment’s window shows."
+   },
+   {
+    "d": "Press <b>Close</b>.",
+    "s": "You are on the deal page again."
+   },
+   {
+    "d": "Make the window 390 wide (F12, then Ctrl+Shift+M).",
+    "s": "The deal page and its amber line fit."
+   },
+   {
+    "d": "Press <b>Finish the refund</b> on the amber line.",
+    "s": "The question fills the screen cleanly."
+   },
+   {
+    "d": "Press the browser’s Back button once.",
+    "s": "The question closes and the payment’s window shows."
+   },
+   {
+    "d": "Press Back once more.",
+    "s": "The window closes and you are still on the deal, not the page before it."
+   },
+   {
+    "d": "Back at full width, press the payment row.",
+    "s": "The payment’s window opens with no question over it, and <b>Finish the refund</b> at its foot."
+   },
+   {
+    "d": "Press that button.",
+    "s": "The same question opens."
+   },
+   {
+    "d": "Press <b>Cancel</b>.",
+    "s": "The payment’s window is still there, and the refund is still unfinished."
+   }
+  ]
+ },
+ {
+  "id": "D",
+  "title": "“They still owe it”, then the sponsor’s side",
+  "job": "Walk 542 Again Dental · the club’s deal page, then the sponsor’s",
+  "forText": "The club is told the amount and the fee before it chooses, and the sponsor then sees the same figures.",
+  "passes": "The choice names $1,176.39 and the $46.39 fee, and the sponsor’s page asks for that amount.",
+  "notIn": "The refund email’s words (walk 576 covered the email). This walk can be done once: a finished refund stays finished.",
+  "who": "The owner; the sponsor’s page is a link.",
+  "where": "Walk 542 Again Dental’s deal and sponsor page.",
+  "steps": [
+   {
+    "stop": true,
+    "d": "Open <a href=\"http://localhost:3000/dev-club-org/admin/sponsorships/057fdfaa-7f7b-4faa-9739-19e81f884784\" target=\"_blank\" rel=\"noopener\">the Again Dental deal</a><br><code>http://localhost:3000/dev-club-org/admin/sponsorships/057fdfaa-7f7b-4faa-9739-19e81f884784</code>.",
+    "s": "An amber line says $1,176.39 was refunded in Stripe, with <b>Finish the refund</b>. <b>Stop if the line is missing.</b>"
+   },
+   {
+    "d": "Press <b>Finish the refund</b>.",
+    "s": "The question opens, asking whether <b>It has ended</b> or <b>They still owe it</b>."
+   },
+   {
+    "d": "Read under <b>They still owe it</b>.",
+    "s": "<b>The deal reads owing again and their link lets them pay. No credit note, because they still owe the full invoice, $1,176.39, which includes the $46.39 processing fee</b>"
+   },
+   {
+    "d": "Pick <b>They still owe it</b>.",
+    "s": "The button reads <b>Finish and email</b>."
+   },
+   {
+    "d": "Type <b>They are paying by cheque instead.</b> in <b>Reason</b>.",
+    "s": "The words are in the field."
+   },
+   {
+    "d": "Press <b>Finish and email</b>.",
+    "s": "The windows close. The deal reads <b>Invoiced</b>, with $1,176.39 still owing and <b>Record a payment</b>."
+   },
+   {
+    "d": "Open <a href=\"http://localhost:3000/dev-club-org/sponsorship/BX_fqn97T6qXORnoH4hHhA.gwsy6FzHP12n6ADdbPCmeA\" target=\"_blank\" rel=\"noopener\">Again Dental’s sponsor page</a><br><code>http://localhost:3000/dev-club-org/sponsorship/BX_fqn97T6qXORnoH4hHhA.gwsy6FzHP12n6ADdbPCmeA</code>.",
+    "s": "<b>$1,176.39 still owing</b>, <b>after the refund</b>."
+   },
+   {
+    "d": "Read the figures and the line under them.",
+    "s": "Total, paid by card, refunded, <b>Still owing $1,176.39</b>, then <b>Still owing includes the $46.39 processing fee (tax included) from your refunded card payment.</b>"
+   }
+  ]
+ },
+ {
+  "id": "E",
+  "title": "The words that name sponsors, and the help",
+  "job": "Dev Club Org · Payouts and Help",
+  "forText": "A club setting its refund policy knows sponsors read it, and the help explains the new page.",
+  "passes": "The policy hint names sponsors and the help finds the owing-again answer.",
+  "notIn": "Changing the policy.",
+  "who": "The owner.",
+  "where": "Organization settings, then Help.",
+  "steps": [
+   {
+    "d": "Open <a href=\"http://localhost:3000/dev-club-org/admin/org/settings\" target=\"_blank\" rel=\"noopener\">Organization settings</a><br><code>http://localhost:3000/dev-club-org/admin/org/settings</code>.",
+    "s": "The <b>Payouts</b> card is on the page."
+   },
+   {
+    "d": "Press the pencil on the <b>Payouts</b> card.",
+    "s": "Under <b>Refund policy</b>: <b>One or two sentences families, teams and sponsors see beside Pay.</b>"
+   },
+   {
+    "d": "Press the ✓ in the pencil’s place, changing nothing.",
+    "s": "The card is as it was."
+   },
+   {
+    "d": "Open <a href=\"http://localhost:3000/dev-club-org/admin/help/org#club-sponsorships-t-business-page\" target=\"_blank\" rel=\"noopener\">the help article about the business’s page</a><br><code>http://localhost:3000/dev-club-org/admin/help/org#club-sponsorships-t-business-page</code>.",
+    "s": "It has <b>An invoice that is owing again</b>, <b>The fee on an invoice owing again</b> and <b>Your refund policy</b>."
+   },
+   {
+    "d": "Read those three.",
+    "s": "They match what you saw in walks A and B."
+   }
+  ]
+ }
+];
+  var CALLS = [];
+  var state = { ticks: {}, verdict: {}, notes: {}, choice: {}, open: "A" };
+  try { var raw = localStorage.getItem(KEY); if (raw) { var got = JSON.parse(raw); state.ticks = got.ticks || {}; state.verdict = got.verdict || {}; state.notes = got.notes || {}; state.choice = got.choice || {}; state.open = got.open || "A"; } } catch (e) {}
+  function save() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} }
+  function el(tag, cls, html) { var n = document.createElement(tag); if (cls) n.className = cls; if (html != null) n.innerHTML = html; return n; }
+  function plain(html) { var d = document.createElement("div"); d.innerHTML = html; return d.textContent.replace(/\s+/g, " ").trim(); }
+  // A step added after the walk was published carries its own label ("7a"), so every other step keeps its number, and a
+  // tick already saved against it stays on the right step.
+  function num(w, i) { if (w.steps[i].n) return w.steps[i].n; var k = 0; for (var j = 0; j <= i; j++) if (!w.steps[j].n) k++; return String(k); }
+  function sid(w, i) { return w.id + "." + num(w, i); }
+  function counts(w) { var n = 0; w.steps.forEach(function (s, i) { if (state.ticks[sid(w, i)]) n++; }); return { done: n, all: w.steps.length }; }
+  var VWORD = { pass: "Passed", issue: "Issue", call: "Needs a call" };
+  function chipOf(w) {
+    var c = counts(w), v = state.verdict[w.id];
+    if (v === "pass" && c.done < c.all) return ["thin", "Passed · only " + c.done + " of " + c.all + " ticked"];
+    if (v) return [v, VWORD[v] + " · " + c.done + " of " + c.all];
+    if (c.done) return ["prog", "In progress · " + c.done + " of " + c.all];
+    return ["", "Not started · " + c.all + " steps"];
+  }
+
+  var index = document.getElementById("index"), host = document.getElementById("walkHost");
+  var cards = {};
+  WALKS.forEach(function (w, wi) {
+    var b = el("button", "wcard");
+    b.type = "button"; b.id = "card-" + w.id; b.setAttribute("aria-controls", "walk-" + w.id);
+    b.appendChild(el("span", "t", "Walk " + w.id + " · " + w.title));
+    b.appendChild(el("span", "j", w.job));
+    var chip = el("span", "chip"); b.appendChild(chip);
+    b.addEventListener("click", function () { state.open = w.id; save(); render(); document.getElementById("walk-" + w.id).scrollIntoView({ block: "start" }); });
+    index.appendChild(b);
+    cards[w.id] = { b: b, chip: chip };
+  });
+
+  function render() {
+    host.innerHTML = "";
+    WALKS.forEach(function (w, wi) {
+      var open = state.open === w.id;
+      cards[w.id].b.setAttribute("aria-expanded", open ? "true" : "false");
+      var ch = chipOf(w); cards[w.id].chip.className = "chip " + ch[0]; cards[w.id].chip.textContent = ch[1];
+      if (!open) return;
+      var sec = el("section", "card walk"); sec.id = "walk-" + w.id;
+      sec.appendChild(el("span", "eyebrow", "Walk " + w.id + " of " + WALKS.length + " · " + w.job));
+      sec.appendChild(el("h2", null, w.title));
+      var meta = el("div", "meta");
+      [["What this walk is for", w.forText], ["It passes when", w.passes], ["Not in this walk", w.notIn], ["Sign in as", w.who], ["Where and on what", w.where]].forEach(function (m) {
+        var d = el("div"); d.appendChild(el("h3", null, m[0])); d.appendChild(el("p", null, m[1])); meta.appendChild(d);
+      });
+      sec.appendChild(meta);
+      var ol = el("ol", "steps");
+      w.steps.forEach(function (s, i) {
+        var id = sid(w, i);
+        var li = el("li", "step" + (s.stop ? " stop" : "") + (state.ticks[id] ? " done" : ""));
+        var cb = el("input"); cb.type = "checkbox"; cb.id = "cb-" + id; cb.checked = !!state.ticks[id];
+        cb.setAttribute("aria-label", "Step " + num(w, i) + " done");
+        cb.addEventListener("change", function () { state.ticks[id] = cb.checked; save(); li.className = "step" + (s.stop ? " stop" : "") + (cb.checked ? " done" : ""); refresh(); });
+        li.appendChild(cb);
+        var body = el("div", "body");
+        if (s.stop || s.who) body.appendChild(el("span", "who", (s.stop ? "Stop check" : "") + (s.stop && s.who ? " · " : "") + (s.who || "")));
+        body.appendChild(el("span", "lab", num(w, i) + " · Do"));
+        body.appendChild(el("p", null, s.d));
+        body.appendChild(el("span", "lab", "You should see"));
+        body.appendChild(el("p", null, s.s));
+        if (s.opts) {
+          var so = el("div", "opts");
+          s.opts.forEach(function (op) {
+            var lb = el("label"), r = el("input"); r.type = "radio"; r.name = "step-" + id; r.id = "opt-" + id + "-" + op[0]; r.checked = state.choice[id] === op[0];
+            r.addEventListener("change", function () { state.choice[id] = op[0]; save(); refresh(); });
+            lb.appendChild(r); lb.appendChild(el("span", null, op[1])); so.appendChild(lb);
+          });
+          body.appendChild(so);
+        }
+        li.appendChild(body);
+        ol.appendChild(li);
+      });
+      sec.appendChild(ol);
+      sec.appendChild(el("h3", null, "Your verdict on this walk"));
+      var vs = el("div", "verdict");
+      [["pass", "Pass"], ["issue", "Issue"], ["call", "Needs a call"]].forEach(function (v) {
+        var btn = el("button", state.verdict[w.id] === v[0] ? "on" : "", v[1]); btn.type = "button"; btn.setAttribute("data-v", v[0]);
+        btn.setAttribute("aria-pressed", state.verdict[w.id] === v[0] ? "true" : "false");
+        btn.addEventListener("click", function () { state.verdict[w.id] = state.verdict[w.id] === v[0] ? "" : v[0]; save(); render(); });
+        vs.appendChild(btn);
+      });
+      sec.appendChild(vs);
+      var lab = el("label", null, "<h3>Notes</h3>"); lab.setAttribute("for", "notes-" + w.id);
+      sec.appendChild(lab);
+      var ta = el("textarea"); ta.id = "notes-" + w.id; ta.value = state.notes[w.id] || "";
+      ta.placeholder = "What you saw, a word you would change, a question for me";
+      ta.addEventListener("input", function () { state.notes[w.id] = ta.value; save(); refresh(); });
+      sec.appendChild(ta);
+      var row = el("div", "row");
+      var cp = el("button", "btn", "Copy this walk’s summary"); cp.type = "button";
+      var msg = el("span", "lead"); msg.setAttribute("aria-live", "polite");
+      var out = el("div", "card out"); out.tabIndex = 0; out.textContent = walkSummary(w);
+      cp.addEventListener("click", function () { copy(walkSummary(w), out, msg); });
+      row.appendChild(cp);
+      if (wi + 1 < WALKS.length) {
+        var nx = el("button", "btn", "Next: walk " + WALKS[wi + 1].id); nx.type = "button";
+        nx.addEventListener("click", function () { state.open = WALKS[wi + 1].id; save(); render(); document.getElementById("walk-" + WALKS[wi + 1].id).scrollIntoView({ block: "start" }); });
+        row.appendChild(nx);
+      }
+      row.appendChild(msg);
+      sec.appendChild(row);
+      sec.appendChild(out);
+      sec._out = out; sec._w = w;
+      host.appendChild(sec);
+    });
+    refresh();
+  }
+
+  // The owner calls sit in their own section, outside the step count; they are drawn once.
+  function renderCalls() {
+    var box = document.getElementById("callsHost");
+    CALLS.forEach(function (c) {
+      var card = el("div", "card"); card.appendChild(el("h3", null, "Call " + c.id + " · " + c.q)); card.appendChild(el("p", null, c.why));
+      var o = el("div", "opts");
+      c.opts.forEach(function (op) {
+        var lb = el("label"), r = el("input"); r.type = "radio"; r.name = "call-" + c.id; r.checked = state.choice[c.id] === op[0];
+        r.addEventListener("change", function () { state.choice[c.id] = op[0]; save(); refresh(); });
+        lb.appendChild(r); lb.appendChild(el("span", null, op[1])); o.appendChild(lb);
+      });
+      card.appendChild(o); box.appendChild(card);
+    });
+    var lab = el("label", null, "<h3>Notes on the calls</h3>"); lab.setAttribute("for", "notes-calls");
+    box.appendChild(lab);
+    var ta = el("textarea"); ta.id = "notes-calls"; ta.value = state.notes.calls || "";
+    ta.placeholder = "Anything you want to say about a call";
+    ta.addEventListener("input", function () { state.notes.calls = ta.value; save(); refresh(); });
+    box.appendChild(ta);
+  }
+
+  function callsSummary() {
+    var lines = ["Owner calls (outside the count)"];
+    CALLS.forEach(function (c) {
+      var a = state.choice[c.id], hit = c.opts.filter(function (o) { return o[0] === a; })[0];
+      lines.push("  Call " + c.id + " (" + c.q + "): " + (hit ? hit[0] + " — " + hit[1] : "NOT ANSWERED"));
+    });
+    var n = (state.notes.calls || "").trim();
+    if (n) lines.push("  Notes: " + n.replace(/\n+/g, " / "));
+    return lines.join("\n");
+  }
+
+  function walkSummary(w) {
+    var c = counts(w), v = state.verdict[w.id];
+    var lines = [w.id + " " + w.title + " · " + (v ? VWORD[v].toUpperCase() : "NO VERDICT") + " · " + c.done + " of " + c.all + " ticked"];
+    w.steps.forEach(function (s, i) {
+      lines.push("  " + (state.ticks[sid(w, i)] ? "[x] " : "[ ] ") + num(w, i) + ". " + plain(s.d.replace(/<br><code>[^<]*<\/code>/g, "")));
+      if (s.opts) { var a = state.choice[sid(w, i)], hit = s.opts.filter(function (o) { return o[0] === a; })[0]; lines.push("      Answer: " + (hit ? hit[1] : "NOT ANSWERED")); }
+    });
+    var n = (state.notes[w.id] || "").trim();
+    if (n) lines.push("  Notes: " + n.replace(/\n+/g, " / "));
+    return lines.join("\n");
+  }
+  function allSummary() {
+    var total = 0, done = 0;
+    WALKS.forEach(function (w) { var c = counts(w); total += c.all; done += c.done; });
+    return [PAGE, "Checked " + done + " of " + total, ""].concat(WALKS.map(walkSummary)).join("\n");
+  }
+  function refresh() {
+    var total = 0, done = 0;
+    WALKS.forEach(function (w) { var c = counts(w); total += c.all; done += c.done; var ch = chipOf(w); cards[w.id].chip.className = "chip " + ch[0]; cards[w.id].chip.textContent = ch[1]; });
+    document.getElementById("progress").textContent = "Checked " + done + " of " + total;
+    document.getElementById("out").textContent = allSummary();
+    var sec = host.querySelector(".walk"); if (sec && sec._out) sec._out.textContent = walkSummary(sec._w);
+  }
+  function copy(text, node, msg) {
+    function pick() { try { var r = document.createRange(); r.selectNodeContents(node); var s = window.getSelection(); s.removeAllRanges(); s.addRange(r); msg.textContent = "Selected: press Ctrl+C to copy."; } catch (e) {} }
+    try { navigator.clipboard.writeText(text).then(function () { msg.textContent = "Copied."; }, pick); } catch (e) { pick(); }
+  }
+  document.getElementById("copyAll").addEventListener("click", function () { copy(allSummary(), document.getElementById("out"), document.getElementById("copied")); });
+  var armed = false;
+  document.getElementById("reset").addEventListener("click", function () {
+    var b = document.getElementById("reset");
+    if (!armed) { armed = true; b.textContent = "Press again to clear every tick and note"; return; }
+    armed = false; b.textContent = "Clear my ticks";
+    state = { ticks: {}, verdict: {}, notes: {}, choice: {}, open: "A" }; save();
+    document.getElementById("callsHost").querySelectorAll(".card, label, textarea").forEach(function (n) { n.remove(); });
+    renderCalls(); render();
+  });
+  renderCalls();
+  render();
+})();
+</script>

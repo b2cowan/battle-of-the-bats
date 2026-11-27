@@ -93,6 +93,8 @@ export default function DealScreen({ dealId }: { dealId: string }) {
   const [refunding, setRefunding] = useState(false);
   // Part A: a refund made in Stripe being finished (the question raised over the payment's window).
   const [finishing, setFinishing] = useState<string | null>(null);
+  /** When the question was raised: see its `onClose`. */
+  const finishRaisedAt = useRef(0);
   const [notice, setNotice] = useNotice();
   const router = useRouter();
   // Offer again on this old deal (Part 4a, 12A): the ordinary Offer window, filled in.
@@ -229,7 +231,7 @@ export default function DealScreen({ dealId }: { dealId: string }) {
   // Send the invoice (round 1 tab 5): a deal its business left at Form received — an unfinished card payment.
   const sendsInvoice = d.state === 'form_received' && !data.unrecordedCard && !data.lapsed;
   // The finish question, over the payment's window, on a fresh read of the deal.
-  const raiseFinish = (r: DealRefund) => { setFinishing(r.id); void reload(); };
+  const raiseFinish = (r: DealRefund) => { finishRaisedAt.current = Date.now(); setFinishing(r.id); void reload(); };
 
   return (
     <>
@@ -427,9 +429,11 @@ export default function DealScreen({ dealId }: { dealId: string }) {
       )}
       {openedPayment && finishingRefund && d.invoice && (
           <FinishRefundQuestion url={api(`/refunds/${finishingRefund.id}/finish`)} refund={finishingRefund} payments={data.payments} refunds={data.refunds} dealState={d.state}
-            total={d.invoice.total} cardFee={(Math.round((d.invoice.cardFee ?? 0) * 100) + Math.round((d.invoice.cardFeeTax ?? 0) * 100)) / 100} number={d.invoice.number} taxed={d.invoice.tax > 0} taxKind={d.invoice.taxKind} business={d.businessName} businessEmail={b?.email ?? null}
+            total={d.invoice.total} cardFee={d.revisedOn ? 0 : (Math.round((d.invoice.cardFee ?? 0) * 100) + Math.round((d.invoice.cardFeeTax ?? 0) * 100)) / 100} number={d.invoice.number} taxed={d.invoice.tax > 0} taxKind={d.invoice.taxKind} business={d.businessName} businessEmail={b?.email ?? null}
             clubCanEmail={data.hasMailingAddress && data.hasContact}
-            onClose={() => setFinishing(null)}
+            // A double click on the button that raised it lands its second press outside the question, which would close it
+            // again at once: a close in the first half second is that press.
+            onClose={() => { if (Date.now() - finishRaisedAt.current > 500) setFinishing(null); }}
             onStale={async text => { setFinishing(null); setNotice({ tone: 'bad', text }); await reload(); }}
             onDone={async res => {
               setFinishing(null); setOpened(null);
