@@ -54,7 +54,6 @@ const DOORS = [
   'lib/chat-service.ts',
   // copy that promised chat
   'lib/coach-capabilities.ts',
-  'app/pricing/page.tsx',
   'app/(consumer)/auth/suspended/page.tsx',
   'app/[orgSlug]/coaches/teams/[teamId]/tournaments/page.tsx',
   'app/[orgSlug]/coaches/teams/[teamId]/page.tsx',
@@ -75,6 +74,13 @@ function walk(dir: string, out: string[] = []): string[] {
 describe('the chat pause: one switch, read by every door', () => {
   it('every door the pause changed still reads the switch in its code', () => {
     for (const file of DOORS) assert.match(readCode(file), /\bCHAT_PAUSED\b/, file);
+  });
+
+  it('the pricing page, which stopped promising chat, reads the switch if it ever does again', () => {
+    for (const file of ['app/pricing/page.tsx', 'app/pricing/ViewerAwarePlans.tsx']) {
+      const code = readCode(file);
+      if (!/\bCHAT_PAUSED\b/.test(code)) assert.doesNotMatch(code, /\bchat/i, file);
+    }
   });
 
   it('every chat API route answers first, before any work (P8) — the sign-up reminder keeps working', () => {

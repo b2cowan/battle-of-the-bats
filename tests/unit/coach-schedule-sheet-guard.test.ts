@@ -75,7 +75,8 @@ describe('E2 — attendance in its own room', () => {
     assert.match(room, /<div className=\{styles\.attendanceRoom\} data-field-floor>/);
     assert.match(room, /role="group" aria-label="Filter attendance by status"/);
     assert.ok(room.includes("onClick={() => setAllAttendance('attending')}") && room.includes("onClick={() => setAllAttendance('unknown')}"));
-    assert.match(room, /<CoachRowList label="Attendance" inset className=\{styles\.attendanceRows\}>/);
+    assert.match(room, /<CoachRowList label="Attendance" inset className=\{family && desk \? `\$\{styles\.attendanceRows\} \$\{styles\.attFamilyDesk\}` : styles\.attendanceRows\}>/);
+    assert.match(room, /const desk = !useIsPhoneNav\(\);/, 'the desk columns are the desk’s: a phone keeps the one row recipe');
     assert.match(room, /<CoachRow\s+key=\{row\.player\.id\}\s+as="button"\s+aria-haspopup="dialog"/, 'the row is the tap and says it opens a dialog');
     assert.ok(room.includes('onClick={e => setRsvpEditId(row.player.id, e.currentTarget)}'), 'the tap names the row — where the RSVP sheet hands focus back (Sheet Frame step 4)');
     assert.ok(room.includes('<SaveStatusPill'), 'the transient Saved pill');

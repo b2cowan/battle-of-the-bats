@@ -156,7 +156,7 @@ describe('6 · the dropdown’s groups and its list-only mark are opt-in', () =>
   });
   // ⚖ Club Tier Stage 13i (2026-11-06): the season switch (`SeasonFrame`, the title's chevron) is the second caller of the
   // list-only mark — a finished season marked in its row, on a face that shows no words. Each builds its options apart.
-  it('only the Team pill and the season switch pass a list-only mark — no other caller’s list moves', () => {
+  it('only the Team pill passes a list-only mark, and only the season switch a trailing chip — no other caller’s list moves', () => {
     const callers = [...walk('app'), ...walk('components')].filter(f => f !== DROPDOWN && /<SingleSelectDropdown\b/.test(readCode(f)));
     // Inside each call (to its closing "/>"), no `group:` — the Team pill builds its options apart (`teamPillOptions`).
     for (const f of callers) {
@@ -166,7 +166,13 @@ describe('6 · the dropdown’s groups and its list-only mark are opt-in', () =>
       }
     }
     const marks = callers.filter(f => /\browMark: /.test(readCode(f))).map(f => f.replace(/\\/g, '/')).sort();
-    assert.deepEqual(marks, [ACCOUNT, 'components/admin/kit/club/SeasonFrame.tsx'].sort());
+    assert.deepEqual(marks, [ACCOUNT]);
+    // The season switch moved to the two-line row's opt-in chip (a1f6b049f): it alone passes `trail` and `roomy`.
+    const FRAME = 'components/admin/kit/club/SeasonFrame.tsx';
+    const trailing = callers.filter(f => /\btrail: |\broomy\b/.test(readCode(f))).map(f => f.replace(/\\/g, '/'));
+    assert.deepEqual(trailing, [FRAME]);
+    assert.match(dd, /\{o\.trail != null && <span className=\{styles\.multiSelectPickTrail\}>\{o\.trail\}<\/span>\}/, 'the dropdown draws it');
+    assert.match(readCode(FRAME), /trail: <SeasonStatePill season=\{s\} \/>,/, 'every season row wears its state, a finished one too');
     assert.match(readCode(ACCOUNT), /function teamPillOptions\(/);
   });
   it('the panel scrolls inside itself (a 30-team list stays in the viewport)', () => {

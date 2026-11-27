@@ -66,7 +66,9 @@ describe('Event settings (E3)', () => {
     assert.match(page, /addEventListener\('pagehide', flushPendingSave\)/, 'closing the tab flushes too');
     assert.match(page, /performSaveRef\.current\?\.\(\{ flush: true \}\)/);
     assert.equal((page.match(/keepalive: flush,/g) ?? []).length, 3, 'all three of the save\'s requests outlive the page');
-    assert.match(page, /if \(flush\) return;\s*\n\s*if \(!tournamentRes\.ok\)/, 'a flush touches nothing on a page that may show another event');
+    assert.match(page, /\}\),\s*\n\s*\]\);\s*\n\s*if \(flush\) return;/, 'a flush touches nothing on a page that may show another event');
+    assert.match(page, /catch \(err: unknown\) \{\s*\n\s*if \(flush\) return;/, 'nor does a flush that failed');
+    assert.match(page, /if \(!flush\) \{\s*setSaveStatus\('saving'\);\s*setSaveError\(''\);\s*\}/, 'nor does a flush on its way out');
     assert.match(page, /autoSavePendingRef\.current = true;\s*\n\s*autoSaveTimerRef\.current = setTimeout/);
   });
   it('arms no pause for an event whose own read has not landed', () => {

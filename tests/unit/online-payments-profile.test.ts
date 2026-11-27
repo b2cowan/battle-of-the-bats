@@ -28,7 +28,8 @@ describe('what Stripe’s form is handed', () => {
   const connect = read('lib/stripe-connect.ts');
   const profile = read('lib/online-payment-profile.ts');
   const route = read('app/api/admin/payouts/route.ts');
-  const prefill = /export async function prefillClubProfile[\s\S]*?\n}\n/.exec(connect)?.[0] ?? '';
+  // \r? — a Windows checkout reads the file with CRLF line ends.
+  const prefill = /export async function prefillClubProfile[\s\S]*?\r?\n}\r?\n/.exec(connect)?.[0] ?? '';
 
   it('the website when there is one, else the description; the industry is never filled in (owner 2026-10-25)', () => {
     assert.match(prefill, /profile\.businessUrl \? \{ business_url: profile\.businessUrl \} : \{ product_description: profile\.productDescription \}/);

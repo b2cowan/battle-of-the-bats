@@ -136,7 +136,9 @@ describe('the operator record while a cancel waits (source)', () => {
   it('End now is its own red window, typed Why required, the ruled sentence, and the endNow flag', () => {
     const endNow = fn('EndPlanNowWindow');
     assert.match(endNow, /danger/);
-    assert.match(endNow, /Ends immediately\. No refund\. This cannot be put back\./);
+    assert.match(endNow, /Ends immediately\. Refunds nothing by itself; a refund when it is not the club’s doing goes through its Money tab\. This cannot be put back\./);
+    assert.match(endNow, /Ending it refunds nothing by itself: fraud, abuse and disputed charges get no refund\./);
+    assert.doesNotMatch(endNow, /Nothing is refunded|No refund\./);
     assert.match(endNow, /endNow: true/);
     assert.match(endNow, /This finishes it today instead/);
     assert.doesNotMatch(endNow, /askWhy=\{false\}/);

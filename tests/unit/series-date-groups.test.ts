@@ -7,6 +7,7 @@ import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import { readFileSync } from 'node:fs';
 import { groupDoor, seriesDateGroups, SERIES_LIST_WORDS as LW } from '../../lib/series-date-groups.ts';
+import { openingTags, readSource } from './_source-code.ts';
 
 const OUT = 'Outside the club’s permit';
 const CLASH = 'Diamond 2 · 14U AA practice, 5:30–7:30 p.m.';
@@ -115,7 +116,16 @@ describe('the coach\'s form draws the grouped list after Where and Who (Ask 5)',
 
   it('the remove taps are held while the form saves — the save sends the dates as they stood at the press (/review)', () => {
     const list = form.slice(form.indexOf('const dateList ='), form.indexOf(') : null;', form.indexOf('const dateList =')));
-    assert.equal((list.match(/disabled=\{saving\}/g) ?? []).length, 3, 'a game row\'s ✕, a group\'s door, a date chip');
+    const taps = openingTags(list, 'button');
+    assert.equal(taps.length, 3, 'a game row\'s ✕, a group\'s door, a date chip');
+    const opponent = openingTags(list, 'OpponentCombobox');
+    assert.equal(opponent.length, 1, 'a game row\'s opponent box');
+    for (const tag of [...taps, ...opponent]) assert.match(tag, /\sdisabled=\{saving\}/, tag);
+    const combo = readSource('components/coaches/OpponentCombobox.tsx');
+    const inputs = openingTags(combo, 'input');
+    assert.equal(inputs.length, 1);
+    assert.match(inputs[0], /\sdisabled=\{disabled\}/, 'the box really takes the hold');
+    assert.match(combo, /const showList = open && !disabled && /, '… and its suggestion list closes with it');
   });
 
   it('every date of a series is checked: the series can never outgrow what the clash check answers (/review)', () => {

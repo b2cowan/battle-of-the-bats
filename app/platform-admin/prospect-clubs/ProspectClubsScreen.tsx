@@ -13,6 +13,7 @@ import Link from 'next/link';
 import AdminPageHeader from '@/components/admin/AdminPageHeader';
 import KitDialog, { DialogCancel } from '@/components/shared/KitDialog';
 import { MAKE_WORDS, OPEN_PREVIEW_CAP, prospectCountLine, prospectCounts, type ProspectRow } from '@/lib/prospect-clubs';
+import { possessive } from '@/lib/utils';
 import kit from '../console.module.css';
 import styles from './prospect-clubs.module.css';
 import MakeClubWindow from './MakeClubWindow';
@@ -57,7 +58,7 @@ export default function ProspectClubsScreen({ rows, claimed = {} }: { rows: Pros
 
       {made && (
         <div className={`${kit.notice} ${kit.noticeGood}`} role="status">
-          {made.name}’s preview is ready, with its sample season and tournament.{' '}
+          {possessive(made.name)} preview is ready, with its sample season and tournament.{' '}
           <a href={`/${made.slug}`} target="_blank" rel="noopener noreferrer" className={kit.door}>Open its site ›</a>
         </div>
       )}

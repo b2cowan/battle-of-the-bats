@@ -53,7 +53,11 @@ describe('Stage 6 Part 2: Rules renders the original content inside the preview 
     assert.match(filtered, /U11 rule: original/);
     assert.match(filtered, /All divisions: original/);
     assert.doesNotMatch(filtered, /U13 rule: original/);
-    assert.match(filtered, /\/club\/cup\/rules\?view=all/);
+    // cfd5037a8: the escape hatch is the dropdown's "All divisions"; the page hands the bar the view=all address.
+    assert.match(filtered, /<option value="">All divisions<\/option><option value="U11" selected="">U11<\/option>/);
+    assert.match(readCode('components/public/PublicRules.tsx'), /viewAllHref=\{href\(`\/\$\{tournamentSlug\}\/rules\?view=all`\)\}/);
+    assert.match(readCode('components/DivisionFilterBar.tsx'), /<select[\s\S]*?onChange=\{e => choose\(e\.target\.value\)\}/);
+    assert.match(readCode('components/DivisionFilterBar.tsx'), /if \(value === ''\) \{\s*if \(isFiltering\) router\.push\(viewAllHref\);\s*return;\s*\}/);
     assert.match(await render({ ...tagged, view: 'all' }), /U13 rule: original/);
     assert.doesNotMatch(readCode('components/public/PublicRules.tsx'), /onlyPublished|schedulePublished/);
   });

@@ -544,8 +544,6 @@ const LIVE_ROW_FILES: string[] = [
   'components/admin/kit/club/BillingKit.tsx',
   'components/admin/kit/club/MembersKit.tsx',
   'components/admin/kit/useAdminKitNav.ts',
-  'components/coaches/CoachesBottomNav.tsx',
-  'components/coaches/CoachesSidebar.tsx',
   'components/coaches/CoachStaffSheet.tsx',
   'components/help/HelpDrawer.tsx',
   // Settings in both workspaces, Session 3: "a Premium portal has no Organization pages" asks the org row its caller holds; a
@@ -554,6 +552,17 @@ const LIVE_ROW_FILES: string[] = [
   // flipped club that later drops to a Tournament plan keeps Members.
   'lib/premium-org-pages.ts',
   'app/api/auth/invitations/[memberId]/route.ts',
+  // Club Communications: the place's layout sends a team workspace to its portal, from the org row it just read.
+  'app/[orgSlug]/admin/club-emails/layout.tsx',
+  // Free time on an ended club: reads the org row fresh so a portal is never closed again; a flipped club is closed like any club.
+  'lib/free-time-reclose-server.ts',
+  // Typed-only club pages send a workspace home, asked of the caller's org row.
+  'lib/typed-only-pages.ts',
+  // Workspace names and addresses: "a standalone portal manages its own" asked of the caller's org row; false after the flip.
+  'lib/workspace-identity.ts',
+  // Admin chrome: hands the loaded org's account kind to the billing link and to the settings-side rule.
+  'components/admin/DeskNamedPage.tsx',
+  'components/admin/kit/kit-tournament-groups.ts',
 ];
 
 const ALLOWED: Record<string, [Klass, string]> = { ...Object.fromEntries(LIVE_ROW_FILES.map(f => [f, ['live-row', LIVE] as [Klass, string]])), ...SPECIAL };

@@ -11,6 +11,8 @@
  * benefit-led, and free of internal scope/jargon. Newest entry first.
  */
 
+import { BILLING_TAX_WORDS } from './billing-tax';
+
 export type ReleaseCategory = 'new' | 'improved' | 'fixed';
 
 export interface ReleaseHighlight {
@@ -157,7 +159,7 @@ export const RELEASE_ENTRIES: ReleaseEntry[] = [
       },
       {
         category: 'improved',
-        text: "Prices on the website and the plan screens now say \"plus applicable taxes\", and the tax is worked out at checkout from your billing address. When you pick a paid plan while setting up a tournament account, the billing address now has its own step.",
+        text: `Prices on the website and the plan screens now say "${BILLING_TAX_WORDS.plusTax}", and the tax is worked out at checkout from your billing address. When you pick a paid plan while setting up a tournament account, the billing address now has its own step.`,
       },
       {
         category: 'improved',

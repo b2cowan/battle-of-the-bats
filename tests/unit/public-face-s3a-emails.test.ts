@@ -64,7 +64,8 @@ describe('S3a — wrap() and the hand-built shells are the warm envelope', () =>
   it('wrap() IS the warm document', () => {
     const email = readCode('lib/email.ts');
     assert.match(email, /export const wrap = \(content: string\) => warmEmailDocument\(content\);/);
-    assert.doesNotMatch(email, /FIELDLOGICHQ/, 'the lime spaced banner is gone; the wordmark line is the envelope’s');
+    // The lookahead — the contact-address constant (FIELDLOGICHQ_CONTACT_EMAIL, 55b883f99) is a name in the code, not a banner.
+    assert.doesNotMatch(email, /FIELDLOGICHQ(?!_CONTACT_EMAIL\b)/, 'the lime spaced banner is gone; the wordmark line is the envelope’s');
   });
   it('each own-shell builder builds on the envelope, not a div of its own', () => {
     for (const f of ['lib/notify.ts', 'lib/basic-coach-announcements.ts', 'lib/family-email.ts',

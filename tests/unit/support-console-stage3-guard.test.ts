@@ -946,7 +946,18 @@ describe('12 · every sentence in a console window’s foot wears the foot-note 
       for (const m of code.matchAll(/footerStart=\{([^\n]*)/g)) {
         seen++;
         const tags = [...m[1].matchAll(/<(span|p|div)(\s+className=\{([a-zA-Z]+)\.([a-zA-Z]+)\})?/g)];
-        assert.ok(tags.length > 0, `${f}: a foot sentence that is not a span or p`);
+        if (tags.length === 0) {
+          // Bare words (a string, or a _WORDS entry): the shared window wraps them and gives them the face (next test).
+          // Read to the brace that closes the expression, so an element on a later line cannot hide behind the first.
+          let end = m.index + 'footerStart={'.length;
+          for (let depth = 1; end < code.length; end++) {
+            if (code[end] === '{') depth++;
+            else if (code[end] === '}' && --depth === 0) break;
+          }
+          const whole = code.slice(m.index + 'footerStart={'.length, end).replace(/[!=]==?\s*'[^']*'/g, '');
+          assert.ok(!/<[A-Za-z>]/.test(whole) && /['"`]|[A-Z_]+_WORDS\./.test(whole), `${f}: a foot sentence that is not words, a span or a p`);
+          continue;
+        }
         for (const t of tags) {
           if (!t[2]) continue; // bare: KitDialog gives it the face
           const imp = new RegExp(`import ${t[3]} from '([^']+)'`).exec(code)?.[1];
@@ -958,6 +969,10 @@ describe('12 · every sentence in a console window’s foot wears the foot-note 
       }
     }
     assert.ok(seen >= 3, `expected the console's windows, found ${seen}`);
+  });
+  it('the shared window gives bare words that face (50a05c390)', () => {
+    assert.match(readSource('components/shared/KitDialog.tsx'), /const footerStart = typeof startGiven === 'string' && startGiven \? <span>\{startGiven\}<\/span> : startGiven;/);
+    assert.match(readSource('components/shared/KitDialog.module.css'), /\.footStart > :is\(span, p\):not\(\[class\]\) \{[^}]*font-size: var\(--type-support\);[^}]*color: var\(--text-tertiary\);/);
   });
 });
 

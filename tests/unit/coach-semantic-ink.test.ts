@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import { readdirSync } from 'node:fs';
 import path from 'node:path';
-import { readSource, stripComments } from './_source-code.ts';
+import { readSource, stripComments, cssRule } from './_source-code.ts';
 
 /**
  * ══════════════════════════════════════════════════════════════════════════════════════════════
@@ -56,6 +56,17 @@ const COACH_SHEETS = [
  */
 const PUNCTUATION_EXEMPT = ['.statStripDot', '.wltSep'];
 
+/**
+ * THE TWO UPSELL CARDS THAT STAY PAPER IN BOTH THEMES (S1-2 bounded insert; 23198459f). The card declares the
+ * `--home-*` palette on ITSELF, so the theme's role tokens (white under Dark) land on cream at about 1.07:1.
+ * Their text names the card's own ink. Keyed by sheet, exact selector, and only the card's ink tokens.
+ */
+const PAPER_CARD_INK: Record<string, { card: string; classes: string[] }> = {
+  'components/coaches/CoachExploreCatalog.module.css': { card: '.premiumBlock', classes: ['.premiumBlock', '.premiumHeading', '.premiumBody', '.premiumFeature', '.premiumReassure', '.premiumPrice', '.premiumPriceUnit'] },
+  'components/coaches/ScopeShelf.module.css': { card: '.footer', classes: ['.footer', '.footerLead', '.footerBody'] },
+};
+const CARD_INKS = ['home-ink', 'home-ink-soft', 'home-dim'];
+
 /** `color:` declarations only — never `border-color:`, `background-color:`, `outline-color:`. */
 const RAW_INK = /(?<![-\w])color:\s*var\(--(white[0-9-]*|home-ink[a-z-]*|home-dim|fl-text|data-gray|blueprint-blue)\b/g;
 
@@ -73,7 +84,10 @@ describe('coach portal text names a role, not a shade', () => {
           const before = code.slice(0, m.index);
           const open = before.lastIndexOf('{');
           const sel = before.slice(before.lastIndexOf('}', open) + 1, open).trim().split('\n').pop()?.trim() ?? '?';
-          return { sel, ink: m[1] };
+          // Every selector sharing the rule: a paper card's exemption never carries to a neighbour in the same list.
+          const head = before.slice(0, open);
+          const list = head.slice(Math.max(head.lastIndexOf('}'), head.lastIndexOf('{'), head.lastIndexOf(';')) + 1).split(',').map(s => s.trim());
+          return { sel, list, ink: m[1] };
         })
         // ⚠⚠ WHOLE CLASS TOKENS, never `sel.includes(exempt)` — the first version used substring
         // matching and a class merely CONTAINING an exempt name inherited its exemption. Proven,
@@ -82,8 +96,23 @@ describe('coach portal text names a role, not a shade', () => {
         // worse than no guard, because it is also a claim that someone checked.
         .filter(o => {
           const classes = o.sel.match(/\.[A-Za-z][\w-]*/g) ?? [];
-          return !classes.some(c => PUNCTUATION_EXEMPT.includes(c));
+          if (classes.some(c => PUNCTUATION_EXEMPT.includes(c))) return false;
+          const paper = PAPER_CARD_INK[sheet];
+          return !(paper && o.list.every(s => paper.classes.includes(s)) && CARD_INKS.includes(o.ink));
         });
+      const paper = PAPER_CARD_INK[sheet];
+      if (paper) {
+        // The exemption lasts only while the card really is its own paper.
+        const card = cssRule(code, paper.card);
+        assert.match(card, /composes: warmVars from '\.\.\/consumer\/warmTheme\.module\.css';/, 'the card declares the warm palette on itself');
+        assert.match(card, /background: var\(--home-paper\);/, 'and paints its own paper');
+        // No later rule on the card itself (a media query, a state, a second line) may put another ground under that ink.
+        const own = new RegExp('\\' + paper.card + '(?::[\\w-]+)*$');
+        const grounds = [...code.matchAll(/([^{}]+)\{([^{}]*)\}/g)]
+          .filter(rule => rule[1].split(',').some(s => own.test(s.trim())))
+          .flatMap(rule => [...rule[2].matchAll(/(?<![-\w])background(?:-color)?:\s*([^;]+)/g)].map(d => d[1].trim()));
+        assert.deepEqual([...new Set(grounds)], ['var(--home-paper)'], paper.card + ' is paper and nothing else');
+      }
 
       assert.deepEqual(offenders, [],
         'these rules ink text with a SHADE instead of a ROLE. Use --text-primary (body), '

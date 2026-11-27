@@ -230,7 +230,8 @@ describe('C3 — the sheet by the clock; the row is the tap; the RSVP sheet is a
     assert.ok(sheet.includes('const [view, setView] = useState<SheetView | null>(initialView);'), 'the sheet opens on the view it is handed');
   });
   it('the attendance row is the tap — a button that says it opens a dialog — and the old button is gone (in the room, since stage 1 · E2)', () => {
-    assert.match(room, /<CoachRowList label="Attendance" inset className=\{styles\.attendanceRows\}>/, 'the portal\'s one row recipe, hairlined inside the sheet on a phone');
+    assert.match(room, /<CoachRowList label="Attendance" inset className=\{family && desk \? `\$\{styles\.attendanceRows\} \$\{styles\.attFamilyDesk\}` : styles\.attendanceRows\}>/, 'the portal\'s one row recipe, hairlined inside the sheet on a phone');
+    assert.match(room, /const desk = !useIsPhoneNav\(\);/, 'the desk columns are the desk’s: a phone keeps the one row recipe');
     assert.match(room, /<CoachRow\s+key=\{row\.player\.id\}\s+as="button"\s+aria-haspopup="dialog"/, 'the whole row raises the sheet');
     assert.ok(room.includes('onClick={e => setRsvpEditId(row.player.id, e.currentTarget)}'), 'the tap names the row — where the sheet hands focus back');
     assert.ok(!/Edit RSVP/.test(page + sheet + room), 'no "Edit RSVP" anywhere on the page, its sheet or its room');

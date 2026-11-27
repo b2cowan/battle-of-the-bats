@@ -25,7 +25,7 @@ import assert from 'node:assert/strict';
 import { existsSync } from 'node:fs';
 import path from 'node:path';
 import { describe, it } from 'node:test';
-import { readCode, readSource, functionBody, callbackBody, cssRule, reachableFrom } from './_source-code.ts';
+import { readCode, readSource, functionBody, callbackBody, cssRule, valueReachableFrom } from './_source-code.ts';
 import { ADMIN_PAGE } from '../../lib/notification-view.ts';
 import { accountingTabs, kitBillingLink, kitPrograms } from '../../lib/admin-kit-nav.ts';
 import { TOUR_GROUPS } from '../../components/admin/admin-nav-config.ts';
@@ -359,7 +359,8 @@ describe('Step 3 · the admin\'s Notifications page opens notifications (D5)', (
   });
 
   it('nothing the admin page loads reaches the coach portal\'s ~945KB stylesheet', () => {
-    const loaded = reachableFrom(ADMIN_PAGE_FRAME);
+    // What the build really loads: an `import type` hop is erased, so it carries no stylesheet to the page.
+    const loaded = valueReachableFrom(ADMIN_PAGE_FRAME);
     // On a phone the reader stands on the shared sheet frame since Sheet Frame step 4 — whose dim became its own
     // that step, so the frame no longer reaches coaches.module.css either.
     assert.ok(loaded.has(READER) && loaded.has('components/coaches/SheetFrame.module.css'), 'the walk reaches the reader and its sheet styles');

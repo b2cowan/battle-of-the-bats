@@ -157,7 +157,9 @@ describe('Part 5 · Plan & billing on free time (drawing D)', () => {
     assert.match(ended, /\{keepPremium\}/);
   });
   it('Keep Premium is the owner\'s, and says "Keep Premium" on the start page too', () => {
-    assert.ok(page.indexOf('if (!s.canManageBilling) return') < page.indexOf('const keepPremium = portal ?'));
+    const gate = page.indexOf('if (!s.canManageBilling) return <LockedCard');
+    assert.ok(gate > 0 && gate < page.indexOf("const keepPremium = portal && portal.state !== 'open' ?"), 'the locked card returns before the card is built');
+    assert.match(page, /if \(userRole !== 'owner'\) return <LockedCard[^\n]*\n\s*return <BillingOwnerBody/);
     assert.match(page, /teamWorkspaceReactivatePath\(org\)\}&keep=1/);
     const start = readCode('app/team/TeamSignupClient.tsx');
     assert.match(start, /isKeepPremium\s*\? 'Keep Premium'/);

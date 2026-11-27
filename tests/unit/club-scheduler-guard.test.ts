@@ -142,7 +142,11 @@ describe('the club\'s practices are written at Finalize and at Send the changes 
   const steps = /rpc\(['"](club_schedule_finalize|club_schedule_apply_changes)(_priced)?['"]/;
   it('only the send module runs the two steps that write them', () => {
     const callers = CODE.filter(f => steps.test(readSource(f)));
-    assert.deepEqual(callers, ['lib/club-schedule-send.ts']);
+    // The demo seed (run by hand, refuses all but the dev project) bills through the product's own step, so its bill is real.
+    assert.deepEqual(callers, ['lib/club-schedule-send.ts', 'scripts/lib/prospect-demo-rep.mjs']);
+    const importers = CODE.filter(f => /from\s+['"][^'"]*prospect-demo-rep\.mjs['"]/.test(readSource(f))).map(f => f.replace(/\\/g, '/'));
+    assert.deepEqual(importers, ['scripts/seed-prospect-demo.mjs']);
+    assert.match(readCode('scripts/seed-prospect-demo.mjs'), /if \(url\.includes\(PROD_REF\) \|\| host !== /);
   });
   it('the send runs them from its POST only — the GET is a preview', () => {
     const route = readCode('app/api/admin/schedules/[scheduleId]/send/route.ts');

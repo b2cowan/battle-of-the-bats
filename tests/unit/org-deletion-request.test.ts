@@ -87,7 +87,7 @@ describe('Delete {name} is the last section of Plan & billing', () => {
     assert.match(one, /Request sent Nov 20, 2026\. We’ll reply to sam@maplecreek\.ca within 30 days\./);
     assert.doesNotMatch(one, /Request deletion…/);
     const several = html(fixture('tournament', facts({ id: 'r1', sentAt: '2026-11-20T15:00:00Z', requesterEmail: 'sam@maplecreek.ca' }, 2)));
-    assert.match(several, /We’ll reply to Maple Creek Tournaments’s owners within 30 days\./);
+    assert.match(several, /We’ll reply to Maple Creek Tournaments’ owners within 30 days\./);
   });
   it('a failed read says it could not check, and offers no door', () => {
     const rendered = html(fixture('team', { status: 'error' }));
@@ -138,7 +138,7 @@ describe('the window is /legal v0.2, one text for every workspace', () => {
   it('what is deleted, what isn’t, the reply line, the buttons', () => {
     assert.equal(DW.window.title('Maple Creek Tournaments'), 'Ask us to delete Maple Creek Tournaments?');
     assert.equal(DW.window.reply('sam@maplecreek.ca'), 'We’ll reply by email to sam@maplecreek.ca within 30 days. Nothing is deleted until you confirm.');
-    assert.equal(DW.window.replyOwners('Maple Creek Tournaments'), 'We’ll reply to Maple Creek Tournaments’s owners within 30 days. Nothing is deleted until you confirm.');
+    assert.equal(DW.window.replyOwners('Maple Creek Tournaments'), 'We’ll reply to Maple Creek Tournaments’ owners within 30 days. Nothing is deleted until you confirm.');
     assert.match(DW.window.deleted.tournament, /your staff list, and the payment records here\.$/);
     assert.match(DW.window.deleted.premium, /families’ contact details/);
     assert.equal(DW.window.signIns(DW.window.people.tournament, 'Maple Creek Tournaments'),
@@ -218,6 +218,8 @@ describe('the record and the route', () => {
   });
   it('the reply-to helper', () => {
     assert.equal(deletionReplyTo('Falcons', 1, 'a@b.ca'), 'a@b.ca');
-    assert.equal(deletionReplyTo('Falcons', 3, 'a@b.ca'), 'Falcons’s owners');
+    assert.equal(deletionReplyTo('Falcons', 3, 'a@b.ca'), 'Falcons’ owners');
+    assert.equal(deletionReplyTo('Maple Creek', 3, 'a@b.ca'), 'Maple Creek’s owners');
+    assert.match(DW.window.replyOwners('Maple Creek'), /^We’ll reply to Maple Creek’s owners within 30 days\./);
   });
 });

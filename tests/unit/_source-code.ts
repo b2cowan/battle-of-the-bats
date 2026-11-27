@@ -208,18 +208,20 @@ function resolveLocal(rel: string, spec: string): string | null {
 /**
  * What a module really LOADS, at any depth: `reachableFrom` without the `import type` / `export type` edges, which the
  * build erases (Club Website Stage 1: a browser part may name a server read's types and still ship none of its code).
- * Static and side-effect imports, value re-exports and `import('…')`; stylesheets are not walked.
+ * Static and side-effect imports, value re-exports and `import('…')`; a stylesheet is followed through its composes and @import.
  */
 export function valueReachableFrom(...entries: string[]): Set<string> {
   const seen = new Set<string>();
   const stack = [...entries];
   while (stack.length) {
     const rel = stack.pop()!;
-    if (seen.has(rel) || !/\.tsx?$/.test(rel)) continue;
+    if (seen.has(rel)) continue;
     seen.add(rel);
+    if (rel.endsWith('.css')) { stack.push(...localImportsOf(rel)); continue; }
     const code = readCode(rel);
     const specs = [
-      ...code.matchAll(/^\s*import\s+(?!type\b)[^;]*?from\s+['"]([^'"]+)['"]/gm),
+      // (?!from\b): a default binding that is itself named `type` still loads its module.
+      ...code.matchAll(/^\s*import\s+(?!type\s+(?!from\b)[\w{*])[^;]*?from\s+['"]([^'"]+)['"]/gm),
       ...code.matchAll(/^\s*import\s+['"]([^'"]+)['"]/gm),
       ...code.matchAll(/^\s*export\s+(?!type\b)[^;]*?from\s+['"]([^'"]+)['"]/gm),
       ...code.matchAll(/import\s*\(\s*['"]([^'"]+)['"]/g),

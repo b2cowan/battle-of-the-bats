@@ -20,7 +20,6 @@ function text(form: FormData, key: string, max = 2000): string {
 export const POST = withObservability(async (req: Request) => {
   const gate = await requirePlatformOwnerApi();
   if (gate.response) return gate.response;
-  const { auth } = gate;
 
   let form: FormData;
   try {
@@ -47,7 +46,7 @@ export const POST = withObservability(async (req: Request) => {
   };
   if (!(logo instanceof File)) return NextResponse.json({ fieldErrors: { logo: MAKE_WORDS.err.logo } }, { status: 400 });
 
-  const result = await makePreviewClub(input, logo, { id: auth.user.id, email: auth.user.email ?? '' });
+  const result = await makePreviewClub(input, logo, { id: gate.auth.user.id, email: gate.auth.user.email ?? '' });
   if (result.ok) return NextResponse.json({ orgId: result.orgId, slug: result.slug });
   if (result.kind === 'fields') return NextResponse.json({ fieldErrors: result.errors }, { status: 400 });
   if (result.kind === 'cap') return NextResponse.json({ cap: true }, { status: 409 });

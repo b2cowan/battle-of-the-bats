@@ -77,7 +77,7 @@ describe('R2 — the tournament preview is the public page down to its ground', 
     // Admin Design Continuity Part B (2026-09-29): the switch-off branch is gone, so the marker rides the
     // preview shell alone — every other admin shell is the kit's own ground.
     const chrome = readCode('app/[orgSlug]/admin/AdminChrome.tsx');
-    assert.match(chrome, /<div className=\{shellClassName\} \{\.\.\.\(isTournamentPreview \? \{ 'data-public-preview': '' \} : \{\}\)\}>/);
+    assert.match(chrome, /<div className=\{shellClassName\} \{\.\.\.\(isTournamentPreview \? \{ 'data-public-preview': '' \} : \{\}\)\} \{\.\.\.\(!isFocused \? \{ 'data-admin-locked': '' \} : \{\}\)\}>/);
     assert.match(chrome, /<div className=\{styles\.previewIsland\} data-public-preview><AdminKitProvider on=\{false\}>\{children\}<\/AdminKitProvider><\/div>/);
   });
 });

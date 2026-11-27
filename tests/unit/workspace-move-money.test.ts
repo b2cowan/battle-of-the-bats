@@ -791,7 +791,9 @@ describe('6 · the webhook: the reactivation verdict, and the event that follows
 
   it('… because a portal’s own cancellation records are not the ones it reads (a different reason tag)', () => {
     const reactivation = readCode('lib/billing-reactivation.ts');
-    assert.match(reactivation, /const CANCELLATION_REASONS = \['account_cancellation', 'stripe_subscription_deleted'\];/);
+    assert.match(readCode('lib/billing-cancellation-policy.ts'), /export const CANCELLATION_REASONS: readonly string\[\] = \['account_cancellation', 'stripe_subscription_deleted'\];/);
+    assert.match(reactivation, /import \{ CANCELLATION_REASONS \} from '\.\/billing-cancellation-policy';/);
+    assert.match(reactivation, /\.in\('metadata->>retentionReason', CANCELLATION_REASONS\)/);
     // Its records are restored by their own module — and, since the review, by the flip too (section 8) — never by this one.
     assert.match(readCode('lib/portal-retained-restore.ts'), /'coaches_portal_cancellation'/);
     assert.doesNotMatch(reactivation, /coaches_portal_cancellation/);

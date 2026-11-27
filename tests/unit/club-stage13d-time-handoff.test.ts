@@ -18,7 +18,7 @@ import { readNoticeFacts } from '../../lib/notification-facts.ts';
 import { houseLeagueAccess } from '../../lib/house-league-access.ts';
 import { NOTIFICATION_CATEGORY, NOTIFICATION_EVENT_LABELS, NOTIFICATION_SECTIONS, PUSH_DEFAULT_ON_EVENTS } from '../../lib/notification-labels.ts';
 import { notificationDestination } from '../../lib/notification-view.ts';
-import { readCode } from './_source-code.ts';
+import { readCode, functionBody } from './_source-code.ts';
 
 const DAY = 24 * 60 * 60 * 1000;
 const NOW = Date.parse('2026-11-20T15:00:00Z');
@@ -110,11 +110,19 @@ describe('the time-given bell (A1, 13d-1 A)', () => {
     const send = readCode('lib/club-schedule-send.ts');
     const server = readCode('lib/league-time-handoff-server.ts');
     assert.match(server, /if \(p\.kind !== 'final' && !\(p\.kind === 'changes' && p\.state === 'final'\)\) return null;/);
-    const step = send.indexOf("rpc('club_schedule_apply_changes_priced'");
-    assert.ok(step > 0, 'the step is called');
-    assert.ok(send.indexOf('await tellTimeGiven(') > step, 'told after the step');
+    // Each member's database step lives in stepFor (839645c5c); the telling is the caller's, after every step has landed.
+    const stepFor = functionBody(send, 'stepFor');
+    assert.match(stepFor, /rpc\('club_schedule_finalize_priced'/, 'Finalize is a step');
+    assert.match(stepFor, /rpc\('club_schedule_apply_changes_priced'/, 'Send the changes is a step');
+    assert.doesNotMatch(stepFor, /tellTimeGiven/, 'nobody is told from inside a step');
+    const run = functionBody(send, 'sendSchedule');
+    const lastStep = run.lastIndexOf('await stepFor('), tellAt = run.indexOf('await tellTimeGiven(');
+    assert.ok(lastStep > 0, 'the steps are run');
+    assert.ok(tellAt > lastStep && tellAt > run.lastIndexOf('landed.push('), 'told after the steps');
+    assert.equal((run.match(/tellTimeGiven\(/g) ?? []).length, 1, 'one telling in the whole send');
+    assert.match(run, /for \(const l of landed\) \{(?:(?!\bfor \()[\s\S])*?if \(l\.preview\.timeHandoff\) \{\s*await tellTimeGiven\([^;]*sendId: l\.sendId, handoff: l\.preview\.timeHandoff/, 'only a member whose step landed is told of');
     // The baseline comes from the schedule itself, never from the bell's read (a failed read costs a bell, not the baseline).
-    assert.match(send, /\.\.\.\(kind === 'final' \|\| kind === 'changes' \? \{ league_slot_ids: heldHouseLeagueSlotIds\(loaded\.slots\) \} : \{\}\),/);
+    assert.match(send, /\.\.\.\(l\.kind === 'final' \|\| l\.kind === 'changes' \? \{ league_slot_ids: heldHouseLeagueSlotIds\(l\.loaded\.slots\) \} : \{\}\),/);
   });
 });
 
@@ -128,7 +136,7 @@ describe('WHO IS TOLD gains a house league line (A2)', () => {
   });
   it('is held off for a send that gives house league nothing', () => {
     const send = readCode('lib/club-schedule-send.ts');
-    assert.match(send, /leagueTime: timeHandoff\?\.told\?\.line \?\? null,/);
+    assert.match(send, /leagueTime: timeHandoff\?\.told\?\.line \?\? subs\.find\(s => s\.preview\.leagueTime\)\?\.preview\.leagueTime \?\? null,/);
     const win = readCode('components/admin/kit/club/schedules/SendWindow.tsx');
     assert.match(win, /\{leagueTime && \(\(\) => \{/);
   });

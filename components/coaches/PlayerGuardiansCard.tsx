@@ -102,7 +102,7 @@ export default function PlayerGuardiansCard({
   async function removeConnected(r: GuardianRow) {
     const ok = await confirm({
       title: `Remove ${r.email}?`,
-      message: `This ends ${r.email}'s connection to ${playerFirstName} on every team, rep and house league, not only this one. Their calendar feed stops too, and they won't be invited again on their own.`,
+      message: `This ends ${possessive(r.email)} connection to ${playerFirstName} on every team, rep and house league, not only this one. Their calendar feed stops too, and they won't be invited again on their own.`,
       confirmText: 'Remove', cancelText: 'Keep connected', tone: 'danger',
     });
     if (ok) await decide(r.id, 'revoke');

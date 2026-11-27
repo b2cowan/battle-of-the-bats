@@ -227,7 +227,7 @@ describe('A4 · A5 · A6 — said only to someone who can', () => {
     assert.match(hub, /const canRunLeague = LEAGUE_RUNNER_ROLES\.includes\(userRole\);/);
     assert.match(hub, /\{canRunLeague \? <Link href=\{p\.href\} className=\{ck\.link\}>Start a season<\/Link> : board \? seasonStarterShort\(board\) : null\}/);
     assert.match(hub, /const canCreateTournaments = hasCapability\(userRole, userCapabilities, 'create_tournaments'\);/);
-    assert.match(hub, /\{canCreateTournaments \? <Link href=\{p\.href\} className=\{ck\.link\}>Run a tournament<\/Link> : NOT_YOURS_WORDS\.tournamentStarterShort\}/);
+    assert.match(hub, /\{canCreateTournaments \? <Link href=\{quietTournaments\.href\} className=\{ck\.link\}>Run a tournament<\/Link> : NOT_YOURS_WORDS\.tournamentStarterShort\}/);
   });
 
   it('A6: Accounting › Teams names who adds a team for someone without Rep teams', () => {

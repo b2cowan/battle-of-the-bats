@@ -230,7 +230,7 @@ describe('the start forms', () => {
     assert.match(readCode('lib/start-door.ts'), /export const RUN_A_TOURNAMENT_STEPS = \['Account', 'Organization', 'Plan'\] as const;/);
     assert.match(form, /organization: \{\s*account: 'organization',\s*signup: '\/api\/auth\/signup',/, 'it keeps the Sign-up Invite Guard');
     assert.match(form, /signupRes = await fetch\(copy\.signup, \{/);
-    assert.match(form, /\.\.\.\(pricing \? startPricingParams\(pricing\) : \{\}\),/);
+    assert.match(form, /\.\.\.\(claim \? \{ next: claim\.next \} : \{ startDoor: copy\.account, \.\.\.\(pricing \? startPricingParams\(pricing\) : \{\}\) \}\),/);
     // one label for the pick (G4, 2026-10-20: "Tournament (free)" has no billing period)
     assert.match(form, /<strong>\{pickedPlanLabel\(shownPick\.plan, shownPick\.billing\)\}<\/strong>, from\s+the pricing page\. You&apos;ll confirm it after naming \{copy\.pick\?\.confirmedAfter\}\./);
     assert.match(form, /pick: \{ of: runATournamentPick, confirmedAfter: 'your organization' \},/, 'Run a tournament keeps its words');
@@ -256,7 +256,7 @@ describe('the start forms', () => {
     // back to the form, entries kept, the cursor in the email field (the Stage 1 screen-reader pass)
     assert.match(form, /onChangeEmail=\{\(\) => \{ setVerifyEmail\(null\); setChangingEmail\(true\); \}\}/);
     assert.match(form, /autoFocus=\{changingEmail \? 'email' : undefined\}/);
-    assert.match(form, /resendNext=\{startDoorLinkPath\(copy\.account\)\}/);
+    assert.match(form, /resendNext=\{claim \? claim\.next : startDoorLinkPath\(copy\.account\)\}/);
   });
   it('step 2 is the name, empty and focused (A3), confirmed in a plain sentence (D5), one tap to create (V1)', () => {
     const step2 = form.slice(form.indexOf('function NameStep('));
@@ -378,7 +378,7 @@ describe('Home’s waiting workspace (A4 revised 2026-10-19)', () => {
     assert.match(tournament, /if \(liveInvitation\) \{\s*redirect\('\/discover'\);/);
   });
   it('sits in Workspaces after the workspaces in use, and Home is not empty while it shows', () => {
-    assert.match(home, /\{workspaces\.map\(ws => <WorkspaceCard key=\{ws\.id\} ctx=\{ws\} \/>\)\}\s*\{waiting && <WaitingWorkspaceCard door=\{waiting\.door\} \/>\}/);
+    assert.match(home, /\{workspaces\.map\(ws => ws\.paused && ws\.orgId \? \(\s*<div key=\{ws\.id\} className=\{styles\.pausedItem\}>\s*<WorkspaceCard ctx=\{ws\} \/>\s*<HideRow [^\n]*\/>\s*<\/div>\s*\) : <WorkspaceCard key=\{ws\.id\} ctx=\{ws\} \/>\)\}\s*\{waiting && <WaitingWorkspaceCard door=\{waiting\.door\} \/>\}/);
     assert.match(home, /\{\(workspaces\.length > 0 \|\| waiting\) && \(/);
     assert.match(home, /const signedInEmpty =\s*loaded && signedIn && !waiting &&/);
   });

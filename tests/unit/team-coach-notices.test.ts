@@ -231,8 +231,19 @@ describe('two bells that never overlap (B1/B3)', () => {
       // sweep names its own kinds, none of them a free coach's; the doors read the reader's own row by kind.
       'lib/needs-attention.ts',
       'lib/notify.ts',
+      // The one-time catch-up of refunds made in Stripe (run by hand, dev only): reads ONE club-bell kind's open rows for
+      // their refund ids; it shows no bell, so the bell rule has nothing to apply to.
+      'lib/online-payment-landing.ts',
       'lib/team-coach-notices.ts',
     ]);
+    // The catch-up's entry covers one read, not its whole file: a second read there, or an app caller, fails here.
+    const landing = readCode('lib/online-payment-landing.ts');
+    assert.equal(landing.match(/from\('notifications'\)/g)?.length, 1);
+    assert.match(landing, /from\('notifications'\)\.select\('org_id, metadata'\)\s*\.eq\('event_type', 'card_refund_unmatched'\)\.is\('cleared_at', null\)/);
+    const callers = ['app', 'lib', 'components'].flatMap(dir => listTs(dir))
+      .filter(f => /\bcatchUpStripeSponsorRefunds\b/.test(readCode(f)))
+      .map(f => f.replace(/\\/g, '/'));
+    assert.deepEqual(callers, ['lib/online-payment-landing.ts']);
   });
 
   it('every bell hook reads through a BellSource, never a bare org id', () => {

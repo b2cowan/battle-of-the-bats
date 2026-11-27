@@ -82,6 +82,7 @@ const WORKSPACE_STATUS_READERS: Record<string, string> = {
   'lib/team-org-billing.ts': 'the club billing move: reads the row it rewrites',
   'lib/team-org-links.ts': "a link summary's stored display (adopted by a club), not liveness",
   'lib/lead-book.ts': '"pays now" is the stored billing standing; a portal billed by nobody never pays',
+  'lib/workspace-upgrade-status.ts': 'not liveness: before a charge, asks whether this Stripe customer still renews ANOTHER portal (GST/HST Stage 2 Part 7)',
 };
 const ENTITLEMENT_READERS: Record<string, string> = {
   'lib/team-workspace-entitlements.ts': 'the per-team gate: the same running rule as the one question',

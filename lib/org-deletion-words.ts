@@ -9,6 +9,7 @@
  */
 import { formatStoredDate } from './timezone';
 import { PLAN_CONFIG } from './plan-config';
+import { possessive } from './utils';
 import type { OrgPlan, SubscriptionStatus } from './types';
 
 /** Which "What is deleted" an organization reads. */
@@ -33,13 +34,13 @@ export const ORG_DELETION_WORDS = {
     door: 'Request deletion…',
     /** Until staff close it. With more than one owner the reply goes to all of them. */
     sent: (sentAt: string, to: string) => `Request sent ${date(sentAt)}. We’ll reply to ${to} within 30 days.`,
-    owners: (name: string) => `${name}’s owners`,
+    owners: (name: string) => `${possessive(name)} owners`,
     loadFailed: 'We couldn’t check for a deletion request. Reload the page to try again.',
   },
   window: {
     title: (name: string) => `Ask us to delete ${name}?`,
     reply: (email: string) => `We’ll reply by email to ${email} within 30 days. Nothing is deleted until you confirm.`,
-    replyOwners: (name: string) => `We’ll reply to ${name}’s owners within 30 days. Nothing is deleted until you confirm.`,
+    replyOwners: (name: string) => `We’ll reply to ${possessive(name)} owners within 30 days. Nothing is deleted until you confirm.`,
     deletedHeading: 'What is deleted',
     deleted: {
       premium: 'The team’s Coaches Portal and everything in it: every season, the roster and families’ contact details, money records, documents, and the tournaments you run.',

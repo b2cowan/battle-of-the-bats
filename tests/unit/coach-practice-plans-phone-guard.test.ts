@@ -507,7 +507,7 @@ describe('practice plans on a phone · stage 4 (N1–N4) — the head of the pag
     assert.equal((door.match(/<Link /g) ?? []).length, 1, 'a nested link is invalid — the desk\'s "Set it on the schedule ›" keeps only its words here');
     assert.match(door, /className=\{`\$\{styles\.ppDocHead\} \$\{styles\.ppWhenDoor\}`\}/);
     assert.match(door, /<span className="sr-only">View on schedule: <\/span>/);
-    assert.match(door, /!record && arrivalTime \? `Arrive by \$\{formatStoredClock\(arrivalTime\)\}`/, 'the Schedule\'s words, the house clock; a record has nobody to instruct');
+    assert.match(door, /!record && arrivalTime\s*\? `Arrive by \$\{formatStoredClock\(arrivalTime\)\}\$\{arrivalNoteSuffix\(arrivalIsAfterStartAt\(startsAt, arrivalTime\)\)\}`\s*: null/, 'the Schedule\'s words, the house clock; a record has nobody to instruct');
     assert.match(chrome, /function planFit\(/, 'the desk line and the door word the fit through ONE helper');
     const sheet = readCode('lib/practice-sheet.ts');
     assert.match(sheet, /export function practicePlaceLabel\(/);
