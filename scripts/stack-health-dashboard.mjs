@@ -59,8 +59,10 @@ function taskInfo() {
     const info = JSON.parse(out.trim());
     // house clock style: "7:30 a.m."
     for (const k of ['nextRun', 'lastRun']) if (info[k]) info[k] = info[k].replace(/ AM$/, ' a.m.').replace(/ PM$/, ' p.m.');
-    // a task that has never run reports 267011 (SCHED_S_TASK_HAS_NOT_RUN): not a failure
-    if (info.lastResult === '267011') info.lastResult = '0';
+    // Two Task Scheduler codes are states, not failures: 267011 (SCHED_S_TASK_HAS_NOT_RUN) and
+    // 267009 (SCHED_S_TASK_RUNNING). The morning run rebuilds this page while it is still running, so
+    // it always reads 267009; how that run ended shows the next time the page is rebuilt.
+    if (info.lastResult === '267011' || info.lastResult === '267009') info.lastResult = '0';
     return info;
   } catch { return null; }
 }

@@ -170,3 +170,9 @@ the issues, history, etc."
 - A daily run takes under 60 s with less than 1 s of database work.
 - The owner receives a test alert email and the first Monday digest.
 - The task survives a reboot, and the report is in `.health/latest.md` by 7:35 a.m.
+
+## Changes 2026-11-27 (owner: "both")
+
+- **The build lookup uses this PC's own AWS sign-in.** It had inherited `.env.local`'s `AWS_PROFILE` (the bookkeeping
+  user, which may not list builds). The lookup now drops that setting.
+- **New advisor findings are named** in the report (kind, then object names, eight per kind), because each is reported once.

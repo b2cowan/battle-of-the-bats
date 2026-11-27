@@ -263,6 +263,23 @@ async function checkHeavyQueries(env) {
 }
 
 // ── DBA: Supabase advisors, new findings only (live) ───────────────────────────────────────────
+// A new finding is reported ONCE (the next run's baseline holds it), so the report has to say WHICH
+// object it is: "INFO rls_enabled_no_policy: a_table, another; WARN …". Worst level first.
+function nameFindings(lints, perKind = 8) {
+  const rank = { ERROR: 0, WARN: 1, INFO: 2 };
+  const kinds = new Map();
+  for (const l of [...lints].sort((a, b) => (rank[a.level] ?? 3) - (rank[b.level] ?? 3))) {
+    const m = l.metadata ?? {};
+    const object = m.name ? `${m.schema && m.schema !== 'public' ? `${m.schema}.` : ''}${m.name}${m.fkey_name ? ` (${m.fkey_name})` : ''}` : (m.entity ?? l.cache_key ?? l.title);
+    const kind = `${l.level} ${l.name}`;
+    kinds.set(kind, (kinds.get(kind) ?? new Set()).add(object));
+  }
+  return [...kinds].map(([kind, set]) => {
+    const names = [...set];
+    return `${kind}: ${names.slice(0, perKind).join(', ')}${names.length > perKind ? ` and ${names.length - perKind} more` : ''}`;
+  }).join('; ');
+}
+
 async function checkAdvisors(env) {
   const area = 'Database';
   for (const kind of ['security', 'performance']) {
@@ -282,9 +299,8 @@ async function checkAdvisors(env) {
     const fixed = base.filter((k) => !(k in keys)).length;
     const warn = fresh.filter((l) => l.level === 'WARN' || l.level === 'ERROR');
     const status = warn.length ? (kind === 'security' ? 'red' : 'amber') : fresh.length && kind === 'security' ? 'amber' : 'green';
-    const names = [...new Set(fresh.map((l) => `${l.level} ${l.name}`))].slice(0, 4).join(', ');
     add(area, env, `Advisors (${kind})`, status,
-      `${fresh.length} new finding${fresh.length === 1 ? '' : 's'}${names ? ` (${names})` : ''} · ${fixed} fixed · ${lints.length} standing`,
+      `${fresh.length} new finding${fresh.length === 1 ? '' : 's'} · ${fixed} fixed · ${lints.length} standing${fresh.length ? ` · new: ${nameFindings(fresh)}` : ''}`,
       kind === 'security' ? 'A new security warning from Supabase: read it in Advisors → Security in the dashboard and fix it before it ships.' : 'A new performance warning (often a missing index or a slow policy): read it in Advisors → Performance.');
   }
 }
@@ -347,6 +363,11 @@ async function checkTraffic(env) {
 // ── DevOps: deployments (AWS Amplify; live) ────────────────────────────────────────────────────
 function checkDeploys() {
   const area = 'Deploys';
+  // .env.local's AWS_PROFILE names the app's bookkeeping sign-in, which may not list builds, and
+  // loading that file (lib/supabase-ops) puts it in this process. The build lookup uses this PC's own
+  // AWS sign-in instead (as scripts/rehearse-plan-ending.mjs does).
+  const awsEnv = { ...process.env, PYTHONIOENCODING: 'utf-8', PYTHONUTF8: '1' };
+  delete awsEnv.AWS_PROFILE;
   for (const branch of ['dev', 'master']) {
     let jobs;
     try {
@@ -355,9 +376,19 @@ function checkDeploys() {
       // setting below is the second guard against the same thing.
       const out = execFileSync('aws', ['amplify', 'list-jobs', '--app-id', 'd3ld0l2bgmmlga', '--branch-name', branch, '--max-results', '10',
         '--region', 'us-east-2', '--output', 'json', '--query', 'jobSummaries[].{jobId:jobId,status:status,startTime:startTime,endTime:endTime}'],
-      { encoding: 'utf8', timeout: 30_000, stdio: ['ignore', 'pipe', 'pipe'], env: { ...process.env, PYTHONIOENCODING: 'utf-8', PYTHONUTF8: '1' } });
+      { encoding: 'utf8', timeout: 30_000, stdio: ['ignore', 'pipe', 'pipe'], env: awsEnv });
       jobs = JSON.parse(out) ?? [];
-    } catch (e) { unknown(area, branch, 'Latest build', e); continue; }
+    } catch (e) {
+      // Not unknown(): a failed command's message STARTS with the whole command line, so its first
+      // 120 characters never reach the reason. Keep what the AWS CLI wrote to stderr: all of it in the
+      // run log, and as one line (the report format) in the report.
+      const reason = String(e?.stderr ?? '').trim() || String(e?.message ?? e);
+      const how = e?.code ?? (e?.status != null ? `exit ${e.status}` : 'no exit code');
+      console.error(`Build lookup for ${branch} failed (${how}):\n${reason}`);
+      add(area, branch, 'Latest build', 'unknown', `could not check (${how}: ${reason.replace(/\s+/g, ' ').slice(0, 1000)})`,
+        'The reason is in this line. If the lookup works by hand but fails each morning, the cause is in how the scheduled run starts.');
+      continue;
+    }
     if (!jobs.length) { add(area, branch, 'Latest build', 'unknown', 'no builds found'); continue; }
     const dur = (j) => (j.endTime && j.startTime ? (Date.parse(j.endTime) - Date.parse(j.startTime)) / 60_000 : null);
     const [latest, ...rest] = jobs;
