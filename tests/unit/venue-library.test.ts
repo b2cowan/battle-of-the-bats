@@ -74,6 +74,9 @@ describe('Archive when anything books it; Delete only when nothing does', () => 
     assert.equal(archiveQuestion('Kinsmen Park', usage({ anyBooking: true, everTeams: ['11U AA'], everSeasons: ['2025 Fall House League'] })).who,
       '11U AA and 2025 Fall House League booked it before.');
   });
+  it('a venue nothing books but the club’s planning holds says which, never “It has bookings”', () => {
+    assert.equal(archiveQuestion('Pinecrest Park', usage({ anyBooking: true, held: 'schedule' })).who, 'One of the club’s schedules holds time there.');
+  });
   it('Delete asks, and says nothing would be lost', () => {
     assert.deepEqual(deleteQuestion('Westfield School'), { title: 'Delete Westfield School?', body: 'Nothing has ever booked it. It leaves the library for good.' });
   });

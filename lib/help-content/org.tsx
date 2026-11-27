@@ -1866,9 +1866,9 @@ const orgHelp: HelpPageContent = {
           title: 'Archive or Delete',
           content: (
             <HelpDefs>
-              <HelpDef term="Archive">At the end of a venue&rsquo;s window, <strong>Archive this venue</strong> is offered when anything books it, past seasons included. It leaves every picker (coaches, house league, a tournament&rsquo;s Import from Library), and every booking keeps it. Archived venues are listed under the table; open one and choose <strong>Bring back this venue</strong>.</HelpDef>
-              <HelpDef term="Delete">Offered in the same place, only when nothing books the venue. It asks first, and the venue leaves the library for good.</HelpDef>
-              <HelpDef term="Held by a permit">A venue a permit holds time at can be archived but not deleted, and a facility a permit names can be renamed but not removed. The permit is under <a href="#permits">Permits</a>.</HelpDef>
+              <HelpDef term="Archive">At the end of a venue&rsquo;s window, <strong>Archive this venue</strong> is offered when anything books it, past seasons included, or a permit, a club schedule or a date off holds it. It leaves every picker (coaches, house league, a tournament&rsquo;s Import from Library), and every booking keeps it. Archived venues are listed under the table; open one and choose <strong>Bring back this venue</strong>.</HelpDef>
+              <HelpDef term="Delete">Offered in the same place, only when nothing books or holds the venue. It asks first, and the venue leaves the library for good.</HelpDef>
+              <HelpDef term="Held by a permit or a schedule">A venue where a permit or a club schedule holds time can be archived but not deleted, and a facility either one names can be renamed but not removed. Permits are under <a href="#permits">Permits</a>.</HelpDef>
               <HelpDef term="Named by a date off">A venue a schedule&rsquo;s date off names (<em>Applies to</em> one venue) can be archived but not deleted: deleting it would quietly make that day close every park. Take the park off the date off first, or archive the venue.</HelpDef>
             </HelpDefs>
           ),

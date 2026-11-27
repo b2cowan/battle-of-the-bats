@@ -5,7 +5,7 @@ import { withObservability, captureAndJson } from '@/lib/observability';
 import { hasOrgVenueLibrary } from '@/lib/plan-features';
 import { FACILITY_TYPES, type FacilityType } from '@/lib/types';
 import { canSaveVenueLibrary, canReadVenueLibrary, duplicateFacilityName, splitLockedRefusal, VENUE_LIBRARY_WORDS } from '@/lib/venue-library';
-import { carryWordsForward, facilitiesBooked, facilitiesWithPartsBooked, readVenueUsage, venueIsBooked } from '@/lib/venue-library-server';
+import { carryWordsForward, facilitiesBooked, facilitiesWithPartsBooked, facilityHolds, readVenueUsage, venueHold, venueIsBooked } from '@/lib/venue-library-server';
 import { sectionsOf, type FieldSections } from '@/lib/field-parts';
 import { readVenuePermits } from '@/lib/permit-server';
 import { bookingsEmailProblem } from '@/lib/venue-library';
@@ -262,21 +262,12 @@ export const POST = withObservability(async (req: Request) => {
           }
           // A facility a permit's block names is held time (Club Tier 10a): renamed, never removed. So is one a club
           // schedule holds (Club Tier 11a: its block names it, or one of its slots stands on it).
-          const [{ data: held, error: hErr }, { data: slotted, error: sErr }] = await Promise.all([
-            supabaseAdmin.from('org_time_block_facilities').select('facility_id, org_time_blocks!inner(permit_id)')
-              .eq('org_id', orgId).in('facility_id', remove).limit(1),
-            supabaseAdmin.from('club_schedule_slots').select('facility_id').eq('org_id', orgId).in('facility_id', remove).limit(1),
-          ]);
-          if (hErr) throw hErr;
-          if (sErr) throw sErr;
-          if (held?.length) {
-            const byPermit = !!(held[0].org_time_blocks as { permit_id?: string | null } | null)?.permit_id;
-            return byPermit
-              ? venueRefusal(409, 'facility_in_permit', `${stored.get(held[0].facility_id as string)?.name ?? 'That facility'} is held by a permit, so it can be renamed but not removed.`)
-              : venueRefusal(409, 'facility_in_schedule', `${stored.get(held[0].facility_id as string)?.name ?? 'That facility'} is in one of the club’s schedules, so it can be renamed but not removed.`);
-          }
-          if (slotted?.length) {
-            return venueRefusal(409, 'facility_in_schedule', `${stored.get(slotted[0].facility_id as string)?.name ?? 'That facility'} is in one of the club’s schedules, so it can be renamed but not removed.`);
+          const holds = await facilityHolds(orgId, remove);
+          const held = remove.find(fid => holds.has(fid));
+          if (held) {
+            return holds.get(held) === 'permit'
+              ? venueRefusal(409, 'facility_in_permit', `${stored.get(held)!.name} is held by a permit, so it can be renamed but not removed.`)
+              : venueRefusal(409, 'facility_in_schedule', `${stored.get(held)!.name} is in one of the club’s schedules, so it can be renamed but not removed.`);
           }
         }
         // ⚖ A split is locked while a booking still to come names one of its parts (round 2 Ask 7 A; any change, not only
@@ -360,27 +351,16 @@ export const POST = withObservability(async (req: Request) => {
       if (await venueIsBooked(orgId, id)) {
         return venueRefusal(409, 'venue_in_use', `${existing.name} has bookings, so it can be archived but not deleted.`);
       }
-      // A permit's block keeps its venue (Club Tier 10a): archive it instead. So does a club schedule's (Club Tier 11a: its
-      // block, or a slot standing on it).
-      // A date off that names the venue keeps it too (mig 488's FK is NO ACTION: "no parks named" is All venues, so a delete
-      // that took its last park would widen the date off to every park).
-      const [{ count: heldBy, error: pErr }, { count: scheduled, error: sErr }, { count: slotted, error: tErr }, { count: offNamed, error: oErr }] = await Promise.all([
-        supabaseAdmin.from('org_time_blocks').select('id', { count: 'exact', head: true }).eq('org_id', orgId).eq('org_venue_id', id).not('permit_id', 'is', null),
-        supabaseAdmin.from('org_time_blocks').select('id', { count: 'exact', head: true }).eq('org_id', orgId).eq('org_venue_id', id).not('schedule_id', 'is', null),
-        supabaseAdmin.from('club_schedule_slots').select('id', { count: 'exact', head: true }).eq('org_id', orgId).eq('org_venue_id', id),
-        supabaseAdmin.from('org_time_date_off_venues').select('date_off_id', { count: 'exact', head: true }).eq('org_id', orgId).eq('org_venue_id', id),
-      ]);
-      if (pErr) throw pErr;
-      if (sErr) throw sErr;
-      if (tErr) throw tErr;
-      if (oErr) throw oErr;
-      if ((heldBy ?? 0) > 0) {
+      // So does the club's own planning (a permit, a club schedule, a date off: `venueHold`) — the question the library's
+      // read asks too, so the window offers Archive on such a venue.
+      const hold = await venueHold(orgId, id);
+      if (hold === 'permit') {
         return venueRefusal(409, 'venue_in_permit', `A permit holds time at ${existing.name}, so it can be archived but not deleted.`);
       }
-      if ((scheduled ?? 0) + (slotted ?? 0) > 0) {
+      if (hold === 'schedule') {
         return venueRefusal(409, 'venue_in_schedule', `One of the club’s schedules holds time at ${existing.name}, so it can be archived but not deleted.`);
       }
-      if ((offNamed ?? 0) > 0) {
+      if (hold === 'date_off') {
         return venueRefusal(409, 'venue_in_date_off', `A date off on one of the club’s schedules names ${existing.name}, so it can be archived but not deleted.`);
       }
       // org_venue_facilities cascade via FK.

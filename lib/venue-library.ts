@@ -105,6 +105,15 @@ export interface LibraryVenue {
   facilities: LibraryFacility[];
 }
 
+/** The club's own planning that keeps a venue: a permit's time, a club schedule's time, or a date off naming it. */
+export type VenueHold = 'permit' | 'schedule' | 'date_off';
+
+const HOLD_WORDS: Record<VenueHold, string> = {
+  permit: 'A permit holds time there.',
+  schedule: 'One of the club’s schedules holds time there.',
+  date_off: 'A date off on one of the club’s schedules names it.',
+};
+
 /** One program's use of a venue, as the library reads it. */
 export interface VenueSeasonUse { id: string; name: string; games: number; practices: number }
 export interface VenueTournamentUse { id: string; name: string; games: number }
@@ -116,19 +125,23 @@ export interface VenueTournamentUse { id: string; name: string; games: number }
  * books it this season. `anyBooking` decides Archive vs Delete.
  */
 export interface VenueUsage {
+  /** Anything keeps the venue: a booking, or (with no booking) a `held` reason. A kept venue is archived, never deleted. */
   anyBooking: boolean;
+  /** What keeps a venue nothing books — read only when there is no booking, so null on a booked one. */
+  held: VenueHold | null;
   teams: string[];
   seasons: VenueSeasonUse[];
   tournaments: VenueTournamentUse[];
   everTeams: string[];
   everSeasons: string[];
   everTournaments: string[];
-  /** Per facility id: bookings that start now or later (not cancelled), and whether any booking holds it at all. */
+  /** Per facility id: bookings that start now or later (not cancelled), and whether a booking, a permit or a schedule
+   *  holds it at all (a held one is renamed, never removed). */
   facilities: Record<string, { upcoming: number; anyBooking: boolean }>;
 }
 
 export const NO_USAGE: VenueUsage = {
-  anyBooking: false, teams: [], seasons: [], tournaments: [], everTeams: [], everSeasons: [], everTournaments: [], facilities: {},
+  anyBooking: false, held: null,teams: [], seasons: [], tournaments: [], everTeams: [], everSeasons: [], everTournaments: [], facilities: {},
 };
 
 /**
@@ -190,7 +203,7 @@ export function archiveQuestion(venueName: string, u: VenueUsage): { title: stri
   const before = whoList(u.everTeams, u.everSeasons, u.everTournaments);
   return {
     title: `Archive ${venueName}?`,
-    who: now ? `${now} book it.` : before ? `${before} booked it before.` : 'It has bookings.',
+    who: now ? `${now} book it.` : before ? `${before} booked it before.` : u.held ? HOLD_WORDS[u.held] : 'It has bookings.',
     what: 'Archiving takes it out of every picker. Existing bookings keep it, and the calendar still shows it. You can bring it back.',
   };
 }

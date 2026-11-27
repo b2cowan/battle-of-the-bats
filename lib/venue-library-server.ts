@@ -26,7 +26,7 @@ import { isLiveSeasonStatus } from './season-live';
 import { tournamentToday } from './timezone';
 import { formatPartLocation, formatVenueLocation } from './venue-label';
 import { legalMasks, type FieldSections } from './field-parts';
-import type { VenueUsage } from './venue-library';
+import type { VenueHold, VenueUsage } from './venue-library';
 
 /** A season or tournament that has finished no longer books "this season". */
 const FINISHED = new Set(['completed', 'archived']);
@@ -39,7 +39,7 @@ type GameRow = { id: string; diamond_id: string; venue_facility_id: string | nul
 
 function emptyUsage(facilityIds: readonly string[]): VenueUsage {
   return {
-    anyBooking: false, teams: [], seasons: [], tournaments: [], everTeams: [], everSeasons: [], everTournaments: [],
+    anyBooking: false, held: null, teams: [], seasons: [], tournaments: [], everTeams: [], everSeasons: [], everTournaments: [],
     facilities: Object.fromEntries(facilityIds.map(id => [id, { upcoming: 0, anyBooking: false }])),
   };
 }
@@ -168,7 +168,57 @@ export async function readVenueUsage(
     u.seasons = [...a.seasons].map(([id, n]) => ({ id, name: season.get(id)?.name ?? 'House league', ...n })).sort((x, y) => byName(x.name, y.name));
     u.tournaments = [...a.tournaments].map(([id, n]) => ({ id, name: tournamentName.get(id) ?? 'A tournament', games: n })).sort((x, y) => byName(x.name, y.name));
   }
+
+  // What keeps a venue or facility though nothing books it — the SAME two questions the route's refusals ask, so the
+  // window never offers a Delete or a ✕ the save refuses. Asked only where no booking has already answered.
+  const [venueHolds, heldFacilities] = await Promise.all([
+    Promise.all(venueIds.filter(id => !out[id].anyBooking).map(async id => ({ id, hold: await venueHold(orgId, id) }))),
+    facilityHolds(orgId, facilityIds.filter(id => !out[venueOfFacility.get(id)!].facilities[id].anyBooking)),
+  ]);
+  for (const { id, hold } of venueHolds) {
+    if (!hold) continue;
+    out[id].held = hold;
+    out[id].anyBooking = true;
+  }
+  for (const id of heldFacilities.keys()) out[venueOfFacility.get(id)!].facilities[id].anyBooking = true;
   return out;
+}
+
+/**
+ * What of the club's own planning keeps this venue: a permit's block, a club schedule's block or slot, or a date off
+ * that names it (mig 488: "no parks named" is All venues, so a delete that took its last park would widen the date off
+ * to every park). Each of those links refuses the delete in the database.
+ */
+export async function venueHold(orgId: string, venueId: string): Promise<VenueHold | null> {
+  const head = (table: string, column = 'id') =>
+    supabaseAdmin.from(table).select(column, { count: 'exact', head: true }).eq('org_id', orgId).eq('org_venue_id', venueId);
+  const [permit, block, slot, off] = await Promise.all([
+    head('org_time_blocks').not('permit_id', 'is', null),
+    head('org_time_blocks').not('schedule_id', 'is', null),
+    head('club_schedule_slots'),
+    head('org_time_date_off_venues', 'date_off_id'),
+  ]);
+  for (const r of [permit, block, slot, off]) if (r.error) throw r.error;
+  if (permit.count) return 'permit';
+  if (block.count || slot.count) return 'schedule';
+  return off.count ? 'date_off' : null;
+}
+
+/** Which of these facilities a permit or a club schedule holds (its block names it, or a slot stands on it). */
+export async function facilityHolds(orgId: string, facilityIds: readonly string[]): Promise<Map<string, 'permit' | 'schedule'>> {
+  const answers = await Promise.all(facilityIds.map(async id => {
+    const [block, slot] = await Promise.all([
+      supabaseAdmin.from('org_time_block_facilities').select('facility_id, org_time_blocks!inner(permit_id)')
+        .eq('org_id', orgId).eq('facility_id', id).limit(1),
+      supabaseAdmin.from('club_schedule_slots').select('facility_id').eq('org_id', orgId).eq('facility_id', id).limit(1),
+    ]);
+    if (block.error) throw block.error;
+    if (slot.error) throw slot.error;
+    const first = block.data?.[0] as unknown as { org_time_blocks: { permit_id: string | null } | null } | undefined;
+    const hold = first?.org_time_blocks?.permit_id ? 'permit' as const : first || slot.data?.length ? 'schedule' as const : null;
+    return { id, hold };
+  }));
+  return new Map(answers.flatMap(a => (a.hold ? [[a.id, a.hold] as const] : [])));
 }
 
 /** Does any booking — past or upcoming, cancelled or not — hold this venue (or, given, this facility)? */

@@ -177,6 +177,16 @@ describe('5. the Venue library — who saves, Archive vs Delete, archived out of
     assert.ok(del.indexOf('venueIsBooked(orgId, id)') < del.indexOf(".from('org_venues').delete()"));
     assert.match(del, /venueRefusal\(409, 'venue_in_use'/);
   });
+  it('the window and the delete ask one question about permits, schedules and dates off, so Archive is offered wherever Delete is refused', () => {
+    const server = readCode('lib/venue-library-server.ts');
+    const usage = server.slice(server.indexOf('function readVenueUsage'), server.indexOf('function venueHold'));
+    assert.match(usage, /await venueHold\(orgId, id\)/);
+    assert.match(usage, /facilityHolds\(orgId, /);
+    assert.match(post, /await venueHold\(orgId, id\)/);
+    assert.match(post, /await facilityHolds\(orgId, remove\)/);
+    // The route asks no table of its own about a hold.
+    assert.doesNotMatch(post, /from\('(org_time_blocks|org_time_block_facilities|club_schedule_slots|org_time_date_off_venues)'\)/);
+  });
   it('a facility a booking holds is renamed, never removed (refused before any write)', () => {
     const upd = post.slice(post.indexOf("action === 'update-venue'"), post.indexOf("action === 'archive-venue'"));
     assert.ok(upd.indexOf('facilitiesBooked(orgId, remove)') < upd.indexOf(".from('org_venues')\n        .update("));
