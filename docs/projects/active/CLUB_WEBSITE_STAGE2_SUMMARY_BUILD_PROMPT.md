@@ -131,6 +131,27 @@ that runs longer or starts a day the wider one misses keeps its own words.
 
 ## Session B — the Venue library and Reopen (S4–S6, T2)
 
+### Handover from Session A (committed `c69281249` + `ea0ce27d3`, 2026-11-26; read before the gate)
+- **Reuse, don't rewrite:** the cover rule is `closureCovers` / `uncoveredClosures` / `coveringClosures` (widest first)
+  in `lib/place-closures.ts`, plus `closureSaysAlready` (covered, or the same place pressed again for those days) and
+  `toStripClosure` (the one builder of the strip's shape) and `isAllDiamonds`. `StaffClosure` (the Venue library's rows)
+  now carries `showsFrom` and `endsAt`; `CloseVenue` carries `allDiamonds`. The strip's words come from `closureStrip`
+  (`lib/club-notice.ts`); "what the site will still say after this Reopen" should be `closureStrip` over the showing
+  closures minus the ones being reopened, never words built by hand.
+- **⚠ A later ruling overrides the drawing's dots** (owner 2026-11-26, committed `e7b97bcdb`, build check
+  `check:dot-joins`; the Venue library change `836968e67`): a list or table cell is never a dotted line. The closed
+  rows already read "Diamond 2 at Lions Park" / "All diamonds at Lions Park" over two plain lines (`rowName`,
+  `rowLines`). So S4's drawn titles "Lions Park · Diamond 1 and Diamond 2" and its one dotted facts line are NOT the
+  words to build: propose at the gate the same idea in the new style ("Diamond 1 and Diamond 2 at Lions Park", the facts
+  as plain lines). Say it out loud.
+- **Two owner calls from Session A's review are open** (walk §578's page): the season a house league admin names for T1
+  is checked to be the club's own, not still running; a club whose places are all archived counts as having none. Not
+  this session's to decide; don't change them unasked.
+- **Walk §578 may not be walked yet.** Its Reopen steps (walks A9, B1, C3, E10) press today's Venue library rows and
+  Reopen window. When this session changes them, rewrite those steps in `CLUB_WEBSITE_STAGE2_SUMMARY_A_WALK.html` and
+  republish it to the same page (https://claude.ai/artifact/75dUJv6ekaeV2ZH2YJLRtR), or fold them into this session's
+  walk. Don't re-run the walk seed while the owner may be walking.
+
 ### The Venue library (drawing tabs 3–4)
 - One box headed "Closed places". A row per **park and dates**: "Lions Park · Diamond 1 and Diamond 2" ·
   "Lions Park · all diamonds" · "All our fields". The line under it keeps today's facts (days, closed at and by,
@@ -236,3 +257,61 @@ bodies from migration files: keep its guards true of the newest definition; exte
 
 Any change to who may close or reopen beyond T1; the plan gate; the postpone/cancel step; the press's limit of 10; the
 tournament Rain delay.
+
+---
+
+## Session B close-out (handover, 2026-11-26) — paste: *"Read and follow docs/projects/active/CLUB_WEBSITE_STAGE2_SUMMARY_BUILD_PROMPT.md, Session B close-out"*
+
+*(Close-out done 2026-11-27: the five steps run, migration 551 applied to dev, committed. What follows is the handover as written.)*
+
+Session B is BUILT, /simplify'd and /review'd (five lenses, 12 defects fixed), NOT committed. The owner ruled the gate
+"Build as you've written": T2 widened to ANY game already marked by a closure still showing; park-level S6 nesting (a
+park's diamond under its whole closure when no all-fields closure, days overlapping); no migration for S5; the ten
+"Not drawn" answers as proposed (results, one email per team per coach, partly covered, park under all fields, …).
+/legal passed the combined reopen email (review file section "Session B: one reopen, several closures"); its MUST-FIX
+is built (name the game's own place when something inside stays closed; never "reopened all its fields" then).
+
+**This session's files** (other sessions share the tree — commit by path / private index only, never `git add -A`):
+`lib/place-closure-window.ts`, `lib/place-closure-window-server.ts`, `lib/place-closure-mail-words.ts`,
+`lib/place-closures.ts`, `lib/place-closure-route.ts` (new), `app/api/admin/org/place-closures/route.ts`,
+`app/api/admin/org/place-closures/reopen/route.ts` (new), `app/api/admin/org/place-closures/[closureId]/route.ts`
+(DELETED in the working tree — `git rm` it in the commit), `app/[orgSlug]/admin/org/venues/page.tsx`,
+`components/admin/kit/club/places/ReopenPlaceWindow.tsx`, `…/places/StripPreview.tsx` (new), `…/places/ClosePlaceWindow.tsx`,
+`…/places/ClosePlace.module.css`, `components/admin/kit/club/VenueLibrary.module.css`,
+`supabase/migrations/551_a_second_press_marks_an_already_marked_game.sql` (new), `scripts/club-website-stage2-closure-check.sql`,
+tests `place-closure-reopen-summary.test.ts` (new), `place-closure-reopen-told.test.ts`, `place-closure-window-route.test.ts`,
+`place-closure-window.test.ts`, `place-closure-several.test.ts`, `place-closures-guard.test.ts`; help `lib/help-content/org.tsx`,
+`house-league.tsx`, `coaches.tsx`; `docs/agents/legal/CLUB_WEBSITE_STAGE2_CLOSE_A_PLACE_REVIEW.md` + `LEGAL_INDEX.md` (one row);
+and HUNKS ONLY in two files other sessions also hold edits in: `docs/agents/db/DATA_DICTIONARY.md` (the
+`rep_event_closure_marks.coach_emailed_at` paragraph) and `supabase/migrations/MANUAL_PROD_STEPS.json` (the 551 entry) —
+`reference_partial_commit_shared_tree.md`. Re-check each help file's diff is only ours before staging it.
+
+**State to know:** mig 551 is NOT on dev (owner's word needed; proved by a rolled-back dry run with the check script,
+T1–T17, 38 of 38). Without it the Close window lists an already-marked game untickable but the press doesn't mark it
+again. `552_house_league_takes_its_slots_part.sql` (another session) fails `place-closures-guard.test.ts`'s quiet-link
+test and `check:manual-prod-migrations` — theirs, not ours. Full typecheck needs `NODE_OPTIONS=--max-old-space-size=8192`
+with the shared tree as it is (passes). Help was updated by a helper; its `close-a-place` searchText run-on is harmless.
+
+### The five steps
+1. **/design** against the drawing (tabs 3–5; the dots ruling overrides its dotted titles/facts — rows are "Diamond 1
+   and Diamond 2 at Lions Park" over two plain lines). Apply its fixes.
+2. **Rendered check:** `npm run check:layout -- --changed` on a running dev server (the Venue library; the windows if
+   swept). Say so if skipped.
+3. **Restart the dev server** (shared modules, new and deleted files) per AGENTS.md; verify the login page 200.
+4. **The walk** (20–50 boxes, one action per step, exact logins with `UATPassword2026!`, computer and phone), on the
+   `--places-walk` seed (`seed-prospect-demo.mjs --club=kestrel` first; NOT while the owner walks). B covers: the one box
+   and tags ("2 diamonds closed today"); the park window (tick both, then one; one email per coach); the covered window
+   ("Remove Diamond 1’s own closure?"); all fields with places closed on their own (the unticked tick, ticked and not);
+   two separate presses on two diamonds (the Close window's "Already marked", no second email, stays marked until both
+   reopen) — this needs mig 551 on dev, so ask the owner to apply it first or mark those steps "after 551". Next free
+   section in `OWNER_QA_LEDGER.md`. **Also rewrite walk §578's Reopen steps** in `CLUB_WEBSITE_STAGE2_SUMMARY_A_WALK.html`
+   and republish to https://claude.ai/artifact/75dUJv6ekaeV2ZH2YJLRtR: A9 (two diamonds of one press are ONE row now; its
+   window offers "Reopen those two diamonds as well"; button "Reopen all our fields"), B1 (one row, "Reopen diamonds at
+   Lions Park?", one press), C3 (row grouping by park and dates; the "also" tick), E10 (button wording), and Walk A's
+   header `notIn` line about "stops saying it's closed". Grep §573's walk (`CLUB_WEBSITE_STAGE2_WALK.html`) for the old
+   row/button words and note them (it already passed). Run /design on the walk page before hand-off.
+5. **Records:** the plan's Session B item under §7 "Closed places, summarized" (what was built, the gate's rulings, the
+   review's fixes, what was left: rare races — a team place renamed mid-press fails the press; the phone "Not changed
+   here" count omits already-marked games; a second press stamps a game "told" when the first press's email failed, and
+   that first press's retry tells the coach), the PM brief, the board line (project `club-website`), and the ledger —
+   same commit as the work. Then offer /docs only if the help needs more. **Commit only on the owner's word.**

@@ -142,7 +142,7 @@ node --env-file=.env.local scripts/seed-on-sale-pictures-extras.mjs --places-wal
   "job": "Kestrel Bay president · computer width · your own test",
   "forText": "A wider closure speaks for a narrower one on your site, and the window tells you what your site will say before you press.",
   "passes": "Every line reads as written, your site never prints three lines for one closure, and the diamonds come back by themselves when all fields reopen.",
-  "notIn": "The Reopen window’s own words (Session B redraws them; today it still says “Your site stops saying it’s closed”), the coach and family emails (walked in §573 and §577).",
+  "notIn": "The Venue library’s box and the Reopen windows’ own words (walked in §579), the coach and family emails (walked in §573 and §577).",
   "who": "president@kestrel-bay.example.test, password UATPassword2026!.",
   "where": "http://localhost:3000/kestrel-bay/admin/org/venues, and the private window on http://localhost:3000/kestrel-bay.",
   "steps": [
@@ -180,8 +180,8 @@ node --env-file=.env.local scripts/seed-on-sale-pictures-extras.mjs --places-wal
     "s": "It still reads <b>Your site won’t change.</b> before you leave. If an empty-day line shows, it no longer says <b>Closing it still tells families on your site.</b>"
    },
    {
-    "d": "In the Venue library, press <b>Reopen</b> on the <b>All our fields</b> row, then <b>Reopen</b> in its window.",
-    "s": "The All our fields row is gone; the two Lions Park diamond rows stay."
+    "d": "In the Venue library, press <b>Reopen</b> on the <b>All our fields</b> row, leave <b>Reopen those two diamonds as well</b> unticked, press <b>Reopen all our fields</b>, then <b>Done</b>.",
+    "s": "The All our fields row is gone; one row, <b>Diamond 1 and Diamond 2 at Lions Park</b>, stays."
    },
    {
     "d": "Refresh the private window.",
@@ -201,7 +201,7 @@ node --env-file=.env.local scripts/seed-on-sale-pictures-extras.mjs --places-wal
   "steps": [
    {
     "stop": true,
-    "d": "In the Venue library, press <b>Reopen</b> on each of the two Lions Park diamond rows (one at a time). Refresh the private window.",
+    "d": "In the Venue library, press <b>Reopen</b> on the <b>Diamond 1 and Diamond 2 at Lions Park</b> row, then <b>Reopen 2 diamonds and email 1 coach</b> and <b>Done</b>. Refresh the private window.",
     "s": "No closed-places box on the club page. <b>Stop if one still shows.</b>"
    },
    {
@@ -250,8 +250,8 @@ node --env-file=.env.local scripts/seed-on-sale-pictures-extras.mjs --places-wal
     "s": "The same two lines, and the small line names two press times: <b>Posted</b> … <b>and</b> … <b>by the club</b>."
    },
    {
-    "d": "In the Venue library, <b>Reopen</b> the <b>All our fields</b> row.",
-    "s": "That row goes; B’s six rows stay."
+    "d": "In the Venue library, press <b>Reopen</b> on the <b>All our fields</b> row, leave <b>Reopen those 5 places as well</b> unticked, press <b>Reopen all our fields</b>, then <b>Done</b>.",
+    "s": "That row and the band under it go; B’s closures stay, one row per park and dates (Lions Park twice: today and tomorrow)."
    },
    {
     "d": "Refresh the private window.",
@@ -332,8 +332,8 @@ node --env-file=.env.local scripts/seed-on-sale-pictures-extras.mjs --places-wal
     "s": "<b>All our fields are closed today.</b>"
    },
    {
-    "d": "Sign in as president. In the Venue library, press <b>Reopen</b> on the <b>All our fields</b> row.",
-    "s": "The row goes, and the private window (refreshed) shows no box."
+    "d": "Sign in as president. In the Venue library, press <b>Reopen</b> on the <b>All our fields</b> row, then <b>Reopen</b> in its window and <b>Done</b>.",
+    "s": "The box goes, and the private window (refreshed) shows no box."
    },
    {
     "d": "Press the <b>archived venues</b> link and <b>Bring back</b> each park. If you deleted any, run the second seed line again.",

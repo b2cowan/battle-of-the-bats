@@ -488,8 +488,12 @@ ok(`${hlGames.length} house league games today in U11 and U15: a final, one past
 // --places-walk (Session 2D's walk, several places in one press) is the same day plus Lions Park's Diamond 3 with a house
 // league game on it (so two of three diamonds can close with a game left on), and a later game on Harbourview Park's
 // Diamond 2 (so a second park has one still to start through the walk). 2C's walk reads as before without it.
+// --summary-walk ("Closed places, summarized", Session B's walk) is --places-walk plus two more Ospreys games at Lions
+// Park: one on Diamond 2 (one coach, games on two diamonds: one email) and one with no diamond recorded (two separate
+// presses on two diamonds). The other walks read as before without it.
 const WALK_IDS = Array.from({ length: 5 }, (_, i) => `5a1e0000-0000-4000-8000-0000000e00${String(i + 1).padStart(2, '0')}`);
-const PLACES_WALK = process.argv.includes('--places-walk');
+const SUMMARY_WALK = process.argv.includes('--summary-walk');
+const PLACES_WALK = SUMMARY_WALK || process.argv.includes('--places-walk');
 const CLOSURE_WALK = PLACES_WALK || process.argv.includes('--closure-walk');
 if (CLOSURE_WALK) {
   head('(e) Close a place walk · Lions Park today');
@@ -544,6 +548,18 @@ if (CLOSURE_WALK) {
     opponent: 'Marlow Heights', home_away: 'home', team_score: null, opponent_score: null, result: null, status: 'scheduled', arrival_time: null,
   })).error);
   ok('the U13 Ospreys vs Marlow Heights at Lions Park · Diamond 1 later today (Public: the mark reaches the team page and the home)');
+  if (SUMMARY_WALK) {
+    for (const [opponent, inMin, facility] of [['Port Ellery', 345, 'Diamond 2'], ['Cedar Bluff', 360, null]]) {
+      const start = NOW.getTime() + inMin * MIN;
+      die(`walk rep game vs ${opponent}`, (await db.from('rep_team_events').insert({
+        org_id: ORG, team_id: team.id, program_year_id: py.id, event_type: 'league_game', name: `vs ${opponent}`,
+        starts_at: repAt(start), ends_at: repAt(start + 90 * MIN), location: facility ? `Lions Park · ${facility}` : 'Lions Park', location_address: '40 Lions Park Rd, Kestrel Bay',
+        org_venue_id: lions.id, org_venue_facility_id: facility ? lionsFac[facility] : null,
+        opponent, home_away: 'home', team_score: null, opponent_score: null, result: null, status: 'scheduled', arrival_time: null,
+      })).error);
+    }
+    ok('and two more Ospreys games at Lions Park later today: vs Port Ellery on Diamond 2, vs Cedar Bluff with no diamond recorded');
+  }
 
   // Tournament: one Fall Classic U11 game on a Lions Park diamond (the diamond copied from the club's place, as (a) does).
   const lionsDiamond = await one('Fall Classic Lions Park', db.from('diamonds').insert({ tournament_id: TID, name: 'Lions Park', address: '40 Lions Park Rd, Kestrel Bay', source_org_venue_id: lions.id }).select('id').single());

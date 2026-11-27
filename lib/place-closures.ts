@@ -173,6 +173,17 @@ export function markPlaceWords(c: { scope: ClosureScope; placeName: string | nul
 
 /** "2 diamonds at Lions Park": several diamonds of one place, said once. */
 export const diamondsAt = (n: number, placeName: string | null) => `${n} diamonds at ${placeName ?? ''}`;
+
+/** Names in their natural order ("Diamond 2" before "Diamond 10"): every list of a park's diamonds sorts by this. */
+export const byNatural = (a: string, b: string) => a.localeCompare(b, 'en-CA', { numeric: true });
+
+/** "Diamond 1 and Diamond 2 at Lions Park": a park's diamonds BY NAME, each once, in natural order (the Venue library's
+ *  rows, Reopen's windows and the coach's reopen email say it the same way). */
+export function diamondsNamed(names: Iterable<string>, placeName: string | null): string {
+  const list = [...new Set(names)].sort(byNatural);
+  const joined = list.length <= 1 ? list.join('') : `${list.slice(0, -1).join(', ')} and ${list[list.length - 1]}`;
+  return `${joined} at ${placeName ?? ''}`;
+}
 /** The verb after a closed place's words: "2 diamonds at Lions Park" and "All our fields" are; one place is. */
 export const isAre = (placeWords: string) => (/^(\d+ diamonds at |all our fields$)/i.test(placeWords) ? 'are' : 'is');
 

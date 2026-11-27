@@ -3423,7 +3423,7 @@ const coachesHelp: HelpPageContent = {
         // Club Tier Stage 6b — the club renames or archives one of its venues.
         'venue renamed', 'new venue name', 'archived venue', 'venue missing from list',
         // Club Website Stage 2 — the club closes one of its places.
-        'needs a new date', 'place closed', 'field closed', 'park closed', 'diamond closed', 'club closed the field', 'club closes a field', 'closed field email', 'reopened',
+        'needs a new date', 'place closed', 'field closed', 'park closed', 'diamond closed', 'club closed the field', 'club closes a field', 'closed field email', 'reopened', 'club reopened the place', 'one email per team',
         'clash', 'double booked', 'double-booked', 'already booked', 'booked by', 'diamond taken', 'busy then', 'not checked for clashes', 'two teams same diamond', 'address', 'google maps', 'map link', 'recent locations', 'links', 'attach link', 'resources', 'tags', 'tag a game', 'game tags', 'manage tags', 'merge tags', 'rename tag', 'filter by tag', 'record by tag', 'awards', 'give an award', 'mvp', 'best hitter', 'hustle award', 'award types', 'manage awards', 'retire award',
         // Chunk D Slice 3 — printable certificates live off the awards report.
         'certificate', 'certificates', 'print certificate', 'print certificates', 'print awards',
@@ -3487,7 +3487,7 @@ const coachesHelp: HelpPageContent = {
               <ul>
                 <li><strong>On your schedule</strong>, the game shows <strong>Needs a new date</strong>. Open it and a note says, for example, <em>From Kestrel Bay Softball Association &middot; Lions Park closed on Sat, Nov 28. Give this game a new date with Edit, or cancel it.</em></li>
                 <li><strong>Families</strong> see the game marked <strong>Place closed</strong> in the family app and, when the team&rsquo;s schedule is set to Public, on the team&rsquo;s public page and the club&rsquo;s home page. A strip at the top of the club&rsquo;s site says the place is closed.</li>
-                <li><strong>The mark goes</strong> when you move or cancel the game. If the club reopens the place first, the mark goes and you get one line saying so; the game is where it was, so keep it or move it.</li>
+                <li><strong>The mark goes</strong> when you move or cancel the game. If the club reopens the place first, the mark goes and you get one email saying so, one per team however many closures reopened together; the game is where it was, so keep it or move it. When another part of the place is still closed, the email names the place your game is at (for example <em>Diamond 1 at Lions Park</em>), not &ldquo;all its fields&rdquo;. If a second closure marks a game that is already marked, you aren&rsquo;t emailed again.</li>
                 <li><strong>A game played anyway</strong> shows its score, not the mark.</li>
               </ul>
             </>

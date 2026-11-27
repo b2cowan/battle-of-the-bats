@@ -82,10 +82,11 @@ wider closure speaks for a narrower one with the same days (two diamonds, then a
 parks on one day share one heading with a row each, and past five rows the rest open in place behind "Show N more
 places" instead of being only counted. The Close a place window shows the admin that strip before the press, or says
 "Your site won't change" when it already says so. A club with no places listed can close all its fields (owners,
-admins, and the house league admin from a season's schedule). Session A (the site and the window) is built and waits
-for the owner's walk; Session B (one Venue library box with a row per park, and Reopen for several diamonds in one press
-with one email per coach) is next, with two separate presses on two diamonds behaving as one press does. Success looks
-like: a parent reads one plain line for a rained-out park, never three that say the same thing, and the admin is never
+admins, and the house league admin from a season's schedule). In the Venue library, everything closed sits in one box
+with a row per park, and one Reopen takes a park's diamonds in one press, with one email per coach. Reopen says what
+stays closed and never claims the site has gone quiet while it hasn't. Two separate presses on two diamonds behave as
+one: the game stays marked until both reopen, and its coach isn't emailed again. Both sessions are built and wait for
+the owner's walks. Success looks like: a parent reads one plain line for a rained-out park, never three that say the same thing, and the admin is never
 told the site changed when it did not.
 
 **Added from Milton Bats' meeting (2026-11-24, proposed, not drawn or ruled): the club's own feed.** The club wants to

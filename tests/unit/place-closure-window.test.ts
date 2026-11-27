@@ -29,7 +29,7 @@ const rp = (id: string, o: Partial<CloseRepGame> = {}): CloseRepGame => ({
 });
 const source = (o: Partial<CloseSource> = {}): CloseSource => ({
   today: DAY, places: [lions], seasons: [{ id: 's1', name: '2026 House League', divisions: [{ id: 'u11', name: 'U11', published: true }, { id: 'u15', name: 'U15', published: true }] }],
-  league: [], rep: [], repHidden: false, tournaments: [], practices: 0, families: [], repReach: {}, ...o,
+  league: [], rep: [], repHeld: [], repHidden: false, tournaments: [], practices: 0, families: [], repReach: {}, ...o,
 });
 
 describe('K1 · who closes a place', () => {

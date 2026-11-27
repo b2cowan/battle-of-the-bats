@@ -22,9 +22,12 @@
  * who can open Organization READS it — no Add venue, no pencil, no Archive or Delete. A refused save says why in the
  * window (the route's words), never silently.
  * ⚖ CLOSE A PLACE (Club Website Stage 2, K1, K11): the toolbar's "Close a place" is one of the window's three buttons (the
- * Overview's and the house league schedule's are the others, same words and icon, owner 2026-11-26). A closure showing on the
- * site sits at the top as one row — the place, its days, who closed it and when, and Reopen — and its place's row wears
- * "Closed today". One row per closure; one that ended by itself at Until is gone. Owner, admin, house league admin only.
+ * Overview's and the house league schedule's are the others, same words and icon, owner 2026-11-26). The closures showing
+ * sit at the top in ONE box, "Closed places" (S4, owner 2026-11-26): a row per park and dates ("Diamond 1 and Diamond 2 at
+ * Lions Park"), two plain lines under it (the days and presses; what it did to games, each game once), one Reopen; with
+ * "All our fields" showing, every other row sits under it ("Also closed on their own"). A venue's row wears "Closed today"
+ * for the whole park or every place, else "2 diamonds closed today". One that ended by itself at Until is gone. Owner,
+ * admin, house league admin only.
  * ⚠ A FAILED LOAD says so, with Try again — never an empty library (S6-09: "No venues in your library yet" over a failed
  * read invited the club to add its venues twice).
  */
@@ -35,7 +38,9 @@ import { useOrg } from '@/lib/org-context';
 import { usePageTitle } from '@/lib/usePageTitle';
 import { useIsPhone } from '@/lib/hooks/useIsPhone';
 import { hasOrgVenueLibrary } from '@/lib/plan-features';
-import { CLOSE_WORDS as CW, canClosePlace, type StaffClosure } from '@/lib/place-closure-window';
+import {
+  CLOSE_WORDS as CW, alsoWords, canClosePlace, lowerEvery, rowsUnder, venueTag, type CloseFrame, type ClosureRow, type StaffClosure,
+} from '@/lib/place-closure-window';
 import { tournamentToday } from '@/lib/timezone';
 import ClosePlaceWindow from '@/components/admin/kit/club/places/ClosePlaceWindow';
 import ReopenPlaceWindow from '@/components/admin/kit/club/places/ReopenPlaceWindow';
@@ -90,21 +95,26 @@ export default function VenueLibraryPage() {
   const [restoring, setRestoring] = useState(false);
   // Close a place (Club Website Stage 2): the closures showing now, and the two windows.
   const canClose = canClosePlace(userRole);
-  const [closures, setClosures] = useState<StaffClosure[]>([]);
+  // S4: the closures showing, the box's rows (counted by the server) and the places whose facilities are all diamonds.
+  const [shut, setShut] = useState<{ closures: StaffClosure[]; rows: ClosureRow[]; diamondParks: Set<string> }>(
+    () => ({ closures: [], rows: [], diamondParks: new Set() }));
   const [closing, setClosing] = useState<{ venueId: string | null } | null>(null);
-  const [reopening, setReopening] = useState<StaffClosure | null>(null);
+  // The row pressed, and the box as it stood then: the reload after a Reopen drops the row, and its window still shows
+  // the result.
+  const [reopening, setReopening] = useState<{ row: ClosureRow; shut: typeof shut } | null>(null);
   const loadClosures = useCallback(async () => {
     if (!slug || !planAllowed || !canClose) return;
     // org-slug-ok: `q` is built from the org context's slug above
     const r = await fetch(`/api/admin/org/place-closures?${q}`, { cache: 'no-store' }).catch(() => null);
-    const d = r?.ok ? await r.json().catch(() => null) : null;
-    setClosures(((d as { closures?: StaffClosure[] } | null)?.closures) ?? []);
+    const d = (r?.ok ? await r.json().catch(() => null) : null) as { closures?: StaffClosure[]; rows?: ClosureRow[]; frame?: CloseFrame } | null;
+    setShut({
+      closures: d?.closures ?? [], rows: d?.rows ?? [],
+      diamondParks: new Set((d?.frame?.venues ?? []).filter(v => v.allDiamonds).map(v => v.id)),
+    });
   }, [slug, planAllowed, canClose, q]);
   useDeferredLoad(!orgLoading && !!slug && canClose, loadClosures);
   const today = tournamentToday();
-  const closedToday = useMemo(() => new Set(closures.filter(c => c.firstDay <= today).flatMap(c => (c.venueId ? [c.venueId] : []))), [closures, today]);
-  const everyClosedToday = closures.some(c => c.scope === 'all' && c.firstDay <= today);
-  const isClosedToday = (id: string) => everyClosedToday || closedToday.has(id);
+  const tagOf = (id: string) => venueTag(shut.closures, id, today);
 
   const beginRead = useLatestRead();
   const load = useCallback(async () => {
@@ -217,11 +227,12 @@ export default function VenueLibraryPage() {
             {venues.map(v => {
               const facilities = facilitiesCell(v.facilities);
               const use = read?.usage[v.id];
+              const tag = tagOf(v.id);
               return (
                 <tr key={v.id} className={repKit.rowOpens} onClick={() => { if (window.getSelection()?.toString()) return; openFromPage({ kind: 'venue', id: v.id }); }}>
                   <td>
                     <button type="button" className={`${repKit.nameButton} ${repKit.nameLink}`} onClick={e => { e.stopPropagation(); openFromPage({ kind: 'venue', id: v.id }); }}>{v.name}</button>
-                    {isClosedToday(v.id) && <> <span className={`${repKit.chip} ${repKit.chipWarn}`}>{CW.closedToday}</span></>}
+                    {tag && <> <span className={`${repKit.chip} ${repKit.chipWarn}`}>{tag}</span></>}
                     {v.address && <span className={repKit.cellSub}>{v.address}</span>}
                   </td>
                   <td className={facilities ? undefined : repKit.dim}>
@@ -239,11 +250,14 @@ export default function VenueLibraryPage() {
       </div>
       <div className={repKit.phoneOnly}>
         <ClubRowFrame><ClubRowList inset label={label}>
-          {venues.map(v => (
-            <ClubRow key={v.id} as="button" aria-haspopup="dialog" onClick={() => openFromPage({ kind: 'venue', id: v.id })}
-              title={<>{v.name}{isClosedToday(v.id) && <span className={`${repKit.chip} ${repKit.chipWarn}`}>{CW.closedToday}</span>}</>}
-              caption={bookedSentence(read?.usage[v.id])} chevron />
-          ))}
+          {venues.map(v => {
+            const tag = tagOf(v.id);
+            return (
+              <ClubRow key={v.id} as="button" aria-haspopup="dialog" onClick={() => openFromPage({ kind: 'venue', id: v.id })}
+                title={<>{v.name}{tag && <span className={`${repKit.chip} ${repKit.chipWarn}`}>{tag}</span>}</>}
+                caption={bookedSentence(read?.usage[v.id])} chevron />
+            );
+          })}
         </ClubRowList></ClubRowFrame>
       </div>
     </>
@@ -260,16 +274,26 @@ export default function VenueLibraryPage() {
         <p className={kit.toolbarLede}>{W.lede}</p>
       </CoachListToolbar>
 
-      {closures.map(c => (
-        <div key={c.id} className={own.closedRow}>
-          <div className={own.closedBody}>
-            <span className={`${repKit.chip} ${repKit.chipWarn}`}>{CW.closed}</span>
-            <strong>{CW.rowName(c)}</strong>
-            {CW.rowLines(c).map(line => <span key={line} className={own.closedLine}>{line}</span>)}
-          </div>
-          <button type="button" className={`btn btn-outline ${own.closedReopen}`} onClick={() => setReopening(c)}>{CW.reopen}</button>
-        </div>
-      ))}
+      {shut.rows.length > 0 && (
+        <section className={own.closedBox} aria-label={CW.closedBox}>
+          <h2 className={own.closedHead}>{CW.closedBox}</h2>
+          {shut.rows.map(r => {
+            const parent = r.under ? shut.rows.find(x => x.key === r.under) ?? null : null;
+            const first = !!parent && rowsUnder(shut.rows, parent.key)[0]?.key === r.key;
+            return (
+              <div key={r.key}>
+                {first && <p className={own.closedBand}>{CW.alsoBand(parent!.scope === 'all' ? lowerEvery(CW.everyPlace) : parent!.placeName ?? parent!.title, alsoWords(rowsUnder(shut.rows, parent!.key)).one)}</p>}
+                <div className={`${own.closedRow}${r.under ? ` ${own.closedUnder}` : ''}`}>
+                  <strong className={own.closedName}>{r.title}</strong>
+                  <button type="button" className={`btn btn-outline ${own.closedReopen}`} aria-label={CW.reopenAria(r.scope === 'all' ? lowerEvery(r.title) : r.scope === 'place' ? r.placeName ?? r.title : r.title)}
+                    onClick={() => setReopening({ row: r, shut })}>{CW.reopen}</button>
+                  <div className={own.closedFacts}>{r.lines.map(line => <span key={line} className={own.closedLine}>{line}</span>)}</div>
+                </div>
+              </div>
+            );
+          })}
+        </section>
+      )}
 
       {failed ? (
         <LoadFailed title={W.loadFailed} onRetry={() => void load()} />
@@ -363,7 +387,8 @@ export default function VenueLibraryPage() {
         />
       )}
       {reopening && (
-        <ReopenPlaceWindow orgSlug={slug} closure={reopening} onReopened={() => { void loadClosures(); }} onClose={() => setReopening(null)} />
+        <ReopenPlaceWindow orgSlug={slug} row={reopening.row} rows={reopening.shut.rows} closures={reopening.shut.closures}
+          diamondParks={reopening.shut.diamondParks} onReopened={() => { void loadClosures(); }} onClose={() => setReopening(null)} />
       )}
       {said && <NoticePill key={said} message={said} onDone={() => setSaid(null)} />}
     </div>

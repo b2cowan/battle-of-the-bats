@@ -90,6 +90,20 @@ describe('the press is one step, all or nothing', () => {
     assert.match(press, /ORDER BY c\.press_seq LIMIT 1\) m\s+WHERE g\.id = ANY \(v_league\);/, 'the Rainout record is still the first closure');
   });
 
+  it('T2 (mig 551) · a game a closure still showing already marks is marked again, its coach already told, locked with the rest', () => {
+    // Found before the locks and locked in the same id-ordered statement as the ticked games, then read again under them.
+    assert.match(press, /PERFORM 1 FROM rep_team_events ev\s+WHERE ev\.id = ANY \(v_all_rep \|\| v_already\) AND ev\.event_type IN \('league_game', 'tournament_game'\) ORDER BY ev\.id FOR UPDATE;/);
+    assert.ok(press.indexOf('INTO v_already_stamps') > press.indexOf('ORDER BY ev.id FOR UPDATE'), 'its stamps are read under the lock');
+    // A standing mark, as `markSpent` reads it: the closure showing, the game where and when it was marked.
+    for (const col of ['marked_org_venue_id', 'marked_facility_id', 'marked_place_id', 'marked_location']) {
+      assert.match(press, new RegExp(`m\\.${col} IS NOT DISTINCT FROM ev\\.`));
+    }
+    assert.match(press, /oc\.reopened_at IS NULL AND oc\.ends_at > now\(\)/);
+    // Its marks arrive stamped, so the send after the press (which emails any mark without one) skips its coach.
+    assert.match(press, /marked_place_id, marked_location, coach_emailed_at\)[\s\S]*?\(v_already_stamps->>\(ev\.id::text\)\)::timestamptz/);
+    assert.match(press, /WHERE ev\.id = ANY \(v_marked\);/);
+  });
+
   it('Reopen moves no game (K11 A): it only stamps the closure', () => {
     const reopen = fnBody('org_place_closure_reopen');
     assert.doesNotMatch(reopen, /league_games|rep_team_events|games\b/);
@@ -136,7 +150,7 @@ describe('one matching rule in two languages', () => {
   });
 
   it('a rep game\'s typed text is read the same way by the press and the window', () => {
-    assert.equal((fnBody('org_place_closure_press').match(/concat_ws\(' · ', ev\.location, tp\.name\)/g) ?? []).length, 3, 'checked, linked, marked: the same text');
+    assert.equal((fnBody('org_place_closure_press').match(/concat_ws\(' · ', ev\.location, tp\.name\)/g) ?? []).length, 4, 'checked, already marked (T2), linked, marked: the same text');
     assert.match(PURE, /parts\.join\(' · '\)/);
   });
 });

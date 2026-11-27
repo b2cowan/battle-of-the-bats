@@ -29043,7 +29043,26 @@ Committed 2026-11-26, ahead of the walk (owner: "simplify and commit"): `d3d1bcc
 
 **Walks:** A two diamonds, then all fields, then reopen all fields (10) · B many places and Show more, on two days (7) · C a different day kept, and the wider one reopened (4) · D on a phone (3) · E a club with no places, as president and as house league admin (12).
 
-**Left out (pinned by tests):** the Reopen windows’ words and the Venue library’s closed rows (Session B redraws both), a diamond closed longer than all fields, a press past ten places, the coach and family emails (§573, §577).
+**Reopen steps rewritten 2026-11-26** for Session B’s box and windows (A9, B1, C3, E10; tick positions unchanged).
+
+**Left out (pinned by tests):** the Reopen windows’ own words and the Venue library’s box (walked in §579), a diamond closed longer than all fields, a press past ten places, the coach and family emails (§573, §577).
 
 **Open calls (outside the count):** 1. the season a house league admin names is checked to be the club’s own, not that it is still running; 2. a club whose places are all archived counts as having none.
 <!-- /§578 -->
+
+## §579 · Club website · Stage 2 · Closed places, summarized · Session B — **the Venue library shows what is closed in one box, a row per park; Reopen takes a park’s diamonds in one press with one email per coach, and says what stays closed; two separate presses on two diamonds keep a game marked until both reopen**
+<!-- §579 -->
+**Walk published 2026-11-26.** [Interactive walk](https://claude.ai/artifact/P6x4zBKVSqSZFa58WscZZ7) (walks A–E, 44 steps; one open call shown outside the count) · [repository HTML](CLUB_WEBSITE_STAGE2_SUMMARY_B_WALK.html). Plan: `CLUB_WEBSITE_ENHANCEMENTS_PLAN.md` §7 (“Closed places, summarized”, S4–S6 and T2, “Session B”). Before the walk: /simplify, /review, /legal and /design run, their fixes applied. Migration 551 is on dev (applied 2026-11-27), which walks C and D need.
+
+**Where:** `http://localhost:3000`, club **Kestrel Bay** (`/kestrel-bay`). **Sign in:** club president `president@kestrel-bay.example.test`, rep coach `rep.coach@kestrel-bay.example.test`, password `UATPassword2026!`; a private window for walk C’s last step.
+
+**Data:** `node --env-file=.env.local scripts/seed-prospect-demo.mjs --club=kestrel`, then `node --env-file=.env.local scripts/seed-on-sale-pictures-extras.mjs --summary-walk` (between 6:00 a.m. and 5:30 p.m.; it clears any earlier closure, so finish §578 first). The new switch is `--places-walk` plus two Ospreys games at Lions Park (Diamond 2, and no diamond recorded).
+
+**Walks:** A one box and the venue tags (6) · B reopen a park’s diamonds (5) · C under all our fields: the covered window and reopen all (15) · D two separate presses, then each reopened (12) · E on a phone (6).
+
+**Left out (pinned by tests):** a closure only partly covered, a part failure, simultaneous presses, the email’s own text.
+
+**Superseded words in passed walks:** §573 reads a Closed row as “Lions Park · all diamonds” (now “All diamonds at Lions Park” in the one box); §577 walks C and D read two Closed rows and reopen them one at a time (now one row and one window), and its note that two separate presses differ is no longer true.
+
+**Open call (outside the count):** “Already marked” rows repeat the heading’s words and show no game time.
+<!-- /§579 -->

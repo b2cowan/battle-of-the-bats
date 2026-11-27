@@ -1,4 +1,5 @@
 -- Club Website Stage 2, Session 2A (mig 539): Close a place — the press, "Link both", the retry, Reopen and the marks.
+-- (T16: mig 549's several diamonds of one place; T17: mig 551's second press over an already-marked game.)
 -- Rolled back; run on dev with
 --   node scripts/db-query.mjs --dev -f scripts/club-website-stage2-closure-check.sql
 -- Each T row is 'pass' or says what it found. The fixture is Kestrel Bay's (dev): its live season, its finished season
@@ -145,12 +146,15 @@ BEGIN
   INSERT INTO r SELECT 'T5b another club''s replay refused', CASE WHEN v_x = 'invalid' THEN 'pass' ELSE coalesce(v_x, 'null') END;
 
   -- T6 a second closure over the same rep game keeps the first's mark; reopening the second leaves the first standing.
+  -- (Since mig 551 the second press also marks the typed game the first marked, unticked: two marks, its coach told.)
   SELECT jsonb_agg(jsonb_build_object('id', e.id, 'seen', e.updated_at)) INTO v_rep FROM rep_team_events e WHERE e.id = v_r;
   SELECT * INTO v_res2 FROM org_place_closure_press(v_org, NULL, v_key2,
     jsonb_build_array(jsonb_build_object('venueId', v_v)), v_day, v_day + 1, 'postponed', NULL, '[]', v_rep, '[]') p;
   PERFORM org_place_closure_reopen(v_org, v_res2.closures[1], NULL);
-  INSERT INTO r SELECT 'T6 second closure never clears the first mark', CASE WHEN v_res2.refusal IS NULL AND v_res2.marks = 1
+  INSERT INTO r SELECT 'T6 second closure never clears the first mark', CASE WHEN v_res2.refusal IS NULL AND v_res2.marks = 2
     AND (SELECT count(*) FROM rep_event_closure_marks WHERE event_id = v_r) = 2
+    AND (SELECT count(*) FROM rep_event_closure_marks WHERE event_id = v_r2 AND closure_id = v_res2.closures[1]
+           AND coach_emailed_at IS NOT NULL) = 1
     AND (SELECT reopened_at FROM org_place_closures WHERE id = v_res.closures[1]) IS NULL
     AND (SELECT reopened_at FROM org_place_closures WHERE id = v_res2.closures[1]) IS NOT NULL THEN 'pass'
     ELSE format('%s %s', v_res2.refusal, v_res2.marks) END;
@@ -312,6 +316,35 @@ BEGIN
       (SELECT count(*) FROM league_rainouts WHERE v_a = ANY (game_ids) AND closure_id = ANY (v_res.closures)) = 1
       AND (SELECT closure_id FROM league_rainouts WHERE v_a = ANY (game_ids) AND closure_id = ANY (v_res.closures)) = v_res.closures[1] THEN 'pass'
       ELSE 'not one record on the first closure' END;
+
+    -- T17 (mig 551, T2) two separate presses behave as one: the rep game at the park with no diamond, marked when Diamond
+    -- 1 closed, is marked by the Diamond 2 press too though not ticked, its coach already told (its stamp carried); a game
+    -- no closure still marks, or one the coach moved since, is not.
+    UPDATE org_place_closures SET reopened_at = now() WHERE id = ANY (v_res.closures);
+    SELECT jsonb_agg(jsonb_build_object('id', e.id, 'seen', e.updated_at)) INTO v_rep FROM rep_team_events e WHERE e.id = v_r;
+    SELECT * INTO v_res FROM org_place_closure_press(v_org, NULL, gen_random_uuid(),
+      jsonb_build_array(jsonb_build_object('venueId', v_v2, 'facilityId', v_f1)), v_day, v_day, 'postponed', NULL, '[]', v_rep, '[]') p;
+    UPDATE rep_event_closure_marks SET coach_emailed_at = '2020-01-01T00:00:00Z' WHERE closure_id = ANY (v_res.closures);
+    SELECT * INTO v_res2 FROM org_place_closure_press(v_org, NULL, gen_random_uuid(),
+      jsonb_build_array(jsonb_build_object('venueId', v_v2, 'facilityId', v_f2)), v_day, v_day, 'postponed', NULL, '[]', '[]', '[]') p;
+    INSERT INTO r SELECT 'T17a T2: the second press marks the already-marked game, its coach already told', CASE WHEN v_res2.refusal IS NULL
+      AND (SELECT count(*) FROM rep_event_closure_marks WHERE event_id = v_r AND closure_id = ANY (v_res2.closures)
+             AND coach_emailed_at = '2020-01-01T00:00:00Z') = 1 AND v_res2.marks = 1 THEN 'pass'
+      ELSE format('%s marks %s', v_res2.refusal, v_res2.marks) END;
+    UPDATE org_place_closures SET reopened_at = now() WHERE id = ANY (v_res.closures || v_res2.closures);
+    SELECT * INTO v_res2 FROM org_place_closure_press(v_org, NULL, gen_random_uuid(),
+      jsonb_build_array(jsonb_build_object('venueId', v_v2, 'facilityId', v_f2)), v_day, v_day, 'postponed', NULL, '[]', '[]', '[]') p;
+    INSERT INTO r SELECT 'T17b a game no closure still marks is not marked unticked', CASE WHEN v_res2.refusal IS NULL AND v_res2.marks = 0 THEN 'pass'
+      ELSE format('%s marks %s', v_res2.refusal, v_res2.marks) END;
+    UPDATE org_place_closures SET reopened_at = now() WHERE id = ANY (v_res2.closures);
+    SELECT jsonb_agg(jsonb_build_object('id', e.id, 'seen', e.updated_at)) INTO v_rep FROM rep_team_events e WHERE e.id = v_r;
+    SELECT * INTO v_res FROM org_place_closure_press(v_org, NULL, gen_random_uuid(),
+      jsonb_build_array(jsonb_build_object('venueId', v_v2, 'facilityId', v_f1)), v_day, v_day, 'postponed', NULL, '[]', v_rep, '[]') p;
+    UPDATE rep_team_events SET starts_at = starts_at + interval '1 minute' WHERE id = v_r;  -- the coach moved it: the mark is spent
+    SELECT * INTO v_res2 FROM org_place_closure_press(v_org, NULL, gen_random_uuid(),
+      jsonb_build_array(jsonb_build_object('venueId', v_v2, 'facilityId', v_f2)), v_day, v_day, 'postponed', NULL, '[]', '[]', '[]') p;
+    INSERT INTO r SELECT 'T17c a game moved since its mark is not marked unticked', CASE WHEN v_res.marks = 1 AND v_res2.refusal IS NULL AND v_res2.marks = 0 THEN 'pass'
+      ELSE format('%s first %s, second %s', v_res2.refusal, v_res.marks, v_res2.marks) END;
   END IF;
 END $$;
 SELECT * FROM r ORDER BY t;

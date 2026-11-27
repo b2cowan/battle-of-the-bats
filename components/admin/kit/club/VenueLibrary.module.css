@@ -100,8 +100,6 @@
   .facKind { display: none; }
 }
 
-/* CLOSE A PLACE (Club Website Stage 2, K11): a closure showing on the site, one row at the top of the library — an amber
-   edge, the place, its days and who closed it, and Reopen (full width on its own line on a phone). */
 /* The table's heading over the three booking columns (owner 2026-11-26): one label spanning them, the other headings
    on the foot of the two-row head. Named by element too, so they outrank the table's own heading rule. */
 thead th.headFoot { vertical-align: bottom; }
@@ -110,11 +108,40 @@ thead th.groupHead { text-align: center; padding-bottom: 0.2rem; }
 thead th.countHead { width: 1%; }
 .facilityCount { white-space: nowrap; }
 
-.closedRow {
-  display: flex; flex-wrap: wrap; align-items: center; gap: 0.6rem 0.9rem; margin: 0 0 0.9rem; padding: 0.75rem 0.9rem;
+/* CLOSE A PLACE (Club Website Stage 2, K11; S4, the summary drawing's tabs 3–4): the closures showing, ONE box at the
+   top of the library — an amber edge, a quiet heading, a row per park and dates on hairlines. A row: its name and
+   Reopen on the first line, the two plain fact lines under the name (full width on a phone, the name and Reopen sharing
+   the 44px top line). The rows under "All our fields" (or a park) step in under a quiet band. */
+.closedBox {
+  margin: 0 0 0.9rem; padding: 0.35rem 0.9rem 0.2rem;
   border: 1px solid var(--home-line); border-left: 3px solid var(--warning); border-radius: 8px; background: var(--card-bg);
 }
-.closedBody { flex: 1 1 18rem; min-width: 0; display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.25rem 0.5rem; }
-.closedBody strong { font-weight: 650; }
-.closedLine { flex-basis: 100%; font-size: var(--type-support); color: var(--text-secondary); }
-@media (max-width: 639px) { .closedReopen { flex-basis: 100%; } }
+.closedHead {
+  margin: 0.45rem 0 0.2rem;
+  font-family: var(--font-data); /* type-ok: eyebrow */
+  font-size: var(--type-label);
+  font-weight: 700;
+  letter-spacing: 0.09em;
+  text-transform: uppercase; /* type-ok: eyebrow */
+  color: var(--text-secondary);
+}
+.closedRow {
+  display: grid; grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: 'name go' 'facts go';
+  align-items: center; gap: 0.15rem 0.9rem; padding: 0.65rem 0; border-top: 1px solid var(--home-line);
+}
+.closedUnder { padding-left: 1.25rem; }
+.closedName { grid-area: name; font-weight: 650; color: var(--text-primary); }
+.closedReopen { grid-area: go; }
+.closedFacts { grid-area: facts; display: flex; flex-direction: column; }
+.closedLine { font-size: var(--type-support); color: var(--text-secondary); line-height: 1.45; }
+/* A tinted strip from edge to edge of the box (the drawing's), so it never reads as one more fact line. */
+.closedBand {
+  margin: 0 -0.9rem; padding: 0.45rem 0.9rem 0.45rem 2.15rem; border-top: 1px solid var(--home-line); background: var(--home-paper);
+  font-size: var(--type-support); color: var(--text-secondary); line-height: 1.45;
+}
+@media (max-width: 640px) {
+  .closedRow { grid-template-areas: 'name go' 'facts facts'; }
+  .closedReopen { min-height: var(--tap-min, 44px); }
+  .closedUnder { padding-left: 0.75rem; }
+  .closedBand { padding-left: 1.65rem; }
+}

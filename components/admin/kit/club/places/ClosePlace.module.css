@@ -132,3 +132,7 @@ button.othersHead { cursor: pointer; }
 .resultRow .btn { align-self: flex-start; }
 .typedList { margin: 0.35rem 0 0; padding-left: 1.1rem; font-size: var(--type-support); color: var(--text-secondary); }
 .para { margin: 0 0 0.75rem; line-height: 1.5; color: var(--text-secondary); }
+
+/* Reopen (Session B, the summary drawing's tab 5): its ticks are the send windows' rows (a tick per diamond, S5; one
+   "Reopen those as well", S6); a diamond's facts are two plain lines under its name. */
+.tickLine { display: block; }

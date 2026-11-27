@@ -227,7 +227,7 @@ describe('the admin\'s ticks survive a change of places (the drawing\'s tab 2)',
     linkedToPlace: true, place: 0, match: 'linked', started: false, seen: 'x', ...o,
   });
   const src = (league: CloseLeagueGame[], rep: CloseRepGame[] = []): CloseSource => ({
-    today: DAY, places: [lions], seasons: [], league, rep, repHidden: false, tournaments: [], practices: 0, families: [], repReach: {},
+    today: DAY, places: [lions], seasons: [], league, rep, repHeld: [], repHidden: false, tournaments: [], practices: 0, families: [], repReach: {},
   });
   it('an unticked game stays unticked; a new park\'s games arrive with the opening ticks', () => {
     const known = new Map([['a', { ticked: false, started: false }], ['b', { ticked: true, started: false }]]);

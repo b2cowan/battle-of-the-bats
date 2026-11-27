@@ -11,9 +11,12 @@ import { hasModuleEntitlement, type EntitlementOrg } from './module-entitlements
 import { sendRainout } from './league-rainout-send';
 import { addCalendarDays, orgDayKey, tournamentToday, zonedWallClockToUtc } from './timezone';
 import { isAllDiamonds, markPlaceOfAll, markSpent, type ClosureScope, type ClosureVerb, type RepMark } from './place-closures';
-import { placeClosureSource } from './place-closures-server';
+import { placeClosureSource, reopenPlaceClosure } from './place-closures-server';
 import { isUuid } from './utils';
-import { closedParks, mayCloseEveryPlace, seesEveryProgram, type CloseFrame, type CloseSource, type RepReach, type StaffClosure } from './place-closure-window';
+import {
+  closedParks, mayCloseEveryPlace, seesEveryProgram,
+  type ClosureFacts, type CloseFrame, type CloseHeldGame, type CloseSource, type RepReach, type ReopenPreview, type StaffClosure,
+} from './place-closure-window';
 import { sendClosureCoachEmails, type CoachMailTeam } from './place-closure-mail';
 import type { RainSendDivision } from './league-rainout';
 import type { OrgRole } from './types';
@@ -118,6 +121,9 @@ export async function closeSource(org: Org, role: OrgRole, input: {
   const runsLeague = hasModuleEntitlement(org, 'module_house_league');
   const runsRep = hasModuleEntitlement(org, 'module_rep_teams');
   const runsTournaments = hasModuleEntitlement(org, 'module_tournaments');
+  // T2: a rep game a closure still showing already marks is marked again by the press, quietly (mig 551): listed apart,
+  // never ticked, its coach not emailed again. Read alongside the rest.
+  const heldRead = runsRep ? heldBy(org.id, src.rep.map(g => g.id)) : Promise.resolve(new Map<string, Pick<CloseHeldGame, 'by' | 'closures'>>());
 
   const lib = await getClubVenueLibrary({ id: org.id, planId: org.planId } as Parameters<typeof getClubVenueLibrary>[0]);
   const fieldName = new Map(lib.venues.flatMap(v => v.facilities.map(f => [f.id, f.name] as const)));
@@ -138,8 +144,10 @@ export async function closeSource(org: Org, role: OrgRole, input: {
     for (const kids of fam.values()) families.push([...new Set(kids.map(k => k.teamId))]);
   }
 
+  const held = await heldRead;
   // Rep: a house league admin gets the games on the place, still to start, as ids and times (K1: a count, no names).
-  const rep = !runsRep ? [] : everyProgram ? src.rep : src.rep.filter(g => g.match === 'linked' && !g.started);
+  const theirs = (g: { match: string; started: boolean }) => everyProgram || (g.match === 'linked' && !g.started);
+  const rep = !runsRep ? [] : src.rep.filter(g => !held.has(g.id) && theirs(g));
   const repReach = await repReachOf(org.id, [...new Set(rep.map(g => g.teamId))]);
 
   return {
@@ -162,6 +170,11 @@ export async function closeSource(org: Org, role: OrgRole, input: {
       typed: everyProgram ? g.typed : null, linkedToPlace: !!g.venueId,
       place: g.place, match: g.match, started: g.started, seen: g.seen,
     })),
+    // K1: a house league admin counts only the rep games they see at all (on the place by its id, not started).
+    repHeld: src.rep.filter(theirs).flatMap(g => {
+      const h = held.get(g.id);
+      return h ? [{ id: g.id, teamName: everyProgram ? g.teamName : '', opponent: everyProgram ? g.opponent : null, ...h }] : [];
+    }),
     repHidden: !everyProgram,
     tournaments: (runsTournaments ? src.tournaments : []).map(t => ({
       id: t.id, name: t.name, games: t.games, atPlace: t.atPlace, diamondIds: t.diamondIds, door: everyProgram,
@@ -172,6 +185,24 @@ export async function closeSource(org: Org, role: OrgRole, input: {
   };
 }
 
+/**
+ * T2 (owner 2026-11-26, as recommended at the gate): the rep games among these that a closure still showing already marks
+ * (not reopened, not past its last day, the game not moved or cancelled), each with those places as one ("Diamond 1 at
+ * Lions Park"). Outside `except` (the press's own closures, after it). The press marks such a game again with the coach
+ * already told, so it stays marked until every closure over it reopens and nobody is emailed twice (mig 551).
+ */
+async function heldBy(orgId: string, eventIds: readonly string[], now: Date = new Date()): Promise<Map<string, Pick<CloseHeldGame, 'by' | 'closures'>>> {
+  if (!eventIds.length) return new Map();
+  const marks = (await standingMarksBy(orgId, 'event_id', eventIds)).filter(m => stillClosing(m, now.getTime()));
+  return new Map([...byEvent(marks)].map(([id, ms]) => [id, { by: markPlaceOfAll(ms.map(m => m.closure)), closures: new Set(ms.map(m => m.closureId)).size }]));
+}
+
+/** A mark's closure still closes its game: not reopened, not past its last day, and not one of `excluding` (a set being
+ *  reopened). T2's "already marked" and Reopen's "still held" ask the same. */
+function stillClosing(m: GameMark, nowMs: number, excluding: ReadonlySet<string> = new Set()): boolean {
+  return !excluding.has(m.closureId) && !m.closure.reopenedAt && Date.parse(m.closure.endsAt) > nowMs;
+}
+
 // ── After the press: the sends ─────────────────────────────────────────────────────────────────────────────────────
 
 export interface ClosureSendResult {
@@ -180,7 +211,11 @@ export interface ClosureSendResult {
     /** A season's send could not even start (its read failed): its changes wait in Changes to send. */
     unsent: boolean;
   };
-  rep: { games: number; teams: { teamId: string; name: string; reach: RepReach; sent: boolean }[] };
+  rep: {
+    games: number; teams: { teamId: string; name: string; reach: RepReach; sent: boolean }[];
+    /** T2: games a closure outside this press already marked, marked again quietly (their coach not emailed again). */
+    held: number;
+  };
 }
 
 /**
@@ -195,7 +230,7 @@ export async function sendAfterPress(p: {
   org: Org; actor: { id: string; email: string | null; role: OrgRole; name: string | null };
   closureIds: readonly string[]; rainoutIds: readonly string[];
 }): Promise<ClosureSendResult> {
-  const out: ClosureSendResult = { league: { verb: 'postponed', games: 0, teams: 0, divisions: [], unsent: false }, rep: { games: 0, teams: [] } };
+  const out: ClosureSendResult = { league: { verb: 'postponed', games: 0, teams: 0, divisions: [], unsent: false }, rep: { games: 0, teams: [], held: 0 } };
 
   // House league, one Rainout record per closure, season and day: sent per season, its divisions together.
   let rainouts: { id: string; season_id: string; verb: ClosureVerb; game_ids: string[]; division_ids: string[] }[] = [];
@@ -239,9 +274,14 @@ export async function sendAfterPress(p: {
 
   // Rep: one email per marked team (K10), the marks not yet emailed — claimed first.
   try {
-    const marks = await fetchAllIn<{ id: string; closure_id: string; event_id: string; team_id: string; coach_emailed_at: string | null }>(
-      [...p.closureIds], (c, a, b) => supabaseAdmin.from('rep_event_closure_marks').select('id, closure_id, event_id, team_id, coach_emailed_at')
+    const all = await fetchAllIn<{ id: string; closure_id: string; event_id: string; team_id: string; coach_emailed_at: string | null; created_at: string }>(
+      [...p.closureIds], (c, a, b) => supabaseAdmin.from('rep_event_closure_marks').select('id, closure_id, event_id, team_id, coach_emailed_at, created_at')
         .eq('org_id', p.org.id).in('closure_id', c).order('id').range(a, b));
+    // T2: the press itself decided which games were already marked (mig 551): their marks arrived told, stamped no later
+    // than the press wrote them (an earlier coach email, or the press's own instant); this send's claims stamp later.
+    const held = new Set(all.filter(m => m.coach_emailed_at && Date.parse(m.coach_emailed_at) <= Date.parse(m.created_at)).map(m => m.event_id));
+    out.rep.held = held.size;
+    const marks = all.filter(m => !held.has(m.event_id));
     // A game counts once, however many closures of the press marked it (D1, mig 549).
     out.rep.games = new Set(marks.map(m => m.event_id)).size;
     if (marks.length) {
@@ -299,14 +339,14 @@ function byEvent<T extends { eventId: string }>(marks: readonly T[]): Map<string
  * Lions Park that were closed" (/legal).
  */
 async function mailTeamsOf(orgId: string, closureIds: readonly string[], marks: { markId: string; closureId: string; eventId: string; teamId: string }[],
-  severalDiamonds?: ReadonlySet<string>): Promise<CoachMailTeam[]> {
+  severalDiamonds?: ReadonlySet<string>, left?: readonly LeftClosure[]): Promise<CoachMailTeam[]> {
   const teamIds = [...new Set(marks.map(m => m.teamId))];
   const [closures, events, teams, heads, staff] = await Promise.all([
     fetchAllIn<{ id: string; scope: ClosureScope; org_venue_id: string | null; place_name: string | null; facility_name: string | null; first_day: string; last_day: string; press_seq: number }>(
       [...closureIds], (c, a, b) => supabaseAdmin.from('org_place_closures').select('id, scope, org_venue_id, place_name, facility_name, first_day, last_day, press_seq')
         .eq('org_id', orgId).in('id', c).order('id').range(a, b)),
-    fetchAllIn<{ id: string; starts_at: string; opponent: string | null }>([...new Set(marks.map(m => m.eventId))], (c, a, b) =>
-      supabaseAdmin.from('rep_team_events').select('id, starts_at, opponent').in('id', c).order('id').range(a, b)),
+    fetchAllIn<{ id: string; starts_at: string; opponent: string | null; org_venue_id: string | null; org_venue_facility_id: string | null }>([...new Set(marks.map(m => m.eventId))], (c, a, b) =>
+      supabaseAdmin.from('rep_team_events').select('id, starts_at, opponent, org_venue_id, org_venue_facility_id').in('id', c).order('id').range(a, b)),
     fetchAllIn<{ id: string; name: string }>(teamIds, (c, a, b) =>
       supabaseAdmin.from('rep_teams').select('id, name').in('id', c).order('id').range(a, b)),
     loadHeadCoaches(orgId, teamIds),
@@ -316,7 +356,18 @@ async function mailTeamsOf(orgId: string, closureIds: readonly string[], marks: 
   const eventOf = new Map(events.map(e => [e.id, e]));
   const nameOf = new Map(teams.map(t => [t.id, t.name]));
   const otherIds = [...new Set(staff.filter(s => s.coachRole !== 'head_coach').map(s => s.userId))];
-  const ids = await resolveCoachUserIdentities(orgId, otherIds);
+  // Reopen only: the club place each game itself is at, by name (/legal, Session B: named where something stays closed).
+  const venueIds = left ? [...new Set(events.flatMap(e => (e.org_venue_id ? [e.org_venue_id] : [])))] : [];
+  const facilityIds = left ? [...new Set(events.flatMap(e => (e.org_venue_facility_id ? [e.org_venue_facility_id] : [])))] : [];
+  const [ids, venues, facilities] = await Promise.all([
+    resolveCoachUserIdentities(orgId, otherIds),
+    fetchAllIn<{ id: string; name: string }>(venueIds, (c, a, b) =>
+      supabaseAdmin.from('org_venues').select('id, name').eq('org_id', orgId).in('id', c).order('id').range(a, b)),
+    fetchAllIn<{ id: string; name: string }>(facilityIds, (c, a, b) =>
+      supabaseAdmin.from('org_venue_facilities').select('id, name').eq('org_id', orgId).in('id', c).order('id').range(a, b)),
+  ]);
+  const venueName = new Map(venues.map(v => [v.id, v.name]));
+  const facilityName = new Map(facilities.map(f => [f.id, f.name]));
   return teamIds.map(teamId => {
     const headPeople = (heads.get(teamId)?.people ?? []).filter(p => !!p.email).map(p => ({ name: p.name, email: p.email! }));
     const otherPeople = staff.filter(s => s.teamId === teamId && s.coachRole !== 'head_coach')
@@ -334,10 +385,22 @@ async function mailTeamsOf(orgId: string, closureIds: readonly string[], marks: 
         const c = cs[0].c;
         const words = cs.length > 1 ? markPlaceOfAll(cs.map(x => ({ scope: x.c.scope, venueId: x.c.org_venue_id, placeName: x.c.place_name, facilityName: x.c.facility_name }))) : undefined;
         const reopenPark = severalDiamonds?.has(eventId) ? c.place_name : null;
+        const mailClosure = (x: typeof c) => ({ scope: x.scope, placeName: x.place_name, facilityName: x.facility_name, firstDay: x.first_day, lastDay: x.last_day });
+        let reopen = {};
+        if (left) {
+          const park = e.org_venue_id ? venueName.get(e.org_venue_id) ?? null : null;
+          const day = orgDayKey(e.starts_at);
+          reopen = {
+            closures: cs.map(x => mailClosure(x.c)),
+            at: park ? { park, diamond: e.org_venue_facility_id ? facilityName.get(e.org_venue_facility_id) ?? null : null } : null,
+            stillClosed: left.some(l => l.first_day <= day && day <= l.last_day && cs.some(x => insideOf(l, x.c))),
+            parkStillClosed: !!e.org_venue_id && left.some(l => l.first_day <= day && day <= l.last_day && l.org_venue_id === e.org_venue_id),
+          };
+        }
         return [{
           markIds: cs.map(x => x.m.markId), startsAt: e.starts_at, opponent: e.opponent,
-          closure: { scope: c.scope, placeName: c.place_name, facilityName: c.facility_name, firstDay: c.first_day, lastDay: c.last_day },
-          ...(words ? { placeWords: words } : {}), ...(reopenPark ? { reopenPark } : {}),
+          closure: mailClosure(c),
+          ...(words ? { placeWords: words } : {}), ...(reopenPark ? { reopenPark } : {}), ...reopen,
         }];
       }).sort((a, b) => a.startsAt.localeCompare(b.startsAt)),
     };
@@ -346,8 +409,12 @@ async function mailTeamsOf(orgId: string, closureIds: readonly string[], marks: 
 
 // ── The Venue library's closed rows ────────────────────────────────────────────────────────────────────────────────
 
-/** The club's closures still showing (not reopened, not past Until): the Venue library's rows and the Overview's line. */
-export async function showingClosures(orgId: string, now: Date = new Date()): Promise<StaffClosure[]> {
+/**
+ * The club's closures still showing (not reopened, not past Until), each with what it did by game id: the Overview's line,
+ * the Close window's preview and the Venue library's box (`closureRows` turns them into its rows, counting a game once;
+ * the ids never leave the server).
+ */
+export async function showingClosureFacts(orgId: string, now: Date = new Date()): Promise<ClosureFacts[]> {
   const at = now.toISOString();
   const { data, error } = await supabaseAdmin.from('org_place_closures')
     .select('id, scope, org_venue_id, place_name, facility_name, first_day, last_day, verb, created_at, closed_by, shows_from, ends_at')
@@ -358,46 +425,32 @@ export async function showingClosures(orgId: string, now: Date = new Date()): Pr
     first_day: string; last_day: string; verb: ClosureVerb; created_at: string; closed_by: string | null; shows_from: string; ends_at: string }[];
   if (!rows.length) return [];
   const ids = rows.map(r => r.id);
-  const [rainouts, marks, people] = await Promise.all([
-    fetchAllIn<{ closure_id: string; season_id: string; game_ids: string[] }>(ids, (c, a, b) =>
-      supabaseAdmin.from('league_rainouts').select('closure_id, season_id, game_ids').in('closure_id', c).order('id').range(a, b)),
+  const [called, marks, people] = await Promise.all([
+    calledOffBy(orgId, ids),
     standingMarksBy(orgId, 'closure_id', ids),
     resolveCoachUserIdentities(orgId, [...new Set(rows.flatMap(r => (r.closed_by ? [r.closed_by] : [])))]),
   ]);
+  return rows.map(r => ({
+    closure: {
+      id: r.id, scope: r.scope, venueId: r.org_venue_id, placeName: r.place_name, facilityName: r.facility_name,
+      firstDay: r.first_day, lastDay: r.last_day, verb: r.verb, closedAt: r.created_at, showsFrom: r.shows_from, endsAt: r.ends_at,
+      closedBy: r.closed_by ? people.get(r.closed_by)?.displayName ?? null : null,
+    },
+    // Still as this closure left them (postponed still postponed, cancelled still cancelled).
+    calledOff: [...new Set(called.filter(x => x.closureId === r.id).flatMap(x => x.games.filter(g => g.status === r.verb).map(g => g.id)))],
+    markEvents: [...new Set(marks.filter(x => x.closureId === r.id).map(x => x.eventId))],
+  }));
+}
+
+/** The house league games these closures called off (any state, reopened or not), by closure, with their status now. */
+async function calledOffBy(orgId: string, closureIds: readonly string[]): Promise<{ closureId: string; seasonId: string; verb: ClosureVerb; games: { id: string; status: string }[] }[]> {
+  const rainouts = await fetchAllIn<{ closure_id: string; season_id: string; verb: ClosureVerb; game_ids: string[] }>([...closureIds], (c, a, b) =>
+    supabaseAdmin.from('league_rainouts').select('closure_id, season_id, verb, game_ids').eq('org_id', orgId).in('closure_id', c).order('id').range(a, b));
   const gameIds = [...new Set(rainouts.flatMap(r => r.game_ids))];
   const games = await fetchAllIn<{ id: string; status: string }>(gameIds, (c, a, b) =>
     supabaseAdmin.from('league_games').select('id, status').in('id', c).order('id').range(a, b));
   const statusOf = new Map(games.map(g => [g.id, g.status]));
-  const teamIds = [...new Set(marks.map(m => m.teamId))];
-  const [teams, onGames] = await Promise.all([
-    fetchAllIn<{ id: string; name: string }>(teamIds, (c, a, b) =>
-      supabaseAdmin.from('rep_teams').select('id, name').in('id', c).order('id').range(a, b)),
-    standingMarksBy(orgId, 'event_id', marks.map(m => m.eventId)),
-  ]);
-  const teamName = new Map(teams.map(t => [t.id, t.name]));
-  return rows.map(r => {
-    const mine = rainouts.filter(x => x.closure_id === r.id);
-    const own = marks.filter(x => x.closureId === r.id);
-    // D1: a game another closure still marks keeps its mark when this one reopens, and its coach isn't told yet.
-    const facts = reopenFacts(own, onGames, at);
-    const kept = own.filter(x => facts.holders.has(x.id));
-    const m = own.filter(x => !facts.holders.has(x.id));
-    const holders = [...new Map(kept.flatMap(x => facts.holders.get(x.id)!).map(h => [h.closureId, h.closure])).values()];
-    return {
-      id: r.id, scope: r.scope, venueId: r.org_venue_id, placeName: r.place_name, facilityName: r.facility_name,
-      firstDay: r.first_day, lastDay: r.last_day, verb: r.verb, closedAt: r.created_at, showsFrom: r.shows_from, endsAt: r.ends_at,
-      closedBy: r.closed_by ? people.get(r.closed_by)?.displayName ?? null : null,
-      // Still as this closure left them (postponed still postponed, cancelled still cancelled); only a postponed one waits
-      // for a date (Reopen reads `verb` with it).
-      leagueCalledOff: new Set(mine.flatMap(x => x.game_ids).filter(id => statusOf.get(id) === r.verb)).size,
-      seasonIds: [...new Set(mine.map(x => x.season_id))],
-      marks: own.length, markTeams: [...new Set(m.map(x => x.teamId))],
-      markTeamNames: [...new Set(m.map(x => teamName.get(x.teamId) ?? ''))].filter(Boolean),
-      marksKept: kept.length,
-      keptWhile: closedParks(holders),
-      marksSeveral: m.length > 0 && m.every(x => facts.severalDiamonds.has(x.eventId)),
-    };
-  });
+  return rainouts.map(r => ({ closureId: r.closure_id, seasonId: r.season_id, verb: r.verb, games: r.game_ids.map(id => ({ id, status: statusOf.get(id) ?? '' })) }));
 }
 
 // ── The marks Reopen reads ─────────────────────────────────────────────────────────────────────────────────────────
@@ -437,19 +490,19 @@ async function standingMarksBy(orgId: string, by: 'closure_id' | 'event_id', ids
 }
 
 /**
- * D1 (mig 549), for each of one closure's marks against every standing mark on its game (`onGames`):
- *   `holders` — the OTHER closures still closing that game (not reopened, not past their last day): reopening leaves such a
- *   game marked, and its coach gets no "reopened" line until the last of them reopens.
+ * D1 (mig 549), for each of the reopened closures' marks against every standing mark on its game (`onGames`):
+ *   `holders` — the closures OUTSIDE the set (`reopening`) still closing that game (not reopened, not past their last
+ *   day): reopening leaves such a game marked, and its coach gets no "reopened" line until the last of them reopens.
  *   `severalDiamonds` — the games (by id) whose marks span two or more diamonds of this closure's park.
  */
-function reopenFacts(own: readonly GameMark[], onGames: readonly GameMark[], nowIso: string) {
+function reopenFacts(own: readonly GameMark[], onGames: readonly GameMark[], nowIso: string, reopening: ReadonlySet<string> = new Set()) {
   const holders = new Map<string, GameMark[]>();
   const severalDiamonds = new Set<string>();
   const nowMs = Date.parse(nowIso);
   const byGame = byEvent(onGames);
   for (const m of own) {
     const all = byGame.get(m.eventId) ?? [];
-    const held = all.filter(x => x.closureId !== m.closureId && !x.closure.reopenedAt && Date.parse(x.closure.endsAt) > nowMs);
+    const held = all.filter(x => x.closureId !== m.closureId && stillClosing(x, nowMs, reopening));
     if (held.length) holders.set(m.id, held);
     if (m.closure.scope === 'diamond' && m.closure.venueId) {
       const diamonds = new Set(all.filter(x => x.closure.scope === 'diamond' && x.closure.venueId === m.closure.venueId).map(x => x.closure.facilityName));
@@ -470,12 +523,14 @@ export interface ReopenTold {
 }
 
 /**
- * What Reopen of one closure tells the coaches (K11 A, D1): its standing marks, not yet told, whose game no other closure
- * still closes. ⚠ Read AFTER the reopen stamps the closure: two diamonds reopened at the same moment would otherwise each
- * see the other still holding the game, and nobody would be told. After the stamps, at least the later read sees neither.
+ * What Reopen of a set of closures tells the coaches (K11 A, D1, S5): their standing marks, not yet told, whose game no
+ * other closure still closes. ⚠ Read AFTER the reopen stamps them: two diamonds reopened at the same moment would
+ * otherwise each see the other still holding the game, and nobody would be told. After the stamps, at least the later
+ * read sees neither — and one read over the whole set (S5) sees every game once, so a coach with games on two diamonds
+ * reopened together is one email.
  */
-export async function reopenTold(orgId: string, closureId: string, now: Date = new Date()): Promise<ReopenTold> {
-  const own = await standingMarksBy(orgId, 'closure_id', [closureId]);
+export async function reopenTold(orgId: string, closureIds: readonly string[], now: Date = new Date()): Promise<ReopenTold> {
+  const own = await standingMarksBy(orgId, 'closure_id', closureIds);
   const onGames = await standingMarksBy(orgId, 'event_id', own.map(m => m.eventId));
   const facts = reopenFacts(own, onGames, now.toISOString());
   const standing = own.filter(m => !m.reopenToldAt && !facts.holders.has(m.id));
@@ -485,19 +540,120 @@ export async function reopenTold(orgId: string, closureId: string, now: Date = n
 }
 
 /**
+ * What Reopen of this set would do (S5, S6, the Reopen windows' figures), counted here and never added up in the browser:
+ * a game two of the set's closures mark counts once, a mark held only by a sibling in the set comes off, and a house league
+ * admin gets counts with no team's name (K1). Read before any stamp, so a closure outside the set holds what it holds.
+ */
+export async function reopenPreview(org: Org, role: OrgRole, ids: readonly string[], now: Date = new Date()): Promise<ReopenPreview> {
+  const set = new Set(ids);
+  // A closure of the set someone already reopened (a page left open) does nothing more: its marks are not counted.
+  const [{ own, onGames }, waiting] = await Promise.all([
+    standingMarksBy(org.id, 'closure_id', ids).then(async all => {
+      const own = all.filter(m => !m.closure.reopenedAt);
+      return { own, onGames: await standingMarksBy(org.id, 'event_id', own.map(m => m.eventId)) };
+    }),
+    stillWaitingOf(org.id, ids),
+  ]);
+  const facts = reopenFacts(own, onGames, now.toISOString(), set);
+  // A game stays marked when any closure outside the set holds it; else its mark comes off, and its coach is emailed
+  // unless an earlier Reopen already told them (the send's own rule, `reopenTold`).
+  const keptGames = new Set(own.filter(m => facts.holders.has(m.id)).map(m => m.eventId));
+  const offGames = own.filter(m => !keptGames.has(m.eventId));
+  const teams = [...new Set(offGames.filter(m => !m.reopenToldAt).map(m => m.teamId))];
+  const holders = [...new Map(own.flatMap(m => facts.holders.get(m.id) ?? []).map(h => [h.closureId, h.closure])).values()];
+  let team: string | null = null;
+  if (teams.length === 1 && seesEveryProgram(role)) {
+    const { data } = await supabaseAdmin.from('rep_teams').select('name').eq('id', teams[0]).maybeSingle();
+    team = (data as { name: string } | null)?.name ?? null;
+  }
+  return {
+    marksOff: new Set(offGames.map(m => m.eventId)).size, coaches: teams.length, team,
+    kept: keptGames.size, keptWhile: closedParks(holders),
+    stillWaiting: waiting.games, seasonIds: waiting.seasonIds,
+  };
+}
+
+/** The postponed house league games these closures called off that still wait for a date, each once, and their seasons.
+ *  Read by the closures' ids whether reopened or not, so a retried Reopen still finds them. */
+async function stillWaitingOf(orgId: string, closureIds: readonly string[]): Promise<{ games: number; seasonIds: string[] }> {
+  // Only what these closures POSTPONED, still postponed (a game one cancelled and someone postponed later is not theirs).
+  const called = (await calledOffBy(orgId, closureIds)).filter(x => x.verb === 'postponed');
+  const waiting = new Set(called.flatMap(x => x.games.filter(g => g.status === 'postponed').map(g => g.id)));
+  return { games: waiting.size, seasonIds: [...new Set(called.filter(x => x.games.some(g => waiting.has(g.id))).map(x => x.seasonId))] };
+}
+
+/**
+ * REOPEN A SET (S5, S6; one press, one email per coach): stamp each chosen closure (mig 539's one-closure stamp, which
+ * touches nothing else), then ONE read of whom to tell over every closure that did reopen, then ONE coach send. Not
+ * all-or-nothing, by design (the gate, 2026-11-26): a stamp that fails is said, and the coaches of the ones that did
+ * reopen are still told — they leave the list, so nothing would ever tell them later. A retry stamps nothing twice
+ * (`already`) and still returns the waiting games. Never throws past a closure that isn't the club's.
+ */
+export async function reopenClosures(p: {
+  org: Org; actor: { id: string; email: string | null; role: OrgRole; name: string | null }; ids: readonly string[];
+}): Promise<{ refusal: 'not_found' } | { refusal: null; reopened: string[]; failed: string[]; coaches: number; stillWaiting: number; seasonIds: string[] }> {
+  // Every id the club's own, or nothing is stamped (a closure of another club, or one deleted with its place, is not_found).
+  const { data: mine, error } = await supabaseAdmin.from('org_place_closures').select('id').eq('org_id', p.org.id).in('id', [...p.ids]);
+  if (error) throw error;
+  if ((mine ?? []).length !== new Set(p.ids).size) return { refusal: 'not_found' };
+  const reopened: string[] = [];
+  const failed: string[] = [];
+  for (const id of p.ids) {
+    try {
+      const r = await reopenPlaceClosure(p.org.id, id, p.actor.id);
+      (r.refusal === 'not_found' ? failed : reopened).push(id);
+    } catch (err) {
+      failed.push(id);
+      console.error('[place-closure] a closure did not reopen:', err instanceof Error ? err.message : String(err));
+    }
+  }
+  if (!reopened.length) return { refusal: null, reopened, failed, coaches: 0, stillWaiting: 0, seasonIds: [] };
+  const [mail, waiting] = await Promise.all([
+    reopenTold(p.org.id, reopened).then(told => reopenCoachEmails({ ...told, org: p.org, actor: p.actor, closureIds: reopened })),
+    // A failed read fails the press's answer (never "nothing waits"): the stamps hold, and pressing again answers in full.
+    stillWaitingOf(p.org.id, reopened),
+  ]);
+  return { refusal: null, reopened, failed, coaches: mail.teams, stillWaiting: waiting.games, seasonIds: waiting.seasonIds };
+}
+
+/** A closure still showing after a Reopen, as the coach's words read it (/legal Session B: is something inside the place
+ *  reopened still closed on the game's day?). */
+type LeftClosure = { scope: ClosureScope; org_venue_id: string | null; facility_name: string | null; first_day: string; last_day: string };
+
+/** Something `left` closes lies inside what `r` closed (every place holds all; a park its diamonds; a diamond itself). */
+const insideOf = (c: LeftClosure, r: { scope: ClosureScope; org_venue_id: string | null; facility_name: string | null }) =>
+  r.scope === 'all' || (!!r.org_venue_id && c.org_venue_id === r.org_venue_id && (r.scope === 'place' || (c.scope === 'diamond' && c.facility_name === r.facility_name)));
+
+/**
  * Reopen's emails (K11 A): each marked game's coach that still stands (the coach hasn't moved or cancelled it) gets one
  * line. Never throws.
  */
 export async function reopenCoachEmails(p: ReopenTold & {
-  org: Org; actor: { id: string; email: string | null; role: OrgRole; name: string | null }; closureId: string;
+  org: Org; actor: { id: string; email: string | null; role: OrgRole; name: string | null }; closureIds: readonly string[];
 }) {
+  const claimed = new Set<string>();
+  /** This run's claims on the games it holds (their first mark came back to it). A sibling mark claimed on a game another
+   *  run holds stays told: giving it back would let a later Reopen take that game again and email its coach twice. */
+  const ours = () => [...new Set(p.standing.filter(m => claimed.has(p.gameMarks.get(m.eventId)?.[0] ?? ''))
+    .flatMap(m => (p.gameMarks.get(m.eventId) ?? []).filter(id => claimed.has(id))))];
+  /** A claim of this run not settled by a sent email goes back, so the next Reopen press tells that coach. */
+  const giveBack = async (ids: readonly string[]) => {
+    for (const c of chunked([...ids])) {
+      const { error } = await supabaseAdmin.from('rep_event_closure_marks').update({ reopen_told_at: null }).eq('org_id', p.org.id).in('id', c);
+      if (error) console.error('[place-closure] a failed reopen email\'s claim was not given back:', error.message);
+    }
+  };
   try {
     if (!p.standing.length || !p.actor.email) return { teams: 0 };
+    // What still shows after the stamps, read BEFORE any claim (a failed read then claims nothing): the words name a game's
+    // own place where something inside the place reopened is still closed on its day (/legal, Session B).
+    const { data: leftRows, error: leftErr } = await supabaseAdmin.from('org_place_closures')
+      .select('scope, org_venue_id, facility_name, first_day, last_day').eq('org_id', p.org.id).is('reopened_at', null).gt('ends_at', new Date().toISOString());
+    if (leftErr) throw leftErr;
     // A game is CLAIMED whole (`reopen_told_at`, a stamp only where none is), every closure's mark on it in one statement,
     // and it is this run's only if its first mark came back: so a retried Reopen, a second Reopen at the same moment, or
     // Reopen pressed again on an earlier diamond never emails a coach twice. A failed email gives the claim back.
     const marksOfGames = p.standing.flatMap(m => p.gameMarks.get(m.eventId) ?? []);
-    const claimed = new Set<string>();
     for (const ids of chunked([...new Set(marksOfGames)])) {
       const { data, error } = await supabaseAdmin.from('rep_event_closure_marks').update({ reopen_told_at: new Date().toISOString() })
         .eq('org_id', p.org.id).in('id', ids).is('reopen_told_at', null).select('id');
@@ -506,17 +662,18 @@ export async function reopenCoachEmails(p: ReopenTold & {
     }
     const mine = p.standing.filter(m => claimed.has(p.gameMarks.get(m.eventId)?.[0] ?? ''));
     if (!mine.length) return { teams: 0 };
-    const teams = (await mailTeamsOf(p.org.id, [p.closureId], mine.map(m => ({ markId: m.id, closureId: m.closureId, eventId: m.eventId, teamId: m.teamId })), p.severalDiamonds))
-      .filter(t => t.games.length);
+    const teams = (await mailTeamsOf(p.org.id, p.closureIds, mine.map(m => ({ markId: m.id, closureId: m.closureId, eventId: m.eventId, teamId: m.teamId })), p.severalDiamonds,
+      (leftRows ?? []) as LeftClosure[])).filter(t => t.games.length);
     const sent = await sendClosureCoachEmails({ org: p.org, actor: p.actor, kind: 'reopened', teams });
-    const failed = new Set(teams.filter(t => !sent.find(x => x.teamId === t.teamId)?.sent).flatMap(t => t.games.flatMap(g => g.markIds)));
-    const back = mine.filter(m => failed.has(m.id)).flatMap(m => (p.gameMarks.get(m.eventId) ?? []).filter(id => claimed.has(id)));
-    for (const ids of chunked(back)) {
-      const { error } = await supabaseAdmin.from('rep_event_closure_marks').update({ reopen_told_at: null }).eq('org_id', p.org.id).in('id', ids);
-      if (error) console.error('[place-closure] a failed reopen email\'s claim was not given back:', error.message);
-    }
+    const done = new Set(teams.filter(t => sent.find(x => x.teamId === t.teamId)?.sent).flatMap(t => t.games.flatMap(g => g.markIds)));
+    // Settled: every mark of a game whose email went. Everything else this run claimed goes back.
+    const settled = new Set(mine.filter(m => done.has(m.id)).flatMap(m => p.gameMarks.get(m.eventId) ?? []));
+    await giveBack(ours().filter(id => !settled.has(id)));
     return { teams: sent.filter(x => x.sent).length };
   } catch (err) {
+    // A throw after a claim (a read, the send) must not strand it: the closures are reopened and leave the list, so
+    // nothing else would ever tell those coaches.
+    await giveBack(ours()).catch(() => undefined);
     console.error('[place-closure] the reopen coach emails did not run:', err instanceof Error ? err.message : String(err));
     return { teams: 0 };
   }

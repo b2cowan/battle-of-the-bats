@@ -20,9 +20,9 @@ type Press = Record<string, unknown>;
 /** The club's own season, as the T1 server check finds it (`getLeagueSeasonById`). */
 const SEASON = U(50);
 function harness(o: { plan?: string; role?: string; refusal?: string | null; replay?: boolean; addons?: string[]; venues?: number } = {}) {
-  const calls = { press: [] as Press[], sends: [] as unknown[], reopen: [] as unknown[], reopenMail: [] as unknown[] };
+  const calls = { press: [] as Press[], sends: [] as unknown[], reopen: [] as { ids: string[] }[], preview: [] as { role: string; ids: string[] }[] };
   const showing = [{ id: U(9), scope: 'place', venueId: U(1), placeName: 'Lions Park', facilityName: null, firstDay: DAY, lastDay: DAY,
-    verb: 'postponed', closedAt: `${DAY}T12:10:00Z`, closedBy: 'Dana Reyes', leagueCalledOff: 4, seasonIds: ['s1'], marks: 1, markTeams: ['t'], markTeamNames: ['U13 Ospreys'] }];
+    verb: 'postponed', closedAt: `${DAY}T12:10:00Z`, closedBy: 'Dana Reyes' }];
   const load = billingTestLoader({
     '@/lib/api-auth': {
       getAuthContextWithScope: async () => ({
@@ -41,7 +41,6 @@ function harness(o: { plan?: string; role?: string; refusal?: string | null; rep
         if (o.refusal) return { refusal: o.refusal };
         return { refusal: null, closureIds: [U(9)], rainoutIds: [U(8)], marks: 1, replay: !!o.replay };
       },
-      reopenPlaceClosure: async (...a: unknown[]) => { calls.reopen.push(a); return { refusal: null, reopenedAt: `${DAY}T15:00:00Z`, already: false }; },
     },
     '@/lib/place-closure-window-server': {
       closeFrame: async () => ({ today: DAY, venues: Array.from({ length: o.venues ?? 0 }, (_, i) => ({ id: U(60 + i), name: `P${i}`, facilities: [], allDiamonds: false })), canAll: true, rep: true }),
@@ -49,21 +48,28 @@ function harness(o: { plan?: string; role?: string; refusal?: string | null; rep
         mayCloseEveryPlace(role, { noPlaces: venues === 0, fromSeason: seasonId === SEASON }),
       closeSource: async () => ({ places: [], rep: [{ id: U(3) }] }),
       seasonPlacesOn: async () => [],
-      showingClosures: async () => showing,
-      reopenTold: async () => ({ standing: [{ id: 'm' }], severalDiamonds: new Set(), gameMarks: new Map() }),
-      sendAfterPress: async (p: unknown) => { calls.sends.push(p); return { league: { verb: 'postponed', games: 0, teams: 0, divisions: [], unsent: false }, rep: { games: 1, teams: [{ teamId: 'ospreys-id', name: 'U13 Ospreys', reach: 'head', sent: true }] } }; },
-      reopenCoachEmails: async (p: unknown) => { calls.reopenMail.push(p); return { teams: 1 }; },
+      showingClosureFacts: async () => showing.map(closure => ({ closure, calledOff: [], markEvents: [] })),
+      sendAfterPress: async (p: unknown) => { calls.sends.push(p); return { league: { verb: 'postponed', games: 0, teams: 0, divisions: [], unsent: false }, rep: { games: 1, held: 0, teams: [{ teamId: 'ospreys-id', name: 'U13 Ospreys', reach: 'head', sent: true }] } }; },
+      reopenPreview: async (_org: unknown, role: string, ids: string[]) => {
+        calls.preview.push({ role, ids });
+        return { marksOff: 1, coaches: 1, team: null, kept: 0, keptWhile: [], stillWaiting: 4, seasonIds: ['s1'] };
+      },
+      reopenClosures: async (p: { ids: string[] }) => {
+        calls.reopen.push(p);
+        return { refusal: null, reopened: p.ids, failed: [], coaches: 1, stillWaiting: 4, seasonIds: ['s1'] };
+      },
     },
   });
   const main = load('app/api/admin/org/place-closures/route.ts') as Record<string, (req: Request) => Promise<Response>>;
-  const one = (load('app/api/admin/org/place-closures/[closureId]/route.ts') as Record<string,
-    (req: Request, ctx: { params: Promise<{ closureId: string }> }) => Promise<Response>>).POST;
+  const set = load('app/api/admin/org/place-closures/reopen/route.ts') as Record<string, (req: Request) => Promise<Response>>;
   const url = (qs = '') => `http://localhost/api/admin/org/place-closures?orgSlug=kestrel${qs}`;
+  const reopenUrl = (qs = '') => `http://localhost/api/admin/org/place-closures/reopen?orgSlug=kestrel${qs}`;
   return {
     calls,
     get: (qs = '') => main.GET(new Request(url(qs))),
     press: (body: unknown) => main.POST(new Request(url(), { method: 'POST', body: JSON.stringify(body) })),
-    reopen: (id = U(9), action = 'reopen') => one(new Request(url(), { method: 'POST', body: JSON.stringify({ action }) }), { params: Promise.resolve({ closureId: id }) }),
+    reopen: (ids: unknown = [U(9)]) => set.POST(new Request(reopenUrl(), { method: 'POST', body: JSON.stringify({ ids }) })),
+    preview: (ids = U(9)) => set.GET(new Request(reopenUrl(`&ids=${ids}`))),
   };
 }
 const body = (o: Record<string, unknown> = {}) => ({
@@ -136,12 +142,19 @@ describe('K1 · who', () => {
     const a = await (await harness({ role: 'admin' }).press(body())).json();
     assert.equal(a.rep.teams[0].name, 'U13 Ospreys');
   });
-  it('a house league admin reads a closure\'s marks as a count, never a team\'s name', async () => {
+  it('the Venue library\'s read carries the closures and their rows, and no team at all (S4)', async () => {
     const d = await (await harness({ role: 'league_admin' }).get()).json();
-    assert.deepEqual(d.closures[0].markTeamNames, []);
-    assert.notEqual(d.closures[0].markTeams[0], 't');
-    const a = await (await harness({ role: 'admin' }).get()).json();
-    assert.deepEqual(a.closures[0].markTeamNames, ['U13 Ospreys']);
+    assert.equal(d.closures.length, 1);
+    assert.equal(d.rows.length, 1);
+    assert.equal(d.rows[0].title, 'Lions Park');
+    assert.doesNotMatch(JSON.stringify(d.rows), /calledOff|markEvents/, 'the game ids stay on the server');
+    assert.doesNotMatch(JSON.stringify(d.closures), /markTeam|Ospreys/);
+  });
+  it('Reopen\'s figures are counted on the server for the person asking (K1: the role decides the team\'s name)', async () => {
+    const h = harness({ role: 'league_admin' });
+    assert.equal((await h.preview(`${U(9)},${U(10)}`)).status, 200);
+    assert.deepEqual(h.calls.preview, [{ role: 'league_admin', ids: [U(9), U(10)] }]);
+    assert.match(read('lib/place-closure-window-server.ts'), /if \(teams\.length === 1 && seesEveryProgram\(role\)\)/);
   });
 });
 
@@ -186,19 +199,25 @@ describe('the press', () => {
   });
 });
 
-describe('K11 · Reopen', () => {
-  it('stamps, then emails the standing marks\' coaches; a malformed id never reaches the database', async () => {
+describe('K11 · Reopen, a set at a time (S5, S6)', () => {
+  it('one press over the set, its figures back; a malformed set never reaches the database', async () => {
     const h = harness();
-    const r = await h.reopen();
+    const r = await h.reopen([U(9), U(10), U(9)]);
     assert.equal(r.status, 200);
     const d = await r.json();
     assert.equal(d.coaches, 1);
     assert.equal(d.stillWaiting, 4);
-    assert.equal(h.calls.reopenMail.length, 1);
-    const bad = harness();
-    assert.equal((await bad.reopen('nope')).status, 404);
-    assert.equal(bad.calls.reopen.length, 0);
-    assert.equal((await harness().reopen(U(9), 'back')).status, 400);
+    assert.deepEqual(h.calls.reopen.map(c => c.ids), [[U(9), U(10)]], 'once, each closure once');
+    for (const ids of [['nope'], [], 'x', Array.from({ length: 101 }, (_, i) => U(100 + i))]) {
+      const bad = harness();
+      assert.equal((await bad.reopen(ids)).status, 400, JSON.stringify(ids).slice(0, 40));
+      assert.equal(bad.calls.reopen.length, 0);
+    }
+    assert.equal((await harness().preview('nope')).status, 400);
+  });
+  it('the old one-closure door is gone: every Reopen window uses the set\'s', () => {
+    assert.doesNotMatch(read('components/admin/kit/club/places/ReopenPlaceWindow.tsx'), /place-closures\/\$\{/);
+    assert.match(read('components/admin/kit/club/places/ReopenPlaceWindow.tsx'), /place-closures\/reopen\?/);
   });
 });
 

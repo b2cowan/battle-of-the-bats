@@ -1,17 +1,16 @@
 import { NextResponse } from 'next/server';
-import { getAuthContextWithScope, unauthorized, forbidden } from '@/lib/api-auth';
+import { forbidden } from '@/lib/api-auth';
 import { withObservability } from '@/lib/observability';
-import { hasOrgVenueLibrary } from '@/lib/plan-features';
 import { hasModuleEntitlement } from '@/lib/module-entitlements';
-import { resolveCoachUserIdentities } from '@/lib/db';
 import { isCalendarDate, daysBetweenDateStrings } from '@/lib/timezone';
 import { isUuid } from '@/lib/utils';
 import { rainLine } from '@/lib/league-rainout';
 import { CLOSURE_MAX_EXTRA_DAYS } from '@/lib/place-closures';
 import { pressPlaceClosure } from '@/lib/place-closures-server';
-import { CLOSE_LINE_MAX, CLOSE_MAX_ENTRIES, CLOSE_WORDS as W, canClosePlace, seesEveryProgram } from '@/lib/place-closure-window';
+import { CLOSE_LINE_MAX, CLOSE_MAX_ENTRIES, CLOSE_WORDS as W, closureRows, seesEveryProgram } from '@/lib/place-closure-window';
+import { closureActor, placeClosureGate } from '@/lib/place-closure-route';
 import {
-  closeFrame, closeSource, mayCloseEveryPlaceHere, seasonNextDay, seasonPlacesOn, sendAfterPress, showingClosures,
+  closeFrame, closeSource, mayCloseEveryPlaceHere, seasonNextDay, seasonPlacesOn, sendAfterPress, showingClosureFacts,
 } from '@/lib/place-closure-window-server';
 
 // The press sends inside the request: one send per division of every season, then the rep coaches.
@@ -23,8 +22,8 @@ const MAX = { places: CLOSE_MAX_ENTRIES, league: 500, rep: 200, links: 500 };
 
 /**
  * CLOSE A PLACE (Club Website Stage 2, Session 2B; rulings K1–K17; mig 539).
- *   GET  — the window's frame (the club's places, its day, what this person may do) and the closures showing now (the
- *          Venue library's rows, the Overview's line). With `first` and `places` (`all`, or `venueId[:facilityId]` comma
+ *   GET  — the window's frame (the club's places, its day, what this person may do), the closures showing now (the
+ *          Overview's line, the window's preview) and the Venue library's rows (S4, a game counted once per row). With `first` and `places` (`all`, or `venueId[:facilityId]` comma
  *          separated) and optionally `last`: the window's read of those places on those days. With `seasonId` and `day`:
  *          that season's places that day (the house league schedule's button, K15).
  *   POST { pressKey, places, firstDay, lastDay, verb, line, league, rep, links } — the press (one database step, all or
@@ -35,13 +34,7 @@ const MAX = { places: CLOSE_MAX_ENTRIES, league: 500, rep: 200, links: 500 };
  * ⚖ K14: the places gate (League Plus, Club, Club · Association), on the server. Where it fails these answer 404, never an
  *   upgrade sentence: the doors are absent there. The rep steps are refused where the club runs no rep teams.
  */
-async function gate(req: Request) {
-  const ctx = await getAuthContextWithScope({ orgSlug: new URL(req.url).searchParams.get('orgSlug') ?? undefined, requireOrgSlug: true });
-  if (!ctx) return { refused: unauthorized() } as const;
-  if (!hasOrgVenueLibrary(ctx.org.planId)) return { refused: NextResponse.json({ error: 'Not found' }, { status: 404 }) } as const;
-  if (!canClosePlace(ctx.role)) return { refused: forbidden() } as const;
-  return { ctx } as const;
-}
+const gate = placeClosureGate;
 
 const bad = () => NextResponse.json({ error: W.errInvalid }, { status: 400 });
 
@@ -67,13 +60,14 @@ export const GET = withObservability(async (req: Request) => {
   // The window's own reads (a season's places, a day's games) never use the closures, and run on every tick: only the
   // pages' bare read pays for them.
   const windowRead = q.has('seasonId') || q.has('day') || q.has('first');
-  const [read, showing] = await Promise.all([closeFrame(ctx.org, ctx.role), windowRead ? [] : showingClosures(ctx.org.id)]);
+  const [read, facts] = await Promise.all([closeFrame(ctx.org, ctx.role), windowRead ? [] : showingClosureFacts(ctx.org.id)]);
+  // S4: the Venue library's rows, each counting a game once; the game ids stay here. K1: no team's name is in either.
+  const closures = facts.map(x => x.closure);
+  const rows = closureRows(facts, new Set(read.venues.filter(v => v.allDiamonds).map(v => v.id)));
   // K1 + T1: whether "All our fields" is offered is the server's one rule — an owner or an admin; a house league admin from
   // a season (`from`) in a club with no places. The window offers what this says and nothing more.
   const canAll = await mayCloseEveryPlaceHere(ctx.org, ctx.role, read.venues.length, q.get('from'));
   const frame = { ...read, canAll };
-  // K1: a house league admin reads a closure's rep marks as a count, never a team's name.
-  const closures = seesEveryProgram(ctx.role) ? showing : showing.map(c => ({ ...c, markTeamNames: [], markTeams: c.markTeams.map((_, i) => String(i)) }));
 
   // K15: a season's places on the window's days, in the club's name order (the press's order), at most the press's 10.
   // With `next=1` (the window opening) and nothing that day, the next day the season has games (the Rainout's rule).
@@ -106,7 +100,7 @@ export const GET = withObservability(async (req: Request) => {
     source = await closeSource(ctx.org, ctx.role, { places, firstDay: first, lastDay: last });
     if (!source) return NextResponse.json({ error: W.errNotFound }, { status: 404 });
   }
-  return NextResponse.json({ frame, closures, seasonPlaces, seasonDay, source });
+  return NextResponse.json({ frame, closures, rows, seasonPlaces, seasonDay, source });
 }, { route: '/api/admin/org/place-closures' });
 
 type Posted = { id?: unknown; seen?: unknown };
@@ -173,11 +167,7 @@ export const POST = withObservability(async (req: Request) => {
     default: return bad();
   }
 
-  const me = (await resolveCoachUserIdentities(ctx.org.id, [ctx.user.id])).get(ctx.user.id);
-  const sent = await sendAfterPress({
-    org: ctx.org, actor: { id: ctx.user.id, email: ctx.user.email ?? null, role: ctx.role, name: me?.displayName ?? null },
-    closureIds: r.closureIds, rainoutIds: r.rainoutIds,
-  });
+  const sent = await sendAfterPress({ org: ctx.org, actor: await closureActor(ctx), closureIds: r.closureIds, rainoutIds: r.rainoutIds });
   // K1: a house league admin reads the rep result as counts — no team's name leaves the server for them.
   const repOut = everyProgram ? sent.rep : { ...sent.rep, teams: sent.rep.teams.map((t, i) => ({ ...t, teamId: String(i), name: '' })) };
   return NextResponse.json({ closureIds: r.closureIds, replay: r.replay, league: sent.league, rep: repOut });

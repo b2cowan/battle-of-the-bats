@@ -5,7 +5,8 @@ import { teamsHearing } from './league-game-changes';
 import { LEAGUE_RUNNER_ROLES } from './house-league-access';
 import { RAIN_LINE_MAX, shortDivision } from './league-rainout';
 import {
-  CLOSURE_MAX_EXTRA_DAYS, closedPlaceName, closureSaysAlready, coveringClosures, diamondsAt, isAre, stripSentence, toStripClosure,
+  CLOSURE_MAX_EXTRA_DAYS, byNatural, closedPlaceName, closureSaysAlready, coveringClosures, diamondsAt, diamondsNamed, isAre,
+  stripSentence, toStripClosure,
   type ClosedPlace, type ClosureVerb, type PlaceMatch,
 } from './place-closures';
 import { closureStrip, type ClosureStrip } from './club-notice';
@@ -83,6 +84,16 @@ export interface CloseRepGame {
   field: string | null; venueId: string | null; typed: string | null; linkedToPlace: boolean;
   place: number; match: PlaceMatch; started: boolean; seen: string;
 }
+
+/** T2 (mig 551): a rep game a closure still showing already marks. The press marks it again with its coach already told,
+ *  whatever is ticked, so the window lists it apart, never ticked, never counted. */
+export interface CloseHeldGame {
+  id: string;
+  /** Empty when the person can't see rep (K1: a count, no names). */
+  teamName: string; opponent: string | null;
+  /** The places still closed that mark it ("Diamond 1 at Lions Park"), and how many closures they are. */
+  by: string; closures: number;
+}
 export interface CloseTournament {
   id: string; name: string; games: number; atPlace: number; diamondIds: string[];
   /** The person may open its Rain delay (K1, K13). */
@@ -98,6 +109,8 @@ export interface CloseSource {
   seasons: { id: string; name: string; divisions: { id: string; name: string; published: boolean }[] }[];
   league: CloseLeagueGame[];
   rep: CloseRepGame[];
+  /** T2: the rep games already marked (apart from `rep`, which holds only what this press may tick). */
+  repHeld: CloseHeldGame[];
   /** K1: a house league admin sees rep as a count. */
   repHidden: boolean;
   tournaments: CloseTournament[];
@@ -114,21 +127,60 @@ export interface StaffClosure {
   firstDay: string; lastDay: string; verb: ClosureVerb; closedAt: string; closedBy: string | null;
   /** When the site started saying it, and the midnight it stops (the strip's own instants: the window's preview reads them). */
   showsFrom: string; endsAt: string;
-  /** House league games this closure called off that still read as it left them (the postponed ones wait for a date). */
-  leagueCalledOff: number;
-  /** Its house league seasons (the result's "Give them new dates" door). */
-  seasonIds: string[];
-  /** Rep marks standing now; the teams whose coach Reopen would email, and their names (empty for a house league admin, K1). */
-  marks: number;
-  markTeams: string[];
-  markTeamNames: string[];
-  /** D1: of `marks`, the games another closure still marks (they keep the mark at Reopen; no coach is told yet), and the
-   *  places still holding them, said by park ("Diamond 1 at Lions Park"). */
-  marksKept: number;
+  // What it did to games is the server's to count (the rows' fact lines, Reopen's `reopenPreview`): never added up here.
+}
+
+/**
+ * A showing closure with what it did, by game id — the server's read for the Venue library's rows (S4): a row counts each
+ * game once, however many of its closures marked or called it off. The ids never leave the server (`closureRows` keeps
+ * the words only).
+ */
+export interface ClosureFacts {
+  closure: StaffClosure;
+  /** House league games it called off that still read as it left them (its `verb`). */
+  calledOff: string[];
+  /** The rep games its standing marks are on. */
+  markEvents: string[];
+}
+
+/** One diamond of a park's row: its own closures (two presses on one diamond are one diamond) and its facts. */
+export interface ClosureRowDiamond { name: string; closureIds: string[]; lines: string[] }
+
+/**
+ * A row of the Venue library's "Closed places" box (S4, the summary drawing's tabs 3–4): one per park and dates — every
+ * place, a whole park, or that park's diamonds. `under`: the row it sits under, "Also closed on their own" (every other
+ * row under "All our fields"; with none, a park's diamonds under that park's whole closure).
+ */
+export interface ClosureRow {
+  key: string;
+  scope: 'all' | 'place' | 'diamonds';
+  venueId: string | null;
+  placeName: string | null;
+  firstDay: string;
+  lastDay: string;
+  closureIds: string[];
+  /** A diamonds row's diamonds, in the park's natural order. */
+  diamonds: ClosureRowDiamond[];
+  /** "Diamond 1 and Diamond 2 at Lions Park" · "All diamonds at Lions Park" · "Riverside Gym" · "All our fields". */
+  title: string;
+  /** Two plain lines, never a dotted one (owner 2026-11-26): the days and the presses; what it did to games. */
+  lines: string[];
+  under: string | null;
+}
+
+/** What Reopen of a chosen set does to the coaches and the games (`GET …/place-closures/reopen`), counted by the server. */
+export interface ReopenPreview {
+  /** Rep games whose mark comes off (no closure outside the set still holds them), each once. */
+  marksOff: number;
+  /** The teams whose coach is emailed; its name when it is one team and the person sees rep (K1). */
+  coaches: number;
+  team: string | null;
+  /** Rep games that stay marked (a closure outside the set holds them), and those places by park. */
+  kept: number;
   keptWhile: string[];
-  /** D1: every mark that comes off is the last of two or more diamonds of this park over its game, so the coach's line
-   *  says "the diamonds at Lions Park" (/legal), as the window's question does. */
-  marksSeveral: boolean;
+  /** Postponed house league games of the set still waiting for a date, each once. */
+  stillWaiting: number;
+  seasonIds: string[];
 }
 
 // ── The plan ───────────────────────────────────────────────────────────────────────────────────────────────────────
@@ -265,7 +317,7 @@ function doneReopen(closures: number = 1): string {
 }
 
 /** "All our fields are…" read inside a sentence: "all our fields are…". A place's own name keeps its capital. */
-const lowerEvery = (s: string) => (s.startsWith(EVERY_PLACE) ? `all our fields${s.slice(EVERY_PLACE.length)}` : s);
+export const lowerEvery = (s: string) => (s.startsWith(EVERY_PLACE) ? `all our fields${s.slice(EVERY_PLACE.length)}` : s);
 
 // ── The Places field's rules (Session 2D, M1–M8; the drawing's notes 2, 5, 10, 11) ─────────────────────────────────
 
@@ -365,6 +417,9 @@ const teamsCoaches = (teams: number) => `The ${possessive(pluralize(teams, 'team
 /** "12:30 p.m." in the club's zone. */
 export const closeClock = (iso: string) => formatTime(utcToZonedInputs(iso).time);
 const q = (s: string) => `“${s}”`;
+/** A Reopen button's tail: "… and email 2 coaches" (phone: "…, email 2"); none to email, the verb alone. */
+const withEmail = (what: string, coaches: number, phone: boolean) =>
+  (coaches === 0 ? what : phone ? `${what}, email ${coaches}` : `${what} and email ${pluralize(coaches, 'coach', 'coaches')}`);
 
 /** By park: "Lions Park" · "2 diamonds at Lions Park" · "Harbourview Park and 2 diamonds at Lions Park" · "those places"
  *  (three parks or more). */
@@ -432,6 +487,16 @@ export const CLOSE_WORDS = {
     : reach === 'others'
       ? 'Marked, not moved. Its coaches are emailed (it has no head coach on file) and set the new date.'
       : 'Marked, not moved. Its head coach is emailed and sets the new date.'),
+  heldGroup: 'Already marked',
+  /** T2: a game a closure still showing already marks (item 10 of the gate): no tick, not counted. */
+  heldNote: (g: Pick<CloseHeldGame, 'by' | 'closures'>) =>
+    `Already marked: ${g.by} ${isAre(g.by)} closed. It stays marked until ${g.closures > 1 ? 'all of them reopen' : 'both reopen'}, and its coach isn’t emailed again.`,
+  heldHidden: (n: number) => (n === 1
+    ? '1 rep game is already marked by a place still closed. It stays marked, and its coach isn’t emailed again.'
+    : `${n} rep games are already marked by places still closed. They stay marked, and their coaches aren’t emailed again.`),
+  doneHeld: (n: number) => (n === 1
+    ? '1 rep game was already marked. Its coach wasn’t emailed again.'
+    : `${n} rep games were already marked. Their coaches weren’t emailed again.`),
   /** K1: a house league admin's rep row. */
   repHiddenCount: (games: number) => `${gamesWord(games)} · marked for its coach`,
   repHiddenLine: (games: number, places: readonly ClosedPlace[]) =>
@@ -615,13 +680,54 @@ export const CLOSE_WORDS = {
   newDates: 'Give them new dates',
   replay: 'This closure was already made. Nothing more was sent.',
 
-  // Reopen (drawing tab 3).
+  // Reopen (drawing tab 3; the summary drawing's tab 5, S5 and S6).
   reopen: 'Reopen',
   reopenTitle: (place: string) => `Reopen ${place}?`,
-  reopenSite: 'Your site stops saying it’s closed, at once.',
-  reopenMarks: (marks: number, oneTeam: string | null, place: string) => marks === 1
-    ? `${oneTeam ? `The ${possessive(oneTeam)} game` : 'The rep game'} loses its mark, and its coach gets one line: ${place} reopened, the game wasn’t moved, keep it or move it.`
-    : `${marks} rep games lose their marks, and their coaches get one line: ${place} reopened, the game wasn’t moved, keep it or move it.`,
+  /** S5: a park's diamonds, ticked. */
+  reopenParkTitle: (park: string) => `Reopen diamonds at ${park}?`,
+  reopenLoading: 'Checking what this changes…',
+  reopenReadFailed: 'What this changes didn’t load. Close the window and try again.',
+  reopenPressFailed: 'We couldn’t tell if it reopened. Check your connection, then press again: nothing reopens twice.',
+  /** "Your site stops saying it’s closed, at once." · "… they’re closed …" · "… Diamond 1 is closed …" · (something of
+   *  the place still shows) "… Diamond 2 at Lions Park is closed through Sun, Nov 29, at once." */
+  reopenSite: (what: string = 'it’s closed') => `Your site stops saying ${what}, at once.`,
+  /** S5: what the site still says of the place (one sentence, bold). */
+  reopenStillSays: ' It still says ',
+  reopenStillShows: 'Your site still shows this:',
+  /** S6: the site after the press, as the tick decides. */
+  reopenThenSays: 'Your site will then say ',
+  reopenThenShows: 'Your site will then show this:',
+  reopenNothingLeft: 'Your site will stop saying anything is closed, at once.',
+  reopenNone: 'Tick a diamond to reopen it.',
+  /** What the press does to the marks, one email per coach ("the diamond" · "the diamonds" · "the place"; every place,
+   *  as S6 is drawn, says no place). */
+  reopenMarksSet: (marks: number, oneTeam: string | null, what: string | null) => {
+    const line = what ? `: ${what} reopened, the game wasn’t moved, keep it or move it.` : '.';
+    return marks === 1
+      ? `${oneTeam ? `The ${possessive(oneTeam)} game` : '1 rep game'} loses its mark. Its coach gets one email${line}`
+      : `${marks} rep games lose their marks. Each coach gets one email${line}`;
+  },
+  /** A closure a wider one covers (the summary drawing's "Remove Diamond 1’s own closure?"). */
+  removeTitle: (name: string) => `Remove ${possessive(name)} own closure?`,
+  removeParkTitle: (park: string) => `Remove the diamonds’ own closures at ${park}?`,
+  /** "It stays closed. All our fields are closed today, so your site doesn’t change." */
+  removeStays: (several: boolean) => (several ? 'They stay closed.' : 'It stays closed.'),
+  removeBy: (bySentence: string) => ` ${bySentence.replace(/\.$/, '')}, so your site doesn’t change.`,
+  /** "Diamond 1 will then open when you reopen all our fields." */
+  removeThen: (name: string | null, byName: string) => `${name ?? 'They'} will then open when you reopen ${byName}.`,
+  removeGo: (several: boolean) => (several ? 'Remove their closures' : 'Remove its closure'),
+  /** S6: "Diamond 1 and Diamond 2 at Lions Park are also closed on their own." */
+  alsoClosed: (names: string, one: boolean) => `${names} ${one ? 'is' : 'are'} also closed on ${one ? 'its' : 'their'} own.`,
+  /** "Reopen it as well" · "Reopen those two diamonds as well" · "Reopen those 3 places as well". */
+  alsoTick: (count: number, diamonds: boolean) => (count === 1 ? 'Reopen it as well'
+    : `Reopen those ${count === 2 ? 'two' : count} ${diamonds ? 'diamonds' : 'places'} as well`),
+  /** S5 button: "Reopen 2 diamonds and email 2 coaches" (phone: "Reopen 2 diamonds, email 2"). */
+  reopenParkGo: (ticked: readonly string[], coaches: number, phone: boolean) =>
+    (ticked.length ? withEmail(`Reopen ${ticked.length === 1 ? ticked[0] : `${ticked.length} diamonds`}`, coaches, phone) : 'Reopen'),
+  /** S6 button: "Reopen all our fields" · "Reopen everything and email 2 coaches"; a park: "Reopen Lions Park" · "Reopen
+   *  all of Lions Park". */
+  reopenWideGo: (wide: string | null, also: boolean, coaches: number, phone: boolean) =>
+    withEmail(wide == null ? (also ? 'Reopen everything' : 'Reopen all our fields') : also ? `Reopen all of ${wide}` : `Reopen ${wide}`, coaches, phone),
   /** D1: "1 rep game stays marked while Diamond 1 at Lions Park is still closed. Its coach is told when that reopens." */
   reopenKept: (n: number, places: readonly string[]) => {
     const said = places.map(p => (p === EVERY_PLACE ? 'all our fields' : p));
@@ -633,31 +739,55 @@ export const CLOSE_WORDS = {
       : `${n} rep games stay marked while ${still}. Their coaches are told when ${when}.`;
   },
   reopenStill: (n: number) => (n === 1 ? 'The 1 postponed game stays under “Needs a new date”.' : `The ${n} postponed games stay under “Needs a new date”.`),
-  reopenStillRest: ' Their families were emailed, so give each a new date from the schedule and they’re told again.',
+  reopenStillRest: (n: number) => (n === 1
+    ? ' Its families were emailed, so give it a new date from the schedule and they’re told again.'
+    : ' Their families were emailed, so give each a new date from the schedule and they’re told again.'),
   reopenKeep: 'Keep it closed',
-  reopenGo: (coaches: number) => (coaches === 0 ? 'Reopen' : `Reopen and email ${pluralize(coaches, 'coach', 'coaches')}`),
+  reopenGo: (coaches: number, phone = false) => withEmail('Reopen', coaches, phone),
+  /** The button while the press is out. */
+  reopening: 'Reopening…',
+  removing: 'Removing…',
+  /** S5: what a screen reader calls the diamonds' ticks. */
+  reopenTicksLabel: 'Diamonds to reopen',
   reopened: (place: string) => `${place} reopened`,
-  reopenedSite: (coaches: number, team: string | null) =>
-    `Your site no longer says it’s closed.${coaches === 0 ? '' : team && coaches === 1 ? ` The ${possessive(team)} coach was emailed.` : ` ${pluralize(coaches, 'coach', 'coaches')} were emailed.`}`,
   reopenedStill: (n: number) => (n === 1 ? '1 game still needs a new date.' : `${n} games still need new dates.`),
   reopenedStillRest: (n: number) => (n === 1 ? ' Its families are told when you give it one.' : ' Their families are told when you give each one.'),
 
-  // The Venue library's closed row (drawing tab 3, "Where it lives").
-  closed: 'Closed',
+  // The results (Session B; not drawn, ruled at the gate 2026-11-26).
+  reopenedPark: (names: string) => `${names} reopened`,
+  removed: (name: string) => `${possessive(name)} own closure removed`,
+  removedPark: 'The diamonds’ own closures removed',
+  /** One of two closures of all our fields (the longer one still says it): "All our fields’ own closure" reads wrong. */
+  removeAllTitle: 'Remove this closure of all our fields?',
+  removedAll: 'Closure of all our fields removed',
+  /** Some of the set reopened and some didn't: the title claims neither (the warning under it names what didn't). */
+  partlyReopened: 'Partly reopened',
+  partlyRemoved: 'Partly removed',
+  /** "It stays closed: all our fields are closed today, so your site didn’t change." */
+  removedSite: (several: boolean, by: string) => `${several ? 'They stay' : 'It stays'} closed: ${by.replace(/\.$/, '')}, so your site didn’t change.`,
+  /** "Your site no longer says it’s closed." · "… they’re closed." · "… anything is closed." */
+  reopenedGone: (what: 'it' | 'they' | 'anything') => `Your site no longer says ${what === 'it' ? 'it’s' : what === 'they' ? 'they’re' : 'anything is'} closed.`,
+  reopenedNowSays: 'Your site now says ',
+  reopenedNowShows: 'Your site now shows this:',
+  reopenedCoaches: (coaches: number, team: string | null) =>
+    (coaches === 0 ? ''
+      : coaches === 1 ? (team ? ` The ${possessive(team)} coach was emailed.` : ' 1 coach was emailed.')
+      : ` ${coaches} coaches were emailed.`),
+  /** A closure that did not reopen (one of the set's stamps failed): "Diamond 2 at Lions Park didn’t reopen. Press Reopen
+   *  on it again." */
+  reopenFailed: (names: readonly string[]) =>
+    `${joinWithAnd(names)} didn’t reopen. Press Reopen on ${names.length === 1 && !/^\d+ diamonds at /.test(names[0]) ? 'it' : 'them'} again.`,
+
+  // The Venue library's "Closed places" box (S4; the summary drawing's tabs 3–4).
+  closedBox: 'Closed places',
   closedToday: 'Closed today',
-  /** "Diamond 2 at Lions Park" · "All diamonds at Lions Park". */
-  rowName: (c: { scope: ClosedPlace['scope']; placeName: string | null; facilityName: string | null }) =>
-    c.scope === 'all' ? 'All our fields' : c.scope === 'diamond' ? `${c.facilityName} at ${c.placeName}` : `All diamonds at ${c.placeName}`,
-  /**
-   * The row's two plain lines, never one dotted one (owner 2026-11-26): the days it is closed for and who closed it
-   * when ("For Sat, Nov 28, closed at 7:10 a.m. by Dana Reyes" — the time is the press, which can be an earlier day),
-   * then what it did to games ("4 postponed, 1 rep game marked"), when it did anything.
-   */
-  rowLines: (c: { firstDay: string; lastDay: string; closedAt: string; closedBy: string | null; leagueCalledOff: number; verb: ClosureVerb; marks: number }): string[] => {
-    const days = c.firstDay === c.lastDay ? formatShortWeekdayDate(c.firstDay) : `${formatShortWeekdayDate(c.firstDay)} to ${formatShortWeekdayDate(c.lastDay)}`;
-    const did = [c.leagueCalledOff ? `${c.leagueCalledOff} ${c.verb}` : null, c.marks ? `${c.marks === 1 ? '1 rep game' : `${c.marks} rep games`} marked` : null].filter(Boolean).join(', ');
-    return [`For ${days}, closed at ${closeClock(c.closedAt)}${c.closedBy ? ` by ${c.closedBy}` : ''}`, ...(did ? [did] : [])];
-  },
+  /** The venue table's tag: "Closed today" for the whole park or every place, else "1 diamond closed today". */
+  diamondsClosedToday: (n: number) => `${n} ${n === 1 ? 'diamond' : 'diamonds'} closed today`,
+  /** "Also closed on their own. These stay closed if you reopen all our fields." */
+  alsoBand: (parent: string, one: boolean) => (one
+    ? `Also closed on its own. It stays closed if you reopen ${parent}.`
+    : `Also closed on their own. These stay closed if you reopen ${parent}.`),
+  reopenAria: (name: string) => `Reopen ${name}`,
   /** The Overview's line (build words; the drawing names it, it does not word it). Counted by park (Session 2D: two
    *  diamonds at one park are one place closed), each named as `groupWord`: "2 diamonds at Lions Park". */
   overviewLabel: 'Places closed',
@@ -676,6 +806,170 @@ export function closedParks(closures: readonly Pick<StaffClosure, 'scope' | 'ven
   const groups = placeGroups(closures.map(c => ({ scope: c.scope, venueId: c.venueId, facilityId: null, name: c.placeName, facilityName: c.facilityName })));
   return [...new Set(groups.map(g => (g.scope === 'all' ? EVERY_PLACE : groupWord(g))))];
 }
+
+// ── The Venue library's rows (S4) ──────────────────────────────────────────────────────────────────────────────────
+
+const daysWords = (first: string, last: string) =>
+  (first === last ? formatShortWeekdayDate(first) : `${formatShortWeekdayDate(first)} to ${formatShortWeekdayDate(last)}`);
+
+/** Who pressed when (item 8 of the gate): "closed at 3:25 p.m. by Dana Reyes" · "closed at 3:25 p.m. and 3:40 p.m. by
+ *  Dana Reyes" · "closed at 3:25 p.m. by Dana Reyes and 3:40 p.m. by Sam Lee" · three presses or more: "closed by Dana
+ *  Reyes" · "closed by Dana Reyes and Sam Lee" · "closed by 3 people" · "closed 3 times". */
+export function pressedWords(presses: readonly { closedAt: string; closedBy: string | null }[]): string {
+  // Two presses that would read the same (one person, one minute) are said once, as the site's own small line does.
+  const ps = [...new Map(presses.map(p => [[closeClock(p.closedAt), p.closedBy ?? ''].join('|'), p])).values()]
+    .sort((a, b) => Date.parse(a.closedAt) - Date.parse(b.closedAt));
+  const by = (p: { closedBy: string | null }) => (p.closedBy ? ` by ${p.closedBy}` : '');
+  const people = [...new Set(ps.flatMap(p => (p.closedBy ? [p.closedBy] : [])))];
+  if (ps.length === 1) return `closed at ${closeClock(ps[0].closedAt)}${by(ps[0])}`;
+  if (ps.length === 2) {
+    const [a, b] = ps;
+    return (a.closedBy ?? null) === (b.closedBy ?? null)
+      ? `closed at ${closeClock(a.closedAt)} and ${closeClock(b.closedAt)}${by(a)}`
+      : `closed at ${closeClock(a.closedAt)}${by(a)} and ${closeClock(b.closedAt)}${by(b)}`;
+  }
+  if (!people.length) return `closed ${ps.length} times`;
+  return people.length <= 2 ? `closed by ${joinWithAnd(people)}` : `closed by ${people.length} people`;
+}
+
+/** A row's two plain lines: "For Thu, Nov 26, closed at 3:25 p.m. by Dana Reyes" and "2 postponed, 1 rep game marked",
+ *  each game counted once however many of the row's closures called it off or marked it. */
+function factLines(items: readonly ClosureFacts[]): string[] {
+  const c = items[0].closure;
+  const games = new Map(items.flatMap(x => x.calledOff.map(id => [id, x.closure.verb] as const)));
+  const postponed = [...games.values()].filter(v => v === 'postponed').length;
+  const cancelled = games.size - postponed;
+  const marks = new Set(items.flatMap(x => x.markEvents)).size;
+  const did = [postponed ? `${postponed} postponed` : null, cancelled ? `${cancelled} cancelled` : null,
+    marks ? `${marks === 1 ? '1 rep game' : `${marks} rep games`} marked` : null].filter(Boolean).join(', ');
+  return [`For ${daysWords(c.firstDay, c.lastDay)}, ${pressedWords(items.map(x => x.closure))}`, ...(did ? [did] : [])];
+}
+
+/**
+ * S4: the "Closed places" box. One row per park and dates (every place; a whole park; that park's diamonds); two presses
+ * on one place are one row. "All our fields" leads and every other row sits under it ("Also closed on their own"); with
+ * none, a park's diamonds sit under that park's whole closure. The rest by first day, then park, the whole park first.
+ * `diamondParks`: the places whose facilities are all diamonds ("All diamonds at Lions Park"; else the name alone).
+ */
+export function closureRows(items: readonly ClosureFacts[], diamondParks: ReadonlySet<string>): ClosureRow[] {
+  const groups = new Map<string, ClosureFacts[]>();
+  for (const x of items) {
+    const c = x.closure;
+    const park = c.scope === 'all' ? 'all' : c.venueId ?? `name:${c.placeName ?? ''}`;
+    const key = `${c.scope === 'diamond' ? 'd' : 'w'}|${park}|${c.firstDay}|${c.lastDay}`;
+    (groups.get(key) ?? groups.set(key, []).get(key)!).push(x);
+  }
+  const rows: ClosureRow[] = [...groups].map(([key, list]) => {
+    const c = list[0].closure;
+    const scope = c.scope === 'all' ? 'all' : c.scope === 'place' ? 'place' : 'diamonds';
+    const byDiamond = new Map<string, ClosureFacts[]>();
+    if (scope === 'diamonds') for (const x of list) { const n = x.closure.facilityName ?? ''; (byDiamond.get(n) ?? byDiamond.set(n, []).get(n)!).push(x); }
+    const diamonds = [...byDiamond].sort(([a], [b]) => byNatural(a, b))
+      .map(([name, mine]) => ({ name, closureIds: mine.map(x => x.closure.id), lines: factLines(mine) }));
+    const park = c.placeName ?? '';
+    const title = scope === 'all' ? EVERY_PLACE
+      : scope === 'place' ? (c.venueId && diamondParks.has(c.venueId) ? `All diamonds at ${park}` : park)
+      : diamondsNamed(diamonds.map(d => d.name), park);
+    return {
+      key, scope, venueId: scope === 'all' ? null : c.venueId, placeName: scope === 'all' ? null : c.placeName,
+      firstDay: c.firstDay, lastDay: c.lastDay, closureIds: list.map(x => x.closure.id), diamonds, title, lines: factLines(list), under: null,
+    };
+  });
+  const byDays = (a: ClosureRow, b: ClosureRow) => a.firstDay.localeCompare(b.firstDay) || a.lastDay.localeCompare(b.lastDay);
+  // A row sits under a wider one only on days they share ("These stay closed if you reopen …" is about those days).
+  const overlap = (a: ClosureRow, b: ClosureRow) => a.firstDay <= b.lastDay && b.firstDay <= a.lastDay;
+  const every = rows.filter(r => r.scope === 'all').sort(byDays);
+  const rest = rows.filter(r => r.scope !== 'all').sort((a, b) => a.firstDay.localeCompare(b.firstDay)
+    || byNatural(a.placeName ?? '', b.placeName ?? '') || (a.scope === 'place' ? 0 : 1) - (b.scope === 'place' ? 0 : 1)
+    || a.lastDay.localeCompare(b.lastDay));
+  const parentOf = (r: ClosureRow): ClosureRow | null => {
+    if (r.scope === 'all') return null;
+    if (every.length) return every.find(w => overlap(w, r)) ?? null;
+    return r.scope === 'diamonds' && r.venueId ? rest.find(w => w.scope === 'place' && w.venueId === r.venueId && overlap(w, r)) ?? null : null;
+  };
+  const out: ClosureRow[] = [];
+  for (const r of [...every, ...rest]) {
+    if (parentOf(r)) continue;
+    out.push(r);
+    for (const d of rest) if (parentOf(d) === r) out.push({ ...d, under: r.key });
+  }
+  return out;
+}
+
+/** The venue table's tag (S4, note 10): "Closed today" when the whole park or every place is closed today, else how many
+ *  of its diamonds are; null when none. */
+export function venueTag(closures: readonly Pick<StaffClosure, 'scope' | 'venueId' | 'facilityName' | 'firstDay'>[], venueId: string, today: string): string | null {
+  const now = closures.filter(c => c.firstDay <= today && (c.scope === 'all' || c.venueId === venueId));
+  if (!now.length) return null;
+  if (now.some(c => c.scope !== 'diamond')) return CLOSE_WORDS.closedToday;
+  return CLOSE_WORDS.diamondsClosedToday(new Set(now.map(c => c.facilityName)).size);
+}
+
+/** The rows under a row ("Also closed on their own"). */
+export const rowsUnder = (rows: readonly ClosureRow[], key: string) => rows.filter(r => r.under === key);
+
+/** S6's warning names (item 6 of the gate): one or two parks by name ("Diamond 1 and Diamond 2 at Lions Park and Alder
+ *  Fields"), three or more by count ("5 places"); `one` when it is a single place (the verb and "its own"). The tick
+ *  counts the closed places and says "diamonds" when they are one park's diamonds. */
+export function alsoWords(rows: readonly ClosureRow[]): { names: string; one: boolean; count: number; diamonds: boolean } {
+  const parks = new Map<string, { name: string; whole: boolean; diamonds: Set<string> }>();
+  for (const r of rows) {
+    const k = r.venueId ?? `name:${r.placeName ?? ''}`;
+    const p = parks.get(k) ?? parks.set(k, { name: r.placeName ?? '', whole: false, diamonds: new Set() }).get(k)!;
+    if (r.scope === 'place') p.whole = true;
+    r.diamonds.forEach(d => p.diamonds.add(d.name));
+  }
+  const said = [...parks.values()].map(p => (p.whole || !p.diamonds.size ? p.name : diamondsNamed(p.diamonds, p.name)));
+  const places = [...parks.values()].reduce((n, p) => n + (p.whole ? 1 : p.diamonds.size), 0);
+  const diamonds = parks.size === 1 && ![...parks.values()][0].whole;
+  return {
+    names: said.length <= 2 ? joinWithAnd(said) : `${places} places`,
+    one: places === 1, count: places, diamonds,
+  };
+}
+
+/** What a Reopen does to the site (the summary drawing's tab 5; every window asks this, never builds the words). */
+export type ReopenSite =
+  /** Every chosen closure is still said by one left showing (a wider one, or the same place pressed again): the site
+   *  won't change. `by` is that one's sentence ("All our fields are closed today."), `byName` its place ("all our fields"). */
+  | { kind: 'covered'; by: string; byName: string; samePlace: boolean }
+  /** The chosen places come off. `still`: what the site goes on saying of those places (every place, the same parks),
+   *  as the strip will read it; null when nothing. `own`: the chosen closure's sentence, for "stops saying …" when
+   *  something of the place still shows. */
+  | { kind: 'stops'; still: ClosureStrip | null; own: string | null };
+
+type SiteClosure = Pick<StaffClosure, 'id' | 'scope' | 'venueId' | 'placeName' | 'facilityName' | 'firstDay' | 'lastDay' | 'showsFrom' | 'endsAt'>;
+
+/** S1 read backwards: the strip over the showing closures minus the ones being reopened (`closureStrip`, the site's own). */
+export function reopenSite(showing: readonly SiteClosure[], ids: ReadonlySet<string>, diamondParks: ReadonlySet<string>, nowIso: string): ReopenSite {
+  const today = utcToZonedInputs(nowIso).date;
+  const live = showing.filter(c => Date.parse(c.endsAt) > Date.parse(nowIso));
+  const chosen = live.filter(c => ids.has(c.id));
+  const left = live.filter(c => !ids.has(c.id));
+  const strip = (c: SiteClosure) => toStripClosure(c, diamondParks);
+  const sayers = chosen.map(n => coveringClosures(strip(n), left.map(strip), today)[0]
+    ?? left.map(strip).find(w => closureSaysAlready(w, strip(n), today)) ?? null);
+  if (chosen.length && sayers.every(Boolean)) {
+    const w = sayers[0]!;
+    const n = strip(chosen[0]);
+    return {
+      kind: 'covered', by: stripSentence(w, today, formatShortWeekdayDate), byName: closedPlaceName(w) ?? 'all our fields',
+      // The same place pressed again for longer: "… will then open when you reopen Lions Park" would name itself.
+      samePlace: closedPlaceName(w) === closedPlaceName(n),
+    };
+  }
+  const everyChosen = chosen.some(c => c.scope === 'all');
+  const parks = new Set(chosen.flatMap(c => (c.venueId ? [c.venueId] : [])));
+  const related = left.filter(c => everyChosen || c.scope === 'all' || (!!c.venueId && parks.has(c.venueId)));
+  const still = closureStrip(related.map(strip), nowIso);
+  // "stops saying Diamond 2 at Lions Park is closed through Sun, Nov 29" only where something of the place still shows.
+  const own = still && chosen.length === 1 ? lowerEvery(stripSentence(strip(chosen[0]), today, formatShortWeekdayDate)).replace(/\.$/, '') : null;
+  return { kind: 'stops', still, own };
+}
+
+/** A strip that is one sentence ("Diamond 2 at Lions Park is closed today."), said inline in bold; null when it is more. */
+export const oneSentence = (s: ClosureStrip | null): string | null =>
+  (s && s.groups.length === 1 && 'sentence' in s.groups[0] ? s.groups[0].sentence : null);
 
 function repDoneLine(t: { name: string; reach: RepReach; sent: boolean }): string {
   if (t.reach === 'none') return `The ${t.name} have no coach to email, so let the team know yourself.`;

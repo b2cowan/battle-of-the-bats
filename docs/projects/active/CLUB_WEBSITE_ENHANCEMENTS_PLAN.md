@@ -660,8 +660,8 @@ the demos follow the product and are curated with `/demos`, never as a build ste
     and admins, and to the house league admin from the schedule's button (§9, C), and opens without shrinking; (2) **two
     separate presses on two diamonds of one park behave as one press** (the Session 2D item above): a game with no
     diamond recorded stays marked until both reopen, with no second email to its coach.
-    - [ ] **Session A (S1–S3, T1) BUILT 2026-11-26, not committed** (owner: "Build it as written", on the gate's four
-      proposals). The club site: a wider closure (every place; a whole park over its diamonds, by the place id) speaks
+    - [ ] **Session A (S1–S3, T1) BUILT 2026-11-26, committed `c69281249` + `ea0ce27d3`** (owner: "Build it as written",
+      on the gate's four proposals). The club site: a wider closure (every place; a whole park over its diamonds, by the place id) speaks
       for a narrower one with the same days; one day heading and a row per park ("Lions Park: Diamond 1 and Diamond 2",
       "all diamonds" only when every facility is a diamond, else the name alone); past five rows four show and "Show N
       more places" opens the rest; the small line counts what shows. The Close a place window previews the strip itself
@@ -676,6 +676,29 @@ the demos follow the product and are curated with `/demos`, never as a build ste
       face) run. **Owner calls from /review:** the season a house league admin names is checked only to be the club's
       own, not live; a club whose places are all archived counts as having none. Walk: Owner QA Ledger §578
       (https://claude.ai/artifact/75dUJv6ekaeV2ZH2YJLRtR, 36 steps, `CLUB_WEBSITE_STAGE2_SUMMARY_A_WALK.html`).
+    - [ ] **Session B (S4–S6, T2) BUILT 2026-11-26, committed 2026-11-27** (owner: "Build as you've written", on the gate). The Venue library:
+      one "Closed places" box, a row per park and dates over two plain lines (the later dots ruling replaces the drawn
+      dotted titles), each game counted once; with all fields showing, the others sit under it behind a tinted band; a
+      venue tag reads "Closed today" only for a whole park or all fields, else "N diamonds closed today". Reopen: a park's
+      diamonds ticked in one window (one press, one email per team per coach); a covered closure asks "Remove … own
+      closure?" and says the place stays closed; a wider row names what stays closed on its own with one unticked "as
+      well"; every site sentence is the strip itself minus what is chosen. T2: a rep game a showing closure already marks
+      is listed "Already marked", never ticked, and marked again with its coach already told (mig 551). Gate rulings
+      beyond the drawing: T2 covers ANY already-marked game, not only the no-diamond one; a park's diamond nests under its
+      whole-park closure when there is no all-fields closure and the days overlap; no migration for S5 (so a part failure
+      tells the coaches of what did reopen and names what didn't). /legal passed the combined reopen email (MUST-FIX
+      built: the game's own place is named while something inside stays closed). /simplify and /review applied (12 defects
+      fixed). /design (2026-11-26), applied: the windows never say the site goes quiet while another closure still shows;
+      a part failure's result reads the site over what did reopen and is titled "Partly reopened"; "1 coach was emailed";
+      one postponed game speaks of "its families"; the covered window and its result say nothing about new dates (as
+      drawn); two closures of all fields read "this closure of all our fields"; the ticks are the send windows' rows; the
+      band is tinted; the button reads "Reopening…"; two presses in one minute read as one time.
+      **Left:** rare races (a team place renamed mid-press fails the press; a second press stamps a game "told" when the
+      first press's email failed, and that first press's retry tells the coach); the phone's "Not changed here" count
+      omits already-marked games; the counts blink while a new tick is read. **Owner call:** "Already marked" rows repeat
+      the heading's words and show no game time (the gate's words). Walk: Owner QA Ledger §579
+      (https://claude.ai/artifact/P6x4zBKVSqSZFa58WscZZ7, 44 steps, `CLUB_WEBSITE_STAGE2_SUMMARY_B_WALK.html`); §578's Reopen steps rewritten for the new windows. Mig 551 is on dev (applied 2026-11-27, owner "apply the db step"; the rolled-back
+      check passes 38 of 38) and goes on prod after 549, before the promote.
 - [x] **Stage 1 (game day on the club home) — 11 asks G1–G11, RULED 2026-11-25: all eleven A, as recommended, no
   notes** (owner paste-back: G1 A · G2 A · G3 A · G4 A · G5 A · G6 A · G7 A · G8 A · G9 A · G10 A · G11 A). G6 is A,
   not D: no "Updated" time line. Drawn 2026-11-25. Page:

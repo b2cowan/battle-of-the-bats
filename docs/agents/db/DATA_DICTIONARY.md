@@ -8571,7 +8571,7 @@ The **intra-org recreational house-league** module (`league_*`) — sign-ups, di
 <!-- dict:col:rep_event_closure_marks.coach_emailed_at -->
 <!-- dict:col:rep_event_closure_marks.reopen_told_at -->
 <!-- dict:col:rep_event_closure_marks.created_at -->
-**`coach_emailed_at`** (null = not yet, or no coach) / **`reopen_told_at`** (Reopen's one line, K11) — the coach emails, stamped by Session 2B's send. **`created_at`**.
+**`coach_emailed_at`** (null = not yet, or no coach) / **`reopen_told_at`** (Reopen's one line, K11) — the coach emails, stamped by Session 2B's send. **Since mig 551 (T2) a mark can arrive with `coach_emailed_at` already set:** a press over a game a closure still showing already marks marks it too, unticked, stamped with the game's earliest earlier stamp (else the press's instant), so the send skips its coach; it then stays marked until every closure over it reopens. ⚠ Such a mark's stamp means "this press does not email", not always "an email went": when the earlier mark had none (its own press's send has not run, or failed and gave its claim back), that earlier press's own send or retry still tells the coach. The send after a press reads a mark whose `coach_emailed_at <= created_at` as one of these (the press's own write; its claims stamp later), which is how the result says "already marked". Reopen (Session B) reopens a SET of closures in one press and claims `reopen_told_at` over all of a game's marks at once, so a coach is told once per team. **`created_at`**.
 
 ---
 

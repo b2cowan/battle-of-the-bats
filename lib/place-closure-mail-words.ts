@@ -1,6 +1,6 @@
 import { warmEmailDocument } from './email-envelope-warm';
 import { MAIL } from './club-group-email-words';
-import { closedPlaceName, isAre, type ClosureScope } from './place-closures';
+import { closedPlaceName, diamondsNamed, isAre, type ClosureScope } from './place-closures';
 import { formatShortWeekdayDate, orgDayKey } from './timezone';
 import { closeClock } from './place-closure-window';
 import { joinWithAnd } from './utils';
@@ -25,6 +25,15 @@ import type { OrgRole } from './types';
 export interface CoachMailClosure { scope: ClosureScope; placeName: string | null; facilityName: string | null; firstDay: string; lastDay: string }
 export interface CoachMailGame {
   startsAt: string; opponent: string | null; closure: CoachMailClosure;
+  /** Reopen (Session B): every closure of the press that held this game (a D1 game has two or more). Absent: `closure`. */
+  closures?: CoachMailClosure[];
+  /** Reopen: the club place the game itself is at ("Diamond 1 at Lions Park"), when it is on one. Null: typed, or none. */
+  at?: { park: string; diamond: string | null } | null;
+  /** Reopen: a closure still showing closes something inside the place reopened, on this game's day (/legal 2026-11-26,
+   *  Session B: then the words name the game's own place, never "reopened all its fields"). */
+  stillClosed?: boolean;
+  /** Reopen: something at the game's OWN park is still closed that day (a park-level game is then not named by its park). */
+  parkStillClosed?: boolean;
   /** D1 (mig 549): a game at the park with no diamond, marked by two or more of its diamonds, is ONE game named by its
    *  park when closed: "2 diamonds at Lions Park". Absent: the closure's place. (Reopen's words are `reopenPark`'s.) */
   placeWords?: string;
@@ -43,12 +52,58 @@ const when = (g: CoachMailGame, withDay: boolean) =>
   `${g.opponent ? `against ${g.opponent} ` : ''}at ${closeClock(g.startsAt)}${withDay ? ` on ${formatShortWeekdayDate(orgDayKey(g.startsAt))}` : ''}`;
 const sameClosure = (games: readonly CoachMailGame[]) =>
   games.every(g => placeOf(g) === placeOf(games[0]) && g.closure.firstDay === games[0].closure.firstDay && g.closure.lastDay === games[0].closure.lastDay);
-/** Reopen is one closure: the D1 park words when every game carries them (/legal), else the closure's own place. */
-const reopenedPlace = (games: readonly CoachMailGame[], subject: boolean) => {
-  const park = games[0].reopenPark;
-  if (park && games.every(g => g.reopenPark === park)) return subject ? `Diamonds at ${park}` : `the diamonds at ${park} that were closed`;
-  return subject ? subjectPlace(games[0]) : placeOf(games[0]);
-};
+const atWords = (a: { park: string; diamond: string | null }) => (a.diamond ? `${a.diamond} at ${a.park}` : a.park);
+const atDay = (g: CoachMailGame) => `${formatShortWeekdayDate(orgDayKey(g.startsAt))} at ${closeClock(g.startsAt)}`;
+/** "Diamond 1 and Diamond 2 at Lions Park", or the park when its whole closure is among them; null: not one park. */
+function oneParkWords(closures: readonly CoachMailClosure[]): string | null {
+  if (!closures.length || closures.some(c => c.scope === 'all' || c.placeName !== closures[0].placeName)) return null;
+  if (closures.some(c => c.scope === 'place')) return closures[0].placeName ?? '';
+  return diamondsNamed(closures.map(c => c.facilityName ?? ''), closures[0].placeName);
+}
+
+/**
+ * Reopen's subject place and body (K11 A; /legal 2026-11-26, Session B: one reopen, several closures). The rule: name the
+ * place the coach's game is at, not the scope lifted; say "reopened {place}" or "all its fields" only when nothing inside
+ * it stays closed on those days.
+ *   one place for every game — today's words (D1: "the diamonds at Lions Park that were closed")
+ *   one park's diamonds — "Diamond 1 and Diamond 2 at Lions Park" (the park when its whole closure is among them)
+ *   different parks — "Fields reopened" · "reopened some of its fields", each game with its place
+ *   something inside stays closed — the game's own place; none known under "all our fields": "lifted its closure of
+ *     all its fields. Some places stay closed on their own."
+ */
+function reopenSay(club: string, team: string, games: readonly CoachMailGame[]): { subject: string; body: string } {
+  const one = games.length === 1;
+  const moved = one ? 'game wasn’t moved' : 'games weren’t moved';
+  const yours = (list: string) => `Your ${one ? 'game' : 'games'} on ${list} ${one ? 'wasn’t' : 'weren’t'} moved. ${one ? 'Keep it or move it.' : 'Keep them or move them.'}`;
+  const say = (subject: string, body: string, list = joinWithAnd(games.map(atDay))) =>
+    ({ subject: `${subject} reopened: ${team} ${moved}`, body: `${club} reopened ${body}. ${yours(list)}` });
+  // A game's own place as the words may name it: a park with no diamond recorded is not named while something inside that
+  // park is still closed that day ("Lions Park reopened" would overstate, /legal).
+  const atOf = (g: CoachMailGame) => (g.at && (g.at.diamond || !g.parkStillClosed) ? atWords(g.at) : null);
+  const some = () => ({
+    subject: `Fields reopened: ${team} ${moved}`,
+    body: `${club} reopened some of its fields. ${yours(joinWithAnd(games.map(g => { const a = atOf(g); return `${atDay(g)}${a ? ` at ${a}` : ''}`; })))}`,
+  });
+  if (!games.some(g => g.stillClosed)) {
+    const park = games[0].reopenPark;
+    if (park && games.every(g => g.reopenPark === park)) return say(`Diamonds at ${park}`, `the diamonds at ${park} that were closed`);
+    if (games.every(g => !g.reopenPark && placeOf(g) === placeOf(games[0]))) return say(subjectPlace(games[0]), placeOf(games[0]));
+    const words = oneParkWords(games.flatMap(g => g.closures ?? [g.closure]));
+    return words ? say(words, words) : some();
+  }
+  const ats = games.map(atOf);
+  if (ats[0] && ats.every(a => a === ats[0])) return say(ats[0], ats[0]);
+  const first = games[0].at;
+  if (first && games.every(g => g.at?.diamond && g.at.park === first.park)) {
+    const words = diamondsNamed(games.map(g => g.at!.diamond!), first.park);
+    return say(words, words);
+  }
+  if (ats.every(a => a === null) && games.every(g => (g.closures ?? [g.closure]).some(c => c.scope === 'all'))) {
+    return { subject: `Fields reopened: ${team} ${moved}`,
+      body: `${club} lifted its closure of all its fields. Some places stay closed on their own. ${yours(joinWithAnd(games.map(atDay)))}` };
+  }
+  return some();
+}
 
 export const COACH_MAIL = {
   /** "Lions Park is closed: U13 Ospreys game needs a new date" · "2 diamonds at Lions Park are closed: …". */
@@ -72,15 +127,8 @@ export const COACH_MAIL = {
       + 'Give each a new date, or cancel it.';
   },
   /** Reopen (K11 A; drawing tab 3): "{Club} reopened Lions Park. Your game on Sat, Nov 28 at 12:30 p.m. wasn’t moved. Keep it or move it." */
-  reopenSubject: (team: string, games: readonly CoachMailGame[]) =>
-    `${reopenedPlace(games, true)} reopened: ${team} ${games.length === 1 ? 'game wasn’t moved' : 'games weren’t moved'}`,
-  reopenBody: (club: string, games: readonly CoachMailGame[]) => {
-    const at = (g: CoachMailGame) => `${formatShortWeekdayDate(orgDayKey(g.startsAt))} at ${closeClock(g.startsAt)}`;
-    const where = reopenedPlace(games, false);
-    return games.length === 1
-      ? `${club} reopened ${where}. Your game on ${at(games[0])} wasn’t moved. Keep it or move it.`
-      : `${club} reopened ${where}. Your games on ${joinWithAnd(games.map(at))} weren’t moved. Keep them or move them.`;
-  },
+  reopenSubject: (team: string, games: readonly CoachMailGame[]) => reopenSay('', team, games).subject,
+  reopenBody: (club: string, games: readonly CoachMailGame[]) => reopenSay(club, '', games).body,
   /** Why this coach got it (their own role on the team). */
   reasonHead: (team: string) => `You get it because you’re head coach of ${team}.`,
   reasonOther: (team: string) => `You get it because you coach ${team} and it has no head coach on file.`,

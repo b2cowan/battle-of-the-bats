@@ -52,18 +52,16 @@ import {
   type ClosePreview, type CloseFrame, type CloseSource, type PlacePick, type RepReach, type StaffClosure,
 } from '@/lib/place-closure-window';
 import type { ClosureVerb } from '@/lib/place-closures';
-import { ClosureStripBox } from '@/components/public/ClubClosureStrip';
-import frameStyles from '@/components/public/ClubFrame.module.css';
-import { useOrg } from '@/lib/org-context';
-import { clubFace } from '@/lib/club-site';
 import { shortDivision, type RainSendDivision } from '@/lib/league-rainout';
 import TickPicker, { type TickBand, type TickOption } from './TickPicker';
+import StripPreview from './StripPreview';
 import s from './ClosePlace.module.css';
 
 interface PressResult {
   closureIds: string[]; replay: boolean;
   league: { verb: ClosureVerb; games: number; teams: number; divisions: (RainSendDivision & { seasonId: string })[]; unsent: boolean };
-  rep: { games: number; teams: { teamId: string; name: string; reach: RepReach; sent: boolean }[] };
+  /** `held` (T2): games already marked by a closure still showing, marked again quietly. */
+  rep: { games: number; teams: { teamId: string; name: string; reach: RepReach; sent: boolean }[]; held: number };
 }
 
 const newKey = () => (typeof crypto !== 'undefined' && 'randomUUID' in crypto
@@ -75,18 +73,9 @@ const wholePark = (venueId: string): PlacePick => ({ venueId, diamonds: [] });
 /** What the site will say after the press, for the window and its result: the strip in its public shape (S1–S3), or "Your
  *  site won't change." when a wider closure already says it. `lead` is the sentence over the strip. */
 function SitePreview({ preview, lead }: { preview: ClosePreview; lead: string }) {
-  // The club's own face, as its site wears it (the tryout preview's rule).
-  const face = clubFace(useOrg().currentOrg?.themeFont);
   if (preview.alreadySays) return <div className={s.site}><b>{W.unchanged}</b>{W.alreadySays(preview.alreadySays)}</div>;
   if (!preview.strip) return null;
-  return (
-    <>
-      <p className={s.siteLead}>{lead}</p>
-      <div className={`${frameStyles.tokens} ${s.preview}`} data-club-face={face}>
-        <ClosureStripBox groups={preview.strip.groups} smallLine={preview.strip.smallLine} />
-      </div>
-    </>
-  );
+  return <StripPreview strip={preview.strip} lead={lead} />;
 }
 
 /** The "maybe" games in one list, league then rep, as the table and the result both name them (rep is absent for a house
@@ -465,6 +454,12 @@ export default function ClosePlaceWindow({ orgSlug, eyebrow, season, initialVenu
             <span className={ck.noticeBody}>{W.doneRep(result.rep.games, source.repHidden ? [] : result.rep.teams)}</span>
           </div>
         )}
+        {result.rep.held > 0 && (
+          <div className={`${ck.notice} ${ck.noticeGood}`}>
+            <CheckCircle2 size={16} aria-hidden />
+            <span className={ck.noticeBody}>{W.doneHeld(result.rep.held)}</span>
+          </div>
+        )}
         {typedLeftGames.length > 0 && (
           <div className={`${ck.notice} ${ck.noticeWarn}`}>
             <AlertTriangle size={16} aria-hidden />
@@ -504,10 +499,13 @@ export default function ClosePlaceWindow({ orgSlug, eyebrow, season, initialVenu
   // schedule).
   const allOnly = noPlaces && frame!.canAll;
   const listedLeague = source ? source.league.filter(g => g.published).length : 0;
-  const nothing = !!source && listedLeague === 0 && source.rep.length === 0;
+  const nothing = !!source && listedLeague === 0 && source.rep.length === 0 && source.repHeld.length === 0;
   const repHiddenGames = source?.repHidden ? source.rep : [];
-  const others = source ? { tournaments: source.tournaments, practices: source.practices, rep: repHiddenGames.length } : null;
-  const othersCount = others ? others.tournaments.length + others.practices + others.rep : 0;
+  // T2 (item 10 of the gate): a game a closure still showing already marks is marked again quietly — listed here, never
+  // ticked or counted, its coach not emailed again.
+  const heldGames = source?.repHeld ?? [];
+  const others = source ? { tournaments: source.tournaments, practices: source.practices, rep: repHiddenGames.length, held: heldGames.length } : null;
+  const othersCount = others ? others.tournaments.length + others.practices + others.rep + others.held : 0;
   const emails = sum?.families ?? 0;
   const total = sum ? W.closing(sum.games, sum.teams) : '';
   const left = CLOSE_LINE_MAX - line.length;
@@ -706,6 +704,17 @@ export default function ClosePlaceWindow({ orgSlug, eyebrow, season, initialVenu
                   <div className={s.otherGroup}>{W.rep} · {W.repHiddenCount(others.rep)}</div>
                   <div className={s.otherRow}><div><strong>{W.repHiddenLine(others.rep, places)}</strong>
                     <span className={s.sub}>{others.rep === 1 ? W.repHiddenSub : W.repHiddenSubMany}</span></div></div>
+                </>)}
+                {others.held > 0 && (<>
+                  <div className={s.otherGroup}>{W.heldGroup}</div>
+                  {source!.repHidden
+                    ? <div className={s.otherRow}><div><strong>{W.heldHidden(others.held)}</strong></div></div>
+                    : heldGames.map(g => (
+                      <div key={g.id} className={s.otherRow}><div>
+                        <strong>{g.opponent ? `${g.teamName} vs ${g.opponent}` : g.teamName}</strong>
+                        <span className={s.sub}>{W.heldNote(g)}</span>
+                      </div></div>
+                    ))}
                 </>)}
                 {others.tournaments.length > 0 && (<>
                   <div className={s.otherGroup}>{W.tournament} · {others.tournaments.some(t => t.door) ? W.tournamentSub : W.tournamentSubNoDoor}</div>
