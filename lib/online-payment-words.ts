@@ -6,6 +6,7 @@
  * written here either: the Payments Terms are a published legal page (`lib/legal-documents/payments/`), linked, never copied.
  */
 import { formatStoredDate, utcToZonedInputs } from './timezone';
+import { sponsorshipsOpen } from './sponsorships-open';
 import { formatTime, joinWithAnd, pluralize, possessive } from './utils';
 import { FACT_LABELS as L, capFactList, factRow, noticeFacts, type FactRow, type NoticeFacts } from './notification-facts';
 
@@ -149,6 +150,8 @@ export const ONLINE_NOTICE_WORDS = {
     'Online payments are paused until your refund policy is written on the Payouts card. Teams see your “How to pay” text until then. Nothing already paid is affected.',
   policyNeedsBodyFamilies:
     'Online payments are paused until your refund policy is written on the Payouts card. Families and teams see your “How to pay” text until then. Nothing already paid is affected.',
+  policyNeedsBodySponsors:
+    'Online payments are paused until your refund policy is written on the Payouts card. Families, teams and sponsors see your “How to pay” text until then. Nothing already paid is affected.',
   // Derived (not in the copy): Stripe asks ahead of a deadline while payments still work.
   stripeNeedsBodyStillOn: (byDeadline: string) =>
     `Stripe needs something more from you${byDeadline}. Online payments stay on until then. Nothing already paid is affected.`,
@@ -558,10 +561,20 @@ const PAYOUTS_WORDS_FAMILIES = {
   quiet: { ...PAYOUTS_WORDS.quiet, line: 'Families and teams pay you directly, outside FieldLogicHQ.' },
 };
 
+/** A club's one refund policy is shown to its sponsors too (owner 2026-11-27), so the lines about it name them while clubs
+ *  have Sponsorships. */
+const PAYOUTS_WORDS_SPONSORS: typeof PAYOUTS_WORDS_FAMILIES = {
+  ...PAYOUTS_WORDS_FAMILIES,
+  policyNeedsBody: 'Write your refund policy to turn them back on. Families, teams and sponsors can read it beside Pay before they pay. Until then they see your “How to pay” text instead of Pay now. Nothing already paid is affected.',
+  before: { ...PAYOUTS_WORDS_FAMILIES.before, policyHint: 'Families, teams and sponsors can read it beside Pay before they pay. You can change it later on the Payouts card.' },
+  record: { ...PAYOUTS_WORDS_FAMILIES.record, policyHint: 'One or two sentences families, teams and sponsors see beside Pay.' },
+};
+
 /** The Payouts words for where the card lives: 'club' (League and Club) names families and teams; 'tournament'
  *  (Tournament Plus) names teams. */
 export function payoutsWords(home: PayoutsHome): typeof PAYOUTS_WORDS_FAMILIES {
-  return home === 'club' ? PAYOUTS_WORDS_FAMILIES : PAYOUTS_WORDS;
+  if (home !== 'club') return PAYOUTS_WORDS;
+  return sponsorshipsOpen() ? PAYOUTS_WORDS_SPONSORS : PAYOUTS_WORDS_FAMILIES;
 }
 
 /** "23 families still owe a house-league fee, and 2 teams still owe a tournament fee" (words §4.1 `disconnect.owing`). */

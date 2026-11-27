@@ -520,6 +520,21 @@ export const DEAL_WORDS = {
     refundedSub: (club: string) => `${club} refunded your sponsorship payment, and the sponsorship has ended.`,
     refundedReceiptTitle: 'Sponsorship refunded',
     invoiceLine: (number: string, total: number) => `Invoice ${number} · ${money(total)}`,
+    // An invoice that is owing AGAIN (owner 2026-11-27, all A; BOARD_READY_STAGE6_SPONSOR_OWING_PAGE_DRAWING; the lines
+    // checked by /legal the same day): the amount is the heading and leaves the invoice's title, and the card shows the sum.
+    owingTitle: (owing: number) => `${money(owing)} still owing`,
+    owingSubRefund: (club: string, count: number) => `${club} shows this invoice as still owing after the ${count > 1 ? 'refunds' : 'refund'}.`,
+    owingSubReversal: (club: string) => `${club} shows this invoice as still owing after the card payment was reversed. Questions? Contact ${club} before you pay.`,
+    owingSubOther: (club: string) => `${club} shows this invoice as still owing. Questions? Contact ${club} before you pay.`,
+    invoiceOnly: (number: string) => `Invoice ${number}`,
+    owingTotal: 'Invoice total',
+    // "Paid by cheque Nov 3, 2026"; a method with no name of its own says only "Paid".
+    owingPaid: (method: string | null, on: string) => `Paid${method ? ` by ${method}` : ''} ${dayYear(on)}`,
+    owingReversed: 'Card payment reversed by the card issuer',
+    owingLeft: 'Still owing',
+    owingFeeRefund: (fee: number, taxed: boolean) => `Still owing includes the ${money(fee)} processing fee${taxed ? ' (tax included)' : ''} from your refunded card payment.`,
+    owingFeeShown: (fee: number, taxed: boolean) => `Still owing includes the ${money(fee)} processing fee${taxed ? ' (tax included)' : ''} shown on this invoice.`,
+    refundPolicyOf: (club: string) => `${possessive(club)} refund policy`,
     // The invoice card's facts, one per line: a label, then the day or address (owner, 2026-11-23; it was one long "Issued · due · also sent to" line).
     issuedLabel: 'Issued',
     dueLabel: 'Due',
@@ -597,7 +612,6 @@ export const DEAL_WORDS = {
     // The paid receipt's card line (round 2 tab 1: "Visa ••4242 · Mar 3, 2027, 2:14 p.m. · invoice 2027-014").
     paidWith: (card: string, when: string, number: string) => `${card} · ${when} · invoice ${number}`,
     feeRow: 'Processing fee',
-    stillOwingAfterRefund: (club: string, owing: string, count: number) => `${club} shows ${owing} still owing after the ${count > 1 ? 'refunds' : 'refund'}.`,
     refundedRow: (on: string) => `Refunded ${dayYear(on)}`,
     refundedOnWay: 'Refund on its way to the card',
     creditNote: (number: string) => `Credit note ${number} (PDF)`,
@@ -790,7 +804,13 @@ export const DEAL_WORDS = {
     choiceEnded: 'It has ended',
     choiceEndedSub: 'The logo comes down and the place is free',
     choiceOwing: 'They still owe it',
-    choiceOwingSub: (taxed: boolean) => `The deal reads owing again and their link lets them pay${taxed ? '. No credit note, because they still owe the full invoice' : ''}`,
+    // `withFee`: the invoice carries a processing fee the sponsor paid, so the amount and the fee are named before the club
+    // chooses (owner 2026-11-27).
+    choiceOwingSub: (taxed: boolean, withFee: { total: number; fee: number } | null) => {
+      const named = withFee ? `${money(withFee.total)}, which includes the ${money(withFee.fee)} processing fee` : null;
+      if (!taxed) return `The deal reads owing again and their link lets them pay${named ? ` ${named}` : ''}`;
+      return `The deal reads owing again and their link lets them pay. No credit note, because they still owe the full invoice${named ? `, ${named}` : ''}`;
+    },
     owingNeedsFee: (left: number) => `To have them still owe it, first refund the other ${money(left)} (the processing fee) in your Stripe dashboard, then finish.`,
     owingNoted: 'Part of this payment already has a credit note, so the full invoice can’t be owed again.',
     chooseFirst: 'Choose what happens to the deal.',

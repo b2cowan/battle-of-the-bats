@@ -31,17 +31,24 @@ import { ORG_IMAGE_TYPES, ORG_LOGO_MAX_BYTES } from '@/lib/org-image-limits';
 import { money, ONLINE_EMAIL_WORDS, PAY_WORDS } from '@/lib/online-payment-words';
 import { openCheckout, usePaymentConfirming } from '@/components/public/PayBlock';
 import type { SponsorPageView, SponsorBusinessPrefill } from '@/lib/sponsor-deal-view';
+import { DUES_PAYMENT_METHOD_LABEL } from '@/lib/types';
+import type { OwingAgain, OwingRow } from '@/lib/club-sponsor-invoice';
 import css from './SponsorDeal.module.css';
 
 const P = DEAL_WORDS.page;
 const C = DEAL_WORDS.card;
 
-/** The club's refund policy, said outright under the card button (owner 2026-11-24: a "Refund policy" link that opened one short
+/** The club's refund policy under a label naming whose it is (owner 2026-11-27), said outright under the card button (owner 2026-11-24: a "Refund policy" link that opened one short
  *  sentence was a label repeating its own content; the policy is ≤300 characters, so it simply shows, which also meets /legal's
  *  "refund policy beside the card button" more strongly than a link did). */
-function RefundPolicy({ text }: { text: string | null }) {
+function RefundPolicy({ club, text }: { club: string; text: string | null }) {
   if (!text) return null;
-  return <p className={css.payNote}>{text}</p>;
+  return (
+    <>
+      <p className={css.policyLabel}>{P.refundPolicyOf(club)}</p>
+      <p className={css.policyText}>{text}</p>
+    </>
+  );
 }
 
 type Open = Extract<SponsorPageView, { state: 'form' | 'done' }>;
@@ -83,13 +90,15 @@ function OpenDeal({ view, onView }: { view: Open; onView: (v: SponsorPageView) =
   const fig = dealFigures({ amount: deal.amount, chargeTax: deal.taxed, registered: true, province: province || null, on: view.today });
   const until = deal.endsOn ? P.until(deal.endsOn) : null;
   const priceNote = [deal.taxed && fig.rate ? P.plusTax(fig.rate.kind) : null, until].filter(Boolean).join(' · ');
+  // Owing again heads the page, never while a card payment is confirming or taken and unrecorded (those say don't pay again).
+  const again = view.state === 'done' && !confirming && !view.received ? view.owingAgain : null;
 
   return (
     <div>
       <div className={css.head}>
         <p className={pay.eyebrow}>{P.eyebrow}</p>
-        <h1 className={`${pay.title} ${pay.titleFocused}`}>{view.state === 'done' ? (view.refundedAway ? P.refundedTitle : P.thanksTitle(view.business.name || deal.offeredTo)) : title}</h1>
-        <p className={css.sub}>{view.state === 'done' ? (view.refundedAway ? P.refundedSub(club.name) : view.logoUrl ? P.thanksSub(club.name) : P.thanksSubNoLogo(club.name)) : P.offeredTo(deal.offeredTo)}</p>
+        <h1 className={`${pay.title} ${pay.titleFocused}`}>{again ? P.owingTitle(view.owing) : view.state === 'done' ? (view.refundedAway ? P.refundedTitle : P.thanksTitle(view.business.name || deal.offeredTo)) : title}</h1>
+        <p className={css.sub}>{again ? (again.cause === 'refund' ? P.owingSubRefund(club.name, again.refundCount) : again.cause === 'reversal' ? P.owingSubReversal(club.name) : P.owingSubOther(club.name)) : view.state === 'done' ? (view.refundedAway ? P.refundedSub(club.name) : view.logoUrl ? P.thanksSub(club.name) : P.thanksSubNoLogo(club.name)) : P.offeredTo(deal.offeredTo)}</p>
       </div>
 
       {confirming ? (
@@ -334,7 +343,7 @@ function SponsorForm({ view, onView, province, setProvince, total, taxRow }: {
               <CreditCard size={18} aria-hidden /> {uploading ? QW.uploadingButton : submitting && how === 'card' ? C.opening : C.sendCard(cardTotal)}
             </button>
             {card.sponsorPays && <p className={css.payNote}>{C.feeNote(cardFee.feeCents / 100, cardFee.feeTaxCents / 100, taxRow?.kind ?? null)}</p>}
-            <RefundPolicy text={card.refundPolicy} />
+            <RefundPolicy club={view.club.name} text={card.refundPolicy} />
           </div>
         )}
         <div className={css.payRow}>
@@ -406,6 +415,8 @@ function Thanks({ view }: { view: Open }) {
   const inv = view.invoice;
   const how = view.howToPay;
   const pdf = `/api/public/sponsorship/${view.token}/invoice`;
+  // A card payment taken and not yet recorded: the page says don't pay again, so it shows no sum of what is owing.
+  const again = view.received ? null : view.owingAgain;
   // The credit notes the business was sent (and any that were cancelled): on the receipt, and on an invoice that is owing again, since the
   // refund email says "your credit note is on your sponsorship page" whichever state the deal is in.
   const noteLinks = (
@@ -448,24 +459,25 @@ function Thanks({ view }: { view: Open }) {
       )}
       {inv && !view.paid && (
         <div className={css.invoice}>
-          <p className={css.invoiceTitle}>{P.invoiceLine(inv.number, inv.total)}</p>
+          <p className={css.invoiceTitle}>{again ? P.invoiceOnly(inv.number) : P.invoiceLine(inv.number, inv.total)}</p>
           <dl className={css.invoiceFacts}>
             <div><dt>{P.issuedLabel}</dt><dd>{P.invoiceDay(inv.issuedOn)}</dd></div>
             <div><dt>{P.dueLabel}</dt><dd>{P.invoiceDay(inv.dueOn)}</dd></div>
             {inv.email && inv.emailed && <div className={css.invoiceFactWide}><dt>{P.emailedToLabel}</dt><dd>{inv.email}</dd></div>}
           </dl>
-          {view.owing < inv.total && <p className={css.invoiceMeta}>{P.partPaid(inv.total - view.owing, view.owing)}</p>}
-          {view.owing > 0 && view.refunds.some(r => !r.pending) && <p className={css.invoiceMeta}>{C.stillOwingAfterRefund(view.club.name, money(view.owing), view.refunds.filter(r => !r.pending).length)}</p>}
-          {view.refunds.length > 0 && (
+          {!again && view.owing < inv.total && <p className={css.invoiceMeta}>{P.partPaid(inv.total - view.owing, view.owing)}</p>}
+          {again && <OwingSum again={again} total={inv.total} owing={view.owing} />}
+          {!again?.rows && view.refunds.length > 0 && (
             <dl className={css.receiptLines}>
               {view.refunds.map(r => (
-                <div key={r.id}><dt>{r.pending || !r.on ? C.refundedOnWay : C.refundedRow(r.on)}</dt><dd>−{money(r.amount)}</dd></div>
+                // No minus once the card says "owing again": under "Still owing" it would read as less to pay.
+                <div key={r.id}><dt>{r.pending || !r.on ? C.refundedOnWay : C.refundedRow(r.on)}</dt><dd>{again ? '' : '−'}{money(r.amount)}</dd></div>
               ))}
             </dl>
           )}
           <a className={css.download} href={pdf} download>{P.downloadInvoice}</a>
           {(view.refunds.some(r => r.creditNumber) || view.cancelledNotes.length > 0) && <div className={css.downloads}>{noteLinks}</div>}
-          {view.card && view.owing > 0 && <PayInvoiceByCard token={view.token} owing={view.owing} policy={view.card.refundPolicy} />}
+          {view.card && view.owing > 0 && <PayInvoiceByCard club={view.club.name} token={view.token} owing={view.owing} policy={view.card.refundPolicy} />}
           <div className={css.how}>
             <p className={css.howTitle}>{P.howToPay}</p>
             <dl className={css.howList}>
@@ -501,8 +513,26 @@ function Thanks({ view }: { view: Open }) {
   );
 }
 
+/** The sum on an invoice that is owing again: the invoice, each payment taken off, each refund or reversal put back, what is
+ *  owing — then the processing fee inside it, when there is one to say. No middle lines when they would not add up. */
+function OwingSum({ again, total, owing }: { again: OwingAgain; total: number; owing: number }) {
+  const label = (r: OwingRow) => r.kind === 'reversed' ? P.owingReversed
+    : r.kind === 'refunded' ? C.refundedRow(r.on!)
+    : P.owingPaid(r.method && r.method !== 'other' ? DUES_PAYMENT_METHOD_LABEL[r.method].toLowerCase() : null, r.on!);
+  return (
+    <>
+      <dl className={css.receiptLines}>
+        <div><dt>{P.owingTotal}</dt><dd>{money(total)}</dd></div>
+        {again.rows?.map((r, i) => <div key={i}><dt>{label(r)}</dt><dd>{r.kind === 'paid' ? '−' : '+'}{money(r.amount)}</dd></div>)}
+        <div className={css.receiptTotal}><dt>{P.owingLeft}</dt><dd>{money(owing)}</dd></div>
+      </dl>
+      {again.fee && <p className={css.invoiceMeta}>{(again.cause === 'refund' ? P.owingFeeRefund : P.owingFeeShown)(again.fee.amount, again.fee.taxed)}</p>}
+    </>
+  );
+}
+
 /** "Pay {owing} by card" on an invoice already out: what is owing, to the cent (the club pays the fee, owner call (3)). */
-function PayInvoiceByCard({ token, owing, policy }: { token: string; owing: number; policy: string | null }) {
+function PayInvoiceByCard({ club, token, owing, policy }: { club: string; token: string; owing: number; policy: string | null }) {
   const [opening, setOpening] = useState(false);
   const [error, setError] = useState<string | null>(null);
   async function pay() {
@@ -519,7 +549,7 @@ function PayInvoiceByCard({ token, owing, policy }: { token: string; owing: numb
         <CreditCard size={18} aria-hidden /> {opening ? C.opening : C.payInvoice(owing)}
       </button>
       <p className={css.payNote}>{C.payInvoiceNote}</p>
-      <RefundPolicy text={policy} />
+      <RefundPolicy club={club} text={policy} />
       {error && <p className={formKit.errorMsg} role="alert">{error}</p>}
     </div>
   );

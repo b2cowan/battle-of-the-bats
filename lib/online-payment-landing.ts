@@ -7,6 +7,7 @@ import { clearSettled } from './needs-attention';
 import { getOrganizationBySlugForServer } from './server-organizations';
 import { canConnectPayouts, canRefundLeagueOnline, canRefundOnline, isPayoutsTreasurer } from './online-payment-access';
 import { factsFromStripe, factsFromRow, payoutsPath, payoutsState, pausedForRefundPolicy, PAYOUTS_ACCOUNT_COLUMNS, type PayoutsAccountRow } from './online-payment-account';
+import { sponsorshipsOpen } from './sponsorships-open';
 import { listDisputes, listRefunds, listStripeFeeLines, requestBankDebit, retrieveAccount, retrieveChargeWithFee, retrieveCheckout, retrieveDispute, retrievePaymentIntentMetadata, retrieveRefund, refundToCard } from './stripe-connect';
 import { chargeBalanceTransaction, disputeFeeCents, standaloneFeeOf, stripeFeeCents } from './online-payment-stripe-fees';
 import { disputeFromStripe, isDisputeOpen, isInquiry, refundBlockedByDispute } from './online-payment-dispute';
@@ -151,7 +152,7 @@ export async function syncPayoutsAccount(stripeAccountId: string): Promise<Payou
       org, userIds: await payoutsPeople(org), eventType: 'payouts_need_attention',
       subjectKey: 'stripeAccountId', subjectId: stripeAccountId,
       title: forPolicy ? W.policyNeedsTitle : W.stripeNeedsTitle,
-      body: forPolicy ? (teamsOnly ? W.policyNeedsBody : W.policyNeedsBodyFamilies)
+      body: forPolicy ? (teamsOnly ? W.policyNeedsBody : sponsorshipsOpen() ? W.policyNeedsBodySponsors : W.policyNeedsBodyFamilies)
         : row.card_payments_status === 'active'
         ? W.stripeNeedsBodyStillOn(deadline)
         : teamsOnly ? W.stripeNeedsBodyPaused : W.stripeNeedsBodyPausedFamilies,

@@ -276,6 +276,55 @@ export function invoiceStanding(total: number, payments: readonly DealPayment[])
   return { paid: paidC / 100, owing: owingC / 100, paidInFull, paidOn: paidInFull ? live[live.length - 1].receivedOn : null, live, listed };
 }
 
+/** One line of the sum on the sponsor's page, from the invoice total to what is owing: a payment takes money off, a refund or a
+ *  reversed card payment puts it back. */
+export interface OwingRow {
+  kind: 'paid' | 'refunded' | 'reversed';
+  amount: number;
+  /** The payment's or refund's day; a reversal has none (the only day on record is the one the loss was booked). */
+  on: string | null;
+  method?: DuesPaymentMethod;
+}
+
+/** An invoice that owes money AGAIN, as the sponsor's page says it (owner 2026-11-27, all A). */
+export interface OwingAgain {
+  /** What the page may say happened. 'other': it can't name one cause (the lines would not add up, a refund and a reversal
+   *  are both on the deal, or a voided payment may be why it owes), so it says only that the invoice is owing. */
+  cause: 'refund' | 'reversal' | 'other';
+  refundCount: number;
+  /** Null when the lines would not add up to what is owing (a part refund on a payment that still counts, a refund on its way,
+   *  money that went back twice): the page then shows the total and what is owing, and lists the refunds without a sum. */
+  rows: OwingRow[] | null;
+  /** The processing fee the sponsor paid by card, with its tax: said only when the lines add up, the whole invoice is owed and
+   *  the invoice was never revised (a revision keeps the old fee figure though the new total doesn't include it). */
+  fee: { amount: number; taxed: boolean } | null;
+}
+
+/** Null unless money is owing after a refund went through, or after a card payment the sponsor's bank took back. */
+export function owingAgain(
+  invoice: Pick<DealInvoice, 'total' | 'cardFee' | 'cardFeeTax'>, payments: readonly DealPayment[], refunds: readonly DealRefund[], owing: number,
+  revised: boolean,
+): OwingAgain | null {
+  const listed = invoiceStanding(invoice.total, payments).listed;
+  const done = refunds.filter(r => r.status === 'succeeded');
+  const lost = listed.filter(p => p.disputeLost);
+  if (owing <= 0 || (!done.length && !lost.length)) return null;
+  const rows: OwingRow[] = [
+    ...listed.map(p => ({ kind: 'paid' as const, amount: p.amount, on: p.receivedOn, method: p.method })),
+    ...done.map(r => ({ kind: 'refunded' as const, amount: r.amount, on: refundDay(r) })),
+    ...lost.map(p => ({ kind: 'reversed' as const, amount: p.amount, on: null })),
+  ];
+  const sumC = rows.reduce((s, r) => s + (r.kind === 'paid' ? -cents(r.amount) : cents(r.amount)), cents(invoice.total));
+  const addsUp = sumC === cents(owing) && !refunds.some(r => r.status === 'pending');
+  const feeC = cents(invoice.cardFee ?? 0) + cents(invoice.cardFeeTax ?? 0);
+  return {
+    cause: !addsUp || (lost.length && done.length) || payments.some(p => p.voided) ? 'other' : lost.length ? 'reversal' : 'refund',
+    refundCount: done.length,
+    rows: addsUp ? rows : null,
+    fee: addsUp && !revised && feeC > 0 && cents(owing) === cents(invoice.total) ? { amount: feeC / 100, taxed: !!invoice.cardFeeTax } : null,
+  };
+}
+
 /** The payments the PAPER lists: every one not voided, except a payment that no longer holds money and has no refund to show for it (a
  *  dispute the club lost: the bank took it, nothing was refunded, and the invoice reads as owing again). */
 export const paymentsOnPaper = (listed: readonly DealPayment[], refunds: readonly Pick<DealRefund, 'paymentId' | 'status'>[]): DealPayment[] =>

@@ -24,7 +24,7 @@ import { dealLinkFormState, type DealLinkAnswer } from './club-form-deal';
 import { readPackage, readSettings } from './club-sponsorships-server';
 import { markDealOpened, newerLinkEmailed, readDeal } from './club-sponsorship-deals-server';
 import { dealBullets, linkTakesForm, linkTakesLogo, type DealInvoice } from './club-sponsorship-deals';
-import { clubCanEmailInvoice, invoiceStanding, refundCounts, refundNoteCancelled, refundedAway } from './club-sponsor-invoice';
+import { clubCanEmailInvoice, invoiceStanding, owingAgain, refundCounts, refundNoteCancelled, refundedAway, type OwingAgain } from './club-sponsor-invoice';
 import { sponsorCardFacts, unrecordedCardPayment } from './sponsor-card-server';
 import { cardLabel } from './online-payment-words';
 import { tournamentToday } from './timezone';
@@ -129,6 +129,8 @@ export type SponsorPageView =
     received: boolean;
     /** What is still owing on the invoice (Part 3a); less than the total means a payment has arrived. */
     owing: number;
+    /** The invoice owes money again, after a refund or a reversed card payment (owner 2026-11-27); null otherwise. */
+    owingAgain: OwingAgain | null;
     paidOn: string | null;
     /** Part 3b: the card button is there only while the club takes card (absent, not broken). `sponsorPays`: the Payouts card's
      *  "Processing fee on sponsorships" says the sponsor pays it — only ever before an invoice (owner call (3)). */
@@ -243,6 +245,7 @@ export async function buildSponsorPageView(orgSlug: string, token: string, opts:
     refundedAway: ended && refundedAway(deal),
     feeRefunded: deal.refunds.some(r => r.status === 'succeeded' && r.feePart > 0),
     owing: ended ? 0 : standing?.owing ?? 0,
+    owingAgain: deal.state === 'invoiced' && deal.invoice ? owingAgain(deal.invoice, deal.payments, deal.refunds, standing?.owing ?? 0, !!deal.revisedOn) : null,
     paidOn: deal.paidOn ?? standing?.paidOn ?? null,
     card: facts && !received ? { sponsorPays: open && facts.feePayer === 'sponsor', refundPolicy: facts.refundPolicy } : null,
     paidCard: lastCard ? { label: cardLabel(lastCard.brand, lastCard.last4), at: lastCard.paidAt ?? '' } : null,

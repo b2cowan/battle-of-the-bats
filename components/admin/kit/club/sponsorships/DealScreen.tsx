@@ -228,6 +228,8 @@ export default function DealScreen({ dealId }: { dealId: string }) {
   const finishingRefund = finishing ? data.refunds.find(x => x.id === finishing) ?? null : null;
   // Send the invoice (round 1 tab 5): a deal its business left at Form received — an unfinished card payment.
   const sendsInvoice = d.state === 'form_received' && !data.unrecordedCard && !data.lapsed;
+  // The finish question, over the payment's window, on a fresh read of the deal.
+  const raiseFinish = (r: DealRefund) => { setFinishing(r.id); void reload(); };
 
   return (
     <>
@@ -240,8 +242,10 @@ export default function DealScreen({ dealId }: { dealId: string }) {
       <div className={css.dealGrid}>
         <Callout tone={c.tone} role="status" flush
           action={c.finish
-            // The callout's button opens the payment's window, where the refund sits "To finish" (Part A, tab 2).
-            ? <button type="button" className="btn btn-lime" aria-haspopup="dialog" onClick={() => setOpened(c.finish!.paymentId)}>{D.card.finishButton}</button>
+            // The callout's button goes straight to the finish question, with the payment's window behind it, so Cancel lands there
+            // (owner 2026-11-27, walk §576 call A). The question waits a frame: two windows' Back steps must not mount in one
+            // commit (`useBackStep`).
+            ? <button type="button" className="btn btn-lime" aria-haspopup="dialog" onClick={() => { const r = c.finish!; setOpened(r.paymentId); window.requestAnimationFrame(() => raiseFinish(r)); }}>{D.card.finishButton}</button>
             : linkMade && d.state === 'offered' && data.link
             ? <button type="button" className="btn btn-lime" onClick={() => void copy()}>{copied ? D.deal.copied : D.deal.copy}</button>
             : recordable
@@ -419,11 +423,11 @@ export default function DealScreen({ dealId }: { dealId: string }) {
           canVoid={d.state === 'invoiced' || d.state === 'paid'}
           creditHref={id => api(`/refunds/${id}/credit-note`)}
           onClose={() => setOpened(null)} onRefund={() => setRefunding(true)} onVoid={() => { setVoiding(openedPayment); setOpened(null); }}
-          onFinish={r => { setFinishing(r.id); void reload(); }} />
+          onFinish={raiseFinish} />
       )}
       {openedPayment && finishingRefund && d.invoice && (
           <FinishRefundQuestion url={api(`/refunds/${finishingRefund.id}/finish`)} refund={finishingRefund} payments={data.payments} refunds={data.refunds} dealState={d.state}
-            total={d.invoice.total} number={d.invoice.number} taxed={d.invoice.tax > 0} taxKind={d.invoice.taxKind} business={d.businessName} businessEmail={b?.email ?? null}
+            total={d.invoice.total} cardFee={(Math.round((d.invoice.cardFee ?? 0) * 100) + Math.round((d.invoice.cardFeeTax ?? 0) * 100)) / 100} number={d.invoice.number} taxed={d.invoice.tax > 0} taxKind={d.invoice.taxKind} business={d.businessName} businessEmail={b?.email ?? null}
             clubCanEmail={data.hasMailingAddress && data.hasContact}
             onClose={() => setFinishing(null)}
             onStale={async text => { setFinishing(null); setNotice({ tone: 'bad', text }); await reload(); }}

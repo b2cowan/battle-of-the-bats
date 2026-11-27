@@ -298,10 +298,12 @@ function stripeReasonWords(code: string | null): string | null {
  * amount and day are fixed; the club writes the reason the business reads. On the last of the deal's money it first asks what
  * happens to the deal ("It has ended" or "They still owe it"), nothing picked, no button until it is chosen.
  */
-export function FinishRefundQuestion({ url, refund, payments, refunds, dealState, total, number, taxed, taxKind, business, businessEmail, clubCanEmail, onClose, onStale, onDone }: {
+export function FinishRefundQuestion({ url, refund, payments, refunds, dealState, total, cardFee, number, taxed, taxKind, business, businessEmail, clubCanEmail, onClose, onStale, onDone }: {
   url: string; refund: DealRefund; payments: readonly DealPayment[]; refunds: readonly DealRefund[]; dealState: string;
   /** The invoice's total: whether the money left standing still covers it. */
   total: number;
+  /** The processing fee the sponsor paid by card, with its tax (0 when the invoice carries none). */
+  cardFee: number;
   number: string; taxed: boolean; taxKind: string | null; business: string; businessEmail: string | null;
   /** The club has a mailing address and a contact for sponsors: without them no refund email can go. */
   clubCanEmail: boolean; onClose: () => void;
@@ -379,7 +381,7 @@ export function FinishRefundQuestion({ url, refund, payments, refunds, dealState
               <input type="radio" name="deal-finish" checked={outcome === 'owing'} onChange={() => setOutcome('owing')} />
               <span>
                 <span className={css.choiceName}>{C.choiceOwing}</span>
-                <span className={ck.hint}>{C.choiceOwingSub(taxed)}</span>
+                <span className={ck.hint}>{C.choiceOwingSub(taxed, cardFee > 0 ? { total, fee: cardFee } : null)}</span>
               </span>
             </label>
           )}

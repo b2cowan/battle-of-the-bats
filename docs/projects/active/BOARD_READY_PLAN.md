@@ -1918,6 +1918,12 @@ in the card-network sentence); Privacy §5 (who sent an offer is kept with its r
   - **Live test on Dev Club Org 2026-11-26**, API refunds standing in for the dashboard click.
   - **Walk §576 published 2026-11-26** (https://claude.ai/artifact/WoaUgqxo7PhCAPxnsTHQu8; walks A–F, 43 steps; 3 owner
     calls). Walk E is where the club's own Stripe dashboard is tried.
+  - **Walk §576 PASSED 2026-11-27, 43 of 43** (owner paste-back; no notes). Walk E: the club's own Stripe dashboard offered
+    Refund, which closes follow-up (2). **The three calls ruled the same day, as recommended** (owner: "i agree, go ahead
+    and build now"): (A) the callout's *Finish the refund* opens the finish question over the payment's window, and Cancel
+    lands on that window (**built on dev 2026-11-27**, with its help step; the payment row and the window's own button are
+    unchanged); (B) the sponsor page's heading changes, and (C) the processing fee stays owed and is said, both carried
+    by the owing-again page rulings below.
   - **Staging, until it runs Part A:** it shares the dev database and can stamp an unfinished Stripe refund as emailed.
   - **Part A follow-ups, for `/plan`** (found 2026-11-26): (1) an email that couldn't send is never retried and can't be
     resent; (2) whether an Express account shows Refund in its dashboard is proved only by the walk; (3) a refund from the
@@ -1928,6 +1934,29 @@ in the card-network sentence); Privacy §5 (who sent an offer is kept with its r
     (8) the "ends the deal" promise can miss in one two-card case with an unfinished refund; (9) the Copy control beside
     Stripe references is under 44px on phones. Walk calls, besides (4): whether the callout's button opens the payment's
     window or the finish question, and the sponsor page's "Thank you" heading when the invoice is owing.
+  - **Sponsor owing-again page DRAWN 2026-11-27, nothing built; five asks RULED all A the same day** (owner
+    paste-back). (1) The heading and money lines as drawn; version 2 signs the sum (payment minus, refund plus), from
+    the owner's note on the first drawing. (2) The processing fee stays in the amount owed, and the sponsor's page and the
+    club's finish window say so. (3) The refund policy stays visible, under a label naming the club. (4) The setup hint
+    names sponsors. (5) The lost-dispute state is drawn next. DRAWN the same day (tab "Card reversed"; wording from
+    `/legal`); asks 6 (that page as drawn) and 7 (card still offered after a reversal) RULED with the go-ahead.
+    **BUILT, reviewed and committed on dev 2026-11-27** (owner: "build now as recommended", then "review and commit"; walk
+    §576 calls B and C included; one commit with §576 call A). One
+    build call for the undrawn cases: when the lines would not add up (refunded and then reversed, a part refund on a
+    payment that still counts, a refund on its way), the card shows only the total and what is owing, lists the refunds
+    with no sign, and the line says only that the invoice is still owing. The fee is said only while the whole invoice is
+    owed. The type check and unit tests passed; the walk case was read off the local server before the review's fixes.
+    `/review` (three lenses) fixed before the commit: no fee line on a revised invoice; no cause named when a voided
+    payment, or both a refund and a reversal, are on the deal; no sum while a card payment is received but unrecorded; the
+    Payouts help names sponsors. Left open, minor: a double click on *Finish the refund* closes the question again; with
+    two unfinished refunds the amber box and the payment's window can pick different ones; the page dates a refund by its
+    booking day where the PDF uses Stripe's. Not run: `/docs` for the sponsor page, a walk. The drawing (owner: "agreed, go ahead", to a drawing):
+    https://claude.ai/artifact/KtEQWe7voHsFR6tDukRmPo (source
+    `BOARD_READY_STAGE6_SPONSOR_OWING_PAGE_DRAWING.html`; `/design` run before hand-off; `/accounting` and `/legal`
+    notes dated 2026-11-27). Bears on walk §576's "Thank you" heading and follow-up (4). `/accounting` recommends KEEPING
+    the processing fee in the amount owed and saying so. Found on the way, for `/plan`: revising an invoice after "They
+    still owe it" keeps the old fee figure, so the PDF and a later receipt still show a fee row inside the new total (the
+    page no longer says the fee there).
   - **Part B BUILT on dev 2026-11-26; calls B1–B5 all ruled A 2026-11-25** (owner: "all A"; B5 added from the build's
     census). (B1) Private-link secrets and unsubscribe addresses are removed from error reports and feedback before they
     are stored or logged, every page and route shape, pinned by `private-link-redaction`; dev's 14 reports and 8 groups

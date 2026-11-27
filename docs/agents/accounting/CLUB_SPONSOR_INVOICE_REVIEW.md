@@ -1,5 +1,5 @@
 # A club's sponsorship invoice, payments and GST/HST collected (Board Ready Stage 6 Part 3a)
-**Last verified:** 2026-11-26 (correction addendum: the dashboard refund as built, read from migration 542 and the code, no source re-read); 2026-11-25 (dashboard-refund addendum, Stripe docs read; earlier: 2026-11-23 Part 3a: read from the code, migration 528 and the existing return-lines file; Part 3b addendum below: migration 530 and GI-200 re-read)
+**Last verified:** 2026-11-27 (fee-owed-again addendum, read from the code, no source re-read; recommendation not yet ruled); 2026-11-26 (correction addendum: the dashboard refund as built, read from migration 542 and the code, no source re-read); 2026-11-25 (dashboard-refund addendum, Stripe docs read; earlier: 2026-11-23 Part 3a: read from the code, migration 528 and the existing return-lines file; Part 3b addendum below: migration 530 and GI-200 re-read)
 **Re-verify by:** 12 months; a CRA change to the invoice-information tiers; before a club books GST/HST collected into a return; if revised invoices gain a credit-note path
 **Depends on facts:** none of FieldLogicHQ's own (this is the PRODUCT's feature for a club's own tax; scope note: a club's tax is outside this agent's charter, so this is a product-correctness check, not advice to any club)
 
@@ -99,6 +99,28 @@ The invoice is never revised, so its tax (line 103, by invoice date) is unchange
 - **The same shape remains on one Stripe path:** a part refund finished with a credit note, then the rest of that payment refunded while another payment stands, leaves the deal owing the whole payment again with the first note still standing (the earlier-note check runs only when "They still owe it" is chosen). The second refund gets no note, but the first one's reduction is asked for again.
 
 **A professional could look at:** returning money but keeping the debt with no credit note; collecting a "Processing fee" row by cheque (an invoice owing again keeps the row, and nothing was spent on a card for that payment). No gate.
+
+## Addendum 2026-11-27: should money owed again drop the sponsor-paid fee? (RECOMMENDATION, not yet ruled by the owner)
+**Reviewed:** `lib/club-sponsor-invoice.ts`, `lib/online-payment-fee.ts` (`sponsorCardFee`), `lib/sponsor-deal-view.ts`, `lib/club-sponsorship-deals.ts` and `-server.ts`, the deal route, migrations 530, 531, 533 and 542, and `CREDIT_NOTES_ON_REFUNDS.md` (s.232). No source re-read: the rule on file settles it. Same scope: the product's correctness, not advice to any club.
+
+**Question.** A $1,176.39 card payment (fee $41.05 + $5.34 HST inside it) is refunded in full from Stripe and finished as "They still owe it". The invoice owes $1,176.39 again, by any method. Proposed: ask $1,130.00.
+
+**1. Keeping it is not a GST/HST or bookkeeping problem.** The invoice is unrevised, so tax charged stays $135.34. A $1,176.39 cheque books $1,041.05 income and $135.34 tax (`club_sponsor_deal_pay`, 531). It is a fairness and wording question. Having had the fee refunded first, the sponsor asked for the whole invoice pays it exactly once; dropping it means they pay it zero times and the club, which already lost the $41.05 processing cost, must give it up as a condition of "still owe".
+
+| Sponsor then pays | Fee kept: club ends with | Fee dropped: club ends with |
+|---|---|---|
+| Cheque | $1,000.00 | $958.95 |
+| Card (club pays the new fee, `sponsorCardFee` with `issued`) | $957.33 | $917.90 |
+
+**Recommendation: keep it by default; no money-logic change.** Before the club chooses, say the amount includes the $46.39 fee, and label the row as the fee on the earlier card payment. If the owner wants a waiver (the refund was the club's mistake), make it a deliberate choice, not automatic. Keeping is soundest when the sponsor caused the reversal (asked to switch method; a lost dispute, which already re-asks the whole amount).
+
+**2. If dropped, the minimum correct form is a credit note for the fee row only** ($41.05 + $5.34 = $46.39), dated the day issued, referencing the invoice, which stays unrevised; owing = total less credited less paid. That is a reduction of consideration (s.232(2)); the club deducts the $5.34 only with the note. No new ledger lines: the refund already reversed the fee income and its tax, a $1,130.00 payment books $1,000.00 + $130.00, and the $41.05 cost stays. Return: line 103 keeps $135.34 in the invoice's period; the $5.34 is an adjustment in the note's period. Not a revised invoice (money has arrived once; the period may be filed). The owner would have to rule an exception to "money owed again gets no credit note": the reason holds for the sponsorship, not for a fee that is removed. A club may legally ask less and still remit the $5.34, but the product cannot then show the invoice settled.
+
+**Build, if dropped:** 542 `club_sponsor_card_refund_finish` (no `credit_seq` when owed again; tax-line words); a fee-only note with its own amounts (`creditNoteLayout` prints `refund.amount`/`taxPart`); every "owing" sum that reads `total` (`invoiceStanding`, the deal-pay, card-land, finish, refund-book and refund-failed functions); cancel the note if the refund bounces; do not lower `total` itself (the original invoice PDF reads it).
+
+**Defect found by reading, not run (to `/plan`, whatever is ruled).** After "They still owe it" (or a lost dispute) nothing holds money, so the deal can be revised (`canRevise`; 533 `club_sponsor_deal_revise`). The revision sets `total` = amount + tax and leaves `card_fee` set, while the invoice prints the sponsorship row as total less tax less fee: a revision to $900.00 would print $858.95 beside a $41.05 fee row. It also rewrites an invoice that was once paid, with no credit note. Separately, a $1,130.00 cheque recorded against $1,176.39 books correctly ($130.00 tax) but leaves $46.39 owing, and a payment then blocks both revise and withdraw.
+
+**A professional could look at:** the line 107 timing if the fee is dropped after the period was filed; for `/legal`, asking a cheque payer for a card processing fee (card network surcharge rules, notice). No gate.
 
 ## Sources
 - Stripe, [Create direct charges](https://docs.stripe.com/connect/direct-charges.md?platform=web&ui=stripe-hosted) (application fees not automatically refunded; refunds debit the connected account), [Disputes on Connect platforms](https://docs.stripe.com/connect/disputes) (no automatic application-fee refund on a dispute), [Refund and cancel payments](https://docs.stripe.com/refunds) (processing fees not returned; pending up to 45 days; failures; `charge_for_pending_refund_disputed`), [How disputes work](https://docs.stripe.com/disputes/how-disputes-work) (no refund while a dispute is open) — read 2026-11-25

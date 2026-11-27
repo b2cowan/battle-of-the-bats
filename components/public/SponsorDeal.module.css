@@ -40,6 +40,9 @@ p.addressHint { margin: 0.1rem 0 0.75rem; }
 .payTable tr:last-child td { border-bottom: 0; font-weight: 700; }
 .payLine { margin: 0 0 1rem; font: 400 0.9375rem/1.5 var(--club-text-face); color: var(--club-text); }
 .payNote { margin: 0.5rem 0 0; font: 400 0.875rem/1.45 var(--club-text-face); color: var(--club-soft); }
+/* The club's refund policy: whose it is, then the sentence. */
+.policyLabel { margin: 0.75rem 0 0; font: 600 0.8125rem var(--club-text-face); color: var(--club-text); }
+.policyText { margin: 0.125rem 0 0; font: 400 0.875rem/1.45 var(--club-text-face); color: var(--club-soft); overflow-wrap: anywhere; }
 .payNotePhone { display: none; }
 @media (max-width: 640px) {
   .payNoteDesk { display: none; }

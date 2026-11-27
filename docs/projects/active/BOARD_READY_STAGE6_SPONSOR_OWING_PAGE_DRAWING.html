@@ -1,0 +1,303 @@
+<title>Sponsor Owing-Again Page</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700&family=Inter:wght@400;600;650;700&family=Space+Grotesk:wght@600&display=swap">
+<style>
+/* Layout: sticky numbered tabs, a View row, framed true-size specimens (today beside proposed), owner's calls last. */
+:root {
+  --doc-bg:#EDEFF1; --doc-panel:#FFFFFF; --doc-ink:#1C2127; --doc-soft:#4C5560; --doc-line:rgba(28,33,39,.14);
+  --doc-accent:#2F5D8A; --doc-accent-soft:rgba(47,93,138,.12);
+  --tag-new:#2E6B2F; --tag-new-bg:rgba(46,107,47,.13); --tag-re:#8A5A0B; --tag-re-bg:rgba(138,90,11,.13); --tag-same:#4C5560; --tag-same-bg:rgba(76,85,96,.12);
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --doc-bg:#14171B; --doc-panel:#1C2026; --doc-ink:#E8ECF0; --doc-soft:#A9B2BC; --doc-line:rgba(232,236,240,.14);
+  --doc-accent:#8DB6DE; --doc-accent-soft:rgba(141,182,222,.16);
+  --tag-new:#8FD18F; --tag-new-bg:rgba(143,209,143,.15); --tag-re:#E3B465; --tag-re-bg:rgba(227,180,101,.15); --tag-same:#A9B2BC; --tag-same-bg:rgba(169,178,188,.14); color-scheme:dark}}
+:root[data-theme="dark"]{
+  --doc-bg:#14171B; --doc-panel:#1C2026; --doc-ink:#E8ECF0; --doc-soft:#A9B2BC; --doc-line:rgba(232,236,240,.14);
+  --doc-accent:#8DB6DE; --doc-accent-soft:rgba(141,182,222,.16);
+  --tag-new:#8FD18F; --tag-new-bg:rgba(143,209,143,.15); --tag-re:#E3B465; --tag-re-bg:rgba(227,180,101,.15); --tag-same:#A9B2BC; --tag-same-bg:rgba(169,178,188,.14); color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--doc-bg);color:var(--doc-ink);font:400 14px/1.5 Inter,system-ui,sans-serif}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--doc-panel)}
+.wrap{max-width:1180px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:20px 60px}
+h1.doc{font:600 26px/1.2 "Space Grotesk",Inter,sans-serif;margin:0 0 6px;text-wrap:balance}
+.lead{margin:0 0 14px;color:var(--doc-soft);max-width:80ch}
+nav{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--doc-panel);border:1px solid var(--doc-line);border-radius:10px;display:flex;gap:4px;padding:5px;overflow-x:auto}
+nav button{flex:0 0 auto;border:0;background:none;color:var(--doc-soft);font:600 14px Inter,sans-serif;padding:8px 12px;border-radius:7px;cursor:pointer;white-space:nowrap}
+nav button[aria-selected="true"]{background:var(--doc-accent-soft);color:var(--doc-accent)}
+button:focus-visible,textarea:focus-visible,input:focus-visible{outline:2px solid var(--doc-accent);outline-offset:2px}
+.viewRow{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:14px 0 0}
+.viewRow span{font-size:12px;font-weight:600;color:var(--doc-soft)}
+.seg{display:inline-flex;background:#FFFFFF;border:1px solid rgba(70,55,30,.2);border-radius:999px;padding:3px}
+.seg button{border:0;background:none;font:400 13px Inter,sans-serif;padding:5px 12px;border-radius:999px;color:#4A4235;cursor:pointer}
+.seg button[aria-pressed="true"]{background:rgba(87,101,30,.14);color:#3E4815;font-weight:600}
+[hidden]{display:none!important}
+.pane{display:grid;grid-template-columns:minmax(0,1fr);gap:14px;margin-top:14px}
+.pane h2{font:600 20px/1.3 "Space Grotesk",Inter,sans-serif;margin:0;text-wrap:balance}
+.pane>p{margin:0;color:var(--doc-soft);max-width:84ch}
+.row{display:flex;flex-wrap:wrap;gap:18px;align-items:flex-start}
+.spec{min-width:0;max-width:100%;display:grid;grid-template-columns:minmax(0,1fr);gap:8px}
+.spec>b{font-size:13px}
+.spec>b small{font-weight:400;color:var(--doc-soft);letter-spacing:.06em;text-transform:uppercase;font-size:11px;margin-left:6px}
+.scroll{overflow-x:auto;max-width:100%;border:1px solid var(--doc-line);border-radius:10px;background:var(--doc-panel);padding:10px}
+.panel{background:var(--doc-panel);border:1px solid var(--doc-line);border-radius:10px;padding:14px 16px;display:grid;gap:8px;max-width:84ch}
+.panel p{margin:0;color:var(--doc-soft)}
+.panel h3{margin:0;font-size:14px}
+
+/* ── The club's public page: fixed light, as it ships ── */
+.club{width:390px;background:#F7F5F1;color:#1F1B16;font-family:Inter,sans-serif}
+.club.wide{width:760px}
+.cbar{background:#1E3A8A;color:#FFFFFF;padding:14px 16px;font:700 20px "Barlow Condensed","Arial Narrow",sans-serif}
+.cbody{padding:20px 16px;max-width:640px;margin:0 auto}
+.wide .cbody{max-width:672px;padding:28px 16px}
+.cbody p,.cbody dl,.cbody dd,.cbody h4{margin:0}
+.eyebrow{font-size:11px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:#6F675B;margin-bottom:4px!important}
+.cbody h4{font:700 20px/1.2 "Barlow Condensed","Arial Narrow",sans-serif;margin-bottom:12px}
+.sub{font-size:15px;line-height:1.45;color:#4E473D}
+.head{margin-bottom:20px}
+.card{background:#FFFFFF;border:1px solid #E4E0D8;border-radius:12px;padding:16px 18px}
+.it{font-weight:700;font-size:17px}
+.facts{display:grid;grid-template-columns:auto 1fr;gap:2px 16px;margin-top:8px!important;font-size:15px}
+.facts dt{color:#4E473D}
+.meta{margin-top:4px!important;font-size:14px;line-height:1.45;color:#4E473D}
+.lines{margin-top:12px!important}
+.lines>div{display:flex;justify-content:space-between;gap:16px;padding:3px 0;font-size:15px;color:#4E473D}
+.lines dd{white-space:nowrap;font-variant-numeric:tabular-nums}
+.lines>div.total{border-top:1px solid #E4E0D8;margin-top:5px;padding-top:7px;color:#1F1B16;font-weight:700}
+.dl{display:flex;align-items:center;min-height:44px;margin-top:8px;font-weight:700;font-size:15px;color:#1E3A8A}
+.pay{margin-top:12px}
+.paybtn{display:flex;align-items:center;justify-content:center;gap:8px;min-height:48px;background:#1E3A8A;color:#FFFFFF;border-radius:8px;font-weight:600;font-size:15px}
+.note{margin-top:8px!important;font-size:14px;line-height:1.45;color:#4E473D}
+.plabel{margin-top:12px!important;font-size:13px;font-weight:600;color:#1F1B16}
+.plabel+.note{margin-top:2px!important}
+.how{margin-top:16px;padding-top:16px;border-top:1px solid #E4E0D8;font-size:15px}
+.how .t{font-weight:700;margin-bottom:8px}
+.how .k{font-size:13px;font-weight:600;color:#4E473D}
+.how .sp{padding-top:12px;margin-top:12px;border-top:1px solid #E4E0D8}
+.revisit{margin-top:16px!important;font-size:14px;color:#4E473D}
+
+/* ── Club admin (warm), fixed ── */
+.win{width:460px;background:#FFFFFF;color:#241E15;border:1px solid rgba(87,101,30,.3);border-radius:12px;font-family:Inter,sans-serif}
+.win.phone{width:370px}
+.wh{padding:14px 18px;border-bottom:1px solid rgba(70,55,30,.12);font-weight:700;font-size:16px}
+.wb{padding:14px 18px;display:grid;gap:10px}
+.wb p{margin:0}
+.hint{font-size:12px;line-height:1.5;color:#615A54;display:block}
+.choice{display:flex;gap:10px;align-items:flex-start;min-height:44px}
+.rad{width:16px;height:16px;margin-top:3px;flex:0 0 auto;border:1.5px solid rgba(70,55,30,.35);border-radius:50%}
+.rad.on{border:5px solid #57651E}
+.cn{display:block;font-weight:650;font-size:14px}
+.fld{font-size:13px;font-weight:600;display:grid;gap:4px}
+.inp{border:1px solid rgba(70,55,30,.2);border-radius:8px;min-height:40px;padding:9px 10px;font-weight:400}
+.wf{padding:12px 18px;border-top:1px solid rgba(70,55,30,.12);display:flex;justify-content:flex-end;gap:8px}
+.wbtn{border:1px solid rgba(70,55,30,.2);border-radius:8px;padding:9px 14px;font-weight:600;font-size:14px}
+.wbtn.lime{background:#D9F99D;border-color:#D9F99D}
+
+/* ── Markers and the differences view ── */
+.m{position:relative}
+.mk{position:absolute;right:-8px;top:-9px;z-index:2;width:24px;height:24px;border-radius:50%;border:2px solid #FFFFFF;background:#8A5A0B;color:#FFFFFF;font:700 12px Inter,sans-serif;cursor:pointer;padding:0}
+.mk.new{background:#2E6B2F}
+/* Inside a card the dot sits in the right padding, clear of the right-aligned amounts. */
+.card .mk{right:-30px;top:0}
+.win .mk{right:-14px;top:-16px}
+body.diff .same{opacity:.16}
+.tag{border:0;border-radius:4px;padding:2px 6px;font:700 11px Inter,sans-serif;letter-spacing:.05em;cursor:pointer}
+.tag.new{background:var(--tag-new-bg);color:var(--tag-new)}
+.tag.re{background:var(--tag-re-bg);color:var(--tag-re)}
+.tag.sm{background:var(--tag-same-bg);color:var(--tag-same)}
+.keys{display:flex;flex-wrap:wrap;gap:8px}
+.keys button{display:flex;align-items:center;gap:6px;background:var(--doc-panel);border:1px solid var(--doc-line);border-radius:8px;color:var(--doc-ink);font:400 13px Inter,sans-serif;padding:7px 10px;cursor:pointer}
+dialog{border:1px solid var(--doc-line);border-radius:12px;background:var(--doc-panel);color:var(--doc-ink);max-width:min(460px,calc(100% - 32px));padding:18px}
+dialog::backdrop{background:rgba(0,0,0,.45)}
+dialog h3{margin:0 0 8px;font-size:16px}
+dialog p{margin:0 0 8px;color:var(--doc-soft)}
+dialog button{border:1px solid var(--doc-line);background:none;color:var(--doc-ink);border-radius:8px;padding:8px 14px;font:600 13px Inter,sans-serif;cursor:pointer}
+fieldset{border:1px solid var(--doc-line);border-radius:10px;background:var(--doc-panel);padding:12px 16px;margin:0;max-width:84ch;display:grid;gap:6px}
+legend{font-weight:700;float:left;width:100%;padding:0}
+fieldset p{margin:0;color:var(--doc-soft)}
+fieldset label{display:flex;gap:8px;align-items:flex-start;min-height:32px;padding-top:4px}
+textarea{width:100%;max-width:84ch;min-height:70px;border:1px solid var(--doc-line);border-radius:8px;background:var(--doc-panel);color:var(--doc-ink);font:400 14px Inter,sans-serif;padding:10px}
+.copy{justify-self:start;border:0;border-radius:8px;background:var(--doc-accent);color:var(--doc-bg);font:600 14px Inter,sans-serif;padding:10px 16px;cursor:pointer}
+pre{white-space:pre-wrap;margin:0;font-size:12px;color:var(--doc-soft);user-select:all}
+</style>
+
+<div class="wrap">
+  <h1 class="doc">Sponsor Owing-Again Page</h1>
+  <p class="lead">The sponsor's own page after their payment was refunded or reversed and the invoice is owed again. Today beside proposed, drawn from the shipped page. Nothing is built. Tap a numbered dot for what changes and why.</p>
+  <nav role="tablist" id="tabs">
+    <button role="tab" data-t="t1" aria-selected="true">1 · Phone</button>
+    <button role="tab" data-t="t2" aria-selected="false">2 · Desktop</button>
+    <button role="tab" data-t="t3" aria-selected="false">3 · Cheque and card</button>
+    <button role="tab" data-t="t4" aria-selected="false">4 · Club side</button>
+    <button role="tab" data-t="t6" aria-selected="false">5 · Card reversed</button>
+    <button role="tab" data-t="t5" aria-selected="false">6 · Your calls</button>
+  </nav>
+  <div class="viewRow" id="viewRow"><span>View</span>
+    <div class="seg"><button type="button" aria-pressed="true" data-v="all">Everything</button><button type="button" aria-pressed="false" data-v="diff">Show only what differs</button></div>
+  </div>
+
+  <section class="pane" id="t1">
+    <h2>The whole payment was refunded and is still owed</h2>
+    <div class="keys">
+      <button data-n="head"><span class="tag re">RESTYLED</span>1 Heading</button>
+      <button data-n="money"><span class="tag re">RESTYLED</span>2 The money</button>
+      <button data-n="fee"><span class="tag new">NEW</span>3 The fee</button>
+      <button data-n="policy"><span class="tag re">RESTYLED</span>4 Refund policy</button>
+      <button data-n="rest"><span class="tag sm">UNCHANGED</span>Everything else</button>
+    </div>
+    <div class="row">
+      <div class="spec"><b>Today <small>phone, 390 wide</small></b><div class="scroll" data-slot="before"></div></div>
+      <div class="spec"><b>Proposed <small>phone, 390 wide</small></b><div class="scroll" data-slot="after"></div></div>
+    </div>
+  </section>
+
+  <section class="pane" id="t2" hidden>
+    <h2>The same page on a computer</h2>
+    <div class="spec"><b>Today <small>desktop</small></b><div class="scroll" data-slot="beforeW"></div></div>
+    <div class="spec"><b>Proposed <small>desktop</small></b><div class="scroll" data-slot="afterW"></div></div>
+  </section>
+
+  <section class="pane" id="t3" hidden>
+    <h2>Only part of it is owed again</h2>
+    <p>The other way onto this page: a deal paid partly by cheque and partly by card, and the card part was refunded from inside FieldLogicHQ, which today also issues a credit note. Example business and figures. The club paid the card fee here, so there is no fee line.</p>
+    <div class="row">
+      <div class="spec"><b>Today <small>phone</small></b><div class="scroll" data-slot="beforeM"></div></div>
+      <div class="spec"><b>Proposed <small>phone</small></b><div class="scroll" data-slot="afterM"></div></div>
+    </div>
+  </section>
+
+  <section class="pane" id="t4" hidden>
+    <h2>What the club sees</h2>
+    <p>Two small wording changes on the club's side. The long first paragraph of the window is shortened here and stays as it is.</p>
+    <div class="row">
+      <div class="spec"><b>Finishing the refund, today <small>club admin</small></b><div class="scroll" data-slot="winBefore"></div></div>
+      <div class="spec"><b>Proposed <small>club admin</small></b><div class="scroll" data-slot="winAfter"></div></div>
+    </div>
+    <div class="row">
+      <div class="spec"><b>Payouts setup, today <small>refund policy box</small></b><div class="scroll" data-slot="hintBefore"></div></div>
+      <div class="spec"><b>Proposed <small>refund policy box</small></b><div class="scroll" data-slot="hintAfter"></div></div>
+    </div>
+  </section>
+
+  <section class="pane" id="t6" hidden>
+    <h2>The sponsor's card payment was reversed</h2>
+    <p>The club lost a card dispute, so the money went back and the invoice is owed again. The sponsor gets no email about it, so this page is where they find out. Example business and figures.</p>
+    <div class="keys">
+      <button data-n="rhead"><span class="tag re">RESTYLED</span>7 Heading and line</button>
+      <button data-n="rrow"><span class="tag new">NEW</span>8 The reversal</button>
+      <button data-n="rfee"><span class="tag new">NEW</span>9 The fee</button>
+    </div>
+    <div class="row">
+      <div class="spec"><b>Today <small>phone</small></b><div class="scroll" data-slot="beforeR"></div></div>
+      <div class="spec"><b>Proposed <small>phone</small></b><div class="scroll" data-slot="afterR"></div></div>
+    </div>
+    <div class="panel"><h3>Not drawn</h3><p>A card payment partly refunded and then reversed in full. The money has gone back twice, so these rows would not add up, and today the page says the invoice is owing "after the refund". It is rare, and I recommend settling it when this is built.</p></div>
+  </section>
+
+  <section class="pane" id="t5" hidden>
+    <h2>Your calls</h2>
+    <div class="panel"><h3>Ruled Nov 27, all A</h3><p>1. Heading and money lines as drawn. 2. The fee stays owed, and both sides say so. 3. The policy stays visible under the club's name. 4. The setup hint names sponsors. 5. Draw the reversed payment next.</p></div>
+    <div id="asks" style="display:grid;gap:12px"></div>
+    <label for="notes"><b>Notes</b></label>
+    <textarea id="notes"></textarea>
+    <button type="button" class="copy" id="copy">Copy my answers</button>
+    <pre id="out"></pre>
+    <div class="panel">
+      <h3>Found on the way, not drawn</h3>
+      <p>After "They still owe it", the club can revise the invoice amount. The revision keeps the old processing-fee line, so a revised $900 invoice would show part of that $900 as a processing fee.</p>
+      <p>In the cheque-and-card case (tab 3), the refund also issues a credit note, which says the invoice was reduced while the page asks for the money again. This one is already on the follow-up list.</p>
+      <p>Both need their own fix. I recommend planning them whichever way you answer these calls.</p>
+    </div>
+  </section>
+</div>
+
+<dialog id="dlg"><h3 id="dt"></h3><p id="da"></p><p id="db"></p><button type="button" id="dc">Close</button></dialog>
+
+<script>
+const mk = (n, num, kind) => `<button type="button" class="mk ${kind||''}" data-n="${n}" aria-label="Explain change ${num}">${num}</button>`;
+const how = `<div class="how same"><p class="t">How to pay</p><p class="k">E-transfer</p><p>pay@dev-club-org.local</p><div class="sp"><p class="k">Cheque</p><p>Payable to Dev Club Org</p></div><p class="note">Please quote invoice 2026-009.</p></div>`;
+const revisit = `<p class="revisit same">This page shows your invoice, and your receipt once you’ve paid, any time you open your link.</p>`;
+const facts = (a, b) => `<dl class="facts same"><dt>Issued</dt><dd>${a}</dd><dt>Due</dt><dd>${b}</dd></dl>`;
+const row = (l, v, cls) => `<div class="${cls||''}"><dt>${l}</dt><dd>${v}</dd></div>`;
+const dl = `<div class="dl same">Download the invoice (PDF)</div>`;
+const note = o => o.credit ? `<div class="dl same">Credit note ${o.credit} (PDF)</div>` : '';
+const payBtn = amt =>`<div class="paybtn same"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg>Pay ${amt} by card</div><p class="note same">Or pay by cheque or e-transfer, as below.</p>`;
+const page = (wide, inner) => `<div class="club ${wide?'wide':''}"><div class="cbar same">Dev Club Org</div><div class="cbody">${inner}</div></div>`;
+
+const before = o => `
+  <div class="head"><p class="eyebrow same">Sponsorship</p><h4>Thank you, ${o.biz}</h4><p class="sub">Dev Club Org has your details.</p></div>
+  <div class="card">
+    <p class="it">Invoice ${o.no} · ${o.total}</p>${facts(o.iss, o.due)}
+    ${o.part ? `<p class="meta">${o.part}</p>` : ''}
+    ${o.rev ? '' : `<p class="meta">Dev Club Org shows ${o.owing} still owing after the refund.</p>
+    <dl class="lines">${row('Refunded Nov 26, 2026', '−' + o.refund)}</dl>`}
+    ${dl}${note(o)}<div class="pay">${payBtn(o.owing)}<p class="note">Refunded in full until Dec 15, then not refunded.</p></div>
+    ${how.replace('2026-009', o.no)}
+  </div>${revisit}`;
+
+const after = (o, marks) => `
+  <div class="head m">${marks ? (o.rev ? mk('rhead', 7) : mk('head', 1)) : ''}<p class="eyebrow same">Sponsorship</p><h4>${o.owing} still owing</h4><p class="sub">${o.rev ? 'Dev Club Org shows this invoice as still owing after the card payment was reversed. Questions? Contact Dev Club Org before you pay.' : 'Dev Club Org shows this invoice as still owing after the refund.'}</p></div>
+  <div class="card">
+    <p class="it">Invoice ${o.no}</p>${facts(o.iss, o.due)}
+    <div class="m">${marks ? (o.rev ? mk('rrow', 8, 'new') : mk('money', 2)) : ''}<dl class="lines">${row('Invoice total', o.total)}${o.paid.map(p => row(p[0], '−' + p[1])).join('')}${o.rev ? row('Card payment reversed by the card issuer', '+' + o.total) : row('Refunded Nov 26, 2026', '+' + o.refund)}${row('Still owing', o.owing, 'total')}</dl></div>
+    ${o.fee ? `<div class="m">${marks ? (o.rev ? mk('rfee', 9, 'new') : mk('fee', 3, 'new')) : ''}<p class="meta">Still owing includes the $46.39 processing fee (tax included) ${o.rev ? 'shown on this invoice' : 'from your refunded card payment'}.</p></div>` : ''}
+    ${dl}${note(o)}<div class="pay">${payBtn(o.owing)}<div class="m">${marks ? mk('policy', 4) : ''}<p class="plabel">Dev Club Org’s refund policy</p><p class="note">Refunded in full until Dec 15, then not refunded.</p></div></div>
+    ${how.replace('2026-009', o.no)}
+  </div>${revisit}`;
+
+const A = { biz:'Walk 542 Whole Bakery', no:'2026-009', total:'$1,176.39', owing:'$1,176.39', refund:'$1,176.39', iss:'Nov 26, 2026', due:'Dec 26, 2026', fee:true, paid:[['Paid by card Nov 26, 2026','$1,176.39']] };
+const M = { biz:'Harbour Dental', no:'2026-014', total:'$1,130.00', owing:'$630.00', refund:'$630.00', iss:'Nov 1, 2026', due:'Dec 1, 2026', fee:false, credit:'2026-014-C1',part:'$500.00 received · $630.00 still owing', paid:[['Paid by cheque Nov 3, 2026','$500.00'],['Paid by card Nov 10, 2026','$630.00']] };
+
+const R = { biz:'Maple Hardware', no:'2026-017', total:'$1,176.39', owing:'$1,176.39', iss:'Nov 1, 2026', due:'Dec 1, 2026', fee:true, rev:true, paid:[['Paid by card Nov 10, 2026','$1,176.39']] };
+
+const win = prop =>`<div class="win"><div class="wh same">Finish Walk 542 Whole Bakery’s refund?</div><div class="wb">
+  <p class="hint same">… $1,130.00 of the sponsorship and $46.39 of the processing fee, tax included …</p>
+  <p class="hint same">Refunding the processing fee to the sponsor doesn’t bring it back to the club. The club still pays Stripe’s fee and FieldLogicHQ’s fee on this payment.</p>
+  <div class="choice same"><span class="rad"></span><span><span class="cn">It has ended</span><span class="hint">The logo comes down and the place is free</span></span></div>
+  <div class="choice m">${prop ? mk('club', 5) : ''}<span class="rad on"></span><span><span class="cn">They still owe it</span><span class="hint">The deal reads owing again and their link lets them pay. No credit note, because they still owe the full invoice${prop ? ', $1,176.39, which includes the $46.39 processing fee' : ''}</span></span></div>
+  <div class="fld same">Reason *<div class="inp">They are paying by cheque instead.</div><span class="hint">Walk 542 Whole Bakery reads this in the refund email.</span></div>
+  </div><div class="wf same"><span class="wbtn">Cancel</span><span class="wbtn lime">Finish and email</span></div></div>`;
+const hint = prop => `<div class="win"><div class="wb"><div class="fld m">${prop ? mk('hint', 6) : ''}Your refund policy<div class="inp">Refunded in full until Dec 15, then not refunded.</div><span class="hint">${prop ? 'Families, teams and sponsors' : 'Families and teams'} can read it beside Pay before they pay. You can change it later on the Payouts card.</span></div></div></div>`;
+
+const slots = { before: page(false, before(A)), after: page(false, after(A, true)), beforeW: page(true, before(A)), afterW: page(true, after(A, true)),
+  beforeM: page(false, before(M)), afterM: page(false, after(M, true)), beforeR: page(false, before(R)), afterR: page(false, after(R, true)),winBefore: win(false), winAfter: win(true), hintBefore: hint(false), hintAfter: hint(true) };
+document.querySelectorAll('[data-slot]').forEach(el => el.innerHTML = slots[el.dataset.slot]);
+
+const NOTES = {
+  head:['1. Heading (restyled)','Today the page thanks the sponsor and says the club has their details, above an invoice that is owed again.','Proposed: the amount owing is the heading, and the sentence naming the club moves up under it, without repeating the amount. It says "refunds" when there is more than one. Only after a refund leaves money owing. Never while a payment is confirming, or taken but not yet recorded: those states tell the sponsor not to pay again.'],
+  money:['2. The money (restyled)','Today the page lists only the refund, with a minus sign, and never shows the payment it undid.','Proposed: invoice total, minus each payment, plus the refund, equals what is still owing. The amount leaves the invoice title so it is not said twice. A paid receipt keeps its minus on a refund, because that sum starts from what was paid. A refund still on its way keeps saying so.'],
+  fee:['3. The fee (new line)','The $1,176.39 includes a $46.39 processing fee (tax included). The page does not say so. The club never got that cost back when it refunded.','Proposed: keep it in the amount owed and say it is there. Accounting check: keeping it is fine for GST/HST and the books. Dropping it would leave the club $41.05 short and need a credit note. Shown only when the invoice carries a fee.'],
+  policy:['4. Refund policy (restyled)','Today the policy is a bare sentence under the pay button, so it reads as if it describes the refund above.','Proposed: the same sentence, still in full view as you ruled on Nov 24, under a label naming whose policy it is. The label applies everywhere this page shows the policy, including the first sign-up page.'],
+  club:['5. Club window (restyled)','The choice says they owe the full invoice. It does not say a processing fee is part of it.','Proposed: name the amount and the fee before the club chooses. Only when the invoice carries a fee. On an invoice without GST/HST there is no credit-note sentence, so it reads: "The deal reads owing again and their link lets them pay $1,176.39, which includes the $46.39 processing fee."'],
+  hint:['6. Setup hint (restyled)','The hint names families and teams. One policy is shown to sponsors too.','Proposed: name sponsors for clubs that take sponsorships, here, on the Payouts card and in the message asking a club to write its policy.'],
+  rhead:['7. Heading and line (restyled)','Today the page thanks the sponsor and shows an unpaid invoice with nothing saying why.','Proposed: the same heading as after a refund. The line says the card payment was reversed and asks them to contact the club before paying. No blame, and no claim about who asked for it. Only after a dispute the club has lost: never while one is open, when the bank is only asking, or when the club won.'],
+  rrow:['8. The reversal (new line)','Today the lost payment is not listed at all.','Proposed: the payment, then the reversal that put the amount back. The wording names the card issuer and carries no date, because the only date we hold is the day we recorded the loss.'],
+  rfee:['9. The fee (new line)','The invoice still includes the processing fee and the page does not say so.','Proposed: the same line as after a refund, reworded because nothing was refunded. Shown only when the invoice carries a fee.'],
+  rest:['Unchanged','Dates, the "Emailed to" line when the invoice was emailed, the PDF and any credit-note links, the card button, the cheque and e-transfer details and the closing line.','They stay exactly as they ship. Optional extras lower on the page, such as adding a logo, are not drawn.']
+};
+const dlg = document.getElementById('dlg');
+document.addEventListener('click', e => {
+  const n = e.target.closest('[data-n]');
+  if (n) { const [t,a,b] = NOTES[n.dataset.n]; dt.textContent = t; da.textContent = a; db.textContent = b; dlg.showModal(); }
+  const t = e.target.closest('[data-t]');
+  if (t) { document.querySelectorAll('[data-t]').forEach(b => b.setAttribute('aria-selected', b === t));
+    document.querySelectorAll('.pane').forEach(p => p.hidden = p.id !== t.dataset.t); document.getElementById('viewRow').hidden = t.dataset.t === 't5'; }
+  const v = e.target.closest('[data-v]');
+  if (v) { document.querySelectorAll('[data-v]').forEach(b => b.setAttribute('aria-pressed', b === v)); document.body.classList.toggle('diff', v.dataset.v === 'diff'); }
+});
+document.getElementById('dc').onclick = () => dlg.close();
+
+const FIRST = 6;
+const ASKS = [
+  ['The reversed-payment page (7, 8 and 9)','The legal check supplied the wording.',['As drawn (recommended)','Something else (say in the notes)']],
+  ['Paying by card again after a reversal','Today the card button is offered again. The legal check found no rule against it in what it read, and did not check the card networks’ rules. The club would pay the card fee on the new payment.',['Keep offering card (recommended)','Cheque and e-transfer only']]
+];
+const box = document.getElementById('asks');
+box.innerHTML = ASKS.map((a,i) => `<fieldset><legend>${i+FIRST}. ${a[0]}</legend><p>${a[1]}</p>${a[2].map((o,j) => `<label><input type="radio" id="q${i}_${j}" name="q${i}" value="${String.fromCharCode(65+j)}"><span>${String.fromCharCode(65+j)}. ${o}</span></label>`).join('')}</fieldset>`).join('');
+document.getElementById('copy').onclick = () => {
+  const text = 'Sponsor owing-again page\n' + ASKS.map((a,i) => { const c = document.querySelector(`input[name="q${i}"]:checked`); return `${i+FIRST}. ${c ?c.value + ' · ' + a[2][c.value.charCodeAt(0)-65] : 'not answered'}`; }).join('\n') + (notes.value.trim() ? '\nNotes: ' + notes.value.trim() : '');
+  out.textContent = text;
+  const btn = document.getElementById('copy');
+  if (navigator.clipboard) navigator.clipboard.writeText(text).then(() => { btn.textContent = 'Copied'; setTimeout(() => btn.textContent = 'Copy my answers', 2000); }).catch(() => {});
+};
+</script>

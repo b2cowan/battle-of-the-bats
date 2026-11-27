@@ -29016,6 +29016,8 @@ Committed 2026-11-26, ahead of the walk (owner: "simplify and commit"): `d3d1bcc
 **Owner calls:** A the amber line’s “Finish the refund” opens the payment’s window or the question · B the sponsor page’s thank-you heading above an invoice owing again · C the processing-fee line on an invoice owing again.
 
 **Left out:** a deal that charges no tax; a club missing its mailing address; paying again after “They still owe it”; a refund the card’s bank sends back; a refund after a lost dispute.
+
+**✅ PASSED 2026-11-27, 43 of 43** (owner paste-back; A 10/10, B 7/7, C 7/7, D 3/3, E 9/9, F 7/7; Stripe’s dashboard offered Refund). The three calls were ruled later the same day, as recommended: **A** open the finish question straight away (built on dev that day, so the amber line’s button in A4–A5, B2, C2 and F2 is now one press); **B** change the heading; **C** keep the fee owed and say so.
 <!-- /§576 -->
 
 ## §577 · Club website · Stage 2 · Session 2D · Several places in one press — **one press closes several parks, or any set of a park’s diamonds; a rep game with no diamond recorded stays marked until the last of them reopens, and its coach is told once**

@@ -87,7 +87,25 @@ Nothing found that promises the club is told of every dispute, that refunds are 
 
 **No lawyer gate** (owner 2026-10-31 and 2026-11-04): the owner decides when a lawyer looks.
 
+## Addendum 2026-11-27: the sponsor page when the invoice is owing again (before a before/after drawing)
+- **Refund policy.** Stripe's website checklist asks most businesses to explain their refund policy clearly, and its dispute guide asks for a screenshot of how it was shown at checkout. Ontario CPA 2002 s.1 (e-Laws Word copy, read today): a "consumer" excludes "a person who is acting for business purposes", so O. Reg. 17/05 disclosure reaches only a sponsor buying personally. Card network rule text not opened (L17 stays open for families). Published §6 "can read it beside the Pay button" is met by visible text or a link; draft addendum §9 "(which shows beside the card button)" is true only of visible text. Recommended: keep it visible (owner 2026-11-24) and label it as the club's.
+- **Heading and figures.** No legal rule. No "payment due" heading while a card payment is received but unrecorded, or while confirming; no "overdue" unless the due date passed. A "Still owing" row satisfies "Yes, say it" if the amount stays attributed to the club.
+- **Processing fee off the amount owing.** The lower-exposure direction, but it changes the invoice, not just this page: draft §4 ("the line stays on the invoice") and the PDF, emails and books move with it (`/accounting`).
+- **To `/plan`:** the policy text shown is not kept with a payment (`lib/online-dispute-read.ts` L92 reads today's text; sponsorships have no facts copy); the setup hint (`lib/online-payment-words.ts` L544, L554) leaves out sponsors.
+
+## Addendum 2026-11-27: the sponsor page after a lost dispute (before a drawing)
+Code read only; no source fetched; card network rules on asking again after a dispute not opened.
+- **Wording.** "{amount} still owing" and "{club} shows this invoice as still owing…" are safe: attributed to the club, no accusation. Name the event, not who asked for it, and show no reason code: "Card payment reversed by the card issuer". Add "Questions? Contact {club} before you pay."
+- **No date on the reversal row.** `dispute_lost_at` is the time we booked the loss (mig 532 L64), not the day the money left the cardholder's bank or Stripe.
+- **Show only on a booked loss with money owing** (`disputeLost`, deal not withdrawn). Never on an open dispute, a bank's question, a won or part dispute.
+- **Card button.** No rule read forbids it; it is a new payment the business starts. Owner call.
+- **Earlier part refund plus a booked loss:** invoice, payment, refund and reversal rows do not add up to the amount owing, and the page today says "after the refund". Needs its own drawing or no sum (`/plan`).
+- Unchanged: no email to the business (owner, walk §565).
+
 ## Sources
+- [Stripe, Website checklist](https://docs.stripe.com/get-started/checklist/website) — accessed 2026-11-27
+- [Stripe, Dispute evidence best practices](https://docs.stripe.com/disputes/best-practices) — accessed 2026-11-27
+- [Consumer Protection Act, 2002, s.1 (Word copy)](https://www.ontario.ca/laws/docs/02c30_e.doc) — accessed 2026-11-27
 - [Canada's Anti-spam Legislation, s.1(2), 6(1), 6(2), 6(6), 11](https://laws-lois.justice.gc.ca/eng/acts/E-1.6/FullText.html) — accessed 2026-11-23
 - [Stripe, Refund and cancel payments](https://docs.stripe.com/refunds) — accessed 2026-11-23
 - Reuses, not re-fetched: PIPEDA s.4.01 (`BOARD_READY_STAGE6_SPONSORSHIPS_DRAWING_REVIEW.md`), FCAC surcharge rules (`CARD_SURCHARGE_PAYER_FEE.md`)
