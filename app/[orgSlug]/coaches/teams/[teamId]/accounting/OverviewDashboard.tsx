@@ -353,10 +353,8 @@ export default function OverviewDashboard({ summary, payablesApiUrl, hrefs, bank
             hrefs={{
               dues: hrefs.dues,
               registerFrom: hrefs.registerFrom,
-              /* Unfiltered so the Balance column survives the hop — a filtered book hides it, and
-                 "see the whole book" landing on one without a balance would answer a different
-                 question than the one the link asks. */
-              fullBook: hrefs.transactions,
+              bill: hrefs.bill,
+              clubBill: hrefs.clubBill,
             }}
           />
         )}

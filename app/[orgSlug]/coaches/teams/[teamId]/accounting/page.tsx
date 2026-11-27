@@ -256,7 +256,10 @@ export default function CoachesAccountingPage({
      room; `tests/unit/room-address-keys-guard.test.ts` fails the build otherwise. */
   /* ⚠ `handoff` / `handoffAnswer` (Club Tier Stage 5c): the club's hand-off, from its bell or email — `ClubHandoffDoor` opens it
      and scrubs both at once; listed so no other tab's address can ever carry one. */
-  const ONE_SHOT_KEYS = ['starter', 'generate', 'tab', 'view', 'line', 'periods', 'duesView', 'fundraiser', 'kind', 'bill', 'from', 'clubBill', 'handoff', 'handoffAnswer', 'bankCheck'];
+  /* ⚠ `filter` / `scheduled` name the Ledger's register controls and FORCE its timeline. Left riding
+     the address, they would put the timeline behind a bill opened from the Overview (which asks for
+     the Bills view), and pressing the same row a second time would change nothing. */
+  const ONE_SHOT_KEYS = ['starter', 'generate', 'tab', 'view', 'filter', 'scheduled', 'line', 'periods', 'duesView', 'fundraiser', 'kind', 'bill', 'from', 'clubBill', 'handoff', 'handoffAnswer', 'bankCheck'];
 
   function sectionHref(id: SectionId, extra?: Record<string, string>) {
     const qp = new URLSearchParams(seasonSearchParams.toString());
@@ -496,12 +499,17 @@ export default function CoachesAccountingPage({
        Timeline view in the panel, so no `view` param is needed — stating one anyway would be a
        second way of saying the same thing.) */
     registerFrom: {
+      all:     sectionHref('ledger', { filter: 'all', scheduled: '1' }),
       dues:    sectionHref('ledger', { filter: 'dues', scheduled: '1' }),
       expense: sectionHref('ledger', { filter: 'expense', scheduled: '1' }),
       club:    sectionHref('ledger', { filter: 'club', scheduled: '1' }),
     },
+    bill: expenseId => sectionHref('ledger', { view: 'bills', bill: expenseId }),
     // One destination where two were (P4). Both rail rows collapse into it — see MoneyRail.
-    ...(showOrgTabs ? { club: sectionHref('club') } : {}),
+    ...(showOrgTabs ? {
+      club: sectionHref('club'),
+      clubBill: (splitId: string) => sectionHref('club', { clubBill: splitId }),
+    } : {}),
   };
 
   // Wide column: Money is now a tabbed hub whose panels include the densest tables in the

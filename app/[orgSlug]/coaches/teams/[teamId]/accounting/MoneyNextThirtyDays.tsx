@@ -16,21 +16,24 @@ interface Props {
   hrefs: {
     dues: string;
     /**
-     * ⚠⚠ THIS PANEL IS NOW A WINDOW INTO THE REGISTER (money redesign P3, plan §4.5), which is the
-     * third answer this link has had and the first one that is a place rather than a workaround.
-     * It opened the old combined screen (landing the coach on what had already been SPENT, when
-     * every row here is money that has not moved). P1 pointed it at Payables — right at the time,
-     * because that tab manages what is owed. But the register's scheduled overlay already holds
-     * every one of these rows, dated, with the settled book beneath them: it is the same window,
-     * only wider. So a row opens the book filtered to its own kind, and the coach sees what is
-     * coming AND what the balance will be when it lands.
-     *
-     * ⚠ ONE EXCEPTION, DELIBERATELY: an OVERDUE dues row still opens Player dues, because its
-     * action is "Remind" — a workflow that lives there and has no equivalent on a book.
+     * ⚖ A ROW THAT IS ONE BILL OPENS THAT BILL (owner, 2026-11-27: View "just drops me in the ledger
+     * screen"). A team bill opens its window over the Ledger's Bills view, a club bill its window on
+     * the Club tab. Opening the register filtered to the row's kind (money redesign P3) left the
+     * coach to find the row they had just pressed — an overdue one below weeks of recorded costs.
      */
-    registerFrom: Record<'dues' | 'expense' | 'club', string>;
-    /** The whole book, overlay on — everything scheduled, unfiltered. */
-    fullBook: string;
+    bill: (expenseId: string) => string;
+    /** Absent for a team with no club tab. */
+    clubBill?: (splitId: string) => string;
+    /**
+     * The register filtered to one kind, with what is scheduled shown: where a DUES row goes (a
+     * grouped one names no single record), and the fallback for a bill row with no bill to name.
+     *
+     * ⚠ ONE EXCEPTION, DELIBERATELY: an OVERDUE dues row opens Player dues, because its action is
+     * "Remind" — a workflow that lives there and has no equivalent on a book.
+     */
+    /** `all` is "See the whole book": everything scheduled, unfiltered, so the Balance column is
+     *  there — a book landing without one would answer a different question than the link asks. */
+    registerFrom: Record<'all' | 'dues' | 'expense' | 'club', string>;
   };
 }
 
@@ -45,6 +48,8 @@ interface LedgerRow {
   title: string;
   sub: string | null;
   amount: number;
+  /** The one bill this row is a payment on: the team's own, or the club's. Dues rows name none. */
+  billId?: string;
 }
 
 /* ⚠ THE CHIP SPEAKS THE PRODUCT'S WORDS, NEVER THE LANE ID (found in the §119 walk, 2026-08-28:
@@ -85,6 +90,7 @@ function buildRows(lanes: PayableLane[]): LedgerRow[] {
           key: `${l.id}-${i.id}`, lane: kind, overdue: i.overdue, dueDate: i.dueDate,
           daysUntilDue: i.daysUntilDue, title: i.description,
           sub: i.category ?? i.label ?? null, amount: i.amount,
+          billId: kind === 'org' ? i.splitId : i.expenseId,
         });
       }
       continue;
@@ -194,8 +200,13 @@ export default function MoneyNextThirtyDays({ apiUrl, hrefs }: Props) {
     // Overdue dues keep their own door: Remind is a workflow, and it lives on Player dues.
     if (row.lane === 'dues' && row.overdue) return { href: hrefs.dues, label: 'Remind' };
     if (row.lane === 'dues') return { href: hrefs.registerFrom.dues, label: 'View' };
-    if (row.lane === 'payable') return { href: hrefs.registerFrom.expense, label: 'View' };
-    return { href: hrefs.registerFrom.club, label: 'View' };
+    if (row.lane === 'payable') {
+      return { href: row.billId ? hrefs.bill(row.billId) : hrefs.registerFrom.expense, label: 'View' };
+    }
+    return {
+      href: row.billId && hrefs.clubBill ? hrefs.clubBill(row.billId) : hrefs.registerFrom.club,
+      label: 'View',
+    };
   }
 
   return (
@@ -278,7 +289,7 @@ export default function MoneyNextThirtyDays({ apiUrl, hrefs }: Props) {
         {/* ⚠ THE BOOK, NOT THE SCHEDULE. This window shows 30 days of what is coming; the register
             shows all of it, and the season behind it, in one column. The payment schedule survives
             on Payables, where commitments are managed — one place to see, separate doors to act. */}
-        <Link href={hrefs.fullBook} className={kit.footLink}>
+        <Link href={hrefs.registerFrom.all} className={kit.footLink}>
           See the whole book →
         </Link>
       </div>

@@ -167,12 +167,15 @@ export interface DashboardHrefs {
   /**
    * The register, opened on one kind with the scheduled overlay ON (money redesign P3, plan §4.5).
    *
-   * ⚠ THIS IS WHAT MAKES THE NEXT-30-DAYS PANEL A WINDOW rather than a summary. Every row there is
-   * money that has not moved yet, and every one of them is ALREADY on the register's scheduled
-   * block — so "View" should land the coach on that row in context, with the settled book beneath
-   * it, instead of on a workspace where they have to find it again.
+   * ⚠ WHERE A NEXT-30-DAYS ROW GOES WHEN IT NAMES NO ONE RECORD (dues). A filtered book does not
+   * land on the row that was pressed, so a row that IS one record opens that record instead — see
+   * `bill` and `clubBill` below. `all` is the whole book: nothing narrowed.
    */
-  registerFrom: Record<'dues' | 'expense' | 'club', string>;
+  registerFrom: Record<'all' | 'dues' | 'expense' | 'club', string>;
+  /** One team bill's own window, over the Ledger's Bills view. */
+  bill: (expenseId: string) => string;
+  /** One club bill's own window, on the Club tab. Absent exactly when `club` is. */
+  clubBill?: (splitId: string) => string;
 }
 
 /**

@@ -4297,6 +4297,16 @@ function MoneyRecordsPanel({
       // 'all', which isn't a real kind.
       setSelectedKinds(wantedFilter === 'all' ? new Set() : new Set([wantedFilter as RegisterKind]));
     }
+    /* ⚖ 'all' IS THE WHOLE BOOK ("See the whole book", owner 2026-11-27): every narrowing this sitting
+       holds goes, not the kind alone — the panel stays mounted, so a dues "View" pressed earlier would
+       otherwise still be on it. The date window is not a narrowing and is left as the coach has it. */
+    if (wantedFilter === 'all') {
+      setSelectedCategories(new Set());
+      setSelectedItems(new Set());
+      setFilterTagIds(new Set());
+      setLedgerQuery('');
+      setSelectedStatus(new Set<RegisterStatus>(['actual', 'overdue', 'scheduled']));
+    }
     /* Adds Scheduled to whatever's already selected rather than replacing it — the deep link means
        "also show what's coming," not "show only what's coming." */
     if (wantedScheduled === '1') {

@@ -18,11 +18,11 @@ import { CoachRail, kit, type CoachRailDot, type CoachRailGroupSpec } from '@/co
  * Navigation itself belongs to the tab bar. A row's job is the STAT; the chevron
  * is a convenience, not a second set of doors. */
 
-/** A row IS a destination, so the row keys are the destination keys — minus the two
+/** A row IS a destination, so the row keys are the destination keys — minus the
  *  hrefs that are deep-links into a surface rather than the surface itself. Derived
  *  rather than re-listed, so a row can never name a tab that isn't addressable. */
 type RowKey = Exclude<keyof DashboardHrefs,
-  'budgetStarter' | 'budgetGenerate' | 'payablesSchedule' | 'bankView' | 'registerFrom'>;
+  'budgetStarter' | 'budgetGenerate' | 'payablesSchedule' | 'bankView' | 'registerFrom' | 'bill' | 'clubBill'>;
 
 /** Journey order for the setup index; the operate rail keeps the order it shipped with.
  *
