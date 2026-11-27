@@ -15,6 +15,7 @@ import { findBasicCoachTeamIdForTournamentRegistration, resolveBasicCoachTeamIdF
 import { migrateBasicTeamIntoWorkspace, pendingMigrationSummary } from './coach-upgrade-migration';
 import { clearStartDoor } from './start-door-server';
 import { DEFAULT_SPORT } from './sports';
+import type { BillingCycle } from './plan-config';
 import { normalizeCreditApplicationMode } from './dues-credits';
 import type {
   AccountingLedger,
@@ -58,6 +59,8 @@ export type ProvisionStandaloneTeamWorkspaceInput = {
   stripeSubscriptionId?: string | null;
   stripeSubscriptionItemId?: string | null;
   currentPeriodEnd?: string | null;
+  /** Monthly or annual, for a portal someone pays for (the account row's `subscription_period`). */
+  billingCycle?: BillingCycle | null;
   entitlementSource?: TeamEntitlementSource;
   entitlementStatus?: TeamEntitlementStatus;
   eventSource?: PlatformEventInput['source'];
@@ -313,6 +316,7 @@ export async function provisionStandaloneTeamWorkspace(
     if (input.stripeCustomerId !== undefined) orgPatch.stripe_customer_id = input.stripeCustomerId;
     if (input.stripeSubscriptionId !== undefined) orgPatch.stripe_subscription_id = input.stripeSubscriptionId;
     if (input.currentPeriodEnd !== undefined) orgPatch.current_period_end = input.currentPeriodEnd;
+    if (input.billingCycle !== undefined) orgPatch.subscription_period = input.billingCycle;
 
     const { error: orgPatchError } = await supabaseAdmin
       .from('organizations')

@@ -383,13 +383,17 @@ async function runPlanWork(event: Stripe.Event, customerId: string | null, opts:
           ? await stripe.subscriptions.retrieve(subscriptionId)
           : null;
 
+        // The cycle the subscription is on NOW: a redelivered or replayed checkout must not write back the one first bought.
+        const livePriceId = sub?.items?.data?.[0]?.price?.id;
+        const livePrice = livePriceId ? await getPlanFromPriceId(livePriceId) : null;
+
         await provisionTeamWorkspaceFromCheckoutMetadata({
           metadata: session.metadata,
           stripeCustomerId: customerId,
           stripeSubscriptionId: subscriptionId,
           stripeSubscriptionItemId: sub ? subscriptionItemId(sub) : null,
           subscriptionStatus: sub?.status ?? 'active',
-          billingCycle: session.metadata.billingCycle ?? null,
+          billingCycle: livePrice?.billingCycle ?? session.metadata.billingCycle ?? null,
           currentPeriodEnd: sub ? toIso(sub.items?.data?.[0]?.current_period_end) : null,
           eventSource: 'stripe',
           sourceEventId: `${event.id}:team_workspace_created`,

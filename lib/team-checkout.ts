@@ -1,6 +1,6 @@
 import { normalizeBillingCycle, type BillingCycle } from './plan-config';
 import { DEFAULT_SPORT } from './sports';
-import { writePlatformEvent, type PlatformEventInput } from './platform-events';
+import { isPastDueTransition, isRecoveryTransition, writePlatformEvent, type PlatformEventInput } from './platform-events';
 import { supabaseAdmin } from './supabase-admin';
 import { sendEmail, teamWorkspaceWelcomeHtml, SITE_URL } from './email';
 import {
@@ -15,6 +15,7 @@ import {
 import type { SubscriptionStatus } from './types';
 import type { TeamEntitlementStatus, TeamWorkspaceSource } from './team-workspace-entitlements';
 import { getActiveOwnedTeamWorkspace } from './team-workspace-owned';
+import { workspacesInForce } from './portal-in-force-server';
 import { convertFreeTimePortal, findKeepPremiumPortal } from './portal-keep-premium';
 import { restoreCoachesPortalRetainedRecords } from './portal-retained-restore';
 import { decideTeamReactivation, type TeamReactivationAnswer, type TeamReactivationOrg } from './team-reactivation';
@@ -235,6 +236,10 @@ export function mapStripeStatusToTeamEntitlementStatus(status: string | null | u
   return 'active';
 }
 
+/** Stripe statuses a portal's records have no word for: the workspace column refuses them (mig 065) and the two mappers
+ *  above would call them paid up. */
+const UNRECORDABLE_STATUSES: ReadonlySet<string> = new Set(['incomplete_expired', 'paused']);
+
 export async function syncTeamWorkspaceSubscription(params: {
   stripeCustomerId: string | null;
   stripeSubscriptionId: string;
@@ -242,6 +247,9 @@ export async function syncTeamWorkspaceSubscription(params: {
   billingCycle?: string | null;
   currentPeriodEnd?: string | null;
   stripeSubscriptionItemId?: string | null;
+  /** For a change to a running portal: no row that already says canceled is written. The ending can finish between the
+   *  caller's read and these writes, and nothing later would undo a late write that switched the portal back on. */
+  onlyWhileRunning?: boolean;
 }): Promise<boolean> {
   const { data: workspace, error } = await supabaseAdmin
     .from('team_workspaces')
@@ -254,41 +262,123 @@ export async function syncTeamWorkspaceSubscription(params: {
 
   if (error) throw error;
   if (!workspace) return false;
+  if (UNRECORDABLE_STATUSES.has(params.subscriptionStatus)) return true;
 
   const orgStatus = mapStripeStatusToOrgStatus(params.subscriptionStatus);
   const entitlementStatus = mapStripeStatusToTeamEntitlementStatus(params.subscriptionStatus);
+  // A renewal date or item the caller does not have keeps the one on file: it is never blanked.
+  const periodEnd = params.currentPeriodEnd ? { current_period_end: params.currentPeriodEnd } : {};
+  const item = params.stripeSubscriptionItemId ? { stripe_subscription_item_id: params.stripeSubscriptionItemId } : {};
 
-  await supabaseAdmin
+  // A write that fails throws, so the webhook answers 500 and Stripe sends the event again (each write repeats safely).
+  const workspaceWrite = supabaseAdmin
     .from('team_workspaces')
     .update({
       stripe_customer_id: params.stripeCustomerId,
       subscription_status: params.subscriptionStatus,
-      current_period_end: params.currentPeriodEnd ?? null,
+      ...periodEnd,
       updated_at: new Date().toISOString(),
     })
     .eq('id', workspace.id);
+  if (params.onlyWhileRunning) workspaceWrite.neq('subscription_status', 'canceled');
+  const { data: workspaceRows, error: workspaceError } = await workspaceWrite.select('id');
+  if (workspaceError) throw workspaceError;
+  if (params.onlyWhileRunning && !workspaceRows?.length) return false;
 
-  await supabaseAdmin
+  const entitlementWrite = supabaseAdmin
+    .from('team_entitlements')
+    .update({
+      status: entitlementStatus,
+      ...item,
+      updated_at: new Date().toISOString(),
+    })
+    .eq('team_workspace_id', workspace.id);
+  if (params.onlyWhileRunning) entitlementWrite.neq('status', 'canceled');
+  const { error: entitlementError } = await entitlementWrite;
+  if (entitlementError) throw entitlementError;
+
+  // The account row goes LAST: a retry after a failure above still finds the old status there, so the turn to past due or
+  // back is still seen and recorded.
+  const accountWrite = supabaseAdmin
     .from('organizations')
     .update({
       stripe_customer_id: workspace.billing_mode === 'org_team_addon' ? null : params.stripeCustomerId,
       stripe_subscription_id: workspace.billing_mode === 'org_team_addon' ? null : params.stripeSubscriptionId,
       subscription_status: orgStatus,
-      subscription_period: params.billingCycle ?? null,
-      current_period_end: params.currentPeriodEnd ?? null,
+      // No cycle is the ending's call (the subscription is deleted): the record stops saying monthly or annual.
+      subscription_period: params.billingCycle ? normalizeBillingCycle(params.billingCycle) : null,
+      ...periodEnd,
     })
     .eq('id', workspace.workspace_org_id);
+  if (params.onlyWhileRunning) accountWrite.neq('subscription_status', 'canceled');
+  const { data: accountRows, error: orgError } = await accountWrite.select('id');
+  if (orgError) throw orgError;
 
-  await supabaseAdmin
-    .from('team_entitlements')
-    .update({
-      status: entitlementStatus,
-      stripe_subscription_item_id: params.stripeSubscriptionItemId ?? null,
-      updated_at: new Date().toISOString(),
-    })
-    .eq('team_workspace_id', workspace.id);
+  return params.onlyWhileRunning ? !!accountRows?.length : true;
+}
 
-  return true;
+/** The statuses a live portal's record follows. `canceled` belongs to the subscription's deletion (the one ending), and on
+ *  `incomplete` nothing has been paid: writing it would call a portal Stripe has marked past due active again. */
+const FOLLOWED_STATUSES: ReadonlySet<string> = new Set(['active', 'trialing', 'past_due', 'unpaid']);
+
+/**
+ * A later change to the subscription a LIVE portal already runs on (status, billing cycle, renewal date, item): it goes
+ * onto that portal's record. It is not a second purchase, so it is answered before the one-portal guard, which used to
+ * swallow it. Null when no portal IN FORCE holds this subscription: an ended or half-reactivated portal, another
+ * subscription and a first purchase are the caller's to decide. Sends nothing.
+ */
+async function followLivePortalSubscription(params: {
+  stripeCustomerId: string | null;
+  stripeSubscriptionId: string;
+  stripeSubscriptionItemId?: string | null;
+  subscriptionStatus: string;
+  billingCycle: string;
+  currentPeriodEnd?: string | null;
+  eventSource: PlatformEventInput['source'];
+  sourceEventId?: string | null;
+}): Promise<TeamCheckoutProvisionResult | null> {
+  const { data: portal, error } = await supabaseAdmin
+    .from('team_workspaces')
+    .select('id, workspace_org_id, rep_team_id')
+    .eq('stripe_subscription_id', params.stripeSubscriptionId)
+    .neq('workspace_state', 'org_owned')
+    .maybeSingle<{ id: string; workspace_org_id: string; rep_team_id: string }>();
+  if (error) throw error;
+  if (!portal || !(await workspacesInForce([portal.id])).has(portal.id)) return null;
+
+  const answer = { provisioned: false, reason: 'already_exists', workspaceOrgId: portal.workspace_org_id } as const;
+  if (!FOLLOWED_STATUSES.has(params.subscriptionStatus)) return answer;
+
+  const { data: before, error: beforeError } = await supabaseAdmin
+    .from('organizations')
+    .select('subscription_status')
+    .eq('id', portal.workspace_org_id)
+    .maybeSingle<{ subscription_status: string | null }>();
+  if (beforeError) throw beforeError;
+
+  // Ended while we were reading: nothing to record.
+  if (!(await syncTeamWorkspaceSubscription({ ...params, onlyWhileRunning: true }))) return answer;
+
+  // The invoice events record these two only when they find the old status, so whichever runs first records it (two
+  // arriving at the same instant can each record one, as on the club path).
+  const status = mapStripeStatusToOrgStatus(params.subscriptionStatus);
+  const turned = isPastDueTransition(before?.subscription_status, status) ? 'subscription_past_due'
+    : isRecoveryTransition(before?.subscription_status, status) ? 'subscription_recovered'
+    : null;
+  if (turned) {
+    await writePlatformEvent({
+      eventType: turned,
+      source: params.eventSource,
+      sourceEventId: params.sourceEventId ? `${params.sourceEventId}:${turned}` : null,
+      orgId: portal.workspace_org_id,
+      previousPlanId: 'team',
+      planId: 'team',
+      previousSubscriptionStatus: before?.subscription_status ?? null,
+      subscriptionStatus: status,
+      metadata: { scope: 'coaches_portal', teamWorkspaceId: portal.id, billingCycle: params.billingCycle },
+    });
+  }
+  return answer;
 }
 
 /**
@@ -504,6 +594,19 @@ export async function provisionTeamWorkspaceFromCheckoutMetadata(params: {
       : { provisioned: false, reason: 'already_exists', workspaceOrgId: kept.workspaceOrgId };
   }
 
+  const followed = await followLivePortalSubscription({
+    stripeCustomerId: params.stripeCustomerId,
+    stripeSubscriptionId: params.stripeSubscriptionId,
+    stripeSubscriptionItemId: params.stripeSubscriptionItemId ?? null,
+    // No status is no news: never assumed active.
+    subscriptionStatus: params.subscriptionStatus ?? '',
+    billingCycle: params.billingCycle ?? parsed.billingCycle,
+    currentPeriodEnd: params.currentPeriodEnd ?? null,
+    eventSource: params.eventSource,
+    sourceEventId: params.sourceEventId ?? null,
+  });
+  if (followed) return followed;
+
   // One Coaches Portal per owner — gate REACTIVATION too, not just fresh provision. A coach who
   // already has another LIVE portal must not reactivate a second one into a parallel live portal.
   // The reactivation target is a CANCELED workspace (not "live"), so reactivating your ONLY canceled
@@ -591,6 +694,7 @@ export async function provisionTeamWorkspaceFromCheckoutMetadata(params: {
       stripeSubscriptionId: params.stripeSubscriptionId,
       stripeSubscriptionItemId: params.stripeSubscriptionItemId,
       currentPeriodEnd: params.currentPeriodEnd,
+      billingCycle: normalizeBillingCycle(params.billingCycle ?? parsed.billingCycle),
       entitlementSource: 'team_plan',
       entitlementStatus: mapStripeStatusToTeamEntitlementStatus(params.subscriptionStatus),
       eventSource: params.eventSource,
