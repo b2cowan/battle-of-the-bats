@@ -1,0 +1,615 @@
+<title>Walk · Club schedules Stage 2 · a field in parts</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: one reading column; a walk index of cards, one walk open at a time; steps as Do / You should see rows with a tick. */
+:root {
+  --bg: #f4f6f5; --surface: #ffffff; --ink: #18211d; --muted: #5b6862; --line: #d5ddd9;
+  --accent: #1f6b4f; --accent-soft: #e2efe9; --warn: #9a5b00; --warn-soft: #fbefd9; --bad: #a3322b; --bad-soft: #f8e3e1;
+  --font-body: "Instrument Sans", "Segoe UI", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, "Cascadia Mono", Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #121715; --surface: #1a211e; --ink: #e5ece8; --muted: #9aa8a1; --line: #2e3833;
+  --accent: #6fcca4; --accent-soft: #1f3a2f; --warn: #f0b75c; --warn-soft: #3a2c14; --bad: #f08a80; --bad-soft: #3d1f1c; color-scheme: dark; } }
+:root[data-theme="dark"] {
+  --bg: #121715; --surface: #1a211e; --ink: #e5ece8; --muted: #9aa8a1; --line: #2e3833;
+  --accent: #6fcca4; --accent-soft: #1f3a2f; --warn: #f0b75c; --warn-soft: #3a2c14; --bad: #f08a80; --bad-soft: #3d1f1c; color-scheme: dark; }
+body { background: var(--bg); color: var(--ink); font: 15px/1.55 var(--font-body); padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 24px 64px; }
+.wrap { max-width: 860px; margin: 0 auto; display: grid; gap: 20px; }
+h1 { font-size: 30px; line-height: 1.15; margin: 0; text-wrap: balance; letter-spacing: -0.01em; }
+h2 { font-size: 19px; margin: 0; text-wrap: balance; }
+h3 { font-size: 13px; margin: 0; text-transform: uppercase; letter-spacing: 0.07em; color: var(--muted); font-weight: 600; }
+p { margin: 0; max-width: 68ch; }
+.eyebrow { font: 600 12px/1 var(--font-mono); letter-spacing: 0.08em; text-transform: uppercase; color: var(--accent); }
+.lead { color: var(--muted); }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 18px; display: grid; gap: 12px; min-width: 0; }
+.signin { border-color: var(--accent); }
+.kv { display: grid; grid-template-columns: max-content 1fr; gap: 6px 16px; }
+.kv dt { color: var(--muted); }
+.kv dd { margin: 0; min-width: 0; overflow-wrap: anywhere; }
+code, .mono { font-family: var(--font-mono); font-size: 0.92em; }
+a { color: var(--accent); }
+pre { margin: 6px 0 0; padding: 10px 12px; background: var(--bg); border: 1px solid var(--line); border-radius: 8px; font: 12px/1.5 var(--font-mono); white-space: pre-wrap; overflow-wrap: anywhere; }
+.note { background: var(--warn-soft); border-radius: 8px; padding: 10px 12px; }
+ul.plain { margin: 0; padding-left: 18px; display: grid; gap: 4px; }
+.index { display: grid; gap: 8px; }
+.wcard { display: grid; grid-template-columns: 1fr auto; gap: 4px 12px; align-items: center; text-align: left; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; font: inherit; color: inherit; cursor: pointer; }
+.wcard[aria-expanded="true"] { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent) inset; }
+.wcard:focus-visible, button:focus-visible, textarea:focus-visible, input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.wcard .t { font-weight: 600; }
+.wcard .j { grid-column: 1; color: var(--muted); font-size: 14px; }
+.chip { grid-row: 1 / span 2; grid-column: 2; font: 600 12px/1 var(--font-body); padding: 6px 9px; border-radius: 999px; background: var(--bg); color: var(--muted); border: 1px solid var(--line); white-space: nowrap; }
+.chip.prog { color: var(--accent); border-color: var(--accent); }
+.chip.pass { background: var(--accent-soft); color: var(--accent); border-color: transparent; }
+.chip.issue { background: var(--bad-soft); color: var(--bad); border-color: transparent; }
+.chip.call, .chip.thin { background: var(--warn-soft); color: var(--warn); border-color: transparent; }
+.walk { display: grid; gap: 14px; }
+.meta { display: grid; gap: 10px; }
+.meta div { display: grid; gap: 2px; }
+.steps { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+.step { display: grid; grid-template-columns: 28px 1fr; gap: 10px; padding: 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); }
+.step.done { border-color: var(--accent); background: var(--accent-soft); }
+.step.stop { border-style: dashed; border-color: var(--warn); }
+.step input[type="checkbox"] { width: 20px; height: 20px; margin: 2px 0 0; accent-color: var(--accent); }
+.step .body { display: grid; gap: 6px; min-width: 0; }
+.step .who { font: 600 11px/1 var(--font-mono); text-transform: uppercase; letter-spacing: 0.07em; color: var(--warn); }
+.step .lab { font-weight: 600; font-size: 12px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); }
+.opts { display: grid; gap: 6px; }
+.opts label { display: flex; gap: 8px; align-items: flex-start; }
+.verdict { display: flex; flex-wrap: wrap; gap: 8px; }
+.verdict button, .btn { font: 600 14px/1 var(--font-body); padding: 10px 14px; border-radius: 8px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); cursor: pointer; }
+.verdict button.on[data-v="pass"] { background: var(--accent); color: var(--surface); border-color: var(--accent); }
+.verdict button.on[data-v="issue"] { background: var(--bad); color: var(--surface); border-color: var(--bad); }
+.verdict button.on[data-v="call"] { background: var(--warn); color: var(--surface); border-color: var(--warn); }
+textarea { width: 100%; box-sizing: border-box; min-height: 80px; font: 14px/1.5 var(--font-body); padding: 10px; border-radius: 8px; border: 1px solid var(--line); background: var(--bg); color: var(--ink); }
+.out { font: 13px/1.5 var(--font-mono); white-space: pre-wrap; }
+.row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.progress { font-weight: 600; }
+@media (max-width: 520px) { .kv { grid-template-columns: 1fr; } .kv dt { margin-top: 6px; } h1 { font-size: 25px; } }
+@media (prefers-reduced-motion: no-preference) { .step { transition: background-color 0.15s, border-color 0.15s; } }
+</style>
+
+<div class="wrap">
+  <header class="card" style="gap:8px">
+    <span class="eyebrow">Club schedules · Stage 2 · A field in parts</span>
+    <h1>A field in parts: sides, from the venue list to the family’s email</h1>
+    <p class="lead">One purpose: a field the club splits into two sides is booked, billed, sent, read and used as a place of its own, by the club, the coaches and house league, and a field that is not split reads exactly as it did before.</p>
+    <p class="lead">Six walks, 50 steps, <b>in order</b>. Written Nov 27, 2026. Everything runs on this computer, on dev data. The two coaches and the league admin are made-up people whose addresses can never receive mail, so nothing real is emailed. No owner calls: the one open word (“cancelled” for a practice with no free side) was ruled on Nov 27.</p>
+    <p class="progress" id="progress">Checked 0 of 0</p>
+  </header>
+
+  <section class="card signin" aria-labelledby="signin-h">
+    <h2 id="signin-h">Sign in as</h2>
+    <dl class="kv">
+      <dt>Where</dt><dd><code>http://localhost:3000/auth/login</code> on this computer. <b>Not the staging site.</b> The club is <b>UAT Rep Club</b>.</dd>
+      <dt>Club owner</dt><dd><code>uat-club-owner@uat-rep-club.local</code> · password <code>UATPassword2026!</code>. Walks A, B, C, D, F, and four steps of E.</dd>
+      <dt>League admin</dt><dd><code>uat-club-league-admin@uat-rep-club.local</code> · password <code>UATPassword2026!</code>. Walk E.</dd>
+      <dt>Coach, 13U AAA</dt><dd><code>uat-club-coach-13aaa@uat-rep-club.local</code> · password <code>UATPassword2026!</code>. Walk C.</dd>
+      <dt>Coach, 15U AAA</dt><dd><code>uat-club-coach-15aaa@uat-rep-club.local</code> · password <code>UATPassword2026!</code>. Walk C, only if the 13U AAA coach has no practice on Field 1.</dd>
+      <dt>A visitor</dt><dd>Nobody signs in. A <b>private window</b>, for one step of walk E.</dd>
+    </dl>
+    <p class="lead">Dev-only sign-ins. Keep this page private. Use a separate window for each person so you are never signed in as two at once.</p>
+  </section>
+
+  <section class="card" aria-labelledby="before-h">
+    <h2 id="before-h">Before you start</h2>
+    <p class="note"><b>These are not boxes.</b> If one is not true, stop and tell me.</p>
+    <ul class="plain">
+      <li><b>Restart the dev server first</b> (<code>npm run dev</code>, wait for “Ready”). Stage 2 changed shared parts of the product, and a server started before it will show the old words.</li>
+      <li><b>The walk’s data is made once, before you start.</b> Ask me, or run this yourself. It is safe to run again, it only ever touches the made-up venue below and what this walk makes, and it never changes a password:<pre>node --env-file=.env.local .probe/schedule-parts-walk/fixture.mjs</pre></li>
+      <li>It makes <b>Parts Walk Park</b>, a venue with Field 1, Field 2, Field 3 and Field 4; two permits on it (<b>Parts walk · rep time</b>, Mondays and Wednesdays 6:00–8:00 p.m., and <b>Parts walk · house league time</b>, Tuesdays and Thursdays); a house-league season <b>Parts walk league 2027</b> with one division, <b>U10 Parts</b>, and four teams (Reds, Blues, Greens, Golds); and one finished club schedule, <b>Parts walk · house league</b>, with Tuesday time on Field 3’s two sides already given to the division’s games and Thursday time on Field 2 already given to its practice time. Every date is January 4 to February 25, 2027.</li>
+      <li>No field in the club is split today except Field 3. Walk A splits Field 1 yourself.</li>
+      <li>Walk the parts <b>in order</b>: B builds the schedule that C sends, D reads, and E’s last steps sit beside.</li>
+      <li>When you are done, tell me. I take the walk’s data away again (the foot of this page says what goes).</li>
+    </ul>
+  </section>
+
+  <section aria-labelledby="index-h" style="display:grid;gap:10px">
+    <h2 id="index-h">The walks</h2>
+    <div class="index" id="index"></div>
+  </section>
+
+  <section id="walkHost"></section>
+
+  <section class="card" id="callsHost" aria-labelledby="calls-h" hidden>
+    <h2 id="calls-h">Owner calls (not counted in the boxes)</h2>
+    <p class="lead">Two questions for you. Answer them whenever you like; they do not change what the walk checks.</p>
+  </section>
+
+  <section class="card" aria-labelledby="clean-h">
+    <h2 id="clean-h">When you are done: what I take away</h2>
+    <p>Nothing here is for you to do. I run the same file with <code>--teardown</code>. It removes, in this order: the house-league season and its games and practices, every schedule named “Parts walk …” (the ones you made and the one the data made) with their slots and the practices the send put on the two coaches’ calendars, the venue’s time rows, the two permits, and last Parts Walk Park with its four fields. It must remove the schedules before the venue, because a field that is split stays split while one of its sides is booked. No other venue, schedule, permit, team or account is touched, and no password is.</p>
+  </section>
+
+  <section class="card" aria-labelledby="sum-h">
+    <h2 id="sum-h">Paste-back (all walks)</h2>
+    <div class="row">
+      <button class="btn" type="button" id="copyAll">Copy the summary</button>
+      <button class="btn" type="button" id="reset">Clear my ticks</button>
+      <span class="lead" id="copied" aria-live="polite"></span>
+    </div>
+    <div class="card out" id="out" tabindex="0"></div>
+  </section>
+</div>
+
+<script>
+(function () {
+  "use strict";
+  var KEY = "club-schedules-stage2-parts-walk-v1";
+  var PAGE = "Club schedules · Stage 2 · A field in parts";
+  var WALKS = [
+ {
+  "id": "A",
+  "title": "A field splits into two sides",
+  "job": "Club owner · computer width · Venue library",
+  "forText": "The club splits a field into two sides in the Venue library, a field with a booked side cannot be re-split, and a field can be quartered.",
+  "passes": "Field 1 reads “Two sides, A and B”, Field 3 is locked with a line that says why, and Field 4 reads “Four quarters, A to D”.",
+  "notIn": "Field 1 being locked once a side is booked: that is the third step of walk C, after the schedule exists.",
+  "who": "uat-club-owner@uat-rep-club.local, password UATPassword2026!.",
+  "where": "http://localhost:3000/uat-rep-club/admin/org/venues (Organization › Venue library).",
+  "steps": [
+   {
+    "stop": true,
+    "d": "Open <b>Organization › Venue library<\/b> and press the pencil beside <b>Parts Walk Park<\/b>.",
+    "s": "Four facility rows: <b>Field 1<\/b>, <b>Field 2<\/b>, <b>Field 3<\/b> and <b>Field 4<\/b>. Each has a name, a kind and a third box for the split. Field 1, Field 2 and Field 4 read <b>Not split<\/b>; Field 3 reads <b>Two sides<\/b>. <b>Stop if there is no Parts Walk Park<\/b>: the walk’s data was not made."
+   },
+   {
+    "d": "On the <b>Field 1<\/b> row, open the split box and choose <b>Two sides<\/b>.",
+    "s": "The box reads <b>Two sides<\/b> and nothing refuses it. (Nothing is booked on Field 1 yet, so it is free to split.)"
+   },
+   {
+    "d": "Look at the <b>Field 3<\/b> row.",
+    "s": "Its split box is greyed out and a line above the rows says <b>Field 3 has bookings on its sides, so it stays in two sides.<\/b> (The house-league time that is already on Field 3’s sides is what locks it.)"
+   },
+   {
+    "d": "On the <b>Field 4<\/b> row choose <b>Four quarters<\/b>, then press the pencil again to close the edit.",
+    "s": "The venue’s card now reads <b>Two sides, A and B<\/b> under Field 1 and Field 3, <b>Four quarters, A to D<\/b> under Field 4, and nothing under Field 2."
+   }
+  ]
+ },
+ {
+  "id": "B",
+  "title": "New schedule on a split field",
+  "job": "Club owner · computer width · carries on from A",
+  "forText": "A new schedule can take a field’s side A and side B as places of their own: its drafts cut each side as its own slot, the grid gives each side a row, the bill prices a side at half, and the printed schedule has a column for each side.",
+  "passes": "Field 1’s two sides are named apart from Field 2 in the drafts, the grid, the bill and the PDF, and Field 2 (not split) reads as it always did.",
+  "notIn": "Sending the schedule (walk C) and other schedules holding the same time (walk D).",
+  "who": "uat-club-owner@uat-rep-club.local, password UATPassword2026!.",
+  "where": "http://localhost:3000/uat-rep-club/admin/schedules (Schedules).",
+  "steps": [
+   {
+    "d": "Open <b>Schedules<\/b> and press <b>New schedule<\/b>.",
+    "s": "A window <b>New schedule<\/b>, “Step 1 of 2 · settings”, with a <b>Permits<\/b> field that reads “No permit: type the time below”."
+   },
+   {
+    "d": "Tick the permit <b>Parts walk · rep time<\/b>.",
+    "s": "A card for it with two rows of time at <b>Parts Walk Park<\/b>: <b>Mon<\/b> 6:00–8:00 p.m. and <b>Wed<\/b> 6:00–8:00 p.m. The schedule’s name fills in as the permit’s name."
+   },
+   {
+    "d": "On the <b>Mon<\/b> row open the <b>Facilities<\/b> box and tick <b>Field 1, side A<\/b> and <b>Field 1, side B<\/b>.",
+    "s": "The list offers <b>Field 1 (whole)<\/b>, <b>Field 1, side A<\/b>, <b>Field 1, side B<\/b> and <b>Field 2<\/b>. Ticking a side unticks the whole field. The box then reads <b>Field 1 in two sides, Field 2<\/b>."
+   },
+   {
+    "d": "On the <b>Wed<\/b> row open <b>Facilities<\/b> and tick only <b>Field 1, side A<\/b>.",
+    "s": "The box reads <b>Field 1 side A<\/b>. (Side B is left free on Wednesdays on purpose: walk D uses it.)"
+   },
+   {
+    "d": "Under <b>Who, and how much<\/b>, leave only <b>13U AAA<\/b> and <b>15U AAA<\/b> ticked.",
+    "s": "Two teams, with equal shares."
+   },
+   {
+    "d": "Press <b>Generate drafts<\/b>.",
+    "s": "“Step 2 of 2 · drafts for Parts walk · rep time” with ranked drafts. The first draft card names the places its practices use: <b>Field 1, side A<\/b> and <b>Field 1, side B<\/b> as two places, apart from <b>Field 2<\/b>. <b>If a card names only “Field 1” with no side, that is an Issue.<\/b>"
+   },
+   {
+    "d": "Press once on the empty part of a draft card (not on a button or a word).",
+    "s": "The whole card takes the chosen border, as it did before this stage. A press anywhere on the card picks it."
+   },
+   {
+    "d": "Press <b>Save as a draft<\/b>.",
+    "s": "The schedule’s page opens as a <b>Draft<\/b>, named Parts walk · rep time."
+   },
+   {
+    "d": "Open the <b>Grid<\/b> and go to the week of Mon, Jan 4, 2027.",
+    "s": "Under <b>Field 1<\/b> there is a row for <b>side A<\/b> and a row for <b>side B<\/b>, each under the field and slightly in; <b>Field 2<\/b> has its one row. Monday has practices on both of Field 1’s side rows; Wednesday has them on side A only."
+   },
+   {
+    "d": "Open the <b>Bill<\/b> tile (the window <b>Bill the teams<\/b>). Read each team’s line and the hint under <b>Split<\/b>. Write down each team’s full-field hours. Do not save a bill: press Cancel.",
+    "s": "The hint reads <b>Each field at the permit’s price: a full field $20.00 an hour, a half field or one side $10.00<\/b>. Each team’s line has a count of full-field slots beside a count of half-field slots (for example “12 full + 8 half”) and a number of full-field hours. A side counts half."
+   },
+   {
+    "d": "On the schedule’s page open <b>Export<\/b> and choose <b>PDF<\/b>, then open the file.",
+    "s": "The printed schedule has a column headed <b>Field 1<\/b> over <b>side A<\/b>, one headed <b>Field 1<\/b> over <b>side B<\/b>, and one for <b>Field 2<\/b>. No column heading carries a price word such as “half”."
+   }
+  ]
+ },
+ {
+  "id": "C",
+  "title": "Send it, and the coach reads the side",
+  "job": "Club owner and the 13U AAA coach · carries on from B",
+  "forText": "After the club finalizes the schedule, a coach’s practice names the side, a field with a booked side is locked in the Venue library, and a change that only swaps one side for the other is sent to the coaches naming both sides.",
+  "passes": "The coach’s practice says “Field 1, side A” (or side B), Field 1 is locked, and the email preview names both sides of the swap.",
+  "notIn": "Anything a family reads (a change of side alone tells families nothing, by your ruling of Nov 26), and the email as it arrives in an inbox: the made-up addresses cannot receive mail.",
+  "who": "uat-club-owner@uat-rep-club.local for steps 1, 2, 4 and 5; uat-club-coach-13aaa@uat-rep-club.local (or uat-club-coach-15aaa@uat-rep-club.local) for step 3. Password UATPassword2026!.",
+  "where": "The draft schedule from walk B; then http://localhost:3000/uat-rep-club/coaches (13U AAA’s Schedule).",
+  "steps": [
+   {
+    "who": "Club owner",
+    "d": "On the schedule’s page press <b>Send<\/b> and choose <b>Final now<\/b>.",
+    "s": "The window is titled <b>Finalize and send<\/b> and lists the two teams. Its button reads <b>Finalize and send to 2<\/b> (or the count of coaches the club has on those teams)."
+   },
+   {
+    "who": "Club owner",
+    "d": "Press <b>Finalize and send<\/b>.",
+    "s": "A notice “Sent to … people on 2 teams.” and the page now shows <b>Final<\/b>."
+   },
+   {
+    "who": "Coach",
+    "d": "Sign in as <code>uat-club-coach-13aaa@uat-rep-club.local<\/code>, open <b>13U AAA<\/b> › <b>Schedule<\/b>, and open a practice at Parts Walk Park on Field 1. If 13U AAA has none on Field 1, use the 15U AAA coach instead.",
+    "s": "The practice’s sheet says <b>Where<\/b> <b>Parts Walk Park · Field 1, side A<\/b> (or <b>side B<\/b>). The same practice in the Schedule list reads the same."
+   },
+   {
+    "who": "Club owner",
+    "d": "Back as the owner, open <b>Organization › Venue library<\/b>, press the pencil beside <b>Parts Walk Park<\/b> and look at Field 1.",
+    "s": "Field 1’s split box is now greyed out, with the line <b>Field 1 has bookings on its sides, so it stays in two sides.<\/b> Field 2 is still free to change."
+   },
+   {
+    "who": "Club owner",
+    "d": "Open the schedule’s <b>Grid<\/b>, find a Monday where one team is on Field 1’s side A row and the other on its side B row at the same time, and drag one onto the other to swap them. (Or open the slot and use <b>Swap with…<\/b>.)",
+    "s": "The two teams trade rows, and the page shows <b>Changed since sent<\/b>."
+   },
+   {
+    "who": "Club owner",
+    "d": "Press <b>Send the changes<\/b> and, in its window, open <b>See 13U AAA’s email<\/b>. Then press Cancel: send nothing.",
+    "s": "The email preview names the move with <b>both sides<\/b>: from <b>Parts Walk Park · Field 1, side A<\/b> to <b>Field 1, side B<\/b> (or the reverse). It does not just say “Field 1”."
+   }
+  ]
+ },
+ {
+  "id": "D",
+  "title": "Other schedules see the sides",
+  "job": "Club owner · computer width · carries on from C",
+  "forText": "A second new schedule leaves out the time the finished schedule already holds and says which schedule holds it; Find the time offers “Field 1, side B” where only side A is held; the permit’s Used figure counts a side at half and carries one note.",
+  "passes": "Wednesday’s free side B is the only Field 1 time offered, the held time is named, and the permit’s Used and its note agree with the bill.",
+  "notIn": "Finishing the second schedule: it is never saved.",
+  "who": "uat-club-owner@uat-rep-club.local, password UATPassword2026!.",
+  "where": "http://localhost:3000/uat-rep-club/admin/schedules, then http://localhost:3000/uat-rep-club/admin/permits.",
+  "steps": [
+   {
+    "d": "On <b>Schedules<\/b> press <b>New schedule<\/b> and type the Name <code>Parts walk second<\/code>.",
+    "s": "The name is kept. (Without it, the schedule would take the permit’s name and read like the first one.)"
+   },
+   {
+    "d": "Tick the permit <b>Parts walk · rep time<\/b> again.",
+    "s": "The same card and the same two rows of time (Mon and Wed). The name is still <b>Parts walk second<\/b>."
+   },
+   {
+    "d": "On the <b>Wed<\/b> row open <b>Facilities<\/b> and tick <b>Field 1, side B<\/b>.",
+    "s": "The box reads <b>Field 1 side B<\/b>. (Leave the Mon row alone: its time is held.)"
+   },
+   {
+    "d": "Press <b>Generate drafts<\/b>.",
+    "s": "Drafts appear. Each card has a line that it leaves out slots another booking already holds, and the line names <b>Parts walk · rep time<\/b>, the finished schedule that holds them. The only Field 1 time handed out is Wednesday side B."
+   },
+   {
+    "d": "Press once on the empty part of a draft card.",
+    "s": "The card takes the chosen border: a press anywhere on the card still picks it."
+   },
+   {
+    "d": "Go back to settings and open the door <b>Find the time across every permit<\/b>.",
+    "s": "The window <b>Find the time<\/b>, a list with the columns <b>Facility · Permit · Free<\/b>, and a count line. It looks the same as it always has."
+   },
+   {
+    "d": "Under <b>Days<\/b> choose Wed only.",
+    "s": "A row for <b>Field 1, side B<\/b> at Parts Walk Park, under <b>Parts walk · rep time<\/b>, reading <b>8 evenings free of 8<\/b>. Side A offers no free evening: it is held."
+   },
+   {
+    "d": "Close Find the time, then close the New schedule window without saving.",
+    "s": "The Schedules list has no <b>Parts walk second<\/b>: nothing was saved."
+   },
+   {
+    "d": "Open <b>Permits<\/b> and open <b>Parts walk · rep time<\/b>. Read <b>Used<\/b> and the note under the figures.",
+    "s": "<b>Used<\/b> reads hours of 48 h (booked time, a side counting half). Under the figures there is <b>one<\/b> note (none at all if every slot has a team), total first: “Of the … h unused, … h is held by a schedule and no team has it yet: open slots on Parts walk · rep time.” Add the two teams’ full-field hours from the bill in walk B: the sum matches Used. <b>If it differs, write both numbers in Notes: that is a finding.<\/b>"
+   }
+  ]
+ },
+ {
+  "id": "E",
+  "title": "House league on club time",
+  "job": "League admin, with four steps by the club owner · computer width",
+  "forText": "House league’s games and practices on club time carry the side: they say “Field 3, side A” on the admin schedule, the public league schedule and Changes to send; a practice on a side holds one team; a league admin adding a game by hand lands on the side of the time; and when the club splits a two-teams-at-once practice slot into sides and sends, each team gets a side.",
+  "passes": "Every place word names its side, the two hand-added games take side A then side B, and the split practice slot gives one team each side with nothing cancelled.",
+  "notIn": "A practice with no free side reading “cancelled” (it needs three teams at once on a slot split into two sides; this data does not build it; the automatic tests hold it, and the word was ruled Nov 27), and the families’ emails (nobody has registered here).",
+  "who": "League admin uat-club-league-admin@uat-rep-club.local for steps 1–9 and 14–18; club owner uat-club-owner@uat-rep-club.local for steps 10–13. Password UATPassword2026!. Step 7 is in a private window.",
+  "where": "http://localhost:3000/uat-rep-club/admin/house-league (season Parts walk league 2027 › Schedule, division U10 Parts).",
+  "steps": [
+   {
+    "stop": true,
+    "who": "League admin",
+    "d": "Sign in as the league admin. Open <b>House league › Parts walk league 2027 › Schedule<\/b>, choose the division <b>U10 Parts<\/b>, and open <b>Tools<\/b> (⋯) › <b>House league’s time<\/b>.",
+    "s": "The window says the time is <b>Given by the club in Parts walk · house league<\/b>. Two rows: Tuesdays <b>U10 Parts games<\/b> with <b>Field 3 in two sides<\/b>, and Thursdays <b>U10 Parts practice time<\/b> with <b>Field 2<\/b>. <b>Stop if there is no such season<\/b>: the data was not made."
+   },
+   {
+    "who": "League admin",
+    "d": "Close it and open <b>Tools<\/b> › <b>Generate games<\/b>.",
+    "s": "Step 1 reads the game time from House league’s time and counts each side as its own slot: two games can be played at once on Field 3, one on each side (8 Tuesdays × 2 hours × 2 sides = 32 slots). “Each game is 60 minutes, the length of a slot.”"
+   },
+   {
+    "who": "League admin",
+    "d": "Go to the match-ups step, choose <b>Once<\/b>, and press to check the games.",
+    "s": "A passing check, <b>Ready to save: 6 games<\/b> (four teams, once through), with nothing about a clash."
+   },
+   {
+    "who": "League admin",
+    "d": "Press <b>Save<\/b>.",
+    "s": "“Saved 6 games as a draft.” and a <b>Draft<\/b> tag on the Schedule page."
+   },
+   {
+    "who": "League admin",
+    "d": "Press <b>Publish schedule<\/b> and confirm with <b>Publish<\/b>.",
+    "s": "The window says how many families get an email (none: nobody has registered here). The tag turns to <b>Published<\/b>."
+   },
+   {
+    "who": "League admin",
+    "d": "Open the <b>List<\/b> view and read the places on the games.",
+    "s": "Each game’s place reads <b>Parts Walk Park · Field 3, side A<\/b> or <b>Parts Walk Park · Field 3, side B<\/b>, never just “Field 3”. Both sides appear."
+   },
+   {
+    "who": "A visitor",
+    "d": "In a private window open <code>http://localhost:3000/uat-rep-club/league/parts-walk-league-2027/schedule<\/code>.",
+    "s": "The public schedule names the same places: <b>Field 3, side A<\/b> and <b>Field 3, side B<\/b>."
+   },
+   {
+    "who": "League admin",
+    "d": "Back as the league admin, open <b>Tools<\/b> › <b>Practice time<\/b> and set <b>Each practice<\/b> to 60 minutes, <b>Teams at once<\/b> to 2 and <b>Practices a week<\/b> to 1.",
+    "s": "A line says what you will get: <b>Every team gets 1 practice a week.<\/b> There is <b>no sentence about sides<\/b> yet: the practice time is on a whole field."
+   },
+   {
+    "who": "League admin",
+    "d": "Press <b>Hand out practices<\/b>. If <b>Tell the families their practice times<\/b> opens, press <b>Not yet<\/b>.",
+    "s": "The Practices list shows Thursday practices at 6:00 and 7:00 p.m. at <b>Parts Walk Park · Field 2<\/b> with no side, two teams at each time."
+   },
+   {
+    "who": "Club owner",
+    "d": "Sign in as the club owner, open <b>Organization › Venue library<\/b>, press the pencil beside <b>Parts Walk Park<\/b> and set Field 2 to <b>Two sides<\/b>.",
+    "s": "It saves with no refusal: the practices on Field 2 are on the whole field, and a whole-field booking does not lock a split."
+   },
+   {
+    "who": "Club owner",
+    "stop": true,
+    "d": "Open <b>Schedules › Parts walk · house league<\/b>, then <b>Tools<\/b> › <b>Settings…<\/b>. On the Thursday row, open <b>Facilities<\/b> and tick <b>Field 2, side A<\/b> and <b>Field 2, side B<\/b>.",
+    "s": "The box reads <b>Field 2 in two sides<\/b>. <b>Stop if Settings… will not let you change the Thursday row’s fields on this schedule<\/b>: that is a finding about the schedule, not about the split. Write what it said."
+   },
+   {
+    "who": "Club owner",
+    "d": "Keep the settings change the window offers.",
+    "s": "The schedule page shows <b>Changed since sent<\/b>. Nothing has gone to anyone."
+   },
+   {
+    "who": "Club owner",
+    "d": "Press <b>Send the changes<\/b>, read the window, and press the button to send.",
+    "s": "The window lists U10 Parts’ practices as moved from <b>Field 2<\/b> to <b>Field 2, side A<\/b> or <b>Field 2, side B<\/b>. After the send, a notice that it was sent."
+   },
+   {
+    "who": "League admin",
+    "d": "Sign in as the league admin and open the division’s practices (the Thursdays).",
+    "s": "At each time two practices, one at <b>Parts Walk Park · Field 2, side A<\/b> and one at <b>Field 2, side B<\/b>: one team a side. <b>None is cancelled.<\/b>"
+   },
+   {
+    "who": "League admin",
+    "d": "Open <b>Tools<\/b> › <b>Practice time<\/b> again.",
+    "s": "One line under the three fields: <b>Field 2’s sides hold one team each. Teams at once is for whole facilities.<\/b>"
+   },
+   {
+    "who": "League admin",
+    "d": "Add a game by hand: <b>Add<\/b> › <b>Game<\/b>, Reds against Blues, on the last Tuesday (Feb 23, 2027) at 6:00 p.m., venue <b>Parts Walk Park<\/b>, <b>Field 3<\/b>. Save it.",
+    "s": "The window offers whole fields only (Field 3, no sides to pick). The game saves, and its place reads <b>Parts Walk Park · Field 3, side A<\/b>: it landed on the side of the game time."
+   },
+   {
+    "who": "League admin",
+    "d": "Add a second game at the same time and place: Greens against Golds, Feb 23, 6:00 p.m., <b>Field 3<\/b>.",
+    "s": "It saves and reads <b>Parts Walk Park · Field 3, side B<\/b>: side A was taken, so it took the other side."
+   },
+   {
+    "who": "League admin",
+    "d": "Open <b>Changes to send<\/b>.",
+    "s": "The two added games are listed with their sides: <b>Field 3, side A<\/b> and <b>Field 3, side B<\/b>. Do not send them."
+   }
+  ]
+ },
+ {
+  "id": "F",
+  "title": "A field that is not split reads as before",
+  "job": "Club owner · computer width · any time after A",
+  "forText": "Two spot checks that a field with no split shows exactly what it showed before this stage.",
+  "passes": "No field outside Parts Walk Park shows a side, a part row or a split line.",
+  "notIn": "Everything else in the product that never learned a side (the stage’s automatic tests hold those).",
+  "who": "uat-club-owner@uat-rep-club.local, password UATPassword2026!.",
+  "where": "http://localhost:3000/uat-rep-club/admin/schedules and http://localhost:3000/uat-rep-club/admin/org/venues.",
+  "steps": [
+   {
+    "d": "Open the schedule <b>Winter dome · Sundays<\/b> and its <b>Grid<\/b> on any Sunday.",
+    "s": "Six fields, <b>Field 1<\/b> to <b>Field 6<\/b>, one row each at Lakeshore Dome. No side rows, no “side A”, no “whole” anywhere."
+   },
+   {
+    "d": "Open <b>Organization › Venue library<\/b> and look at the <b>Lakeshore Dome<\/b> card.",
+    "s": "Its six fields read as plain names, with no “Two sides” or “Four quarters” line under any of them."
+   }
+  ]
+ }
+];
+  var CALLS = [];
+  var state = { ticks: {}, verdict: {}, notes: {}, choice: {}, open: "A" };
+  try { var raw = localStorage.getItem(KEY); if (raw) { var got = JSON.parse(raw); state.ticks = got.ticks || {}; state.verdict = got.verdict || {}; state.notes = got.notes || {}; state.choice = got.choice || {}; state.open = got.open || "A"; } } catch (e) {}
+  function save() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} }
+  function el(tag, cls, html) { var n = document.createElement(tag); if (cls) n.className = cls; if (html != null) n.innerHTML = html; return n; }
+  function plain(html) { var d = document.createElement("div"); d.innerHTML = html; return d.textContent.replace(/\s+/g, " ").trim(); }
+  function num(w, i) { if (w.steps[i].n) return w.steps[i].n; var k = 0; for (var j = 0; j <= i; j++) if (!w.steps[j].n) k++; return String(k); }
+  function sid(w, i) { return w.id + "." + num(w, i); }
+  function counts(w) { var n = 0; w.steps.forEach(function (s, i) { if (state.ticks[sid(w, i)]) n++; }); return { done: n, all: w.steps.length }; }
+  var VWORD = { pass: "Passed", issue: "Issue", call: "Needs a call" };
+  function chipOf(w) {
+    var c = counts(w), v = state.verdict[w.id];
+    if (v === "pass" && c.done < c.all) return ["thin", "Passed · only " + c.done + " of " + c.all + " ticked"];
+    if (v) return [v, VWORD[v] + " · " + c.done + " of " + c.all];
+    if (c.done) return ["prog", "In progress · " + c.done + " of " + c.all];
+    return ["", "Not started · " + c.all + " steps"];
+  }
+
+  var index = document.getElementById("index"), host = document.getElementById("walkHost");
+  var cards = {};
+  WALKS.forEach(function (w, wi) {
+    var b = el("button", "wcard");
+    b.type = "button"; b.id = "card-" + w.id; b.setAttribute("aria-controls", "walk-" + w.id);
+    b.appendChild(el("span", "t", "Walk " + w.id + " · " + w.title));
+    b.appendChild(el("span", "j", w.job));
+    var chip = el("span", "chip"); b.appendChild(chip);
+    b.addEventListener("click", function () { state.open = w.id; save(); render(); document.getElementById("walk-" + w.id).scrollIntoView({ block: "start" }); });
+    index.appendChild(b);
+    cards[w.id] = { b: b, chip: chip };
+  });
+
+  function render() {
+    host.innerHTML = "";
+    WALKS.forEach(function (w, wi) {
+      var open = state.open === w.id;
+      cards[w.id].b.setAttribute("aria-expanded", open ? "true" : "false");
+      var ch = chipOf(w); cards[w.id].chip.className = "chip " + ch[0]; cards[w.id].chip.textContent = ch[1];
+      if (!open) return;
+      var sec = el("section", "card walk"); sec.id = "walk-" + w.id;
+      sec.appendChild(el("span", "eyebrow", "Walk " + w.id + " of " + WALKS.length + " · " + w.job));
+      sec.appendChild(el("h2", null, w.title));
+      var meta = el("div", "meta");
+      [["What this walk is for", w.forText], ["It passes when", w.passes], ["Not in this walk", w.notIn], ["Sign in as", w.who], ["Where and on what", w.where]].forEach(function (m) {
+        var d = el("div"); d.appendChild(el("h3", null, m[0])); d.appendChild(el("p", null, m[1])); meta.appendChild(d);
+      });
+      sec.appendChild(meta);
+      var ol = el("ol", "steps");
+      w.steps.forEach(function (s, i) {
+        var id = sid(w, i);
+        var li = el("li", "step" + (s.stop ? " stop" : "") + (state.ticks[id] ? " done" : ""));
+        var cb = el("input"); cb.type = "checkbox"; cb.id = "cb-" + id; cb.checked = !!state.ticks[id];
+        cb.setAttribute("aria-label", "Step " + num(w, i) + " done");
+        cb.addEventListener("change", function () { state.ticks[id] = cb.checked; save(); li.className = "step" + (s.stop ? " stop" : "") + (cb.checked ? " done" : ""); refresh(); });
+        li.appendChild(cb);
+        var body = el("div", "body");
+        if (s.stop || s.who) body.appendChild(el("span", "who", (s.stop ? "Stop check" : "") + (s.stop && s.who ? " · " : "") + (s.who || "")));
+        body.appendChild(el("span", "lab", num(w, i) + " · Do"));
+        body.appendChild(el("p", null, s.d));
+        body.appendChild(el("span", "lab", "You should see"));
+        body.appendChild(el("p", null, s.s));
+        li.appendChild(body);
+        ol.appendChild(li);
+      });
+      sec.appendChild(ol);
+      sec.appendChild(el("h3", null, "Your verdict on this walk"));
+      var vs = el("div", "verdict");
+      [["pass", "Pass"], ["issue", "Issue"], ["call", "Needs a call"]].forEach(function (v) {
+        var btn = el("button", state.verdict[w.id] === v[0] ? "on" : "", v[1]); btn.type = "button"; btn.setAttribute("data-v", v[0]);
+        btn.setAttribute("aria-pressed", state.verdict[w.id] === v[0] ? "true" : "false");
+        btn.addEventListener("click", function () { state.verdict[w.id] = state.verdict[w.id] === v[0] ? "" : v[0]; save(); render(); });
+        vs.appendChild(btn);
+      });
+      sec.appendChild(vs);
+      var lab = el("label", null, "<h3>Notes</h3>"); lab.setAttribute("for", "notes-" + w.id);
+      sec.appendChild(lab);
+      var ta = el("textarea"); ta.id = "notes-" + w.id; ta.value = state.notes[w.id] || "";
+      ta.placeholder = "What you saw, a word you would change, a question for me";
+      ta.addEventListener("input", function () { state.notes[w.id] = ta.value; save(); refresh(); });
+      sec.appendChild(ta);
+      var row = el("div", "row");
+      var cp = el("button", "btn", "Copy this walk’s summary"); cp.type = "button";
+      var msg = el("span", "lead"); msg.setAttribute("aria-live", "polite");
+      var out = el("div", "card out"); out.tabIndex = 0; out.textContent = walkSummary(w);
+      cp.addEventListener("click", function () { copy(walkSummary(w), out, msg); });
+      row.appendChild(cp);
+      if (wi + 1 < WALKS.length) {
+        var nx = el("button", "btn", "Next: walk " + WALKS[wi + 1].id); nx.type = "button";
+        nx.addEventListener("click", function () { state.open = WALKS[wi + 1].id; save(); render(); document.getElementById("walk-" + WALKS[wi + 1].id).scrollIntoView({ block: "start" }); });
+        row.appendChild(nx);
+      }
+      row.appendChild(msg);
+      sec.appendChild(row);
+      sec.appendChild(out);
+      sec._out = out; sec._w = w;
+      host.appendChild(sec);
+    });
+    refresh();
+  }
+
+  // The owner calls sit in their own section, outside the step count; they are drawn once.
+  function renderCalls() {
+    var box = document.getElementById("callsHost");
+    if (!CALLS.length) return;
+    box.hidden = false;
+    CALLS.forEach(function (c) {
+      var card = el("div", "card"); card.appendChild(el("h3", null, "Call " + c.id + " · " + c.q)); card.appendChild(el("p", null, c.why));
+      var o = el("div", "opts");
+      c.opts.forEach(function (op) {
+        var lb = el("label"), r = el("input"); r.type = "radio"; r.name = "call-" + c.id; r.checked = state.choice[c.id] === op[0];
+        r.addEventListener("change", function () { state.choice[c.id] = op[0]; save(); refresh(); });
+        lb.appendChild(r); lb.appendChild(el("span", null, op[1])); o.appendChild(lb);
+      });
+      card.appendChild(o); box.appendChild(card);
+    });
+    var lab = el("label", null, "<h3>Notes on the calls</h3>"); lab.setAttribute("for", "notes-calls");
+    box.appendChild(lab);
+    var ta = el("textarea"); ta.id = "notes-calls"; ta.value = state.notes.calls || "";
+    ta.placeholder = "Anything you want to say about a call";
+    ta.addEventListener("input", function () { state.notes.calls = ta.value; save(); refresh(); });
+    box.appendChild(ta);
+  }
+
+  function callsSummary() {
+    if (!CALLS.length) return [];
+    var lines = ["Owner calls (outside the count)"];
+    CALLS.forEach(function (c) {
+      var a = state.choice[c.id], hit = c.opts.filter(function (o) { return o[0] === a; })[0];
+      lines.push("  Call " + c.id + " (" + c.q + "): " + (hit ? hit[0] + " — " + hit[1] : "NOT ANSWERED"));
+    });
+    var n = (state.notes.calls || "").trim();
+    if (n) lines.push("  Notes: " + n.replace(/\n+/g, " / "));
+    return lines;
+  }
+
+  function walkSummary(w) {
+    var c = counts(w), v = state.verdict[w.id];
+    var lines = [w.id + " " + w.title + " · " + (v ? VWORD[v].toUpperCase() : "NO VERDICT") + " · " + c.done + " of " + c.all + " ticked"];
+    w.steps.forEach(function (s, i) { lines.push("  " + (state.ticks[sid(w, i)] ? "[x] " : "[ ] ") + num(w, i) + ". " + plain(s.d)); });
+    var n = (state.notes[w.id] || "").trim();
+    if (n) lines.push("  Notes: " + n.replace(/\n+/g, " / "));
+    return lines.join("\n");
+  }
+  function allSummary() {
+    var total = 0, done = 0;
+    WALKS.forEach(function (w) { var c = counts(w); total += c.all; done += c.done; });
+    return [PAGE, "Checked " + done + " of " + total, ""].concat(WALKS.map(walkSummary), callsSummary().length ? [""] : [], callsSummary()).join("\n");
+  }
+  function refresh() {
+    var total = 0, done = 0;
+    WALKS.forEach(function (w) { var c = counts(w); total += c.all; done += c.done; var ch = chipOf(w); cards[w.id].chip.className = "chip " + ch[0]; cards[w.id].chip.textContent = ch[1]; });
+    document.getElementById("progress").textContent = "Checked " + done + " of " + total;
+    document.getElementById("out").textContent = allSummary();
+    var sec = host.querySelector(".walk"); if (sec && sec._out) sec._out.textContent = walkSummary(sec._w);
+  }
+  function copy(text, node, msg) {
+    function pick() { try { var r = document.createRange(); r.selectNodeContents(node); var s = window.getSelection(); s.removeAllRanges(); s.addRange(r); msg.textContent = "Selected: press Ctrl+C to copy."; } catch (e) {} }
+    try { navigator.clipboard.writeText(text).then(function () { msg.textContent = "Copied."; }, pick); } catch (e) { pick(); }
+  }
+  document.getElementById("copyAll").addEventListener("click", function () { copy(allSummary(), document.getElementById("out"), document.getElementById("copied")); });
+  var armed = false;
+  document.getElementById("reset").addEventListener("click", function () {
+    var b = document.getElementById("reset");
+    if (!armed) { armed = true; b.textContent = "Press again to clear every tick and note"; return; }
+    armed = false; b.textContent = "Clear my ticks";
+    state = { ticks: {}, verdict: {}, notes: {}, choice: {}, open: "A" }; save();
+    document.getElementById("callsHost").querySelectorAll(".card, label, textarea").forEach(function (n) { n.remove(); });
+    renderCalls(); render();
+  });
+  renderCalls();
+  render();
+})();
+</script>

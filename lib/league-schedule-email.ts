@@ -4,7 +4,7 @@ import { familyClose } from './club-schedule-league-words';
 import type { EmailWords } from './club-schedule-words';
 import { placeDiffers, type GameSnapshot, type NetChange } from './league-game-changes';
 import { SCHEDULE_EMAIL_WORDS as W, whenAndPlace } from './league-schedule-words';
-import { fieldPartName, type FieldSections } from './field-parts';
+import { parkFieldWords, type FieldSections } from './field-parts';
 
 /**
  * ══════════════════════════════════════════════════════════════════════════════════════════════
@@ -35,8 +35,7 @@ export function placeTextOf(places: {
     const venue = s.venueId ? places.venues.get(s.venueId) : null;
     if (!venue) return s.location?.trim() ?? '';
     const facility = s.facilityId ? places.facilities.get(s.facilityId) : null;
-    // dot-join-ok: the one place word, park · field (two items), as before parts; the part joins the field with a comma.
-    return facility ? `${venue.name} · ${fieldPartName(facility, s.sectionMask, places.sections.get(s.facilityId!) ?? 1, ', ')}` : venue.name;
+    return parkFieldWords(venue.name, facility, s.sectionMask, (s.facilityId ? places.sections.get(s.facilityId) : null) ?? 1);
   };
 }
 

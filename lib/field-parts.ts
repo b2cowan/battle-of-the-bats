@@ -77,6 +77,21 @@ export function isLegalMask(mask: number, sections: FieldSections): boolean {
 }
 
 /**
+ * THE PART AN EDIT KEEPS, for every writer that is handed a field and no part (the house-league hand edit, the coach's
+ * event edit and re-import): an edit that leaves the field alone keeps the part the club booked; another field (or none)
+ * is the whole of it; a part the field no longer offers (split differently since) is the whole field too.
+ */
+export function keptMask(
+  storedFacilityId: string | null | undefined,
+  storedMask: number | null | undefined,
+  nextFacilityId: string | null | undefined,
+  sections: FieldSections,
+): number {
+  const kept = nextFacilityId && nextFacilityId === storedFacilityId ? maskOf(storedMask) : WHOLE;
+  return isLegalMask(kept, sections) ? kept : WHOLE;
+}
+
+/**
  * Do two bookings ON THE SAME FIELD hold overlapping ground? The whole field meets every part; two parts meet when
  * they share a quarter. The caller compares the field first — two different fields never overlap here.
  */
@@ -135,10 +150,34 @@ export function partWords(mask: number | null | undefined, sections: FieldSectio
   return bits(m) === 1 ? `quarter ${letters(m)}` : `quarters ${letters(m)}`;
 }
 
+/**
+ * A STORED line's field without the part its writer joined on (", side A", ", quarters A–B": `formatPartLocation`), for
+ * a reader that takes the field's name from the line and words the part from the mask itself — so the part is said once,
+ * and from the booking's own mask. A name with no part words comes back as it was.
+ */
+export function withoutPartWords(name: string): string {
+  return name.replace(/, (side [AB]|quarter [A-D]|quarters [A-D]–[A-D])$/, '');
+}
+
 /** The field with its part, joined by `sep`: "Field 1 side A" (a list), "Field 1, side A" (the calendar). */
 export function fieldPartName(name: string, mask: number | null | undefined, sections: FieldSections, sep = ' '): string {
   const part = partWords(mask, sections);
   return part ? `${name}${sep}${part}` : name;
+}
+
+/**
+ * A place as house league and the club's lists say it: "Maple Grove Park · Diamond 2, side A" — the park and the field,
+ * the part after the field with a comma (round 2 tab 8). Either name may be missing (the other alone; '' for neither). A
+ * whole field, or one not split, reads exactly as before parts. The caller looks the names up and keeps its own fallback.
+ */
+export function parkFieldWords(
+  park: string | null | undefined,
+  field: string | null | undefined,
+  mask: number | null | undefined,
+  sections: FieldSections,
+): string {
+  // dot-join-ok: the one place word, park · field (two items), as before parts; the part joins the field with a comma.
+  return [park, field ? fieldPartName(field, mask, sections, ', ') : null].filter(Boolean).join(' · ');
 }
 
 /** The part an event carries and how its field splits, both read with the event (2C part 2) — never stored as text. */

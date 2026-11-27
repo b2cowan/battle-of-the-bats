@@ -302,6 +302,9 @@ spec). With no split field every word reads byte-for-byte as before (the 2B rule
 
 ## Session 2E part 3 — the stage's close
 
+> **DONE 2026-11-27** (the plan's "2E part 3" line holds the review, the words, the help and the fixes; walk §581;
+> Stage 3's build prompt is in the plan under Stage 3). Kept as the record.
+
 Session 2E's original items 2 and 3, above, unchanged: `/simplify` then `/review` on the whole stage's diff; the one
 `/marketing` pass for Stage 2's words; `/docs` (the scheduler and house-league help, and the 2D notes folded into it);
 the 2D design check's P1/P2 (fix or ideas backlog, the owner's call); the board line; the Stage 2 walk at the owner's

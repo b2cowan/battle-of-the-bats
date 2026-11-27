@@ -21,6 +21,7 @@ import { withObservability } from '@/lib/observability';
 import { denyUnless, canManageSchedule } from '@/lib/coach-capabilities';
 import { isMirroredEvent } from '@/lib/coach-tournament-games';
 import { isClubSlotEvent } from '@/lib/club-slot-event';
+import { keptMask } from '@/lib/field-parts';
 import { utcToZonedInputs } from '@/lib/timezone';
 import {
   reviewScheduleRows, committableScheduleRows, isBlankScheduleRow,
@@ -194,8 +195,11 @@ export const POST = withObservability(async (req: Request,
             delete changes.fieldNumber;
           }
         }
-        // The same field re-imported keeps the part the club booked (Club schedules Stage 2); a new field is whole.
-        if (changes.orgVenueFacilityId !== undefined && changes.orgVenueFacilityId === stored?.orgVenueFacilityId) changes.sectionMask = stored.sectionMask;
+        // The same field re-imported keeps the part the club booked while the field still offers it (Club schedules
+        // Stage 2, `keptMask`); a new field is whole.
+        if (changes.orgVenueFacilityId !== undefined && stored) {
+          changes.sectionMask = keptMask(stored.orgVenueFacilityId, stored.sectionMask, changes.orgVenueFacilityId, stored.fieldSections);
+        }
         if (row.uniform.trim()) changes.uniform = row.uniform.trim();
         if (r.opponent !== null) changes.opponent = r.opponent;
         if (r.homeAway !== null) changes.homeAway = r.homeAway as 'home' | 'away' | 'neutral';

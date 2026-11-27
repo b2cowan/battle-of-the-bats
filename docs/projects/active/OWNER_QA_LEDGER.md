@@ -29081,3 +29081,16 @@ Committed 2026-11-26, ahead of the walk (owner: "simplify and commit"): `d3d1bcc
 
 **Left out:** a refund still on its way (the page shows no sum; a test covers it); paying again by card; the invoice PDF and emails.
 <!-- /§580 -->
+
+## §581 · Club schedules · Stage 2 · A field in parts — **a field the club splits into two sides (or four quarters) is booked, billed, sent, read and used as a place of its own: the Venue library splits it and locks the split while a side is booked; New schedule cuts each side as its own slot at half a practice and half the price; the grid has a row per side, the PDF a column; a coach's practice says "Field 1, side A"; another schedule leaves out the time a finished one holds and Find the time offers the free side; a permit's Used counts a side at half with one note; house league's games and practices on club time say the side, a side holds one team, a hand-added game lands on side A then side B, and the club's send keeps one team a side; a field that is not split reads as before**
+<!-- §581 -->
+**Walk published 2026-11-27.** [Interactive walk](https://claude.ai/artifact/5Es159enb523YWCApKPDBp) (walks A–F, 50 steps; no owner calls) · [repository HTML](SCHEDULE_PARTS_STAGE2_WALK.html). Build: Stage 2 Sessions 2A `e080b0750`, 2B `b37a4bccc`, 2C `05b0f9c4e` + `06d3234e0`, 2D `06538607f`, 2E `6e097dc5b` + `0703050c2` and the 2E part 3 close; plan `SCHEDULE_FIELDS_SAME_TIME_TRADES_PLAN.md` Stage 2; drawing `SCHEDULE_HALVES_SAME_TIME_DRAWINGS.html`. Migrations 541, 544, 545, 546, 552 and 553 are on dev; production order in `MANUAL_PROD_STEPS.json`.
+
+**Where:** this computer, `http://localhost:3000`, UAT Rep Club. **Restart the dev server first** (shared modules changed). **Sign in:** club owner `uat-club-owner@uat-rep-club.local`, league admin `uat-club-league-admin@uat-rep-club.local`, coaches `uat-club-coach-13aaa@uat-rep-club.local` and `uat-club-coach-15aaa@uat-rep-club.local`, all `UATPassword2026!`; one step in a private window.
+
+**Data:** `.probe/schedule-parts-walk/fixture.mjs` (dev only, re-runnable, touches no password), run 2026-11-27: Parts Walk Park (Fields 1–4, Field 3 in two sides and locked), permits "Parts walk · rep time" and "Parts walk · house league time", a finished house-league schedule (48 slots), season "Parts walk league 2027" with division U10 Parts and four teams; dates Jan 4 – Feb 25, 2027. Teardown after the walk: the same file with `--teardown` (schedules first, then the venue).
+
+**Walks:** A the split (4) · B New schedule, drafts, grid, bill, PDF (11) · C Send and the coach (6) · D other schedules, Find the time, Used (9) · E house league on club time, rulings A and B (18) · F no split field reads as before (2).
+
+**Left out:** a house-league practice with no free side reading "cancelled" (needs three teams at once on one slot; the tests hold it; the word ruled 2026-11-27); email as it arrives (made-up addresses: the Send window's preview only); four quarters gets one look.
+<!-- /§581 -->

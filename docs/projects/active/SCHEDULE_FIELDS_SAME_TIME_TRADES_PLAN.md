@@ -594,6 +594,46 @@ Migration first. Drawn together with Stage 3.
         first (both refused); the coach feed's practices, `readTeamPractices`, the exports and the two windows show the
         stored line, true for every row since 552 (none before it); two different facility names that read the same fold
         in a practice night's places.
+  - [ ] **2E part 3, the stage's close (2026-11-27).** Owner: "Seams only", "Fix both now", "Yes, write it" (the walk).
+        **Scope, said out loud before the work:** the stage's diff is ~9,000 lines over ~140 files and every session had
+        run `/simplify` and `/review` on its own lines, so the whole-stage passes read the SEAMS between sessions (one home
+        per word, the five migrations' order, "no split reads as before" across every surface, the accepted items added up).
+        **`/simplify` (cross-session):** one rule for the part an edit keeps (`keptMask`, field-parts; the house-league
+        `keptPart` calls it) — the coach's event edit and re-import kept a part without asking whether the field still
+        offers it (a behaviour gap, now the whole field, as house league reads it); one home for "Park · Field 1, side A"
+        (`parkFieldWords`, field-parts) in place of `placeNamer`'s and `placeTextOf`'s own copies and three inline ones
+        (the club website's game lists, the league admin's club-schedule view, the schedule page's clash pool). Not taken:
+        `samePlace` at three hand-written same-place checks (each sits inside a "both name a field" branch, so each is
+        already `samePlace`'s rule; a swap would change nothing); one type for the five place-name map shapes (touches every reader for no change a person sees).
+        **`/review` (three seam lenses: words across surfaces, data and release order, closures; no Critical or High).**
+        Fixed: **the club calendar said a house-league part twice** ("Milton Sports Dome · Field 1, side A, side A": it
+        reads the facility from the stored line, which carries the part since 552, and adds the part from the mask) — the
+        line's part words are taken off (`withoutPartWords`) and the mask says it once; `MANUAL_PROD_STEPS.json`: 552's
+        ORDER now names 539 (552's recorder is 539's plus the part; 539 re-run after 552 silently drops "side A → side B is
+        news") and 541's entry says never to re-run it after 552. The plan's "a read fails outright without 541" was half
+        true: reads through the paging helper throw, but the house-league booking check reads a failed pool as empty and
+        every save carries on (`checkLeagueBookings`, the shipped 9d-2a policy, not Stage 2's; only Generate refuses), and
+        without 544, 546 or 552 the functions take no part and store the whole field — the release order is the only guard.
+        **Accepted:** the send's carry of a game to another part of the same field (no move written) updates the part,
+        not the stored line, so the exports and calendar file can say the old side until the next write — only where the
+        plan wrote no move, which since 2E part 1 counts a part change as a move (the calendar now reads the mask, so it is
+        right there); clash words in the venue-clash line name the other booking's field without its part (the club
+        calendar's carries it); an archived venue's part rows can say the part twice after an edit; a cancelled booking
+        un-cancelled after a re-split keeps a part its field no longer offers (read in quarter words, as ruled 2026-11-25);
+        the verify queries for 541, 546 and 552 prove the functions exist, not every change; closures compare fields, never
+        parts, by design (a field-level closure covers every part; the closure emails name the field).
+        **2D design check P1 and P2 fixed** (owner: "Fix both now"): a draft card is a box holding its pick button (its name
+        and score) with the measures as the button's description, the button's cover keeping the whole card pressable;
+        Find the time's rows carry table roles with a read header (`TABLE_EXCEPTION_REGISTER.md` K-33).
+        **`/marketing` (the one pass):** every Stage 2 word kept, three rulings (owner 2026-11-27, all as recommended): a comma
+        for one booked place everywhere, "waiting to be sent" in the Used note, "cancelled" kept (the Words section, below).
+        **`/docs`:** split fields in the Venue library (`#venue-library-t-split`), Schedules (`#club-schedules-t-parts`,
+        `#club-schedules-t-held`, the 2D notes folded in), Permits (`#permits-t-held`), house league
+        (`#house-league-time-t-sides`) and the coach's club practice; the stale "a second schedule isn't told" note corrected.
+        **`/legal` not triggered** (no new email, nothing new collected; a part only joins the place words) and **`/accounting`
+        not triggered** (customer bookkeeping), said so the owner can disagree. **Walk §581** published
+        (https://claude.ai/artifact/5Es159enb523YWCApKPDBp, 50 steps; fixture `.probe/schedule-parts-walk/fixture.mjs` on dev,
+        teardown after). **Stage 3's build prompt** written under Stage 3. Tests: 5,552 of the related tests pass; typecheck clean.
 - [x] **2D design check, applied 2026-11-26** (owner: "I agree with your recommendations", both asks of
       `claude.ai/artifact/EVyadHYH81Ga9zMtaNNwyq` as recommended; source `SCHEDULE_PARTS_2D_DESIGN_CHECK.html`): the Used
       line is the Use band's one note, total first (`heldUnusedWords` over the whole list; the workbook one note too);
@@ -631,7 +671,7 @@ Migration first. Drawn together with Stage 3.
         (names only).
       - Not taken: skipping the holder columns for readers that don't say them, and one slot read shared across a
         schedule page's added parts.
-- [ ] Reported by the 2D design check, not 2D's (for the 2E close or the ideas backlog): **P1** a draft card is a
+- [x] **Fixed in the 2E part 3 close, 2026-11-27** (owner: "Fix both now"). Reported by the 2D design check, not 2D's: **P1** a draft card is a
       `<button>` holding a `<ul>` (invalid; a screen reader reads the whole card as the button's name); **P2** Find the
       time's list is a div table with an `aria-hidden` header and no `TABLE_EXCEPTION_REGISTER.md` row.
 - [ ] Reported by `/design`, not this project's to fix: the shipped "Give it to" menu inside a cell of the "Open slots and
@@ -994,6 +1034,85 @@ No migration expected (the rule is one more entry in the schedule's settings).
 - [ ] Tests in `tests/unit/club-schedule-engine.test.ts`: a group placed together every week it can be; unequal shares
       stop at the smaller share and say so; an impossible group refused on entry; a run with no such rule unchanged.
 
+#### Stage 3 build prompt (written 2026-11-27 by the Stage 2 close, from what Stage 2's build changed)
+
+> **Four sessions, in order**, each pasted into a fresh chat (`/clear` first): *"Read and follow
+> docs/projects/active/SCHEDULE_FIELDS_SAME_TIME_TRADES_PLAN.md — Stage 3 build prompt, Session 3A"* (then 3B, 3C, 3D).
+> The drawing is the spec: `SCHEDULE_HALVES_SAME_TIME_DRAWINGS.html` (artifact
+> https://claude.ai/artifact/YTTYBE67znkupmwLYkLZRR), tabs 7 and 8, and round 2's tab 7 for house league. The rulings:
+> §2a R1–R10; round 1 Asks **7 A** (a same-time group may land on two parts of one field: a part is a place, each team
+> billed for the place it got), **10 A** (the rule ranks below the hard rules, above the conveniences; prime time with
+> the conveniences), **11 A** (a team in a sharing rule and a same-time rule is refused on entry), **12 A** (the hand-move
+> warning is the drag tooltip, and the notice after the drop repeats it in the held, wrapping face), **13 A** (name the
+> placements a week drops when its tries run out, one sentence in the why window's free group, and fix the back-to-back
+> gap with it); round 2 **Ask 6 A** (house league: in Practice time under "Hand it to the teams", naming teams in any
+> division, shown in each division's window; whichever division is handed out matches the other's practices as they
+> stand; R6 on entry; a line per rule in the window's existing notice, before Hand out). No migration expected (the rule
+> is one more entry in the schedule's settings; house league's in its Practice time settings) — if a session finds it
+> needs one, it stops and says so.
+
+**Start conditions (every session).** Stage 2 committed and its walk (Owner QA Ledger, the Stage 2 entry) passed or the
+owner says go; `git status` first — other sessions share the working copy: never edit a file carrying another session's
+uncommitted changes, commit through a private index (`reference_partial_commit_shared_tree.md`), never `git add -A`.
+Each session ends with `npm run verify:changed`, `npm run typecheck` (`NODE_OPTIONS=--max-old-space-size=8192`), the
+focused tests, `/review` offered, a product-owner summary and **commit at the owner's word**.
+
+**What Stage 2 changed that Stage 3 meets (read at HEAD 2026-11-27):**
+- **A place is a part.** Slots are cut per part (`cutSlots`, `lib/club-schedule-engine.ts`); a slot's key and `pos`
+  carry the mask (`slotPosOf`); `samePlace` / `partsOverlap` (`lib/field-parts.ts`) say side A and side B share no
+  ground. So R3's "each on its own field" reads, under Ask 7 A, **each on its own place**: two members on side A and side B
+  of one field at one start are together, each billed its part. Count free places at a start by slot (part), never by
+  `facilityId` alone — and never a part with the whole field that holds it.
+- **Shares are in quarters when parts exist** (`shareTargets`, units; `needsFor` works caps and `toHand` in quarters and
+  a lone team's quota as need ÷ `biggest`; `lastPass` counts `slotSize / teams`). A linked placement takes each member's
+  own slot size; R4 (a share is the limit) is checked in those units.
+- **Sharing never meets a part:** `needsFor`'s sharing-group branch counts only slots of weight ≥ 1, so a part (and a
+  "Half cost" field) never hosts a group (round 1 Ask 6 A). Stage 3's group step must not change that.
+- **`balanceValue` skips a swap between different slot sizes;** a same-time group must not be split by it (the Stage 3
+  checklist above) — and a swap that keeps the group together must also keep each member's size.
+- **Unchanged by Stage 2, so Stage 3 builds on the shipped code:** `lib/club-schedule-settings.ts` (`SharingRule`
+  `{teamIds, groupIds, atOnce}`, the validator inline in `readScheduleSettings`, `defaultRules`, `rulesOn`),
+  `lib/club-schedule-gaps.ts` (`OpenWhy`, `ShortTeam`), `findViolation`, `holdable`, `dropVerdict` and `ruleBroken`
+  (`lib/club-schedule-view.ts`; `ruleBroken` checks by `facilityId` — a same-time check there must compare places with
+  `samePlace`), `planMove` (the engine; part-aware only through `pos`).
+- **House league:** a part holds one team (`atOnceOn` = 1 on a part, `lib/league-practice-time.ts` `planPractices`), and
+  the club's sharing rules never name house league (`lib/league-practice-time-server.ts:33`, unchanged). The same-time
+  rule there is Practice time's own, like Teams at once. Two teams of one rule on side A and side B at one start are
+  together (Ask 7 A read the same way).
+- **Words:** one booked place is "Field 1, side A" (a comma; the Stage 2 `/marketing` pass). A report line that names a
+  place uses `slotPlaceName` (screens) or `slotPlaceWords` (paper); house league uses `parkFieldWords`. No reader writes
+  its own bit arithmetic.
+
+**Session 3A — the rule's shape, on entry.** The rule in `lib/club-schedule-settings.ts` beside `sharing` (R1, R9: "at
+the same time" / "never at the same time", teams only, R10), its limits and validator inside `readScheduleSettings`,
+`rulesOn` and `defaultRules`; "Add a rule" in New schedule and Settings…; R6 (a group that can never line up, from what
+the form holds — game days go to the report, they can't be known there) and Ask 11 A (a team in a sharing rule and a
+same-time rule) refused on entry, in the window and on the server. Tests: the validator, the refusals.
+
+**Session 3B — the engine and the report.** The per-week step between `needsFor` and `planWeek` (the checklist above:
+starts where every member is eligible, free and still owed a slot, with enough free places in one building at one start —
+parts counted as places, Ask 7 A); linked teams out of `lastPass`; `holdable` drops a linked placement whole or not at
+all; "Moved around" moves a group together; `balanceValue` never splits a group; "never at the same time" as a forbid in
+the week's placement, checked by `findViolation`; Ask 10 A's rank. The per-rule report (R2, R8: wanted against placed,
+the first reason for each miss, sharing included) on the draft cards, the page and the "Open slots and short teams"
+window (`lib/club-schedule-gaps.ts` gains the reason); Ask 13 A's sentence and the back-to-back gap. Tests in
+`tests/unit/club-schedule-engine.test.ts` (the checklist's four) plus: a group on side A and side B of one field placed
+together; a run with parts and no rule unchanged.
+
+**Session 3C — hand moves.** `dropVerdict` / `ruleBroken` and `planMove` check the rule (R7, Ask 12 A: the tooltip, and
+the notice after the drop repeats it in the held, wrapping face — the notice pill's held face, a Stage 2 build note);
+the page's re-measure reads it. Tests.
+
+**Session 3D — house league, then the stage's close.** The rule in `PracticeTimeWindow.tsx` under "Hand it to the teams"
+(round 2 Ask 6 A), `planPractices` places a linked team at its partner's existing start where it can (a part holds one
+team: the partner on the other side counts as together), R6 from both divisions' time, one notice line per rule before
+Hand out. Then the close: `/simplify` and `/review` on the stage's diff; the ONE `/marketing` pass (the Stage 3 rows of
+"Words for /marketing": the rule's names, the report sentences, R6's refusal, house league's door and lines — and, if
+the owner wants it, the one next-step line for every cancelled house-league practice in the send's notice, left there by
+the Stage 2 pass); `/docs` (the scheduler's rules help and Practice time); the board line; the Stage 3 walk at the
+owner's word; Stage 4's build prompt. `/legal` and `/accounting` are not triggered (no new email, nothing new
+collected, the bill does not change: R3).
+
 ### Stage 4 — Like-for-like swaps between coaches (T1, T4–T7, T9)
 Migration first. No money moves.
 - [ ] Drawing: the coach seeing the schedule's other teams (T4), proposing, the other coach answering, the club's one
@@ -1157,26 +1276,37 @@ Migration only if Stage 4's record needs it.
 - [ ] The entry-time refusal for a group that can never line up — New schedule
 - [ ] The trade proposal, the answer and the club's notice — coaches and the schedule's builders
 - [ ] The per-schedule switch's label — the schedule's settings
-- [ ] The names for a field's parts — the venue list, the schedule's rows, the grid, the PDF. Working words: the "Two sides" tick
+- [x] **Settled 2026-11-27 (the Stage 2 /marketing pass; owner: "Comma for one place").** Every word below kept as
+      built, with one change: ONE booked place joins its part with a comma everywhere ("Field 1, side A": the builder's
+      grid rows and their tips, the held-by-draft note, house league's Practice time rows now say it as Find the time, the
+      calendar, the emails and the PDF already did); a box that lists several ticked places keeps spaces ("Field 1 in two
+      sides, Field 2 side A", "Field 1 quarters A–B, C and D"), since commas inside that list would not read.
+      The names for a field's parts — the venue list, the schedule's rows, the grid, the PDF. Working words: the "Two sides" tick
       and its locked line, "Field 1 (whole)", "side A", "Field 1 in two sides", "Field 2 side A", the "holds … That time is left out." line,
       the draft line "Whichever is finalized first keeps it", the Split hint's "a half field or one side". Round 2 (Ask 4
       A, ruled 2026-11-25): the select's "Not split" / "Two sides" / "Four quarters" and its locked line, "quarter A", "quarters A–B",
       "Field 1 in four quarters", "Field 1 quarters A–B, C and D", "Quarter A" / "Quarters A–B" grid rows, the PDF's
       two-line part headings, the bill's "quarter-field slots" and "a quarter $20.00"
-- [ ] House league (round 2): the time row's "Field 1 in two sides, Field 3", the line "Field 1's sides hold one team
+- [x] **Stage 2's words settled 2026-11-27** (the Stage 3 words in this row — "Teams at the same time", its door, the rule
+      sentences, the notice's report lines, R6 — wait for Stage 3's pass). Kept as built; the open sentence **ruled: keep
+      "cancelled"** (owner 2026-11-27, as /marketing recommended: it is true, families must not come, and the admin's next
+      step is every cancelled practice's; a next-step line for all of them, if wanted, is Stage 3's notice work).
+      House league (round 2): the time row's "Field 1 in two sides, Field 3", the line "Field 1's sides hold one team
       each. Teams at once is for whole facilities.", "Teams at the same time" and its door, the rule sentences with
       divisions, the notice's report lines, the R6 refusal — Practice time; a part in every place word (tab 8). Written in
       2E part 2: a practice night's places "Milton Sports Dome · Field 1, side A and side B" (the admin list), Schedule
       health's "Field 1, side A is booked twice …", and a practice Send the changes can't fit on a side reads the send's
       existing "cancelled" (the owner's ruling B option said "1 house-league practice needs a new time": is that wanted?)
-- [ ] The Used line, ONE note under the Use band since the 2D design check (Ask 1 A, 2026-11-26): "Of the 52 h unused,
+- [x] **Settled 2026-11-27**, one change (owner: "waiting to be sent"): a schedule's time given to teams and not yet
+      sent reads "6 h on {schedule} waiting to be sent" — it had said "given to teams on {schedule} and not sent", a clause
+      the plan never wrote, inside a sentence that says no team has it yet. The Used line, ONE note under the Use band since the 2D design check (Ask 1 A, 2026-11-26): "Of the 52 h unused,
       15 h is held by schedules and no team has it yet: 9 h of open slots on {schedule} and 6 h of house-league time on
       {schedule} not given out." (one schedule: "… held by a schedule …: open slots on {schedule}."); the workbook's note
       says the same
-- [ ] The drafts step (2D design check Ask 2 A): the card line "4 slots on time the draft {name} holds", and the one notice
+- [x] **Settled 2026-11-27, kept as built.** The drafts step (2D design check Ask 2 A): the card line "4 slots on time the draft {name} holds", and the one notice
       above the cards "Some of this time is also given out by the draft {name}. Whichever schedule is finalized first
       keeps it; the other shows it as a clash."
-- [ ] Find the time (2D design check F5): the tick-list words on its rows, "Field 1 (whole)" / "Field 1, side B"
+- [x] **Settled 2026-11-27, kept as built.** Find the time (2D design check F5): the tick-list words on its rows, "Field 1 (whole)" / "Field 1, side B"
 
 ## Open questions
 

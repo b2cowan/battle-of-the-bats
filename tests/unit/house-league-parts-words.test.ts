@@ -4,7 +4,8 @@ import { nightPlaces, seasonCalendar, type SeasonPlace } from '../../lib/league-
 import { whereWords } from '../../lib/club-calendar-view.ts';
 import { findNextLine } from '../../lib/house-league-find.ts';
 import { leagueIssueWords, type LeagueHealthIssue } from '../../lib/league-schedule-health.ts';
-import { fieldPartName } from '../../lib/field-parts.ts';
+import { fieldPartName, parkFieldWords, withoutPartWords } from '../../lib/field-parts.ts';
+import { readCode } from './_source-code.ts';
 import { emailChangeLine, placeTextOf, publishedLine } from '../../lib/league-schedule-email.ts';
 import type { GameSnapshot } from '../../lib/league-game-changes.ts';
 import type { LeagueGame, LeaguePractice } from '../../lib/types.ts';
@@ -99,5 +100,27 @@ describe('The family emails (published schedule and changes) say the part', () =
     const line = emailChangeLine({ gameId: 'g1', kind: 'place', before: snap(F1, SIDE_A), now: snap(F1, SIDE_B), byClub: false, changeIds: [] }, 'Reds vs Blues', placeOf);
     assert.match(line ?? '', /Field 1, side B/);
     assert.match(line ?? '', /Field 1, side A/);
+  });
+});
+
+describe('Stage 2 close: the part said once, from one home', () => {
+  it('the club calendar reads a stored line\'s field without the part its writer joined on, and words the part once', () => {
+    assert.equal(withoutPartWords('Field 1, side A'), 'Field 1');
+    assert.equal(withoutPartWords('Field 1, quarter C'), 'Field 1');
+    assert.equal(withoutPartWords('Field 1, quarters A–B'), 'Field 1');
+    assert.equal(withoutPartWords('Field 1'), 'Field 1', 'a whole field reads as before');
+    assert.equal(withoutPartWords('Diamond 2, North'), 'Diamond 2, North', 'only part words are taken off');
+    // The house-league row: the stored line's field, the part from the row's own mask (before: "Field 1, side A, side A").
+    const where = { venueId: 'v', venueName: 'Milton Sports Dome', facility: withoutPartWords('Field 1, side A'), part: 'side A', address: null, text: null };
+    assert.equal(whereWords({ where, sport: null } as Parameters<typeof whereWords>[0]), 'Milton Sports Dome · Field 1, side A');
+    assert.match(readCode('lib/club-calendar.ts'), /facility: withoutPartWords\(text\.slice\(at \+ VENUE_FACILITY_SEPARATOR\.length\)\)/);
+  });
+  it('parkFieldWords: the park and the field, the part after a comma; a whole or unsplit field as before', () => {
+    assert.equal(parkFieldWords('Milton Sports Dome', 'Field 1', 3, 2), 'Milton Sports Dome · Field 1, side A');
+    assert.equal(parkFieldWords('Milton Sports Dome', 'Field 1', 0, 2), 'Milton Sports Dome · Field 1');
+    assert.equal(parkFieldWords('Milton Sports Dome', 'Field 1', 0, 1), 'Milton Sports Dome · Field 1');
+    assert.equal(parkFieldWords('Milton Sports Dome', null, 3, 2), 'Milton Sports Dome', 'no field: the park alone, no part');
+    assert.equal(parkFieldWords(null, 'Field 1', 12, 2), 'Field 1, side B');
+    assert.equal(parkFieldWords(undefined, undefined, 0, 1), '');
   });
 });

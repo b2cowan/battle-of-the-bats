@@ -66,7 +66,7 @@ export default function ScheduleGrid({
   const byKey = useMemo(() => new Map(view.slots.map(s => [s.key, s])), [view.slots]);
   // Each cell's slots, found once per read — a drag re-renders every cell as the pointer crosses them.
   const byCell = useMemo(() => slotsByCell(view.slots), [view.slots]);
-  // A slot's place with its part (Stage 2): "Field 1 side A" in the chip's name and the drop's tip.
+  // A slot's place with its part (Stage 2): "Field 1, side A" in the chip's name and the drop's tip.
   // Named once per row, per read (a chip's name is read on every drag move).
   const placeNames = useMemo(() => {
     const named = new Map<string, string>();

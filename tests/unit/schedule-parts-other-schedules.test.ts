@@ -118,7 +118,7 @@ describe('the Used line: unused time a final schedule holds that no team has', (
       { scheduleId: 's', by: FINAL, holds: 'open', minutes: 540 },
       { scheduleId: 'h', by: 'Spring house league 2027', holds: 'house_league', minutes: 360 },
     ], 3120), 'Of the 52 h unused, 15 h is held by schedules and no team has it yet: 9 h of open slots on Spring rep 2027 and 6 h of house-league time on Spring house league 2027 not given out.');
-    assert.match(heldUnusedWords([{ scheduleId: 's', by: FINAL, holds: 'teams', minutes: 90 }], 3120)!, /: time given to teams on Spring rep 2027 and not sent\.$/);
+    assert.match(heldUnusedWords([{ scheduleId: 's', by: FINAL, holds: 'teams', minutes: 90 }], 3120)!, /: time on Spring rep 2027 waiting to be sent\.$/);
   });
 });
 

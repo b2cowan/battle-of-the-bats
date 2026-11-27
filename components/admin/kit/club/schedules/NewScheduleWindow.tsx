@@ -1037,10 +1037,10 @@ export default function NewScheduleWindow({ q, orgSlug, orgName, startPermitId =
     const v = places.find(x => x.venueId === r.place?.venueId);
     const byFacility = new Map<string | null, string[]>();
     for (const d of r.found.draftDays) byFacility.set(d.facilityId, [...(byFacility.get(d.facilityId) ?? []), d.day]);
-    // A field the row names in part says its part ("Field 1 side B", Session 2D).
+    // A field the row names in part says its part ("Field 1, side B", Session 2D; a comma, the Stage 2 /marketing pass).
     const nameOf = (fid: string) => {
       const f = v?.facilities.find(x => x.id === fid);
-      return f ? fieldPartName(f.name, r.place ? masksOn(r.place, fid)[0] : undefined, sectionsOf(f.sections)) : '';
+      return f ? fieldPartName(f.name, r.place ? masksOn(r.place, fid)[0] : undefined, sectionsOf(f.sections), ', ') : '';
     };
     return [...byFacility].map(([fid, days]) => W.foundDraftNote(draftDaysSaid(days), days.length > 1,
       (fid ? nameOf(fid) : v?.venueName) ?? '', r.found!.draftBy));
@@ -1748,7 +1748,7 @@ export default function NewScheduleWindow({ q, orgSlug, orgName, startPermitId =
     // With its part (Stage 2, /review 2026-11-26): side A and side B at one start never read as two "Field 1" slots.
     return (x: Pick<DraftSlot, 'venueId' | 'facilityId' | 'sectionMask'>) => {
       const f = out.get(placeKey(x.venueId, x.facilityId));
-      return f ? fieldPartName(f.name, x.sectionMask, f.sections) : '';
+      return f ? fieldPartName(f.name, x.sectionMask, f.sections, ', ') : '';
     };
   }, [places]);
   const measureClass = (m: DraftMeasure | undefined): 'good' | 'amber' | 'plain' => {
@@ -1940,9 +1940,14 @@ export default function NewScheduleWindow({ q, orgSlug, orgName, startPermitId =
       )}
       <div className={sch.cards} role="group" aria-label="Drafts">
         {gen.drafts.map((d, i) => (
-          <button key={`${d.strategy}-${d.round}`} type="button" className={sch.card} aria-pressed={chosen === i} onClick={() => setChosen(i)}>
-            <span className={sch.cardHead}><b>{d.label}</b><span className={sch.score}>{d.score}<small>/100</small></span></span>
-            <ul className={sch.measures}>
+          // The pick is the card's name and score only; its measures are the button's description, not its name (2D design
+          // check P1: a <button> may not hold a list). The button's ::after spans the card, so the whole card still picks.
+          <div key={`${d.strategy}-${d.round}`} className={sch.card} data-chosen={chosen === i || undefined}>
+            <button type="button" className={sch.cardPick} aria-pressed={chosen === i}
+              aria-describedby={`draft-measures-${d.strategy}-${d.round}`} onClick={() => setChosen(i)}>
+              <span className={sch.cardHead}><b>{d.label}</b><span className={sch.score}>{d.score}<small>/100</small></span></span>
+            </button>
+            <ul id={`draft-measures-${d.strategy}-${d.round}`} className={sch.measures}>
               {d.lines.map((line, li) => {
                 const c = measureClass(d.measures[li]);
                 return (
@@ -1956,7 +1961,7 @@ export default function NewScheduleWindow({ q, orgSlug, orgName, startPermitId =
               {d.warnings.map(w => <li key={w.line} className={sch.amber}><AlertTriangle size={13} aria-hidden />{w.line}</li>)}
               {heldByDraft[i].slots > 0 && <li className={sch.amber}><AlertTriangle size={13} aria-hidden />{W.foundDraftWarning(heldByDraft[i].slots, heldByDraft[i].by)}</li>}
             </ul>
-          </button>
+          </div>
         ))}
         <button type="button" className={sch.door} onClick={() => void generate(round + 1)} disabled={busy}>{W.threeMore}</button>
       </div>

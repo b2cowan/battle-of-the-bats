@@ -1,4 +1,4 @@
-import { fieldPartName, sectionsOf, type FieldSections } from './field-parts';
+import { parkFieldWords, sectionsOf, type FieldSections } from './field-parts';
 import type { GameFaceFields } from './league-game-changes';
 
 /**
@@ -20,9 +20,6 @@ export function placeNamer(places: PlaceNames) {
     const venue = g.orgVenueId ? places.venues.get(g.orgVenueId)?.name : null;
     if (!venue) return g.location || null;
     const facility = g.orgVenueFacilityId ? places.facilities.get(g.orgVenueFacilityId) : null;
-    if (!facility) return venue;
-    const sections = sectionsOf(places.sections.get(g.orgVenueFacilityId!));
-    // dot-join-ok: the one place word, park · field (two items), as before parts; the part joins the field with a comma.
-    return `${venue} · ${fieldPartName(facility, g.sectionMask, sections, ', ')}`;
+    return parkFieldWords(venue, facility, g.sectionMask, sectionsOf(g.orgVenueFacilityId ? places.sections.get(g.orgVenueFacilityId) : null));
   };
 }

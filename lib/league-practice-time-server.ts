@@ -59,7 +59,7 @@ export async function readPracticeTime(orgId: string, season: LeagueSeason, divi
       const field = partOfSlot({ facilityId: r.facility_id, sectionMask: r.section_mask }, name, f => places.sectionsOf.get(f) ?? 1);
       return {
         id: r.id, day: start.date, weekday: weekdayOf(start.date), start: start.time, end: end.time, startsAt: r.starts_at,
-        place: field ? fieldPartName(field.name, field.mask, field.sections) : name,
+        place: field ? fieldPartName(field.name, field.mask, field.sections, ', ') : name,
         placeKey: `${r.org_venue_id}|${r.facility_id ?? ''}${maskSuffix(r.section_mask)}`, venue,
         ...(field ? { field } : {}),
       };

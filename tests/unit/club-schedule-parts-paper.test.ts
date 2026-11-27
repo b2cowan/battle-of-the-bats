@@ -122,7 +122,7 @@ describe('a coach’s lines (the review card, a hand-back’s Sundays) and the c
   it('the schedule page’s hand-back callout names the side, in the screen’s form', () => {
     const p2 = [{ venueId: V, venueName: 'Dome', facilities: [{ id: 'f1', name: 'Field 1', sections: 2 as const }] }];
     const sunday = { slotId: 's', startsAt: '2027-03-07T14:30:00Z', venueId: V, facilityId: 'f1' };
-    assert.ok(askSundayLine({ ...sunday, sectionMask: 12 }, p2).endsWith(' · Field 1 side B'));
+    assert.ok(askSundayLine({ ...sunday, sectionMask: 12 }, p2).endsWith(' · Field 1, side B'));
     assert.ok(askSundayLine(sunday, p2).endsWith(' · Field 1'));
   });
   it('the calendar: "Lions Park · Diamond 2, side A", never a second " · "; no part, as before', () => {

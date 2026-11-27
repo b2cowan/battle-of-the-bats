@@ -205,13 +205,21 @@
 /* A notice above the cards spans the whole row — as a plain grid child it took the cards' 15rem cell, pushed the cards
    into the wide column and dropped the chosen draft's By team list into the narrow one (its names wrapped, its figures overlapped). */
 .draftsSpan { grid-column: 1 / -1; }
+/* A card is a box holding its pick button and its measures list (a button may not hold a list); the button's ::after
+   covers the card, so a press anywhere on it picks the draft and the focus ring rings the whole card. */
 .card {
-  display: block; width: 100%; padding: 0.7rem 0.85rem;
+  position: relative; display: block; width: 100%; padding: 0.7rem 0.85rem;
   border: 1px solid var(--home-line); border-radius: 8px; background: var(--card-bg);
-  color: var(--text-primary); font: inherit; text-align: left; cursor: pointer;
+  color: var(--text-primary); text-align: left; cursor: pointer;
 }
-.card[aria-pressed='true'] { border: 2px solid var(--home-olive); padding: calc(0.7rem - 1px) calc(0.85rem - 1px); }
-.card:focus-visible { outline: 2px solid var(--home-olive); outline-offset: 2px; }
+.card[data-chosen] { border: 2px solid var(--home-olive); padding: calc(0.7rem - 1px) calc(0.85rem - 1px); }
+.cardPick {
+  display: block; width: 100%; padding: 0; border: 0; background: none;
+  color: inherit; font: inherit; text-align: left; cursor: pointer;
+}
+.cardPick::after { content: ''; position: absolute; inset: 0; border-radius: 8px; }
+.cardPick:focus-visible { outline: none; }
+.cardPick:focus-visible::after { outline: 2px solid var(--home-olive); outline-offset: 2px; }
 .cardHead { display: flex; align-items: baseline; gap: 0.5rem; }
 .cardHead b { flex: 1; font-size: var(--type-body); font-weight: 700; }
 .score { font-size: 1.25rem; font-weight: 700; font-variant-numeric: tabular-nums; color: var(--home-olive); }

@@ -275,7 +275,7 @@ export function groupLeagueTime(p: {
     const parts = new Map<string, LeagueTimePart & { blockKey: string }>();
     for (const s of [...mine].sort((a, b) => a.day.localeCompare(b.day) || a.start.localeCompare(b.start))) {
       const field = partOfSlot(s, p.placeOf(s.venueId, s.facilityId), p.sectionsOf);
-      const place = field ? fieldPartName(field.name, field.mask, field.sections) : p.placeOf(s.venueId, s.facilityId);
+      const place = field ? fieldPartName(field.name, field.mask, field.sections, ', ') : p.placeOf(s.venueId, s.facilityId);
       const blockKey = s.blockId ?? 'none';
       // Side A and side B at one clock are two parts (a part's key carries its mask; a whole field keys as before).
       const key = `${blockKey}|${s.weekday}|${s.start}|${s.end}|${s.venueId}|${s.facilityId ?? ''}${maskSuffix(s.sectionMask)}|${keyOfUse(s.use)}`;

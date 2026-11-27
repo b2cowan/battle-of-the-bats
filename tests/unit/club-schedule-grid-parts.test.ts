@@ -35,7 +35,7 @@ describe('placeRows: a row per part, under its field', () => {
       ['Quarter D', 'Field 1 · Milton Sports Dome', 8, false],
     ]);
     assert.ok(rows.every(r => r.fieldKey === placeKey(V, 'f1')));
-    assert.deepEqual(rows.map(r => r.fullName), ['Field 1', 'Field 1 quarters A–B', 'Field 1 quarter C', 'Field 1 quarter D']);
+    assert.deepEqual(rows.map(r => r.fullName), ['Field 1', 'Field 1, quarters A–B', 'Field 1, quarter C', 'Field 1, quarter D']);
   });
   it('a field used only in parts: its own row is a label over its sides', () => {
     const rows = placeRows(PLACES, [slot('a', 'f2', 3), slot('b', 'f2', 12)]);
@@ -63,9 +63,9 @@ describe('placeRows: a row per part, under its field', () => {
 });
 
 describe('a slot’s place in words, and the engine’s view of it', () => {
-  it('"Field 1 quarter C", "Field 2 side A", "Field 3"', () => {
-    assert.equal(slotPlaceName(PLACES, slot('a', 'f1', 4)), 'Field 1 quarter C');
-    assert.equal(slotPlaceName(PLACES, slot('a', 'f2', 3)), 'Field 2 side A');
+  it('"Field 1, quarter C", "Field 2, side A", "Field 3"', () => {
+    assert.equal(slotPlaceName(PLACES, slot('a', 'f1', 4)), 'Field 1, quarter C');
+    assert.equal(slotPlaceName(PLACES, slot('a', 'f2', 3)), 'Field 2, side A');
     assert.equal(slotPlaceName(PLACES, slot('a', 'f3', 0)), 'Field 3');
   });
   it('a part’s place in the week carries the part, so a move "every week" stays on that part', () => {

@@ -38,7 +38,7 @@ import {
   type ClubBooking,
 } from './venue-clash';
 import { clashOtherName, facilityWords } from './venue-clash-words';
-import { partWords, sectionsOf } from './field-parts';
+import { partWords, sectionsOf, withoutPartWords } from './field-parts';
 import { VENUE_FACILITY_SEPARATOR } from './venue-label';
 import { SCRIMMAGE_LABEL } from './coach-schedule-vocab';
 import { DEFAULT_BOOKING_MINUTES } from './booking-length';
@@ -105,12 +105,15 @@ export function calendarWindow(from: string | null, to: string | null): { from: 
   return { from, to };
 }
 
-/** House league keeps one line, "Venue — Facility": read back into its two halves (as it was played, renames included). */
+/** House league keeps one line, "Venue — Facility": read back into its two halves (as it was played, renames included).
+ *  Since mig 552 the line carries a part ("Venue — Field 1, side A"); the facility half leaves it off, because the row's
+ *  part is worded from its own mask (`partProp`) — said once, and true even where a send carried the part without
+ *  rewriting the line (Stage 2 close). */
 function splitLeagueLine(line: string | null, hasFacility: boolean): { venue: string | null; facility: string | null } {
   const text = line ?? '';
   const at = hasFacility ? text.lastIndexOf(VENUE_FACILITY_SEPARATOR) : -1;
   return at > 0
-    ? { venue: text.slice(0, at), facility: text.slice(at + VENUE_FACILITY_SEPARATOR.length) }
+    ? { venue: text.slice(0, at), facility: withoutPartWords(text.slice(at + VENUE_FACILITY_SEPARATOR.length)) }
     : { venue: text || null, facility: null };
 }
 

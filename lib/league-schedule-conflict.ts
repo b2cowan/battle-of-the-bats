@@ -37,21 +37,19 @@ import {
 // under the plain-node test runner.
 import { zonedWallClockToUtc } from './timezone.ts';
 import { DEFAULT_BOOKING_MINUTES } from './booking-length.ts';
-import { isLegalMask, maskOf, WHOLE, type FieldSections } from './field-parts.ts';
+import { keptMask, type FieldSections } from './field-parts.ts';
 
 /**
  * THE PART A HAND EDIT KEEPS (Club schedules Stage 2, round 2 Ask 1 A: house league never splits a field). A game or a
- * practice takes a part only from its club slot; a hand edit that leaves its field alone keeps that part, and one that
- * picks another field (or no field) puts it on the whole of it — the pickers offer whole facilities only. A part its
- * field no longer offers (`sections`: split differently since) is the whole field too, as every other writer reads it.
+ * practice takes a part only from its club slot; the pickers offer whole facilities only, so the rule is `keptMask`'s,
+ * the one every writer handed a field and no part uses.
  */
 export function keptPart(
   stored: { org_venue_facility_id: string | null; section_mask: number | null },
   nextFacilityId: string | null,
   sections: FieldSections,
 ): number {
-  const kept = nextFacilityId && nextFacilityId === stored.org_venue_facility_id ? maskOf(stored.section_mask) : WHOLE;
-  return isLegalMask(kept, sections) ? kept : WHOLE;
+  return keptMask(stored.org_venue_facility_id, stored.section_mask, nextFacilityId, sections);
 }
 
 

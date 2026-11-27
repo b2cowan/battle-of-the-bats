@@ -13,7 +13,7 @@
  * list shows the one loading line (/ux 6). Computer-only, like New schedule (absent at phone width by ruling, §5.9).
  * ══════════════════════════════════════════════════════════════════════════════════════════════
  */
-import { useEffect, useState, type ReactNode } from 'react';
+import { useEffect, useId, useState, type ReactNode } from 'react';
 import Link from 'next/link';
 import { Check, Plus, X } from 'lucide-react';
 import ck from '../ClubKit.module.css';
@@ -136,6 +136,7 @@ export default function FindTheTime({ filters, onFilters, read, ticked, onTick, 
   orgSlug: string;
 }) {
   const { data, loading, failed, failedWords, asking } = read;
+  const countId = useId();
   const set = (patch: Partial<FindFilters>) => onFilters({ ...filters, ...patch });
   const toggle = (list: readonly (string | number)[], v: string | number) => (list.includes(v) ? list.filter(x => x !== v) : [...list, v]);
   const venueName = (id: string) => places.find(p => p.venueId === id)?.venueName ?? '';
@@ -267,9 +268,13 @@ export default function FindTheTime({ filters, onFilters, read, ticked, onTick, 
     list = (
       <div className={sch.findList} aria-busy={loading}>
         {/* Facilities, not rows, and each piece of ground's hours once (2D design check F6): the reading's own totals. */}
-        <p className={sch.findCount}>{loading ? W.findLoading : W.findCount(data.places, data.freeMinutes)}</p>
-        <div className={`${sch.findRow} ${sch.findHead}`} aria-hidden>
-          <span>{W.findHeadPlace}</span><span>{W.findHeadPermit}</span><span className={sch.findRight}>{W.findHeadFree}</span>
+        <p id={countId} className={sch.findCount}>{loading ? W.findLoading : W.findCount(data.places, data.freeMinutes)}</p>
+        {/* The rows read as a table (2D design check P2): the header names the columns, each row's three parts are its
+            cells. Kept a grid of divs so the tick box leads the first cell (TABLE_EXCEPTION_REGISTER K-33). */}
+        <div role="table" aria-labelledby={countId}>
+        <div role="row" className={`${sch.findRow} ${sch.findHead}`}>
+          <span role="columnheader">{W.findHeadPlace}</span><span role="columnheader">{W.findHeadPermit}</span>
+          <span role="columnheader" className={sch.findRight}>{W.findHeadFree}</span>
         </div>
         {data.rows.map(r => {
           const key = findRowKey(r);
@@ -280,10 +285,12 @@ export default function FindTheTime({ filters, onFilters, read, ticked, onTick, 
           const chosen = pricedBy[key] ?? r.pricedBy ?? '';
           const pickable = r.freeDays + r.draftDays > 0;
           return (
-            <div key={key} className={sch.findRow}>
-              <CheckChoice checked={ticked.has(key)} disabled={!pickable} onChange={on => onTick(key, on)}
-                title={facilityName(r.venueId, r.unit, r.sectionMask)} caption={r.unit ? venueName(r.venueId) : undefined} />
-              <span className={sch.findCell}>
+            <div key={key} role="row" className={sch.findRow}>
+              <span role="cell">
+                <CheckChoice checked={ticked.has(key)} disabled={!pickable} onChange={on => onTick(key, on)}
+                  title={facilityName(r.venueId, r.unit, r.sectionMask)} caption={r.unit ? venueName(r.venueId) : undefined} />
+              </span>
+              <span role="cell" className={sch.findCell}>
                 <b>{joinWithAnd(names)}</b>
                 {issuers.length > 0 && <small>{joinWithAnd(issuers)}</small>}
                 {choosable && (
@@ -295,7 +302,7 @@ export default function FindTheTime({ filters, onFilters, read, ticked, onTick, 
                   </>
                 )}
               </span>
-              <span className={`${sch.findCell} ${sch.findRight}`}>
+              <span role="cell" className={`${sch.findCell} ${sch.findRight}`}>
                 <b>{W.findFreeOf(r.freeDays, r.heldDays, r.evening)}</b>
                 <small>{W.findPattern(stretches, r.freeMinutes)}</small>
                 {r.draftDays > 0 && <small className={sch.amber}>{W.findDraftHeld(r.draftDays, r.draftBy)}</small>}
@@ -303,6 +310,7 @@ export default function FindTheTime({ filters, onFilters, read, ticked, onTick, 
             </div>
           );
         })}
+        </div>
       </div>
     );
   }

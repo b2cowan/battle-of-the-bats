@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
-import { eventFieldName } from '../../lib/field-parts.ts';
+import { eventFieldName, keptMask } from '../../lib/field-parts.ts';
 import { practicePlaceLabel } from '../../lib/practice-sheet.ts';
 import { eventSurfaceLabel, surfaceLabel } from '../../lib/sports.ts';
 import { coachScheduleCalendarEntries, coachScheduleSheetRows, type CoachCalendarEvent } from '../../lib/export/schedule-calendar.ts';
@@ -88,11 +88,18 @@ describe('the readers carry the part (source guards)', () => {
     const writes = [...db.matchAll(/org_venue_facility_id = fields\.orgVenueFacilityId;\s*\w+\.section_mask = (fields\.sectionMask \?\? )?0/g)];
     assert.equal(writes.length, 2, 'updateRepTeamEvent and the series edit');
   });
-  it('(e) …but an edit or a re-import that leaves the field alone keeps the part the club booked', () => {
+  it('(e) …but an edit or a re-import that leaves the field alone keeps the part the club booked, while the field offers it', () => {
     assert.match(readCode('app/api/coaches/[orgSlug]/teams/[teamId]/events/[eventId]/route.ts'),
-      /fields\.orgVenueFacilityId === event\.orgVenueFacilityId\) fields\.sectionMask = event\.sectionMask/);
+      /fields\.sectionMask = keptMask\(event\.orgVenueFacilityId, event\.sectionMask, fields\.orgVenueFacilityId, event\.fieldSections\)/);
     assert.match(readCode('app/api/coaches/[orgSlug]/teams/[teamId]/events/import/route.ts'),
-      /changes\.orgVenueFacilityId === stored\?\.orgVenueFacilityId\) changes\.sectionMask = stored\.sectionMask/);
+      /changes\.sectionMask = keptMask\(stored\.orgVenueFacilityId, stored\.sectionMask, changes\.orgVenueFacilityId, stored\.fieldSections\)/);
+    // The one rule (Stage 2 close): the same field keeps its part; another field, no field, or a part the field no
+    // longer offers is the whole field.
+    assert.equal(keptMask('f1', 3, 'f1', 2), 3);
+    assert.equal(keptMask('f1', 3, 'f2', 2), 0);
+    assert.equal(keptMask('f1', 3, null, 2), 0);
+    assert.equal(keptMask('f1', 1, 'f1', 2), 0, 'quarter A on a field now in two sides');
+    assert.equal(keptMask('f1', 3, 'f1', 1), 0, 'a field no longer split');
   });
   it('the send’s clash count reads each written practice’s part (side A beside side B is no clash)', () => {
     assert.match(readCode('lib/club-schedule-send.ts'), /\.select\('id, team_id, starts_at, ends_at, org_venue_id, org_venue_facility_id, section_mask,/);

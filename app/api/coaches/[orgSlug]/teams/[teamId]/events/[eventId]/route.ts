@@ -1,4 +1,5 @@
 import { refuseWithoutLiveSeat } from '@/lib/coach-season-refusal';
+import { keptMask } from '@/lib/field-parts';
 import { NextResponse } from 'next/server';
 import { getAuthContext, unauthorized, forbidden } from '@/lib/api-auth';
 import {
@@ -197,9 +198,12 @@ export const PATCH = withObservability(async (req: Request,
   if (body.startsAt !== undefined)    fields.startsAt = body.startsAt;
   if (body.endsAt !== undefined)      fields.endsAt = body.endsAt || null;
   // Where — the place link (mig 307) and the club-venue links (mig 319) through the one rail above. The form re-sends an
-  // unchanged field on every save; a field left alone keeps the part the club booked (Club schedules Stage 2).
+  // unchanged field on every save; a field left alone keeps the part the club booked unless the field no longer offers
+  // it (Club schedules Stage 2, `keptMask`: the one rule every writer handed a field and no part uses).
   Object.assign(fields, where.fields);
-  if (fields.orgVenueFacilityId !== undefined && fields.orgVenueFacilityId === event.orgVenueFacilityId) fields.sectionMask = event.sectionMask;
+  if (fields.orgVenueFacilityId !== undefined) {
+    fields.sectionMask = keptMask(event.orgVenueFacilityId, event.sectionMask, fields.orgVenueFacilityId, event.fieldSections);
+  }
   if (body.arrivalTime !== undefined) fields.arrivalTime = body.arrivalTime?.trim() || null;
   if (body.uniform !== undefined)     fields.uniform = body.uniform?.trim() || null;
   if (body.resources !== undefined)   fields.resources = sanitizeResources(body.resources);

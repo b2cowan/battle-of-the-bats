@@ -86,7 +86,7 @@ function placeWords(places: readonly DocPlace[], venueId: string, facilityId: st
 const fieldOf = (places: readonly DocPlace[], s: Pick<DocSlot, 'venueId' | 'facilityId'>) =>
   places.find(p => p.venueId === s.venueId)?.facilities.find(f => f.id === s.facilityId);
 
-/** A SLOT's place with its part, the one home: "Field 1, quarter A" on paper; the screens join with a space
+/** A SLOT's place with its part, the one home: "Field 1, quarter A", on paper and on the screens alike
  *  (lib/club-schedule-view `slotPlaceName`). The field's name alone when whole; the venue when it has no facility. */
 export function slotPlaceWords(places: readonly DocPlace[], s: Pick<DocSlot, 'venueId' | 'facilityId' | 'sectionMask'>, sep = ', '): string {
   const name = placeWords(places, s.venueId, s.facilityId);

@@ -77,7 +77,7 @@ import LoadingState from '@/components/shared/LoadingState';
 import DateInput from '@/components/shared/DateInput';
 import TimeInput from '@/components/shared/TimeInput';
 import { endFollowingStart } from '@/lib/date-field';
-import { fieldPartName, sectionsOf } from '@/lib/field-parts';
+import { fieldPartName, parkFieldWords, sectionsOf } from '@/lib/field-parts';
 
 // ── Export definition ─────────────────────────────────────────────────────────
 
@@ -1656,8 +1656,7 @@ export default function SchedulePage() {
           place={(venueId, facilityId, sectionMask) => {
             const v = venues.find(x => x.id === venueId);
             const f = facilityId ? v?.facilities?.find(x => x.id === facilityId) : undefined;
-            // dot-join-ok: the one place word, park · field (two items), as before parts; the part joins the field with a comma.
-            return [v?.name ?? noun, f?.name ? fieldPartName(f.name, sectionMask, sectionsOf(f.sections), ', ') : null].filter(Boolean).join(' · ');
+            return parkFieldWords(v?.name ?? noun, f?.name, sectionMask, sectionsOf(f?.sections));
           }}
           divisionName={id => divisions.find(d => d.id === id)?.name ?? ''}
           phone={phone}

@@ -19,7 +19,7 @@ import { mondayOfDay, tournamentToday } from '@/lib/timezone';
 import { joinWithAnd } from '@/lib/utils';
 import { houseLeagueUse, SCHEDULE_SCREEN_WORDS as SW } from '@/lib/club-schedule-words';
 import { cellKey, dayHead, firstCursor, gridColumns, placeRows, scheduleDates, slotsByCell, slotTime, stepGrid } from '@/lib/club-schedule-view';
-import { fieldPartName, sectionsOf } from '@/lib/field-parts';
+import { parkFieldWords, sectionsOf } from '@/lib/field-parts';
 import { keyOfUse, practicesRemovedBy, LEAGUE_TIME_REFUSALS as R, LEAGUE_TIME_WORDS as W, type LeagueTimeChange, type LeagueUse } from '@/lib/league-time';
 import type { LeagueClubSchedule, LeagueClubSlot } from '@/lib/league-club-schedule';
 
@@ -113,8 +113,7 @@ export default function LeagueClubSchedulePage() {
     const v = read?.places.find(p => p.venueId === x.venueId);
     const f = x.facilityId ? v?.facilities.find(ff => ff.id === x.facilityId) : null;
     // A part after its field, with a comma ("Field 1, side A"), as every house-league place says it (round 2 tab 8).
-    // dot-join-ok: the shipped "venue · field" place line (two items); 2E added only the part's words
-    return [v?.venueName, f ? fieldPartName(f.name, x.sectionMask, sectionsOf(f.sections), ', ') : null].filter(Boolean).join(' · ');
+    return parkFieldWords(v?.venueName, f?.name, x.sectionMask, sectionsOf(f?.sections));
   };
 
   // The facts line names fields, never a part's row ("Side A").

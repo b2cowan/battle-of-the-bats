@@ -110,7 +110,8 @@ export function placeRows(places: readonly SchedulePlace[], slots: readonly Pick
       for (const m of sortMasks(parts ?? [])) {
         out.push({
           key: partRowKey(p.venueId, f.id, m), venueId: p.venueId, facilityId: f.id, venueName: p.venueName, sectionMask: m, fieldKey: key,
-          name: partLabel(m, sections) ?? f.name, sub: `${f.name} · ${p.venueName}`, fullName: fieldPartName(f.name, m, sections),
+          // dot-join-ok: the row's shipped "field · venue" caption (two items); the comma reword only touched fullName.
+          name: partLabel(m, sections) ?? f.name, sub: `${f.name} · ${p.venueName}`, fullName: fieldPartName(f.name, m, sections, ', '),
         });
       }
     }
@@ -125,9 +126,10 @@ export function placeName(places: readonly SchedulePlace[], venueId: string, fac
   return v?.facilities.find(f => f.id === facilityId)?.name ?? '';
 }
 
-/** A SLOT's place in a line, with its part (Stage 2): "Field 1 side A", "Field 1 quarter C"; the field's name when whole. */
+/** A SLOT's place in a line, with its part (Stage 2): "Field 1, side A", "Field 1, quarter C"; the field's name when
+ *  whole. One booked place joins its part with a comma everywhere (the Stage 2 /marketing pass, owner 2026-11-27). */
 export const slotPlaceName = (places: readonly SchedulePlace[], s: Pick<SlotView, 'venueId' | 'facilityId' | 'sectionMask'>): string =>
-  slotPlaceWords(places, s, ' ');
+  slotPlaceWords(places, s);
 
 /** Whether the schedule's slots stand on a side or half (mask 3 or 12) and on a quarter — the Split hint's two words. */
 export function partKinds(slots: readonly Pick<SlotView, 'sectionMask'>[]): { half: boolean; quarter: boolean } {

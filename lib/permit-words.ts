@@ -238,7 +238,8 @@ export const usedPercent = (booked: number, held: number) => `${Math.round(usedR
 function heldUnusedPart(h: HeldUnused, withHours: boolean): string {
   const of = withHours ? `${hoursWords(h.minutes)} of ` : '';
   if (h.holds === 'house_league') return `${of}house-league time on ${h.by} not given out`;
-  if (h.holds === 'teams') return `${withHours ? `${hoursWords(h.minutes)} ` : 'time '}given to teams on ${h.by} and not sent`;
+  // "waiting to be sent", not "given to teams": the sentence says no team has it yet (the Stage 2 /marketing pass, 2026-11-27).
+  if (h.holds === 'teams') return `${withHours ? `${hoursWords(h.minutes)} ` : 'time '}on ${h.by} waiting to be sent`;
   return `${of}open slots on ${h.by}`;
 }
 

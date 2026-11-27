@@ -213,7 +213,7 @@ export default function SchedulePage() {
   const nameOf = useCallback((id: string) => teamById.get(id)?.name ?? (isProgramHolder(id) ? W.heldByHouseLeague : 'A team'), [teamById]);
   const colourOf = useCallback((id: string) => teamColour(shown?.teams ?? [], id), [shown]);
   const groupOf = useCallback((id: string) => teamById.get(id)?.groupId ?? null, [teamById]);
-  // A slot's place with its part (Stage 2): "Field 1 side A" in every tooltip, notice and window.
+  // A slot's place with its part (Stage 2): "Field 1, side A" in every tooltip, notice and window.
   const placeOfSlot = useCallback((x: Pick<SlotView, 'venueId' | 'facilityId' | 'sectionMask'>) => slotPlaceName(shown?.places ?? [], x), [shown]);
   // The schedule's sharing rules read against its teams: a slot's room (Stage 11c) — the moves, the drop and the slot window.
   const sharing = useMemo(() => sharingPools(read?.schedule.settings.rules.sharing ?? [], shown?.teams ?? []), [read, shown]);
