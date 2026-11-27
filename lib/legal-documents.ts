@@ -14,8 +14,10 @@
  *
  * Versions so far: 2026-11-22 (the first published Terms and Privacy Policy), 2026-11-23 (the Club release: the Data Terms and the
  * list of companies join, Terms and Privacy follow), 2026-11-24 (the Payments Terms publish; the Terms, Privacy Policy and Data
- * Terms carry the sentences that name them — `docs/agents/legal/PUBLISHED_CLUB_RELEASE_DOCUMENTS_NOTES.md`). Each later version
- * was a minor change: `current` moved, `oldestAccepted` stayed 2026-11-22, nobody accepts again.
+ * Terms carry the sentences that name them — `docs/agents/legal/PUBLISHED_CLUB_RELEASE_DOCUMENTS_NOTES.md`), 2026-11-28 (the
+ * sponsorship version: a business paying a sponsorship by card, in the Payments Terms, the Privacy Policy, the Terms and the Data
+ * Terms; same notes file). Each later version was a minor change: `current` moved, `oldestAccepted` stayed 2026-11-22, nobody
+ * accepts the Terms or the Privacy Policy again (a connected club is asked to agree to a new Payments Terms version).
  *
  * ── How 6.3 (acceptance at every door) uses the two values — build it there, NOT here ──────────────────────────────────────
  *   · `currentVersion(doc)` is what a door records when someone accepts: the dated `current` when published, `'draft'` in the
@@ -68,8 +70,9 @@ export const LEGAL_DOCUMENTS: Record<LegalDocKey, LegalDocument> = {
       { version: '2026-11-22', sha256: 'b5f8e3d6428cc4709908b4bb199c95ea4ee47df993300589dfc29a5cca877eba' },
       { version: '2026-11-23', sha256: 'e322a101cf5b1b33618858dc68a25e556c8c268e3a3bcd29159a447a4bf46cfe' },
       { version: '2026-11-24', sha256: '179758c92fd25cb48c98fda35b42d4ba029b25f283294bb5d4f7899a58fcb8a6' },
+      { version: '2026-11-28', sha256: '05f4bc5c30f310d96a36c428be4fc287c139defcf3a148aadf005b14cf709843' },
     ],
-    current: '2026-11-24',
+    current: '2026-11-28',
     oldestAccepted: '2026-11-22',
   },
   privacy: {
@@ -78,8 +81,9 @@ export const LEGAL_DOCUMENTS: Record<LegalDocKey, LegalDocument> = {
       { version: '2026-11-22', sha256: 'abdaa491af8b11109ac2471e9db9106c5ab361d50c125948b42519bd86800552' },
       { version: '2026-11-23', sha256: '013c2bca8c15ce6f3fb7507449412ee75c41e46e4dbf40e068e74c8abf6b4423' },
       { version: '2026-11-24', sha256: '4799eb1df81bf71c26aad6416161c39b4ef106de800a118da6f045df1457f3d5' },
+      { version: '2026-11-28', sha256: '6953b37f794439f3e97f54a030fb83326ef5fa006132c2b7ac63d0669f77b379' },
     ],
-    current: '2026-11-24',
+    current: '2026-11-28',
     oldestAccepted: '2026-11-22',
   },
 };
@@ -115,9 +119,11 @@ export type LegalPageKey = LegalDocKey | 'data-terms' | 'subprocessors' | 'payme
 export const DATA_TERMS_VERSIONS: PublishedVersion[] = [
   { version: '2026-11-23', sha256: '23d88e4ae12c751b9513dffb7d31f01953ca3923998afb9f1d096af24e4af358' },
   { version: '2026-11-24', sha256: '6f3ca5d077558a46ee3cf257370bc4c0ec6e4f10794f7aa709af794e92b35c2d' },
+  { version: '2026-11-28', sha256: 'b19c83f15ee4cfafe14250164a6be8c994cca3569920a3f81747e0611b42387d' },
 ];
 export const PAYMENTS_TERMS_VERSIONS: PublishedVersion[] = [
   { version: '2026-11-24', sha256: '3fe278cb35e129f806c10a3cfca96fcde3bc87e35612e4cf9f1701cd3d20d951' },
+  { version: '2026-11-28', sha256: '6b72288a4147f79214eb34be886fe70a416248a683c4e0e8b1eca36f388bd5b2' },
 ];
 export const SUBPROCESSOR_LIST_VERSIONS: PublishedVersion[] = [
   { version: '2026-11-23', sha256: '45de07d8b2a178bbb17bde58bca2235878490b979be74e116233fc04368078e8' },

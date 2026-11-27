@@ -69,14 +69,15 @@ export function cardLabel(brand: string | null, last4: string | null): string {
 }
 
 /** The version of the Payments Terms an owner agrees to, recorded with the agreement: the newest date in
- *  `PAYMENTS_TERMS_VERSIONS` (`lib/legal-documents.ts`; a test holds the two equal). Published 2026-11-24, replacing the
+ *  `PAYMENTS_TERMS_VERSIONS` (`lib/legal-documents.ts`; a test holds the two equal). 2026-11-28 added a sponsor's card
+ *  payment. The first published version, 2026-11-24, replaced the
  *  placeholder `'placeholder-counsel-pending'`; an owner who agreed to the placeholder is asked again (the daily job's notice).
  *  ⚠ Moving it asks EVERY connected club to agree again and emails its owners — minor change or not. */
-export const PAYMENTS_TERMS_VERSION = '2026-11-24';
+export const PAYMENTS_TERMS_VERSION = '2026-11-28';
 
 /** `/legal`'s short "What changed" for the current version (words §5.3 `{counselSummary}`). Empty: the window leaves the
- *  section out. Empty for 2026-11-24, the first published version (no production club had agreed before). `/legal`'s text;
- *  the product never writes it. */
+ *  section out. Empty for 2026-11-24, the first published version (no production club had agreed before), and for 2026-11-28
+ *  (to be published before any production club agrees; counted on release day). `/legal`'s text; the product never writes it. */
 export const PAYMENTS_TERMS_SUMMARY = '';
 
 /**

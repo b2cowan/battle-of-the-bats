@@ -1,5 +1,5 @@
 # FieldLogicHQ — Legal Facts
-**Last updated:** 2026-11-23 (the Payments Terms published as version 2026-11-24, in the product; online payments still off in production, 0 payout accounts and 0 agreements there); 2026-11-20 (Stage 4 Part 2: family sign-up form answers and waiting files); 2026-11-18 (Board Ready data terms follow-through: the four supplier dates, ImprovMX countersigned, notices subscribed, server logs 90 days, the AI rule written into `AGENCY_RULES.md`); 2026-11-18 (Board Ready data terms: ImprovMX, suppliers' notice terms, the 2026-11-18 census incl. the AI and Auth-mailer findings); 2026-11-17 (email only for contact, no phone or mailing address; breach procedure approved and its record's place; Terms §6 receipts line settled); 2026-11-16 (the accept step and the 6.4 emails as built, Stage 6 step 6.6); 2026-11-12 (two-step sign-in fact reworded; 2026-11-08: supplier data-processing mechanisms, Supabase encryption wording, breach procedure; GST/HST
+**Last updated:** 2026-11-27 (the sponsorship version 2026-11-28 frozen in the product for the next release: Payments Terms, Privacy, Terms, Data Terms); 2026-11-23 (the Payments Terms published as version 2026-11-24, in the product; online payments still off in production, 0 payout accounts and 0 agreements there); 2026-11-20 (Stage 4 Part 2: family sign-up form answers and waiting files); 2026-11-18 (Board Ready data terms follow-through: the four supplier dates, ImprovMX countersigned, notices subscribed, server logs 90 days, the AI rule written into `AGENCY_RULES.md`); 2026-11-18 (Board Ready data terms: ImprovMX, suppliers' notice terms, the 2026-11-18 census incl. the AI and Auth-mailer findings); 2026-11-17 (email only for contact, no phone or mailing address; breach procedure approved and its record's place; Terms §6 receipts line settled); 2026-11-16 (the accept step and the 6.4 emails as built, Stage 6 step 6.6); 2026-11-12 (two-step sign-in fact reworded; 2026-11-08: supplier data-processing mechanisms, Supabase encryption wording, breach procedure; GST/HST
 Stage 6 step 6.1). Seeded 2026-11-04 from a repo census — each fact carries its source; re-open the source before a draft
 rests on it.
 
@@ -106,11 +106,11 @@ registered with ServiceOntario 2026-11-06** (renewal date still to be read off t
   (Part B-1, built on dev 2026-11-26; production held none, counted that day). A report also names the signed-in account
   and its email address. The grouped summary of each error keeps a short entry (type, page address, counts and dates)
   until 90 days after it is resolved, with no end date while open; its latest technical trace and context are cleared 30
-  days after the error was last seen by migration 555 (2026-11-27; apply state in `MANUAL_PROD_STEPS.json`). Draft:
-  `drafts/PRIVACY_POLICY_SPONSORSHIP_ADDENDUM.md`.
+  days after the error was last seen by migration 555 (2026-11-27; apply state in `MANUAL_PROD_STEPS.json`). Said in
+  Privacy Policy version 2026-11-28.
 - **Sign-up form clean-up is running on production** (`club_form_files_sweep` last ran `ok` 2026-11-25): health answers
   and file answers removed 90 days after the season is finished or 120 days after its last day (a reopened season waits);
-  never-attached uploads older than 12 hours removed. The published policy does not say it yet (drafted in the addendum).
+  never-attached uploads older than 12 hours removed. Said in Privacy Policy §9 and Data Terms §11, version 2026-11-28.
 - No public sharing of a child's data (`BUSINESS_DECISIONS.md` ~L2871); no one-to-one adult–minor
   messaging (`docs/projects/active/COACH_PORTAL_CHUNK_D_COUNSEL_PACKET.md` ~L188).
 - **Known gaps on file:** no player-information retention or purge rule (TODO, raised 2026-07-17); the
@@ -207,15 +207,16 @@ registered with ServiceOntario 2026-11-06** (renewal date still to be read off t
   name of the member who finished it on the deal. **A sponsor's card dispute is recorded and booked** (since migrations 532 and 534, walk §564;
   re-read 2026-11-25, `lib/online-payment-landing.ts` `applyCardDispute`): a dispute row, a notice to whoever opens Sponsorships, a loss
   reversed in the club's books with no credit note and the deal back to owing, a win put back; there is no "Copy the facts" screen for a
-  sponsorship. Until the 2026-11-23 build it was silent. Possibly stale because of the sponsor card payment: the published Payments Terms
-  2026-11-24 §1/§2/§4/§6/§7/§9/§11 and Privacy 2026-11-24 §5/§6/§9/§12 (drafts: `drafts/PAYMENTS_TERMS_SPONSORSHIP_CARD_ADDENDUM.md`
-  0.4 and `drafts/PRIVACY_POLICY_SPONSORSHIP_ADDENDUM.md` 0.3, both owner-approved 2026-11-27, not yet published).
+  sponsorship. Until the 2026-11-23 build it was silent. Described by the Payments Terms and Privacy Policy version
+  2026-11-28 (frozen 2026-11-27, publishing with the release that carries the sponsor card payment; deployment state: the
+  release-history record).
 
 ## Consent and email mechanics that exist today
 - **Payments terms:** a checkbox an owner ticks in "Before you set up payouts" (and again in the card's "new payments terms"
   window after a change); every tick is kept append-only with who, when, the version and the sentence (mig 497). Since
   2026-11-23 the text is the published **Payments Terms, version 2026-11-24** (`/legal/payments`; the card links the exact
-  version being ticked, and the version an owner agreed to); the placeholder is gone. Any new version asks every connected club
+  version being ticked, and the version an owner agreed to); the placeholder is gone. The newest registered version is
+  **2026-11-28** (adds a sponsor's card payment; frozen 2026-11-27 for the next release). Any new version asks every connected club
   to agree again and emails its owners (daily job), minor or not.
 - **Tryout registration:** two required consents (data collection, eligibility) and a separate optional
   marketing consent.

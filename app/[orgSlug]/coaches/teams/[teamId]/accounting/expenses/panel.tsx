@@ -6472,22 +6472,16 @@ function MoneyRecordsPanel({
    * whole left half of the row to this sentence, so it can afford the FIGURE instead of the label —
    * same structure, same separator, more use. Omitted, the wording is byte-identical to before, so
    * the list is untouched by construction rather than by promise.
-   *
-   * `amount` LEADS the sentence — "$660.00 · 7 days overdue" — and only a bill's header passes it
-   * (owner, 2026-11-26): a piece row's figure is already in its Owing cell.
    */
   function payStatusText(
-    badge: PayableRowStatus, days: number, partly: boolean,
-    { remaining, amount }: { remaining?: number; amount?: number } = {},
+    badge: PayableRowStatus, days: number, partly: boolean, remaining?: number,
   ): ReactNode {
     const tone = badge === 'paid' ? styles.payStatePaid
       : badge === 'overdue' ? styles.payStateOverdue
       : partly ? styles.payStatePartly : styles.payStateAhead;
-    const when = badge === 'paid' ? 'Paid'
+    const words = badge === 'paid' ? 'Paid'
       : badge === 'overdue' ? `${Math.abs(days)} days overdue`
       : days === 0 ? 'Due today' : `In ${days} days`;
-    // Mid-sentence after a figure, so "In 36 days" and "Due today" lose their capital.
-    const words = amount === undefined ? when : `${fmt(amount)} · ${when.toLowerCase()}`;
     const aside = !partly || badge === 'paid' ? ''
       : remaining === undefined ? ' · partly paid'
       : ` · ${fmt(remaining)} still owing`;
@@ -6501,8 +6495,13 @@ function MoneyRecordsPanel({
 
   /**
    * A BILL HEADER'S STATUS CELL — what is owed now and what comes next, beside the whole balance in
-   * Owing. A late bill leads with everything past due (aged by its oldest payment) and names the next
-   * payment beneath; a bill that is not late says its next amount and how soon.
+   * Owing. One fact to a line, never joined by a dot (owner, 2026-11-27): the date word (a late bill
+   * is aged by its oldest payment), then the amount — everything past due, or the next amount — then,
+   * on a late bill, the next payment.
+   *
+   * ⚠ NO "partly paid" HERE: it describes one payment and these amounts can cover several. They are
+   * what is still left to pay, Owing shows the total once money has landed, and the rows beneath
+   * say which payment is part paid.
    */
   function payBillStatus(bill: PayBill) {
     if (!bill.nextBadge) return payStatusText('paid', 0, false);
@@ -6510,12 +6509,11 @@ function MoneyRecordsPanel({
     const late = pastDue > 0;
     return (
       <span className={styles.payBillStatus}>
-        {payStatusText(bill.nextBadge, bill.nextDays ?? 0, bill.nextPartly, {
-          amount: late ? pastDue : nextAmount,
-        })}
+        {payStatusText(bill.nextBadge, bill.nextDays ?? 0, false)}
+        <span className={styles.payDueNow}>{fmt(late ? pastDue : nextAmount)} {late ? 'past due' : 'due'}</span>
         {late && nextDate && (
           <span className={styles.payThenNext}>
-            Next {fmt(nextAmount)} · {nextDays === 0 ? 'due today' : fmtDate(nextDate)}
+            Next {fmt(nextAmount)} {nextDays === 0 ? 'due today' : `on ${fmtDate(nextDate)}`}
           </span>
         )}
       </span>
@@ -8116,7 +8114,7 @@ function MoneyRecordsPanel({
                           st,
                           daysBetweenDateStrings(today, inst.dueDate),
                           inst.state === 'partly_paid',
-                          { remaining: inst.remaining },
+                          inst.remaining,
                         )}
                       </span>
                       <span className={styles.payDrawerAmt}>{fmt(inst.amount)}</span>

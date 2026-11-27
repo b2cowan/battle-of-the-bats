@@ -46,6 +46,64 @@ export const CATEGORY_LABELS: Record<ReleaseCategory, string> = {
  */
 export const RELEASE_ENTRIES: ReleaseEntry[] = [
   {
+    date: '2026-11-27',
+    title: "Close a place, game day on the club home page, split fields, and sponsor card payments",
+    highlights: [
+      {
+        category: 'new',
+        text: "On League Plus and the Club plans, Close a place handles a closed park or diamond in one press. Your club site says it is closed, the house league games you leave ticked are postponed or cancelled and their families emailed, and rep coaches are emailed to set a new date. Tournaments keep their own Rain delay. It replaces the Rainout button on the house league schedule, and reopening does not move games back.",
+      },
+      {
+        category: 'new',
+        text: "On a game day, a club's public home page shows games live now, later today, latest results and any not being played. Rep games show for teams whose schedule is set to Public. The public house league schedule, standings and season pages update on their own while games are on.",
+      },
+      {
+        category: 'new',
+        text: "On League Plus and the Club plans, you can split a field into two sides or four quarters and book each part separately. Coaches and families see which part is theirs.",
+      },
+      {
+        category: 'new',
+        text: "A sponsor can now pay a deal by card when the club has set up payouts. The club can refund from the deal, with a credit note to the business. A refund made in Stripe is recorded on the deal for you to finish.",
+      },
+      {
+        category: 'new',
+        text: "Offer again lists last year's sponsors so a club can send this year's packages in one go. Each business gets its own email and its own deal.",
+      },
+      {
+        category: 'new',
+        text: "Search entries on the Ledger finds words in an entry's name, detail, Category or Item, for clubs and in the Premium Coaches Portal.",
+      },
+      {
+        category: 'improved',
+        text: "Club schedules can use only some of a permit's fields. When time is left open, the schedule says why and shows which teams are short. A new schedule also leaves out time another finalized schedule holds.",
+      },
+      {
+        category: 'improved',
+        text: "In the Premium Coaches Portal, a bill in the Ledger's Bills view shows what is past due and what is due next. View on a bill in Next 30 days now opens that bill.",
+      },
+      {
+        category: 'improved',
+        text: "A blank practice plan now has a \"Start this plan from…\" button when your team has something to start from.",
+      },
+      {
+        category: 'improved',
+        text: "On a phone or tablet, admin buttons and controls are easier to tap, and the tournament bracket editor opens full size and scrolls sideways.",
+      },
+      {
+        category: 'fixed',
+        text: "A rep game still being scored no longer shows as a finished tie on the public team page or the family schedule. It reads \"Live now\".",
+      },
+      {
+        category: 'fixed',
+        text: "A sponsorship package that sold out in an earlier fiscal year frees its places in the new one, unless that deal is still showing. Emailing an offer to a business with an address on file now works.",
+      },
+      {
+        category: 'fixed',
+        text: "The warning that a booking falls outside your club's permit shows again.",
+      },
+    ],
+  },
+  {
     date: '2026-11-23',
     title: "Sponsorship deals with invoices and payments, and save a bank check and finish it later",
     highlights: [

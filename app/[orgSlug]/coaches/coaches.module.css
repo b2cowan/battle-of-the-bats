@@ -14826,10 +14826,12 @@ div.gdRow { cursor: default; }
 /* One block, so a phone card keeps both lines together opposite its "Status" label. */
 .payBillStatus { display: block; font-variant-numeric: tabular-nums; }
 .payBillStatus .payState { white-space: normal; }
-.payThenNext {
+.payDueNow, .payThenNext {
   display: block; margin-top: 0.1rem; padding-left: calc(6px + 0.3rem); /* under the words, past the dot */
-  font-size: var(--type-support); color: var(--text-secondary);
+  font-size: var(--type-support);
 }
+.payDueNow { color: var(--text-primary); }
+.payThenNext { color: var(--text-secondary); }
 
 /* ── The drawer: the whole commitment in one panel ──────────────────────────────────────────── */
 .payDrawer { display: block; }

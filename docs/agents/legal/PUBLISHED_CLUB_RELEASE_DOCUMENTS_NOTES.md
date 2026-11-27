@@ -291,3 +291,182 @@ this draft deleted and the index pointed at the product's copy.
 - **Gmail holds privacy requests that can be about a child, without business terms.** Small in volume; it is our
   exposure, not a club's. The deferred own mailbox fixes it. (ImprovMX's half closed 2026-11-18: its agreement is
   countersigned.)
+
+---
+
+# The sponsorship version (2026-11-28; frozen 2026-11-27)
+
+**What it is.** One date for four texts (O-S1, owner 2026-11-25; publish authorized 2026-11-27, "go ahead"): new versions of
+the Payments Terms, the Privacy Policy, the Terms of Service and the Data Terms in
+`lib/legal-documents/<kind>/2026-11-28.md`, each the whole 2026-11-24 text with its approved addendum applied word for word
+(cut from the draft by script, not retyped). The list of companies is unchanged. Terms, Privacy and Data Terms: a minor
+change; `current` moved to 2026-11-28, `oldestAccepted` stays 2026-11-22, nobody accepts again.
+`PAYMENTS_TERMS_VERSION` is `'2026-11-28'`; `PAYMENTS_TERMS_SUMMARY` stays empty (no draft gave a "What changed" text).
+The promote that carries them is planned for 2026-11-27 or 2026-11-28. The drafts, their change logs and owner notes:
+`git show 1ce596dec:docs/agents/legal/drafts/<file>`.
+
+**Changed after the literal apply (owner 2026-11-27, "fix both"; the Payments file and its sha256 only):**
+- Payments §9: the added business "follow the law" bullet ended with a period in the middle of a semicolon list; it now ends
+  with a semicolon. No word changed.
+- Payments §11: "the payer is a business" reads "the payer is the sponsor", since §1 says a sponsor is a business or person.
+
+**Where the addendum did not give a position, or reads awkwardly** (applied literally; a file production has not served may
+still change, with its sha256):
+- Payments §9: "replaces the second bullet, adds two". The published "follow the law ... If you choose to have the payer pay"
+  bullet stays word for word, so two "follow the law and the card networks' rules" bullets sit together (sponsor, then
+  payer).
+- Payments §7: the draft calls the "gather the facts" sentence the "existing first bullet"; it is in the second. Changed by
+  its quoted words. The new dispute bullet is last in §7. The §11 sentences are a new last paragraph.
+- Privacy §5 names "a person or family who sponsors a club".
+- Payments §4's replacement lists "registrations, team fees and tournament entries" and leaves out "programs", which §2 and
+  §9 name.
+- Not in this version: `/legal`'s 2026-11-26 note (Board Ready plan, Part B, open item (d)) that §10 of the next Payments
+  Terms version should name "an open dispute (including a bank's question about a payment)". The approved 0.4 says no §10
+  change.
+
+## Release-day conditions (in order; production reads are counts only)
+1. The version date is 2026-11-28. If the promote slips past it, rename the four files and every date string to the promote
+   day first (same text, same sha256). If it promotes 2026-11-27, either ship as dated (the 2026-11-24 precedent, the
+   owner's choice) or rename to 2026-11-27.
+2. **Count connected clubs:** payout accounts and Payments Terms agreements (2026-11-25: 0 and 0). If any club has agreed to
+   2026-11-24, stop: 30 days' email notice (O-S1, Payments Terms §13).
+3. The migrations the release carries are on production first, in the order `MANUAL_PROD_STEPS.json` records, including 530
+   to 534 (sponsor card), 542 (the Stripe-account refund; recount duplicate open notices first) and **555** (error summary
+   details).
+4. After 555, run the error clean-up once (platform admin, or wait for 08:15 UTC) and count 0 `error_groups` rows not seen
+   for 30 days that still hold `sample_stack` or `sample_context`. The run removes them for good.
+5. Demo removal: 543, then `scripts/retire-public-demos.mjs --prod --apply`, before the promote (Terms §12 loses its
+   warning); count 0 demo organizations.
+6. One successful production run of `club_form_files_sweep` stands behind Privacy §9 and Data Terms §11 (last read ok
+   2026-11-25; read it again).
+7. After the promote: /legal/terms, /legal/privacy, /legal/data-terms and /legal/payments show 2026-11-28 signed out;
+   /legal/payments/2026-11-24 still answers; the Payouts card's "Read the terms" opens 2026-11-28.
+
+---
+
+# From the Payments Terms addendum (0.4)
+
+## Before this can be published
+
+> NOTE — Owner material from here to the end; the preview and the page drop it.
+
+**0.4 was approved by the owner 2026-11-27. It goes only with the release that carries the refund made in the club's Stripe account** (migration 542, on dev): §6, §4's card-fee bullet and §11's last sentence about a Stripe refund describe that build. Released without it, they would be untrue.
+
+**How this publishes (owner decision O-S1).** The product's Payments Terms are one frozen file per version (`lib/legal-documents/payments/<date>.md`, registered in `PAYMENTS_TERMS_VERSIONS` with its sha256; `PAYMENTS_TERMS_VERSION` in `lib/online-payment-words.ts` must equal the newest). The addendum is applied to a copy of the whole 2026-11-24 text and frozen as a new dated version; 2026-11-24 stays served at its own address (the card's "Read the terms" opens the version an owner agreed to). **Never edit the 2026-11-24 file** (the build fails).
+
+**A new version is needed, and it is not just "clarifying".** The 2026-11-24 text names the seller's sale as "registration, program, team fee or tournament entry" (§2), limits what a club may take payments for to the same list (§9), and says the fee setting is "for the whole organization" (§4). A sponsor's card payment is outside all three. Moving `PAYMENTS_TERMS_VERSION` asks every connected club to agree again and emails its owners (the daily job), minor or not (`lib/online-payment-owner-notices.ts`, `lib/payments-terms-agreement.ts`).
+
+**The ordering that costs nothing:** publish this version **before the first production club connects**, in the release that carries the sponsor's card payment. Online payments have been switched on in production since 2026-11-24, so a club can connect on any day; on 2026-11-25 production holds 0 payout accounts and 0 agreements (counts only), so today nobody would be asked twice and nobody has agreed to a text that leaves sponsorships out. **Count both again on release day.** If it publishes after clubs have agreed to 2026-11-24, treat it as a change that adds a new default cost (our fee on sponsor card payments, the club paying by default) and widens what the club may do, so under §13 it needs **30 days' email notice**, not "when we post". The reason is in the code: there is no separate sponsorship switch. A connected club whose account takes payments, with the launch switch on and a refund policy, gets the sponsor's card button on every deal without any step of its own (`lib/sponsor-card-server.ts` `sponsorCardFacts`).
+
+**The Privacy and Terms versions move with it** (the build refuses a Privacy version older than the Payments Terms in force). Their drafts: `PRIVACY_POLICY_SPONSORSHIP_ADDENDUM.md` and `TERMS_SPONSORSHIP_ADDENDUM.md` (Terms §4 plus one Data Terms §11 bullet). **§3 of these terms needs no change:** the list of what a club sells is in §2 as published.
+
+**Who accepts.** The club's owner, at the Payouts card (the "Before you set up payouts" tick, or the "new payments terms" window), as for 2026-11-24. **The business that pays by card accepts none of our terms**, and should not be shown them: FieldLogicHQ is not the seller, and a link to our terms on the club's page would suggest it is. The business sees the club's own refund policy and, if the club set one, the club's own privacy link (`components/public/SponsorDealContent.tsx` `RefundPolicy`, `Foot`); Stripe's page carries Stripe's own notice.
+
+**Owner decisions.**
+- O-S1. ANSWERED 2026-11-25: publish in the release that carries sponsor card payments and Offer again, with the Privacy, Terms and Data Terms versions on one date. Count connected clubs that day; if one has agreed to 2026-11-24, stop (30 days' email notice).
+- O-S2. ANSWERED 2026-11-24 (owner, walk §564 call (b): "build a notice and the books reversal first"): the product records a sponsor's dispute, raises a notice, and books a loss; §7 now says so (0.2).
+- O-S3. ANSWERED 2026-11-24 (owner: "do the O-S7 wording pass"): the product says "It can take 5 to 10 business days to appear, depending on the card company."; §6 says the same (0.3).
+- O-S4. FALLS AWAY (0.2): §10 is no longer narrowed.
+
+## For a lawyer's eye
+
+- **§7, the dispute bullet (0.2).** The product now tells the club of a sponsor's dispute, and books a lost one, but does not promise to catch every case (a part dispute, an unrecorded payment): the bullet says so. A lawyer could read whether "we tell whoever at your organization opens Sponsorships" is a promise stronger than the product can keep when nobody holds that seat, and the GST/HST sentence ("we do not adjust the GST/HST on an invoice that has been issued") is a statement about the club's tax that the club's accountant owns.
+- **§6, a refund that does not reach the card (0.2).** The cancelled credit note: the product keeps the note, marks it cancelled, never reuses its number, and tells the business. Whether that is the right way to withdraw a credit note that reduced GST/HST is for the club's accountant (see the topic file's 2026-11-24 addendum).
+- **§4 and §9, the business-pays fee.** A processing fee passed to a business is the club's charge, and the card rate can exceed the card networks' surcharge ceiling if it is read as a surcharge (2.4%, no more than the cost of acceptance, none in Québec); GST/HST is charged on it. Whether it is a surcharge or a service fee is unsettled (`CARD_SURCHARGE_PAYER_FEE.md`). The default is "the club pays", which keeps it out of the common case.
+- **§6, asking for refunded money again (0.4).** "They still owe it" follows a refund of everything the business paid on a payment, and then asks it for the invoice again, with no credit note. The product says so in the refund email and on the business's page. A lawyer could read whether the club may ask again for money it chose to refund, and what it must tell the business.
+- **§4, a processing fee line on an invoice owing again (0.4).** The line stays and can be paid by cheque or e-transfer, so the club would collect a "Processing fee" on a payment with no card cost (a product question for `/plan`; `/accounting` flags it too).
+- **§6, a refund from the deal beside another payment (0.4).** When one payment is refunded in full from the deal and what remains no longer covers the invoice, the deal reads owing again and a credit note is still issued. This is the opposite of the Stripe-account rule; an open follow-up for `/plan` (accounting topic file, 2026-11-26).
+- **§6, no fee refund.** A business that paid a fee on a deal that is then fully refunded from the deal gets everything back but the fee (the club can include it only by refunding in its Stripe account), and the card page does not say so before it pays (it says so in the refund email). The exposure sits with the club (its own representation to its sponsor), not with us; whether the page should say it first is O-S5 in the topic file.
+- **§2 and §6, an individual sponsor.** If the payer is a person, a family or a sole proprietor rather than a business, consumer rules for internet agreements may apply to the club (`ONTARIO_CONSUMER_INTERNET_AGREEMENTS.md`, backlog L17). The club's obligations, not ours; the draft puts the information duty on the club in §9.
+- **§12 (unchanged), the cost-cover clause** now reaches claims by a sponsor about a sponsorship's refunds and the fee passed to it. Same language, wider cases.
+- **Money-services status** is unchanged by this change (`RPAA_FINTRAC_MONEY_SERVICES_STATUS.md`): a direct charge on the club's account, our fee taken at the payment, nothing held.
+
+---
+
+# From the Privacy Policy addendum (0.3)
+
+## Before this can be published
+
+> NOTE — Owner material from here to the end; the preview and the page drop it.
+
+**When it publishes (owner 2026-11-25).** With the release that carries the sponsor's card payment and Offer again, on the same date as
+the Payments Terms (the build refuses a Privacy version older than the Payments Terms in force). Three sentences are only
+true from that release: the card, refund and dispute words in §5 and §6; Offer again's payment date; and "at every
+address the club has on its record" in §12 (on production today an unsubscribe stops one address). The 0.2 words about a
+refund made in the club's own Stripe account are true only from the release that carries that build (migration 542).
+
+**True on production already (2026-11-25):** everything else here, including the sign-up clean-up (the six-hourly sweep
+ran successfully on production on 2026-11-25; 0 sign-up files and 0 answers there, counts only).
+
+**0.3's error-report words are true only once migration 555 is on production and the clean-up has run once** (the nightly
+run, or the platform admin's own run). On 2026-11-27, 13 of production's 19 error summaries held details older than 30
+days (counts only); that run removes them for good.
+
+**A minor change under §13** (recorded as a judgement, not a certainty): it names records the product keeps for a club
+and adds no company and no new use of an account holder's information. No notice email; nobody accepts again
+(`oldestAccepted` stays 2026-11-22).
+
+**Not in this version, because the product doesn't do it yet:** club events and camps, club website previews, player
+photos. Each carries its own sentences with its own release.
+
+**Product findings, for `/plan` (the text is written true without them):**
+1. (Owner 2026-11-25: fix soon, as its own small fix.) **Private links in error reports: fixed in code (Part B-1,
+   built on dev 2026-11-26; true on production once released).** Every private-link shape (the no-sign-in pages, their
+   data routes, the calendar feeds, and a secret after `?`) and unsubscribe addresses are removed before an error report
+   or feedback note is stored or logged. Dev's stored rows were cleaned; production held none (counted 2026-11-26).
+   **The 30-day sentence and the grouped summary (`/legal` 2026-11-26; owner 2026-11-27 "yes to both").** Each group kept
+   its latest sample (technical trace and context) until 90 days after it was resolved, with no end date while open or
+   ignored. Migration 555 (written and trialled on dev 2026-11-27, rolled back) has the nightly job clear it 30 days after
+   the group was last seen; 0.3 carries the matching words in §4, §8 and §9.
+2. A logo that has been shown stays reachable by its address, and a withdrawn deal keeps the logo the business sent.
+3. A club can't delete a business that ever had a deal, or its attached files; there is no screen for a removal request.
+4. The sponsor page shows the club's privacy link only while the form is open, not on its later or closed states.
+
+## For a lawyer's eye
+
+- **§4, §8 and §9, error reports (0.3).** Naming the signed-in account in §4 and narrowing §8's claim correct a text
+  that is live today; judged minor under §13. A lawyer could say whether correcting an overstated protection needs
+  notice. The alert email we send ourselves on a serious error carried the error message, which stays in our own mailbox past
+  30 days; the message was taken out of that email (owner 2026-11-27). Alerts sent before then are still in the mailbox.
+- **§5 and §9, the offer record and the stop list** are deleted with the organization. CASL puts the burden of proving
+  consent on whoever claims it (s. 13) and a violation can be pursued up to three years after a designated person learns
+  of it (s. 23(1)); a deleted club leaves neither record behind. The private right to sue was repealed before it came
+  into force. Whether FieldLogicHQ is itself a sender is the open question that decides if this is our exposure. Owner 2026-11-25: left as
+  built; a lawyer looks when the owner chooses.
+- **§5, a sponsor who is a person or a family** is outside the business-contact exemption (PIPEDA s. 4.01); the club's
+  own openness duty then applies, met today by the club's privacy link where it set one.
+- **§9, sign-up clean-up:** every other answer and the sign-up record stay with no time limit (backlog L9, "limited
+  retention").
+- **§13:** whether naming sponsors is a "new way" of using information that needs the notice email.
+
+## Sources
+- [CASL, S.C. 2010, c. 23, s. 13, s. 23(1), s. 91 footnote](https://laws-lois.justice.gc.ca/eng/acts/E-1.6/FullText.html) — accessed 2026-11-25 (current to 2026-10-29)
+- Everything else rests on `BOARD_READY_STAGE6_SPONSORSHIPS_DRAWING_REVIEW.md`, `BOARD_READY_STAGE6_PART3B_CARD_REVIEW.md` and the code
+
+---
+
+# From the Terms and Data Terms addendum (0.2)
+
+## Before this can be published
+
+> NOTE — Owner material from here to the end; the preview and the page drop it.
+
+- **§12's removal publishes only after production's demo clubs are deleted** (the demo removal step of the same
+  release). It takes away a warning about something that no longer exists, so it is minor too.
+- **A minor change under §18.** The list already says "Everything your organization or team puts into FieldLogicHQ", so
+  sponsors are inside it today; this names them. The Data Terms bullet states a clean-up the product has run on
+  production since 2026-11-22, with 0 sign-up files and answers there on 2026-11-25. No notice email, nobody accepts
+  again.
+- **The Data Terms need only that bullet,** so this release writes a new Data Terms file at the same date. Their list of
+  Customer Data points at Terms §4, so sponsors carry into them. The owner kept the clean-up sentence (2026-11-25).
+- **The list of companies needs no change.** Sponsorships adds no company.
+- **Left out on purpose:** the clubs' website preview paragraph for §3 (it belongs to the release that makes previews
+  reachable) and whether one co-owner's confirmation is enough to delete an organization (not ruled).
+
+## For a lawyer's eye
+
+- **Data Terms §11.** An automatic removal of a club's records sits beside §2's "you decide how long to keep it". A
+  lawyer could say whether naming it needs the §18 notice once a club holds such records.
+- **§4.** A sponsor's logo is someone else's property that the club publishes. The sponsor page asks the business to
+  confirm it may use the logo and allows the club to show it; §5 already bars uploading what the club has no right to
+  share. A lawyer could say whether the club's licence from its sponsor should also be named in these Terms.
