@@ -196,9 +196,13 @@ describe('6 · the account alarms', () => {
   it('the ordinary reset page asks for the notice (it saves straight with the sign-in service), and only outside the backup-code save', () => {
     assert.match(readCode('app/(consumer)/auth/reset-password/page.tsx'), /if \(!viaBackupCode\) void fetch\('\/api\/auth\/password-reset-notice'/);
   });
-  it('the reset notice goes only to the signed-in person, only for a password saved in the last minutes, after the others are signed out', () => {
+  it('the reset notice goes only to a person signed in with both steps, within the freshness window, after the others are signed out', () => {
     const code = readCode('app/api/auth/password-reset-notice/route.ts');
-    assert.match(code, /auth\.getUser\(\)/);
+    // Both steps, never the password alone (owner 2026-11-26).
+    assert.match(code, /const user = await getSignedInUser\(supabase\);/);
+    assert.doesNotMatch(code, /auth\.getUser\(|readSessionTwoStep|getSessionTwoStep|\?\?\s*\(await/);
+    const refuses = code.indexOf('if (!user?.email) return');
+    assert.ok(refuses >= 0 && refuses < code.indexOf("signOut({ scope: 'others' })"), 'refused before anyone is signed out');
     assert.match(code, /user\.updated_at/);
     assert.match(code, /FRESH_MS/);
     assert.ok(code.indexOf("signOut({ scope: 'others' })") < code.indexOf('passwordChangedEmail('));

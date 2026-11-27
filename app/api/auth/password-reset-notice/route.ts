@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { withObservability } from '@/lib/observability';
 import { createClient } from '@/lib/supabase-server';
 import { passwordChangedEmail, sendTwoStepEmail } from '@/lib/two-step-emails';
+import { getSignedInUser } from '@/lib/two-step-session';
 
 /** The password must have been saved this recently, by the service's own clock, for the notice to go out. */
 const FRESH_MS = 5 * 60_000;
@@ -15,16 +16,23 @@ const ONCE_MS = 10 * 60_000;
  * service's own, which needs a custom sender we don't run (owner 2026-11-18: every account email goes out from our
  * sender, the service sends none).
  *
- * The page calls this once the new password is saved. It tells ONLY the signed-in person's own address, and only when
- * the service says their password changed in the last few minutes, so it cannot be used to mail anyone or to mail the
- * person a "changed" notice for a change that did not happen. Best effort: the page never waits on or shows the result.
+ * The page calls this once the new password is saved. It tells ONLY the signed-in person's own address, so it cannot
+ * be used to mail anyone else. Best effort: the page never waits on or shows the result.
+ *
+ * ⚖ SIGNED IN MEANS BOTH STEPS (owner 2026-11-26): the person is read by `getSignedInUser`, so with two-step on, a
+ * password alone gets nothing here. Before, it signed the owner's devices out and mailed them. An ordinary reset
+ * keeps its email: the page asks for the code before it saves. (A backup-code reset is mailed by its own route.) One
+ * rare edge goes without it: a lost-phone replacement whose mark failed to clear, where an app code counts for
+ * nothing until it does (lib/two-step-session.ts).
+ * ⚠ THE FRESHNESS WINDOW DOES NOT PROVE A PASSWORD CHANGE. `updated_at` also moves on an ordinary sign-in (seen on dev
+ * 2026-11-26), so a person who is fully signed in can still call this without having changed anything.
  *
  * Signs the other devices out first, as the other two password routes do, so the email's claim about them is true.
  * This device keeps its session (a signed-out-others call spares the current one).
  */
 export const POST = withObservability(async () => {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getSignedInUser(supabase);
   if (!user?.email) return NextResponse.json({ error: 'Sign in first.' }, { status: 401 });
 
   const changedAt = Date.parse(user.updated_at ?? '');
