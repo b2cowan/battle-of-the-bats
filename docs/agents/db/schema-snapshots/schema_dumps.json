@@ -36743,7 +36743,7 @@
         "column_name": "fee_refund_entry_id",
         "foreign_table": "accounting_entries",
         "foreign_column": "id",
-        "constraint_name": "club_sponsor_deal_refunds_fee_entry_id_fkey"
+        "constraint_name": "club_sponsor_deal_refunds_fee_refund_entry_id_fkey"
       },
       {
         "table_name": "club_sponsor_deal_refunds",
@@ -61995,6 +61995,15 @@
         "column_default": null
       },
       {
+        "table_name": "club_schedule_slots",
+        "pos": 18,
+        "column_name": "section_mask",
+        "data_type": "smallint",
+        "udt_name": "int2",
+        "is_nullable": "NO",
+        "column_default": "0"
+      },
+      {
         "table_name": "club_schedules",
         "pos": 1,
         "column_name": "id",
@@ -62504,6 +62513,429 @@
         "column_name": "void_reason",
         "data_type": "text",
         "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "club_sponsor_deal_payments",
+        "pos": 19,
+        "column_name": "online_payment_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "club_sponsor_deal_payments",
+        "pos": 20,
+        "column_name": "card_brand",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "club_sponsor_deal_payments",
+        "pos": 21,
+        "column_name": "card_last4",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "club_sponsor_deal_payments",
+        "pos": 22,
+        "column_name": "fee_paid_by",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "club_sponsor_deal_payments",
+        "pos": 23,
+        "column_name": "fee_amount",
+        "data_type": "numeric",
+        "udt_name": "numeric",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "club_sponsor_deal_payments",
+        "pos": 24,
+        "column_name": "fee_charged",
+        "data_type": "numeric",
+        "udt_name": "numeric",
+        "is_nullable": "NO",
+        "column_default": "0"
+      },
+      {
+        "table_name": "club_sponsor_deal_payments",
+        "pos": 25,
+        "column_name": "fee_tax",
+        "data_type": "numeric",
+        "udt_name": "numeric",
+        "is_nullable": "NO",
+        "column_default": "0"
+      },
+      {
+        "table_name": "club_sponsor_deal_payments",
+        "pos": 26,
+        "column_name": "fee_income_entry_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "club_sponsor_deal_payments",
+        "pos": 27,
+        "column_name": "fee_cost_entry_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "club_sponsor_deal_payments",
+        "pos": 28,
+        "column_name": "returned_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "club_sponsor_deal_payments",
+        "pos": 29,
+        "column_name": "dispute_lost_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "club_sponsor_deal_refunds",
+        "pos": 1,
+        "column_name": "id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": "gen_random_uuid()"
+      },
+      {
+        "table_name": "club_sponsor_deal_refunds",
+        "pos": 2,
+        "column_name": "org_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "club_sponsor_deal_refunds",
+        "pos": 3,
+        "column_name": "deal_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "club_sponsor_deal_refunds",
+        "pos": 4,
+        "column_name": "payment_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "club_sponsor_deal_refunds",
+        "pos": 5,
+        "column_name": "online_payment_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "club_sponsor_deal_refunds",
+        "pos": 6,
+        "column_name": "amount",
+        "data_type": "numeric",
+        "udt_name": "numeric",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "club_sponsor_deal_refunds",
+        "pos": 7,
+        "column_name": "tax_part",
+        "data_type": "numeric",
+        "udt_name": "numeric",
+        "is_nullable": "NO",
+        "column_default": "0"
+      },
+      {
+        "table_name": "club_sponsor_deal_refunds",
+        "pos": 8,
+        "column_name": "whole",
+        "data_type": "boolean",
+        "udt_name": "bool",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "club_sponsor_deal_refunds",
+        "pos": 9,
+        "column_name": "ends_deal",
+        "data_type": "boolean",
+        "udt_name": "bool",
+        "is_nullable": "NO",
+        "column_default": "false"
+      },
+      {
+        "table_name": "club_sponsor_deal_refunds",
+        "pos": 10,
+        "column_name": "reason",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "club_sponsor_deal_refunds",
+        "pos": 11,
+        "column_name": "status",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": "'pending'::text"
+      },
+      {
+        "table_name": "club_sponsor_deal_refunds",
+        "pos": 12,
+        "column_name": "stripe_refund_id",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "club_sponsor_deal_refunds",
+        "pos": 13,
+        "column_name": "failure_reason",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "club_sponsor_deal_refunds",
+        "pos": 14,
+        "column_name": "refunded_on",
+        "data_type": "date",
+        "udt_name": "date",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "club_sponsor_deal_refunds",
+        "pos": 15,
+        "column_name": "credit_seq",
+        "data_type": "integer",
+        "udt_name": "int4",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "club_sponsor_deal_refunds",
+        "pos": 16,
+        "column_name": "income_entry_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "club_sponsor_deal_refunds",
+        "pos": 17,
+        "column_name": "tax_entry_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "club_sponsor_deal_refunds",
+        "pos": 18,
+        "column_name": "created_by",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "club_sponsor_deal_refunds",
+        "pos": 19,
+        "column_name": "created_by_name",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "club_sponsor_deal_refunds",
+        "pos": 20,
+        "column_name": "created_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
+        "table_name": "club_sponsor_deal_refunds",
+        "pos": 21,
+        "column_name": "succeeded_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "club_sponsor_deal_refunds",
+        "pos": 22,
+        "column_name": "failed_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "club_sponsor_deal_refunds",
+        "pos": 23,
+        "column_name": "emailed_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "club_sponsor_deal_refunds",
+        "pos": 24,
+        "column_name": "cancel_emailed_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "club_sponsor_deal_refunds",
+        "pos": 25,
+        "column_name": "origin",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": "'app'::text"
+      },
+      {
+        "table_name": "club_sponsor_deal_refunds",
+        "pos": 26,
+        "column_name": "stripe_created_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "club_sponsor_deal_refunds",
+        "pos": 27,
+        "column_name": "stripe_reason",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "club_sponsor_deal_refunds",
+        "pos": 28,
+        "column_name": "fee_part",
+        "data_type": "numeric",
+        "udt_name": "numeric",
+        "is_nullable": "NO",
+        "column_default": "0"
+      },
+      {
+        "table_name": "club_sponsor_deal_refunds",
+        "pos": 29,
+        "column_name": "fee_tax_part",
+        "data_type": "numeric",
+        "udt_name": "numeric",
+        "is_nullable": "NO",
+        "column_default": "0"
+      },
+      {
+        "table_name": "club_sponsor_deal_refunds",
+        "pos": 30,
+        "column_name": "fee_refund_entry_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "club_sponsor_deal_refunds",
+        "pos": 31,
+        "column_name": "after_lost_dispute",
+        "data_type": "boolean",
+        "udt_name": "bool",
+        "is_nullable": "NO",
+        "column_default": "false"
+      },
+      {
+        "table_name": "club_sponsor_deal_refunds",
+        "pos": 32,
+        "column_name": "finished_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "club_sponsor_deal_refunds",
+        "pos": 33,
+        "column_name": "finished_by",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "club_sponsor_deal_refunds",
+        "pos": 34,
+        "column_name": "finished_by_name",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "club_sponsor_deal_refunds",
+        "pos": 35,
+        "column_name": "outcome",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "club_sponsor_deal_refunds",
+        "pos": 36,
+        "column_name": "credit_on",
+        "data_type": "date",
+        "udt_name": "date",
         "is_nullable": "YES",
         "column_default": null
       },
@@ -63051,6 +63483,24 @@
         "table_name": "club_sponsor_deals",
         "pos": 61,
         "column_name": "original_total",
+        "data_type": "numeric",
+        "udt_name": "numeric",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "club_sponsor_deals",
+        "pos": 62,
+        "column_name": "card_fee",
+        "data_type": "numeric",
+        "udt_name": "numeric",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "club_sponsor_deals",
+        "pos": 63,
+        "column_name": "card_fee_tax",
         "data_type": "numeric",
         "udt_name": "numeric",
         "is_nullable": "YES",
@@ -64513,6 +64963,33 @@
         "udt_name": "timestamptz",
         "is_nullable": "YES",
         "column_default": null
+      },
+      {
+        "table_name": "email_address_stops",
+        "pos": 1,
+        "column_name": "email",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "email_address_stops",
+        "pos": 2,
+        "column_name": "source",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "email_address_stops",
+        "pos": 3,
+        "column_name": "stopped_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
       },
       {
         "table_name": "email_batches",
@@ -68331,6 +68808,15 @@
         "column_default": null
       },
       {
+        "table_name": "league_games",
+        "pos": 20,
+        "column_name": "section_mask",
+        "data_type": "smallint",
+        "udt_name": "int2",
+        "is_nullable": "NO",
+        "column_default": "0"
+      },
+      {
         "table_name": "league_notification_log",
         "pos": 1,
         "column_name": "id",
@@ -68997,6 +69483,15 @@
         "column_default": null
       },
       {
+        "table_name": "league_practices",
+        "pos": 17,
+        "column_name": "section_mask",
+        "data_type": "smallint",
+        "udt_name": "int2",
+        "is_nullable": "NO",
+        "column_default": "0"
+      },
+      {
         "table_name": "league_rainouts",
         "pos": 1,
         "column_name": "id",
@@ -69108,6 +69603,24 @@
         "table_name": "league_rainouts",
         "pos": 13,
         "column_name": "put_back_by",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "league_rainouts",
+        "pos": 14,
+        "column_name": "closure_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "league_rainouts",
+        "pos": 15,
+        "column_name": "org_venue_id",
         "data_type": "uuid",
         "udt_name": "uuid",
         "is_nullable": "YES",
@@ -72210,6 +72723,33 @@
         "column_default": null
       },
       {
+        "table_name": "online_payments",
+        "pos": 54,
+        "column_name": "sponsor_deal_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "online_payments",
+        "pos": 55,
+        "column_name": "sponsor_fee_tax",
+        "data_type": "numeric",
+        "udt_name": "numeric",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "online_payments",
+        "pos": 56,
+        "column_name": "sponsor_invoice",
+        "data_type": "jsonb",
+        "udt_name": "jsonb",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
         "table_name": "online_refunds_unassigned",
         "pos": 1,
         "column_name": "id",
@@ -74379,6 +74919,177 @@
         "column_default": "now()"
       },
       {
+        "table_name": "org_place_closures",
+        "pos": 1,
+        "column_name": "id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": "gen_random_uuid()"
+      },
+      {
+        "table_name": "org_place_closures",
+        "pos": 2,
+        "column_name": "org_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "org_place_closures",
+        "pos": 3,
+        "column_name": "press_key",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "org_place_closures",
+        "pos": 4,
+        "column_name": "press_seq",
+        "data_type": "smallint",
+        "udt_name": "int2",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "org_place_closures",
+        "pos": 5,
+        "column_name": "scope",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "org_place_closures",
+        "pos": 6,
+        "column_name": "org_venue_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "org_place_closures",
+        "pos": 7,
+        "column_name": "org_venue_facility_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "org_place_closures",
+        "pos": 8,
+        "column_name": "place_name",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "org_place_closures",
+        "pos": 9,
+        "column_name": "facility_name",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "org_place_closures",
+        "pos": 10,
+        "column_name": "first_day",
+        "data_type": "date",
+        "udt_name": "date",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "org_place_closures",
+        "pos": 11,
+        "column_name": "last_day",
+        "data_type": "date",
+        "udt_name": "date",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "org_place_closures",
+        "pos": 12,
+        "column_name": "shows_from",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "org_place_closures",
+        "pos": 13,
+        "column_name": "ends_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "org_place_closures",
+        "pos": 14,
+        "column_name": "verb",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "org_place_closures",
+        "pos": 15,
+        "column_name": "line",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "org_place_closures",
+        "pos": 16,
+        "column_name": "closed_by",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "org_place_closures",
+        "pos": 17,
+        "column_name": "created_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
+        "table_name": "org_place_closures",
+        "pos": 18,
+        "column_name": "reopened_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "org_place_closures",
+        "pos": 19,
+        "column_name": "reopened_by",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
         "table_name": "org_public_site_content",
         "pos": 1,
         "column_name": "id",
@@ -74676,6 +75387,15 @@
         "column_default": null
       },
       {
+        "table_name": "org_time_block_facilities",
+        "pos": 4,
+        "column_name": "section_mask",
+        "data_type": "smallint",
+        "udt_name": "int2",
+        "is_nullable": "NO",
+        "column_default": "0"
+      },
+      {
         "table_name": "org_time_blocks",
         "pos": 1,
         "column_name": "id",
@@ -74955,6 +75675,15 @@
         "column_default": "now()"
       },
       {
+        "table_name": "org_venue_facilities",
+        "pos": 9,
+        "column_name": "sections",
+        "data_type": "smallint",
+        "udt_name": "int2",
+        "is_nullable": "NO",
+        "column_default": "1"
+      },
+      {
         "table_name": "org_venues",
         "pos": 1,
         "column_name": "id",
@@ -75214,6 +75943,132 @@
         "udt_name": "timestamptz",
         "is_nullable": "YES",
         "column_default": null
+      },
+      {
+        "table_name": "organization_previews",
+        "pos": 1,
+        "column_name": "org_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "organization_previews",
+        "pos": 2,
+        "column_name": "org_slug",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "organization_previews",
+        "pos": 3,
+        "column_name": "org_name",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "organization_previews",
+        "pos": 4,
+        "column_name": "meeting_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "organization_previews",
+        "pos": 5,
+        "column_name": "made_by",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "organization_previews",
+        "pos": 6,
+        "column_name": "logo_source_url",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "organization_previews",
+        "pos": 7,
+        "column_name": "claimed_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "organization_previews",
+        "pos": 8,
+        "column_name": "claimed_by",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "organization_previews",
+        "pos": 9,
+        "column_name": "removed_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "organization_previews",
+        "pos": 10,
+        "column_name": "created_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
+        "table_name": "organization_previews",
+        "pos": 11,
+        "column_name": "updated_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
+        "table_name": "organization_previews",
+        "pos": 12,
+        "column_name": "sport",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "organization_previews",
+        "pos": 13,
+        "column_name": "province_code",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "organization_previews",
+        "pos": 14,
+        "column_name": "claim_code",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": "preview_claim_code()"
       },
       {
         "table_name": "organizations",
@@ -75655,6 +76510,15 @@
         "udt_name": "text",
         "is_nullable": "YES",
         "column_default": null
+      },
+      {
+        "table_name": "organizations",
+        "pos": 51,
+        "column_name": "is_preview",
+        "data_type": "boolean",
+        "udt_name": "bool",
+        "is_nullable": "NO",
+        "column_default": "false"
       },
       {
         "table_name": "payments_terms_agreements",
@@ -78906,6 +79770,222 @@
         "column_default": "'{}'::jsonb"
       },
       {
+        "table_name": "preview_claim_records",
+        "pos": 1,
+        "column_name": "id",
+        "data_type": "bigint",
+        "udt_name": "int8",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "preview_claim_records",
+        "pos": 2,
+        "column_name": "kind",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "preview_claim_records",
+        "pos": 3,
+        "column_name": "org_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "preview_claim_records",
+        "pos": 4,
+        "column_name": "org_name",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "preview_claim_records",
+        "pos": 5,
+        "column_name": "user_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "preview_claim_records",
+        "pos": 6,
+        "column_name": "user_email",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "preview_claim_records",
+        "pos": 7,
+        "column_name": "box_text",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "preview_claim_records",
+        "pos": 8,
+        "column_name": "claim_code",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "preview_claim_records",
+        "pos": 9,
+        "column_name": "start_plan",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "preview_claim_records",
+        "pos": 10,
+        "column_name": "at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
+        "table_name": "preview_claim_tries",
+        "pos": 1,
+        "column_name": "id",
+        "data_type": "bigint",
+        "udt_name": "int8",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "preview_claim_tries",
+        "pos": 2,
+        "column_name": "org_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "preview_claim_tries",
+        "pos": 3,
+        "column_name": "visitor_key",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "preview_claim_tries",
+        "pos": 4,
+        "column_name": "tried_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
+        "table_name": "preview_email_consents",
+        "pos": 1,
+        "column_name": "id",
+        "data_type": "bigint",
+        "udt_name": "int8",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "preview_email_consents",
+        "pos": 2,
+        "column_name": "org_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "preview_email_consents",
+        "pos": 3,
+        "column_name": "org_name",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "preview_email_consents",
+        "pos": 4,
+        "column_name": "email",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "preview_email_consents",
+        "pos": 5,
+        "column_name": "role",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "preview_email_consents",
+        "pos": 6,
+        "column_name": "given_on",
+        "data_type": "date",
+        "udt_name": "date",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "preview_email_consents",
+        "pos": 7,
+        "column_name": "given_how",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": "'in_person'::text"
+      },
+      {
+        "table_name": "preview_email_consents",
+        "pos": 8,
+        "column_name": "recorded_by",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "preview_email_consents",
+        "pos": 9,
+        "column_name": "sent_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "preview_email_consents",
+        "pos": 10,
+        "column_name": "created_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
         "table_name": "push_subscriptions",
         "pos": 1,
         "column_name": "id",
@@ -80546,6 +81626,123 @@
       {
         "table_name": "rep_evaluation_not_assessed",
         "pos": 9,
+        "column_name": "created_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
+        "table_name": "rep_event_closure_marks",
+        "pos": 1,
+        "column_name": "id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": "gen_random_uuid()"
+      },
+      {
+        "table_name": "rep_event_closure_marks",
+        "pos": 2,
+        "column_name": "org_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_event_closure_marks",
+        "pos": 3,
+        "column_name": "closure_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_event_closure_marks",
+        "pos": 4,
+        "column_name": "event_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_event_closure_marks",
+        "pos": 5,
+        "column_name": "team_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_event_closure_marks",
+        "pos": 6,
+        "column_name": "marked_starts_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_event_closure_marks",
+        "pos": 7,
+        "column_name": "marked_org_venue_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_event_closure_marks",
+        "pos": 8,
+        "column_name": "marked_facility_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_event_closure_marks",
+        "pos": 9,
+        "column_name": "marked_place_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_event_closure_marks",
+        "pos": 10,
+        "column_name": "marked_location",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_event_closure_marks",
+        "pos": 11,
+        "column_name": "coach_emailed_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_event_closure_marks",
+        "pos": 12,
+        "column_name": "reopen_told_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_event_closure_marks",
+        "pos": 13,
         "column_name": "created_at",
         "data_type": "timestamp with time zone",
         "udt_name": "timestamptz",
@@ -84538,6 +85735,15 @@
         "udt_name": "uuid",
         "is_nullable": "YES",
         "column_default": null
+      },
+      {
+        "table_name": "rep_team_events",
+        "pos": 45,
+        "column_name": "section_mask",
+        "data_type": "smallint",
+        "udt_name": "int2",
+        "is_nullable": "NO",
+        "column_default": "0"
       },
       {
         "table_name": "rep_team_expense_tags",
@@ -92246,10 +93452,31 @@
       },
       {
         "table_name": "club_sponsor_deal_payments",
+        "column_name": "fee_cost_entry_id",
+        "foreign_table": "accounting_entries",
+        "foreign_column": "id",
+        "constraint_name": "club_sponsor_deal_payments_fee_cost_entry_id_fkey"
+      },
+      {
+        "table_name": "club_sponsor_deal_payments",
+        "column_name": "fee_income_entry_id",
+        "foreign_table": "accounting_entries",
+        "foreign_column": "id",
+        "constraint_name": "club_sponsor_deal_payments_fee_income_entry_id_fkey"
+      },
+      {
+        "table_name": "club_sponsor_deal_payments",
         "column_name": "income_entry_id",
         "foreign_table": "accounting_entries",
         "foreign_column": "id",
         "constraint_name": "club_sponsor_deal_payments_income_entry_id_fkey"
+      },
+      {
+        "table_name": "club_sponsor_deal_payments",
+        "column_name": "online_payment_id",
+        "foreign_table": "online_payments",
+        "foreign_column": "id",
+        "constraint_name": "club_sponsor_deal_payments_online_payment_id_fkey"
       },
       {
         "table_name": "club_sponsor_deal_payments",
@@ -92278,6 +93505,69 @@
         "foreign_table": null,
         "foreign_column": null,
         "constraint_name": "club_sponsor_deal_payments_voided_by_fkey"
+      },
+      {
+        "table_name": "club_sponsor_deal_refunds",
+        "column_name": "created_by",
+        "foreign_table": null,
+        "foreign_column": null,
+        "constraint_name": "club_sponsor_deal_refunds_created_by_fkey"
+      },
+      {
+        "table_name": "club_sponsor_deal_refunds",
+        "column_name": "deal_id",
+        "foreign_table": "club_sponsor_deals",
+        "foreign_column": "id",
+        "constraint_name": "club_sponsor_deal_refunds_deal_id_fkey"
+      },
+      {
+        "table_name": "club_sponsor_deal_refunds",
+        "column_name": "fee_refund_entry_id",
+        "foreign_table": "accounting_entries",
+        "foreign_column": "id",
+        "constraint_name": "club_sponsor_deal_refunds_fee_refund_entry_id_fkey"
+      },
+      {
+        "table_name": "club_sponsor_deal_refunds",
+        "column_name": "finished_by",
+        "foreign_table": null,
+        "foreign_column": null,
+        "constraint_name": "club_sponsor_deal_refunds_finished_by_fkey"
+      },
+      {
+        "table_name": "club_sponsor_deal_refunds",
+        "column_name": "income_entry_id",
+        "foreign_table": "accounting_entries",
+        "foreign_column": "id",
+        "constraint_name": "club_sponsor_deal_refunds_income_entry_id_fkey"
+      },
+      {
+        "table_name": "club_sponsor_deal_refunds",
+        "column_name": "online_payment_id",
+        "foreign_table": "online_payments",
+        "foreign_column": "id",
+        "constraint_name": "club_sponsor_deal_refunds_online_payment_id_fkey"
+      },
+      {
+        "table_name": "club_sponsor_deal_refunds",
+        "column_name": "org_id",
+        "foreign_table": "organizations",
+        "foreign_column": "id",
+        "constraint_name": "club_sponsor_deal_refunds_org_id_fkey"
+      },
+      {
+        "table_name": "club_sponsor_deal_refunds",
+        "column_name": "payment_id",
+        "foreign_table": "club_sponsor_deal_payments",
+        "foreign_column": "id",
+        "constraint_name": "club_sponsor_deal_refunds_payment_id_fkey"
+      },
+      {
+        "table_name": "club_sponsor_deal_refunds",
+        "column_name": "tax_entry_id",
+        "foreign_table": "accounting_entries",
+        "foreign_column": "id",
+        "constraint_name": "club_sponsor_deal_refunds_tax_entry_id_fkey"
       },
       {
         "table_name": "club_sponsor_deals",
@@ -93401,6 +94691,13 @@
       },
       {
         "table_name": "league_rainouts",
+        "column_name": "closure_id",
+        "foreign_table": "org_place_closures",
+        "foreign_column": "id",
+        "constraint_name": "league_rainouts_closure_id_fkey"
+      },
+      {
+        "table_name": "league_rainouts",
         "column_name": "created_by",
         "foreign_table": null,
         "foreign_column": null,
@@ -93412,6 +94709,13 @@
         "foreign_table": "organizations",
         "foreign_column": "id",
         "constraint_name": "league_rainouts_org_id_fkey"
+      },
+      {
+        "table_name": "league_rainouts",
+        "column_name": "org_venue_id",
+        "foreign_table": "org_venues",
+        "foreign_column": "id",
+        "constraint_name": "league_rainouts_org_venue_id_fkey"
       },
       {
         "table_name": "league_rainouts",
@@ -93989,6 +95293,13 @@
       },
       {
         "table_name": "online_payments",
+        "column_name": "sponsor_deal_id",
+        "foreign_table": "club_sponsor_deals",
+        "foreign_column": "id",
+        "constraint_name": "online_payments_sponsor_deal_id_fkey"
+      },
+      {
+        "table_name": "online_payments",
         "column_name": "team_id",
         "foreign_table": "teams",
         "foreign_column": "id",
@@ -94380,6 +95691,41 @@
         "constraint_name": "org_person_reattachments_to_person_id_fkey"
       },
       {
+        "table_name": "org_place_closures",
+        "column_name": "closed_by",
+        "foreign_table": null,
+        "foreign_column": null,
+        "constraint_name": "org_place_closures_closed_by_fkey"
+      },
+      {
+        "table_name": "org_place_closures",
+        "column_name": "org_id",
+        "foreign_table": "organizations",
+        "foreign_column": "id",
+        "constraint_name": "org_place_closures_org_id_fkey"
+      },
+      {
+        "table_name": "org_place_closures",
+        "column_name": "org_venue_facility_id",
+        "foreign_table": "org_venue_facilities",
+        "foreign_column": "id",
+        "constraint_name": "org_place_closures_org_venue_facility_id_fkey"
+      },
+      {
+        "table_name": "org_place_closures",
+        "column_name": "org_venue_id",
+        "foreign_table": "org_venues",
+        "foreign_column": "id",
+        "constraint_name": "org_place_closures_org_venue_id_fkey"
+      },
+      {
+        "table_name": "org_place_closures",
+        "column_name": "reopened_by",
+        "foreign_table": null,
+        "foreign_column": null,
+        "constraint_name": "org_place_closures_reopened_by_fkey"
+      },
+      {
         "table_name": "org_public_site_content",
         "column_name": "org_id",
         "foreign_table": "organizations",
@@ -94534,6 +95880,20 @@
         "constraint_name": "organization_members_user_id_fkey"
       },
       {
+        "table_name": "organization_previews",
+        "column_name": "claimed_by",
+        "foreign_table": null,
+        "foreign_column": null,
+        "constraint_name": "organization_previews_claimed_by_fkey"
+      },
+      {
+        "table_name": "organization_previews",
+        "column_name": "made_by",
+        "foreign_table": null,
+        "foreign_column": null,
+        "constraint_name": "organization_previews_made_by_fkey"
+      },
+      {
         "table_name": "platform_account_email_events",
         "column_name": "email_id",
         "foreign_table": "platform_account_emails",
@@ -94658,6 +96018,13 @@
         "foreign_table": "divisions",
         "foreign_column": "id",
         "constraint_name": "pools_age_group_id_fkey"
+      },
+      {
+        "table_name": "preview_claim_records",
+        "column_name": "user_id",
+        "foreign_table": null,
+        "foreign_column": null,
+        "constraint_name": "preview_claim_records_user_id_fkey"
       },
       {
         "table_name": "push_subscriptions",
@@ -95218,6 +96585,34 @@
         "foreign_table": "rep_team_measurable_types",
         "foreign_column": "team_id",
         "constraint_name": "rep_evaluation_not_assessed_type_team_fkey"
+      },
+      {
+        "table_name": "rep_event_closure_marks",
+        "column_name": "closure_id",
+        "foreign_table": "org_place_closures",
+        "foreign_column": "id",
+        "constraint_name": "rep_event_closure_marks_closure_id_fkey"
+      },
+      {
+        "table_name": "rep_event_closure_marks",
+        "column_name": "event_id",
+        "foreign_table": "rep_team_events",
+        "foreign_column": "id",
+        "constraint_name": "rep_event_closure_marks_event_id_fkey"
+      },
+      {
+        "table_name": "rep_event_closure_marks",
+        "column_name": "org_id",
+        "foreign_table": "organizations",
+        "foreign_column": "id",
+        "constraint_name": "rep_event_closure_marks_org_id_fkey"
+      },
+      {
+        "table_name": "rep_event_closure_marks",
+        "column_name": "team_id",
+        "foreign_table": "rep_teams",
+        "foreign_column": "id",
+        "constraint_name": "rep_event_closure_marks_team_id_fkey"
       },
       {
         "table_name": "rep_fundraiser_credit_plan",
@@ -98955,8 +100350,8 @@
       },
       {
         "tablename": "club_schedule_slots",
-        "indexname": "club_schedule_slots_family_place_start",
-        "indexdef": "CREATE UNIQUE INDEX club_schedule_slots_family_place_start ON public.club_schedule_slots USING btree (family_id, org_venue_id, COALESCE(facility_id, '00000000-0000-0000-0000-000000000000'::uuid), starts_at)"
+        "indexname": "club_schedule_slots_family_place_overlap",
+        "indexdef": "CREATE INDEX club_schedule_slots_family_place_overlap ON public.club_schedule_slots USING gist (family_id, org_venue_id, COALESCE(facility_id, '00000000-0000-0000-0000-000000000000'::uuid), section_range(section_mask), tstzrange(starts_at, ends_at, '[)'::text)) WHERE (removed_at IS NULL)"
       },
       {
         "tablename": "club_schedule_slots",
@@ -98977,6 +100372,11 @@
         "tablename": "club_schedule_slots",
         "indexname": "club_schedule_slots_pkey",
         "indexdef": "CREATE UNIQUE INDEX club_schedule_slots_pkey ON public.club_schedule_slots USING btree (id)"
+      },
+      {
+        "tablename": "club_schedule_slots",
+        "indexname": "club_schedule_slots_schedule_idx",
+        "indexdef": "CREATE INDEX club_schedule_slots_schedule_idx ON public.club_schedule_slots USING btree (schedule_id, org_venue_id, starts_at)"
       },
       {
         "tablename": "club_schedule_slots",
@@ -99065,8 +100465,43 @@
       },
       {
         "tablename": "club_sponsor_deal_payments",
+        "indexname": "club_sponsor_deal_payments_online_uniq",
+        "indexdef": "CREATE UNIQUE INDEX club_sponsor_deal_payments_online_uniq ON public.club_sponsor_deal_payments USING btree (online_payment_id) WHERE (online_payment_id IS NOT NULL)"
+      },
+      {
+        "tablename": "club_sponsor_deal_payments",
         "indexname": "club_sponsor_deal_payments_pkey",
         "indexdef": "CREATE UNIQUE INDEX club_sponsor_deal_payments_pkey ON public.club_sponsor_deal_payments USING btree (id)"
+      },
+      {
+        "tablename": "club_sponsor_deal_refunds",
+        "indexname": "club_sponsor_deal_refunds_credit_uniq",
+        "indexdef": "CREATE UNIQUE INDEX club_sponsor_deal_refunds_credit_uniq ON public.club_sponsor_deal_refunds USING btree (deal_id, credit_seq) WHERE (credit_seq IS NOT NULL)"
+      },
+      {
+        "tablename": "club_sponsor_deal_refunds",
+        "indexname": "club_sponsor_deal_refunds_deal_idx",
+        "indexdef": "CREATE INDEX club_sponsor_deal_refunds_deal_idx ON public.club_sponsor_deal_refunds USING btree (org_id, deal_id, created_at)"
+      },
+      {
+        "tablename": "club_sponsor_deal_refunds",
+        "indexname": "club_sponsor_deal_refunds_payment_idx",
+        "indexdef": "CREATE INDEX club_sponsor_deal_refunds_payment_idx ON public.club_sponsor_deal_refunds USING btree (payment_id)"
+      },
+      {
+        "tablename": "club_sponsor_deal_refunds",
+        "indexname": "club_sponsor_deal_refunds_pkey",
+        "indexdef": "CREATE UNIQUE INDEX club_sponsor_deal_refunds_pkey ON public.club_sponsor_deal_refunds USING btree (id)"
+      },
+      {
+        "tablename": "club_sponsor_deal_refunds",
+        "indexname": "club_sponsor_deal_refunds_stripe_uniq",
+        "indexdef": "CREATE UNIQUE INDEX club_sponsor_deal_refunds_stripe_uniq ON public.club_sponsor_deal_refunds USING btree (stripe_refund_id) WHERE (stripe_refund_id IS NOT NULL)"
+      },
+      {
+        "tablename": "club_sponsor_deal_refunds",
+        "indexname": "club_sponsor_deal_refunds_unfinished_idx",
+        "indexdef": "CREATE INDEX club_sponsor_deal_refunds_unfinished_idx ON public.club_sponsor_deal_refunds USING btree (org_id, deal_id) WHERE ((origin = 'stripe'::text) AND (status = 'succeeded'::text) AND (finished_at IS NULL) AND (NOT after_lost_dispute))"
       },
       {
         "tablename": "club_sponsor_deals",
@@ -99297,6 +100732,11 @@
         "tablename": "early_access_leads",
         "indexname": "idx_early_access_leads_status",
         "indexdef": "CREATE INDEX idx_early_access_leads_status ON public.early_access_leads USING btree (status, created_at DESC)"
+      },
+      {
+        "tablename": "email_address_stops",
+        "indexname": "email_address_stops_pkey",
+        "indexdef": "CREATE UNIQUE INDEX email_address_stops_pkey ON public.email_address_stops USING btree (email)"
       },
       {
         "tablename": "email_batches",
@@ -100240,6 +101680,16 @@
       },
       {
         "tablename": "league_rainouts",
+        "indexname": "league_rainouts_closure_day_uq",
+        "indexdef": "CREATE UNIQUE INDEX league_rainouts_closure_day_uq ON public.league_rainouts USING btree (closure_id, season_id, day) WHERE (closure_id IS NOT NULL)"
+      },
+      {
+        "tablename": "league_rainouts",
+        "indexname": "league_rainouts_closure_games_idx",
+        "indexdef": "CREATE INDEX league_rainouts_closure_games_idx ON public.league_rainouts USING gin (game_ids) WHERE (closure_id IS NOT NULL)"
+      },
+      {
+        "tablename": "league_rainouts",
         "indexname": "league_rainouts_org_idx",
         "indexdef": "CREATE INDEX league_rainouts_org_idx ON public.league_rainouts USING btree (org_id)"
       },
@@ -100252,6 +101702,11 @@
         "tablename": "league_rainouts",
         "indexname": "league_rainouts_season_idx",
         "indexdef": "CREATE INDEX league_rainouts_season_idx ON public.league_rainouts USING btree (season_id) WHERE (put_back_at IS NULL)"
+      },
+      {
+        "tablename": "league_rainouts",
+        "indexname": "league_rainouts_venue_idx",
+        "indexdef": "CREATE INDEX league_rainouts_venue_idx ON public.league_rainouts USING btree (org_venue_id) WHERE (org_venue_id IS NOT NULL)"
       },
       {
         "tablename": "league_registration_price_changes",
@@ -100541,7 +101996,7 @@
       {
         "tablename": "notifications",
         "indexname": "notifications_one_open_online_payments_notice",
-        "indexdef": "CREATE UNIQUE INDEX notifications_one_open_online_payments_notice ON public.notifications USING btree (org_id, user_id, event_type, COALESCE((metadata ->> 'onlineDisputeId'::text), (metadata ->> 'stripeAccountId'::text), (metadata ->> 'onlinePaymentItemId'::text), (metadata ->> 'onlinePaymentId'::text), (metadata ->> 'unassignedRefundId'::text), (metadata ->> 'enrolledRefundId'::text), (metadata ->> 'unmatchedStripeRefundId'::text), (metadata ->> 'termsVersion'::text), (metadata ->> 'endingFor'::text))) WHERE ((cleared_at IS NULL) AND (event_type = ANY (ARRAY['payouts_need_attention'::text, 'online_payment_not_recorded'::text, 'card_refund_failed'::text, 'card_refund_whose'::text, 'card_refund_still_enrolled'::text, 'card_refund_unmatched'::text, 'debit_returned'::text, 'debit_reversed'::text, 'card_disputed'::text, 'card_dispute_lost'::text, 'online_payment_over'::text, 'payments_terms_changed'::text, 'payments_ending'::text])))"
+        "indexdef": "CREATE UNIQUE INDEX notifications_one_open_online_payments_notice ON public.notifications USING btree (org_id, user_id, event_type, COALESCE((metadata ->> 'onlineDisputeId'::text), (metadata ->> 'stripeAccountId'::text), (metadata ->> 'onlinePaymentItemId'::text), (metadata ->> 'onlinePaymentId'::text), (metadata ->> 'unassignedRefundId'::text), (metadata ->> 'enrolledRefundId'::text), (metadata ->> 'unmatchedStripeRefundId'::text), (metadata ->> 'termsVersion'::text), (metadata ->> 'endingFor'::text), (metadata ->> 'sponsorRefundId'::text))) WHERE ((cleared_at IS NULL) AND (event_type = ANY (ARRAY['payouts_need_attention'::text, 'online_payment_not_recorded'::text, 'card_refund_failed'::text, 'card_refund_whose'::text, 'card_refund_still_enrolled'::text, 'card_refund_unmatched'::text, 'debit_returned'::text, 'debit_reversed'::text, 'card_disputed'::text, 'card_dispute_lost'::text, 'online_payment_over'::text, 'payments_terms_changed'::text, 'payments_ending'::text, 'sponsor_refund_to_finish'::text, 'sponsor_refund_twice'::text])))"
       },
       {
         "tablename": "notifications",
@@ -100551,7 +102006,7 @@
       {
         "tablename": "notifications",
         "indexname": "notifications_org_needs_attention_idx",
-        "indexdef": "CREATE INDEX notifications_org_needs_attention_idx ON public.notifications USING btree (org_id, event_type) WHERE ((cleared_at IS NULL) AND (event_type = ANY (ARRAY['assistant_coach_approval_requested'::text, 'card_dispute_lost'::text, 'card_disputed'::text, 'card_refund_failed'::text, 'card_refund_still_enrolled'::text, 'card_refund_unmatched'::text, 'card_refund_whose'::text, 'club_hand_back_asked'::text, 'club_hand_back_unasked'::text, 'club_payment_handed_off'::text, 'club_schedule_review'::text, 'debit_returned'::text, 'debit_reversed'::text, 'house_league_withdraw_request'::text, 'online_payment_not_recorded'::text, 'online_payment_over'::text, 'payment_failed'::text, 'payments_ending'::text, 'payments_terms_changed'::text, 'payouts_need_attention'::text, 'team_coach_payment_reminder'::text, 'team_money_sent'::text, 'team_move_requested'::text, 'team_no_show'::text, 'team_request_filed'::text, 'team_request_holding_payout'::text])))"
+        "indexdef": "CREATE INDEX notifications_org_needs_attention_idx ON public.notifications USING btree (org_id, event_type) WHERE ((cleared_at IS NULL) AND (event_type = ANY (ARRAY['assistant_coach_approval_requested'::text, 'card_dispute_lost'::text, 'card_disputed'::text, 'card_refund_failed'::text, 'card_refund_still_enrolled'::text, 'card_refund_unmatched'::text, 'card_refund_whose'::text, 'club_hand_back_asked'::text, 'club_hand_back_unasked'::text, 'club_payment_handed_off'::text, 'club_schedule_review'::text, 'debit_returned'::text, 'debit_reversed'::text, 'house_league_withdraw_request'::text, 'online_payment_not_recorded'::text, 'online_payment_over'::text, 'payment_failed'::text, 'payments_ending'::text, 'payments_terms_changed'::text, 'payouts_need_attention'::text, 'sponsor_refund_to_finish'::text, 'sponsor_refund_twice'::text, 'team_coach_payment_reminder'::text, 'team_money_sent'::text, 'team_move_requested'::text, 'team_no_show'::text, 'team_request_filed'::text, 'team_request_holding_payout'::text])))"
       },
       {
         "tablename": "notifications",
@@ -100561,7 +102016,7 @@
       {
         "tablename": "notifications",
         "indexname": "notifications_user_needs_attention_idx",
-        "indexdef": "CREATE INDEX notifications_user_needs_attention_idx ON public.notifications USING btree (user_id, event_type) WHERE ((cleared_at IS NULL) AND (event_type = ANY (ARRAY['assistant_coach_approval_requested'::text, 'card_dispute_lost'::text, 'card_disputed'::text, 'card_refund_failed'::text, 'card_refund_still_enrolled'::text, 'card_refund_unmatched'::text, 'card_refund_whose'::text, 'club_hand_back_asked'::text, 'club_hand_back_unasked'::text, 'club_payment_handed_off'::text, 'club_schedule_review'::text, 'debit_returned'::text, 'debit_reversed'::text, 'house_league_withdraw_request'::text, 'online_payment_not_recorded'::text, 'online_payment_over'::text, 'payment_failed'::text, 'payments_ending'::text, 'payments_terms_changed'::text, 'payouts_need_attention'::text, 'team_coach_payment_reminder'::text, 'team_money_sent'::text, 'team_move_requested'::text, 'team_no_show'::text, 'team_request_filed'::text, 'team_request_holding_payout'::text])))"
+        "indexdef": "CREATE INDEX notifications_user_needs_attention_idx ON public.notifications USING btree (user_id, event_type) WHERE ((cleared_at IS NULL) AND (event_type = ANY (ARRAY['assistant_coach_approval_requested'::text, 'card_dispute_lost'::text, 'card_disputed'::text, 'card_refund_failed'::text, 'card_refund_still_enrolled'::text, 'card_refund_unmatched'::text, 'card_refund_whose'::text, 'club_hand_back_asked'::text, 'club_hand_back_unasked'::text, 'club_payment_handed_off'::text, 'club_schedule_review'::text, 'debit_returned'::text, 'debit_reversed'::text, 'house_league_withdraw_request'::text, 'online_payment_not_recorded'::text, 'online_payment_over'::text, 'payment_failed'::text, 'payments_ending'::text, 'payments_terms_changed'::text, 'payouts_need_attention'::text, 'sponsor_refund_to_finish'::text, 'sponsor_refund_twice'::text, 'team_coach_payment_reminder'::text, 'team_money_sent'::text, 'team_move_requested'::text, 'team_no_show'::text, 'team_request_filed'::text, 'team_request_holding_payout'::text])))"
       },
       {
         "tablename": "notifications",
@@ -100747,6 +102202,11 @@
         "tablename": "online_payments",
         "indexname": "online_payments_intent_key",
         "indexdef": "CREATE UNIQUE INDEX online_payments_intent_key ON public.online_payments USING btree (stripe_payment_intent_id) WHERE (stripe_payment_intent_id IS NOT NULL)"
+      },
+      {
+        "tablename": "online_payments",
+        "indexname": "online_payments_one_open_per_deal",
+        "indexdef": "CREATE UNIQUE INDEX online_payments_one_open_per_deal ON public.online_payments USING btree (sponsor_deal_id) WHERE ((status = 'open'::text) AND (flow = 'sponsorship'::text) AND (sponsor_deal_id IS NOT NULL))"
       },
       {
         "tablename": "online_payments",
@@ -101239,6 +102699,31 @@
         "indexdef": "CREATE INDEX org_person_reattachments_to_idx ON public.org_person_reattachments USING btree (to_person_id)"
       },
       {
+        "tablename": "org_place_closures",
+        "indexname": "org_place_closures_org_id_idx",
+        "indexdef": "CREATE INDEX org_place_closures_org_id_idx ON public.org_place_closures USING btree (org_id)"
+      },
+      {
+        "tablename": "org_place_closures",
+        "indexname": "org_place_closures_pkey",
+        "indexdef": "CREATE UNIQUE INDEX org_place_closures_pkey ON public.org_place_closures USING btree (id)"
+      },
+      {
+        "tablename": "org_place_closures",
+        "indexname": "org_place_closures_press_once",
+        "indexdef": "CREATE UNIQUE INDEX org_place_closures_press_once ON public.org_place_closures USING btree (press_key, press_seq)"
+      },
+      {
+        "tablename": "org_place_closures",
+        "indexname": "org_place_closures_showing_idx",
+        "indexdef": "CREATE INDEX org_place_closures_showing_idx ON public.org_place_closures USING btree (org_id, ends_at) WHERE (reopened_at IS NULL)"
+      },
+      {
+        "tablename": "org_place_closures",
+        "indexname": "org_place_closures_venue_idx",
+        "indexdef": "CREATE INDEX org_place_closures_venue_idx ON public.org_place_closures USING btree (org_venue_id) WHERE (org_venue_id IS NOT NULL)"
+      },
+      {
         "tablename": "org_public_site_content",
         "indexname": "org_public_site_content_org_id_key",
         "indexdef": "CREATE UNIQUE INDEX org_public_site_content_org_id_key ON public.org_public_site_content USING btree (org_id)"
@@ -101271,7 +102756,7 @@
       {
         "tablename": "org_time_block_facilities",
         "indexname": "org_time_block_facilities_pkey",
-        "indexdef": "CREATE UNIQUE INDEX org_time_block_facilities_pkey ON public.org_time_block_facilities USING btree (block_id, facility_id)"
+        "indexdef": "CREATE UNIQUE INDEX org_time_block_facilities_pkey ON public.org_time_block_facilities USING btree (block_id, facility_id, section_mask)"
       },
       {
         "tablename": "org_time_blocks",
@@ -101387,6 +102872,16 @@
         "tablename": "organization_members",
         "indexname": "organization_members_pkey",
         "indexdef": "CREATE UNIQUE INDEX organization_members_pkey ON public.organization_members USING btree (id)"
+      },
+      {
+        "tablename": "organization_previews",
+        "indexname": "organization_previews_org_slug_idx",
+        "indexdef": "CREATE INDEX organization_previews_org_slug_idx ON public.organization_previews USING btree (lower(org_slug))"
+      },
+      {
+        "tablename": "organization_previews",
+        "indexname": "organization_previews_pkey",
+        "indexdef": "CREATE UNIQUE INDEX organization_previews_pkey ON public.organization_previews USING btree (org_id)"
       },
       {
         "tablename": "organizations",
@@ -101884,6 +103379,41 @@
         "indexdef": "CREATE UNIQUE INDEX pools_pkey ON public.pools USING btree (id)"
       },
       {
+        "tablename": "preview_claim_records",
+        "indexname": "preview_claim_records_org_idx",
+        "indexdef": "CREATE INDEX preview_claim_records_org_idx ON public.preview_claim_records USING btree (org_id, at DESC)"
+      },
+      {
+        "tablename": "preview_claim_records",
+        "indexname": "preview_claim_records_pkey",
+        "indexdef": "CREATE UNIQUE INDEX preview_claim_records_pkey ON public.preview_claim_records USING btree (id)"
+      },
+      {
+        "tablename": "preview_claim_tries",
+        "indexname": "preview_claim_tries_org_idx",
+        "indexdef": "CREATE INDEX preview_claim_tries_org_idx ON public.preview_claim_tries USING btree (org_id, tried_at DESC)"
+      },
+      {
+        "tablename": "preview_claim_tries",
+        "indexname": "preview_claim_tries_pkey",
+        "indexdef": "CREATE UNIQUE INDEX preview_claim_tries_pkey ON public.preview_claim_tries USING btree (id)"
+      },
+      {
+        "tablename": "preview_claim_tries",
+        "indexname": "preview_claim_tries_visitor_idx",
+        "indexdef": "CREATE INDEX preview_claim_tries_visitor_idx ON public.preview_claim_tries USING btree (visitor_key, tried_at DESC)"
+      },
+      {
+        "tablename": "preview_email_consents",
+        "indexname": "preview_email_consents_one_per_preview",
+        "indexdef": "CREATE UNIQUE INDEX preview_email_consents_one_per_preview ON public.preview_email_consents USING btree (org_id)"
+      },
+      {
+        "tablename": "preview_email_consents",
+        "indexname": "preview_email_consents_pkey",
+        "indexdef": "CREATE UNIQUE INDEX preview_email_consents_pkey ON public.preview_email_consents USING btree (id)"
+      },
+      {
         "tablename": "push_subscriptions",
         "indexname": "push_subscriptions_endpoint_key",
         "indexdef": "CREATE UNIQUE INDEX push_subscriptions_endpoint_key ON public.push_subscriptions USING btree (endpoint)"
@@ -102287,6 +103817,31 @@
         "tablename": "rep_evaluation_not_assessed",
         "indexname": "rep_evaluation_not_assessed_uniq",
         "indexdef": "CREATE UNIQUE INDEX rep_evaluation_not_assessed_uniq ON public.rep_evaluation_not_assessed USING btree (session_id, player_id, measurable_type_id)"
+      },
+      {
+        "tablename": "rep_event_closure_marks",
+        "indexname": "rep_event_closure_marks_event_idx",
+        "indexdef": "CREATE INDEX rep_event_closure_marks_event_idx ON public.rep_event_closure_marks USING btree (event_id)"
+      },
+      {
+        "tablename": "rep_event_closure_marks",
+        "indexname": "rep_event_closure_marks_once",
+        "indexdef": "CREATE UNIQUE INDEX rep_event_closure_marks_once ON public.rep_event_closure_marks USING btree (closure_id, event_id)"
+      },
+      {
+        "tablename": "rep_event_closure_marks",
+        "indexname": "rep_event_closure_marks_org_id_idx",
+        "indexdef": "CREATE INDEX rep_event_closure_marks_org_id_idx ON public.rep_event_closure_marks USING btree (org_id)"
+      },
+      {
+        "tablename": "rep_event_closure_marks",
+        "indexname": "rep_event_closure_marks_pkey",
+        "indexdef": "CREATE UNIQUE INDEX rep_event_closure_marks_pkey ON public.rep_event_closure_marks USING btree (id)"
+      },
+      {
+        "tablename": "rep_event_closure_marks",
+        "indexname": "rep_event_closure_marks_team_idx",
+        "indexdef": "CREATE INDEX rep_event_closure_marks_team_idx ON public.rep_event_closure_marks USING btree (team_id)"
       },
       {
         "tablename": "rep_fundraiser_credit_plan",
@@ -105841,6 +107396,12 @@
       {
         "kind": "CHECK",
         "table_name": "club_schedule_slots",
+        "detail": "club_schedule_slots_section_mask_valid",
+        "check_clause": "((section_mask = ANY (ARRAY[0, 1, 2, 3, 4, 8, 12])) AND ((section_mask = 0) OR (facility_id IS NOT NULL)))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "club_schedule_slots",
         "detail": "club_schedule_slots_window",
         "check_clause": "((ends_at > starts_at) AND (ends_at <= (starts_at + '24:00:00'::interval)))"
       },
@@ -105967,6 +107528,12 @@
       {
         "kind": "CHECK",
         "table_name": "club_sponsor_deal_payments",
+        "detail": "club_sponsor_deal_payments_card",
+        "check_clause": "(((online_payment_id IS NULL) AND (fee_paid_by IS NULL) AND (fee_amount IS NULL) AND (fee_charged = (0)::numeric) AND (fee_tax = (0)::numeric)) OR ((online_payment_id IS NOT NULL) AND (method = 'card'::text) AND (fee_paid_by = ANY (ARRAY['club'::text, 'sponsor'::text])) AND (fee_amount >= (0)::numeric) AND ((fee_paid_by = 'sponsor'::text) OR ((fee_charged = (0)::numeric) AND (fee_tax = (0)::numeric))) AND (fee_charged >= (0)::numeric) AND (fee_tax >= (0)::numeric) AND (fee_tax <= tax_part) AND ((fee_charged + fee_tax) < amount) AND ((card_last4 IS NULL) OR (card_last4 ~ '^[0-9]{4}$'::text))))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "club_sponsor_deal_payments",
         "detail": "club_sponsor_deal_payments_check",
         "check_clause": "((tax_part >= (0)::numeric) AND (tax_part <= amount))"
       },
@@ -106020,6 +107587,66 @@
       },
       {
         "kind": "CHECK",
+        "table_name": "club_sponsor_deal_refunds",
+        "detail": "club_sponsor_deal_refunds_amount_check",
+        "check_clause": "(amount > (0)::numeric)"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "club_sponsor_deal_refunds",
+        "detail": "club_sponsor_deal_refunds_check",
+        "check_clause": "((tax_part >= (0)::numeric) AND (tax_part <= amount))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "club_sponsor_deal_refunds",
+        "detail": "club_sponsor_deal_refunds_created_by_name_check",
+        "check_clause": "((char_length(btrim(created_by_name)) >= 1) AND (char_length(btrim(created_by_name)) <= 120))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "club_sponsor_deal_refunds",
+        "detail": "club_sponsor_deal_refunds_credit_seq_check",
+        "check_clause": "((credit_seq IS NULL) OR (credit_seq > 0))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "club_sponsor_deal_refunds",
+        "detail": "club_sponsor_deal_refunds_failure_reason_check",
+        "check_clause": "((failure_reason IS NULL) OR (char_length(failure_reason) <= 300))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "club_sponsor_deal_refunds",
+        "detail": "club_sponsor_deal_refunds_origin",
+        "check_clause": "((origin = ANY (ARRAY['app'::text, 'stripe'::text])) AND ((origin = 'stripe'::text) OR ((reason IS NOT NULL) AND (created_by_name IS NOT NULL) AND (stripe_created_at IS NULL) AND (fee_part = (0)::numeric) AND (fee_tax_part = (0)::numeric) AND (NOT after_lost_dispute) AND (finished_at IS NULL) AND (outcome IS NULL))) AND ((origin = 'app'::text) OR (stripe_refund_id IS NOT NULL)) AND ((finished_at IS NULL) = (finished_by_name IS NULL)) AND ((finished_at IS NULL) OR (reason IS NOT NULL)) AND ((outcome IS NULL) OR ((outcome = ANY (ARRAY['ended'::text, 'owing'::text])) AND (finished_at IS NOT NULL))) AND ((finished_by_name IS NULL) OR ((char_length(btrim(finished_by_name)) >= 1) AND (char_length(btrim(finished_by_name)) <= 120))) AND ((stripe_reason IS NULL) OR (char_length(stripe_reason) <= 60)) AND (fee_part >= (0)::numeric) AND (fee_tax_part >= (0)::numeric) AND (fee_tax_part <= fee_part) AND (fee_part <= amount) AND (fee_tax_part <= tax_part) AND ((credit_on IS NULL) OR (credit_seq IS NOT NULL)))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "club_sponsor_deal_refunds",
+        "detail": "club_sponsor_deal_refunds_reason_check",
+        "check_clause": "((char_length(btrim(reason)) >= 1) AND (char_length(btrim(reason)) <= 300))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "club_sponsor_deal_refunds",
+        "detail": "club_sponsor_deal_refunds_status_check",
+        "check_clause": "(status = ANY (ARRAY['pending'::text, 'succeeded'::text, 'failed'::text]))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "club_sponsor_deal_refunds",
+        "detail": "club_sponsor_deal_refunds_succeeded",
+        "check_clause": "(((succeeded_at IS NULL) = (refunded_on IS NULL)) AND ((status <> 'succeeded'::text) OR (succeeded_at IS NOT NULL)) AND ((status <> 'failed'::text) OR (failed_at IS NOT NULL)))"
+      },
+      {
+        "kind": "RLS",
+        "table_name": "club_sponsor_deal_refunds",
+        "detail": "ENABLED",
+        "check_clause": null
+      },
+      {
+        "kind": "CHECK",
         "table_name": "club_sponsor_deals",
         "detail": "club_sponsor_deals_amount_check",
         "check_clause": "((amount >= (0)::numeric) AND (amount <= (1000000)::numeric))"
@@ -106029,6 +107656,12 @@
         "table_name": "club_sponsor_deals",
         "detail": "club_sponsor_deals_business_name_check",
         "check_clause": "((business_name IS NULL) OR ((char_length(btrim(business_name)) >= 1) AND (char_length(btrim(business_name)) <= 80)))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "club_sponsor_deals",
+        "detail": "club_sponsor_deals_card_fee",
+        "check_clause": "(((card_fee IS NULL) OR ((card_fee > (0)::numeric) AND (invoice_seq IS NOT NULL) AND (pay_method = 'card'::text))) AND ((card_fee_tax IS NULL) OR ((card_fee IS NOT NULL) AND (card_fee_tax >= (0)::numeric))))"
       },
       {
         "kind": "CHECK",
@@ -106691,6 +108324,24 @@
         "check_clause": null
       },
       {
+        "kind": "CHECK",
+        "table_name": "email_address_stops",
+        "detail": "email_address_stops_email_check",
+        "check_clause": "((email = lower(btrim(email))) AND ((char_length(email) >= 3) AND (char_length(email) <= 320)) AND (POSITION(('@'::text) IN (email)) > 1))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "email_address_stops",
+        "detail": "email_address_stops_source_check",
+        "check_clause": "(source = 'preview_link'::text)"
+      },
+      {
+        "kind": "RLS",
+        "table_name": "email_address_stops",
+        "detail": "ENABLED",
+        "check_clause": null
+      },
+      {
         "kind": "RLS",
         "table_name": "email_batches",
         "detail": "ENABLED",
@@ -107317,6 +108968,12 @@
       {
         "kind": "CHECK",
         "table_name": "league_games",
+        "detail": "league_games_section_mask_valid",
+        "check_clause": "((section_mask = ANY (ARRAY[0, 1, 2, 3, 4, 8, 12])) AND ((section_mask = 0) OR (org_venue_facility_id IS NOT NULL)))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "league_games",
         "detail": "league_games_status_check",
         "check_clause": "(status = ANY (ARRAY['scheduled'::text, 'completed'::text, 'cancelled'::text, 'postponed'::text]))"
       },
@@ -107457,6 +109114,12 @@
         "table_name": "league_practice_time",
         "detail": "ENABLED",
         "check_clause": null
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "league_practices",
+        "detail": "league_practices_section_mask_valid",
+        "check_clause": "((section_mask = ANY (ARRAY[0, 1, 2, 3, 4, 8, 12])) AND ((section_mask = 0) OR (org_venue_facility_id IS NOT NULL)))"
       },
       {
         "kind": "CHECK",
@@ -108044,13 +109707,13 @@
         "kind": "CHECK",
         "table_name": "online_payments",
         "detail": "online_payments_flow_chk",
-        "check_clause": "(flow = ANY (ARRAY['tournament_team'::text, 'league_signup'::text]))"
+        "check_clause": "(flow = ANY (ARRAY['tournament_team'::text, 'league_signup'::text, 'sponsorship'::text]))"
       },
       {
         "kind": "CHECK",
         "table_name": "online_payments",
         "detail": "online_payments_flow_shape_chk",
-        "check_clause": "(((flow = 'tournament_team'::text) AND (season_id IS NULL) AND (signup_key IS NULL)) OR ((flow = 'league_signup'::text) AND (tournament_id IS NULL) AND (team_id IS NULL) AND (signup_key IS NOT NULL) AND ((char_length(signup_key) >= 1) AND (char_length(signup_key) <= 64)) AND (scope = 'full'::text)))"
+        "check_clause": "(((flow = 'tournament_team'::text) AND (season_id IS NULL) AND (signup_key IS NULL) AND (sponsor_deal_id IS NULL) AND (sponsor_fee_tax IS NULL) AND (sponsor_invoice IS NULL)) OR ((flow = 'league_signup'::text) AND (tournament_id IS NULL) AND (team_id IS NULL) AND (signup_key IS NOT NULL) AND ((char_length(signup_key) >= 1) AND (char_length(signup_key) <= 64)) AND (scope = 'full'::text) AND (sponsor_deal_id IS NULL) AND (sponsor_fee_tax IS NULL) AND (sponsor_invoice IS NULL)) OR ((flow = 'sponsorship'::text) AND (tournament_id IS NULL) AND (team_id IS NULL) AND (season_id IS NULL) AND (signup_key IS NULL) AND (scope = 'full'::text) AND (rail = 'card'::text) AND ((sponsor_fee_tax IS NULL) OR ((sponsor_fee_tax >= (0)::numeric) AND (fee_payer = 'family'::text))) AND ((sponsor_invoice IS NULL) OR (jsonb_typeof(sponsor_invoice) = 'object'::text))))"
       },
       {
         "kind": "CHECK",
@@ -108516,6 +110179,60 @@
       },
       {
         "kind": "CHECK",
+        "table_name": "org_place_closures",
+        "detail": "org_place_closures_all_has_no_name",
+        "check_clause": "((scope = 'all'::text) = (place_name IS NULL))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "org_place_closures",
+        "detail": "org_place_closures_days",
+        "check_clause": "((last_day >= first_day) AND ((last_day - first_day) <= 13))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "org_place_closures",
+        "detail": "org_place_closures_diamond_named",
+        "check_clause": "((scope = 'diamond'::text) = (facility_name IS NOT NULL))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "org_place_closures",
+        "detail": "org_place_closures_line_check",
+        "check_clause": "((line IS NULL) OR ((char_length(line) >= 1) AND (char_length(line) <= 120)))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "org_place_closures",
+        "detail": "org_place_closures_press_seq_check",
+        "check_clause": "((press_seq >= 1) AND (press_seq <= 10))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "org_place_closures",
+        "detail": "org_place_closures_scope_check",
+        "check_clause": "(scope = ANY (ARRAY['place'::text, 'diamond'::text, 'all'::text]))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "org_place_closures",
+        "detail": "org_place_closures_shows",
+        "check_clause": "(ends_at > shows_from)"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "org_place_closures",
+        "detail": "org_place_closures_verb_check",
+        "check_clause": "(verb = ANY (ARRAY['postponed'::text, 'cancelled'::text]))"
+      },
+      {
+        "kind": "RLS",
+        "table_name": "org_place_closures",
+        "detail": "ENABLED",
+        "check_clause": null
+      },
+      {
+        "kind": "CHECK",
         "table_name": "org_public_site_content",
         "detail": "org_public_site_content_contacts_cap",
         "check_clause": "((jsonb_typeof(contacts) = 'array'::text) AND (jsonb_array_length(contacts) <= 12))"
@@ -108585,6 +110302,12 @@
         "table_name": "org_site_notices",
         "detail": "ENABLED",
         "check_clause": null
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "org_time_block_facilities",
+        "detail": "org_time_block_facilities_section_mask_valid",
+        "check_clause": "(section_mask = ANY (ARRAY[0, 1, 2, 3, 4, 8, 12]))"
       },
       {
         "kind": "RLS",
@@ -108659,6 +110382,12 @@
         "check_clause": "(facility_type = ANY (ARRAY['diamond'::text, 'field'::text, 'court'::text, 'rink'::text, 'gym'::text, 'other'::text]))"
       },
       {
+        "kind": "CHECK",
+        "table_name": "org_venue_facilities",
+        "detail": "org_venue_facilities_sections_valid",
+        "check_clause": "(sections = ANY (ARRAY[1, 2, 4]))"
+      },
+      {
         "kind": "RLS",
         "table_name": "org_venue_facilities",
         "detail": "ENABLED",
@@ -108714,6 +110443,48 @@
       },
       {
         "kind": "CHECK",
+        "table_name": "organization_previews",
+        "detail": "organization_previews_claim_code_shape",
+        "check_clause": "((claim_code IS NULL) OR (claim_code ~ '^[2-9A-HJ-NP-Z]{6}$'::text))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "organization_previews",
+        "detail": "organization_previews_claimer_needs_claim",
+        "check_clause": "((claimed_by IS NULL) OR (claimed_at IS NOT NULL))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "organization_previews",
+        "detail": "organization_previews_code_only_while_open",
+        "check_clause": "((claim_code IS NULL) OR ((claimed_at IS NULL) AND (removed_at IS NULL)))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "organization_previews",
+        "detail": "organization_previews_logo_source_is_web",
+        "check_clause": "((logo_source_url ~* '^https?://'::text) AND (length(logo_source_url) <= 2000))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "organization_previews",
+        "detail": "organization_previews_province_code_shape",
+        "check_clause": "((province_code IS NULL) OR (province_code ~ '^[A-Z]{2}$'::text))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "organization_previews",
+        "detail": "organization_previews_removed_or_claimed",
+        "check_clause": "((removed_at IS NULL) OR (claimed_at IS NULL))"
+      },
+      {
+        "kind": "RLS",
+        "table_name": "organization_previews",
+        "detail": "ENABLED",
+        "check_clause": null
+      },
+      {
+        "kind": "CHECK",
         "table_name": "organizations",
         "detail": "organizations_account_kind_check",
         "check_clause": "(account_kind = ANY (ARRAY['organization'::text, 'team_workspace'::text]))"
@@ -108735,6 +110506,12 @@
         "table_name": "organizations",
         "detail": "organizations_fiscal_first_month_check",
         "check_clause": "((fiscal_first_month >= 1) AND (fiscal_first_month <= 12))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "organizations",
+        "detail": "organizations_preview_has_no_stripe",
+        "check_clause": "((NOT is_preview) OR ((stripe_customer_id IS NULL) AND (stripe_subscription_id IS NULL)))"
       },
       {
         "kind": "CHECK",
@@ -109631,6 +111408,72 @@
         "check_clause": null
       },
       {
+        "kind": "CHECK",
+        "table_name": "preview_claim_records",
+        "detail": "preview_claim_records_claim_shape",
+        "check_clause": "((kind <> 'claim'::text) OR ((user_email IS NOT NULL) AND ((char_length(btrim(user_email)) >= 1) AND (char_length(btrim(user_email)) <= 320)) AND (box_text IS NOT NULL) AND ((char_length(btrim(box_text)) >= 1) AND (char_length(btrim(box_text)) <= 1000)) AND (claim_code IS NOT NULL) AND (start_plan IS NOT NULL)))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "preview_claim_records",
+        "detail": "preview_claim_records_kind_check",
+        "check_clause": "(kind = ANY (ARRAY['claim'::text, 'undo'::text]))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "preview_claim_records",
+        "detail": "preview_claim_records_undo_shape",
+        "check_clause": "((kind <> 'undo'::text) OR ((box_text IS NULL) AND (claim_code IS NULL) AND (user_email IS NULL)))"
+      },
+      {
+        "kind": "RLS",
+        "table_name": "preview_claim_records",
+        "detail": "ENABLED",
+        "check_clause": null
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "preview_claim_tries",
+        "detail": "preview_claim_tries_visitor_key_check",
+        "check_clause": "((char_length(visitor_key) >= 1) AND (char_length(visitor_key) <= 128))"
+      },
+      {
+        "kind": "RLS",
+        "table_name": "preview_claim_tries",
+        "detail": "ENABLED",
+        "check_clause": null
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "preview_email_consents",
+        "detail": "preview_email_consents_email_check",
+        "check_clause": "((email = lower(btrim(email))) AND ((char_length(email) >= 3) AND (char_length(email) <= 320)) AND (POSITION(('@'::text) IN (email)) > 1))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "preview_email_consents",
+        "detail": "preview_email_consents_given_how_check",
+        "check_clause": "(given_how = 'in_person'::text)"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "preview_email_consents",
+        "detail": "preview_email_consents_org_name_check",
+        "check_clause": "((char_length(btrim(org_name)) >= 1) AND (char_length(btrim(org_name)) <= 200))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "preview_email_consents",
+        "detail": "preview_email_consents_role_check",
+        "check_clause": "(role = ANY (ARRAY['president'::text, 'vice_president'::text, 'secretary'::text, 'treasurer'::text, 'registrar'::text, 'board_member'::text]))"
+      },
+      {
+        "kind": "RLS",
+        "table_name": "preview_email_consents",
+        "detail": "ENABLED",
+        "check_clause": null
+      },
+      {
         "kind": "RLS",
         "table_name": "push_subscriptions",
         "detail": "ENABLED",
@@ -109951,6 +111794,12 @@
       {
         "kind": "RLS",
         "table_name": "rep_evaluation_not_assessed",
+        "detail": "ENABLED",
+        "check_clause": null
+      },
+      {
+        "kind": "RLS",
+        "table_name": "rep_event_closure_marks",
         "detail": "ENABLED",
         "check_clause": null
       },
@@ -110673,6 +112522,12 @@
         "table_name": "rep_team_events",
         "detail": "rep_team_events_scrimmage_is_a_game_check",
         "check_clause": "((NOT is_scrimmage) OR (event_type = 'league_game'::text))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "rep_team_events",
+        "detail": "rep_team_events_section_mask_valid",
+        "check_clause": "((section_mask = ANY (ARRAY[0, 1, 2, 3, 4, 8, 12])) AND ((section_mask = 0) OR (org_venue_facility_id IS NOT NULL)))"
       },
       {
         "kind": "CHECK",

@@ -2461,7 +2461,7 @@
   },
   {
     "table_name": "club_sponsor_deal_refunds",
-    "constraint_name": "club_sponsor_deal_refunds_fee_entry_id_fkey",
+    "constraint_name": "club_sponsor_deal_refunds_fee_refund_entry_id_fkey",
     "constraint_type": "FOREIGN KEY",
     "column_name": "fee_refund_entry_id",
     "foreign_table": "accounting_entries",
