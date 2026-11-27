@@ -35,10 +35,12 @@ export interface RecordErrorFlags {
   status?: string;
 }
 
+/** What an alert email says. The error's MESSAGE is deliberately not here (/legal, owner 2026-11-27): the
+ *  email stays in our mailbox past the 30 days the Privacy Policy gives an error report's details. It is
+ *  read on the issue's page, which the email links to. */
 export interface CriticalAlertDetails {
   title: string;
   errorName: string;
-  message: string | null;
   route?: string;
   method?: string;
   orgSlug?: string | null;
@@ -121,7 +123,6 @@ function alertHtml(trigger: string, flags: RecordErrorFlags, d: CriticalAlertDet
         ${row('Error', d.errorName)}
         ${row('Route', d.route ? `${d.method ? `${d.method} ` : ''}${d.route}` : null)}
         ${row('Org', d.orgSlug)}
-        ${row('Message', d.message)}
         ${row('Request ID', d.requestId)}
       </table>
       <p style="margin-top:16px;">

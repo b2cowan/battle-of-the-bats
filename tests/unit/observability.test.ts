@@ -221,7 +221,7 @@ describe('maybeSendCriticalAlert (never rejects)', () => {
         { severity: 'critical', is_new: true, group_id: 'g1' },
         'server',
         'production',
-        { title: 't', errorName: 'E', message: 'm', route: '/api/billing/x' },
+        { title: 't', errorName: 'E', route: '/api/billing/x' },
       ),
     );
     resetAlertTokens();

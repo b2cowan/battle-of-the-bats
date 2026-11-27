@@ -165,8 +165,8 @@ photos. Each carries its own sentences with its own release.
 
 - **§4, §8 and §9, error reports (0.3).** Naming the signed-in account in §4 and narrowing §8's claim correct a text
   that is live today; judged minor under §13. A lawyer could say whether correcting an overstated protection needs
-  notice. Separately, the alert email we send ourselves on a serious error carries the error message and stays in our own
-  mailbox past 30 days; `/legal` recommends dropping the message from that email.
+  notice. The alert email we send ourselves on a serious error carried the error message, which stays in our own mailbox past
+  30 days; the message was taken out of that email (owner 2026-11-27). Alerts sent before then are still in the mailbox.
 - **§5 and §9, the offer record and the stop list** are deleted with the organization. CASL puts the burden of proving
   consent on whoever claims it (s. 13) and a violation can be pursued up to three years after a designated person learns
   of it (s. 23(1)); a deleted club leaves neither record behind. The private right to sue was repealed before it came

@@ -175,7 +175,6 @@ export async function captureError(err: unknown, opts: CaptureOptions = {}): Pro
       await maybeSendCriticalAlert(data as RecordErrorFlags, source, env, {
         title,
         errorName: name,
-        message: safeMessage,
         route,
         method,
         orgSlug,
