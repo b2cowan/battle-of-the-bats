@@ -103,9 +103,10 @@ registered with ServiceOntario 2026-11-06** (renewal date still to be read off t
   exists and deleted with it (row delete checked on dev 2026-11-25, rolled back; files go with the org file sweep). Only
   never-attached form uploads are swept; a waiting logo is not. A shown logo stays publicly reachable. Error reports keep
   the page address and the IP for 30 days. A private link's secret and unsubscribe addresses are removed before storing
-  (Part B-1, built on dev 2026-11-26; production held none, counted that day). The grouped summary of each error (page
-  address, technical trace, latest context) is deleted only 90 days after it is resolved; open ones have no end date
-  (open item, see the draft's finding 1). Draft:
+  (Part B-1, built on dev 2026-11-26; production held none, counted that day). A report also names the signed-in account
+  and its email address. The grouped summary of each error keeps a short entry (type, page address, counts and dates)
+  until 90 days after it is resolved, with no end date while open; its latest technical trace and context are cleared 30
+  days after the error was last seen by migration 555 (2026-11-27; apply state in `MANUAL_PROD_STEPS.json`). Draft:
   `drafts/PRIVACY_POLICY_SPONSORSHIP_ADDENDUM.md`.
 - **Sign-up form clean-up is running on production** (`club_form_files_sweep` last ran `ok` 2026-11-25): health answers
   and file answers removed 90 days after the season is finished or 120 days after its last day (a reopened season waits);
@@ -208,7 +209,7 @@ registered with ServiceOntario 2026-11-06** (renewal date still to be read off t
   reversed in the club's books with no credit note and the deal back to owing, a win put back; there is no "Copy the facts" screen for a
   sponsorship. Until the 2026-11-23 build it was silent. Possibly stale because of the sponsor card payment: the published Payments Terms
   2026-11-24 §1/§2/§4/§6/§7/§9/§11 and Privacy 2026-11-24 §5/§6/§9/§12 (drafts: `drafts/PAYMENTS_TERMS_SPONSORSHIP_CARD_ADDENDUM.md`
-  0.4 and `drafts/PRIVACY_POLICY_SPONSORSHIP_ADDENDUM.md` 0.2, both awaiting owner approval 2026-11-26).
+  0.4 and `drafts/PRIVACY_POLICY_SPONSORSHIP_ADDENDUM.md` 0.3, both owner-approved 2026-11-27, not yet published).
 
 ## Consent and email mechanics that exist today
 - **Payments terms:** a checkbox an owner ticks in "Before you set up payouts" (and again in the card's "new payments terms"

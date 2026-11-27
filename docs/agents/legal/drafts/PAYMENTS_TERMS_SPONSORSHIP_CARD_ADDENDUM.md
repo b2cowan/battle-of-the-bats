@@ -3,7 +3,7 @@
 | | |
 |---|---|
 | **Version** | 0.4 (an addendum to the published Payments Terms version 2026-11-24; becomes a whole new frozen text, see "How this publishes") |
-| **Status** | draft, awaiting owner approval (0.3 was approved 2026-11-25, approval page, all five calls as recommended); not published. Not reviewed by a lawyer. The live Payments Terms page and every version constant are untouched. |
+| **Status** | owner-approved 2026-11-27 (owner: "I approve the 2 policy drafts"; 0.3 was approved 2026-11-25, approval page, all five calls as recommended); not published. Not reviewed by a lawyer. The live Payments Terms page and every version constant are untouched. |
 | **Effective date** | none yet (a new dated version: the day it is promoted or later; never reuse 2026-11-24) |
 | **Last reviewed** | 2026-11-26 (`/legal` and `/accounting` on the refund made in the club's Stripe account; §4, §6, §7, §9, §10 and §11 checked against the code on dev) |
 | **Seller** | the owner, trading as FieldLogicHQ, Ontario (`docs/agents/accounting/ACCOUNTING_FACTS.md`) |
@@ -90,7 +90,7 @@ Left as published. See "How this publishes" for what the new version asks of a c
 
 > NOTE — Owner material from here to the end; the preview and the page drop it.
 
-**Before it publishes, 0.4 needs the owner's approval, and it goes only with the release that carries the refund made in the club's Stripe account** (migration 542, on dev): §6, §4's card-fee bullet and §11's last sentence about a Stripe refund describe that build. Released without it, they would be untrue.
+**0.4 was approved by the owner 2026-11-27. It goes only with the release that carries the refund made in the club's Stripe account** (migration 542, on dev): §6, §4's card-fee bullet and §11's last sentence about a Stripe refund describe that build. Released without it, they would be untrue.
 
 **How this publishes (owner decision O-S1).** The product's Payments Terms are one frozen file per version (`lib/legal-documents/payments/<date>.md`, registered in `PAYMENTS_TERMS_VERSIONS` with its sha256; `PAYMENTS_TERMS_VERSION` in `lib/online-payment-words.ts` must equal the newest). The addendum is applied to a copy of the whole 2026-11-24 text and frozen as a new dated version; 2026-11-24 stays served at its own address (the card's "Read the terms" opens the version an owner agreed to). **Never edit the 2026-11-24 file** (the build fails).
 
