@@ -20,7 +20,7 @@
 import { hasCapability } from './roles.ts';
 import { canMoveClubMoney } from './member-access.ts';
 import type { EntitlementOrg } from './module-entitlements.ts';
-import { joinWithAnd, pluralize } from './utils.ts';
+import { joinWithAnd, pluralize, possessive } from './utils.ts';
 import type { FieldSections } from './field-parts.ts';
 import { FACILITY_TYPE_LABELS, type FacilityType, type OrgRole } from './types.ts';
 
@@ -92,7 +92,7 @@ export function splitLockedLine(fields: readonly { name: string; sections: Field
 
 /** The route's refusal when a stale page changes a locked split (the same sentence as the line). */
 export function splitLockedRefusal(name: string, sections: FieldSections): string {
-  return splitLockedLine([{ name, sections }]) ?? `${name}’s split can’t change while a part is booked.`;
+  return splitLockedLine([{ name, sections }]) ?? `${possessive(name)} split can’t change while a part is booked.`;
 }
 export interface LibraryVenue {
   id: string;
