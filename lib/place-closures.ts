@@ -261,7 +261,7 @@ export function toStripClosure(c: Omit<StripClosure, 'allDiamonds'>, diamondPark
 
 /** A whole park's row reads "all diamonds" only when it has facilities and every one is a diamond (the site and the
  *  window's preview ask the same). */
-export const isAllDiamonds = (kinds: readonly string[]) => kinds.length > 0 && kinds.every(k => k === 'diamond');
+export const isAllDiamonds = (kinds: readonly (string | null | undefined)[]) => kinds.length > 0 && kinds.every(k => k === 'diamond');
 
 // ── The cover rule (S1, owner 2026-11-26; Session B's Venue library and Reopen read the same) ──────────────────────
 
