@@ -110,7 +110,10 @@ export const GET = withObservability(async (req: Request) => {
       seasonName: season.name, sport: season.sport ?? null, games: p.games, practices: p.practices, teamName, divisionName,
       placeOf: (venueId, facilityId) => {
         const venue = places?.venues.get(venueId);
-        return venue ? { venue: venue.name, facility: facilityId ? places!.facilities.get(facilityId) ?? null : null, address: venue.address } : null;
+        return venue ? {
+          venue: venue.name, facility: facilityId ? places!.facilities.get(facilityId) ?? null : null, address: venue.address,
+          sections: facilityId ? places!.sections.get(facilityId) : undefined,
+        } : null;
       },
     }).bookings : [];
     return [p.seasonId, { season, teamName, divisionName, bookings }];

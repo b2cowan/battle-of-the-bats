@@ -38,7 +38,7 @@ import {
 import { clashLine, clashLineText } from './venue-clash-words';
 import { checkClubPermitsOrFlag, checkClubPermitsQuietly } from './permit-lookup';
 import { permitLine, type PermitOutside } from './permit-words';
-import { sectionsOf, type FieldSections } from './field-parts';
+import { fieldPartName, sectionsOf, type FieldSections } from './field-parts';
 import type { ClubVenueOption, FacilityType, OrgPlan, RepTeamEvent, RepTryoutSession } from './types';
 
 const DAY = 86_400_000;
@@ -185,6 +185,8 @@ interface LibraryNames {
   venue: Map<string, string>;
   facility: Map<string, string>;
   kinds: Map<string, FacilityType[]>;
+  /** How each split field splits (absent: whole): a booking's own part in the clash line (2E part 2). */
+  sections?: Map<string, FieldSections>;
 }
 
 type GameRow = {
@@ -238,7 +240,7 @@ type TryoutRow = Parameters<typeof tryoutSessionBooking>[0];
 type LeagueRow = Omit<Parameters<typeof leagueBooking>[0], 'kind'> & { season_id: string };
 type DiamondRow = { id: string; tournament_id: string; source_org_venue_id: string; tournaments: TournamentRef & { id: string } };
 type NameRow = { id: string; name: string };
-type FacilityNameRow = NameRow & { org_venue_id: string; facility_type: FacilityType };
+type FacilityNameRow = NameRow & { org_venue_id: string; facility_type: FacilityType; sections: number | null };
 
 /**
  * Every booking on one of the club's venues that could overlap [fromMs, toMs] — padded a day each side so a
@@ -288,10 +290,11 @@ async function readClubPool(orgId: string, fromMs: number, toMs: number): Promis
       .in('source_org_venue_id', venueIds)
       .eq('tournaments.org_id', orgId)
       .order('id').range(a, b)),
-    fetchAll<FacilityNameRow>((a, b) => supabaseAdmin.from('org_venue_facilities').select('id, name, org_venue_id, facility_type').eq('org_id', orgId).order('id').range(a, b)),
+    fetchAll<FacilityNameRow>((a, b) => supabaseAdmin.from('org_venue_facilities').select('id, name, org_venue_id, facility_type, sections').eq('org_id', orgId).order('id').range(a, b)),
   ]);
   for (const f of facilities) {
     names.facility.set(f.id, f.name);
+    if (sectionsOf(f.sections) !== 1) (names.sections ??= new Map()).set(f.id, sectionsOf(f.sections));
     const kinds = names.kinds.get(f.org_venue_id);
     if (kinds) kinds.push(f.facility_type);
     else names.kinds.set(f.org_venue_id, [f.facility_type]);
@@ -433,7 +436,9 @@ async function report(orgId: string, bookings: readonly (ClubBooking | null)[], 
     const named = placed.map(b => ({
       ...b,
       venueName: b.venueName ?? names.venue.get(b.venueId!) ?? null,
-      facilityName: b.facilityName ?? (b.facilityId ? names.facility.get(b.facilityId) ?? null : null),
+      // The booking's own part after a comma ("Diamond 1, side A"); the whole field reads as before.
+      facilityName: b.facilityName ?? (b.facilityId && names.facility.has(b.facilityId)
+        ? fieldPartName(names.facility.get(b.facilityId)!, b.sectionMask, names.sections?.get(b.facilityId) ?? 1, ', ') : null),
     }));
     for (const [key, f] of findClubClashesFor(named, pool)) {
       const b = named.find(x => x.key === key)!;

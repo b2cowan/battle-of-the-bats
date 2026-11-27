@@ -306,3 +306,13 @@ Session 2E's original items 2 and 3, above, unchanged: `/simplify` then `/review
 `/marketing` pass for Stage 2's words; `/docs` (the scheduler and house-league help, and the 2D notes folded into it);
 the 2D design check's P1/P2 (fix or ideas backlog, the owner's call); the board line; the Stage 2 walk at the owner's
 word; Stage 3's build prompt into the plan. Start by reading the plan's 2E part 1 and part 2 lines for what they changed.
+
+Brought up to date by 2E part 2 (2026-11-27):
+- **Both owner questions from Part 1's review are ruled and built** (A: the side follows the time; B: one team a side,
+  with mig 553). Nothing in Part 3 re-opens them; the walk tests both (a league admin adds a game on side-only game time and
+  it lands on side A, then B when A is taken; the club splits a two-teams-at-once practice slot and sends: one team a side).
+- **Production order for the whole stage:** 541 → 544 → 546 → 552 → 553 (`MANUAL_PROD_STEPS.json`), every one before the
+  promote that ships Stage 2; 545 (an index) any time. 553 is on dev (2026-11-27).
+- **/marketing has one open sentence of the owner's:** a practice Send the changes can't fit on a side reads the send's
+  existing "cancelled"; the ruling's option said "1 house-league practice needs a new time" (the plan's Words row).
+- The stage's whole diff for `/simplify` and `/review`: commits `e080b0750` (2A) through the 2E part 2 commit.

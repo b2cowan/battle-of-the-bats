@@ -560,6 +560,40 @@ Migration first. Drawn together with Stage 3.
         admin moving a side-A game to side-B time saves it still labelled side A (or meets a clash on side A while side B
         is free); (B) Send the changes can put two house-league practices on one side (a whole-field slot with two teams at
         once changed to sides: the pairing carries both onto one, nothing checks the one-team rule there).
+        **RULED 2026-11-27 (the 2E part 2 session), both as recommended:** (A) the side follows the time; (B) one per side,
+        extras unplaced, and (said out loud: B needs a database change) "build it now". Built in 2E part 2, below.
+  - [ ] **2E part 2 built 2026-11-27** (mig 553 **applied to dev 2026-11-27** at the owner's word — "apply 553 and commit" — the live function read back equal to the file; prod pending, ORDER after 546). **The two rulings first:**
+        (A) a hand-placed game takes the side of its division's game time it lands on — its own part when that time is there
+        and no other game holds it, else the first free part in the one order, else the first (the booking check then refuses
+        it by name); a move from side A onto side B's time is side B, a whole field picked onto side time is side A
+        (`placeGame` + `gameSlotsAt`; the edit route now places BEFORE the booking check, so the check reads the side it lands
+        on, and re-words the stored line, `onPart`); the window's live line asks the same (`divisionId` to the live check).
+        The pickers still offer whole fields (round 2 Ask 1 A holds). (B) Send the changes keeps one team a part: the first
+        practice keeps the side its use went to, the next takes a free part beside it (same field, start and end, house
+        league's since the last send, no use), which becomes the same division's practice time (`p_league.copies`, mig 553:
+        `club_schedule_apply_changes` re-made from the live dev body, equal to 546's, plus loop 1b; `/dba` 2026-11-27: apply
+        with changes, both taken — `on conflict do nothing`, the part proven the same field, start and end; a rolled-back
+        dry run compiles); one with no part left is cancelled, said with the send's existing "cancelled" words (no new
+        sentence; the option's "needs a new time" was working words — /marketing's call in Part 3).
+        **Every place word carries the part** ("Milton Sports Dome · Field 1, side A"; a comma, never a second dash or dot):
+        the season calendar's `where` (`part`; the admin schedule, the public schedule page, Find), the admin list's practice
+        night (side A and side B are two places, folded "Field 1, side A and side B"), the tray's and Schedule health's
+        place (a clash names the side only when both bookings are on it), both family emails (`placeTextOf`, now pure), the
+        club website's game lists, Find's next line, the cross-program clash line (shared with rep teams: the booking's own
+        part), the house-league coach page and the coach calendar (`placeNamer`, moved to a pure module). Left on the stored
+        line, which carries the part for every row written since 552 (no part row existed before it: 0 on dev, no house
+        league on prod): the CSV/XLSX/ICS exports, the practice window, the coach feed's practices and `readTeamPractices`.
+        The Generate games window already counts each side as its own slot. Tests: `house-league-parts` (+9: both rulings and
+        the migration's text), `house-league-parts-words` (8), `house-league-parts-coach-family` (8), each with the "no split
+        = identical" case; two guards brought along (the club website read's import list gains the pure `field-parts`; the
+        live check ties its new `divisionId` to the season, plan I01).
+        **`/review` 2026-11-27** (high-risk; no Critical or High; full `npm test` 0 failed). Fixed: a failed read of taken
+        game time no longer reads as every part free (and the live check takes only a uuid game id); the edit route never
+        writes a part beside the old words (refuses instead); the live check's refusal words name the side it chose.
+        **Accepted:** a league admin's move that is both off the division's time and a clash now says "outside the time"
+        first (both refused); the coach feed's practices, `readTeamPractices`, the exports and the two windows show the
+        stored line, true for every row since 552 (none before it); two different facility names that read the same fold
+        in a practice night's places.
 - [x] **2D design check, applied 2026-11-26** (owner: "I agree with your recommendations", both asks of
       `claude.ai/artifact/EVyadHYH81Ga9zMtaNNwyq` as recommended; source `SCHEDULE_PARTS_2D_DESIGN_CHECK.html`): the Used
       line is the Use band's one note, total first (`heldUnusedWords` over the whole list; the workbook one note too);
@@ -1131,7 +1165,10 @@ Migration only if Stage 4's record needs it.
       two-line part headings, the bill's "quarter-field slots" and "a quarter $20.00"
 - [ ] House league (round 2): the time row's "Field 1 in two sides, Field 3", the line "Field 1's sides hold one team
       each. Teams at once is for whole facilities.", "Teams at the same time" and its door, the rule sentences with
-      divisions, the notice's report lines, the R6 refusal — Practice time; a part in every place word (tab 8)
+      divisions, the notice's report lines, the R6 refusal — Practice time; a part in every place word (tab 8). Written in
+      2E part 2: a practice night's places "Milton Sports Dome · Field 1, side A and side B" (the admin list), Schedule
+      health's "Field 1, side A is booked twice …", and a practice Send the changes can't fit on a side reads the send's
+      existing "cancelled" (the owner's ruling B option said "1 house-league practice needs a new time": is that wanted?)
 - [ ] The Used line, ONE note under the Use band since the 2D design check (Ask 1 A, 2026-11-26): "Of the 52 h unused,
       15 h is held by schedules and no team has it yet: 9 h of open slots on {schedule} and 6 h of house-league time on
       {schedule} not given out." (one schedule: "… held by a schedule …: open slots on {schedule}."); the workbook's note

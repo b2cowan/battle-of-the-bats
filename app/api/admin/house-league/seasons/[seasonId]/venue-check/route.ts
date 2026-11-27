@@ -2,9 +2,10 @@ import { NextResponse } from 'next/server';
 import { getAuthContextWithRole } from '@/lib/api-auth';
 import { houseLeagueRefusal } from '@/lib/house-league-gate';
 import { getLeagueSeasonById } from '@/lib/db';
-import { resolveLeagueVenueSelection, checkLeagueBookings, resolveEndInstant } from '@/lib/league-venue';
+import { resolveLeagueVenueSelection, checkLeagueBookings, resolveEndInstant, onPart } from '@/lib/league-venue';
+import { isUuid } from '@/lib/utils';
 import { supabaseAdmin } from '@/lib/supabase-admin';
-import { teamsInSeason } from '@/lib/league-season-scope';
+import { divisionInSeason, teamsInSeason } from '@/lib/league-season-scope';
 import { withObservability } from '@/lib/observability';
 import { zonedWallClockToUtc } from '@/lib/timezone';
 import { bookingOfLeagueRow, checkClubClashes } from '@/lib/venue-clash-lookup';
@@ -13,6 +14,7 @@ import type { PermitOutside } from '@/lib/permit-words';
 import { generateOccurrences } from '@/lib/league-practice-series';
 import type { ClubBooking, ClashFinding } from '@/lib/venue-clash';
 import { maskProp } from '@/lib/field-parts';
+import { placeGame } from '@/lib/league-game-place';
 
 const MAX_OCCURRENCES = 60;
 
@@ -72,7 +74,7 @@ export const POST = withObservability(async (req: Request,
   const blank = { results: occurrences.map(o => ({ date: o.date, refusal: null as Refusal | null, crossProgram: [] as ClashFinding[], permit: null as PermitOutside | null })) };
   if (!occurrences.length || !body.orgVenueId) return NextResponse.json(blank);
 
-  const excludeGameIds = typeof body.excludeGameId === 'string' ? [body.excludeGameId] : [];
+  const excludeGameIds = isUuid(body.excludeGameId) ? [body.excludeGameId] : [];
   // A practice being edited (Stage 11b Part 4): its own dates are never another booking.
   const excludePracticeIds = Array.isArray(body.excludePracticeIds)
     ? (body.excludePracticeIds as unknown[]).filter((x): x is string => typeof x === 'string').slice(0, MAX_OCCURRENCES) : [];
@@ -91,8 +93,9 @@ export const POST = withObservability(async (req: Request,
     ...(editing ? { stored: editing } : {}),
   });
   if (!selection.ok || !selection.value.orgVenueId) return NextResponse.json(blank);
-  const { orgVenueId, orgVenueFacilityId, location } = selection.value;
-  const part = maskProp(selection.value.sectionMask);
+  const { orgVenueId, orgVenueFacilityId } = selection.value;
+  let { location } = selection.value;
+  let part = maskProp(selection.value.sectionMask);
 
   // The window's own label for the booking it is about to make (the refusal never names it, but the engine wants one).
   let label = kind === 'practice' ? 'This practice' : 'This game';
@@ -107,6 +110,17 @@ export const POST = withObservability(async (req: Request,
     const endsAt = startsAt && o.endTime ? resolveEndInstant(startsAt, o.date, o.endTime) : null;
     return { date: o.date, startsAt, endsAt };
   });
+
+  // A game takes the side of the club time it lands on (the save's `placeGame`, owner 2026-11-27): ask about that side, so
+  // the line never refuses side A when the save would put the game on a free side B.
+  // The division is tied to THIS season first (the league scope rule, plan I01).
+  if (kind === 'game' && slots.length === 1 && slots[0].startsAt && await divisionInSeason(seasonId, body.divisionId)) {
+    const placed = await placeGame({
+      orgId: ctx.org.id, seasonId, divisionId: body.divisionId as string, divisionName: '', scheduledAt: slots[0].startsAt,
+      orgVenueId, orgVenueFacilityId, sectionMask: selection.value.sectionMask, gameId: excludeGameIds[0], placeAnywhere: true,
+    });
+    if (!('refusal' in placed)) { part = maskProp(placed.sectionMask); location = onPart(selection.value, placed.sectionMask).location; }
+  }
 
   // 1. House league's own rule — per occurrence, so a series' refusal is on the date it falls on.
   const own = await checkLeagueBookings({

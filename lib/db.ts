@@ -2915,6 +2915,7 @@ export async function createLeagueGame(input: LeagueGameInput): Promise<LeagueGa
       ends_at:      input.endsAt ?? null,
       org_venue_id:          input.orgVenueId ?? null,
       org_venue_facility_id: input.orgVenueFacilityId ?? null,
+      section_mask: input.sectionMask ?? 0,
       location:     input.location ?? null,
       notes:        input.notes ?? null,
       slot_use_id:  input.slotUseId ?? null,

@@ -13,7 +13,7 @@ import { memberDisplayName } from './member-names';
 import { coachCopyWords, leagueCoachesToCopy, sendCoachCopies } from './families-email-coaches';
 import { asLastSent, heldChangesOf, sendHeldChanges, snapshotOf, type HeldGameOf, type SendHeldResult } from './league-game-changes-server';
 import { familiesFor, netChangeOf, publicState, type GameSnapshot, type HeldChange, type NetChange } from './league-game-changes';
-import { emailChangeLine, publishedLine, scheduleEmailWords, type PlaceText, type SchedulePart } from './league-schedule-email';
+import { emailChangeLine, placeTextOf, publishedLine, scheduleEmailWords, type PlaceText, type SchedulePart } from './league-schedule-email';
 import { SCHEDULE_EMAIL_WORDS } from './league-schedule-words';
 import { rainoutLinesFor } from './league-rainout-server';
 import type { EmailWords } from './club-schedule-words';
@@ -67,13 +67,7 @@ const schedulePath = (org: ScheduleMailOrg, season: ScheduleMailSeason) =>
 
 /** A game's place as families read it: "Maple Grove Park · Diamond 1", or what was typed. */
 async function placeReader(orgId: string): Promise<PlaceText> {
-  const places = await getOrgPlaceNames(orgId);
-  return s => {
-    const venue = s.venueId ? places.venues.get(s.venueId) : null;
-    if (!venue) return s.location?.trim() ?? '';
-    const facility = s.facilityId ? places.facilities.get(s.facilityId) : null;
-    return facility ? `${venue.name} · ${facility}` : venue.name;
-  };
+  return placeTextOf(await getOrgPlaceNames(orgId));
 }
 
 async function teamNames(divisionId: string): Promise<Map<string, string>> {

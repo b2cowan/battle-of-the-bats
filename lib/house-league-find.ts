@@ -102,7 +102,7 @@ function findWhen(iso: string): string {
 export function findNextLine(team: string, b: SeasonBooking | null): string | null {
   if (!b || !b.startMs) return null;
   const w = b.where;
-  const where = [w.venueName, w.facility].filter(Boolean).join(', ') || w.text || null;
+  const where = [w.venueName, w.facility, w.facility && w.part].filter(Boolean).join(', ') || w.text || null;
   return FIND_WORDS.next(team, findWhen(new Date(b.startMs).toISOString()), b.who, where);
 }
 

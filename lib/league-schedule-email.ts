@@ -4,6 +4,7 @@ import { familyClose } from './club-schedule-league-words';
 import type { EmailWords } from './club-schedule-words';
 import { placeDiffers, type GameSnapshot, type NetChange } from './league-game-changes';
 import { SCHEDULE_EMAIL_WORDS as W, whenAndPlace } from './league-schedule-words';
+import { fieldPartName, type FieldSections } from './field-parts';
 
 /**
  * ══════════════════════════════════════════════════════════════════════════════════════════════
@@ -24,6 +25,20 @@ export function dayAndClock(iso: string | null): { day: string; clock: string } 
 
 /** How a family reads a game's place: "Maple Grove Park · Diamond 1", or the typed place. */
 export type PlaceText = (s: GameSnapshot) => string;
+
+/** A game's place in a family email from the club's names: "Maple Grove Park · Diamond 1", its part after a comma
+ *  ("Field 1, side A", Club schedules Stage 2) from (mask, the field's split) at read time; the typed place otherwise. */
+export function placeTextOf(places: {
+  venues: ReadonlyMap<string, { name: string }>; facilities: ReadonlyMap<string, string>; sections: ReadonlyMap<string, FieldSections>;
+}): PlaceText {
+  return s => {
+    const venue = s.venueId ? places.venues.get(s.venueId) : null;
+    if (!venue) return s.location?.trim() ?? '';
+    const facility = s.facilityId ? places.facilities.get(s.facilityId) : null;
+    // dot-join-ok: the one place word, park · field (two items), as before parts; the part joins the field with a comma.
+    return facility ? `${venue.name} · ${fieldPartName(facility, s.sectionMask, places.sections.get(s.facilityId!) ?? 1, ', ')}` : venue.name;
+  };
+}
 
 /** A published game's line: "Tue, Jun 1 · 6:00 p.m. · Cardinals vs Rays · Maple Grove Park · Diamond 1". */
 export function publishedLine(s: GameSnapshot, title: string, placeOf: PlaceText): string {

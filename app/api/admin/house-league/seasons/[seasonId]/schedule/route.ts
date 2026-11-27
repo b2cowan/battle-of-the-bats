@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { getAuthContextWithRole } from '@/lib/api-auth';
 import { houseLeagueRefusal } from '@/lib/house-league-gate';
 import { getLeagueSeasonById, createLeagueGame } from '@/lib/db';
-import { resolveLeagueVenueSelection, checkLeagueBookings, resolveEndInstant } from '@/lib/league-venue';
+import { resolveLeagueVenueSelection, checkLeagueBookings, resolveEndInstant, onPart } from '@/lib/league-venue';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { withObservability } from '@/lib/observability';
 import { zonedWallClockToUtc } from '@/lib/timezone';
@@ -210,13 +210,14 @@ export const POST = withObservability(async (req: Request,
 
   // Venue comes from the org library; the display string is DERIVED server-side so
   // `location` can never disagree with the reference. Free text only when nothing picked.
-  const selection = await resolveLeagueVenueSelection({
+  const picked = await resolveLeagueVenueSelection({
     orgId: ctx!.org.id,
     orgVenueId: body.orgVenueId ?? null,
     orgVenueFacilityId: body.orgVenueFacilityId ?? null,
     locationText: body.location ?? null,
   });
-  if (!selection.ok) return NextResponse.json({ error: selection.error }, { status: 400 });
+  if (!picked.ok) return NextResponse.json({ error: picked.error }, { status: 400 });
+  let selection = picked.value;
 
   // ⚖ Where it may go (9d2b·B, `placeGame`): on the division's game time it links to it; a league admin on the club's
   // schedule places it nowhere else. A game saved with no date places nothing until it is given one. On a published
@@ -225,11 +226,13 @@ export const POST = withObservability(async (req: Request,
   if (scheduledAt) {
     const placed = await placeGame({
       orgId: ctx!.org.id, seasonId, divisionId, divisionName: (division.name as string) ?? '', scheduledAt,
-      orgVenueId: selection.value.orgVenueId, orgVenueFacilityId: selection.value.orgVenueFacilityId,
+      orgVenueId: selection.orgVenueId, orgVenueFacilityId: selection.orgVenueFacilityId,
       placeAnywhere: houseLeagueAccess(ctx!, ctx!.org, season).placeAnywhere,
     });
     if ('refusal' in placed) return NextResponse.json({ error: placed.refusal, code: 'outside_time' }, { status: 409 });
     slotUseId = placed.slotUseId;
+    // The side follows the time (owner 2026-11-27): a whole field picked onto side time is that side, checked and written so.
+    selection = onPart(selection, placed.sectionMask);
   }
 
   // One booking pool, org-wide: a practice on this surface blocks this game too.
@@ -239,9 +242,9 @@ export const POST = withObservability(async (req: Request,
     proposed: [{
       id: 'new-game', kind: 'game',
       startsAt: scheduledAt, endsAt,
-      orgVenueId: selection.value.orgVenueId,
-      orgVenueFacilityId: selection.value.orgVenueFacilityId,
-      location: selection.value.location,
+      orgVenueId: selection.orgVenueId,
+      orgVenueFacilityId: selection.orgVenueFacilityId, ...maskProp(selection.sectionMask),
+      location: selection.location,
       label: `${names.get(homeTeamId) ?? 'Home'} vs ${names.get(awayTeamId) ?? 'Away'}`,
     }],
   });
@@ -260,9 +263,10 @@ export const POST = withObservability(async (req: Request,
     awayTeamId,
     scheduledAt,
     endsAt,
-    orgVenueId:         selection.value.orgVenueId,
-    orgVenueFacilityId: selection.value.orgVenueFacilityId,
-    location: selection.value.location,
+    orgVenueId:         selection.orgVenueId,
+    orgVenueFacilityId: selection.orgVenueFacilityId,
+    sectionMask: selection.sectionMask,
+    location: selection.location,
     notes:    body.notes ?? null,
     slotUseId,
   });

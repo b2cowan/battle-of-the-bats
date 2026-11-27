@@ -158,7 +158,7 @@ export default function GameWindow({ game, score = null, booking, divisionId, di
   const { refused, line, checking, lineIsCurrent } = useLeagueLine({
     checkPath, sport, where: draft.where, venues, kind: 'game',
     occurrence: editing && placing ? { date: draft.date, startTime: draft.time, endTime: draft.endTime } : null,
-    excludeGameId: game?.id ?? null,
+    excludeGameId: game?.id ?? null, divisionId: game?.divisionId ?? divisionId,
     onSeePermit,
   });
   /** A re-date has to be given a date and a time: a game put back on with neither is still waiting for one. */

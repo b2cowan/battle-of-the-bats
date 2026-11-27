@@ -77,6 +77,7 @@ import LoadingState from '@/components/shared/LoadingState';
 import DateInput from '@/components/shared/DateInput';
 import TimeInput from '@/components/shared/TimeInput';
 import { endFollowingStart } from '@/lib/date-field';
+import { fieldPartName, sectionsOf } from '@/lib/field-parts';
 
 // ── Export definition ─────────────────────────────────────────────────────────
 
@@ -847,7 +848,8 @@ export default function SchedulePage() {
       placeOf: (venueId, facilityId) => {
         const v = venueById.get(venueId);
         if (!v) return null;
-        return { venue: v.name, facility: (facilityId && v.facilities?.find(f => f.id === facilityId)?.name) || null, address: v.address ?? null };
+        const f = facilityId ? v.facilities?.find(x => x.id === facilityId) : undefined;
+        return { venue: v.name, facility: f?.name || null, address: v.address ?? null, sections: f?.sections };
       },
       clashes,
       permits: new Map(Object.entries(gamePermits)),
@@ -1265,7 +1267,9 @@ export default function SchedulePage() {
   /** A place as a Changes to send row says it: the facility alone when it has one ("Diamond 2"), else the venue or the text. */
   const placeWords = (snap: GameSnapshot) => {
     const v = snap.venueId ? venues.find(x => x.id === snap.venueId) : null;
-    const fac = v && snap.facilityId ? v.facilities?.find(f => f.id === snap.facilityId)?.name : null;
+    const f = v && snap.facilityId ? v.facilities?.find(x => x.id === snap.facilityId) : undefined;
+    // Its part after a comma ("Diamond 2, side A"): side A → side B reads as two places.
+    const fac = f?.name ? fieldPartName(f.name, snap.sectionMask, sectionsOf(f.sections), ', ') : null;
     return fac || v?.name || snap.location || '';
   };
 
@@ -1649,10 +1653,11 @@ export default function SchedulePage() {
           eyebrow={season?.name ?? ''}
           team={id => teamName.get(id) ?? 'Team'}
           label={key => bookingOf(key)?.label ?? ''}
-          place={(venueId, facilityId) => {
+          place={(venueId, facilityId, sectionMask) => {
             const v = venues.find(x => x.id === venueId);
-            const f = facilityId ? v?.facilities?.find(x => x.id === facilityId)?.name : null;
-            return [v?.name ?? noun, f].filter(Boolean).join(' · ');
+            const f = facilityId ? v?.facilities?.find(x => x.id === facilityId) : undefined;
+            // dot-join-ok: the one place word, park · field (two items), as before parts; the part joins the field with a comma.
+            return [v?.name ?? noun, f?.name ? fieldPartName(f.name, sectionMask, sectionsOf(f.sections), ', ') : null].filter(Boolean).join(' · ');
           }}
           divisionName={id => divisions.find(d => d.id === id)?.name ?? ''}
           phone={phone}

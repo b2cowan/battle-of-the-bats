@@ -33,7 +33,7 @@
  * ══════════════════════════════════════════════════════════════════════════════════════════════
  */
 
-import { maskOf, maskSuffix } from './field-parts.ts';
+import { maskOf, maskRank, maskSuffix, partsOverlap, WHOLE } from './field-parts.ts';
 
 /** A slot of the schedule, removed ones included (they are where a moved use waits). `isNew`: house league came to hold it
  *  since the last send (the slot was made, or given to house league, since) — only such time is where a moved use can have
@@ -63,6 +63,9 @@ export interface LeagueSlotGame {
 /** The step's `p_league` (mig 392 §6, made whole by mig 393; `games` by mig 411). */
 export interface LeagueStepArg {
   uses: { from: string; to: string }[];
+  /** A part beside the one a use was carried to, made the same division's practice time for the practice that part's
+   *  one-team rule pushed off it (owner 2026-11-27; mig 553). Absent when there is none (every step before parts). */
+  copies?: { from: string; to: string }[];
   cancel: string[];
   updates: { practiceId: string; slotId: string; scheduledAt: string; endsAt: string; location: string }[];
   /** 9d-2b Part 5: games moved with their time; a published division's postponed, a draft's removed. */
@@ -122,18 +125,41 @@ export function planLeagueChanges(p: {
 
   const step: LeagueStepArg = { uses: [...carried].map(([from, to]) => ({ from, to })), cancel: [], updates: [], games: { move: [], postpone: [], remove: [] } };
   const changes: LeagueChange[] = [];
+  // ⚖ ONE TEAM A PART (round 2 Ask 5 A; owner 2026-11-27, the 2E part 1 review's question B). A whole-field slot holding
+  // two teams at once, carried onto a side, would put both on that side. The first keeps the side its use went to; the next
+  // takes a free part beside it (the same field, start and end, house league's since the last send, no use yet, ground no
+  // other practice here holds), which becomes the same division's practice time (`copies`); one with no part left is
+  // cancelled, as any practice that no longer fits. A whole field holds as many as its teams at once, as before.
+  const onPart = new Map<string, { startMs: number; endMs: number }[]>();
+  const holds = (slotId: string, startMs: number, endMs: number) =>
+    (onPart.get(slotId) ?? []).some(w => w.startMs < endMs && startMs < w.endMs);
+  const spareBeside = (to: LeagueSlot) => p.slots
+    .filter(s => s.id !== to.id && isHeld(s) && s.isNew && !useBySlot.has(s.id) && !taken.has(s.id)
+      && s.venueId === to.venueId && s.facilityId === to.facilityId && s.startMs === to.startMs && s.endMs === to.endMs
+      && maskOf(s.sectionMask) !== WHOLE && !partsOverlap(s.sectionMask, to.sectionMask))
+    .sort((a, b) => maskRank(a.sectionMask) - maskRank(b.sectionMask) || a.id.localeCompare(b.id));
+  // (The floor keeps one schedule's slots at one time off each other's ground, so the parts beside never overlap.)
   for (const pr of [...p.practices].sort((a, b) => a.teamId.localeCompare(b.teamId) || a.startMs - b.startMs)) {
     const from = slotById.get(pr.slotId);
     if (!from || pr.cancelled || pr.startMs <= p.nowMs) continue;
     if (!from.removed && from.houseLeague) continue;
     const toId = carried.get(from.id);
-    const to = toId ? slotById.get(toId) : undefined;
+    let to = toId ? slotById.get(toId) : undefined;
     const use = useBySlot.get(from.id);
     const shift = to ? to.startMs - from.startMs : 0;
     const fromEndMs = pr.endMs ?? from.endMs;
     const startMs = pr.startMs + shift, endMs = fromEndMs + shift;
-    const fits = !!to && !!use && use.kind === 'practices' && use.seasonId === pr.seasonId && use.divisionId === pr.divisionId
+    let fits = !!to && !!use && use.kind === 'practices' && use.seasonId === pr.seasonId && use.divisionId === pr.divisionId
       && startMs >= to.startMs && endMs <= to.endMs && endMs > startMs;
+    if (fits && maskOf(to!.sectionMask) !== WHOLE && holds(to!.id, startMs, endMs)) {
+      const beside = spareBeside(to!)[0];
+      if (beside) {
+        taken.add(beside.id);
+        (step.copies ??= []).push({ from: to!.id, to: beside.id });
+        to = beside;
+      } else fits = false;
+    }
+    if (fits && maskOf(to!.sectionMask) !== WHOLE) onPart.set(to!.id, [...(onPart.get(to!.id) ?? []), { startMs, endMs }]);
     if (fits) {
       step.updates.push({ practiceId: pr.id, slotId: to!.id, scheduledAt: new Date(startMs).toISOString(), endsAt: new Date(endMs).toISOString(), location: p.locationOf(to!.id) });
       // A slot replaced by one at the same time and place (shortened, or saved again): the practice's link follows the
@@ -236,6 +262,7 @@ export function leagueRows(changes: readonly LeagueChange[], faceOf: (startMs: n
 export function leagueFingerprint(step: LeagueStepArg): string {
   const parts = [
     ...step.uses.map(u => `u:${u.from}>${u.to}`),
+    ...(step.copies ?? []).map(u => `k:${u.from}>${u.to}`),
     ...step.cancel.map(id => `c:${id}`),
     ...step.updates.map(u => `m:${u.practiceId}>${u.slotId}@${u.scheduledAt}`),
     ...step.games.move.map(g => `gm:${g.gameId}>${g.slotId}@${g.scheduledAt}`),

@@ -44,7 +44,7 @@ import { formatStoredDate, mondayOfDay, orgDayKey, utcToZonedInputs } from './ti
 import { formatTime, pluralize } from './utils.ts';
 import { weekdayOf } from './permit-time.ts';
 import { dayWords } from './calendar-recipe.ts';
-import { maskOf } from './field-parts.ts';
+import { maskOf, maskProp, WHOLE } from './field-parts.ts';
 import type { ScheduleHealthTone } from './schedule-metrics.ts';
 import { SEASON_SCHEDULE_WORDS } from './league-season-calendar.ts';
 import type { LeagueGame, LeaguePractice } from './types.ts';
@@ -157,7 +157,9 @@ export type LeagueHealthIssue =
   /** A game a club permit's date off took (Club Tier 13c Session B, B3): the club no longer holds the park that day. Read
    *  from what is BOOKED at the park (the permit's one rule, server-side), never from what a schedule handed out. */
   | { kind: 'outside_permit'; gameId: string; homeTeamId: string; awayTeamId: string; day: string; startMs: number; venue: string | null; facility: string | null }
-  | { kind: 'clash'; keys: [string, string]; venueId: string; facilityId: string | null; day: string; startMs: number }
+  | { kind: 'clash'; keys: [string, string]; venueId: string; facilityId: string | null; day: string; startMs: number;
+      /** The part both are on ("Field 1, side A is booked twice"); absent when either holds the whole field (2E part 2). */
+      sectionMask?: number }
   | { kind: 'twice_in_a_day'; teamId: string; day: string }
   | { kind: 'byes_back_to_back'; teamId: string; weeks: [string, string] }
   /** A division's teams off by more than the tolerance. */
@@ -310,6 +312,7 @@ export function buildLeagueScheduleHealth(input: {
       if (slotA && slotA === slotB) continue;
       clashes.push({
         kind: 'clash', keys: [pageKey(b), pageKey(c.partner)], venueId: b.orgVenueId ?? '', facilityId: b.orgVenueFacilityId ?? null,
+        ...maskProp(maskOf(b.sectionMask) === maskOf(c.partner.sectionMask) ? b.sectionMask : WHOLE),
         day: orgDayKey(new Date(Math.max(Date.parse(b.startsAt!), Date.parse(c.partner.startsAt!))).toISOString()), startMs: Math.max(Date.parse(b.startsAt!), Date.parse(c.partner.startsAt!)),
       });
     }
@@ -473,7 +476,7 @@ export type LeagueIssueDoor = 'show' | 'showIt' | 'date' | 'teams' | 'none';
 export function leagueIssueWords(issue: LeagueHealthIssue, ctx: {
   team: (id: string) => string;
   label: (key: string) => string;
-  place: (venueId: string, facilityId: string | null) => string;
+  place: (venueId: string, facilityId: string | null, sectionMask?: number) => string;
   division: (id: string) => string;
 }): { text: string; door: LeagueIssueDoor; tone: 'error' | 'warning' | 'info' } {
   const day = (d: string) => formatStoredDate(d, { withYear: false });
@@ -500,7 +503,7 @@ export function leagueIssueWords(issue: LeagueHealthIssue, ctx: {
     }
     case 'clash': {
       return {
-        text: `${ctx.place(issue.venueId, issue.facilityId)} is booked twice on ${dayWords(issue.day)} at ${clockAt(issue.startMs)}: ${ctx.label(issue.keys[0])} and ${ctx.label(issue.keys[1])}.`,
+        text: `${ctx.place(issue.venueId, issue.facilityId, issue.sectionMask)} is booked twice on ${dayWords(issue.day)} at ${clockAt(issue.startMs)}: ${ctx.label(issue.keys[0])} and ${ctx.label(issue.keys[1])}.`,
         door: 'show', tone: 'error',
       };
     }

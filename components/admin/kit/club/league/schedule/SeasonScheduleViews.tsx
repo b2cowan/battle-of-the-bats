@@ -38,7 +38,7 @@ import { WEEKDAY_HEADS, dayOfMonth, dayWords, monthCells, monthWords, weekRangeW
 import { mondayOfDay } from '@/lib/timezone';
 import { clockOf, dayLong, timeWords, whereWords } from '@/lib/club-calendar-view';
 import { facilityWords } from '@/lib/venue-clash-words';
-import { pluralize } from '@/lib/utils';
+import { joinWithAnd, pluralize } from '@/lib/utils';
 import { SCHEDULE_PUBLIC_WORDS } from '@/lib/league-schedule-words';
 import {
   SEASON_PUBLIC_WORDS, SEASON_SCHEDULE_WORDS as W, foldNights, nightPlaces, seasonWeeks, todayLineAt,
@@ -55,13 +55,18 @@ const nightTime = (n: { startMs: number; endMs: number }) => timeWords({ startMs
 
 /** "Maple Grove Park · Diamond 1, Diamond 2" — a night's places, one venue named once. */
 function nightPlaceWords(night: { practices: readonly SeasonBooking[] }, sport: string | null): string {
-  const byVenue = new Map<string, string[]>();
+  // A field's parts fold onto it, after a comma: "Field 1, side A and side B" (Club schedules Stage 2, 2E part 2).
+  const byVenue = new Map<string, Map<string, string[]>>();
   for (const w of nightPlaces(night)) {
     const venue = w.venueName ?? w.text ?? '';
     const fac = w.venueName ? facilityWords(sport, w.facility) : '';
-    byVenue.set(venue, [...(byVenue.get(venue) ?? []), ...(fac ? [fac] : [])]);
+    const facs = byVenue.get(venue) ?? byVenue.set(venue, new Map()).get(venue)!;
+    if (fac) facs.set(fac, [...(facs.get(fac) ?? []), ...(w.part ? [w.part] : [])]);
   }
-  return [...byVenue].map(([venue, facs]) => (facs.length ? `${venue} · ${facs.join(', ')}` : venue)).filter(Boolean).join('; ');
+  const facWords = (facs: Map<string, string[]>) =>
+    [...facs].map(([fac, parts]) => (parts.length ? `${fac}, ${joinWithAnd([...parts].sort())}` : fac));
+  // dot-join-ok: the one place word, park · field (two items), as before parts; the part joins the field with a comma.
+  return [...byVenue].map(([venue, facs]) => (facs.size ? `${venue} · ${facWords(facs).join(', ')}` : venue)).filter(Boolean).join('; ');
 }
 
 /**

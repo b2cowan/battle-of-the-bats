@@ -57,6 +57,8 @@ describe('1 · the read imports exactly its list', () => {
       './game-status',
       './timezone',
       './types',
+      // Club schedules Stage 2, 2E part 2: a game's part in words (pure, imports nothing).
+      './field-parts',
     ]);
   });
   it('no dynamic import, no require, no re-export', () => {

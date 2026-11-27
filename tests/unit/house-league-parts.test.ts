@@ -3,9 +3,9 @@ import { describe, it } from 'node:test';
 import { readFileSync } from 'node:fs';
 import { planPractices, splitFieldsOf, PRACTICE_TIME_WORDS as W, type PracticeTimeSlot, type PracticeTimeTeam } from '../../lib/league-practice-time.ts';
 import { groupLeagueTime, partsShapes, placesWords, type LeagueTimeSlot } from '../../lib/league-time.ts';
-import { gameSlotLookup, type SeasonGameSlot } from '../../lib/league-season-calendar.ts';
+import { gameSlotLookup, gameSlotsAt, type SeasonGameSlot } from '../../lib/league-season-calendar.ts';
 import { asLastSent, placeDiffers, snapshotOf, type GameSnapshot, type HeldChange } from '../../lib/league-game-changes.ts';
-import { leagueRows, planLeagueChanges, type LeagueSlot, type LeagueSlotGame, type PracticeFace } from '../../lib/club-schedule-league-plan.ts';
+import { leagueFingerprint, leagueRows, planLeagueChanges, type LeagueSlot, type LeagueSlotGame, type PracticeFace } from '../../lib/club-schedule-league-plan.ts';
 import { leagueRowLine } from '../../lib/club-schedule-league-words.ts';
 import { faceOfTold, placeOfTold, predictHandOut, toldKey, snapshotOf as toldSnapshotOf, type ToldPractice } from '../../lib/league-practice-tell.ts';
 import { findLeagueBookingConflicts, keptPart, type LeagueBooking } from '../../lib/league-schedule-conflict.ts';
@@ -277,6 +277,84 @@ describe('Send the changes: a house-league game or practice moved to the other s
     const [row] = leagueRows(plan.changes, (_s, _e, id) => face(id), []);
     const line = leagueRowLine(row, f => ({ venue: 'Milton Sports Dome', facility: `Field 1, side ${f.sectionMask === SIDE_B ? 'B' : 'A'}` }));
     assert.match(line, /Field 1, side A → Field 1, side B/);
+  });
+});
+
+// ── 2E part 2's two rulings (owner 2026-11-27, the 2E part 1 review's questions A and B) ─────────────────────────────
+
+describe('Question B: a whole field holding two teams, turned into sides, keeps one team a side', () => {
+  const ms = (day: string, time: string) => Date.parse(zonedWallClockToUtc(day, time)!);
+  const weekOfMs = (t: number) => mondayOfDay(utcToZonedInputs(new Date(t).toISOString()).date);
+  const NOW = ms('2027-01-01', '09:00');
+  const slot = (id: string, o: Partial<LeagueSlot>): LeagueSlot =>
+    ({ id, startMs: ms('2027-01-10', '09:00'), endMs: ms('2027-01-10', '10:30'), venueId: DOME, facilityId: F1, removed: false, houseLeague: true, isNew: false, ...o });
+  const practice = (id: string, teamId: string) =>
+    ({ id, teamId, seasonId: 'w', divisionId: 'u9', slotId: 'whole', startMs: ms('2027-01-10', '09:00'), endMs: ms('2027-01-10', '10:30'), cancelled: false });
+  const uses = [{ slotId: 'whole', seasonId: 'w', divisionId: 'u9', kind: 'practices' as const }];
+  const run = (slots: LeagueSlot[], practices: ReturnType<typeof practice>[]) =>
+    planLeagueChanges({ slots, uses, practices, nowMs: NOW, weekOfMs, locationOf: id => `Milton Sports Dome — ${id}` });
+  const sides = [slot('whole', { removed: true }), slot('sa', { sectionMask: SIDE_A, isNew: true }), slot('sb', { sectionMask: SIDE_B, isNew: true })];
+
+  it('the first team on side A, the second on side B, which becomes the division\'s practice time', () => {
+    const plan = run(sides, [practice('p1', 't1'), practice('p2', 't2')]);
+    assert.deepEqual(plan.step.uses, [{ from: 'whole', to: 'sa' }]);
+    assert.deepEqual(plan.step.copies, [{ from: 'sa', to: 'sb' }]);
+    assert.deepEqual(plan.step.updates.map(u => [u.practiceId, u.slotId]), [['p1', 'sa'], ['p2', 'sb']]);
+    assert.deepEqual(plan.step.cancel, []);
+  });
+
+  it('a third team, with no side left, is cancelled (as any practice that no longer fits)', () => {
+    const plan = run(sides, [practice('p1', 't1'), practice('p2', 't2'), practice('p3', 't3')]);
+    assert.deepEqual(plan.step.updates.map(u => u.slotId), ['sa', 'sb']);
+    assert.deepEqual(plan.step.cancel, ['p3']);
+    assert.equal(plan.changes.find(c => c.practiceId === 'p3')?.kind, 'cancelled');
+  });
+
+  it('a part with a use of its own, or another field, is never taken for the second team', () => {
+    const owned = run([...sides.slice(0, 2), slot('sb', { sectionMask: SIDE_B, isNew: true, facilityId: F3 })], [practice('p1', 't1'), practice('p2', 't2')]);
+    assert.equal(owned.step.copies, undefined);
+    assert.deepEqual(owned.step.cancel, ['p2']);
+  });
+
+  it('the copy is in the fingerprint (a press must find the plan the window showed)', () => {
+    const two = run(sides, [practice('p1', 't1'), practice('p2', 't2')]);
+    const one = run(sides, [practice('p1', 't1')]);
+    assert.notEqual(leagueFingerprint(two.step), leagueFingerprint({ ...two.step, copies: undefined }));
+    assert.equal(one.step.copies, undefined);
+  });
+
+  it('no split field: two teams carried onto a whole field stay together, the step has no `copies` key', () => {
+    const plan = run([slot('whole', { removed: true }), slot('w2', { isNew: true })], [practice('p1', 't1'), practice('p2', 't2')]);
+    assert.equal('copies' in plan.step, false);
+    assert.deepEqual(plan.step.updates.map(u => u.slotId), ['w2', 'w2']);
+  });
+
+  it('mig 553 makes the copy a practices use, after step 1, only on time house league holds and nothing uses', () => {
+    const sql = readFileSync(new URL('../../supabase/migrations/553_a_part_beside_takes_the_next_team.sql', import.meta.url), 'utf8');
+    const loop = (key: string) => sql.indexOf(`jsonb_array_elements(coalesce(p_league->'${key}'`);
+    const copies = loop('copies');
+    assert.ok(copies > loop('uses') && copies < loop('cancel'));
+    assert.match(sql.slice(copies, copies + 1400), /insert into league_slot_uses[\s\S]*u\.kind = 'practices'/);
+    assert.match(sql.slice(copies, copies + 1400), /p\.program = 'house_league'/);
+  });
+});
+
+describe('Question A: a hand-placed game takes the side of the club time it lands on', () => {
+  const at = '2027-01-03T14:00:00.000Z';
+  const s = (slotId: string, sectionMask?: number, o: Partial<SeasonGameSlot> = {}): SeasonGameSlot =>
+    ({ slotId, divisionId: 'u9', startsAt: at, venueId: DOME, facilityId: F1, ...(sectionMask ? { sectionMask } : {}), scheduleId: 'sch', scheduleName: 'Winter', ...o });
+  const slots = [s('sb', SIDE_B), s('sa', SIDE_A), s('other-div', SIDE_A, { divisionId: 'u11' }), s('f3', undefined, { facilityId: F3 })];
+  const game = (sectionMask?: number) => ({ divisionId: 'u9', scheduledAt: at, orgVenueId: DOME, orgVenueFacilityId: F1, ...(sectionMask ? { sectionMask } : {}) });
+
+  it('a whole field picked onto side time: side A first, then side B (placeGame takes the first free)', () => {
+    assert.deepEqual(gameSlotsAt(game(), slots).map(x => x.slotId), ['sa', 'sb']);
+  });
+  it('a side-B game keeps side B first; another division\'s or field\'s time is never offered', () => {
+    assert.deepEqual(gameSlotsAt(game(SIDE_B), slots).map(x => x.slotId), ['sb', 'sa']);
+    assert.deepEqual(gameSlotsAt({ ...game(), scheduledAt: '2027-01-03T15:00:00.000Z' }, slots), []);
+  });
+  it('whole-field time: the one slot, as before parts', () => {
+    assert.deepEqual(gameSlotsAt({ ...game(), orgVenueFacilityId: F3 }, slots).map(x => x.slotId), ['f3']);
   });
 });
 

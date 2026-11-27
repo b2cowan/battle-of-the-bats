@@ -102,7 +102,10 @@ export default async function PublicSchedulePage({
     divisionName: new Map(divisions.map(d => [d.id, d.name])),
     placeOf: (venueId, facilityId) => {
       const venue = places.venues.get(venueId);
-      return venue ? { venue: venue.name, facility: facilityId ? places.facilities.get(facilityId) ?? null : null, address: venue.address } : null;
+      return venue ? {
+        venue: venue.name, facility: facilityId ? places.facilities.get(facilityId) ?? null : null, address: venue.address,
+        sections: facilityId ? places.sections.get(facilityId) : undefined,
+      } : null;
     },
   });
   const renderedAt = new Date();

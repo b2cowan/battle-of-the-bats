@@ -18,6 +18,8 @@ import { coachToldLine, tellStateOf, type CoachToldLine, type TeamTellState } fr
 import { coachScoreView, type CoachScoreRow } from './league-coach-scores';
 import { readScoreRecords } from './league-coach-scores-server';
 import type { LeagueGame } from './types';
+import { maskProp } from './field-parts';
+import { placeNamer } from './house-league-coach-place';
 
 /**
  * ══════════════════════════════════════════════════════════════════════════════════════════════
@@ -262,7 +264,7 @@ export async function readCoachTeamPage(
 async function readTeamScores(orgId: string, divisionId: string, teamId: string, userId: string, now: Date, live: boolean): Promise<CoachScoreRow[]> {
   const [gameRes, teamRes, seatRes, places] = await Promise.all([
     supabaseAdmin.from('league_games')
-      .select('id, home_team_id, away_team_id, scheduled_at, location, org_venue_id, org_venue_facility_id, status, home_score, away_score, updated_at')
+      .select('id, home_team_id, away_team_id, scheduled_at, location, org_venue_id, org_venue_facility_id, section_mask, status, home_score, away_score, updated_at')
       // The team id was checked as a UUID before any read (readCoachTeamPage), so the filter string is safe.
       .eq('org_id', orgId).eq('division_id', divisionId).or(`home_team_id.eq.${teamId},away_team_id.eq.${teamId}`)
       .in('status', ['scheduled', 'completed']).lte('scheduled_at', now.toISOString())
@@ -274,7 +276,7 @@ async function readTeamScores(orgId: string, divisionId: string, teamId: string,
   ]);
   for (const r of [gameRes, teamRes, seatRes]) if (r.error) throw new Error(`Couldn't read the team's scores: ${r.error.message}`);
   type Row = { id: string; home_team_id: string; away_team_id: string; scheduled_at: string; location: string | null; org_venue_id: string | null;
-    org_venue_facility_id: string | null; status: LeagueGame['status']; home_score: number | null; away_score: number | null; updated_at: string };
+    org_venue_facility_id: string | null; section_mask: number | null; status: LeagueGame['status']; home_score: number | null; away_score: number | null; updated_at: string };
   const rows = (gameRes.data ?? []) as Row[];
   const records = await readScoreRecords(orgId, rows.map(r => r.id));
   const teamName = new Map(((teamRes.data ?? []) as { id: string; name: string }[]).map(t => [t.id, t.name]));
@@ -288,22 +290,12 @@ async function readTeamScores(orgId: string, divisionId: string, teamId: string,
     const view = coachScoreView(game, records.get(r.id) ?? null, { userId, home }, names, nowMs);
     return {
       gameId: r.id, startsAt: r.scheduled_at, homeName: names.home, awayName: names.away,
-      place: placeOf({ orgVenueId: r.org_venue_id, orgVenueFacilityId: r.org_venue_facility_id, location: r.location }),
+      place: placeOf({ orgVenueId: r.org_venue_id, orgVenueFacilityId: r.org_venue_facility_id, location: r.location, ...maskProp(r.section_mask) }),
       home, homeScore: r.home_score, awayScore: r.away_score,
       view: live ? view : { ...view, door: null },
       seen: r.updated_at, enteredAs: home ? seatName.get(r.home_team_id) ?? null : null,
     };
   }).filter(r => r.view.state !== 'notStarted' && r.view.state !== 'calledOff');
-}
-
-/** "Maple Grove Park · Diamond 2", or the typed place: the club's venue names for a game's place. */
-function placeNamer(places: Awaited<ReturnType<typeof getOrgPlaceNames>>) {
-  return (g: Pick<GameFaceFields, 'orgVenueId' | 'orgVenueFacilityId' | 'location'>) => {
-    const venue = g.orgVenueId ? places.venues.get(g.orgVenueId)?.name : null;
-    if (!venue) return g.location || null;
-    const facility = g.orgVenueFacilityId ? places.facilities.get(g.orgVenueFacilityId) : null;
-    return facility ? `${venue} · ${facility}` : venue;
-  };
 }
 
 /**
@@ -356,7 +348,7 @@ async function readTeamGames(orgId: string, seasonId: string, divisionId: string
 async function readGamesAsSent(orgId: string, seasonId: string, divisionId: string, teamId: string) {
   const [gameRes, teamRes, places] = await Promise.all([
     supabaseAdmin.from('league_games')
-      .select('id, home_team_id, away_team_id, scheduled_at, ends_at, location, org_venue_id, org_venue_facility_id, status, moved_from, home_score, away_score')
+      .select('id, home_team_id, away_team_id, scheduled_at, ends_at, location, org_venue_id, org_venue_facility_id, section_mask, status, moved_from, home_score, away_score')
       // The team id was checked as a UUID before any read (readCoachTeamPage), so the filter string is safe.
       .eq('org_id', orgId).eq('division_id', divisionId).or(`home_team_id.eq.${teamId},away_team_id.eq.${teamId}`)
       .order('scheduled_at', { nullsFirst: false }).order('id').limit(500),
@@ -367,11 +359,11 @@ async function readGamesAsSent(orgId: string, seasonId: string, divisionId: stri
   // ⚠ The held rows AFTER the games (see publicSeasonGames): a change landing between the reads has its row by now.
   const held = await heldChangesOf(seasonId, divisionId);
   if (teamRes.error) throw new Error(`Couldn't read the division's teams: ${teamRes.error.message}`);
-  type Row = { id: string; home_team_id: string; away_team_id: string; status: LeagueGame['status']; home_score: number | null; away_score: number | null }
+  type Row = { id: string; home_team_id: string; away_team_id: string; status: LeagueGame['status']; home_score: number | null; away_score: number | null; section_mask: number | null }
     & { [K in 'scheduled_at' | 'ends_at' | 'location' | 'org_venue_id' | 'org_venue_facility_id' | 'moved_from']: string | null };
   const games = ((gameRes.data ?? []) as Row[]).map(r => ({
     id: r.id, homeTeamId: r.home_team_id, awayTeamId: r.away_team_id, scheduledAt: r.scheduled_at, endsAt: r.ends_at,
-    location: r.location, orgVenueId: r.org_venue_id, orgVenueFacilityId: r.org_venue_facility_id, status: r.status,
+    location: r.location, orgVenueId: r.org_venue_id, orgVenueFacilityId: r.org_venue_facility_id, ...maskProp(r.section_mask), status: r.status,
     movedFrom: r.moved_from, homeScore: r.home_score, awayScore: r.away_score,
   } satisfies GameFaceFields & Pick<LeagueGame, 'homeTeamId' | 'awayTeamId' | 'homeScore' | 'awayScore'>));
   const teamName = new Map(((teamRes.data ?? []) as { id: string; name: string }[]).map(t => [t.id, t.name]));

@@ -24,7 +24,7 @@
 import { mondayOfDay, orgDayKey } from './timezone.ts';
 import { DEFAULT_BOOKING_MINUTES } from './booking-length.ts';
 import { pluralize } from './utils.ts';
-import { maskSuffix } from './field-parts.ts';
+import { maskOf, maskRank, maskSuffix, partWords, sectionsOf } from './field-parts.ts';
 import { bookingWindow, findLeagueBookingConflicts, isBlockingConflict, type LeagueBooking } from './league-schedule-conflict.ts';
 import type { CalendarBooking, CalendarOther, CalendarWhere } from './club-calendar-view.ts';
 import type { PermitOutside } from './permit-words.ts';
@@ -43,8 +43,9 @@ export interface SeasonGameSlot {
   scheduleName: string;
 }
 
-/** A club venue's current words, by id. */
-export interface SeasonPlace { venue: string | null; facility: string | null; address: string | null }
+/** A club venue's current words, by id. `sections`: how the facility splits (absent: whole), so a booking's part reads in
+ *  words ("Field 1, side A", Club schedules Stage 2, 2E part 2). */
+export interface SeasonPlace { venue: string | null; facility: string | null; address: string | null; sections?: number | null }
 
 export interface SeasonCalendarInput {
   seasonName: string;
@@ -100,6 +101,19 @@ export function gameSlotOf(g: GameAt, slots: readonly SeasonGameSlot[]): SeasonG
   return gameSlotLookup(slots)(g);
 }
 
+/** Every one of a division's game-time slots at a game's start on its field, whatever their part: the game's own part first,
+ *  then the field's parts in their one order (`maskRank`). A hand-placed game takes the first free one (`placeGame`). */
+export function gameSlotsAt(g: GameAt, slots: readonly SeasonGameSlot[]): SeasonGameSlot[] {
+  if (!g.scheduledAt || !g.orgVenueId) return [];
+  const at = Date.parse(g.scheduledAt);
+  const own = maskOf(g.sectionMask);
+  return slots
+    .filter(s => s.divisionId === g.divisionId && s.venueId === g.orgVenueId && (s.facilityId ?? null) === (g.orgVenueFacilityId ?? null)
+      && Date.parse(s.startsAt) === at)
+    .sort((a, b) => Number(maskOf(b.sectionMask) === own) - Number(maskOf(a.sectionMask) === own)
+      || maskRank(a.sectionMask) - maskRank(b.sectionMask));
+}
+
 /** `gameSlotOf` for many games: the slots are keyed once, so each game is a lookup, not a scan that parses every slot's start.
  *  The part is in the key: a game on the whole field (a hand move: house league never splits a field) matches no side's
  *  slot, and side A never matches side B's. */
@@ -116,10 +130,12 @@ export function gameSlotLookup(slots: readonly SeasonGameSlot[]) {
 }
 
 export function seasonCalendar(input: SeasonCalendarInput): SeasonCalendar {
-  const where = (venueId: string | null, facilityId: string | null, location: string | null): CalendarWhere => {
+  const where = (venueId: string | null, facilityId: string | null, mask: number | undefined, location: string | null): CalendarWhere => {
     const club = venueId ? input.placeOf(venueId, facilityId) : null;
+    // The part from (mask, sections) at read time ("side A"); no `part` key on the whole field (as before parts).
+    const part = club?.facility ? partWords(mask, sectionsOf(club.sections)) : null;
     return club
-      ? { venueId, venueName: club.venue, facility: club.facility, address: club.address, text: null }
+      ? { venueId, venueName: club.venue, facility: club.facility, address: club.address, text: null, ...(part ? { part } : {}) }
       : { venueId: null, venueName: null, facility: null, address: null, text: location || null };
   };
   const span = (startIso: string, endIso: string | null) => {
@@ -147,7 +163,7 @@ export function seasonCalendar(input: SeasonCalendarInput): SeasonCalendar {
       ...(g.scheduledAt ? span(g.scheduledAt, g.endsAt) : { startMs: 0, endMs: 0, hasEnd: false, allDay: false }),
       who: `${team(g.homeTeamId)} vs ${team(g.awayTeamId)}`,
       what: input.divisionName.get(g.divisionId) ?? '',
-      where: where(g.orgVenueId, g.orgVenueFacilityId, g.location),
+      where: where(g.orgVenueId, g.orgVenueFacilityId, g.sectionMask, g.location),
       state: g.status === 'cancelled' ? 'cancelled' : g.status === 'postponed' ? 'postponed' : null,
       clubSchedule: slot ? { slotId: slot.slotId, scheduleId: slot.scheduleId, scheduleName: slot.scheduleName, canOpen: !!input.canOpenSchedules } : null,
       divisionId: g.divisionId,
@@ -173,7 +189,7 @@ export function seasonCalendar(input: SeasonCalendarInput): SeasonCalendar {
       // The club calendar's spelling ("13U AAA practice"), so a practice reads as one in every view and window title.
       who: SEASON_SCHEDULE_WORDS.practiceTitle(team(p.teamId)),
       what: 'Practice',
-      where: where(p.orgVenueId, p.orgVenueFacilityId, p.location),
+      where: where(p.orgVenueId, p.orgVenueFacilityId, p.sectionMask, p.location),
       state: p.status === 'cancelled' ? 'cancelled' : null,
       clubSchedule: p.clubScheduleSlotId && from
         ? { slotId: p.clubScheduleSlotId, scheduleId: from.scheduleId, scheduleName: from.scheduleName, canOpen: !!input.canOpenSchedules }
@@ -271,9 +287,10 @@ export function foldNights(bookings: readonly SeasonBooking[]): SeasonListRow[] 
   return rows;
 }
 
-/** A night's places: "Maple Grove Park · Diamonds 1, 2" is the view's to say; this is the distinct facilities in order. */
+/** A night's places: "Maple Grove Park · Diamonds 1, 2" is the view's to say; this is the distinct facilities (and parts:
+ *  side A and side B are two places) in order. */
 export const nightPlaces = (night: { practices: readonly SeasonBooking[] }) =>
-  [...new Map(night.practices.map(p => [`${p.where.venueId ?? ''}|${p.where.facility ?? p.where.text ?? ''}`, p.where])).values()];
+  [...new Map(night.practices.map(p => [`${p.where.venueId ?? ''}|${p.where.facility ?? p.where.text ?? ''}|${p.where.part ?? ''}`, p.where])).values()];
 
 /** A week as a list heads it: its Monday and what falls in it, by start. */
 export interface SeasonWeek<B> { monday: string; bookings: B[] }

@@ -61,13 +61,15 @@ export function useLeagueLine(opts: {
   /** …or the dates an edit of a series reaches (Stage 11b Part 4). */
   occurrences?: { date: string; startTime: string; endTime: string }[] | null;
   excludeGameId?: string | null;
+  /** A game's division: the check asks about the side of its game time the save would put it on (`placeGame`). */
+  divisionId?: string | null;
   /** The practices an edit moves: never a clash with themselves. */
   excludePracticeIds?: string[] | null;
   teamId?: string | null;
   /** Opens the permit the quiet line is about (the game window's "See the permit"); absent = no door. */
   onSeePermit?: (permitId: string) => void;
 }) {
-  const { checkPath, sport, where, venues, kind, occurrence, series, occurrences, excludeGameId, excludePracticeIds, teamId, onSeePermit } = opts;
+  const { checkPath, sport, where, venues, kind, occurrence, series, occurrences, excludeGameId, divisionId, excludePracticeIds, teamId, onSeePermit } = opts;
   const ready = where.source === 'club' && !!where.orgVenueId && (
     series ? !!(series.startDate && series.endDate && series.startTime && series.endTime)
       : occurrences ? occurrences.length > 0 && occurrences.every(o => o.date && o.startTime)
@@ -79,7 +81,7 @@ export function useLeagueLine(opts: {
       body: {
         kind, orgVenueId: where.orgVenueId, orgVenueFacilityId: where.orgVenueFacilityId,
         ...(series ? { series } : { occurrences: occurrences ?? [occurrence] }),
-        excludeGameId: excludeGameId ?? null, excludePracticeIds: excludePracticeIds ?? [], teamId: teamId ?? null,
+        excludeGameId: excludeGameId ?? null, ...(divisionId ? { divisionId } : {}), excludePracticeIds: excludePracticeIds ?? [], teamId: teamId ?? null,
       },
     } : null,
     readLeagueCheck,

@@ -47,7 +47,7 @@ export default function LeagueHealthWindow({
   team: (id: string) => string;
   /** A booking by the page's key ("league_game:{id}"), said: "Tigers vs Braves", "Tigers practice". */
   label: (key: string) => string;
-  place: (venueId: string, facilityId: string | null) => string;
+  place: (venueId: string, facilityId: string | null, sectionMask?: number) => string;
   divisionName: (id: string) => string;
   phone: boolean;
   /** Whoever runs the season: a postponed game's door is "Give it a new date"; a reader's is "Show it". */

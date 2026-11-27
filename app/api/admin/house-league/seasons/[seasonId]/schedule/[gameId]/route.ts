@@ -3,7 +3,7 @@ import { getAuthContextWithRole } from '@/lib/api-auth';
 import { houseLeagueRefusal } from '@/lib/house-league-gate';
 import { getLeagueSeasonById, leagueGameRow, updateLeagueGame } from '@/lib/db';
 import { clubWriteGame, staffName } from '@/lib/league-coach-scores-server';
-import { resolveLeagueVenueSelection, checkLeagueBookings, resolveEndInstant } from '@/lib/league-venue';
+import { resolveLeagueVenueSelection, checkLeagueBookings, resolveEndInstant, onPart, type LeagueVenueSelection } from '@/lib/league-venue';
 import { maskOf, maskProp } from '@/lib/field-parts';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { withObservability } from '@/lib/observability';
@@ -111,6 +111,7 @@ export const PATCH = withObservability(async (req: Request,
   // (clearing falls back to whatever text was typed, if any). When the key is absent the
   // stored reference stays; a bare `location` edit cannot desync it, because a stored
   // venue always re-derives the display string server-side.
+  let picked: LeagueVenueSelection | null = null;
   if ('orgVenueId' in body) {
     const selection = await resolveLeagueVenueSelection({
       orgId: ctx!.org.id,
@@ -121,6 +122,7 @@ export const PATCH = withObservability(async (req: Request,
       stored: game,
     });
     if (!selection.ok) return NextResponse.json({ error: selection.error }, { status: 400 });
+    picked = selection.value;
     patch.orgVenueId         = selection.value.orgVenueId;
     patch.orgVenueFacilityId = selection.value.orgVenueFacilityId;
     patch.location           = selection.value.location;
@@ -167,6 +169,36 @@ export const PATCH = withObservability(async (req: Request,
   const slotRevived =
     (game.status === 'cancelled' || game.status === 'postponed')
     && holdsSlot;
+  // ⚖ WHERE IT MAY GO (9d2b·B, `placeGame`): a game whose start or place moves, and that is on, lands on its division's
+  // game time and links to it — or, for a league admin on the club's schedule, is refused. A game left where it was
+  // (a score, a note, an end time, put back on) keeps its link, even one outside every use: it says nothing.
+  // A game coming back on (from postponed or cancelled) is placed again: moving it while it was off checked nothing.
+  // Placed BEFORE the booking check: the side follows the time (owner 2026-11-27), so the check reads the side it lands on.
+  const moved = slotRevived || !sameMs(eff.scheduledAt, game.scheduled_at)
+    || (eff.orgVenueId ?? null) !== (game.org_venue_id ?? null) || (eff.orgVenueFacilityId ?? null) !== (game.org_venue_facility_id ?? null)
+    || (patch.location !== undefined && (patch.location ?? null) !== (game.location ?? null));
+  if (moved && holdsSlot) {
+    const placed = await placeGame({
+      orgId: ctx!.org.id, seasonId, divisionId: game.division_id, divisionName: division.name,
+      scheduledAt: eff.scheduledAt, orgVenueId: eff.orgVenueId, orgVenueFacilityId: eff.orgVenueFacilityId,
+      ...maskProp(eff.sectionMask), gameId, placeAnywhere: houseLeagueAccess(ctx!, ctx!.org, season).placeAnywhere,
+    });
+    if ('refusal' in placed) return NextResponse.json({ error: placed.refusal, code: 'outside_time' }, { status: 409 });
+    patch.slotUseId = placed.slotUseId;
+    if (placed.sectionMask !== eff.sectionMask) {
+      // Another side's time: its part and its words (the stored line reads ", side B").
+      const named = picked ?? await resolveLeagueVenueSelection({
+        orgId: ctx!.org.id, orgVenueId: eff.orgVenueId, orgVenueFacilityId: eff.orgVenueFacilityId, stored: game,
+      }).then(r => (r.ok ? r.value : null));
+      // The part and its words go together, or not at all (/review 2026-11-27).
+      if (!named) return NextResponse.json({ error: 'Surface not found at that venue.' }, { status: 400 });
+      patch.location = eff.location = onPart(named, placed.sectionMask).location;
+      eff.sectionMask = placed.sectionMask;
+      if (placed.sectionMask !== maskOf(game.section_mask)) patch.sectionMask = placed.sectionMask;
+      else delete patch.sectionMask;
+    }
+  }
+
   let warnings: string[] = [];
   // Where or when changed (or the slot came back), and the game holds a slot: both checks run, the league's own
   // refusal before the write and the cross-program report after it.
@@ -194,23 +226,6 @@ export const PATCH = withObservability(async (req: Request,
       );
     }
     warnings = check.warnings.map(w => w.message);
-  }
-
-  // ⚖ WHERE IT MAY GO (9d2b·B, `placeGame`): a game whose start or place moves, and that is on, lands on its division's
-  // game time and links to it — or, for a league admin on the club's schedule, is refused. A game left where it was
-  // (a score, a note, an end time, put back on) keeps its link, even one outside every use: it says nothing.
-  // A game coming back on (from postponed or cancelled) is placed again: moving it while it was off checked nothing.
-  const moved = slotRevived || !sameMs(eff.scheduledAt, game.scheduled_at)
-    || (eff.orgVenueId ?? null) !== (game.org_venue_id ?? null) || (eff.orgVenueFacilityId ?? null) !== (game.org_venue_facility_id ?? null)
-    || (patch.location !== undefined && (patch.location ?? null) !== (game.location ?? null));
-  if (moved && holdsSlot) {
-    const placed = await placeGame({
-      orgId: ctx!.org.id, seasonId, divisionId: game.division_id, divisionName: division.name,
-      scheduledAt: eff.scheduledAt, orgVenueId: eff.orgVenueId, orgVenueFacilityId: eff.orgVenueFacilityId,
-      ...maskProp(eff.sectionMask), placeAnywhere: houseLeagueAccess(ctx!, ctx!.org, season).placeAnywhere,
-    });
-    if ('refusal' in placed) return NextResponse.json({ error: placed.refusal, code: 'outside_time' }, { status: 409 });
-    patch.slotUseId = placed.slotUseId;
   }
 
   // On a published division the database records the change as it writes it (mig 409's trigger): it waits in Changes to

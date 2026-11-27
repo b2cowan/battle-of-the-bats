@@ -436,6 +436,8 @@ export interface OrgVenueFacility {
   facilityType: FacilityType;
   displayOrder: number;
   notes?: string;
+  /** How the field splits, as the Venue library route returns it (1, 2 or 4; Club schedules Stage 2). */
+  sections?: number;
 }
 
 /**

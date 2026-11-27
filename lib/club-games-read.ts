@@ -7,6 +7,7 @@ import { gameDayCheckWindow, isoWindow, leagueGamePhase } from './club-game-live
 import { publicGameState } from './game-status';
 import { addCalendarDays, orgDayKey, tournamentToday, zonedWallClockToUtc } from './timezone';
 import type { Organization } from './types';
+import { fieldPartName } from './field-parts';
 
 /**
  * ══════════════════════════════════════════════════════════════════════════════════════════════
@@ -168,7 +169,9 @@ export async function readClubGames(
         home: s.teamName.get(g.homeTeamId) ?? 'A team',
         away: s.teamName.get(g.awayTeamId) ?? 'A team',
         homeAway: null,
-        place: venue ? (facility ? `${venue.name} · ${facility}` : venue.name) : (g.location?.trim() || null),
+        // The part after a comma ("Field 1, side A"), read from the field's split; the whole field as before.
+        // dot-join-ok: the one place word, park · field (two items), as before parts; the part joins the field with a comma.
+        place: venue ? (facility ? `${venue.name} · ${fieldPartName(facility, g.sectionMask, league!.places.sections.get(g.orgVenueFacilityId!) ?? 1, ', ')}` : venue.name) : (g.location?.trim() || null),
         address: phase === 'live' && !moved ? venue?.address?.trim() || null : null,
         // A game moved off this day and then called off says so (the day it left is kept on it for good).
         state: phase === 'cancelled' || phase === 'postponed' || !moved ? phase : 'moved' as const,

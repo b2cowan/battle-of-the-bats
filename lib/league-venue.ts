@@ -49,6 +49,15 @@ export interface LeagueVenueSelection {
   fieldSections: FieldSections;
   /** Derived "Venue — Facility" (", side A" after a kept part) when picked; the trimmed typed text otherwise. */
   location: string | null;
+  /** The picked venue's and field's names, so {@link onPart} can say another part. */
+  venueName?: string;
+  facilityName?: string | null;
+}
+
+/** The selection on another part of its field (a game placed on side time, `placeGame`): the mask and its words. */
+export function onPart(v: LeagueVenueSelection, sectionMask: number): LeagueVenueSelection {
+  if (sectionMask === v.sectionMask || !v.venueName || !v.facilityName) return v;
+  return { ...v, sectionMask, location: formatPartLocation(v.venueName, v.facilityName, sectionMask, v.fieldSections) };
 }
 
 export type LeagueVenueSelectionResult =
@@ -93,6 +102,8 @@ export async function resolveLeagueVenueSelection(args: {
       location: proof.facility
         ? formatPartLocation(proof.venue.name, proof.facility.name, sectionMask, proof.facility.sections)
         : proof.venue.name,
+      venueName: proof.venue.name,
+      facilityName: proof.facility?.name ?? null,
     },
   };
 }
