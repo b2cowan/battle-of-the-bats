@@ -31,12 +31,13 @@
  * practice the rows name, so a started slot is history and is never in a plan.
  */
 import { addCalendarDays, formatStoredDate, mondayOfDay, utcToZonedInputs } from './timezone.ts';
-import { pluralize, possessive } from './utils.ts';
+import { joinWithAnd, pluralize, possessive } from './utils.ts';
 import { weekdayOf } from './permit-time.ts';
 import { SCHEDULE_COACH_WORDS, SCHEDULE_WORDS } from './club-schedule-words.ts';
 import { SERIES_SCOPE_ROWS } from './coach-series-scope.ts';
 import type { LeaguePractice } from './types.ts';
 import type { CurrentPractice, ToldPractice } from './league-practice-tell.ts';
+import type { PlacePart } from './league-time.ts';
 
 /** One slot of a division's practice time, its club day and clock already worked out in the club's zone. */
 export interface PracticeTimeSlot {
@@ -49,11 +50,15 @@ export interface PracticeTimeSlot {
   end: string;
   /** The slot's start, an instant (ISO): a practice inside it is an offset from here. */
   startsAt: string;
-  /** The facility's name (the venue's when the slot is the venue itself), and its identity. */
+  /** The facility's name (the venue's when the slot is the venue itself), and its identity. A part of a split field is its
+   *  own place: "Field 1 side A", keyed with its mask. */
   place: string;
   placeKey: string;
   /** The venue's name, for the window's rows (the plan never reads it). */
   venue?: string;
+  /** A part of a split field (Club schedules Stage 2): it holds ONE team, whatever Teams at once says (round 2 Ask 5 A).
+   *  Absent on a whole field. */
+  field?: PlacePart;
 }
 
 export interface PracticeTimeTeam { id: string; name: string }
@@ -157,14 +162,19 @@ interface Part {
   weekday: number;
   startMin: number;
   endMin: number;
-  /** Practices that fit in one slot, and seats (practices × teams at once). */
+  /** Practices that fit in one slot, teams at once on it (1 on a part), and seats (practices × teams at once). */
   pieces: number;
+  atOnce: number;
   seats: number;
   /** Its slot in each week, by the week's Monday. */
   byWeek: Map<string, PracticeTimeSlot>;
 }
 
 const overlap = (a: Part, b: Part) => a.weekday === b.weekday && a.startMin < b.endMin && b.startMin < a.endMin;
+
+/** Teams at once on a slot: the setting on a whole facility, one on a side or a quarter (a part is never shared — round 1
+ *  Ask 6 A, round 2 Ask 5 A; the hand-out step refuses more, mig 552). */
+const atOnceOn = (slot: Pick<PracticeTimeSlot, 'field'>, s: PracticeSettings) => (slot.field ? 1 : s.teamsAtOnce);
 
 /** The division's parts, Monday first, then by clock and facility. */
 function partsOf(slots: readonly PracticeTimeSlot[], s: PracticeSettings): Part[] {
@@ -176,9 +186,9 @@ function partsOf(slots: readonly PracticeTimeSlot[], s: PracticeSettings): Part[
     const endMin = minutesOf(slot.end) <= startMin ? minutesOf(slot.end) + 24 * 60 : minutesOf(slot.end);
     const part = map.get(key) ?? {
       key, order: 0, weekday: slot.weekday, startMin, endMin,
-      pieces: Math.max(0, Math.floor((endMin - startMin) / s.practiceMinutes)), seats: 0, byWeek: new Map(),
+      pieces: Math.max(0, Math.floor((endMin - startMin) / s.practiceMinutes)), atOnce: atOnceOn(slot, s), seats: 0, byWeek: new Map(),
     };
-    part.seats = part.pieces * s.teamsAtOnce;
+    part.seats = part.pieces * part.atOnce;
     // One slot a week per part (a part is one weekday's clock on one facility); a duplicate keeps the first.
     const week = mondayOfDay(slot.day);
     if (!part.byWeek.has(week)) part.byWeek.set(week, slot);
@@ -213,6 +223,13 @@ function membersFor(parts: readonly Part[], teams: readonly PracticeTimeTeam[], 
     }
   }
   return members;
+}
+
+/** The split fields a division's practice time has parts of, once each, by name: the window's "hold one team" line. */
+export function splitFieldsOf(slots: readonly PracticeTimeSlot[]): { name: string; sections: number }[] {
+  const byId = new Map<string, { name: string; sections: number }>();
+  for (const s of slots) if (s.field && !byId.has(s.field.id)) byId.set(s.field.id, { name: s.field.name, sections: s.field.sections });
+  return [...byId.values()].sort((a, b) => byName(a.name, b.name));
 }
 
 /** THE PLAN: a division's practices over its practice time (the header says how). */
@@ -256,7 +273,7 @@ export function planPractices(p: {
 
   const rows: PlannedPractice[] = [];
   const place = (slot: PracticeTimeSlot, seat: number, teamId: string) => {
-    const from = Date.parse(slot.startsAt) + Math.floor(seat / s.teamsAtOnce) * s.practiceMinutes * MIN;
+    const from = Date.parse(slot.startsAt) + Math.floor(seat / atOnceOn(slot, s)) * s.practiceMinutes * MIN;
     rows.push({ slotId: slot.id, teamId, scheduledAt: new Date(from).toISOString(), endsAt: new Date(from + s.practiceMinutes * MIN).toISOString() });
   };
   for (const shape of shapes.values()) {
@@ -274,7 +291,7 @@ export function planPractices(p: {
       for (const part of shape.parts) {
         const m = plan.members.get(part.key) ?? [];
         // Room to spare uses the earliest seats; the teams move through them a practice time a week.
-        const step = m.length ? s.teamsAtOnce % m.length : 0;
+        const step = m.length ? part.atOnce % m.length : 0;
         m.forEach((teamId, i) => place(part.byWeek.get(week)!, mod(i + w * step, m.length), teamId));
       }
     }
@@ -282,7 +299,7 @@ export function planPractices(p: {
 
   const t = planShape(typical.parts);
   const practicesAWeek = t.short ? t.seats : t.perTeam * teams.length;
-  const turns = t.short || typical.parts.some(x => Math.ceil((t.members.get(x.key)?.length ?? 0) / s.teamsAtOnce) > 1);
+  const turns = t.short || typical.parts.some(x => Math.ceil((t.members.get(x.key)?.length ?? 0) / x.atOnce) > 1);
   return {
     rows, slotIds, seatsAWeek, perTeam: t.perTeam, practicesAWeek, openAWeek: seatsAWeek - practicesAWeek,
     goWithout: t.short ? teams.length - t.seats : 0, turns, tooShort,
@@ -309,6 +326,12 @@ export const PRACTICE_TIME_WORDS = {
   notRoomFor: (n: number) => `There isn’t time for ${n} a week.`,
   open: (n: number) => (n === 1 ? '1 slot stays open.' : `${n} slots stay open.`),
   turns: 'Teams take turns at the early and late times, week by week.',
+  /** [marketing] Club schedules Stage 2 (round 2 tab 6, Ask 5 A): under the three fields, only when the division's time
+   *  has a part — "Field 1’s sides hold one team each. Teams at once is for whole facilities." */
+  partsHoldOne: (fields: readonly { name: string; sections: number }[]) => {
+    const kinds = [...new Set(fields.map(f => (f.sections === 2 ? 'sides' : 'quarters')))].sort();
+    return `${joinWithAnd(fields.map(f => possessive(f.name)))} ${kinds.join(' and ')} hold one team each. Teams at once is for whole facilities.`;
+  },
   /** [marketing] the time is short: who goes without, and that it goes round. */
   shortLead: (fit: number, teams: number) => `There’s room for ${fit} of ${teams} teams each week.`,
   shortTurns: (without: number) => `The other ${pluralize(without, 'team')} take${without === 1 ? 's' : ''} turns going without, week by week.`,

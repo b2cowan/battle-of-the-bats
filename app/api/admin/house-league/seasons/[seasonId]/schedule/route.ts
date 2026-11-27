@@ -22,6 +22,7 @@ import { takenOnce } from '@/lib/permit-dates-off-view';
 import type { LeagueOutsidePermit } from '@/lib/league-schedule-health';
 import { hasOrgVenueLibrary } from '@/lib/plan-features';
 import { tournamentToday, isCalendarDate, mondayOfDay } from '@/lib/timezone';
+import { maskProp } from '@/lib/field-parts';
 
 function mapGame(row: any) {
   return {
@@ -34,6 +35,7 @@ function mapGame(row: any) {
     endsAt:      row.ends_at ?? null,
     orgVenueId:         row.org_venue_id ?? null,
     orgVenueFacilityId: row.org_venue_facility_id ?? null,
+    ...maskProp(row.section_mask),
     location:    row.location ?? null,
     homeScore:   row.home_score ?? null,
     awayScore:   row.away_score ?? null,

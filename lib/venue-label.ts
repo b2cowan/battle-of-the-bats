@@ -1,4 +1,5 @@
 import type { Venue } from './types';
+import { fieldPartName, type FieldSections } from './field-parts';
 
 type GameLike = {
   venueId?: string;
@@ -19,6 +20,16 @@ export const VENUE_FACILITY_SEPARATOR = ' — ';
 
 export function formatVenueLocation(venueName: string, facilityName?: string | null): string {
   return facilityName ? `${venueName}${VENUE_FACILITY_SEPARATOR}${facilityName}` : venueName;
+}
+
+/**
+ * A house-league booking's stored line with its part (Club schedules Stage 2, round 2 tab 8): "Milton Sports Dome — Field 1,
+ * side A". The part joins the facility with a COMMA, never a second " — ": a reader splits the line at its LAST separator
+ * (`whereOfLibraryRow`, lib/club-calendar.ts), so the facility reads back as "Field 1, side A". The whole field is
+ * `formatVenueLocation` exactly.
+ */
+export function formatPartLocation(venueName: string, facilityName: string | null | undefined, mask: number | null | undefined, sections: FieldSections): string {
+  return formatVenueLocation(venueName, facilityName ? fieldPartName(facilityName, mask, sections, ', ') : facilityName);
 }
 
 /**

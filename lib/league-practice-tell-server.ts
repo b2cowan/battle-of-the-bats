@@ -14,6 +14,7 @@ import { formatTime } from './utils';
 import { memberDisplayName } from './member-names';
 import { readHouseholds, type Household } from './club-schedule-league-mail';
 import { copyCoachesOnFirstTell } from './league-practice-coach-copy';
+import { maskOf, WHOLE } from './field-parts';
 import {
   changeLines, dateLines, placeOfTold, practiceSummary, practiceTimesEmailWords, snapshotOf, teamChange, tellStateOf,
   type CurrentPractice, type TeamTellState, type TellPart, type ToldPractice,
@@ -48,20 +49,26 @@ export interface TellMailOrg extends ClubEmailOrg { slug?: string }
 
 const quietTransport = () => process.env.NODE_ENV !== 'production';
 
-interface PracticeRow { team_id: string; scheduled_at: string; ends_at: string | null; org_venue_id: string | null; org_venue_facility_id: string | null; location: string | null; club_schedule_slot_id: string | null }
+interface PracticeRow {
+  team_id: string; scheduled_at: string; ends_at: string | null; org_venue_id: string | null; org_venue_facility_id: string | null;
+  section_mask: number | null; location: string | null; club_schedule_slot_id: string | null;
+}
 
 /** Each team's upcoming practices that are on (not cancelled), as families would be told them. */
 export async function readPracticesNow(orgId: string, teamIds: readonly string[]): Promise<Map<string, CurrentPractice[]>> {
   const out = new Map<string, CurrentPractice[]>(teamIds.map(t => [t, []]));
   if (!teamIds.length) return out;
   const rows = await fetchAllIn<PracticeRow & { id: string }>([...teamIds], (c, a, b) => supabaseAdmin.from('league_practices')
-    .select('id, team_id, scheduled_at, ends_at, org_venue_id, org_venue_facility_id, location, club_schedule_slot_id')
+    .select('id, team_id, scheduled_at, ends_at, org_venue_id, org_venue_facility_id, section_mask, location, club_schedule_slot_id')
     .eq('org_id', orgId).in('team_id', c).neq('status', 'cancelled').gt('scheduled_at', new Date().toISOString())
     .order('id').range(a, b));
   for (const r of rows) {
+    const f = r.org_venue_id ? r.org_venue_facility_id : null;
+    // The part, when the practice is on one (side A is not side B: moving between them is a change families hear).
+    const m = f ? maskOf(r.section_mask) : WHOLE;
     out.get(r.team_id)?.push({
-      s: r.scheduled_at, e: r.ends_at, v: r.org_venue_id, f: r.org_venue_id ? r.org_venue_facility_id : null,
-      l: r.org_venue_id ? null : r.location, slot: r.club_schedule_slot_id,
+      s: r.scheduled_at, e: r.ends_at, v: r.org_venue_id, f, l: r.org_venue_id ? null : r.location,
+      ...(m !== WHOLE ? { m } : {}), slot: r.club_schedule_slot_id,
     });
   }
   return out;
@@ -124,7 +131,10 @@ async function divisionTeams(seasonId: string, divisionId: string): Promise<Team
 /** A place's words from the club's places. */
 async function placeReader(orgId: string) {
   const places = await getOrgPlaceNames(orgId);
-  return placeOfTold({ venue: id => places.venues.get(id)?.name ?? null, facility: id => places.facilities.get(id) ?? null });
+  return placeOfTold({
+    venue: id => places.venues.get(id)?.name ?? null, facility: id => places.facilities.get(id) ?? null,
+    sections: id => places.sections.get(id) ?? 1,
+  });
 }
 
 /** A household that can be emailed: a usable address, and only its children on these teams. */

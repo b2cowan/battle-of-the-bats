@@ -21,12 +21,15 @@ export async function placeGame(p: {
   scheduledAt: string | null;
   orgVenueId: string | null;
   orgVenueFacilityId: string | null;
+  /** The part the game keeps (`keptPart`); absent = the whole field. A whole-field game never links to a side's slot. */
+  sectionMask?: number;
   placeAnywhere: boolean;
 }): Promise<{ slotUseId: string | null } | { refusal: string }> {
   // A typed place, or no date: it cannot be on the club's time.
   const slots = p.scheduledAt && p.orgVenueId ? await seasonGameSlots(p.orgId, p.seasonId) : [];
   const slot = gameSlotOf({
     divisionId: p.divisionId, scheduledAt: p.scheduledAt, orgVenueId: p.orgVenueId, orgVenueFacilityId: p.orgVenueFacilityId,
+    sectionMask: p.sectionMask,
   }, slots);
   if (slot) return { slotUseId: slot.slotId };
   return p.placeAnywhere ? { slotUseId: null } : { refusal: W.outsideTime(p.divisionName) };

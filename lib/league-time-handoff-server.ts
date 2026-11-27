@@ -7,8 +7,8 @@ import { boardNames } from './member-names';
 import { HOUSE_LEAGUE } from './club-schedule-holders';
 import { FINISHED_LEAGUE_SEASON_STATUSES } from './house-league-access';
 import { houseLeagueHeldSince, seasonTimeFacts, usesOf } from './league-time-server';
-import { groupLeagueTime, leagueTimeMinutes, partsShapes, partsWords, seasonHoldsSlot, type LeagueTimeSlot } from './league-time';
-import { facilityListWords } from './permit-words';
+import { groupLeagueTime, leagueTimeMinutes, partsShapes, partsWords, placesWords, seasonHoldsSlot, type LeagueTimeSlot } from './league-time';
+import { maskProp, partFactor } from './field-parts';
 import { weekdayOf } from './permit-time';
 import { utcToZonedInputs } from './timezone';
 import type { ClubPlaces } from './permit-lookup';
@@ -77,10 +77,12 @@ function pieceOf(slots: readonly LeagueTimeSlot[], places: ClubPlaces): TimePiec
     slots, schedules: [{ id: 'send', name: '', startsOn: days[0], endsOn: days[days.length - 1] }], divisions: [],
     placeOf: (v, f) => (f ? places.facilityName.get(f) : null) ?? places.venueName.get(v) ?? '',
     venueOf: v => places.venueName.get(v) ?? '',
+    sectionsOf: f => places.sectionsOf.get(f) ?? 1,
   });
   const parts = sources.flatMap(src => src.stretches.flatMap(st => st.rows.flatMap(r => r.parts)));
   // One line per slot shape: the opened notice lists them; `detail` keeps them on one line for the Send window.
-  const lines = partsShapes(parts).map(sh => `${sh.when} · ${facilityListWords(sh.places)}`);
+  // dot-join-ok: the shipped notice line "when · where" (two items); 2E changed only the place words
+  const lines = partsShapes(parts).map(sh => `${sh.when} · ${placesWords(sh)}`);
   return { minutes: leagueTimeMinutes(sources), detail: partsWords(parts), lines, firstDay: days[0], lastDay: days[days.length - 1] };
 }
 
@@ -88,9 +90,10 @@ function pieceOf(slots: readonly LeagueTimeSlot[], places: ClubPlaces): TimePiec
 function asWindowSlot(s: StoredSlot): LeagueTimeSlot & { length: number } {
   const start = utcToZonedInputs(s.startsAt), end = utcToZonedInputs(s.endsAt);
   return {
-    id: s.id, scheduleId: 'send', blockId: s.blockId, venueId: s.venueId, facilityId: s.facilityId,
+    id: s.id, scheduleId: 'send', blockId: s.blockId, venueId: s.venueId, facilityId: s.facilityId, ...maskProp(s.sectionMask),
     day: start.date, weekday: weekdayOf(start.date), start: start.time, end: end.time, use: null,
-    length: (Date.parse(s.endsAt) - Date.parse(s.startsAt)) / 60_000,
+    // A part counts its share of the field's time (a side half), as the window's figure does.
+    length: ((Date.parse(s.endsAt) - Date.parse(s.startsAt)) / 60_000) * partFactor(s.sectionMask),
   };
 }
 const total = (slots: readonly { length: number }[]) => slots.reduce((n, s) => n + s.length, 0);

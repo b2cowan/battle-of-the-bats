@@ -42,11 +42,14 @@ export interface GameTimeSlot {
   /** The slot's instants (ISO): a game takes them whole. */
   startsAt: string;
   endsAt: string;
-  /** The facility's name (the venue's when the slot is the venue itself), and its identity. */
+  /** The facility's name (the venue's when the slot is the venue itself), and its identity. A side of a split field is its
+   *  own game time ("Field 1, side A"; Club schedules Stage 2). */
   place: string;
   placeKey: string;
   venueId: string;
   facilityId: string | null;
+  /** The slot's part; absent on the whole field. The save writes the slot's own part (mig 552). */
+  sectionMask?: number;
 }
 
 export interface GameTeam { id: string; name: string }

@@ -24,6 +24,7 @@
 import { mondayOfDay, orgDayKey } from './timezone.ts';
 import { DEFAULT_BOOKING_MINUTES } from './booking-length.ts';
 import { pluralize } from './utils.ts';
+import { maskSuffix } from './field-parts.ts';
 import { bookingWindow, findLeagueBookingConflicts, isBlockingConflict, type LeagueBooking } from './league-schedule-conflict.ts';
 import type { CalendarBooking, CalendarOther, CalendarWhere } from './club-calendar-view.ts';
 import type { PermitOutside } from './permit-words.ts';
@@ -36,6 +37,8 @@ export interface SeasonGameSlot {
   startsAt: string;
   venueId: string;
   facilityId: string | null;
+  /** The slot's part; absent on the whole field. A game matches its slot only on the same part (side A ≠ side B). */
+  sectionMask?: number;
   scheduleId: string;
   scheduleName: string;
 }
@@ -91,21 +94,25 @@ export function resultWords(g: Pick<LeagueGame, 'status' | 'homeScore' | 'awaySc
 }
 
 /** A game on one of its division's game-time slots: the same division, start and facility. Otherwise nothing. */
-export function gameSlotOf(g: Pick<LeagueGame, 'divisionId' | 'scheduledAt' | 'orgVenueId' | 'orgVenueFacilityId'>, slots: readonly SeasonGameSlot[]): SeasonGameSlot | null {
+type GameAt = Pick<LeagueGame, 'divisionId' | 'scheduledAt' | 'orgVenueId' | 'orgVenueFacilityId' | 'sectionMask'>;
+
+export function gameSlotOf(g: GameAt, slots: readonly SeasonGameSlot[]): SeasonGameSlot | null {
   return gameSlotLookup(slots)(g);
 }
 
-/** `gameSlotOf` for many games: the slots are keyed once, so each game is a lookup, not a scan that parses every slot's start. */
+/** `gameSlotOf` for many games: the slots are keyed once, so each game is a lookup, not a scan that parses every slot's start.
+ *  The part is in the key: a game on the whole field (a hand move: house league never splits a field) matches no side's
+ *  slot, and side A never matches side B's. */
 export function gameSlotLookup(slots: readonly SeasonGameSlot[]) {
-  const slotKey = (divisionId: string, startMs: number, venueId: string, facilityId: string | null | undefined) =>
-    `${divisionId}|${startMs}|${venueId}|${facilityId ?? ''}`;
+  const slotKey = (divisionId: string, startMs: number, venueId: string, facilityId: string | null | undefined, mask: number | null | undefined) =>
+    `${divisionId}|${startMs}|${venueId}|${facilityId ?? ''}${maskSuffix(mask)}`;
   const byKey = new Map<string, SeasonGameSlot>();
   for (const s of slots) {
-    const k = slotKey(s.divisionId, Date.parse(s.startsAt), s.venueId, s.facilityId);
+    const k = slotKey(s.divisionId, Date.parse(s.startsAt), s.venueId, s.facilityId, s.sectionMask);
     if (!byKey.has(k)) byKey.set(k, s);
   }
-  return (g: Pick<LeagueGame, 'divisionId' | 'scheduledAt' | 'orgVenueId' | 'orgVenueFacilityId'>): SeasonGameSlot | null =>
-    !g.scheduledAt || !g.orgVenueId ? null : byKey.get(slotKey(g.divisionId, Date.parse(g.scheduledAt), g.orgVenueId, g.orgVenueFacilityId)) ?? null;
+  return (g: GameAt): SeasonGameSlot | null =>
+    !g.scheduledAt || !g.orgVenueId ? null : byKey.get(slotKey(g.divisionId, Date.parse(g.scheduledAt), g.orgVenueId, g.orgVenueFacilityId, g.sectionMask)) ?? null;
 }
 
 export function seasonCalendar(input: SeasonCalendarInput): SeasonCalendar {
@@ -200,12 +207,12 @@ export function seasonClashes(input: {
   const pool: LeagueBooking[] = [
     ...input.games.map((g): LeagueBooking => ({
       id: g.id, kind: 'game', startsAt: g.scheduledAt, endsAt: g.endsAt, status: g.status,
-      orgVenueId: g.orgVenueId, orgVenueFacilityId: g.orgVenueFacilityId, location: g.location,
+      orgVenueId: g.orgVenueId, orgVenueFacilityId: g.orgVenueFacilityId, sectionMask: g.sectionMask, location: g.location,
       label: `${team(g.homeTeamId)} vs ${team(g.awayTeamId)}`,
     })),
     ...input.practices.map((p): LeagueBooking => ({
       id: p.id, kind: 'practice', startsAt: p.scheduledAt, endsAt: p.endsAt, status: p.status,
-      orgVenueId: p.orgVenueId, orgVenueFacilityId: p.orgVenueFacilityId, location: p.location,
+      orgVenueId: p.orgVenueId, orgVenueFacilityId: p.orgVenueFacilityId, sectionMask: p.sectionMask, location: p.location,
       label: `${team(p.teamId)} practice`,
     })),
   ];

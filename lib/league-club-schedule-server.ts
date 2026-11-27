@@ -8,6 +8,7 @@ import { addCalendarDays, mondayOfDay, utcToZonedInputs } from './timezone';
 import { canOpenModule, type MemberAccessInput } from './member-access';
 import { loadSchedule, readClubTeams } from './club-schedule-server';
 import { HOUSE_LEAGUE } from './club-schedule-holders';
+import { maskProp, maskSuffix } from './field-parts';
 import { practicesStillToCome } from './league-time-server';
 import { projectClubSlots, type LeagueClubSchedule, type RawClubSlot } from './league-club-schedule';
 import type { EntitlementOrg } from './module-entitlements';
@@ -48,7 +49,7 @@ export async function readLeagueClubSchedule(p: {
   const raw: RawClubSlot[] = loaded.slots.map(s => {
     const start = utcToZonedInputs(s.startsAt), end = utcToZonedInputs(s.endsAt);
     return {
-      id: s.id, venueId: s.venueId, facilityId: s.facilityId, startsAt: s.startsAt, day: start.date, weekday: weekdayOf(start.date),
+      id: s.id, venueId: s.venueId, facilityId: s.facilityId, ...maskProp(s.sectionMask), startsAt: s.startsAt, day: start.date, weekday: weekdayOf(start.date),
       startClock: start.time, endClock: end.time, houseLeague: s.teamIds.includes(HOUSE_LEAGUE),
       teamIds: s.teamIds.filter(id => id !== HOUSE_LEAGUE), removed: s.removed,
     };
@@ -72,9 +73,10 @@ export async function readLeagueClubSchedule(p: {
     schedule: { id: loaded.row.id, name: loaded.row.name, startsOn: loaded.row.starts_on, endsOn: loaded.row.ends_on },
     places: venueIds.map(v => ({
       venueId: v, venueName: places.venueName.get(v) ?? '',
-      facilities: (places.byVenue.get(v) ?? []).map(f => ({ id: f, name: places.facilityName.get(f) ?? '' })),
+      facilities: (places.byVenue.get(v) ?? []).map(f => ({ id: f, name: places.facilityName.get(f) ?? '', sections: places.sectionsOf.get(f) ?? 1 })),
     })),
-    placesUsed: [...new Map(live.map(s => [`${s.venueId}|${s.facilityId ?? ''}`, { venueId: s.venueId, facilityId: s.facilityId }])).values()],
+    // A part is its own place: the grid draws it on a row under its field (the club's grid rows, `placeRows`).
+    placesUsed: [...new Map(live.map(s => [`${s.venueId}|${s.facilityId ?? ''}${maskSuffix(s.sectionMask)}`, { venueId: s.venueId, facilityId: s.facilityId, ...maskProp(s.sectionMask) }])).values()],
     week: from,
     slots: projectClubSlots({
       slots: raw, week: { from, to }, seasonId: p.season.id,

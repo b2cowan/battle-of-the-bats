@@ -201,3 +201,108 @@ At the end house league carries parts from club time, and Stage 2 is ready for i
    summary so the owner can disagree. `/accounting` is not triggered (customer bookkeeping).
 3. **Write Stage 3's build prompt** (teams at the same time, rep and house league; its rulings are round 1 Asks 7,
    10–13 and round 2 Ask 6) into the plan, from what Stage 2's build actually changed.
+
+> **2E was split in three (2026-11-26, said out loud in the 2E session):** the census counted 7 house-league readers, the
+> code has about 40. Part 1 (the part travels and is respected) is committed (2026-11-26); the plan's "2E part 1 built"
+> line under Stage 2 holds what it did, the two calls the code made, the review and its two open owner questions. Paste, each in a fresh
+> chat (`/clear` first):
+> - *"Read and follow docs/projects/active/SCHEDULE_PARTS_STAGE2_BUILD_PROMPT.md — Session 2E part 1, finish"*
+> - *"… — Session 2E part 2"*
+> - *"… — Session 2E part 3"*
+
+## Session 2E part 1, finish — apply 552 to dev, review, commit
+
+> **DONE 2026-11-26** (the plan's "2E part 1" lines hold the apply, the review and the fixes). Kept as the record.
+
+**The owner's go is this prompt** (2026-11-26: "give me the prompt to do 1 and 2": apply 552 to dev; `/review`, then
+commit, with the two one-line changes in the other session's files). Start conditions 2 and 5 above still hold.
+
+1. **Read first:** the plan's "2E part 1 built" line (Stage 2) and `git status`. Part 1's files are uncommitted in the
+   shared tree; another session's Close a place work is uncommitted beside them (its typecheck errors and failing
+   `place-closure*` tests are not this session's). Take the next free migration number at commit time; if another
+   session took 552 meanwhile, renumber (the file, its header, `house-league-parts.test.ts`, the plan line, `lib/types.ts`'
+   two comments).
+2. **Apply 552 to dev** (`node scripts/db-query.mjs --dev -f supabase/migrations/552_house_league_takes_its_slots_part.sql`).
+   Read the six functions back (`pg_get_functiondef`) and run `scripts/schedule-parts-house-league-check.sql` on the
+   applied functions: 9 of 9, or stop and say what failed. Record "applied to dev 2026-11-26" in the plan line.
+3. **`/review`** (`.claude/commands/review.md`) on Part 1's diff ONLY: the files the plan line names, the migration, the
+   proof, `tests/unit/house-league-parts.test.ts` and `league-schedule-health.test.ts`. Fix the clear defects; a finding
+   that changes what an admin, coach or family sees is the owner's — ask, don't build. If a fix touches the migration,
+   re-run the proof and re-apply to dev. Record what was fixed and accepted in the plan line.
+4. **The two waiting files**, through a private index (`reference_partial_commit_shared_tree.md`), never touching the
+   other session's hunks:
+   - `tests/unit/place-closures-guard.test.ts`: the "only the closure press turns the quiet link on" test counts every
+     migration naming `'league.quiet_link'`; 552 re-makes the recorder, which only READS it. Change that one filter to
+     migrations that TURN IT ON (`set_config('league.quiet_link', 'on'`). The committed guard fails on 552 too.
+   - `supabase/migrations/MANUAL_PROD_STEPS.json`: 552's entry — prod `pending`; function-only, invisible to
+     `check:migrations`; ORDER after 541 and 546, before the promote that ships Part 1's code (that code sends
+     `section_mask` to `league_game_club_write` and expects parts from the generate and hand-out functions); verify
+     `select count(*) from pg_proc where proname='league_game_snapshot' and prosrc like '%sectionMask%'` -> 1.
+5. **Before the commit:** `npm run typecheck` (with `NODE_OPTIONS=--max-old-space-size=8192`; it runs out of memory
+   otherwise), the focused tests (the 13 files the plan line names), `node scripts/check-dot-joins.mjs`. `verify:changed`
+   stops at `npm test` while the other session's tests fail: run its later checks directly and say so.
+6. **The board line** for `schedule-fields-trades` (`OWNER_BRIEF_PROJECTS.json`, a shared file: your hunk only): 2E part 1
+   committed, part 2 next.
+7. **Commit** on `dev`, explicit pathspecs (Part 1's files, the plan's 2E lines and this prompt file's 2E sections —
+   both are this session's), `git show --stat HEAD` after; no push. Message: what a house-league admin
+   sees (the plan line's "Built"), the two calls the code made, the dev apply, the review.
+8. **Hand-off:** a product-owner summary, then **re-read the "Session 2E part 2" section below and bring it up to date
+   with anything the review changed**, and give the owner its one paste line. Restart the dev server before any browser
+   look (shared modules changed).
+
+## Session 2E part 2 — every place word carries the part
+
+At the end every screen, email, file and public page that says where a house-league game or practice is says the part:
+"Milton Sports Dome · Field 1, side A" (round 2 tab 8; the drawing's "Every place a part's words reach" table is the
+spec). With no split field every word reads byte-for-byte as before (the 2B rule: test it).
+
+1. **Start:** Part 1 committed (the plan's "2E part 1" line says so); `git status`; start condition 2 (Close a place's
+   files: `lib/league-schedule-mail.ts`, the house-league schedule page and the club website's game lists are the likely
+   collisions). Part 1's `/review` left **two owner questions** (the plan's 2E part 1 lines, A and B: hand-placing a
+   game on side time; Send the changes putting two practices on one side). Ask whether they are ruled; build neither
+   without a ruling, and a ruled one is its own small piece before the readers. ⚠ **Part 1 does not go to production
+   without Part 2:** a side A → side B move is already news, and the words still say "Field 1" for both until this
+   session. Changed by the review: `keptPart(stored, fieldId, sections)` (a part the field no longer offers is the
+   whole field; `resolveLeagueVenueSelection` returns `fieldSections`), the live check reads an edited practice's part,
+   and mig 552 now also re-makes `section_mask_check` (only a new field or part is judged). Part 1 already gives every reader the part: the `LeagueGame` / `LeaguePractice` mappers carry
+   `sectionMask`, `getOrgPlaceNames` returns `sections`, the snapshot carries it, and new stored lines carry ", side A".
+   **Stored lines written before 552 do not:** words built from ids get the part; a reader that only shows `location`
+   text gets it only for rows written since.
+2. **The one rule for words:** the part joins the facility with a comma (`fieldPartName(…, ', ')`, `clubFieldWords`),
+   never a second " — " or " · ". Read at read time from (mask, sections); never a new stored word. No reader writes its
+   own bit arithmetic (`lib/field-parts.ts` is the one home).
+3. **The readers** (the 2E session's census, 2026-11-26 — open each line before changing it):
+   - Place builders: `lib/league-season-calendar.ts` `seasonCalendar`'s `where()` (set `CalendarWhere.part`; `whereWords`
+     already prints it) and `SeasonPlace` / `placeOf`; `nightPlaces` keys venue|facility (side A and B fold into one);
+     `lib/league-venue.ts` `report()` (the refusal's "on {fieldLabel}"); `lib/house-league-coach.ts` `placeNamer`;
+     `lib/league-schedule-mail.ts` `placeReader`; `lib/club-games-read.ts:159-171`; `lib/house-league-find.ts:104-105`.
+   - Public: the league schedule page (`publicSeasonGames` → `seasonCalendar` → `whereWords`); `publicLeagueGamesBetween`
+     → the club website's game lists. The public "Moved" mark already follows (Part 1's `placeDiffers`).
+   - Emails and notices: the published-schedule email and the change email (`GameSnapshot` now has the part; teach
+     `placeReader`, and check `lib/league-schedule-email.ts`'s `gameLine` / `wasClause` and the tray's `trayChangeLine`
+     read a side-only move as two different places); the practice Tell step (Part 1 gave `placeOfTold` a `sections` reader: check every caller passes it).
+   - Coach portal (house league): `readTeamScores`, `readGamesAsSent`, `readCoachFeedEvents`, `readTeamPractices`
+     (explicit selects: add `section_mask`); `FeedTeamEvent` extends `EventPart` but is never given it (the coach ICS
+     feed, `lib/family-team-schedule.ts`, `lib/family-league-entries.ts`).
+   - Admin: the schedule page's `placeOf` for `seasonCalendar`, its CSV/XLSX (`g.location`), its ICS
+     (`houseLeagueCalendarEntries`), Changes to send's `placeWords`, Schedule health's clash words
+     (`leagueIssueWords`); `GameWindow` and `SeasonScheduleViews.nightPlaceWords` (`facilityWords` ignores `w.part`);
+     `PracticeWindow` (`practice.location`); Generate games' two row lists (Part 1 made each slot's `place` "Field 1,
+     side A": check the window and its count "65 game slots in all" counts each side).
+   - The clash pool's facility names (`lib/venue-clash-lookup.ts:289`) read no `sections`: the cross-program clash words
+     say no part.
+4. **Words for /marketing:** none new beyond the drawing's; collect any sentence you had to write into the plan's
+   "Words for /marketing" house-league row for Part 3's pass.
+5. **Tests:** each surface with a part, and the "no split = identical" test extended to the public page, both emails, the
+   coach feed and the exports. `/review` on Part 2's diff before the commit.
+6. **End:** `npm run typecheck`, the focused tests, `check-dot-joins`, a product-owner summary, the plan line ("2E part 2
+   built") and the board line; **commit at the owner's word**; then point the owner at "Session 2E part 3" (bring it up
+   to date first). `/legal` is not triggered by Part 2 (a part only joins the place words; no new email, nothing new
+   collected) — say so so the owner can disagree.
+
+## Session 2E part 3 — the stage's close
+
+Session 2E's original items 2 and 3, above, unchanged: `/simplify` then `/review` on the whole stage's diff; the one
+`/marketing` pass for Stage 2's words; `/docs` (the scheduler and house-league help, and the 2D notes folded into it);
+the 2D design check's P1/P2 (fix or ideas backlog, the owner's call); the board line; the Stage 2 walk at the owner's
+word; Stage 3's build prompt into the plan. Start by reading the plan's 2E part 1 and part 2 lines for what they changed.

@@ -4,12 +4,11 @@ import KitDialog, { DialogReason } from '../../KitDialog';
 import ck from '../../ClubKit.module.css';
 import { repKit, useDeferredLoad } from '../../RepKit';
 import LoadingState from '@/components/shared/LoadingState';
-import { hoursAWeek, partsShapes } from '@/lib/league-time';
+import { hoursAWeek, partsShapes, placesWords } from '@/lib/league-time';
 import {
-  planPractices, PRACTICE_MINUTES, PRACTICES_A_WEEK, TEAMS_AT_ONCE, PRACTICE_TIME_WORDS as W,
+  planPractices, splitFieldsOf, PRACTICE_MINUTES, PRACTICES_A_WEEK, TEAMS_AT_ONCE, PRACTICE_TIME_WORDS as W,
   type PracticeSettings, type PracticeTimeRead,
 } from '@/lib/league-practice-time';
-import { facilityListWords } from '@/lib/permit-words';
 import { joinWithAnd } from '@/lib/utils';
 import { handOutAgainCounts, predictHandOut, PRACTICE_TELL_WORDS as TW } from '@/lib/league-practice-tell';
 import s from './LeagueTime.module.css';
@@ -98,12 +97,15 @@ export default function PracticeTimeWindow({ orgSlug, seasonId, seasonName, divi
 
   const rows = useMemo(() => {
     if (!read) return [];
-    return partsShapes(read.slots.map(x => ({ weekday: x.weekday, start: x.start, end: x.end, place: x.place }))).map(shape => {
+    return partsShapes(read.slots.map(x => ({ weekday: x.weekday, start: x.start, end: x.end, place: x.place, field: x.field }))).map(shape => {
       const venues = [...new Set(read.slots.filter(x => shape.places.includes(x.place) && shape.days.includes(x.weekday)).map(x => x.venue ?? ''))].filter(Boolean);
       const isVenue = venues.length === shape.places.length && venues.every(v => shape.places.includes(v));
-      return { ...shape, where: isVenue ? facilityListWords(shape.places) : `${joinWithAnd(venues)} · ${facilityListWords(shape.places)}` };
+      // A split field's parts fold the way New schedule's box says them: "Field 1 in two sides, Field 3" (round 2 tab 6).
+      // dot-join-ok: the shipped row's second line, venue · fields (two items, a quiet caption; 2E changed only the fields' words)
+      return { ...shape, where: isVenue ? placesWords(shape) : `${joinWithAnd(venues)} · ${placesWords(shape)}` };
     });
   }, [read]);
+  const splitFields = useMemo(() => (read ? splitFieldsOf(read.slots) : []), [read]);
 
   const empty = !!read && read.slots.length === 0;
   const noTeams = !!read && !empty && read.teams.length === 0;
@@ -217,6 +219,7 @@ export default function PracticeTimeWindow({ orgSlug, seasonId, seasonName, divi
                     </select>
                   </label>
                 </div>
+                {splitFields.length > 0 && <p className={ck.hint}>{W.partsHoldOne(splitFields)}</p>}
                 <div aria-live="polite">{result}</div>
                 {plan && plan.tooShort > 0 && plan.seatsAWeek > 0 && <p className={ck.hint}>{W.tooShort(plan.tooShort)}</p>}
               </>

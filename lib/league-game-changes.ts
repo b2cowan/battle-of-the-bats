@@ -1,5 +1,6 @@
 import { normalizeGuardianEmail } from './guardian-email';
 import type { LeagueGame, LeagueGameStatus } from './types';
+import { maskOf, maskProp } from './field-parts';
 
 /**
  * ══════════════════════════════════════════════════════════════════════════════════════════════
@@ -24,6 +25,8 @@ export interface GameSnapshot {
   location: string | null;
   venueId: string | null;
   facilityId: string | null;
+  /** The part of a split field (mig 552 adds it to the snapshot); absent on the whole field and on older snapshots. */
+  sectionMask?: number;
   status: LeagueGameStatus;
   movedFrom: string | null;
 }
@@ -65,8 +68,10 @@ export interface HeldGame {
 export const publicState = (s: LeagueGameStatus) => (s === 'cancelled' ? 'cancelled' : s === 'postponed' ? 'postponed' : 'on');
 
 export const sameMs = (a: string | null, b: string | null) => (a == null || b == null ? a === b : Date.parse(a) === Date.parse(b));
+/** Side A → side B is a change of place, as Field 1 → Field 2 is (round 2 tab 8; the trigger agrees, mig 552). */
 export const placeDiffers = (a: GameSnapshot, b: GameSnapshot) =>
-  (a.location ?? null) !== (b.location ?? null) || (a.venueId ?? null) !== (b.venueId ?? null) || (a.facilityId ?? null) !== (b.facilityId ?? null);
+  (a.location ?? null) !== (b.location ?? null) || (a.venueId ?? null) !== (b.venueId ?? null) || (a.facilityId ?? null) !== (b.facilityId ?? null)
+  || maskOf(a.sectionMask) !== maskOf(b.sectionMask);
 
 /**
  * ⚖ "LINK BOTH" IS NOT NEWS (Club Website Stage 2, K7). The closure press links a typed-in game to the place named in its
@@ -175,20 +180,23 @@ export function teamsHearing(games: readonly { homeTeamId: string; awayTeamId: s
 //    rule is unit-tested; pure, no read) ───────────────────────────────────────────────────────────────────────────
 
 /** The fields of a game families read (mig 409's `league_game_snapshot`), plus its id. */
-export type GameFaceFields = Pick<LeagueGame, 'id' | 'scheduledAt' | 'endsAt' | 'location' | 'orgVenueId' | 'orgVenueFacilityId' | 'status' | 'movedFrom'>;
+export type GameFaceFields = Pick<LeagueGame, 'id' | 'scheduledAt' | 'endsAt' | 'location' | 'orgVenueId' | 'orgVenueFacilityId' | 'sectionMask' | 'status' | 'movedFrom'>;
 
 export function snapshotOf(g: Omit<GameFaceFields, 'id'>): GameSnapshot {
   return {
     scheduledAt: g.scheduledAt, endsAt: g.endsAt, location: g.location, venueId: g.orgVenueId,
-    facilityId: g.orgVenueFacilityId, status: g.status, movedFrom: g.movedFrom,
+    facilityId: g.orgVenueFacilityId, ...maskProp(g.sectionMask), status: g.status, movedFrom: g.movedFrom,
   };
 }
 
 function withSnapshot<G extends GameFaceFields>(g: G, s: GameSnapshot): G {
-  return {
+  const out: G = {
     ...g, scheduledAt: s.scheduledAt, endsAt: s.endsAt, location: s.location, orgVenueId: s.venueId,
-    orgVenueFacilityId: s.facilityId, status: s.status, movedFrom: s.movedFrom,
+    orgVenueFacilityId: s.facilityId, ...maskProp(s.sectionMask), status: s.status, movedFrom: s.movedFrom,
   };
+  // The part families heard: none when they heard the whole field (a game since moved onto a side reads as it was).
+  if (maskOf(s.sectionMask) === 0) delete out.sectionMask;
+  return out;
 }
 
 /** These games as families last heard them: a held change reads its `before`; a game added since is dropped. */

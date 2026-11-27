@@ -33,10 +33,21 @@
  * ══════════════════════════════════════════════════════════════════════════════════════════════
  */
 
+import { maskOf, maskSuffix } from './field-parts.ts';
+
 /** A slot of the schedule, removed ones included (they are where a moved use waits). `isNew`: house league came to hold it
  *  since the last send (the slot was made, or given to house league, since) — only such time is where a moved use can have
  *  gone (an older one with no use is time not given yet, never a move). */
-export interface LeagueSlot { id: string; startMs: number; endMs: number; venueId: string; facilityId: string | null; removed: boolean; houseLeague: boolean; isNew: boolean }
+export interface LeagueSlot {
+  id: string; startMs: number; endMs: number; venueId: string; facilityId: string | null;
+  /** The slot's part (Club schedules Stage 2); absent on the whole field. Side A → side B is a move. */
+  sectionMask?: number;
+  removed: boolean; houseLeague: boolean; isNew: boolean;
+}
+
+/** The same ground: venue, field and part (a whole field and its side are NOT the same place for a move). */
+const samePlaceOf = (a: Pick<LeagueSlot, 'venueId' | 'facilityId' | 'sectionMask'>, b: Pick<LeagueSlot, 'venueId' | 'facilityId' | 'sectionMask'>) =>
+  a.venueId === b.venueId && a.facilityId === b.facilityId && maskOf(a.sectionMask) === maskOf(b.sectionMask);
 /** How a league admin divided a house-league slot (one per slot). */
 export interface LeagueUse { slotId: string; seasonId: string; divisionId: string | null; kind: 'games' | 'practices' }
 /** A house-league practice on the schedule's time. `endMs` null: no end was stored — read as running to its slot's end. */
@@ -96,10 +107,12 @@ export function planLeagueChanges(p: {
   const lost = p.uses.map(u => slotById.get(u.slotId)).filter((s): s is LeagueSlot => !!s && !isHeld(s));
   const gained = p.slots.filter(s => isHeld(s) && s.isNew && !useBySlot.has(s.id));
   // Every same-week pair, closest start times first (ties by id, so the plan is the same on every read); each loss and
-  // each gain is used once.
+  // each gain is used once. At one gap a part stays on its own ground (Club schedules Stage 2): side A and side B
+  // re-timed together never swap. Pairs of whole fields tie by id, as before parts.
+  const leavesPart = (l: LeagueSlot, g: LeagueSlot) => Number((maskOf(l.sectionMask) !== 0 || maskOf(g.sectionMask) !== 0) && !samePlaceOf(l, g));
   const pairs = lost.flatMap(l => gained.filter(g => p.weekOfMs(g.startMs) === p.weekOfMs(l.startMs))
-    .map(g => ({ from: l.id, to: g.id, gap: Math.abs(g.startMs - l.startMs) })))
-    .sort((a, b) => a.gap - b.gap || a.from.localeCompare(b.from) || a.to.localeCompare(b.to));
+    .map(g => ({ from: l.id, to: g.id, gap: Math.abs(g.startMs - l.startMs), leaves: leavesPart(l, g) })))
+    .sort((a, b) => a.gap - b.gap || a.leaves - b.leaves || a.from.localeCompare(b.from) || a.to.localeCompare(b.to));
   const carried = new Map<string, string>(), taken = new Set<string>();
   for (const pr of pairs) {
     if (carried.has(pr.from) || taken.has(pr.to)) continue;
@@ -125,7 +138,7 @@ export function planLeagueChanges(p: {
       step.updates.push({ practiceId: pr.id, slotId: to!.id, scheduledAt: new Date(startMs).toISOString(), endsAt: new Date(endMs).toISOString(), location: p.locationOf(to!.id) });
       // A slot replaced by one at the same time and place (shortened, or saved again): the practice's link follows the
       // slot, but nothing a coach or a family reads changed, so nobody is told.
-      const same = shift === 0 && pr.endMs != null && to!.venueId === from.venueId && to!.facilityId === from.facilityId;
+      const same = shift === 0 && pr.endMs != null && samePlaceOf(to!, from);
       if (!same) changes.push({ kind: 'moved', practiceId: pr.id, teamId: pr.teamId, fromSlotId: from.id, toSlotId: to!.id, fromStartMs: pr.startMs, fromEndMs, toStartMs: startMs, toEndMs: endMs });
     } else {
       step.cancel.push(pr.id);
@@ -149,7 +162,8 @@ export function planLeagueChanges(p: {
     const base = { gameId: g.id, seasonId: g.seasonId, divisionId: g.divisionId, published: g.published, fromSlotId: from.id };
     if (fits) {
       // The same time and place (a slot saved again): the game's link follows its use, and there is nothing to write.
-      if (shift === 0 && to!.venueId === from.venueId && to!.facilityId === from.facilityId) continue;
+      // A move to the other side of the field is a move (round 2 tab 8: "A part change is a move").
+      if (shift === 0 && samePlaceOf(to!, from)) continue;
       step.games.move.push({
         gameId: g.id, slotId: to!.id, scheduledAt: new Date(startMs).toISOString(),
         endsAt: endMs == null ? null : new Date(endMs).toISOString(), location: p.locationOf(to!.id),
@@ -169,7 +183,11 @@ export function planLeagueChanges(p: {
 // ── A team's changes as rows (h4: "Sundays from Nov 8: Field 1 → Field 3, 11:00 a.m. → 12:30 p.m.") ─────────────────
 
 /** A practice's when and where, on the club's clock. */
-export interface PracticeFace { day: string; weekday: number; startClock: string; endClock: string; venueId: string; facilityId: string | null }
+export interface PracticeFace {
+  day: string; weekday: number; startClock: string; endClock: string; venueId: string; facilityId: string | null;
+  /** The slot's part; absent on the whole field. */
+  sectionMask?: number;
+}
 
 /** One row: the practices of one team that changed the same way, on one weekday, time and place. */
 export interface LeagueRow {
@@ -184,7 +202,9 @@ export interface LeagueRow {
   now: PracticeFace | null;
 }
 
-const sig = (f: PracticeFace) => `${f.weekday}|${f.startClock}|${f.endClock}|${f.venueId}|${f.facilityId ?? ''}`;
+/** A face's weekday, clock and place, its part included (a whole field keys exactly as before parts). */
+const placeSig = (f: PracticeFace) => `${f.venueId}|${f.facilityId ?? ''}${maskSuffix(f.sectionMask)}`;
+const sig = (f: PracticeFace) => `${f.weekday}|${f.startClock}|${f.endClock}|${placeSig(f)}`;
 
 /**
  * Group a plan's changes into rows, team by team: a move groups by where it was and where it went, a cancel by where it
@@ -198,7 +218,7 @@ export function leagueRows(changes: readonly LeagueChange[], faceOf: (startMs: n
     const now = c.kind === 'moved' ? faceOf(c.toStartMs, c.toEndMs, c.toSlotId) : null;
     // A move's group also keeps how many days it shifted, so Sun → Mon and Sun → Tue never share a row.
     const shift = now ? Math.round((Date.parse(`${now.day}T12:00:00Z`) - Date.parse(`${was.day}T12:00:00Z`)) / 86_400_000) : 0;
-    const key = `${c.teamId}|${c.kind}|${sig(was)}|${now ? `${shift}|${now.startClock}|${now.endClock}|${now.venueId}|${now.facilityId ?? ''}` : ''}`;
+    const key = `${c.teamId}|${c.kind}|${sig(was)}|${now ? `${shift}|${now.startClock}|${now.endClock}|${placeSig(now)}` : ''}`;
     const row = groups.get(key) ?? groups.set(key, { teamId: c.teamId, kind: c.kind, days: [], throughEnd: true, was, now }).get(key)!;
     row.days.push(was.day);
   }

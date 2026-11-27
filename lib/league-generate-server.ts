@@ -4,7 +4,8 @@ import { fetchAll } from './supabase-paging';
 import { readClubPlaces } from './permit-lookup';
 import { clubDayOf, weekdayOf } from './permit-time';
 import { utcToZonedInputs } from './timezone';
-import { formatVenueLocation } from './venue-label';
+import { formatPartLocation } from './venue-label';
+import { fieldPartName, maskProp, maskSuffix } from './field-parts';
 import { checkLeagueBookings } from './league-venue';
 import { clashReportForLeagueRows } from './venue-clash-lookup';
 import { clashOtherName, clashTimeRange } from './venue-clash-words';
@@ -46,12 +47,14 @@ export async function divisionGameTime(orgId: string, season: LeagueSeason, divi
     })
     .map(r => {
       const start = utcToZonedInputs(r.starts_at), end = utcToZonedInputs(r.ends_at);
+      const name = (r.facility_id ? places.facilityName.get(r.facility_id) : null) ?? places.venueName.get(r.org_venue_id) ?? '';
       return {
         id: r.id, day: start.date, weekday: weekdayOf(start.date), start: start.time, end: end.time,
         startsAt: r.starts_at, endsAt: r.ends_at,
-        place: (r.facility_id ? places.facilityName.get(r.facility_id) : null) ?? places.venueName.get(r.org_venue_id) ?? '',
-        placeKey: `${r.org_venue_id}|${r.facility_id ?? ''}`,
-        venueId: r.org_venue_id, facilityId: r.facility_id,
+        // A side is its own game time, two games at once (round 2 tab 8): "Field 1, side A".
+        place: r.facility_id ? fieldPartName(name, r.section_mask, places.sectionsOf.get(r.facility_id) ?? 1, ', ') : name,
+        placeKey: `${r.org_venue_id}|${r.facility_id ?? ''}${maskSuffix(r.section_mask)}`,
+        venueId: r.org_venue_id, facilityId: r.facility_id, ...maskProp(r.section_mask),
       };
     });
 }
@@ -73,7 +76,7 @@ export function slotMinutesOf(slots: readonly GameTimeSlot[]): number | null {
 function proposedRows(plan: GamePlan, slotOf: Map<string, GameTimeSlot>) {
   return plan.games.map((g, i) => {
     const s = slotOf.get(g.slotId)!;
-    return { id: `new-${i}`, scheduledAt: g.scheduledAt, endsAt: g.endsAt, status: 'scheduled', orgVenueId: s.venueId, orgVenueFacilityId: s.facilityId };
+    return { id: `new-${i}`, scheduledAt: g.scheduledAt, endsAt: g.endsAt, status: 'scheduled', orgVenueId: s.venueId, orgVenueFacilityId: s.facilityId, ...maskProp(s.sectionMask) };
   });
 }
 
@@ -99,12 +102,12 @@ export async function checkGeneratedGames(p: {
       orgId: p.orgId,
       proposed: rows.map((r, i) => ({
         id: r.id, kind: 'game' as const, startsAt: r.scheduledAt, endsAt: r.endsAt, status: 'scheduled',
-        orgVenueId: r.orgVenueId, orgVenueFacilityId: r.orgVenueFacilityId,
+        orgVenueId: r.orgVenueId, orgVenueFacilityId: r.orgVenueFacilityId, ...maskProp(r.sectionMask),
         label: `${nameOf.get(plan.games[i].homeTeamId) ?? ''} vs ${nameOf.get(plan.games[i].awayTeamId) ?? ''}`,
       })),
     }),
     fetchAll<Parameters<typeof leagueHealthPracticeFromRow>[0]>((a, b) => supabaseAdmin.from('league_practices')
-      .select('id, division_id, team_id, scheduled_at, ends_at, status, org_venue_id, org_venue_facility_id, location, club_schedule_slot_id')
+      .select('id, division_id, team_id, scheduled_at, ends_at, status, org_venue_id, org_venue_facility_id, section_mask, location, club_schedule_slot_id')
       .eq('season_id', p.season.id).eq('division_id', p.divisionId).order('id').range(a, b)),
   ]);
 
@@ -150,7 +153,7 @@ export async function checkGeneratedGames(p: {
     games: plan.games.map((g, i) => ({
       id: rows[i].id, divisionId: p.divisionId, homeTeamId: g.homeTeamId, awayTeamId: g.awayTeamId,
       scheduledAt: g.scheduledAt, endsAt: g.endsAt, status: 'scheduled',
-      venueId: rows[i].orgVenueId, facilityId: rows[i].orgVenueFacilityId, location: null,
+      venueId: rows[i].orgVenueId, facilityId: rows[i].orgVenueFacilityId, ...maskProp(rows[i].sectionMask), location: null,
     })),
     practices: practices.map(leagueHealthPracticeFromRow),
     teams: p.teams.map(t => ({ id: t.id, name: t.name, divisionId: p.divisionId })),
@@ -175,7 +178,8 @@ export async function insertGeneratedGames(p: {
   const location = (s: GameTimeSlot) => {
     const venue = places.venueName.get(s.venueId) ?? '';
     const facility = s.facilityId ? places.facilityName.get(s.facilityId) ?? null : null;
-    return facility ? formatVenueLocation(venue, facility) : venue || null;
+    // The part after a comma ("Field 1, side A", round 2 tab 8); the step writes the slot's own part beside the field.
+    return facility ? formatPartLocation(venue, facility, s.sectionMask, places.sectionsOf.get(s.facilityId!) ?? 1) : venue || null;
   };
   const games = p.plan.games.map(g => {
     const s = slotOf.get(g.slotId)!;
@@ -195,7 +199,7 @@ export async function insertGeneratedGames(p: {
   // is the same whichever id each row came back with.
   const saved = games.slice(0, ids.length).map((g, i) => ({
     id: ids[i], scheduledAt: g.scheduledAt, endsAt: g.endsAt, status: 'scheduled',
-    orgVenueId: g.venueId, orgVenueFacilityId: g.facilityId,
+    orgVenueId: g.venueId, orgVenueFacilityId: g.facilityId, ...maskProp(slotOf.get(g.slotUseId)?.sectionMask),
   }));
   const report = await clashReportForLeagueRows(p.orgId, p.season, 'game', saved);
   return { saved: saved.length, permitLines: Object.values(report.permitLines).filter(Boolean) };

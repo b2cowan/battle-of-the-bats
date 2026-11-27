@@ -19,10 +19,26 @@
 import { formatTimeRange, isUuid, joinWithAnd, pluralize, possessive } from './utils.ts';
 import { formatWeekRange } from './timezone.ts';
 import { facilityListWords, hoursNumber, weekdayPlural, weekdaysWords } from './permit-words.ts';
-import { houseLeagueUse } from './club-schedule-words.ts';
+import { houseLeagueUse, rowPlacesWords } from './club-schedule-words.ts';
+import { fieldPartName, maskOf, maskSuffix, partFactor, WHOLE, type FieldSections } from './field-parts.ts';
 
 export type LeagueUseKind = 'games' | 'practices';
 export interface LeagueUse { divisionId: string; kind: LeagueUseKind }
+
+/**
+ * A slot's part of a split field (Stage 2, round 2 Ask 1 A: house league gets parts only through club time): the field,
+ * its name and split, and the part's mask. Absent on a whole field, so a whole field reads exactly as before parts.
+ */
+export interface PlacePart { id: string; name: string; mask: number; sections: FieldSections }
+
+/** A slot's part with its field's name and split, or null on the whole field (or a slot with no field). */
+export function partOfSlot(
+  s: { facilityId: string | null; sectionMask?: number | null }, name: string, sectionsOf?: (facilityId: string) => FieldSections,
+): PlacePart | null {
+  const mask = maskOf(s.sectionMask);
+  if (!s.facilityId || mask === WHOLE) return null;
+  return { id: s.facilityId, name, mask, sections: sectionsOf?.(s.facilityId) ?? 1 };
+}
 
 /** One house-league slot as the window reads it: its club day and clock already worked out in the club's zone. */
 export interface LeagueTimeSlot {
@@ -31,6 +47,8 @@ export interface LeagueTimeSlot {
   blockId: string | null;
   venueId: string;
   facilityId: string | null;
+  /** The slot's part (`club_schedule_slots.section_mask`); absent on the whole field. */
+  sectionMask?: number;
   /** The club day (YYYY-MM-DD) and its weekday, 1 = Monday. */
   day: string;
   weekday: number;
@@ -49,12 +67,14 @@ export interface LeagueTimePart {
   weekday: number;
   start: string;
   end: string;
-  /** The facility's name, or the venue's when the slot is the venue itself. */
+  /** The facility's name, or the venue's when the slot is the venue itself; a part names its part ("Field 1 side A"). */
   place: string;
+  /** A part of a split field: what folds "Field 1 side A" and "side B" back into "Field 1 in two sides". */
+  field?: PlacePart;
   slotIds: string[];
   firstDay: string;
   lastDay: string;
-  /** One week's minutes (one slot a week). */
+  /** One week's minutes (one slot a week); a part counts its share of the field's time (a side half, round 1 Ask 9 A). */
   minutes: number;
   use: LeagueUse | null;
 }
@@ -131,16 +151,42 @@ export const hoursOf = (minutes: number) => pluralize(hoursNumber(minutes), 'hou
  * "6:00–9:00 p.m."), then the days and facilities that share a clock gathered — "Tue and Thu · 6:00–7:30 p.m. · Diamond 1
  * and Diamond 2". Shapes that don't line up are each said, joined by "; ", Monday first.
  */
-export function partsWords(parts: readonly Pick<LeagueTimePart, 'weekday' | 'start' | 'end' | 'place'>[]): string {
-  return partsShapes(parts).map(s => `${s.when} · ${facilityListWords(s.places)}`).join('; ');
+export function partsWords(parts: readonly ShapeInput[]): string {
+  // dot-join-ok: the shipped row detail "when · where" (two items); 2E changed only the place words
+  return partsShapes(parts).map(s => `${s.when} · ${placesWords(s)}`).join('; ');
 }
 
+/** A shape's places in words: "Diamond 1 and Diamond 2", or with a split field's parts folded the way New schedule's box
+ *  says them, "Field 1 in two sides, Field 3" (round 2 tab 6). */
+export const placesWords = (s: PartsShape) => s.where ?? facilityListWords(s.places);
+
 /** One shape of some parts: its days and clock ("Mon and Wed · 6:00–9:00 p.m."), its facilities, and a week's minutes
- *  (the clock on each day at each facility). Practice time lists its division's time one row per shape (frame h1). */
-export interface PartsShape { days: number[]; when: string; places: string[]; minutesAWeek: number }
+ *  (the clock on each day at each facility, a part at its share). Practice time lists its division's time one row per
+ *  shape (frame h1). `where` is set only when a place is a part of a split field. */
+export interface PartsShape { days: number[]; when: string; places: string[]; minutesAWeek: number; where?: string }
+
+type ShapeInput = Pick<LeagueTimePart, 'weekday' | 'start' | 'end' | 'place' | 'field'>;
+
+/** The shape's places said with their parts folded per field (`rowPlacesWords`, New schedule's box words). */
+function foldedWhere(places: readonly string[], fieldOf: ReadonlyMap<string, PlacePart>): string | undefined {
+  if (!places.some(x => fieldOf.has(x))) return undefined;
+  const fields: { id: string; name: string; sections: FieldSections }[] = [];
+  const parts: Record<string, number[]> = {};
+  for (const label of places) {
+    const f = fieldOf.get(label);
+    const id = f ? f.id : `whole:${label}`;
+    if (!fields.some(x => x.id === id)) fields.push(f ? { id, name: f.name, sections: f.sections } : { id, name: label, sections: 1 });
+    if (f) parts[id] = [...(parts[id] ?? []), f.mask];
+  }
+  return rowPlacesWords(fields, { facilityIds: fields.map(x => x.id), parts });
+}
 
 /** Some parts as their shapes, Monday first (`partsWords` says them on one line). */
-export function partsShapes(parts: readonly Pick<LeagueTimePart, 'weekday' | 'start' | 'end' | 'place'>[]): PartsShape[] {
+export function partsShapes(parts: readonly ShapeInput[]): PartsShape[] {
+  // A part's place label names its part; its weight is its share of the field (a side counts half the field's time).
+  const fieldOf = new Map<string, PlacePart>();
+  for (const p of parts) if (p.field) fieldOf.set(p.place, p.field);
+  const weight = (place: string) => partFactor(fieldOf.get(place)?.mask);
   // 1. Each (day, place)'s clocks, touching ones joined.
   const runs = new Map<string, { weekday: number; place: string; spans: [number, number][] }>();
   for (const p of parts) {
@@ -178,15 +224,17 @@ export function partsShapes(parts: readonly Pick<LeagueTimePart, 'weekday' | 'st
     }
     for (const g of byPlaces.values()) {
       const days = [...g.days].sort((a, b) => a - b);
+      const where = foldedWhere(g.places, fieldOf);
       shapes.push({
         firstDay: days[0], start: c.start, days, places: g.places,
         when: `${weekdaysWords(days)} · ${formatTimeRange(clockOf(c.start), clockOf(c.end))}`,
-        minutesAWeek: (c.end - c.start) * days.length * g.places.length,
+        minutesAWeek: (c.end - c.start) * days.length * g.places.reduce((n, x) => n + weight(x), 0),
+        ...(where ? { where } : {}),
       });
     }
   }
   return shapes.sort((a, b) => a.firstDay - b.firstDay || a.start - b.start)
-    .map(({ days, when, places, minutesAWeek }) => ({ days, when, places, minutesAWeek }));
+    .map(({ days, when, places, minutesAWeek, where }) => ({ days, when, places, minutesAWeek, ...(where ? { where } : {}) }));
 }
 
 /** A stretch's title: the days, the clock and the facilities house league holds in it, as one envelope. */
@@ -195,7 +243,9 @@ function stretchTitle(parts: readonly LeagueTimePart[]): string {
   const start = Math.min(...parts.map(p => minutesOf(p.start)));
   const end = Math.max(...parts.map(p => minutesOf(p.end)));
   const places = [...new Set(parts.map(p => p.place))].sort(byName);
-  return `${weekdaysWords(days)} · ${formatTimeRange(clockOf(start), clockOf(end))} · ${facilityListWords(places)}`;
+  const fieldOf = new Map(parts.flatMap(p => (p.field ? [[p.place, p.field] as const] : [])));
+  // dot-join-ok: the shipped stretch title "days · clock · fields" (House league's time, 11b); 2E changed only the fields' words
+  return `${weekdaysWords(days)} · ${formatTimeRange(clockOf(start), clockOf(end))} · ${foldedWhere(places, fieldOf) ?? facilityListWords(places)}`;
 }
 
 /**
@@ -209,6 +259,8 @@ export function groupLeagueTime(p: {
   divisions: readonly LeagueTimeDivision[];
   placeOf: (venueId: string, facilityId: string | null) => string;
   venueOf: (venueId: string) => string;
+  /** A split field's split, by facility (a part's words); a field not in it reads not split. */
+  sectionsOf?: (facilityId: string) => FieldSections;
 }): LeagueTimeSource[] {
   const divisionOrder = new Map(p.divisions.map((d, i) => [d.id, i]));
   const divisionName = new Map(p.divisions.map(d => [d.id, d.name]));
@@ -222,17 +274,20 @@ export function groupLeagueTime(p: {
     // Parts: weekday + clock + place + use, across the weeks.
     const parts = new Map<string, LeagueTimePart & { blockKey: string }>();
     for (const s of [...mine].sort((a, b) => a.day.localeCompare(b.day) || a.start.localeCompare(b.start))) {
-      const place = p.placeOf(s.venueId, s.facilityId);
+      const field = partOfSlot(s, p.placeOf(s.venueId, s.facilityId), p.sectionsOf);
+      const place = field ? fieldPartName(field.name, field.mask, field.sections) : p.placeOf(s.venueId, s.facilityId);
       const blockKey = s.blockId ?? 'none';
-      const key = `${blockKey}|${s.weekday}|${s.start}|${s.end}|${s.venueId}|${s.facilityId ?? ''}|${keyOfUse(s.use)}`;
+      // Side A and side B at one clock are two parts (a part's key carries its mask; a whole field keys as before).
+      const key = `${blockKey}|${s.weekday}|${s.start}|${s.end}|${s.venueId}|${s.facilityId ?? ''}${maskSuffix(s.sectionMask)}|${keyOfUse(s.use)}`;
       const part = parts.get(key);
       if (part) {
         part.slotIds.push(s.id);
         part.lastDay = s.day;
       } else {
         parts.set(key, {
-          key, blockKey, weekday: s.weekday, start: s.start, end: s.end, place, slotIds: [s.id], firstDay: s.day, lastDay: s.day,
-          minutes: minutesOf(s.end) - minutesOf(s.start), use: s.use,
+          key, blockKey, weekday: s.weekday, start: s.start, end: s.end, place, ...(field ? { field } : {}),
+          slotIds: [s.id], firstDay: s.day, lastDay: s.day,
+          minutes: (minutesOf(s.end) - minutesOf(s.start)) * partFactor(s.sectionMask), use: s.use,
         });
       }
     }

@@ -503,6 +503,63 @@ Migration first. Drawn together with Stage 3.
         ⚠ **Release order, sharper now:** every coach and family schedule read asks for `section_mask` and the field’s
         `sections`, so **541 must be on a database before this code is** (a read fails outright without it, where the
         old `select('*')` did not). Production order unchanged: 541 → 544 → 546 before the 2B/2C promote.
+  - [ ] **2E split in three, said out loud 2026-11-26:** the census counted 7 house-league readers; the code has about 40
+        (6 database functions and about 30 readers that say or compare a house-league place). Part 1 = the part travels
+        and is respected; Part 2 = every place word (admin, public, coach, email, calendar, export); Part 3 = the stage's
+        close (`/simplify`, `/review`, `/marketing`, `/docs`, the board, the walk) and Stage 3's prompt.
+  - [ ] **2E part 1 built 2026-11-26** (mig 552, re-made from the live dev bodies: `league_games_generate_save` and
+        `league_practices_hand_out` write the SLOT's part, never the payload's; a part slot holds ONE practice at a time
+        whatever Teams at once says (round 2 Ask 5 A; the refusal names 1); `league_game_snapshot` carries
+        `sectionMask`; `league_games_record_change` counts a part change as a change of place (round 2 tab 8), which now
+        also reaches mig 546's carry; `league_game_undo` puts the part back (a part the field no longer offers is the
+        whole field); `league_game_club_write` writes `section_mask` when the patch names it; a catch-up runs first (0 rows
+        on dev; prod has no house-league rows). `/dba` on the text: apply with changes, all taken (the refusal's number,
+        Undo after a re-split, the prod-steps entry); one accepted: when a facility is cleared the `after` snapshot shows the
+        old mask beside no field (the recorder sorts before the mask check; the row ends at 0). Rolled-back dry run of the
+        migration with `scripts/schedule-parts-house-league-check.sql`, 9 of 9 (it caught a type fault in Undo, fixed).
+        **Applied to dev 2026-11-26** (the owner's go: the "2E part 1, finish" prompt), the live functions read back equal to
+        the file, the proof on the applied functions 9 of 9; re-applied the same day after `/review` (below), 11 of 11, and
+        2A's `schedule-parts-floor-check.sql` 17 of 17; prod pending, ORDER after 541 and 546, before the promote.
+        Built: Practice time keys a side as its own place (side A and side B at one clock were ONE part, and the second
+        slot was silently dropped); the time row folds "Field 1 in two sides, Field 3" and counts a side at half (9 hours
+        stays 9); the line "Field 1’s sides hold one team each. Teams at once is for whole facilities." only when the time
+        has a part; House league's time and the hand-off bell key and count a part the same way; generated games and the
+        stored line carry the part ("Milton Sports Dome — Field 1, side A", a comma, never a second dash —
+        `formatPartLocation`); every house-league clash check passes the part (`LeagueBooking.sectionMask`, the booking
+        pool, Schedule health, the season calendar, the live check, the generator); the game-to-slot match keys by part;
+        a hand edit keeps its part on its own field and is the whole field on another (`keptPart`, inside
+        `resolveLeagueVenueSelection`, so the stored line keeps ", side A" too); the venue rename writes one line per
+        part; the club's Send the changes moves a house-league game or practice to the other side as a move (2B's owed
+        `sig`) and its words name both sides; the Tell step's told snapshot remembers the side (`m`, absent when whole);
+        the league admin's view of a club schedule draws a part's row under its field. `getOrgPlaceNames` reads each
+        field's split (for Part 2's words). Tests: `house-league-parts` (30), `league-schedule-health`'s row test gains
+        the part; every other related test unchanged.
+        **Said out loud in the session:** (1) a league admin on the club's schedule may place a game only on its
+        division's game time; a hand-placed game is on a whole field, so on a field whose game time is all sides a league
+        admin can't add a game there by hand (refused "outside the time"). Follows Ask 1 A (house league never splits a
+        field); an owner question if it bites. (2) A club send that only changes a published game's side now waits in
+        Changes to send as the club's change (families hear it as a place change), where 546 said nothing.
+        **The two shared files** went in as one change each, the other session's edits left uncommitted:
+        `place-closures-guard.test.ts` counts only migrations that TURN `league.quiet_link` on (552 re-makes the recorder,
+        which reads it), and `MANUAL_PROD_STEPS.json` has 552's entry. That guard reads only `$$`-quoted function bodies,
+        so it still reads 539's recorder, not 552's; `house-league-parts` holds the "Link both" rule on 552's.
+        **`/review` 2026-11-26** (high-risk, four lenses; no Critical or High). Fixed: a score could not be saved on a game
+        whose field had since been split differently (an error; the club-write function names the field and part on every
+        save) — `section_mask_check` (541's, all five tables) now judges only a NEW field or part, in 552; a hand edit on
+        such a booking puts it on the whole field and says no part (`keptPart` takes the field's split); the live clash line
+        keeps an edited practice's part, as the save does; a club send re-timing both sides together keeps each on its side
+        (the pairing broke the tie on slot ids); two stale dictionary lines, the snapshot's keys and one SQL comment.
+        **Accepted:** a venue rename skips an upcoming CANCELLED booking on a part its field no longer offers; Undo puts the
+        stored line back with its old part words after such a re-split (the booking is the whole field); two finalized
+        schedules showing one ground could each hand it out; Schedule health counts two sides as one place and a practice
+        run alternating sides reads "Every Wednesday"; rows 546 put on a part before this change read changed once (none on
+        dev, no house league on prod). ⚠ **Part 1 does not go to production without Part 2:** a move from side A to side B
+        is now news while the emails and Changes to send still say "Field 1" for both.
+        **Two owner questions from the review (not built):** (A) the hand pickers offer whole fields, so on game time that
+        is all sides a league admin can neither ADD nor MOVE a game there (said (1) covered adding only), and an owner or
+        admin moving a side-A game to side-B time saves it still labelled side A (or meets a clash on side A while side B
+        is free); (B) Send the changes can put two house-league practices on one side (a whole-field slot with two teams at
+        once changed to sides: the pairing carries both onto one, nothing checks the one-team rule there).
 - [x] **2D design check, applied 2026-11-26** (owner: "I agree with your recommendations", both asks of
       `claude.ai/artifact/EVyadHYH81Ga9zMtaNNwyq` as recommended; source `SCHEDULE_PARTS_2D_DESIGN_CHECK.html`): the Used
       line is the Use band's one note, total first (`heldUnusedWords` over the whole list; the workbook one note too);

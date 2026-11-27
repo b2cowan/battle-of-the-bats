@@ -27,6 +27,7 @@ import { weekdayOf } from './permit-time';
 import { weekdaysWords } from './permit-words';
 import { SCHEDULE_PUBLISH_WORDS } from './league-schedule-words';
 import { leagueRows, type LeagueChange, type LeagueRow, type PracticeFace } from './club-schedule-league-plan';
+import { fieldPartName, maskOf, maskProp, maskSuffix, WHOLE, type FieldSections } from './field-parts';
 import {
   familyClose, familyPartOpening, familyRowLines, familySubject, rowWhen, type LeaguePlace,
 } from './club-schedule-league-words';
@@ -35,18 +36,31 @@ import type { PlannedPractice, PracticeTimeSlot } from './league-practice-time';
 
 /** A practice as families are told it: start and end (ISO instants; `e` null when none was stored), the venue and
  *  facility ids, and the typed place when there is no venue. The shape of the snapshot (mig 415). */
-export interface ToldPractice { s: string; e: string | null; v: string | null; f: string | null; l: string | null }
+export interface ToldPractice {
+  s: string; e: string | null; v: string | null; f: string | null; l: string | null;
+  /** The part of a split field (Club schedules Stage 2); absent on the whole field and on every snapshot from before it. */
+  m?: number;
+}
 
 /** A team's practice now, with the slot it sits on (the hand-out rewrites only its own slots). */
 export interface CurrentPractice extends ToldPractice { slot: string | null }
 
 const ms = (iso: string) => Date.parse(iso);
 
+/** Where a told practice is, as a key: the venue and field ids with the part (side A is not side B), or the typed place. */
+const idsKey = (p: ToldPractice) => `${p.v}|${p.f ?? ''}${maskSuffix(p.m)}`;
+
 /** One practice's identity: when it starts and ends, and where (the venue's ids, or the typed place). */
 export function toldKey(p: ToldPractice): string {
-  const where = p.v ? `v:${p.v}|${p.f ?? ''}` : `l:${(p.l ?? '').trim().toLowerCase()}`;
+  const where = p.v ? `v:${idsKey(p)}` : `l:${(p.l ?? '').trim().toLowerCase()}`;
   return `${ms(p.s)}|${p.e ? ms(p.e) : ''}|${where}`;
 }
+
+/** The part as a told practice stores it: no key for the whole field (so a whole field's snapshot is as before parts). */
+const partKey = (mask: number | null | undefined): { m?: number } => {
+  const m = maskOf(mask);
+  return m === WHOLE ? {} : { m };
+};
 
 /** The practices still to come, in start order. */
 export function upcoming<T extends ToldPractice>(list: readonly T[], nowMs: number): T[] {
@@ -61,7 +75,7 @@ export function sameUpcoming(told: readonly ToldPractice[], now: readonly ToldPr
 
 /** The snapshot a send stores: the upcoming practices, in the stored shape (no slot). */
 export function snapshotOf(now: readonly ToldPractice[], nowMs: number): ToldPractice[] {
-  return upcoming(now, nowMs).map(p => ({ s: new Date(p.s).toISOString(), e: p.e ? new Date(p.e).toISOString() : null, v: p.v, f: p.f, l: p.l }));
+  return upcoming(now, nowMs).map(p => ({ s: new Date(p.s).toISOString(), e: p.e ? new Date(p.e).toISOString() : null, v: p.v, f: p.f, l: p.l, ...partKey(p.m) }));
 }
 
 export type TeamTellState = 'none' | 'untold' | 'changed' | 'told';
@@ -88,12 +102,12 @@ export function predictHandOut(p: {
   const slot = new Map(p.slots.map(s => [s.id, s]));
   const out = new Map<string, ToldPractice[]>();
   for (const [teamId, list] of p.current) {
-    out.set(teamId, list.filter(x => !(x.slot && planned.has(x.slot) && ms(x.s) > p.nowMs)).map(x => ({ s: x.s, e: x.e, v: x.v, f: x.f, l: x.l })));
+    out.set(teamId, list.filter(x => !(x.slot && planned.has(x.slot) && ms(x.s) > p.nowMs)).map(x => ({ s: x.s, e: x.e, v: x.v, f: x.f, l: x.l, ...partKey(x.m) })));
   }
   for (const r of p.rows) {
     const s = slot.get(r.slotId);
     const [v, f] = (s?.placeKey ?? '|').split('|');
-    (out.get(r.teamId) ?? out.set(r.teamId, []).get(r.teamId)!).push({ s: r.scheduledAt, e: r.endsAt, v: v || null, f: f || null, l: null });
+    (out.get(r.teamId) ?? out.set(r.teamId, []).get(r.teamId)!).push({ s: r.scheduledAt, e: r.endsAt, v: v || null, f: f || null, l: null, ...partKey(s?.field?.mask) });
   }
   return out;
 }
@@ -115,22 +129,33 @@ export function handOutAgainCounts(p: {
 // ── The change, as rows ────────────────────────────────────────────────────────────────────────────────────
 
 /** Where a practice is, as a key the rows group by: the venue and facility ids, or the typed place. */
-const placeKeyOf = (p: ToldPractice) => (p.v ? `${p.v}|${p.f ?? ''}` : `l:${p.l ?? ''}`);
+const placeKeyOf = (p: ToldPractice) => (p.v ? idsKey(p) : `l:${p.l ?? ''}`);
 
-/** A practice's face on the club's clock, from its instants and its place key. */
+/** A practice's face on the club's clock, from its instants and its place key ("venue|field", "|mask" for a part). */
 export function faceOfTold(startMs: number, endMs: number, key: string): PracticeFace {
   const start = utcToZonedInputs(new Date(startMs).toISOString());
   const end = Number.isFinite(endMs) ? utcToZonedInputs(new Date(endMs).toISOString()) : { time: '' };
   const typed = key.startsWith('l:');
-  const [v, f] = typed ? [key, ''] : key.split('|');
-  return { day: start.date, weekday: weekdayOf(start.date), startClock: start.time, endClock: end.time, venueId: v, facilityId: f || null };
+  const [v, f, m] = typed ? [key, '', ''] : key.split('|');
+  return {
+    day: start.date, weekday: weekdayOf(start.date), startClock: start.time, endClock: end.time, venueId: v, facilityId: f || null,
+    ...maskProp(m ? Number(m) : WHOLE),
+  };
 }
 
-/** A face's place in words, from the club's place names (a typed place is its own words). */
-export function placeOfTold(names: { venue: (id: string) => string | null; facility: (id: string) => string | null }) {
-  return (f: PracticeFace): LeaguePlace => (f.venueId.startsWith('l:')
-    ? { venue: f.venueId.slice(2), facility: null }
-    : { venue: names.venue(f.venueId) ?? '', facility: f.facilityId ? names.facility(f.facilityId) : null });
+/** A face's place in words, from the club's place names (a typed place is its own words); a part after the field
+ *  ("Field 1, side A") when `sections` says how the field splits. */
+export function placeOfTold(names: {
+  venue: (id: string) => string | null; facility: (id: string) => string | null; sections?: (id: string) => FieldSections;
+}) {
+  return (f: PracticeFace): LeaguePlace => {
+    if (f.venueId.startsWith('l:')) return { venue: f.venueId.slice(2), facility: null };
+    const name = f.facilityId ? names.facility(f.facilityId) : null;
+    return {
+      venue: names.venue(f.venueId) ?? '',
+      facility: name && f.facilityId ? fieldPartName(name, f.sectionMask, names.sections?.(f.facilityId) ?? 1, ', ') : name,
+    };
+  };
 }
 
 /** One team's change: the built 11b rows (moved, cancelled), the practices added, and the first date anything changed. */
@@ -184,7 +209,7 @@ export function teamChange(teamId: string, told: readonly ToldPractice[], now: r
   const addedGroups = new Map<string, { days: string[]; face: PracticeFace }>();
   for (const p of added) {
     const face = faceOf(p);
-    const sig = `${face.weekday}|${face.startClock}|${face.endClock}|${face.venueId}|${face.facilityId ?? ''}`;
+    const sig = `${face.weekday}|${face.startClock}|${face.endClock}|${face.venueId}|${face.facilityId ?? ''}${maskSuffix(face.sectionMask)}`;
     (addedGroups.get(sig) ?? addedGroups.set(sig, { days: [], face }).get(sig)!).days.push(face.day);
   }
   const addedRows = [...addedGroups.values()].map(g => ({ ...g, days: g.days.sort() })).sort((x, y) => x.days[0].localeCompare(y.days[0]));

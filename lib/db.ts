@@ -28,7 +28,7 @@ import { planInstallmentWrites, paymentRestatements, legacyEntryDescriptionsForP
 import { whyPlanStrandsPaidMoney } from './payable-scope-edit';
 import { CLUB_OWNED_BOOK_KINDS } from './club-money-figures';
 import { toCents, toDollars } from './coach-register';
-import { maskOf, sectionsOf } from './field-parts';
+import { maskOf, maskProp, sectionsOf, type FieldSections } from './field-parts';
 import { registrationOwes } from './league-price';
 import { checklistLeft, seasonChecklist } from './house-league-season';
 import { cleanSiteList } from './public-site-patch';
@@ -2270,6 +2270,8 @@ export interface LeagueGameInput {
   /** Set together via resolveLeagueVenueSelection — never write a facility without its venue. */
   orgVenueId?: string | null;
   orgVenueFacilityId?: string | null;
+  /** The part it keeps on its field (a hand edit's `keptPart`); absent = kept as stored, and 0 on a new game. */
+  sectionMask?: number;
   location?: string | null;
   notes?: string | null;
   /** The division game time it sits on (9d-2b, `lib/league-game-place.ts`); null off it. */
@@ -2396,6 +2398,7 @@ function mapLeagueGame(row: any): LeagueGame {
     endsAt:      row.ends_at ?? null,
     orgVenueId:         row.org_venue_id ?? null,
     orgVenueFacilityId: row.org_venue_facility_id ?? null,
+    ...maskProp(row.section_mask),
     location:    row.location ?? null,
     homeScore:   row.home_score ?? null,
     awayScore:   row.away_score ?? null,
@@ -2738,19 +2741,28 @@ export async function getSeasonGamesBetween(seasonId: string, fromIso: string, t
  * Every club venue's and facility's name, a closed venue's too — a game played at a venue the club has since closed was
  * still played there, so the record keeps naming it. Throws on a failed read.
  */
-export async function getOrgPlaceNames(orgId: string): Promise<{ venues: Map<string, { name: string; address: string | null }>; facilities: Map<string, string> }> {
+export async function getOrgPlaceNames(orgId: string): Promise<{
+  venues: Map<string, { name: string; address: string | null }>;
+  facilities: Map<string, string>;
+  /** How each field splits (Club schedules Stage 2, mig 541): a booking's part in words. A field absent here is whole. */
+  sections: Map<string, FieldSections>;
+}> {
   const { data, error } = await supabaseAdmin
     .from('org_venues')
-    .select('id, name, address, org_venue_facilities(id, name)')
+    .select('id, name, address, org_venue_facilities(id, name, sections)')
     .eq('org_id', orgId);
   if (error) throw error;
   const venues = new Map<string, { name: string; address: string | null }>();
   const facilities = new Map<string, string>();
-  for (const v of (data ?? []) as { id: string; name: string; address: string | null; org_venue_facilities: { id: string; name: string }[] | null }[]) {
+  const sections = new Map<string, FieldSections>();
+  for (const v of (data ?? []) as { id: string; name: string; address: string | null; org_venue_facilities: { id: string; name: string; sections: number | null }[] | null }[]) {
     venues.set(v.id, { name: v.name, address: v.address ?? null });
-    for (const f of v.org_venue_facilities ?? []) facilities.set(f.id, f.name);
+    for (const f of v.org_venue_facilities ?? []) {
+      facilities.set(f.id, f.name);
+      if (sectionsOf(f.sections) !== 1) sections.set(f.id, sectionsOf(f.sections));
+    }
   }
-  return { venues, facilities };
+  return { venues, facilities, sections };
 }
 
 // ─── League practices ─────────────────────────────────────────────────────────
@@ -2765,6 +2777,7 @@ function mapLeaguePractice(row: Record<string, unknown>): LeaguePractice {
     endsAt:            row.ends_at as string | null,
     orgVenueId:         (row.org_venue_id as string | null) ?? null,
     orgVenueFacilityId: (row.org_venue_facility_id as string | null) ?? null,
+    ...maskProp(row.section_mask as number | null | undefined),
     location:          row.location as string | null,
     notes:             row.notes as string | null,
     status:            row.status as LeaguePracticeStatus,
@@ -2838,13 +2851,16 @@ export async function createPractices(inputs: LeaguePracticeInput[]): Promise<Le
  *  route refuses one (only the club's schedule changes it), and nothing here writes its slot link. */
 export async function updatePractices(rows: {
   id: string; scheduledAt: string; endsAt: string | null;
-  orgVenueId: string | null; orgVenueFacilityId: string | null; location: string | null; notes: string | null;
+  orgVenueId: string | null; orgVenueFacilityId: string | null;
+  /** The part it keeps (`keptPart`: 0 on another field — house league never splits a field). */
+  sectionMask: number;
+  location: string | null; notes: string | null;
 }[]): Promise<void> {
   const now = new Date().toISOString();
   for (const r of rows) {
     const { error } = await supabaseAdmin.from('league_practices').update({
       scheduled_at: r.scheduledAt, ends_at: r.endsAt, org_venue_id: r.orgVenueId, org_venue_facility_id: r.orgVenueFacilityId,
-      location: r.location, notes: r.notes, updated_at: now,
+      section_mask: r.sectionMask, location: r.location, notes: r.notes, updated_at: now,
     }).eq('id', r.id).is('club_schedule_slot_id', null);
     if (error) throw new Error(`updatePractices failed: ${error.message}`);
   }
@@ -2942,6 +2958,7 @@ export function leagueGameRow(
   if (input.endsAt      !== undefined) patch.ends_at      = input.endsAt;
   if (input.orgVenueId         !== undefined) patch.org_venue_id          = input.orgVenueId;
   if (input.orgVenueFacilityId !== undefined) patch.org_venue_facility_id = input.orgVenueFacilityId;
+  if (input.sectionMask !== undefined) patch.section_mask = input.sectionMask;
   if (input.location    !== undefined) patch.location     = input.location;
   if (input.homeScore   !== undefined) patch.home_score   = input.homeScore;
   if (input.awayScore   !== undefined) patch.away_score   = input.awayScore;

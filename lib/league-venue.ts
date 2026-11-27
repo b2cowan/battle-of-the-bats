@@ -21,15 +21,17 @@
 
 import { supabaseAdmin } from './supabase-admin';
 import { ORG_TIME_ZONE } from './timezone';
-import { formatVenueLocation } from './venue-label';
+import { formatPartLocation } from './venue-label';
 import {
   findLeagueBookingConflicts,
   isBlockingConflict,
+  keptPart,
   type LeagueBooking,
   type LeagueBookingConflict,
 } from './league-schedule-conflict';
 import { DEFAULT_BOOKING_MINUTES } from './booking-length';
 import { proveLibraryVenue } from './venue-clash-lookup';
+import { maskProp, WHOLE, type FieldSections } from './field-parts';
 
 // Pure end-time resolution lives with the engine (unit-testable); routes import it from here.
 export { resolveEndInstant } from './league-schedule-conflict';
@@ -41,7 +43,11 @@ export { resolveEndInstant } from './league-schedule-conflict';
 export interface LeagueVenueSelection {
   orgVenueId: string | null;
   orgVenueFacilityId: string | null;
-  /** Derived "Venue — Facility" when picked; the trimmed typed text otherwise. */
+  /** The part it keeps (`keptPart`): 0 unless an edit leaves a part's booking on its own field. */
+  sectionMask: number;
+  /** How the picked field splits (1 with none): a series edit asks `keptPart` of each of its rows. */
+  fieldSections: FieldSections;
+  /** Derived "Venue — Facility" (", side A" after a kept part) when picked; the trimmed typed text otherwise. */
   location: string | null;
 }
 
@@ -55,6 +61,8 @@ export async function resolveLeagueVenueSelection(args: {
   orgVenueFacilityId?: string | null;
   /** Typed free text — used ONLY when no venue is picked. */
   locationText?: string | null;
+  /** An edit: the row as stored, so a booking left on its own field keeps its part (`keptPart`). Absent on a new one. */
+  stored?: { org_venue_facility_id: string | null; section_mask: number | null };
 }): Promise<LeagueVenueSelectionResult> {
   const { orgId, orgVenueId, orgVenueFacilityId, locationText } = args;
 
@@ -63,7 +71,7 @@ export async function resolveLeagueVenueSelection(args: {
       return { ok: false, error: 'A surface cannot be picked without its venue.' };
     }
     const text = locationText?.trim() || null;
-    return { ok: true, value: { orgVenueId: null, orgVenueFacilityId: null, location: text } };
+    return { ok: true, value: { orgVenueId: null, orgVenueFacilityId: null, sectionMask: WHOLE, fieldSections: 1, location: text } };
   }
 
   // The tenant check is the library's ONE proof (Club Tier Stage 6a, shared with the rep teams' resolver); the
@@ -71,16 +79,25 @@ export async function resolveLeagueVenueSelection(args: {
   const proof = await proveLibraryVenue(orgId, orgVenueId, orgVenueFacilityId ?? null);
   // "not found" for a foreign org's venue too — don't confirm it exists.
   if (!proof.ok) return { ok: false, error: proof.missing === 'venue' ? 'Venue not found.' : 'Surface not found at that venue.' };
+  const facilityId = proof.facility?.id ?? null;
+  const fieldSections = proof.facility?.sections ?? 1;
+  const sectionMask = args.stored ? keptPart(args.stored, facilityId, fieldSections) : WHOLE;
   return {
     ok: true,
     value: {
       orgVenueId: proof.venue.id,
-      orgVenueFacilityId: proof.facility?.id ?? null,
-      // Same shape resolveGameVenueLabel renders for tournaments — one label everywhere.
-      location: proof.facility ? formatVenueLocation(proof.venue.name, proof.facility.name) : proof.venue.name,
+      orgVenueFacilityId: facilityId,
+      sectionMask,
+      fieldSections,
+      // Same shape resolveGameVenueLabel renders for tournaments — one label everywhere; a kept part after a comma.
+      location: proof.facility
+        ? formatPartLocation(proof.venue.name, proof.facility.name, sectionMask, proof.facility.sections)
+        : proof.venue.name,
     },
   };
 }
+
+export { keptPart } from './league-schedule-conflict';
 
 // ---------------------------------------------------------------------------
 // Save-time clash check against the org-wide pool
@@ -118,6 +135,8 @@ interface PoolRow {
   ends_at?: string | null;
   org_venue_id: string | null;
   org_venue_facility_id: string | null;
+  /** The part of a split field (mig 541; 0 = whole): side A beside side B is no clash. */
+  section_mask: number | null;
   location: string | null;
   home_team_id?: string;
   away_team_id?: string;
@@ -187,7 +206,7 @@ export async function checkLeagueBookings(args: {
   const [gamesRes, practicesRes] = await Promise.all([
     supabaseAdmin
       .from('league_games')
-      .select('id, status, scheduled_at, ends_at, org_venue_id, org_venue_facility_id, location, home_team_id, away_team_id')
+      .select('id, status, scheduled_at, ends_at, org_venue_id, org_venue_facility_id, section_mask, location, home_team_id, away_team_id')
       .eq('org_id', orgId)
       .neq('status', 'cancelled')
       .neq('status', 'postponed')
@@ -195,7 +214,7 @@ export async function checkLeagueBookings(args: {
       .lte('scheduled_at', rangeEnd),
     supabaseAdmin
       .from('league_practices')
-      .select('id, status, scheduled_at, ends_at, org_venue_id, org_venue_facility_id, location, team_id')
+      .select('id, status, scheduled_at, ends_at, org_venue_id, org_venue_facility_id, section_mask, location, team_id')
       .eq('org_id', orgId)
       .neq('status', 'cancelled')
       .gte('scheduled_at', rangeStart)
@@ -224,14 +243,14 @@ export async function checkLeagueBookings(args: {
     ...gameRows.map((r): LeagueBooking => ({
       id: r.id, kind: 'game',
       startsAt: r.scheduled_at, endsAt: r.ends_at ?? null, status: r.status,
-      orgVenueId: r.org_venue_id, orgVenueFacilityId: r.org_venue_facility_id,
+      orgVenueId: r.org_venue_id, orgVenueFacilityId: r.org_venue_facility_id, ...maskProp(r.section_mask),
       location: r.location,
       label: `${teamName.get(r.home_team_id ?? '') ?? 'Home'} vs ${teamName.get(r.away_team_id ?? '') ?? 'Away'}`,
     })),
     ...practiceRows.map((r): LeagueBooking => ({
       id: r.id, kind: 'practice',
       startsAt: r.scheduled_at, endsAt: r.ends_at ?? null, status: r.status,
-      orgVenueId: r.org_venue_id, orgVenueFacilityId: r.org_venue_facility_id,
+      orgVenueId: r.org_venue_id, orgVenueFacilityId: r.org_venue_facility_id, ...maskProp(r.section_mask),
       location: r.location,
       label: `${teamName.get(r.team_id ?? '') ?? 'Team'} practice`,
     })),

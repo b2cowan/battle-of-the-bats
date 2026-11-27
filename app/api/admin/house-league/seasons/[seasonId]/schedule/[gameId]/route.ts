@@ -4,6 +4,7 @@ import { houseLeagueRefusal } from '@/lib/house-league-gate';
 import { getLeagueSeasonById, leagueGameRow, updateLeagueGame } from '@/lib/db';
 import { clubWriteGame, staffName } from '@/lib/league-coach-scores-server';
 import { resolveLeagueVenueSelection, checkLeagueBookings, resolveEndInstant } from '@/lib/league-venue';
+import { maskOf, maskProp } from '@/lib/field-parts';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { withObservability } from '@/lib/observability';
 import { zonedWallClockToUtc } from '@/lib/timezone';
@@ -24,7 +25,7 @@ export const maxDuration = 120;
 async function verifyGame(gameId: string, seasonId: string) {
   const { data } = await supabaseAdmin
     .from('league_games')
-    .select('id, division_id, status, home_score, away_score, scheduled_at, ends_at, org_venue_id, org_venue_facility_id, location, home_team_id, away_team_id, updated_at')
+    .select('id, division_id, status, home_score, away_score, scheduled_at, ends_at, org_venue_id, org_venue_facility_id, section_mask, location, home_team_id, away_team_id, updated_at')
     .eq('id', gameId)
     .eq('season_id', seasonId)
     .single();
@@ -116,11 +117,14 @@ export const PATCH = withObservability(async (req: Request,
       orgVenueId: body.orgVenueId ?? null,
       orgVenueFacilityId: body.orgVenueFacilityId ?? null,
       locationText: body.location ?? null,
+      // House league never splits a field (round 2 Ask 1 A): another field is the whole of it; the same field keeps its part.
+      stored: game,
     });
     if (!selection.ok) return NextResponse.json({ error: selection.error }, { status: 400 });
     patch.orgVenueId         = selection.value.orgVenueId;
     patch.orgVenueFacilityId = selection.value.orgVenueFacilityId;
     patch.location           = selection.value.location;
+    if (selection.value.sectionMask !== maskOf(game.section_mask)) patch.sectionMask = selection.value.sectionMask;
   } else if ('location' in body && !game.org_venue_id) {
     patch.location = body.location ?? null;
   }
@@ -154,6 +158,7 @@ export const PATCH = withObservability(async (req: Request,
     endsAt: (patch.endsAt !== undefined ? patch.endsAt : game.ends_at) as string | null,
     orgVenueId: patch.orgVenueId !== undefined ? patch.orgVenueId : game.org_venue_id,
     orgVenueFacilityId: patch.orgVenueFacilityId !== undefined ? patch.orgVenueFacilityId : game.org_venue_facility_id,
+    sectionMask: patch.sectionMask ?? maskOf(game.section_mask),
     location: (patch.location !== undefined ? patch.location : game.location) as string | null,
   };
   const placementChanged =
@@ -178,7 +183,7 @@ export const PATCH = withObservability(async (req: Request,
       proposed: [{
         id: gameId, kind: 'game',
         startsAt: eff.scheduledAt, endsAt: eff.endsAt,
-        orgVenueId: eff.orgVenueId, orgVenueFacilityId: eff.orgVenueFacilityId, location: eff.location,
+        orgVenueId: eff.orgVenueId, orgVenueFacilityId: eff.orgVenueFacilityId, ...maskProp(eff.sectionMask), location: eff.location,
         label: `${names.get(homeTeamId) ?? 'Home'} vs ${names.get(awayTeamId) ?? 'Away'}`,
       }],
     });
@@ -202,7 +207,7 @@ export const PATCH = withObservability(async (req: Request,
     const placed = await placeGame({
       orgId: ctx!.org.id, seasonId, divisionId: game.division_id, divisionName: division.name,
       scheduledAt: eff.scheduledAt, orgVenueId: eff.orgVenueId, orgVenueFacilityId: eff.orgVenueFacilityId,
-      placeAnywhere: houseLeagueAccess(ctx!, ctx!.org, season).placeAnywhere,
+      ...maskProp(eff.sectionMask), placeAnywhere: houseLeagueAccess(ctx!, ctx!.org, season).placeAnywhere,
     });
     if ('refusal' in placed) return NextResponse.json({ error: placed.refusal, code: 'outside_time' }, { status: 409 });
     patch.slotUseId = placed.slotUseId;
@@ -249,7 +254,7 @@ export const PATCH = withObservability(async (req: Request,
     ? await clashReportForLeagueRows(ctx!.org.id, season, 'game', [{
         id: gameId,
         scheduledAt: eff.scheduledAt, endsAt: eff.endsAt, status: effectiveStatus,
-        orgVenueId: eff.orgVenueId, orgVenueFacilityId: eff.orgVenueFacilityId,
+        orgVenueId: eff.orgVenueId, orgVenueFacilityId: eff.orgVenueFacilityId, ...maskProp(eff.sectionMask),
       }])
     : emptyReport();
   return NextResponse.json({ ok: true, warnings, crossProgram, sent, ...(sendFailed ? { sendFailed: CW.sendNowFailed } : {}) });

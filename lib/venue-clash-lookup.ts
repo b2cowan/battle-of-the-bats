@@ -38,6 +38,7 @@ import {
 import { clashLine, clashLineText } from './venue-clash-words';
 import { checkClubPermitsOrFlag, checkClubPermitsQuietly } from './permit-lookup';
 import { permitLine, type PermitOutside } from './permit-words';
+import { sectionsOf, type FieldSections } from './field-parts';
 import type { ClubVenueOption, FacilityType, OrgPlan, RepTeamEvent, RepTryoutSession } from './types';
 
 const DAY = 86_400_000;
@@ -119,7 +120,7 @@ export async function getClubVenuesForTeam(org: OrgRef, teamId: string): Promise
 // ---------------------------------------------------------------------------
 
 export type LibraryVenueProof =
-  | { ok: true; venue: { id: string; name: string; address: string | null }; facility: { id: string; name: string } | null }
+  | { ok: true; venue: { id: string; name: string; address: string | null }; facility: { id: string; name: string; sections: FieldSections } | null }
   | { ok: false; missing: 'venue' | 'facility' };
 
 /**
@@ -131,7 +132,7 @@ export async function proveLibraryVenue(orgId: string, venueId: string, facility
   const [venueRes, facRes] = await Promise.all([
     supabaseAdmin.from('org_venues').select('id, org_id, name, address').eq('id', venueId).maybeSingle(),
     facilityId
-      ? supabaseAdmin.from('org_venue_facilities').select('id, org_venue_id, org_id, name').eq('id', facilityId).maybeSingle()
+      ? supabaseAdmin.from('org_venue_facilities').select('id, org_venue_id, org_id, name, sections').eq('id', facilityId).maybeSingle()
       : Promise.resolve({ data: null }),
   ]);
   const venue = venueRes.data;
@@ -141,7 +142,8 @@ export async function proveLibraryVenue(orgId: string, venueId: string, facility
   return {
     ok: true,
     venue: { id: venue.id as string, name: venue.name as string, address: (venue.address as string | null) ?? null },
-    facility: fac ? { id: fac.id as string, name: fac.name as string } : null,
+    // `sections`: how the field splits (mig 541) — a house-league line that keeps its part names it (lib/league-venue.ts).
+    facility: fac ? { id: fac.id as string, name: fac.name as string, sections: sectionsOf(fac.sections) } : null,
   };
 }
 
@@ -460,7 +462,7 @@ export function clashReportForLeagueRows(
   orgId: string,
   season: { name: string; sport?: string | null },
   kind: 'game' | 'practice',
-  rows: readonly { id: string; scheduledAt: string | null; endsAt?: string | null; status?: string | null; orgVenueId?: string | null; orgVenueFacilityId?: string | null }[],
+  rows: readonly { id: string; scheduledAt: string | null; endsAt?: string | null; status?: string | null; orgVenueId?: string | null; orgVenueFacilityId?: string | null; sectionMask?: number | null }[],
 ): Promise<ClashReport> {
   return report(orgId, rows.map(r => bookingOfLeagueRow(r, kind, season.name)), () => season.sport);
 }

@@ -44,6 +44,7 @@ import { heldHouseLeagueSlotIds, tellTimeGiven, timeHandoffFor, type SendTimeHan
 import type { LeagueTimeLine } from './league-time-handoff';
 import { coachTeamPath } from './house-league-coach-invites';
 import { formatVenueLocation } from './venue-label';
+import { maskProp } from './field-parts';
 import { weekdayOf } from './permit-time';
 import {
   isEmptyLeagueStep, leagueFingerprint, leagueRows, planLeagueChanges,
@@ -502,13 +503,15 @@ async function leagueHalf(c: Context, opts: { audience?: boolean } = {}): Promis
 
   const slots: LeagueSlot[] = c.loaded.slots.map(s => ({
     id: s.id, startMs: Date.parse(s.startsAt), endMs: Date.parse(s.endsAt), venueId: s.venueId, facilityId: s.facilityId,
-    removed: s.removed, houseLeague: s.teamIds.includes(HOUSE_LEAGUE), isNew: sinceSent(s.id),
+    ...maskProp(s.sectionMask), removed: s.removed, houseLeague: s.teamIds.includes(HOUSE_LEAGUE), isNew: sinceSent(s.id),
   }));
   const slotById = new Map(slots.map(s => [s.id, s]));
-  const placeOf = (f: { venueId: string; facilityId: string | null }): LeaguePlace => ({
-    venue: c.places.venueName.get(f.venueId) ?? '', facility: f.facilityId ? c.places.facilityName.get(f.facilityId) ?? null : null,
+  // A face's place in words, its part after the field ("Field 1, side A"): the coach's email, the families' and the row.
+  const placeOf = (f: { venueId: string; facilityId: string | null; sectionMask?: number }): LeaguePlace => ({
+    venue: c.places.venueName.get(f.venueId) ?? '', facility: clubFieldWords(c.places, f.facilityId, f.sectionMask),
   });
-  // The display cache, as Practice time writes it (lib/league-practice-time-server.ts): "venue — facility".
+  // The display cache, as Practice time writes it (lib/league-practice-time-server.ts): "venue — facility", a part after a
+  // comma ("Field 1, side A").
   const locationOf = (slotId: string) => {
     const p = placeOf(slotById.get(slotId)!);
     return p.venue && p.facility ? formatVenueLocation(p.venue, p.facility) : p.facility ?? p.venue;
@@ -532,7 +535,10 @@ async function leagueHalf(c: Context, opts: { audience?: boolean } = {}): Promis
   const iso = (ms: number) => new Date(ms).toISOString();
   const faceOf = (startMs: number, endMs: number, slotId: string): PracticeFace => {
     const s = slotById.get(slotId)!, z = utcToZonedInputs(iso(startMs));
-    return { day: z.date, weekday: weekdayOf(z.date), startClock: z.time, endClock: utcToZonedInputs(iso(endMs)).time, venueId: s.venueId, facilityId: s.facilityId };
+    return {
+      day: z.date, weekday: weekdayOf(z.date), startClock: z.time, endClock: utcToZonedInputs(iso(endMs)).time, venueId: s.venueId, facilityId: s.facilityId,
+      ...maskProp(s.sectionMask),
+    };
   };
   const changed = new Set(plan.changes.map(ch => ch.practiceId));
   const stays = sent.filter(p => !p.cancelled && p.startMs > nowMs && !changed.has(p.id))

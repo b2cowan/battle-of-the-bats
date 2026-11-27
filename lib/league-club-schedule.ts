@@ -11,6 +11,7 @@
 import { formatTime } from './utils.ts';
 import { formatWeekRange } from './timezone.ts';
 import { keyOfUse, type LeagueTimeDivision, type LeagueTimePractice, type LeagueUse } from './league-time.ts';
+import { maskProp, maskSuffix, type FieldSections } from './field-parts.ts';
 
 /** Who holds a slot, as a league admin may know it. `teams` null = names withheld (no Rep teams for this viewer). */
 export type LeagueClubHolder =
@@ -22,6 +23,8 @@ export interface LeagueClubSlot {
   id: string;
   venueId: string;
   facilityId: string | null;
+  /** The slot's part of a split field (Club schedules Stage 2); absent on the whole field. Drawn on its part's row. */
+  sectionMask?: number;
   /** The club day (YYYY-MM-DD), the slot's start as an instant (cell order), and its clocks in the club's zone. */
   day: string;
   startsAt: string;
@@ -38,9 +41,10 @@ export interface LeagueClubSlot {
 export interface LeagueClubSchedule {
   schedule: { id: string; name: string; startsOn: string; endsOn: string };
   /** The places the schedule's slots stand on, as the grid's rows read them. */
-  places: { venueId: string; venueName: string; facilities: { id: string; name: string }[] }[];
-  /** Every place the schedule's live slots stand on, so the grid's rows hold still from week to week (/review). */
-  placesUsed: { venueId: string; facilityId: string | null }[];
+  places: { venueId: string; venueName: string; facilities: { id: string; name: string; sections?: FieldSections }[] }[];
+  /** Every place the schedule's live slots stand on, so the grid's rows hold still from week to week (/review); a part
+   *  is its own place (its row under its field). */
+  placesUsed: { venueId: string; facilityId: string | null; sectionMask?: number }[];
   /** The week's slots only (Monday to Sunday of `week`). */
   week: string;
   slots: LeagueClubSlot[];
@@ -51,7 +55,7 @@ export interface LeagueClubSchedule {
 
 /** The raw slot the server reads, before the projection. */
 export interface RawClubSlot {
-  id: string; venueId: string; facilityId: string | null; startsAt: string; day: string; weekday: number;
+  id: string; venueId: string; facilityId: string | null; sectionMask?: number; startsAt: string; day: string; weekday: number;
   startClock: string; endClock: string; teamIds: string[]; houseLeague: boolean; removed: boolean;
 }
 
@@ -77,11 +81,10 @@ export function projectClubSlots(p: {
 }): LeagueClubSlot[] {
   const live = p.slots.filter(s => !s.removed);
   const holderKey = (s: RawClubSlot) => (s.houseLeague ? 'house_league' : s.teamIds.length ? [...s.teamIds].sort().join(',') : 'open');
+  // A run is one weekday, clock, place (its part included: side A's run is not side B's) and holder.
+  const runKey = (s: RawClubSlot) => `${s.weekday}|${s.startClock}|${s.venueId}|${s.facilityId ?? ''}${maskSuffix(s.sectionMask)}|${holderKey(s)}`;
   const runs = new Map<string, string[]>();
-  for (const s of live) {
-    const k = `${s.weekday}|${s.startClock}|${s.venueId}|${s.facilityId ?? ''}|${holderKey(s)}`;
-    runs.set(k, [...(runs.get(k) ?? []), s.day]);
-  }
+  for (const s of live) runs.set(runKey(s), [...(runs.get(runKey(s)) ?? []), s.day]);
   return live
     .filter(s => s.day >= p.week.from && s.day <= p.week.to)
     .map((s): LeagueClubSlot => {
@@ -92,9 +95,9 @@ export function projectClubSlots(p: {
         : s.teamIds.length
           ? { kind: 'rep', teams: p.teamName ? s.teamIds.map(id => p.teamName!.get(id) ?? '').filter(Boolean) : null }
           : { kind: 'open' };
-      const days = [...(runs.get(`${s.weekday}|${s.startClock}|${s.venueId}|${s.facilityId ?? ''}|${holderKey(s)}`) ?? [])].sort();
+      const days = [...(runs.get(runKey(s)) ?? [])].sort();
       return {
-        id: s.id, venueId: s.venueId, facilityId: s.facilityId, day: s.day, startsAt: s.startsAt,
+        id: s.id, venueId: s.venueId, facilityId: s.facilityId, ...maskProp(s.sectionMask), day: s.day, startsAt: s.startsAt,
         startClock: s.startClock, endClock: s.endClock, holder,
         canUse: s.houseLeague && !otherSeason && p.final && s.startsAt > p.now && p.inSeason(s.day),
         repeats: days.length > 1 ? repeatsWords(s.weekday, s.startClock, days[0], days[days.length - 1]) : null,

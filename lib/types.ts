@@ -1100,6 +1100,9 @@ export interface LeagueGame {
   /** Picked venue/surface from the ORG venue library — not per-season copies (mig 229). */
   orgVenueId: string | null;
   orgVenueFacilityId: string | null;
+  /** The part of a split field it takes from its club slot (Club schedules Stage 2, mig 541/552); absent on the whole
+   *  field. House league never splits a field itself (round 2 Ask 1 A). */
+  sectionMask?: number;
   /** Display cache: server-derived from the picked venue, free text only when none picked. */
   location: string | null;
   homeScore: number | null;
@@ -1126,6 +1129,8 @@ export interface LeaguePractice {
   /** Picked venue/surface from the ORG venue library (mig 229) — one booking pool with games. */
   orgVenueId: string | null;
   orgVenueFacilityId: string | null;
+  /** The part of a split field it takes from its club slot (mig 541/552); absent on the whole field. */
+  sectionMask?: number;
   /** Display cache: server-derived from the picked venue, free text only when none picked. */
   location: string | null;
   notes: string | null;

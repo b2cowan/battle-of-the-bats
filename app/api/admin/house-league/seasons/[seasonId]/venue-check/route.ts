@@ -12,6 +12,7 @@ import { checkClubPermitsQuietly } from '@/lib/permit-lookup';
 import type { PermitOutside } from '@/lib/permit-words';
 import { generateOccurrences } from '@/lib/league-practice-series';
 import type { ClubBooking, ClashFinding } from '@/lib/venue-clash';
+import { maskProp } from '@/lib/field-parts';
 
 const MAX_OCCURRENCES = 60;
 
@@ -71,13 +72,27 @@ export const POST = withObservability(async (req: Request,
   const blank = { results: occurrences.map(o => ({ date: o.date, refusal: null as Refusal | null, crossProgram: [] as ClashFinding[], permit: null as PermitOutside | null })) };
   if (!occurrences.length || !body.orgVenueId) return NextResponse.json(blank);
 
+  const excludeGameIds = typeof body.excludeGameId === 'string' ? [body.excludeGameId] : [];
+  // A practice being edited (Stage 11b Part 4): its own dates are never another booking.
+  const excludePracticeIds = Array.isArray(body.excludePracticeIds)
+    ? (body.excludePracticeIds as unknown[]).filter((x): x is string => typeof x === 'string').slice(0, MAX_OCCURRENCES) : [];
+
+  // A game or practice being edited keeps its part while it stays on its field (the save's rule, `keptPart`): ask about
+  // that ground. A series edit asks about its first date's part.
+  const editedIds = kind === 'practice' ? excludePracticeIds : excludeGameIds;
+  const editing = editedIds.length
+    ? (await supabaseAdmin.from(kind === 'practice' ? 'league_practices' : 'league_games').select('org_venue_facility_id, section_mask')
+      .in('id', editedIds).eq('season_id', seasonId).order('scheduled_at').limit(1).maybeSingle()).data
+    : null;
   const selection = await resolveLeagueVenueSelection({
     orgId: ctx.org.id,
     orgVenueId: typeof body.orgVenueId === 'string' ? body.orgVenueId : null,
     orgVenueFacilityId: typeof body.orgVenueFacilityId === 'string' ? body.orgVenueFacilityId : null,
+    ...(editing ? { stored: editing } : {}),
   });
   if (!selection.ok || !selection.value.orgVenueId) return NextResponse.json(blank);
   const { orgVenueId, orgVenueFacilityId, location } = selection.value;
+  const part = maskProp(selection.value.sectionMask);
 
   // The window's own label for the booking it is about to make (the refusal never names it, but the engine wants one).
   let label = kind === 'practice' ? 'This practice' : 'This game';
@@ -94,17 +109,13 @@ export const POST = withObservability(async (req: Request,
   });
 
   // 1. House league's own rule — per occurrence, so a series' refusal is on the date it falls on.
-  const excludeGameIds = typeof body.excludeGameId === 'string' ? [body.excludeGameId] : [];
-  // A practice being edited (Stage 11b Part 4): its own dates are never another booking.
-  const excludePracticeIds = Array.isArray(body.excludePracticeIds)
-    ? (body.excludePracticeIds as unknown[]).filter((x): x is string => typeof x === 'string').slice(0, MAX_OCCURRENCES) : [];
   const own = await checkLeagueBookings({
     orgId: ctx.org.id,
     excludeGameIds,
     excludePracticeIds,
     proposed: slots.map((s, i) => ({
       id: `proposed-${i}`, kind, startsAt: s.startsAt, endsAt: s.endsAt,
-      orgVenueId, orgVenueFacilityId, location, label: `${label} #${i}`,
+      orgVenueId, orgVenueFacilityId, ...part, location, label: `${label} #${i}`,
     })),
   });
   const refusalByIndex = new Map<number, Refusal>();
@@ -122,7 +133,7 @@ export const POST = withObservability(async (req: Request,
 
   // 2. Across programs — warns only. League bookings are the league's own rule, never repeated here (owner 'league').
   const proposed = slots.map((s, i) => bookingOfLeagueRow({
-    id: `proposed-${i}`, scheduledAt: s.startsAt, endsAt: s.endsAt, status: 'scheduled', orgVenueId, orgVenueFacilityId,
+    id: `proposed-${i}`, scheduledAt: s.startsAt, endsAt: s.endsAt, status: 'scheduled', orgVenueId, orgVenueFacilityId, ...part,
   }, kind, season.name));
   const placed = proposed.filter((p): p is ClubBooking => !!p);
   const [found, outside] = await Promise.all([

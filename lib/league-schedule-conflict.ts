@@ -37,6 +37,22 @@ import {
 // under the plain-node test runner.
 import { zonedWallClockToUtc } from './timezone.ts';
 import { DEFAULT_BOOKING_MINUTES } from './booking-length.ts';
+import { isLegalMask, maskOf, WHOLE, type FieldSections } from './field-parts.ts';
+
+/**
+ * THE PART A HAND EDIT KEEPS (Club schedules Stage 2, round 2 Ask 1 A: house league never splits a field). A game or a
+ * practice takes a part only from its club slot; a hand edit that leaves its field alone keeps that part, and one that
+ * picks another field (or no field) puts it on the whole of it — the pickers offer whole facilities only. A part its
+ * field no longer offers (`sections`: split differently since) is the whole field too, as every other writer reads it.
+ */
+export function keptPart(
+  stored: { org_venue_facility_id: string | null; section_mask: number | null },
+  nextFacilityId: string | null,
+  sections: FieldSections,
+): number {
+  const kept = nextFacilityId && nextFacilityId === stored.org_venue_facility_id ? maskOf(stored.section_mask) : WHOLE;
+  return isLegalMask(kept, sections) ? kept : WHOLE;
+}
 
 
 /**
@@ -74,6 +90,9 @@ export interface LeagueBooking {
   status?: string | null;
   orgVenueId?: string | null;
   orgVenueFacilityId?: string | null;
+  /** The part of a split field it takes from its club slot (Club schedules Stage 2); absent = the whole field, which meets
+   *  every part. Side A beside side B is no clash. */
+  sectionMask?: number | null;
   /** Display cache / typed text — matched trim+case-fold only, via venue-identity. */
   location?: string | null;
   /** Human label ("Tigers vs Bears", "Tigers practice") carried through for messages. */
@@ -84,6 +103,7 @@ function toPlacementSource(b: LeagueBooking): VenuePlacementSource {
   return {
     venueId: b.orgVenueId,
     venueFacilityId: b.orgVenueFacilityId,
+    sectionMask: b.sectionMask,
     location: b.location,
   };
 }

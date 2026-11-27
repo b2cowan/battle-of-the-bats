@@ -6,6 +6,7 @@ import { readClubPlaces } from './permit-lookup';
 import { weekdayOf } from './permit-time';
 import { addCalendarDays, utcToZonedInputs, zonedWallClockToUtc } from './timezone';
 import { HOUSE_LEAGUE } from './club-schedule-holders';
+import { maskProp } from './field-parts';
 import {
   groupLeagueTime, seasonHoldsSlot, LEAGUE_TIME_REFUSALS as R,
   type LeagueTime, type LeagueTimeChange, type LeagueTimeSchedule, type LeagueTimeSlot, type LeagueUseKind,
@@ -34,6 +35,8 @@ import type { LeagueSeason } from './types';
 
 type SlotRow = {
   id: string; schedule_id: string; block_id: string | null; org_venue_id: string; facility_id: string | null;
+  /** The slot's part (mig 541; 0 = the whole field). */
+  section_mask: number;
   starts_at: string; ends_at: string;
 };
 
@@ -54,7 +57,7 @@ function liveHouseLeagueSlots(orgId: string, select: string, head?: { count: 'ex
 
 /** House league's live slots of final schedules, still to come, inside the season (ids alone when `ids` narrows it). */
 export async function houseLeagueSlotRows(orgId: string, season: LeagueSeason, ids?: readonly string[]): Promise<SlotRow[]> {
-  const columns = 'id, schedule_id, block_id, org_venue_id, facility_id, starts_at, ends_at';
+  const columns = 'id, schedule_id, block_id, org_venue_id, facility_id, section_mask, starts_at, ends_at';
   const rows = ids
     ? await fetchAllIn<SlotRow>(ids, (c, a, b) => liveHouseLeagueSlots(orgId, columns).in('id', c).order('id').range(a, b))
     : await fetchAll<SlotRow>((a, b) => liveHouseLeagueSlots(orgId, columns).order('id').range(a, b));
@@ -138,13 +141,13 @@ export async function seasonGameSlots(orgId: string, seasonId: string): Promise<
   if (!uses.length) return [];
   const division = new Map(uses.map(u => [u.slot_id, u.division_id]));
   const rows = await fetchAllIn<SlotRow & { club_schedules: { name: string } | { name: string }[] }>([...division.keys()], (c, a, b) => supabaseAdmin
-    .from('club_schedule_slots').select('id, schedule_id, block_id, org_venue_id, facility_id, starts_at, ends_at, club_schedules!inner(name, state)')
+    .from('club_schedule_slots').select('id, schedule_id, block_id, org_venue_id, facility_id, section_mask, starts_at, ends_at, club_schedules!inner(name, state)')
     .eq('org_id', orgId).in('id', c).is('removed_at', null).eq('club_schedules.state', 'final').order('id').range(a, b));
   return rows.map(r => {
     const schedule = Array.isArray(r.club_schedules) ? r.club_schedules[0] : r.club_schedules;
     return {
       slotId: r.id, divisionId: division.get(r.id)!, startsAt: r.starts_at, venueId: r.org_venue_id, facilityId: r.facility_id,
-      scheduleId: r.schedule_id, scheduleName: schedule?.name ?? '',
+      ...maskProp(r.section_mask), scheduleId: r.schedule_id, scheduleName: schedule?.name ?? '',
     };
   });
 }
@@ -170,6 +173,7 @@ export async function readLeagueTime(orgId: string, season: LeagueSeason): Promi
     const u = uses.get(r.id);
     return {
       id: r.id, scheduleId: r.schedule_id, blockId: r.block_id, venueId: r.org_venue_id, facilityId: r.facility_id,
+      ...maskProp(r.section_mask),
       day: start.date, weekday: weekdayOf(start.date), start: start.time, end: end.time,
       use: u ? { divisionId: u.division_id, kind: u.kind } : null,
     };
@@ -184,6 +188,7 @@ export async function readLeagueTime(orgId: string, season: LeagueSeason): Promi
       slots, schedules: ordered, divisions: divisionList,
       placeOf: (v, f) => (f ? places.facilityName.get(f) : null) ?? places.venueName.get(v) ?? '',
       venueOf: v => places.venueName.get(v) ?? '',
+      sectionsOf: f => places.sectionsOf.get(f) ?? 1,
     }),
     divisions: divisionList,
     practices,

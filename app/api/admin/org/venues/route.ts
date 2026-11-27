@@ -303,7 +303,10 @@ export const POST = withObservability(async (req: Request) => {
       // the library's own rows (see `carryWordsForward`: a failure in between must leave the change for the retry to see).
       const carried = await carryWordsForward(orgId, id, {
         name, address,
-        facilities: plan ? plan.keep.map(k => ({ id: k.id, name: k.name })) : [...stored.values()].map(f => ({ id: f.id, name: f.name })),
+        // Each field's split: a house-league line on a part keeps its part's words ("Field 1, side A").
+        facilities: plan
+          ? plan.keep.map(k => ({ id: k.id, name: k.name, sections: sectionsOf(k.sections) }))
+          : [...stored.values()].map(f => ({ id: f.id, name: f.name, sections: sectionsOf(f.sections) })),
       }, { venueName: existing.name !== name, address: (existing.address ?? null) !== address, facilityIds: renamedFacilityIds });
 
       const created: Record<string, string> = {};

@@ -5,9 +5,10 @@ import { readClubPlaces } from './permit-lookup';
 import { weekdayOf } from './permit-time';
 import { mondayOfDay, utcToZonedInputs } from './timezone';
 import { fetchAllIn } from './supabase-paging';
-import { formatVenueLocation } from './venue-label';
+import { formatPartLocation } from './venue-label';
+import { fieldPartName, maskSuffix } from './field-parts';
 import { houseLeagueSlotRows, usesOf } from './league-time-server';
-import { LEAGUE_TIME_REFUSALS } from './league-time';
+import { LEAGUE_TIME_REFUSALS, partOfSlot } from './league-time';
 import {
   DEFAULT_SETTINGS, planPractices, readSettings, sameIds, PRACTICE_TIME_REFUSALS as R,
   type HandOutBody, type PracticeTimeRead, type PracticeTimeSlot,
@@ -53,10 +54,14 @@ export async function readPracticeTime(orgId: string, season: LeagueSeason, divi
     .map((r): PracticeTimeSlot => {
       const start = utcToZonedInputs(r.starts_at), end = utcToZonedInputs(r.ends_at);
       const venue = places.venueName.get(r.org_venue_id) ?? '';
+      const name = (r.facility_id ? places.facilityName.get(r.facility_id) : null) ?? venue;
+      // A side or a quarter is its own place (it holds one team, round 2 Ask 5 A); its label names the part.
+      const field = partOfSlot({ facilityId: r.facility_id, sectionMask: r.section_mask }, name, f => places.sectionsOf.get(f) ?? 1);
       return {
         id: r.id, day: start.date, weekday: weekdayOf(start.date), start: start.time, end: end.time, startsAt: r.starts_at,
-        place: (r.facility_id ? places.facilityName.get(r.facility_id) : null) ?? venue,
-        placeKey: `${r.org_venue_id}|${r.facility_id ?? ''}`, venue,
+        place: field ? fieldPartName(field.name, field.mask, field.sections) : name,
+        placeKey: `${r.org_venue_id}|${r.facility_id ?? ''}${maskSuffix(r.section_mask)}`, venue,
+        ...(field ? { field } : {}),
       };
     })
     .sort((a, b) => a.startsAt.localeCompare(b.startsAt) || a.placeKey.localeCompare(b.placeKey));
@@ -116,8 +121,15 @@ export async function handOutPractices(p: { orgId: string; season: LeagueSeason;
   const slot = new Map(read.slots.map(s => [s.id, s]));
   const rows = plan.rows.map(r => {
     const s = slot.get(r.slotId)!;
-    // The display cache, as a picked venue writes it (lib/league-venue.ts); the step writes the slot's venue and facility.
-    return { ...r, location: s.venue && s.place !== s.venue ? formatVenueLocation(s.venue, s.place) : s.place };
+    // The display cache, as a picked venue writes it (lib/league-venue.ts), with the slot's part after a comma ("Field 1,
+    // side A", round 2 tab 8); the step writes the slot's venue, facility and part.
+    const facility = s.field ? s.field.name : s.place;
+    return {
+      ...r,
+      location: s.venue && facility !== s.venue
+        ? formatPartLocation(s.venue, facility, s.field?.mask, s.field?.sections ?? 1)
+        : s.place,
+    };
   });
 
   const { data, error } = await supabaseAdmin.rpc('league_practices_hand_out', {

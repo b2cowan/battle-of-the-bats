@@ -11,6 +11,7 @@ import { formatShortWeekdayDate, formatStoredDate, formatWeekRange } from './tim
 import { weekdayPlural } from './permit-words';
 import { weeklyDays, type EmailWords } from './club-schedule-words';
 import type { LeagueRow, PracticeFace } from './club-schedule-league-plan';
+import { maskOf } from './field-parts';
 import { FACT_LABELS as L, capFactList, factRow, noticeFacts, type NoticeFacts } from './notification-facts';
 
 /** A practice's place: the venue and its facility (a venue without facilities has none). */
@@ -34,7 +35,9 @@ export function rowWhen(r: Pick<LeagueRow, 'days' | 'throughEnd' | 'was'>): stri
 
 const short = (p: LeaguePlace) => p.facility ?? p.venue;
 const full = (p: LeaguePlace) => (p.facility ? `${p.venue} · ${p.facility}` : p.venue);
-const samePlace = (a: PracticeFace, b: PracticeFace) => a.venueId === b.venueId && a.facilityId === b.facilityId;
+/** The same ground, its part included: side A → side B is a place change ("Field 1, side A → Field 1, side B"). */
+const samePlace = (a: PracticeFace, b: PracticeFace) =>
+  a.venueId === b.venueId && a.facilityId === b.facilityId && maskOf(a.sectionMask) === maskOf(b.sectionMask);
 
 /**
  * The h4 row, after the team's name (`changeTeamLine`): "Sundays from Nov 8: Field 1 → Field 3, 11:00 a.m. → 12:30 p.m."

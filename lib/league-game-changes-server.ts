@@ -6,6 +6,7 @@ import { asLastSent, heldGames, lastSentInWindow, sendClaim, type GameSnapshot, 
 import type { LeagueDivision, LeagueGame, LeagueSeason } from './types';
 import { addCalendarDays, orgDayKey, tournamentToday, zonedWallClockToUtc } from './timezone';
 import { leagueCheckWindow } from './club-game-live';
+import { maskProp } from './field-parts';
 
 // The as-last-sent view moved to the pure module (Club Website Stage 1) so its window rule is unit-tested; kept reachable
 // here for the readers that import it from this module.
@@ -56,14 +57,14 @@ export async function heldGamesOf(seasonId: string, divisionId?: string, heldRow
   if (!held.length) return [];
   // (A mapped type: league-game-changes-guard reads any object key named for the trigger's date as a write of it.)
   type Nullable = 'scheduled_at' | 'ends_at' | 'location' | 'org_venue_id' | 'org_venue_facility_id' | 'moved_from';
-  const rows = await fetchAllIn<{ id: string; division_id: string; home_team_id: string; away_team_id: string; status: LeagueGame['status'] }
+  const rows = await fetchAllIn<{ id: string; division_id: string; home_team_id: string; away_team_id: string; status: LeagueGame['status']; section_mask: number | null }
     & { [K in Nullable]: string | null }>([...new Set(held.map(h => h.gameId))], (c, a, b) => supabaseAdmin.from('league_games')
-    .select('id, division_id, home_team_id, away_team_id, scheduled_at, ends_at, location, org_venue_id, org_venue_facility_id, status, moved_from')
+    .select('id, division_id, home_team_id, away_team_id, scheduled_at, ends_at, location, org_venue_id, org_venue_facility_id, section_mask, status, moved_from')
     .in('id', c).order('id').range(a, b));
   const byId = new Map(rows.map(r => [r.id, r]));
   const current = new Map(rows.map(r => [r.id, {
     scheduledAt: r.scheduled_at, endsAt: r.ends_at, location: r.location, venueId: r.org_venue_id,
-    facilityId: r.org_venue_facility_id, status: r.status, movedFrom: r.moved_from,
+    facilityId: r.org_venue_facility_id, ...maskProp(r.section_mask), status: r.status, movedFrom: r.moved_from,
   } satisfies GameSnapshot]));
   return heldGames(held, current).flatMap(g => {
     const r = byId.get(g.gameId);
@@ -279,5 +280,5 @@ export async function publicLeagueGamesBetween(orgId: string, fromIso: string, t
     } : null;
   }));
   const found = out.filter((x): x is PublicLeagueSeasonGames => x !== null);
-  return { seasons: found, places: found.length ? await getOrgPlaceNames(orgId) : { venues: new Map(), facilities: new Map() } };
+  return { seasons: found, places: found.length ? await getOrgPlaceNames(orgId) : { venues: new Map(), facilities: new Map(), sections: new Map() } };
 }

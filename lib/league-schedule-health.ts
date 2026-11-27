@@ -44,6 +44,7 @@ import { formatStoredDate, mondayOfDay, orgDayKey, utcToZonedInputs } from './ti
 import { formatTime, pluralize } from './utils.ts';
 import { weekdayOf } from './permit-time.ts';
 import { dayWords } from './calendar-recipe.ts';
+import { maskOf } from './field-parts.ts';
 import type { ScheduleHealthTone } from './schedule-metrics.ts';
 import { SEASON_SCHEDULE_WORDS } from './league-season-calendar.ts';
 import type { LeagueGame, LeaguePractice } from './types.ts';
@@ -60,6 +61,8 @@ export interface LeagueHealthGame {
   status: string;
   venueId: string | null;
   facilityId: string | null;
+  /** The part of a split field (Club schedules Stage 2; 0 or absent = whole): side A beside side B is no clash. */
+  sectionMask?: number;
   location: string | null;
 }
 export interface LeagueHealthPractice {
@@ -71,6 +74,7 @@ export interface LeagueHealthPractice {
   status: string;
   venueId: string | null;
   facilityId: string | null;
+  sectionMask?: number;
   location: string | null;
   clubSlotId: string | null;
 }
@@ -78,12 +82,13 @@ export interface LeagueHealthTeam { id: string; name: string; divisionId: string
 
 export function leagueHealthPracticeFromRow(row: {
   id: string; division_id: string | null; team_id: string; scheduled_at: string | null; ends_at: string | null; status: string;
-  org_venue_id: string | null; org_venue_facility_id: string | null; location: string | null; club_schedule_slot_id: string | null;
+  org_venue_id: string | null; org_venue_facility_id: string | null; section_mask: number | null; location: string | null;
+  club_schedule_slot_id: string | null;
 }): Required<LeagueHealthPractice> {
   return {
     id: row.id, divisionId: row.division_id, teamId: row.team_id, scheduledAt: row.scheduled_at, endsAt: row.ends_at,
-    status: row.status, venueId: row.org_venue_id, facilityId: row.org_venue_facility_id, location: row.location,
-    clubSlotId: row.club_schedule_slot_id,
+    status: row.status, venueId: row.org_venue_id, facilityId: row.org_venue_facility_id, sectionMask: maskOf(row.section_mask),
+    location: row.location, clubSlotId: row.club_schedule_slot_id,
   };
 }
 
@@ -91,13 +96,15 @@ export function leagueHealthPracticeFromRow(row: {
 export function leagueHealthGameOf(g: LeagueGame): Required<LeagueHealthGame> {
   return {
     id: g.id, divisionId: g.divisionId, homeTeamId: g.homeTeamId, awayTeamId: g.awayTeamId, scheduledAt: g.scheduledAt,
-    endsAt: g.endsAt, status: g.status, venueId: g.orgVenueId, facilityId: g.orgVenueFacilityId, location: g.location,
+    endsAt: g.endsAt, status: g.status, venueId: g.orgVenueId, facilityId: g.orgVenueFacilityId, sectionMask: maskOf(g.sectionMask),
+    location: g.location,
   };
 }
 export function leagueHealthPracticeOf(p: LeaguePractice): Required<LeagueHealthPractice> {
   return {
     id: p.id, divisionId: p.divisionId, teamId: p.teamId, scheduledAt: p.scheduledAt, endsAt: p.endsAt, status: p.status,
-    venueId: p.orgVenueId, facilityId: p.orgVenueFacilityId, location: p.location, clubSlotId: p.clubScheduleSlotId,
+    venueId: p.orgVenueId, facilityId: p.orgVenueFacilityId, sectionMask: maskOf(p.sectionMask), location: p.location,
+    clubSlotId: p.clubScheduleSlotId,
   };
 }
 
@@ -289,8 +296,8 @@ export function buildLeagueScheduleHealth(input: {
   //    A structured match is a clash; two identical typed names only MIGHT be one place and are not counted. Two teams'
   //    practices from one club slot are that slot's one booking ("teams at once", 11b), never a clash.
   const onPractices = input.practices.filter(p => p.status !== 'cancelled' && p.scheduledAt);
-  const gameBookings: LeagueBooking[] = onGames.map(x => ({ id: x.id, kind: 'game', startsAt: x.scheduledAt, endsAt: x.endsAt, status: x.status, orgVenueId: x.venueId, orgVenueFacilityId: x.facilityId, location: x.location }));
-  const practiceBookings: LeagueBooking[] = onPractices.map(x => ({ id: x.id, kind: 'practice', startsAt: x.scheduledAt, endsAt: x.endsAt, status: x.status, orgVenueId: x.venueId, orgVenueFacilityId: x.facilityId, location: x.location }));
+  const gameBookings: LeagueBooking[] = onGames.map(x => ({ id: x.id, kind: 'game', startsAt: x.scheduledAt, endsAt: x.endsAt, status: x.status, orgVenueId: x.venueId, orgVenueFacilityId: x.facilityId, sectionMask: x.sectionMask, location: x.location }));
+  const practiceBookings: LeagueBooking[] = onPractices.map(x => ({ id: x.id, kind: 'practice', startsAt: x.scheduledAt, endsAt: x.endsAt, status: x.status, orgVenueId: x.venueId, orgVenueFacilityId: x.facilityId, sectionMask: x.sectionMask, location: x.location }));
   const pool = [...gameBookings, ...practiceBookings];
   const clubSlotOf = new Map(onPractices.map(x => [`practice:${x.id}`, x.clubSlotId]));
   const pageKey = (b: LeagueBooking) => `league_${b.kind}:${b.id}`;

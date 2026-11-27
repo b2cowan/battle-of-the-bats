@@ -267,9 +267,10 @@ describe('prime time', () => {
 describe('the page\'s rows', () => {
   it('a game and a practice as the page holds them read the same as their rows', () => {
     const game = { id: 'g', seasonId: 's', divisionId: 'd', homeTeamId: 'h', awayTeamId: 'a', scheduledAt: at('2026-06-01'), endsAt: null, orgVenueId: 'v', orgVenueFacilityId: 'f', location: null, homeScore: null, awayScore: null, status: 'scheduled' as const, notes: null, slotUseId: null, movedFrom: null, createdAt: '', updatedAt: '' };
-    assert.deepEqual(leagueHealthGameOf(game), { id: 'g', divisionId: 'd', homeTeamId: 'h', awayTeamId: 'a', scheduledAt: at('2026-06-01'), endsAt: null, status: 'scheduled', venueId: 'v', facilityId: 'f', location: null });
+    // Club schedules Stage 2: the part travels too (0 = the whole field), so health's clash rule can tell side A from side B.
+    assert.deepEqual(leagueHealthGameOf(game), { id: 'g', divisionId: 'd', homeTeamId: 'h', awayTeamId: 'a', scheduledAt: at('2026-06-01'), endsAt: null, status: 'scheduled', venueId: 'v', facilityId: 'f', sectionMask: 0, location: null });
     const practice = { id: 'p', seasonId: 's', divisionId: null, teamId: 't', scheduledAt: null, endsAt: null, orgVenueId: null, orgVenueFacilityId: null, location: 'Eastview', notes: null, status: 'scheduled' as const, recurrenceGroupId: null, clubScheduleSlotId: 'slot', createdAt: '', updatedAt: '' };
-    assert.deepEqual(leagueHealthPracticeOf(practice), { id: 'p', divisionId: null, teamId: 't', scheduledAt: null, endsAt: null, status: 'scheduled', venueId: null, facilityId: null, location: 'Eastview', clubSlotId: 'slot' });
+    assert.deepEqual(leagueHealthPracticeOf(practice), { id: 'p', divisionId: null, teamId: 't', scheduledAt: null, endsAt: null, status: 'scheduled', venueId: null, facilityId: null, sectionMask: 0, location: 'Eastview', clubSlotId: 'slot' });
   });
 });
 

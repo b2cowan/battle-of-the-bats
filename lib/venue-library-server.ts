@@ -24,7 +24,8 @@ import { supabaseAdmin } from './supabase-admin';
 import { fetchAll, fetchAllIn } from './supabase-paging';
 import { isLiveSeasonStatus } from './season-live';
 import { tournamentToday } from './timezone';
-import { formatVenueLocation } from './venue-label';
+import { formatPartLocation, formatVenueLocation } from './venue-label';
+import { legalMasks, type FieldSections } from './field-parts';
 import type { VenueUsage } from './venue-library';
 
 /** A season or tournament that has finished no longer books "this season". */
@@ -222,7 +223,7 @@ export async function facilitiesWithPartsBooked(facilityIds: readonly string[]):
  * carry is idempotent. Returns how many booking rows took new words.
  */
 export async function carryWordsForward(orgId: string, venueId: string, final: {
-  name: string; address: string | null; facilities: readonly { id: string; name: string }[];
+  name: string; address: string | null; facilities: readonly { id: string; name: string; sections?: FieldSections }[];
 }, changed: { venueName: boolean; address: boolean; facilityIds: readonly string[] }, now: Date = new Date()): Promise<number> {
   if (!changed.venueName && !changed.address && !changed.facilityIds.length) return 0;
   const nowIso = now.toISOString();
@@ -248,14 +249,24 @@ export async function carryWordsForward(orgId: string, venueId: string, final: {
   // House league keeps ONE line, "Venue — Facility" (lib/venue-label.ts): a renamed venue rewrites every upcoming line
   // on it, a renamed facility only that facility's. It keeps no address.
   if (changed.venueName || renamed.length) {
-    const lines: { facilityId: string | null; text: string }[] = changed.venueName
-      ? [{ facilityId: null, text: final.name }, ...final.facilities.map(f => ({ facilityId: f.id, text: formatVenueLocation(final.name, f.name) }))]
-      : renamed.map(f => ({ facilityId: f.id, text: formatVenueLocation(final.name, f.name) }));
+    // A split field's line carries its part after a comma ("Venue — Field 1, side A", Club schedules Stage 2): one line per
+    // part it offers, each written only onto the bookings on that part. A field not split is one line, as before parts.
+    const fieldLines = (f: { id: string; name: string; sections?: FieldSections }) => {
+      const sections = f.sections ?? 1;
+      return sections === 1
+        ? [{ facilityId: f.id, text: formatVenueLocation(final.name, f.name) }]
+        : legalMasks(sections).map(mask => ({ facilityId: f.id, mask, text: formatPartLocation(final.name, f.name, mask, sections) }));
+    };
+    const lines: { facilityId: string | null; mask?: number; text: string }[] = changed.venueName
+      ? [{ facilityId: null, text: final.name }, ...final.facilities.flatMap(fieldLines)]
+      : renamed.flatMap(fieldLines);
     for (const table of ['league_games', 'league_practices'] as const) {
       for (const line of lines) {
-        const q = supabaseAdmin.from(table).update({ location: line.text, ...stamp })
+        let q = supabaseAdmin.from(table).update({ location: line.text, ...stamp })
           .eq('org_id', orgId).eq('org_venue_id', venueId).gte('scheduled_at', nowIso);
-        writes.push((line.facilityId ? q.eq('org_venue_facility_id', line.facilityId) : q.is('org_venue_facility_id', null)).select('id'));
+        q = line.facilityId ? q.eq('org_venue_facility_id', line.facilityId) : q.is('org_venue_facility_id', null);
+        if (line.mask !== undefined) q = q.eq('section_mask', line.mask);
+        writes.push(q.select('id'));
       }
     }
   }

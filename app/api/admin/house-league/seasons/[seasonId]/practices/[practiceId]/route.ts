@@ -8,6 +8,8 @@ import { resolveLeagueVenueSelection, checkLeagueBookings, resolveEndInstant } f
 import { utcToZonedInputs, zonedWallClockToUtc } from '@/lib/timezone';
 import { SCHEDULE_WORDS } from '@/lib/club-schedule-words';
 import { PRACTICE_WINDOW_WORDS } from '@/lib/league-practice-time';
+import { keptPart } from '@/lib/league-venue';
+import { maskProp } from '@/lib/field-parts';
 
 /**
  * ONE PRACTICE: cancel it (`{ action: 'cancel', scope: one | remaining | all }`), or move a hand-booked one
@@ -33,7 +35,7 @@ export const PATCH = withObservability(async (req: NextRequest,
   if (refused) return refused;
   const { data: practice } = await supabaseAdmin
     .from('league_practices')
-    .select('id, team_id, status, scheduled_at, recurrence_group_id, club_schedule_slot_id, notes')
+    .select('id, team_id, status, scheduled_at, recurrence_group_id, club_schedule_slot_id, notes, org_venue_facility_id, section_mask')
     .eq('id', practiceId)
     .eq('season_id', seasonId)
     .single();
@@ -58,10 +60,16 @@ export const PATCH = withObservability(async (req: NextRequest,
 const isClock = (v: string) => /^([01]\d|2[0-3]):[0-5]\d$/.test(v);
 const isDay = (v: string) => /^\d{4}-\d{2}-\d{2}$/.test(v) && new Date(`${v}T12:00:00Z`).toISOString().slice(0, 10) === v;
 
+type PracticeRow = {
+  id: string; team_id: string; status: string; scheduled_at: string | null; recurrence_group_id: string | null; notes: string | null;
+  org_venue_facility_id: string | null; section_mask: number | null;
+};
+type Target = { id: string; scheduled_at: string | null; notes: string | null; org_venue_facility_id: string | null; section_mask: number | null };
+
 /** The pencil's save: this practice, or this one and the rest of its series (each keeping its own date). */
 async function editPractice(
   orgId: string,
-  practice: { id: string; team_id: string; status: string; scheduled_at: string | null; recurrence_group_id: string | null; notes: string | null },
+  practice: PracticeRow,
   scope: unknown,
   body: Record<string, unknown>,
 ) {
@@ -76,9 +84,9 @@ async function editPractice(
   }
 
   // The dates it moves: this one, or this one and the ones after it in its series that aren't cancelled.
-  let targets: { id: string; scheduled_at: string | null; notes: string | null }[] = [{ id: practice.id, scheduled_at: practice.scheduled_at, notes: practice.notes }];
+  let targets: Target[] = [practice];
   if (scope === 'rest' && practice.recurrence_group_id && practice.scheduled_at) {
-    const { data } = await supabaseAdmin.from('league_practices').select('id, scheduled_at, notes')
+    const { data } = await supabaseAdmin.from('league_practices').select('id, scheduled_at, notes, org_venue_facility_id, section_mask')
       .eq('org_id', orgId).eq('recurrence_group_id', practice.recurrence_group_id).is('club_schedule_slot_id', null)
       .neq('status', 'cancelled').gte('scheduled_at', practice.scheduled_at).order('scheduled_at');
     targets = (data ?? []) as typeof targets;
@@ -89,6 +97,8 @@ async function editPractice(
     orgVenueId: (body.orgVenueId as string | null) ?? null,
     orgVenueFacilityId: (body.orgVenueFacilityId as string | null) ?? null,
     locationText: (body.location as string | null) ?? null,
+    // The practice's own line keeps its part on its own field (a club practice whose slot the club removed).
+    stored: practice,
   });
   if (!selection.ok) return NextResponse.json({ error: selection.error }, { status: 400 });
   const { orgVenueId, orgVenueFacilityId, location } = selection.value;
@@ -100,7 +110,10 @@ async function editPractice(
     const date = scope === 'one' ? (body.scheduledDate as string) : utcToZonedInputs(t.scheduled_at).date;
     const scheduledAt = zonedWallClockToUtc(date, startTime) ?? `${date}T${startTime}:00`;
     const endsAt = endTime ? (resolveEndInstant(scheduledAt, date, endTime) ?? `${date}T${endTime}:00`) : null;
-    return { id: t.id, scheduledAt, endsAt, orgVenueId, orgVenueFacilityId, location, notes: notesOf(t.notes) };
+    // House league never splits a field (round 2 Ask 1 A): a move to another field is the whole field; the same field keeps
+    // the part it came with (a club practice whose slot the club removed).
+    const sectionMask = keptPart(t, orgVenueFacilityId, selection.value.fieldSections);
+    return { id: t.id, scheduledAt, endsAt, orgVenueId, orgVenueFacilityId, sectionMask, location, notes: notesOf(t.notes) };
   });
   if (!rows.length) return NextResponse.json({ error: W.cancelled, code: 'cancelled' }, { status: 409 });
 
@@ -111,7 +124,7 @@ async function editPractice(
     excludePracticeIds: rows.map(r => r.id),
     proposed: rows.map((r, i) => ({
       id: `edit-${i}`, kind: 'practice' as const, startsAt: r.scheduledAt, endsAt: r.endsAt,
-      orgVenueId: r.orgVenueId, orgVenueFacilityId: r.orgVenueFacilityId, location: r.location,
+      orgVenueId: r.orgVenueId, orgVenueFacilityId: r.orgVenueFacilityId, ...maskProp(r.sectionMask), location: r.location,
       label: `${team?.name ?? 'Team'} practice`,
     })),
   });

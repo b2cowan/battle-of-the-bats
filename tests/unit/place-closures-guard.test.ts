@@ -113,7 +113,7 @@ describe('"Link both" is not news (K7)', () => {
       .filter(p => readFileSync(p, 'utf8').includes('quiet_link') && !p.endsWith('league-game-changes.ts'));
     assert.deepEqual(others, []);
     const migs = MIGS.filter(n => !PRESS_MIGS.includes(n))
-      .filter(n => readFileSync(join(MIG_DIR, n), 'utf8').includes("'league.quiet_link'"));
+      .filter(n => readFileSync(join(MIG_DIR, n), 'utf8').includes("set_config('league.quiet_link', 'on'"));
     assert.deepEqual(migs, []);
     assert.ok(PRESS_MIGS.includes('539_a_closed_place_closes_for_every_program.sql'));
   });
