@@ -205,6 +205,10 @@
 /* A notice above the cards spans the whole row — as a plain grid child it took the cards' 15rem cell, pushed the cards
    into the wide column and dropped the chosen draft's By team list into the narrow one (its names wrapped, its figures overlapped). */
 .draftsSpan { grid-column: 1 / -1; }
+/* Its door sits in the sentence at the sentence's size. At .door's button height it stretched the line and dropped the words
+   below the warning icon (owner, 2026-11-27); a phone keeps the tap floor. The arrow takes the door's colour, not the icon's. */
+@media (min-width: 769px) { .draftsSpan .door { min-height: 0; font-size: inherit; } }
+.draftsSpan .door svg { margin-top: 0; color: inherit; }
 /* A card is a box holding its pick button and its measures list (a button may not hold a list); the button's ::after
    covers the card, so a press anywhere on it picks the draft and the focus ring rings the whole card. */
 .card {
@@ -542,8 +546,10 @@ details.chGroup[open] .chToggle > span + span { display: inline; }
 /* Right-aligned over its figures, explicitly: the first permit's heading is the FIRST cell of the second header row, and would
    otherwise pick up the Team column's left alignment. */
 .fairTable th.fairSubHead { text-align: right; padding-left: 0.9rem; text-transform: none; letter-spacing: 0; font-weight: 600; }
-.fairTable td { padding: 0.28rem 0.3rem; text-align: right; color: var(--text-primary); vertical-align: middle; }
-.fairTable td:first-child { display: flex; align-items: center; gap: 0.4rem; min-width: 0; }
+/* One line across a row: the name and every figure share the first line, and Hours' full-field figure hangs under its own.
+   The Team cell stays a table cell — as a flex box it stopped short of the row and broke the row's rule (owner, 2026-11-27). */
+.fairTable td { padding: 0.28rem 0.3rem; text-align: right; color: var(--text-primary); vertical-align: baseline; }
+.fairTable td:first-child .swatch { margin-right: 0.4rem; }
 .fairTable tr.grp td { font-weight: 700; border-top: 1px solid var(--home-line); }
 .fairTable tr.amberRow td { color: var(--badge-warning-ink); }
 .fairLines { margin: 0 0 0.75rem; display: grid; gap: 0.3rem; font-size: var(--type-support); color: var(--badge-warning-ink); }
@@ -562,7 +568,8 @@ details.chGroup[open] .chToggle > span + span { display: inline; }
 .gapDoors { display: flex; flex-wrap: wrap; gap: 0 1.25rem; margin-top: 0.3rem; }
 .gapSec { margin: 0 0 0.35rem; font-family: var(--font-display); font-size: var(--type-support); font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; color: var(--text-secondary); } /* type-ok: section label */
 .gapTable { width: 100%; min-width: 0; }
-.gapTable td:first-child { display: table-cell; }
+/* Its rows end in a Give it button, so they stay centred. */
+.gapTable td { vertical-align: middle; }
 .gapTable td.gapLeft, .gapTable th.gapLeft { text-align: left; }
 .gapTable td.gapAmber { color: var(--badge-warning-ink); font-weight: 600; }
 .gapTable td.gapQuiet { color: var(--text-tertiary); }
