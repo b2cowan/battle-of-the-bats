@@ -13,7 +13,7 @@
  *   • a cron schedule (`cron.schedule`) — migrations 122, 183, 224, 226, 273
  *   • a data-only INSERT / UPDATE / DELETE — migration 264 and many others
  *   • a dropped column (prod having MORE than dev never fails a "prod is missing" check)
- *   • a created / replaced / dropped function
+ *   • a created / replaced / dropped / altered function
  *
  * For all of these, `check:migrations` reports "prod in sync" and the release proceeds with a
  * clean bill of health, whether or not the migration was ever applied to prod. And the miss is
@@ -100,6 +100,10 @@ function invisibleOps(sql) {
   if (/(^|;|\bbegin\b|\bthen\b)\s*(insert\s+into\b|update\s+(?=[a-z_."])|delete\s+from\b)/m.test(body)) ops.push('data');
   if (/\bdrop\s+column\b/.test(body)) ops.push('drop-column');
   if (/\b(create\s+(or\s+replace\s+)?function|drop\s+function)\b/.test(body)) ops.push('function');
+  /* AN ALTERED FUNCTION — settings (`SET search_path = …`), owner, SECURITY DEFINER/INVOKER or name.
+     The same shape as above and nothing else can see it: a migration made ONLY of these statements
+     (336, then 554 on 2026-11-27) was never listed, so `--promote` passed with prod not carrying it. */
+  if (/\balter\s+(function|procedure|routine)\b/.test(body)) ops.push('function-settings');
   /* AN RLS POLICY — created, dropped or altered — is the fourth shape nothing else can see (found
      2026-09-12 when mig 292 rewrote fourteen development write policies and this gate said
      nothing). The drift and parity checks compare tables, columns, CHECKs, constraints and indexes;

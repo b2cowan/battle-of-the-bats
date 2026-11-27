@@ -176,3 +176,6 @@ the issues, history, etc."
 - **The build lookup uses this PC's own AWS sign-in.** It had inherited `.env.local`'s `AWS_PROFILE` (the bookkeeping
   user, which may not list builds). The lookup now drops that setting.
 - **New advisor findings are named** in the report (kind, then object names, eight per kind), because each is reported once.
+- **The production-step check sees an altered function** (owner: "commit and fix"). `check-manual-prod-migrations.mjs`
+  now flags `ALTER FUNCTION | PROCEDURE | ROUTINE`; before, a migration made only of those (336, 554) was never listed,
+  so `--promote` passed without it.
