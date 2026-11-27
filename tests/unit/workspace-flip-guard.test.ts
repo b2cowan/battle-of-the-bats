@@ -398,6 +398,7 @@ const SPECIAL: Record<string, [Klass, string]> = {
   'lib/start-plan-server.ts': ['live-row', "On-sale pages S2: the paid doors' signed-in owner check finds the organization its owner already runs and excludes a Coaches Portal (account_kind team_workspace / plan team), which is not a real organization; read fresh per request, so a portal that has flipped into a club is found as the club and sent to its own billing page"],
   'lib/team-workspace-provisioning.ts': ['portal-only', 'CREATES a workspace organization (account_kind team_workspace, status active); a club is never created here'],
   'lib/team-checkout.ts': ['tombstone-aware', 'portal checkout and syncTeamWorkspaceSubscription, which excludes a tombstone (this build); the reactivation guard rejects a flipped org'],
+  'lib/team-reactivation.ts': ['tombstone-aware', "the one reactivation rule, asked before the Premium checkout and again by the webhook: reads the org row its caller just read and refuses anything that is neither a portal tag nor the Premium plan, so a flipped club is refused before a payment is taken"],
   'lib/team-org-billing.ts': ['portal-only', 'the org_team_addon billing mode (a club adding a team); keyed on the workspace, never on a club that was one'],
   'lib/portal-keep-premium.ts': ['portal-only', 'free-team Keep Premium: matches the workspace by its Stripe id, which is NULL on a tombstone, so it finds nothing'],
   'app/coaches/checkout/complete/page.tsx': ['portal-only', 'the Team checkout return page: finds the workspace by the subscription it just bought'],

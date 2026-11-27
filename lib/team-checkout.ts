@@ -17,6 +17,7 @@ import type { TeamEntitlementStatus, TeamWorkspaceSource } from './team-workspac
 import { getActiveOwnedTeamWorkspace } from './team-workspace-owned';
 import { convertFreeTimePortal, findKeepPremiumPortal } from './portal-keep-premium';
 import { restoreCoachesPortalRetainedRecords } from './portal-retained-restore';
+import { decideTeamReactivation, type TeamReactivationAnswer, type TeamReactivationOrg } from './team-reactivation';
 
 export type TeamCheckoutRequest = {
   teamName: string;
@@ -290,62 +291,45 @@ export async function syncTeamWorkspaceSubscription(params: {
   return true;
 }
 
-async function findReactivationWorkspace(
-  parsed: TeamCheckoutMetadata,
-): Promise<ReactivationWorkspace | null> {
-  if (!parsed.reactivateOrgSlug) return null;
-
-  const { data: org, error: orgError } = await supabaseAdmin
-    .from('organizations')
-    .select('id, slug, account_kind, plan_id, subscription_status')
-    .eq('slug', parsed.reactivateOrgSlug)
-    .maybeSingle<{
-      id: string;
-      slug: string;
-      account_kind: string | null;
-      plan_id: string | null;
-      subscription_status: string | null;
-    }>();
-
-  if (orgError) throw orgError;
-  if (!org) {
-    throw new TeamWorkspaceProvisioningError('reactivation_workspace_not_found', 'The Coaches Portal workspace to reactivate was not found.');
-  }
-  if (org.account_kind !== 'team_workspace' && org.plan_id !== 'team') {
-    throw new TeamWorkspaceProvisioningError('invalid_reactivation_workspace', 'Only Premium Coaches Portal workspaces can be reactivated here.');
-  }
-
-  const { data: member, error: memberError } = await supabaseAdmin
-    .from('organization_members')
-    .select('id, role, status')
-    .eq('organization_id', org.id)
-    .eq('user_id', parsed.ownerUserId)
-    .eq('status', 'active')
-    .maybeSingle<{ id: string; role: string; status: string }>();
-
-  if (memberError) throw memberError;
-  if (!member || member.role !== 'owner') {
-    throw new TeamWorkspaceProvisioningError('reactivation_not_owner', 'You must be the owner of this Coaches Portal workspace to reactivate it.');
-  }
-
-  const { data: workspace, error: workspaceError } = await supabaseAdmin
-    .from('team_workspaces')
-    .select('id, workspace_org_id, rep_team_id, billing_mode, subscription_status')
-    .eq('workspace_org_id', org.id)
-    .maybeSingle<ReactivationWorkspace>();
-
-  if (workspaceError) throw workspaceError;
-  if (!workspace) {
-    throw new TeamWorkspaceProvisioningError('reactivation_workspace_not_found', 'The Coaches Portal workspace to reactivate was not found.');
-  }
-  // team_direct = self-serve paid portal (Stripe reactivation). org_team_addon (org-billed) stays blocked: it
-  // reactivates through the linked org's billing flow.
-  if (workspace.billing_mode !== 'team_direct') {
-    throw new TeamWorkspaceProvisioningError('org_billed_reactivation_not_supported', 'Org-billed Coaches Portal workspaces must be reactivated from the linked organization billing flow.');
-  }
-  if (workspace.subscription_status !== 'canceled' && org.subscription_status !== 'canceled') return null;
-
-  return workspace;
+/**
+ * The one rule (`lib/team-reactivation.ts`) read from our records. The checkout asks it before anything is made in Stripe
+ * and the webhook asks it again after payment: add a refusal to the rule, never to one caller.
+ */
+export async function checkTeamReactivation(input: {
+  reactivateOrgSlug: string | null;
+  ownerUserId: string;
+}): Promise<TeamReactivationAnswer<ReactivationWorkspace>> {
+  return decideTeamReactivation<ReactivationWorkspace>(input, {
+    async org(slug) {
+      const { data, error } = await supabaseAdmin
+        .from('organizations')
+        .select('id, account_kind, plan_id, subscription_status')
+        .eq('slug', slug)
+        .maybeSingle<TeamReactivationOrg>();
+      if (error) throw error;
+      return data;
+    },
+    async activeRole(orgId, userId) {
+      const { data, error } = await supabaseAdmin
+        .from('organization_members')
+        .select('role')
+        .eq('organization_id', orgId)
+        .eq('user_id', userId)
+        .eq('status', 'active')
+        .maybeSingle<{ role: string }>();
+      if (error) throw error;
+      return data?.role ?? null;
+    },
+    async portal(orgId) {
+      const { data, error } = await supabaseAdmin
+        .from('team_workspaces')
+        .select('id, workspace_org_id, rep_team_id, billing_mode, subscription_status')
+        .eq('workspace_org_id', orgId)
+        .maybeSingle<ReactivationWorkspace>();
+      if (error) throw error;
+      return data;
+    },
+  });
 }
 
 async function reactivateTeamWorkspaceFromParsedMetadata(params: {
@@ -359,8 +343,14 @@ async function reactivateTeamWorkspaceFromParsedMetadata(params: {
   eventSource: PlatformEventInput['source'];
   sourceEventId?: string | null;
 }): Promise<TeamCheckoutProvisionResult | null> {
-  const workspace = await findReactivationWorkspace(params.parsed);
-  if (!workspace) return null;
+  const answer = await checkTeamReactivation(params.parsed);
+  // The checkout asks first, so meeting this after payment means the records changed in between: say so for whoever reads
+  // the error, with the portal named.
+  if (answer.kind === 'refused') {
+    throw new TeamWorkspaceProvisioningError(answer.code, `Reactivation refused after checkout for ${params.parsed.reactivateOrgSlug}; check Stripe for a subscription with no portal. ${answer.message}`);
+  }
+  if (answer.kind !== 'reactivate') return null;
+  const workspace = answer.portal;
 
   const subscriptionStatus = params.subscriptionStatus ?? 'active';
   const orgStatus = mapStripeStatusToOrgStatus(subscriptionStatus);

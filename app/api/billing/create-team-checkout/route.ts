@@ -5,6 +5,7 @@ import { getPlanConfigOverride } from '@/lib/plan-config-db';
 import { getStripePriceId } from '@/lib/stripe-prices';
 import {
   buildTeamCheckoutMetadata,
+  checkTeamReactivation,
   normalizeTeamCheckoutRequest,
   provisionTeamWorkspaceFromCheckoutMetadata,
 } from '@/lib/team-checkout';
@@ -88,6 +89,22 @@ export const POST = withObservability(async (req: Request) => {
       orgSlug: existingPortal.orgSlug,
       url: `${appUrl}/${existingPortal.orgSlug}/coaches`,
     }), { status: 409, headers: { 'Content-Type': 'application/json' } });
+  }
+
+  // A reactivation the webhook would refuse is refused HERE, by the same rule, before anything is made in Stripe: after
+  // payment a refusal leaves the coach charged with no portal. Keep Premium is answered above, as the webhook answers it
+  // first.
+  if (!keepPortal) {
+    const reactivation = await checkTeamReactivation({
+      reactivateOrgSlug: checkoutRequest.reactivateOrgSlug,
+      ownerUserId: user.id,
+    });
+    if (reactivation.kind === 'refused') {
+      return new Response(JSON.stringify({ error: `${reactivation.message} Nothing has been charged.`, code: reactivation.code }), {
+        status: reactivation.status,
+        headers: { 'Content-Type': 'application/json' },
+      });
+    }
   }
 
   // GST/HST Stage 1: a coach buys Premium as a PERSON, so the address is their own home address, saved by the sign-up page's

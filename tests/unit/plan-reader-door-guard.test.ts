@@ -132,6 +132,7 @@ const ALLOWED: Record<string, [Klass, string]> = {
   'lib/team-org-billing.ts': ['portal', 'team_workspaces billing'],
   'lib/team-workspace-provisioning.ts': ['portal', 'portal provisioning'],
   'lib/team-checkout.ts': ['portal', 'portal checkout and reactivation'],
+  'lib/team-reactivation.ts': ['portal', 'the reactivation rule, moved out of lib/team-checkout.ts: reactivation asks the STORED record (a paid portal that ended), not what free time holds open'],
   'lib/portal-keep-premium.ts': ['portal', 'Keep Premium (Support console 4b): the checkout writes a free-time portal coach-paid'],
   // ── identity ──
   'lib/coach-membership.ts': ['identity', "plan_id 'team' = the portal stub"],
