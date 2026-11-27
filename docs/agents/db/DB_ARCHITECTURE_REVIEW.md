@@ -1004,6 +1004,15 @@ Migration N+3 — DROP tournaments.organization_id (after N verified in prod)
 
 ---
 
+### [2026-11-27] — Finding #57: seven elevated functions never fixed where they look names up
+**Severity:** Low
+**Finding:** Seven SECURITY DEFINER functions owned by postgres had no `search_path` on dev and prod (six executable by anon and authenticated), with unqualified table names. A temporary table is searched before `public`: on dev a look-alike `organization_members` made `is_org_owner` answer true for a made-up person (rolled back). Not reachable today: the API lets no visitor create a table or send SQL, and neither role has CREATE on `public`. Also found: on both databases anon and authenticated hold no table privilege on `organization_members`, `org_audit_log`, `org_member_tournament_assignments`, `pools` or `tournaments`, so the access rules that call these functions are dormant there (`rule_items` is browser-readable). The morning check reports a new advisor finding once, so these standing ones never resurfaced. Still without a path, none elevated (10 on dev): create_accounting_transfer, obs_severity_rank, record_error_event, enforce_guardian_cap, stamp_rep_tryout_first_offered, league_game_public_state, place_name_in_typed, place_closure_match, section_range, section_mask_legal. The section and place helpers are SQL functions, and pinning one stops Postgres inlining it, so check their callers before pinning them.
+**Tables affected:** organization_members, org_audit_log, org_member_tournament_assignments, pools, rule_items, tournaments, pool_slots (function settings only)
+**Recommendation:** `SET search_path = public, pg_temp` on the seven, plus `league_game_snapshot` (the 2026-11-27 warning). Any later CREATE OR REPLACE of one of them must carry the SET clause.
+**Status:** Addressed — mig 554 applied to dev 2026-11-27; production gets it with the promote, after 552 (MANUAL_PROD_STEPS.json).
+
+---
+
 ## Trigger checklist — when to re-run `/dba`
 
 - [ ] Before merging any migration that adds a new table

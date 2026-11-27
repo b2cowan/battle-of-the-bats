@@ -1216,7 +1216,7 @@ Also surfaced read-only on the dashboard funnel payload as `reminderLastSentAt` 
 4. **Conflicting app-layer `payment_status` fallbacks** — `lib/db.ts:1264` coerces missing→`'paid'`, but [admin/teams/route.ts:67](../../../app/api/admin/teams/route.ts#L67) and the check-in route coerce missing→`'pending'`. Since prod allows NULL `payment_status`, the divergence is observable.
 5. **Finding #25 drift, now on 3 columns** — `status`/`payment_status`/`registered_at` (dev NOT NULL / prod nullable). Defaults identical. (`coach` was the fourth — prod NOT NULL — until migration 202 loosened it on both envs 2026-07-27; see `coach`.)
 6. **`coach` stores a NAME, `email` stores the email.** Naming smell — `coach` is the display name (from form `coachName`), not a FK/email.
-7. **`slot_id` and `waitlist_position` are mutually exclusive** states managed by the `claim_next_slot` RPC; rejecting a team releases the slot on **both** sides (`pool_slots.team_id` AND `teams.slot_id`).
+7. **`slot_id` and `waitlist_position` are mutually exclusive** states managed by the `claim_next_slot` RPC; rejecting a team releases the slot on **both** sides (`pool_slots.team_id` AND `teams.slot_id`). Since **mig 554** it, like the other elevated membership functions (`is_org_owner`, `get_my_org_ids`, `is_org_member_for_*`, `can_access_tournament_for_*`), pins `search_path = public, pg_temp`; a replacement must carry that clause.
 8. **🔒 Server-only, except a member may see a new team's NAME (mig 310, dev + prod 2026-09-28).**
    - **Access:** `anon` holds nothing on `teams`. `authenticated` holds SELECT on `(id, tournament_id, name)` only, under `teams_member_read_for_live_feed` (`USING can_access_tournament(tournament_id)`; an ACTIVE member only since mig 505).
    - **Why:** it exists for the admin live rail's "new team registered" line (`LiveLogicProvider`, `LiveEventLog`: realtime INSERT by `tournament_id`).
@@ -8446,7 +8446,7 @@ The **intra-org recreational house-league** module (`league_*`) — sign-ups, di
 
 <!-- dict:col:league_game_changes.before -->
 <!-- dict:col:league_game_changes.after -->
-**`before`** / **`after`** (jsonb; `league_game_snapshot()`: `scheduledAt`, `endsAt`, `location`, `venueId`, `facilityId`, `sectionMask` since **mig 552** (a row written before it has none), `status`, `movedFrom`, `slotUseId` since mig 413) — the game before and after this edit. `before` is null only for `added`.
+**`before`** / **`after`** (jsonb; `league_game_snapshot()`: `scheduledAt`, `endsAt`, `location`, `venueId`, `facilityId`, `sectionMask` since **mig 552** (a row written before it has none), `status`, `movedFrom`, `slotUseId` since mig 413; the function pins `search_path = public, pg_temp` since mig 554, which a replacement must carry) — the game before and after this edit. `before` is null only for `added`.
 
 <!-- dict:col:league_game_changes.source -->
 **`source`** (text NOT NULL default `league`, CHECK `league` · `club`) — `club` when the club's Send the changes moved the division's game time or took it back (9d2·13, 9d2·16; **mig 411**: `club_schedule_apply_changes` sets `league.change_source = 'club'` around its games block and clears it after, so a later write in the same transaction is the league's). The tray's "The club moved …" line. ⚠ **A held `club` row can't be undone** — `league_game_undo` returns `'club'` (the game would go back onto time the club gave away, 9d2·3), and the tray shows no Undo on it; the league admin gives the game a new date instead.
