@@ -299,7 +299,7 @@ prompt → the build → `/simplify`, `/review`, `/legal` or `/accounting` where
   (29 steps, Owner QA Ledger §567), committed `d574a5f9b`. **Walk closed 2026-11-25** (owner: "walk b was done, we
   can hold d until our push to staging, close this walk for now"): A, B and C passed (B with a score note); D, the
   staging edge check (§9), is held until the push to staging. Detail in §567.)*
-- [ ] **Stage 2 — Field status (idea 3; F3).** Second tenant. *(Corrected by Stage 0: it is today's Rainout widened to
+- [x] **Stage 2 — Field status (idea 3; F3).** **CLOSED 2026-11-27 on the owner's word** ("commit and close"). Second tenant. *(Corrected by Stage 0: it is today's Rainout widened to
   a place ("Close a place"), not a third tool; tournament games ride their own Rain delay, so it does NOT wait on the
   real-venues project. It needs only a count of typed-only games first, dev, counts only.)*
   *(Club events, E7: the window also lists the club's events at that place, each opening in Events.)*
@@ -322,6 +322,9 @@ prompt → the build → `/simplify`, `/review`, `/legal` or `/accounting` where
   owner's word; the stage closes when the walk passes and the owner says so.)*
   *(**Walk §573 passed 2026-11-26, 34 of 34.** 2C committed `016a939fc`. The stage stays unticked until the owner says
   so; the follow-up, Session 2D, is committed (`c3f999420`) and walked (§577, 45 of 45).)*
+  *(**Closed 2026-11-27.** The closed-places summary (§7) is built, committed and walked: Session A §578, 36 of 36;
+  Session B with reopen several §579, 49 of 49. Its open follow-ups stay in §9 and close nothing. Production gets its
+  database changes with the release.)*
 - [ ] **Stage 3 — The site's face (idea 7; F4).** `/legal` and the consent question first. Before news, so a news post
   is built with its photo from the start. *(Club events, E9: the one photo question is this stage's; camps ask it in
   the same words. P1–P5 ruled 2026-11-25: optional, blank = No; one Yes names the website and the club's own social
@@ -641,7 +644,7 @@ the demos follow the product and are curated with `/demos`, never as a build ste
     setting; under "All our fields" a game at a hand-typed place shows what was typed, where Place was blank; the help's
     search words lost the removed sentence. Left as built: on a phone the park name is not bold and the typed line and
     "who is emailed" note are one ink step fainter than before.
-  - [ ] **Closed places, summarized — 6 asks S1–S6, RULED 2026-11-26: all six A** (owner: "I agree with your
+  - [x] **Closed places, summarized — 6 asks S1–S6, RULED 2026-11-26: all six A** (owner: "I agree with your
     recommendations, get me the build prompt"). Raised by the owner on the running site ("can the site warnings be
     smarter and better at summarizing?", "same problem in the admin", "draw it up"). Build prompt:
     [CLUB_WEBSITE_STAGE2_SUMMARY_BUILD_PROMPT.md](CLUB_WEBSITE_STAGE2_SUMMARY_BUILD_PROMPT.md). Page:
@@ -660,7 +663,8 @@ the demos follow the product and are curated with `/demos`, never as a build ste
     and admins, and to the house league admin from the schedule's button (§9, C), and opens without shrinking; (2) **two
     separate presses on two diamonds of one park behave as one press** (the Session 2D item above): a game with no
     diamond recorded stays marked until both reopen, with no second email to its coach.
-    - [ ] **Session A (S1–S3, T1) BUILT 2026-11-26, committed `c69281249` + `ea0ce27d3`** (owner: "Build it as written",
+    - [x] **Session A (S1–S3, T1) BUILT 2026-11-26, committed `c69281249` + `ea0ce27d3`; walk §578 passed
+      2026-11-27, 36 of 36** (owner: "Build it as written",
       on the gate's four proposals). The club site: a wider closure (every place; a whole park over its diamonds, by the place id) speaks
       for a narrower one with the same days; one day heading and a row per park ("Lions Park: Diamond 1 and Diamond 2",
       "all diamonds" only when every facility is a diamond, else the name alone); past five rows four show and "Show N
@@ -674,9 +678,12 @@ the demos follow the product and are curated with `/demos`, never as a build ste
       /simplify, /review (fixes: a failed "all diamonds" read no longer hides the strip; the same place pressed again
       reads "won't change"), /legal (no MUST-FIX, review file updated), /design (one fix: the preview wears the club's
       face) run. **Owner calls from /review:** the season a house league admin names is checked only to be the club's
-      own, not live; a club whose places are all archived counts as having none. Walk: Owner QA Ledger §578
+      own, not live; a club whose places are all archived counts as having none. **Both RULED 2026-11-27, as
+      recommended** (owner: "go ahead"): a finished season no longer counts (built and committed the same day: the season
+      must be the club's own and not finished, as on the screen); archived places stay as they are. Walk: Owner QA Ledger §578
       (https://claude.ai/artifact/75dUJv6ekaeV2ZH2YJLRtR, 36 steps, `CLUB_WEBSITE_STAGE2_SUMMARY_A_WALK.html`).
-    - [ ] **Session B (S4–S6, T2) BUILT 2026-11-26, committed 2026-11-27** (owner: "Build as you've written", on the gate). The Venue library:
+    - [x] **Session B (S4–S6, T2) BUILT 2026-11-26, committed 2026-11-27; walk §579 passed 2026-11-27, 49 of 49**
+      (owner: "Build as you've written", on the gate). The Venue library:
       one "Closed places" box, a row per park and dates over two plain lines (the later dots ruling replaces the drawn
       dotted titles), each game counted once; with all fields showing, the others sit under it behind a tinted band; a
       venue tag reads "Closed today" only for a whole park or all fields, else "N diamonds closed today". Reopen: a park's
@@ -695,10 +702,30 @@ the demos follow the product and are curated with `/demos`, never as a build ste
       band is tinted; the button reads "Reopening…"; two presses in one minute read as one time.
       **Left:** rare races (a team place renamed mid-press fails the press; a second press stamps a game "told" when the
       first press's email failed, and that first press's retry tells the coach); the phone's "Not changed here" count
-      omits already-marked games; the counts blink while a new tick is read. **Owner call:** "Already marked" rows repeat
-      the heading's words and show no game time (the gate's words). Walk: Owner QA Ledger §579
-      (https://claude.ai/artifact/P6x4zBKVSqSZFa58WscZZ7, 44 steps, `CLUB_WEBSITE_STAGE2_SUMMARY_B_WALK.html`); §578's Reopen steps rewritten for the new windows. Mig 551 is on dev (applied 2026-11-27, owner "apply the db step"; the rolled-back
+      omits already-marked games; the counts blink while a new tick is read. **RULED 2026-11-27** (owner: "go ahead", on the recommendation): an
+      "Already marked" row no longer repeats the heading's words and shows the game's time on its own line (with its day
+      on a several-day closure). Walk: Owner QA Ledger §579
+      (https://claude.ai/artifact/P6x4zBKVSqSZFa58WscZZ7, rewritten 2026-11-27 for reopen several: 49 steps, `CLUB_WEBSITE_STAGE2_SUMMARY_B_WALK.html`); §578's Reopen steps rewritten for the new windows. Mig 551 is on dev (applied 2026-11-27, owner "apply the db step"; the rolled-back
       check passes 38 of 38) and goes on prod after 549, before the promote.
+    - [x] **Reopen several, from the running box — BUILT and committed 2026-11-27; walked in §579 (walk D), passed
+      2026-11-27** (owner: "why can't I reopen on one
+      click? … would like the option to easily reopen 1 or many. also need the option to reopen something I set to be
+      closed tomorrow", then "build it as sketched"). The Venue library box: a heading per day, soonest first; a tick per
+      row and per day heading when two or more rows show (nothing ticked to start); "Reopen N places" in the box's
+      heading. One ticked row opens that row's window, two or more one new window (what reopens, what the site will say,
+      one email per team's coach). The venue table adds "Closed tomorrow". No new server behaviour, email words or
+      database step (the one-set reopen door of S5 serves it). Replaces S4's order and its days on every row. **Two fixes
+      the owner added (“go ahead”):** a new closure shows straight after its press (the two “showing” reads no longer
+      compare its start with the web server's clock, which on dev ran 0.7 s behind); the by-venue permit read works again
+      (unnamed join, ambiguous since mig 487 — **production carries the same failure**: venue windows' permits, Outside
+      the permit lines and the permit form's day check say nothing there until this ships). /simplify, then /review (high
+      tier, four lenses) applied: a row never sits under a wider closure that starts later; with something staying closed
+      the several window asks “Reopen what you ticked?” and counts nothing; “Stays closed” gets a line per reason; over
+      100 closures says to tick fewer; ticks clear when the box re-reads; day headings and row buttons read correctly to a
+      screen reader; the coach's reopen email no longer names a park as reopened while a diamond there is closed on a
+      listed day (/legal file updated). **Left (older):** “your site doesn’t change” can be untrue when the same place was
+      pressed twice for different days; a failed re-read empties the box; the venue window's permit rows are dot-joined
+      (visible again now the read works).
 - [x] **Stage 1 (game day on the club home) — 11 asks G1–G11, RULED 2026-11-25: all eleven A, as recommended, no
   notes** (owner paste-back: G1 A · G2 A · G3 A · G4 A · G5 A · G6 A · G7 A · G8 A · G9 A · G10 A · G11 A). G6 is A,
   not D: no "Updated" time line. Drawn 2026-11-25. Page:
@@ -1780,7 +1807,7 @@ Answered 2026-11-24 (Stage 0 Part 1); evidence in the Progress block.
   `/strategy`, Stage 2 drawing, 2026-11-25).** It ships today (the routes gate on `bulk_reschedule`). To `/strategy`;
   K14's ruling corrects it in the same unit if Close a place replaces the Rainout. *(Trued by `/strategy` in Session 2B,
   2026-11-25, with the decision logged in `BUSINESS_DECISIONS.md`.)*
-- [ ] **A club with no places: the Rainout button now opens "Your club has no places yet" (found building Session 2B,
+- [x] **A club with no places: the Rainout button now opens "Your club has no places yet" (found building Session 2B,
   2026-11-25; an OWNER CALL, named, not ruled).** K8 (a club with no places opens the Venue library) and K15 (the Rainout
   button opens Close a place) together mean a house league whose games carry only typed places — every club on
   production today has no places — can no longer call off a rainy day from the schedule until it adds its places. Today's
@@ -1793,7 +1820,7 @@ Answered 2026-11-24 (Stage 0 Part 1); evidence in the Progress block.
   recommendation"): owners and admins, and the house league admin too from the schedule's button. Put to the owner with
   its cost: in a club with no places they could then close fields for every program, which they cannot where places are
   listed. Built with the summary build (§7, "Closed places, summarized"). Settle with the same build (found by /review,
-  2026-11-26): at a desk this window opens at the form's one height and then shrinks to the small card.
+  2026-11-26): at a desk this window opens at the form's one height and then shrinks to the small card. *(Built with Session A, T1, and walked: §578, walk E, 2026-11-27.)*
 - [x] **The old Rainout's help is stale until 2C's `/docs` pass (Session 2B, 2026-11-25).** `lib/help-content/house-league.tsx`'s
   Rainout article and its "I pressed Rainout by mistake" FAQ still describe "Email the families now" and "Put all back".
   2C rewrites them to point at the new "Close a place" topic (build prompt 2C step 6). *(Done in 2C, 2026-11-26: both
@@ -1824,6 +1851,11 @@ Answered 2026-11-24 (Stage 0 Part 1); evidence in the Progress block.
 - [ ] **The family app's mark has not been seen in a browser (2C, 2026-11-26).** No made-up family follows the U13
   Ospreys, so neither `/design` nor the walk can reach it; tests pin its words and its rule. A fixture guardian on the
   Ospreys would let a later walk see it. Low.
+- [ ] **"Your site doesn't change" can be untrue (Session B and reopen several, 2026-11-27).** When the same place was
+  pressed twice for different days. Named, not ruled. Low.
+- [ ] **A failed re-read empties the "Closed places" box (reopen several, 2026-11-27).** Low.
+- [ ] **The venue window's permit rows are dot-joined (found 2026-11-27).** Against the no-dots ruling, and visible
+  again now the by-venue permit read works. Low.
 
 ## 10. Words for /marketing
 

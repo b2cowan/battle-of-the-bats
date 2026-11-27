@@ -23,15 +23,16 @@
  * window (the route's words), never silently.
  * ⚖ CLOSE A PLACE (Club Website Stage 2, K1, K11): the toolbar's "Close a place" is one of the window's three buttons (the
  * Overview's and the house league schedule's are the others, same words and icon, owner 2026-11-26). The closures showing
- * sit at the top in ONE box, "Closed places" (S4, owner 2026-11-26): a row per park and dates ("Diamond 1 and Diamond 2 at
- * Lions Park"), two plain lines under it (the days and presses; what it did to games, each game once), one Reopen; with
- * "All our fields" showing, every other row sits under it ("Also closed on their own"). A venue's row wears "Closed today"
- * for the whole park or every place, else "2 diamonds closed today". One that ended by itself at Until is gone. Owner,
- * admin, house league admin only.
+ * sit at the top in ONE box, "Closed places" (`ClosedPlacesBox`; S4, owner 2026-11-26): under a heading per day, a row
+ * per park and dates ("Diamond 1 and Diamond 2 at Lions Park"), plain lines under it (who closed it; what it did to
+ * games, each game once), its own Reopen; with "All our fields" showing, every other row sits under it ("Also closed on
+ * their own"). Ticks reopen several in one press (owner 2026-11-27): one ticked row opens that row's window, two or more
+ * the several window. A venue's row wears "Closed today" for the whole park or every place, else "2 diamonds closed
+ * today", and the same for tomorrow. One that ended by itself at Until is gone. Owner, admin, house league admin only.
  * ⚠ A FAILED LOAD says so, with Try again — never an empty library (S6-09: "No venues in your library yet" over a failed
  * read invited the club to add its venues twice).
  */
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { Fragment, useCallback, useEffect, useMemo, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { ChevronDown, ChevronRight, CloudRain, MapPin, Plus } from 'lucide-react';
 import { useOrg } from '@/lib/org-context';
@@ -39,11 +40,13 @@ import { usePageTitle } from '@/lib/usePageTitle';
 import { useIsPhone } from '@/lib/hooks/useIsPhone';
 import { hasOrgVenueLibrary } from '@/lib/plan-features';
 import {
-  CLOSE_WORDS as CW, alsoWords, canClosePlace, lowerEvery, rowsUnder, venueTag, type CloseFrame, type ClosureRow, type StaffClosure,
+  CLOSE_WORDS as CW, canClosePlace, venueTags, type CloseFrame, type ClosureRow, type StaffClosure,
 } from '@/lib/place-closure-window';
 import { tournamentToday } from '@/lib/timezone';
 import ClosePlaceWindow from '@/components/admin/kit/club/places/ClosePlaceWindow';
 import ReopenPlaceWindow from '@/components/admin/kit/club/places/ReopenPlaceWindow';
+import ReopenSeveralWindow from '@/components/admin/kit/club/places/ReopenSeveralWindow';
+import ClosedPlacesBox from '@/components/admin/kit/club/places/ClosedPlacesBox';
 import { jsonInit, moneyFetch, refusalText } from '@/lib/money-fetch';
 // ⚖ Inside Organization (Club Tier Stage 13i, A5) the place names this tab, so only its actions remain (TabPageHeader).
 import { TabPageHeader } from '@/components/admin/kit/club/PlaceFrame';
@@ -99,9 +102,17 @@ export default function VenueLibraryPage() {
   const [shut, setShut] = useState<{ closures: StaffClosure[]; rows: ClosureRow[]; diamondParks: Set<string> }>(
     () => ({ closures: [], rows: [], diamondParks: new Set() }));
   const [closing, setClosing] = useState<{ venueId: string | null } | null>(null);
-  // The row pressed, and the box as it stood then: the reload after a Reopen drops the row, and its window still shows
-  // the result.
-  const [reopening, setReopening] = useState<{ row: ClosureRow; shut: typeof shut } | null>(null);
+  // The rows being reopened, and the box as it stood then: the reload after a Reopen drops them, and the window still
+  // shows the result.
+  const [reopening, setReopening] = useState<{ picked: ClosureRow[]; shut: typeof shut } | null>(null);
+  // The box's ticked rows, by key. Cleared whenever the closures are read, so a closure that has since joined a row is
+  // never ticked by itself.
+  const [ticked, setTicked] = useState<ReadonlySet<string>>(() => new Set());
+  const tick = (keys: readonly string[], on: boolean) => setTicked(t => {
+    const next = new Set(t);
+    for (const k of keys) if (on) next.add(k); else next.delete(k);
+    return next;
+  });
   const loadClosures = useCallback(async () => {
     if (!slug || !planAllowed || !canClose) return;
     // org-slug-ok: `q` is built from the org context's slug above
@@ -111,10 +122,11 @@ export default function VenueLibraryPage() {
       closures: d?.closures ?? [], rows: d?.rows ?? [],
       diamondParks: new Set((d?.frame?.venues ?? []).filter(v => v.allDiamonds).map(v => v.id)),
     });
+    setTicked(new Set());
   }, [slug, planAllowed, canClose, q]);
   useDeferredLoad(!orgLoading && !!slug && canClose, loadClosures);
   const today = tournamentToday();
-  const tagOf = (id: string) => venueTag(shut.closures, id, today);
+  const tagsOf = (id: string) => venueTags(shut.closures, id, today);
 
   const beginRead = useLatestRead();
   const load = useCallback(async () => {
@@ -227,12 +239,12 @@ export default function VenueLibraryPage() {
             {venues.map(v => {
               const facilities = facilitiesCell(v.facilities);
               const use = read?.usage[v.id];
-              const tag = tagOf(v.id);
+              const tags = tagsOf(v.id);
               return (
                 <tr key={v.id} className={repKit.rowOpens} onClick={() => { if (window.getSelection()?.toString()) return; openFromPage({ kind: 'venue', id: v.id }); }}>
                   <td>
                     <button type="button" className={`${repKit.nameButton} ${repKit.nameLink}`} onClick={e => { e.stopPropagation(); openFromPage({ kind: 'venue', id: v.id }); }}>{v.name}</button>
-                    {tag && <> <span className={`${repKit.chip} ${repKit.chipWarn}`}>{tag}</span></>}
+                    {tags.map(tag => <Fragment key={tag}> <span className={`${repKit.chip} ${repKit.chipWarn}`}>{tag}</span></Fragment>)}
                     {v.address && <span className={repKit.cellSub}>{v.address}</span>}
                   </td>
                   <td className={facilities ? undefined : repKit.dim}>
@@ -251,10 +263,10 @@ export default function VenueLibraryPage() {
       <div className={repKit.phoneOnly}>
         <ClubRowFrame><ClubRowList inset label={label}>
           {venues.map(v => {
-            const tag = tagOf(v.id);
+            const tags = tagsOf(v.id);
             return (
               <ClubRow key={v.id} as="button" aria-haspopup="dialog" onClick={() => openFromPage({ kind: 'venue', id: v.id })}
-                title={<>{v.name}{tag && <span className={`${repKit.chip} ${repKit.chipWarn}`}>{tag}</span>}</>}
+                title={<>{v.name}{tags.map(tag => <span key={tag} className={`${repKit.chip} ${repKit.chipWarn}`}>{tag}</span>)}</>}
                 caption={bookedSentence(read?.usage[v.id])} chevron />
             );
           })}
@@ -275,24 +287,8 @@ export default function VenueLibraryPage() {
       </CoachListToolbar>
 
       {shut.rows.length > 0 && (
-        <section className={own.closedBox} aria-label={CW.closedBox}>
-          <h2 className={own.closedHead}>{CW.closedBox}</h2>
-          {shut.rows.map(r => {
-            const parent = r.under ? shut.rows.find(x => x.key === r.under) ?? null : null;
-            const first = !!parent && rowsUnder(shut.rows, parent.key)[0]?.key === r.key;
-            return (
-              <div key={r.key}>
-                {first && <p className={own.closedBand}>{CW.alsoBand(parent!.scope === 'all' ? lowerEvery(CW.everyPlace) : parent!.placeName ?? parent!.title, alsoWords(rowsUnder(shut.rows, parent!.key)).one)}</p>}
-                <div className={`${own.closedRow}${r.under ? ` ${own.closedUnder}` : ''}`}>
-                  <strong className={own.closedName}>{r.title}</strong>
-                  <button type="button" className={`btn btn-outline ${own.closedReopen}`} aria-label={CW.reopenAria(r.scope === 'all' ? lowerEvery(r.title) : r.scope === 'place' ? r.placeName ?? r.title : r.title)}
-                    onClick={() => setReopening({ row: r, shut })}>{CW.reopen}</button>
-                  <div className={own.closedFacts}>{r.lines.map(line => <span key={line} className={own.closedLine}>{line}</span>)}</div>
-                </div>
-              </div>
-            );
-          })}
-        </section>
+        <ClosedPlacesBox rows={shut.rows} today={today} ticked={ticked} onTick={tick}
+          onReopen={picked => setReopening({ picked, shut })} />
       )}
 
       {failed ? (
@@ -386,10 +382,13 @@ export default function VenueLibraryPage() {
           onClose={() => setClosing(null)}
         />
       )}
-      {reopening && (
-        <ReopenPlaceWindow orgSlug={slug} row={reopening.row} rows={reopening.shut.rows} closures={reopening.shut.closures}
+      {reopening && (reopening.picked.length === 1 ? (
+        <ReopenPlaceWindow orgSlug={slug} row={reopening.picked[0]} rows={reopening.shut.rows} closures={reopening.shut.closures}
           diamondParks={reopening.shut.diamondParks} onReopened={() => { void loadClosures(); }} onClose={() => setReopening(null)} />
-      )}
+      ) : (
+        <ReopenSeveralWindow orgSlug={slug} picked={reopening.picked} rows={reopening.shut.rows} closures={reopening.shut.closures}
+          diamondParks={reopening.shut.diamondParks} onReopened={() => { void loadClosures(); }} onClose={() => setReopening(null)} />
+      ))}
       {said && <NoticePill key={said} message={said} onDone={() => setSaid(null)} />}
     </div>
   );

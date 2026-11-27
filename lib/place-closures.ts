@@ -320,9 +320,14 @@ export function coveringClosures<T extends CoverClosure>(n: CoverClosure, list: 
   return list.filter(w => closureCovers(w, n, today)).sort((a, b) => (a.scope === 'all' ? 0 : 1) - (b.scope === 'all' ? 0 : 1));
 }
 
-/** Showing now: from the press (K3) to the end of Until, and not reopened. No job ends one: this is the whole rule. */
-export function isClosureShowing(c: { showsFrom: string; endsAt: string; reopenedAt: string | null }, nowMs: number): boolean {
-  return !c.reopenedAt && Date.parse(c.showsFrom) <= nowMs && nowMs < Date.parse(c.endsAt);
+/**
+ * Showing now: to the end of Until, and not reopened. No job ends one: this is the whole rule.
+ * ⚠ Never ask whether it has STARTED: a closure starts at its press (`shows_from`, the database's clock, never later), so
+ * a "from then on" check against the reader's clock could only ever leave out the one just pressed (found 2026-11-27, a
+ * web server under a second behind).
+ */
+export function isClosureShowing(c: { endsAt: string; reopenedAt: string | null }, nowMs: number): boolean {
+  return !c.reopenedAt && nowMs < Date.parse(c.endsAt);
 }
 
 // ── The place's words, and the strip's sentence (Session 2B; the strip's box is `closureStrip`, lib/club-notice.ts)────────────────────────────

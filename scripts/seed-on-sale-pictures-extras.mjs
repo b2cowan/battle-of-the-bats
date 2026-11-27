@@ -506,8 +506,12 @@ if (CLOSURE_WALK) {
   if (wall(NOW.getTime() + 390 * MIN).date !== TODAY) die('walk', { message: 'the walk\'s games would fall on tomorrow: run this before about 5:30 p.m.' });
   if (wall(NOW.getTime()).time < '06:00:00') die('walk', { message: 'run the walk\'s seed after about 6:00 a.m.' });
 
-  let lions = await one('Lions Park', db.from('org_venues').select('id, name').eq('org_id', ORG).eq('name', 'Lions Park').maybeSingle());
+  let lions = await one('Lions Park', db.from('org_venues').select('id, name, is_active').eq('org_id', ORG).eq('name', 'Lions Park').maybeSingle());
   if (!lions) lions = await one('add Lions Park', db.from('org_venues').insert({ org_id: ORG, name: 'Lions Park', address: '40 Lions Park Rd, Kestrel Bay', notes: null, is_active: true }).select('id, name').single());
+  else if (!lions.is_active) {
+    die('bring back Lions Park', (await db.from('org_venues').update({ is_active: true, updated_at: new Date().toISOString() }).eq('id', lions.id).eq('org_id', ORG)).error);
+    ok('Lions Park was archived: brought back');
+  }
   const lionsFac = {};
   const haveFacs = await one('Lions Park diamonds', db.from('org_venue_facilities').select('id, name').eq('org_venue_id', lions.id));
   for (const [i, name] of ['Diamond 1', 'Diamond 2', ...(PLACES_WALK ? ['Diamond 3'] : [])].entries()) {

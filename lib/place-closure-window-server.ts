@@ -2,6 +2,7 @@ import 'server-only';
 import { supabaseAdmin } from './supabase-admin';
 import { chunked, fetchAll, fetchAllIn } from './supabase-paging';
 import { getLeagueSeasonById, resolveCoachUserIdentities } from './db';
+import { isFinishedLeagueSeason } from './house-league-access';
 import { getClubVenueLibrary } from './venue-clash-lookup';
 import { childrenOnTeams } from './league-game-changes-server';
 import { familiesFor, teamsHearing } from './league-game-changes';
@@ -54,13 +55,15 @@ export async function closeFrame(org: Org, role: OrgRole): Promise<CloseFrame> {
 
 /**
  * K1 + T1, on the server: may this person close every place at once? An owner or an admin, always; a house league admin
- * only in a club with no places, and only when the request names one of the club's own seasons (the schedule's button).
+ * only in a club with no places, and only when the request names one of the club's own seasons that isn't finished (the
+ * schedule's button, which a finished season doesn't show; owner 2026-11-27).
  * The press itself checks no role, so this is the one gate (the window read and the press both ask it).
  */
 export async function mayCloseEveryPlaceHere(org: Org, role: OrgRole, venues: number, seasonId: unknown): Promise<boolean> {
   if (seesEveryProgram(role)) return true;
   if (venues > 0 || typeof seasonId !== 'string' || !isUuid(seasonId)) return false;
-  return mayCloseEveryPlace(role, { noPlaces: true, fromSeason: !!(await getLeagueSeasonById(seasonId, org.id)) });
+  const season = await getLeagueSeasonById(seasonId, org.id);
+  return mayCloseEveryPlace(role, { noPlaces: true, fromSeason: !!season && !isFinishedLeagueSeason(season) });
 }
 
 /**
@@ -173,7 +176,7 @@ export async function closeSource(org: Org, role: OrgRole, input: {
     // K1: a house league admin counts only the rep games they see at all (on the place by its id, not started).
     repHeld: src.rep.filter(theirs).flatMap(g => {
       const h = held.get(g.id);
-      return h ? [{ id: g.id, teamName: everyProgram ? g.teamName : '', opponent: everyProgram ? g.opponent : null, ...h }] : [];
+      return h ? [{ id: g.id, teamName: everyProgram ? g.teamName : '', opponent: everyProgram ? g.opponent : null, startsAt: g.startsAt, ...h }] : [];
     }),
     repHidden: !everyProgram,
     tournaments: (runsTournaments ? src.tournaments : []).map(t => ({
@@ -418,7 +421,7 @@ export async function showingClosureFacts(orgId: string, now: Date = new Date())
   const at = now.toISOString();
   const { data, error } = await supabaseAdmin.from('org_place_closures')
     .select('id, scope, org_venue_id, place_name, facility_name, first_day, last_day, verb, created_at, closed_by, shows_from, ends_at')
-    .eq('org_id', orgId).is('reopened_at', null).lte('shows_from', at).gt('ends_at', at)
+    .eq('org_id', orgId).is('reopened_at', null).gt('ends_at', at)
     .order('created_at').order('press_seq');
   if (error) throw error;
   const rows = (data ?? []) as { id: string; scope: ClosureScope; org_venue_id: string | null; place_name: string | null; facility_name: string | null;

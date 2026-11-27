@@ -54,10 +54,12 @@ const sameClosure = (games: readonly CoachMailGame[]) =>
   games.every(g => placeOf(g) === placeOf(games[0]) && g.closure.firstDay === games[0].closure.firstDay && g.closure.lastDay === games[0].closure.lastDay);
 const atWords = (a: { park: string; diamond: string | null }) => (a.diamond ? `${a.diamond} at ${a.park}` : a.park);
 const atDay = (g: CoachMailGame) => `${formatShortWeekdayDate(orgDayKey(g.startsAt))} at ${closeClock(g.startsAt)}`;
-/** "Diamond 1 and Diamond 2 at Lions Park", or the park when its whole closure is among them; null: not one park. */
-function oneParkWords(closures: readonly CoachMailClosure[]): string | null {
+/** "Diamond 1 and Diamond 2 at Lions Park", or the park when its whole closure is among them; null: not one park, or the
+ *  park would be named while something in it is still closed on one of the games' days (`partly`; several days reopened
+ *  in one press can do that). */
+function oneParkWords(closures: readonly CoachMailClosure[], partly: boolean): string | null {
   if (!closures.length || closures.some(c => c.scope === 'all' || c.placeName !== closures[0].placeName)) return null;
-  if (closures.some(c => c.scope === 'place')) return closures[0].placeName ?? '';
+  if (closures.some(c => c.scope === 'place')) return partly ? null : closures[0].placeName ?? '';
   return diamondsNamed(closures.map(c => c.facilityName ?? ''), closures[0].placeName);
 }
 
@@ -88,7 +90,7 @@ function reopenSay(club: string, team: string, games: readonly CoachMailGame[]):
     const park = games[0].reopenPark;
     if (park && games.every(g => g.reopenPark === park)) return say(`Diamonds at ${park}`, `the diamonds at ${park} that were closed`);
     if (games.every(g => !g.reopenPark && placeOf(g) === placeOf(games[0]))) return say(subjectPlace(games[0]), placeOf(games[0]));
-    const words = oneParkWords(games.flatMap(g => g.closures ?? [g.closure]));
+    const words = oneParkWords(games.flatMap(g => g.closures ?? [g.closure]), games.some(g => g.parkStillClosed));
     return words ? say(words, words) : some();
   }
   const ats = games.map(atOf);

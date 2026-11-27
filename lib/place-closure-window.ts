@@ -40,8 +40,9 @@ export function seesEveryProgram(role: OrgRole | null | undefined): boolean {
 
 /**
  * Every place at once ("All our fields"): an owner or an admin (K1); and (T1, owner 2026-11-26) a house league admin, but
- * ONLY from a season's schedule in a club with no places — where "All our fields" is the only thing there is to close. The
- * owner took this with its cost: that admin can then close fields for every program. Reopen's people are unchanged.
+ * ONLY from the schedule of a season that isn't finished (`fromSeason`; owner 2026-11-27), in a club with no places —
+ * where "All our fields" is the only thing there is to close. The owner took this with its cost: that admin can then
+ * close fields for every program. Reopen's people are unchanged.
  */
 export function mayCloseEveryPlace(role: OrgRole | null | undefined, at: { noPlaces: boolean; fromSeason: boolean }): boolean {
   return seesEveryProgram(role) || (canClosePlace(role) && at.noPlaces && at.fromSeason);
@@ -90,7 +91,7 @@ export interface CloseRepGame {
 export interface CloseHeldGame {
   id: string;
   /** Empty when the person can't see rep (K1: a count, no names). */
-  teamName: string; opponent: string | null;
+  teamName: string; opponent: string | null; startsAt: string;
   /** The places still closed that mark it ("Diamond 1 at Lions Park"), and how many closures they are. */
   by: string; closures: number;
 }
@@ -165,8 +166,13 @@ export interface ClosureRow {
   title: string;
   /** Two plain lines, never a dotted one (owner 2026-11-26): the days and the presses; what it did to games. */
   lines: string[];
+  /** The first line without its days ("Closed at 3:25 p.m. by Dana Reyes"), for a row whose day heading says them. */
+  pressed: string;
   under: string | null;
 }
+
+/** The most closures one Reopen takes (the route refuses more; the windows say so first). */
+export const REOPEN_MAX_IDS = 100;
 
 /** What Reopen of a chosen set does to the coaches and the games (`GET …/place-closures/reopen`), counted by the server. */
 export interface ReopenPreview {
@@ -417,9 +423,11 @@ const teamsCoaches = (teams: number) => `The ${possessive(pluralize(teams, 'team
 /** "12:30 p.m." in the club's zone. */
 export const closeClock = (iso: string) => formatTime(utcToZonedInputs(iso).time);
 const q = (s: string) => `“${s}”`;
-/** A Reopen button's tail: "… and email 2 coaches" (phone: "…, email 2"); none to email, the verb alone. */
+/** A Reopen button. None to email: what it reopens, alone. With coaches to email, a computer says "Reopen and email 2
+ *  coaches" whatever is reopened (the title and ticks name it), so both buttons share the question window's one row
+ *  (owner 2026-11-27, "go for it"); a phone keeps "…, email 2". */
 const withEmail = (what: string, coaches: number, phone: boolean) =>
-  (coaches === 0 ? what : phone ? `${what}, email ${coaches}` : `${what} and email ${pluralize(coaches, 'coach', 'coaches')}`);
+  (coaches === 0 ? what : phone ? `${what}, email ${coaches}` : `Reopen and email ${pluralize(coaches, 'coach', 'coaches')}`);
 
 /** By park: "Lions Park" · "2 diamonds at Lions Park" · "Harbourview Park and 2 diamonds at Lions Park" · "those places"
  *  (three parks or more). */
@@ -490,7 +498,7 @@ export const CLOSE_WORDS = {
   heldGroup: 'Already marked',
   /** T2: a game a closure still showing already marks (item 10 of the gate): no tick, not counted. */
   heldNote: (g: Pick<CloseHeldGame, 'by' | 'closures'>) =>
-    `Already marked: ${g.by} ${isAre(g.by)} closed. It stays marked until ${g.closures > 1 ? 'all of them reopen' : 'both reopen'}, and its coach isn’t emailed again.`,
+    `${g.by} ${isAre(g.by)} closed. It stays marked until ${g.closures > 1 ? 'all of them reopen' : 'both reopen'}, and its coach isn’t emailed again.`,
   heldHidden: (n: number) => (n === 1
     ? '1 rep game is already marked by a place still closed. It stays marked, and its coach isn’t emailed again.'
     : `${n} rep games are already marked by places still closed. They stay marked, and their coaches aren’t emailed again.`),
@@ -721,11 +729,11 @@ export const CLOSE_WORDS = {
   /** "Reopen it as well" · "Reopen those two diamonds as well" · "Reopen those 3 places as well". */
   alsoTick: (count: number, diamonds: boolean) => (count === 1 ? 'Reopen it as well'
     : `Reopen those ${count === 2 ? 'two' : count} ${diamonds ? 'diamonds' : 'places'} as well`),
-  /** S5 button: "Reopen 2 diamonds and email 2 coaches" (phone: "Reopen 2 diamonds, email 2"). */
+  /** S5 button: "Reopen 2 diamonds" · "Reopen and email 2 coaches" (phone: "Reopen 2 diamonds, email 2"). */
   reopenParkGo: (ticked: readonly string[], coaches: number, phone: boolean) =>
     (ticked.length ? withEmail(`Reopen ${ticked.length === 1 ? ticked[0] : `${ticked.length} diamonds`}`, coaches, phone) : 'Reopen'),
-  /** S6 button: "Reopen all our fields" · "Reopen everything and email 2 coaches"; a park: "Reopen Lions Park" · "Reopen
-   *  all of Lions Park". */
+  /** S6 button: "Reopen all our fields" · a park: "Reopen Lions Park" · "Reopen all of Lions Park"; with coaches to
+   *  email, `withEmail`'s one sentence (phone: "Reopen everything, email 2"). */
   reopenWideGo: (wide: string | null, also: boolean, coaches: number, phone: boolean) =>
     withEmail(wide == null ? (also ? 'Reopen everything' : 'Reopen all our fields') : also ? `Reopen all of ${wide}` : `Reopen ${wide}`, coaches, phone),
   /** D1: "1 rep game stays marked while Diamond 1 at Lions Park is still closed. Its coach is told when that reopens." */
@@ -792,6 +800,40 @@ export const CLOSE_WORDS = {
    *  diamonds at one park are one place closed), each named as `groupWord`: "2 diamonds at Lions Park". */
   overviewLabel: 'Places closed',
   overviewSub: (names: readonly string[]) => `${joinWithAnd(names)} · reopen from the Venue library`,
+
+  // Reopen several (owner 2026-11-27, "build it as sketched"): the box's day headings and ticks, its button, the venue
+  // table's tomorrow tag, and the one window for two rows or more.
+  today: (days: string) => `Today, ${days}`,
+  tomorrow: (days: string) => `Tomorrow, ${days}`,
+  closedTomorrow: 'Closed tomorrow',
+  diamondsClosedTomorrow: (n: number) => `${pluralize(n, 'diamond')} closed tomorrow`,
+  pickRowAria: (name: string, days: string) => `Select ${name}, ${days}`,
+  pickDayAria: (days: string) => `Select everything under ${days}`,
+  pickedPlaces: (n: number) => `Reopen ${pluralize(n, 'place')}`,
+  pickedAll: 'Reopen all our fields',
+  /** All our fields ticked with other places. */
+  pickedEverything: 'Reopen everything ticked',
+  severalListLabel: 'What you’re reopening',
+  severalRemoveTitle: 'Remove these closures?',
+  severalKeep: 'Keep them closed',
+  /** More closures than one press takes (`REOPEN_MAX_IDS`). */
+  reopenTooMany: 'That’s too many to reopen at once. Close this window, tick fewer, then reopen the rest.',
+  /** "Reopen 4 places" · "Reopen and email 2 coaches" (phone: "Reopen 4 places, email 2"). */
+  severalGo: (label: string, coaches: number, phone: boolean) => withEmail(label, coaches, phone),
+  /** Under a listed row a closure left showing still says: "Stays closed: all our fields are closed today". `places`
+   *  names them when that reason holds only part of the row. */
+  staysClosed: (places: string | null, several: boolean, bySentence: string) =>
+    `${places ? `${places} ${several ? 'stay' : 'stays'} closed` : 'Stays closed'}: ${lowerEvery(bySentence.replace(/\.$/, ''))}`,
+  /** The several window where some of what is ticked stays closed: neither its title nor its button counts places. */
+  severalMixedTitle: 'Reopen what you ticked?',
+  severalStaysAll: 'They stay closed, so your site doesn’t change.',
+  severalStayedAll: 'They stay closed, so your site didn’t change.',
+  alsoStays: (names: string, one: boolean) =>
+    `${names} ${one ? 'is' : 'are'} also closed on ${one ? 'its' : 'their'} own and ${one ? 'stays' : 'stay'} closed.`,
+  reopenedPlaces: (n: number) => `${pluralize(n, 'place')} reopened`,
+  reopenedAll: 'All our fields reopened',
+  reopenedPlain: 'Reopened',
+  removedSeveral: 'Closures removed',
 };
 
 /** The typed group's kind: typed by hand (no place id), on the place with no diamond recorded, or both. */
@@ -831,6 +873,8 @@ export function pressedWords(presses: readonly { closedAt: string; closedBy: str
   if (!people.length) return `closed ${ps.length} times`;
   return people.length <= 2 ? `closed by ${joinWithAnd(people)}` : `closed by ${people.length} people`;
 }
+
+const capital = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 
 /** A row's two plain lines: "For Thu, Nov 26, closed at 3:25 p.m. by Dana Reyes" and "2 postponed, 1 rep game marked",
  *  each game counted once however many of the row's closures called it off or marked it. */
@@ -872,12 +916,14 @@ export function closureRows(items: readonly ClosureFacts[], diamondParks: Readon
       : diamondsNamed(diamonds.map(d => d.name), park);
     return {
       key, scope, venueId: scope === 'all' ? null : c.venueId, placeName: scope === 'all' ? null : c.placeName,
-      firstDay: c.firstDay, lastDay: c.lastDay, closureIds: list.map(x => x.closure.id), diamonds, title, lines: factLines(list), under: null,
+      firstDay: c.firstDay, lastDay: c.lastDay, closureIds: list.map(x => x.closure.id), diamonds, title, lines: factLines(list),
+      pressed: capital(pressedWords(list.map(x => x.closure))), under: null,
     };
   });
   const byDays = (a: ClosureRow, b: ClosureRow) => a.firstDay.localeCompare(b.firstDay) || a.lastDay.localeCompare(b.lastDay);
-  // A row sits under a wider one only on days they share ("These stay closed if you reopen …" is about those days).
-  const overlap = (a: ClosureRow, b: ClosureRow) => a.firstDay <= b.lastDay && b.firstDay <= a.lastDay;
+  // A row sits under a wider one only on days they share ("These stay closed if you reopen …" is about those days), and
+  // never under one that starts later: under that one's day heading, today's closure would read as tomorrow's.
+  const overlap = (w: ClosureRow, r: ClosureRow) => w.firstDay <= r.firstDay && r.firstDay <= w.lastDay;
   const every = rows.filter(r => r.scope === 'all').sort(byDays);
   const rest = rows.filter(r => r.scope !== 'all').sort((a, b) => a.firstDay.localeCompare(b.firstDay)
     || byNatural(a.placeName ?? '', b.placeName ?? '') || (a.scope === 'place' ? 0 : 1) - (b.scope === 'place' ? 0 : 1)
@@ -896,13 +942,72 @@ export function closureRows(items: readonly ClosureFacts[], diamondParks: Readon
   return out;
 }
 
-/** The venue table's tag (S4, note 10): "Closed today" when the whole park or every place is closed today, else how many
- *  of its diamonds are; null when none. */
-export function venueTag(closures: readonly Pick<StaffClosure, 'scope' | 'venueId' | 'facilityName' | 'firstDay'>[], venueId: string, today: string): string | null {
-  const now = closures.filter(c => c.firstDay <= today && (c.scope === 'all' || c.venueId === venueId));
-  if (!now.length) return null;
-  if (now.some(c => c.scope !== 'diamond')) return CLOSE_WORDS.closedToday;
-  return CLOSE_WORDS.diamondsClosedToday(new Set(now.map(c => c.facilityName)).size);
+/**
+ * The venue table's tags (S4, note 10): "Closed today" when the whole park or every place is closed today, else how many
+ * of its diamonds are. A second tag says tomorrow the same way when a closure starting tomorrow adds something (owner
+ * 2026-11-27: a closure set for tomorrow said nothing in the table). Empty when neither.
+ */
+export function venueTags(closures: readonly Pick<StaffClosure, 'scope' | 'venueId' | 'facilityName' | 'firstDay' | 'lastDay'>[],
+  venueId: string, today: string): string[] {
+  const mine = closures.filter(c => c.scope === 'all' || c.venueId === venueId);
+  const say = (list: typeof mine, whole: string, some: (n: number) => string) =>
+    (!list.length ? null : list.some(c => c.scope !== 'diamond') ? whole : some(new Set(list.map(c => c.facilityName)).size));
+  const now = mine.filter(c => c.firstDay <= today);
+  const next = addCalendarDays(today, 1);
+  const then = mine.filter(c => c.firstDay <= next && next <= c.lastDay);
+  const adds = then.some(c => c.firstDay === next) && !now.some(c => c.scope !== 'diamond' && next <= c.lastDay);
+  return [
+    say(now, CLOSE_WORDS.closedToday, CLOSE_WORDS.diamondsClosedToday),
+    adds ? say(then, CLOSE_WORDS.closedTomorrow, CLOSE_WORDS.diamondsClosedTomorrow) : null,
+  ].filter(t => t !== null);
+}
+
+// ── The box's days and ticks (owner 2026-11-27) ────────────────────────────────────────────────────────────────────
+
+/** One day heading of the box and its rows: a row sits under its own days, or under the wider row it is "also closed"
+ *  beneath. */
+export interface ClosedDay { key: string; firstDay: string; lastDay: string; label: string; rows: ClosureRow[] }
+
+/** `closureRows`' rows under day headings, soonest first: "Today, Fri, Nov 27" · "Tomorrow, Sat, Nov 28" · "Sun, Nov 29"
+ *  · "Fri, Nov 27 to Sun, Nov 29". */
+export function closedDays(rows: readonly ClosureRow[], today: string): ClosedDay[] {
+  const label = (first: string, last: string) => {
+    const days = daysWords(first, last);
+    if (first !== last) return days;
+    return first === today ? CLOSE_WORDS.today(days) : first === addCalendarDays(today, 1) ? CLOSE_WORDS.tomorrow(days) : days;
+  };
+  const byKey = new Map<string, ClosedDay>();
+  let day: ClosedDay | undefined;
+  for (const r of rows) {
+    // A row under a wider one follows it (`closureRows`' order), so it stays in that one's day.
+    if (!r.under || !day) {
+      const key = `${r.firstDay}|${r.lastDay}`;
+      day = byKey.get(key) ?? { key, firstDay: r.firstDay, lastDay: r.lastDay, label: label(r.firstDay, r.lastDay), rows: [] };
+      byKey.set(key, day);
+    }
+    day.rows.push(r);
+  }
+  return [...byKey.values()].sort((a, b) => a.firstDay.localeCompare(b.firstDay) || a.lastDay.localeCompare(b.lastDay));
+}
+
+/** A row's lines under its day heading: the days are said again only where they differ from the heading's. */
+export const rowLinesUnder = (r: ClosureRow, day: Pick<ClosedDay, 'firstDay' | 'lastDay'>): string[] =>
+  (r.firstDay === day.firstDay && r.lastDay === day.lastDay ? [r.pressed, ...r.lines.slice(1)] : r.lines);
+
+/** A row's own days ("Sat, Nov 28" · "Fri, Nov 27 to Sun, Nov 29"). */
+export const rowDays = (r: Pick<ClosureRow, 'firstDay' | 'lastDay'>) => daysWords(r.firstDay, r.lastDay);
+
+/** How many places the ticked rows are (a place ticked for two days counts once), and whether all our fields is one. */
+export function pickedPlaces(rows: readonly ClosureRow[]): { all: boolean; places: number } {
+  const others = rows.filter(r => r.scope !== 'all');
+  return { all: others.length < rows.length, places: alsoWords(others).count };
+}
+
+/** The box's button and the window's title: "Reopen 4 places" · "Reopen all our fields" · "Reopen everything ticked". */
+export function pickedLabel(rows: readonly ClosureRow[]): string {
+  const { all, places } = pickedPlaces(rows);
+  if (all) return places ? CLOSE_WORDS.pickedEverything : CLOSE_WORDS.pickedAll;
+  return CLOSE_WORDS.pickedPlaces(places);
 }
 
 /** The rows under a row ("Also closed on their own"). */
@@ -940,15 +1045,49 @@ export type ReopenSite =
 
 type SiteClosure = Pick<StaffClosure, 'id' | 'scope' | 'venueId' | 'placeName' | 'facilityName' | 'firstDay' | 'lastDay' | 'showsFrom' | 'endsAt'>;
 
+/** The closures still showing at `nowIso`: the chosen ones, and the ones left. */
+function splitShowing(showing: readonly SiteClosure[], ids: ReadonlySet<string>, nowIso: string) {
+  const live = showing.filter(c => Date.parse(c.endsAt) > Date.parse(nowIso));
+  return { today: utcToZonedInputs(nowIso).date, chosen: live.filter(c => ids.has(c.id)), left: live.filter(c => !ids.has(c.id)) };
+}
+
+/** The closure left showing that still says `n`: a wider one first, else the same place pressed again for those days. */
+function sayerOf(n: SiteClosure, left: readonly SiteClosure[], diamondParks: ReadonlySet<string>, today: string) {
+  const mine = toStripClosure(n, diamondParks);
+  const others = left.map(c => toStripClosure(c, diamondParks));
+  return coveringClosures(mine, others, today)[0] ?? others.find(w => closureSaysAlready(w, mine, today)) ?? null;
+}
+
+/**
+ * What a listed row says when reopening the chosen set still leaves some of it closed ("Stays closed: all our fields are
+ * closed today"), a line per reason; the places are named when a reason holds only part of the row. Empty: all of it opens.
+ */
+export function staysLines(row: Pick<ClosureRow, 'closureIds'>, showing: readonly SiteClosure[], ids: ReadonlySet<string>,
+  diamondParks: ReadonlySet<string>, nowIso: string): string[] {
+  const { today, chosen, left } = splitShowing(showing, ids, nowIso);
+  // Only what comes off can "stay closed": one that isn't chosen (or didn't reopen) is simply still closed.
+  const mine = chosen.filter(c => row.closureIds.includes(c.id));
+  const reasons = new Map<string, SiteClosure[]>();
+  for (const c of mine) {
+    const by = sayerOf(c, left, diamondParks, today);
+    if (!by) continue;
+    const sentence = stripSentence(by, today, formatShortWeekdayDate);
+    (reasons.get(sentence) ?? reasons.set(sentence, []).get(sentence)!).push(c);
+  }
+  return [...reasons].map(([sentence, held]) => {
+    if (held.length === mine.length) return CLOSE_WORDS.staysClosed(null, false, sentence);
+    const names = [...new Set(held.map(c => closedPlaceName(toStripClosure(c, diamondParks)) ?? EVERY_PLACE))];
+    const diamonds = held.every(c => c.scope === 'diamond' && c.placeName === held[0].placeName);
+    const said = diamonds ? diamondsNamed([...new Set(held.map(c => c.facilityName ?? ''))].sort(byNatural), held[0].placeName) : joinWithAnd(names);
+    return CLOSE_WORDS.staysClosed(said, names.length > 1, sentence);
+  });
+}
+
 /** S1 read backwards: the strip over the showing closures minus the ones being reopened (`closureStrip`, the site's own). */
 export function reopenSite(showing: readonly SiteClosure[], ids: ReadonlySet<string>, diamondParks: ReadonlySet<string>, nowIso: string): ReopenSite {
-  const today = utcToZonedInputs(nowIso).date;
-  const live = showing.filter(c => Date.parse(c.endsAt) > Date.parse(nowIso));
-  const chosen = live.filter(c => ids.has(c.id));
-  const left = live.filter(c => !ids.has(c.id));
+  const { today, chosen, left } = splitShowing(showing, ids, nowIso);
   const strip = (c: SiteClosure) => toStripClosure(c, diamondParks);
-  const sayers = chosen.map(n => coveringClosures(strip(n), left.map(strip), today)[0]
-    ?? left.map(strip).find(w => closureSaysAlready(w, strip(n), today)) ?? null);
+  const sayers = chosen.map(n => sayerOf(n, left, diamondParks, today));
   if (chosen.length && sayers.every(Boolean)) {
     const w = sayers[0]!;
     const n = strip(chosen[0]);

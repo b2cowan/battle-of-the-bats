@@ -4,6 +4,7 @@
 
 - **Both public demos are RETIRED** (owner 2026-11-25; plan `docs/projects/active/RETIRE_PUBLIC_DEMOS_PLAN.md`). Any demo or sandbox instruction or ruling in these notes is history: build no demo work. The prospect demo and club previews are separate and stay.
 
+- [Closed places: days and ticks](design_decisions.md) — owner 2026-11-27 "build it as sketched": the Venue library box has a heading per day and ticks; "Reopen 4 places" opens one window, one email per coach; nothing starts ticked; the venue table adds "Closed tomorrow".
 - [Closed places, summarized](design_decisions.md) — owner 2026-11-26, S1–S6 all A: a wider closure speaks for a narrower one on the site; a day's heading and a row per park; five rows, then "Show N more places"; the Venue library one box, a row per park; Reopen several diamonds in one press, one email per coach.
 
 - [No dotted lines in lists or table cells](design_decisions.md) — owner 2026-11-26: different facts get columns; like things get a count with names underneath; the rest goes in the opened row; a dot only in a quiet caption, two items at most. Draw it that way; `check:dot-joins` holds new code.

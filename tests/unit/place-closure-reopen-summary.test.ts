@@ -3,7 +3,8 @@ import { describe, it } from 'node:test';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import {
-  CLOSE_WORDS as W, alsoWords, closureRows, defaultTicks, oneSentence, pressedWords, reopenSite, rowsUnder, venueTag,
+  CLOSE_WORDS as W, alsoWords, closureRows, defaultTicks, oneSentence, pressedWords, reopenSite, rowsUnder, venueTags,
+  closedDays, pickedLabel, rowLinesUnder, staysLines,
   type ClosureFacts, type CloseSource, type StaffClosure,
 } from '../../lib/place-closure-window.ts';
 import { COACH_MAIL, type CoachMailGame } from '../../lib/place-closure-mail-words.ts';
@@ -78,11 +79,96 @@ describe('S4 · one box, a row per park and dates', () => {
   });
   it('the venue tag tells the truth: a park with only some diamonds closed is not "Closed today"', () => {
     const d1 = c({ facilityName: 'Diamond 1' }); const d2 = c({ facilityName: 'Diamond 2' });
-    assert.equal(venueTag([d1], 'lions', TODAY), '1 diamond closed today');
-    assert.equal(venueTag([d1, d2], 'lions', TODAY), '2 diamonds closed today');
-    assert.equal(venueTag([d1, c({ scope: 'place', facilityName: null })], 'lions', TODAY), 'Closed today');
-    assert.equal(venueTag([c({ scope: 'all', venueId: null })], 'alder', TODAY), 'Closed today');
-    assert.equal(venueTag([c({ firstDay: '2026-11-27', lastDay: '2026-11-27' })], 'lions', TODAY), null, 'tomorrow is not today');
+    assert.deepEqual(venueTags([d1], 'lions', TODAY), ['1 diamond closed today']);
+    assert.deepEqual(venueTags([d1, d2], 'lions', TODAY), ['2 diamonds closed today']);
+    assert.deepEqual(venueTags([d1, c({ scope: 'place', facilityName: null })], 'lions', TODAY), ['Closed today']);
+    assert.deepEqual(venueTags([c({ scope: 'all', venueId: null })], 'alder', TODAY), ['Closed today']);
+    assert.deepEqual(venueTags([d1], 'alder', TODAY), []);
+  });
+  it('tomorrow gets its own tag when a closure starting tomorrow adds something (owner 2026-11-27)', () => {
+    const next = { firstDay: '2026-11-27', lastDay: '2026-11-27' };
+    const whole = c({ scope: 'place', facilityName: null, ...next });
+    assert.deepEqual(venueTags([whole], 'lions', TODAY), ['Closed tomorrow']);
+    assert.deepEqual(venueTags([c({ facilityName: 'Diamond 1' }), whole], 'lions', TODAY), ['1 diamond closed today', 'Closed tomorrow']);
+    assert.deepEqual(venueTags([c({ facilityName: 'Diamond 2', ...next })], 'lions', TODAY), ['1 diamond closed tomorrow']);
+    // A diamond closed through tomorrow counts in tomorrow's figure beside one starting then.
+    assert.deepEqual(venueTags([c({ facilityName: 'Diamond 1', lastDay: '2026-11-27' }), c({ facilityName: 'Diamond 2', ...next })], 'lions', TODAY),
+      ['1 diamond closed today', '2 diamonds closed tomorrow']);
+    // Already closed whole through tomorrow: nothing to add.
+    assert.deepEqual(venueTags([c({ scope: 'place', facilityName: null, lastDay: '2026-11-29' }), whole], 'lions', TODAY), ['Closed today']);
+    assert.deepEqual(venueTags([c({ scope: 'place', facilityName: null, firstDay: '2026-11-28', lastDay: '2026-11-28' })], 'lions', TODAY), []);
+  });
+});
+
+describe('days and ticks (owner 2026-11-27, "build it as sketched")', () => {
+  it('a closure never sits under a wider one that starts later: today\'s would read as tomorrow\'s', () => {
+    const all = c({ scope: 'all', venueId: null, placeName: null, facilityName: null, firstDay: '2026-11-27', lastDay: '2026-11-27' });
+    const park = c({ scope: 'place', facilityName: null, lastDay: '2026-11-29' });
+    const days = closedDays(closureRows([f(all), f(park)], NONE), TODAY);
+    assert.deepEqual(days.map(d => [d.label, d.rows.map(r => r.title)]), [
+      ['Thu, Nov 26 to Sun, Nov 29', ['Lions Park']],
+      ['Tomorrow, Fri, Nov 27', ['All our fields']],
+    ]);
+  });
+  const next = { firstDay: '2026-11-27', lastDay: '2026-11-27', endsAt: '2026-11-28T05:00:00Z' };
+  const park = (venueId: string, placeName: string, o: Partial<StaffClosure> = {}) =>
+    c({ scope: 'place', venueId, placeName, facilityName: null, ...o });
+  it('a heading per day, soonest first, so tomorrow is never lost at the foot; a row says its days only where they differ', () => {
+    const rows = closureRows([f(park('lions', 'Lions Park', next)), f(park('pine', 'Pinecrest Park'), ['g1']), f(c({ facilityName: 'Diamond 1' }))], NONE);
+    const days = closedDays(rows, TODAY);
+    assert.deepEqual(days.map(d => [d.label, d.rows.map(r => r.title)]), [
+      ['Today, Thu, Nov 26', ['Diamond 1 at Lions Park', 'Pinecrest Park']],
+      ['Tomorrow, Fri, Nov 27', ['Lions Park']],
+    ]);
+    assert.deepEqual(rowLinesUnder(days[0].rows[1], days[0]), ['Closed at 3:25 p.m. by Dana Reyes', '1 postponed']);
+    assert.equal(closedDays(closureRows([f(park('a', 'A', { lastDay: '2026-11-29' }))], NONE), TODAY)[0].label, 'Thu, Nov 26 to Sun, Nov 29');
+    const later = { firstDay: '2026-12-05', lastDay: '2026-12-05' };
+    assert.equal(closedDays(closureRows([f(park('a', 'A', later))], NONE), TODAY)[0].label, 'Sat, Dec 5');
+  });
+  it('a row under all our fields stays in that heading and says its own days when they differ', () => {
+    const all = c({ scope: 'all', venueId: null, placeName: null, facilityName: null, lastDay: '2026-11-29' });
+    const rows = closureRows([f(all), f(park('lions', 'Lions Park', next))], NONE);
+    const days = closedDays(rows, TODAY);
+    assert.equal(days.length, 1);
+    assert.deepEqual(rowLinesUnder(days[0].rows[1], days[0]), ['For Fri, Nov 27, closed at 3:25 p.m. by Dana Reyes']);
+  });
+  it('the button counts places: a diamond is one, a park ticked for two days is one, all our fields is named', () => {
+    const rows = closureRows([f(park('alder', 'Alder Fields')), f(c({ facilityName: 'Diamond 1' })), f(c({ facilityName: 'Diamond 2' })),
+      f(park('alder', 'Alder Fields', next))], NONE);
+    assert.equal(pickedLabel(rows), 'Reopen 3 places');
+    assert.equal(pickedLabel(rows.filter(r => r.venueId === 'alder')), 'Reopen 1 place');
+    const all = closureRows([f(c({ scope: 'all', venueId: null, placeName: null, facilityName: null }))], NONE);
+    assert.equal(pickedLabel(all), 'Reopen all our fields');
+    assert.equal(pickedLabel([...all, ...rows]), 'Reopen everything ticked');
+    assert.equal(W.severalGo('Reopen 4 places', 2, false), 'Reopen and email 2 coaches');
+    assert.equal(W.severalGo('Reopen 4 places', 0, false), 'Reopen 4 places');
+    assert.equal(W.severalGo('Reopen 4 places', 2, true), 'Reopen 4 places, email 2');
+  });
+  it('a ticked row a closure left showing still says reads "Stays closed", and the others do not', () => {
+    const all = c({ scope: 'all', venueId: null, placeName: null, facilityName: null });
+    const d1 = c({ facilityName: 'Diamond 1' });
+    const alder = park('alder', 'Alder Fields', next);
+    const rows = closureRows([f(all), f(d1), f(alder)], NONE);
+    const ids = new Set([d1.id, alder.id]);
+    const line = (id: string) => staysLines(rows.find(r => r.closureIds.includes(id))!, [all, d1, alder], ids, NONE, NOW);
+    assert.deepEqual(line(d1.id), ['Stays closed: all our fields are closed today']);
+    assert.deepEqual(line(alder.id), []);
+    assert.deepEqual(staysLines(rows.find(r => r.closureIds.includes(d1.id))!, [all, d1], new Set([all.id, d1.id]), NONE, NOW), []);
+    // One that didn't come off is simply still closed, never "stays closed" because of itself.
+    assert.deepEqual(staysLines(rows.find(r => r.closureIds.includes(d1.id))!, [d1, alder], new Set([alder.id]), NONE, NOW), []);
+  });
+  it('a row held only in part, or by two reasons, gets a line per reason with its places', () => {
+    const through = { lastDay: '2026-11-29', endsAt: '2026-11-30T05:00:00Z' };
+    const row = [1, 2, 3].map(i => c({ facilityName: `Diamond ${i}` }));
+    const longer = [1, 2].map(i => c({ facilityName: `Diamond ${i}`, ...through }));
+    const rows = closureRows(row.map(x => f(x)), NONE);
+    const chosen = new Set(row.map(x => x.id));
+    assert.deepEqual(staysLines(rows[0], [...row, ...longer], chosen, NONE, NOW), [
+      'Diamond 1 at Lions Park stays closed: Diamond 1 at Lions Park is closed through Sun, Nov 29',
+      'Diamond 2 at Lions Park stays closed: Diamond 2 at Lions Park is closed through Sun, Nov 29',
+    ]);
+    const all = c({ scope: 'all', venueId: null, placeName: null, facilityName: null, ...through });
+    assert.deepEqual(staysLines(rows[0], [...row, all], chosen, NONE, NOW), ['Stays closed: all our fields are closed through Sun, Nov 29']);
   });
 });
 
@@ -128,12 +214,15 @@ describe('Reopen never says the site stops saying what it still says', () => {
     assert.equal(W.alsoTick(many.count, many.diamonds), 'Reopen those 3 places as well');
   });
   it('the buttons (items 7 and 9)', () => {
-    assert.equal(W.reopenParkGo(['Diamond 1', 'Diamond 2'], 2, false), 'Reopen 2 diamonds and email 2 coaches');
+    // A computer says one short sentence when coaches are emailed, so both buttons share the window's row.
+    assert.equal(W.reopenParkGo(['Diamond 1', 'Diamond 2'], 2, false), 'Reopen and email 2 coaches');
+    assert.equal(W.reopenParkGo(['Diamond 1', 'Diamond 2'], 0, false), 'Reopen 2 diamonds');
     assert.equal(W.reopenParkGo(['Diamond 1', 'Diamond 2'], 2, true), 'Reopen 2 diamonds, email 2');
     assert.equal(W.reopenParkGo([], 0, false), 'Reopen');
     assert.equal(W.reopenWideGo(null, false, 0, false), 'Reopen all our fields');
-    assert.equal(W.reopenWideGo(null, false, 2, false), 'Reopen all our fields and email 2 coaches');
-    assert.equal(W.reopenWideGo(null, true, 2, false), 'Reopen everything and email 2 coaches');
+    assert.equal(W.reopenWideGo(null, false, 2, false), 'Reopen and email 2 coaches');
+    assert.equal(W.reopenWideGo('Lions Park', true, 2, false), 'Reopen and email 2 coaches');
+    assert.equal(W.reopenWideGo(null, true, 2, true), 'Reopen everything, email 2');
     assert.equal(W.removeGo(false), 'Remove its closure');
   });
 });
@@ -141,10 +230,10 @@ describe('Reopen never says the site stops saying what it still says', () => {
 describe('T2 · an already-marked game is listed, never ticked, never counted', () => {
   it('the window lists it apart from what it ticks, and says how long it stays marked', () => {
     const src = { league: [], rep: [{ id: 'fresh', match: 'linked', started: false }],
-      repHeld: [{ id: 'held', teamName: 'U13 Ospreys', opponent: null, by: 'Diamond 1 at Lions Park', closures: 1 }] } as unknown as CloseSource;
+      repHeld: [{ id: 'held', teamName: 'U13 Ospreys', opponent: null, startsAt: NOW, by: 'Diamond 1 at Lions Park', closures: 1 }] } as unknown as CloseSource;
     assert.deepEqual([...defaultTicks(src)], ['fresh']);
-    assert.equal(W.heldNote({ by: 'Diamond 1 at Lions Park', closures: 1 }), 'Already marked: Diamond 1 at Lions Park is closed. It stays marked until both reopen, and its coach isn’t emailed again.');
-    assert.equal(W.heldNote({ by: '2 diamonds at Lions Park', closures: 2 }), 'Already marked: 2 diamonds at Lions Park are closed. It stays marked until all of them reopen, and its coach isn’t emailed again.');
+    assert.equal(W.heldNote({ by: 'Diamond 1 at Lions Park', closures: 1 }), 'Diamond 1 at Lions Park is closed. It stays marked until both reopen, and its coach isn’t emailed again.');
+    assert.equal(W.heldNote({ by: '2 diamonds at Lions Park', closures: 2 }), '2 diamonds at Lions Park are closed. It stays marked until all of them reopen, and its coach isn’t emailed again.');
     const server = readFileSync(join(import.meta.dirname, '..', '..', 'lib/place-closure-window-server.ts'), 'utf8');
     assert.match(server, /src\.rep\.filter\(g => !held\.has\(g\.id\) && theirs\(g\)\)/, 'a held game never reaches the tickable list');
     assert.equal(W.doneHeld(1), '1 rep game was already marked. Its coach wasn’t emailed again.');
@@ -186,6 +275,14 @@ describe('the coach\'s reopen email, several closures in one press (/legal 2026-
     const g = game({ closure: closure(null, 'all', null), at: { park: 'Lions Park', diamond: null }, stillClosed: true, parkStillClosed: true });
     assert.doesNotMatch(COACH_MAIL.reopenSubject('U13 Ospreys', [g]), /Lions Park reopened/);
     assert.doesNotMatch(COACH_MAIL.reopenBody('Kestrel Bay', [g]), /reopened Lions Park/);
+  });
+  it('several days in one press: never "reopened Lions Park" while a diamond there is closed on one of them (/review 2026-11-27)', () => {
+    const sat = game({ at: { park: 'Lions Park', diamond: 'Diamond 1' }, parkStillClosed: true });
+    const sun = game({ startsAt: '2026-11-29T15:00:00Z', closure: closure(null, 'place'), at: { park: 'Lions Park', diamond: null } });
+    assert.doesNotMatch(COACH_MAIL.reopenBody('Kestrel Bay', [sat, sun]), /reopened Lions Park\./);
+    assert.match(COACH_MAIL.reopenBody('Kestrel Bay', [sat, sun]), /^Kestrel Bay reopened some of its fields\./);
+    // With nothing there still closed, the park is the honest name.
+    assert.match(COACH_MAIL.reopenBody('Kestrel Bay', [{ ...sat, parkStillClosed: false }, sun]), /^Kestrel Bay reopened Lions Park\./);
   });
   it('the email still writes no link', () => {
     assert.doesNotMatch(COACH_MAIL.reopenBody('Kestrel Bay', [game({ stillClosed: true, at: null })]), /https?:|<a/);

@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
+import { readFileSync } from 'node:fs';
 import {
   fieldPrices, heldTime, overlappingBlocks, permitAnswer, permitUse, weekdayOf,
   type PermitTime, type UseBooking, type VenueFacilities,
@@ -371,5 +372,13 @@ describe('the cost as rows: one row per price, and how the hour was worked out (
     assert.equal(fieldHourSentence(27000, 468.75, 57.6), '$27,000.00 over 468.75 full-field hours: a full field is $57.60 an hour.');
     assert.equal(fieldHourSentence(27000, 374.99999999, 72), '$27,000.00 over 375 full-field hours: a full field is $72.00 an hour.');
     assert.equal(fieldHourSentence(90000, 1250, 72), '$90,000.00 over 1,250 full-field hours: a full field is $72.00 an hour.');
+  });
+});
+
+describe('the by-venue permit read names its join', () => {
+  it('a block points at a permit twice (permit_id, from_permit_id), so an unnamed join is refused and the read fails', () => {
+    const src = readFileSync('lib/permit-lookup.ts', 'utf8');
+    assert.match(src, /org_time_blocks!org_time_blocks_permit_id_fkey!inner\(org_venue_id\)/);
+    assert.doesNotMatch(src, /org_time_blocks!inner\(/);
   });
 });

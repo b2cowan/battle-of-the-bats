@@ -100,11 +100,11 @@ describe('K9 · the rep mark is spent by reading the game, never by writing', ()
 });
 
 describe('K3 · K16 · the strip: from the press to the end of Until, place words only, no job', () => {
-  const c = { showsFrom: '2026-11-27T23:00:00Z', endsAt: '2026-11-29T05:00:00Z', reopenedAt: null };
+  const c = { endsAt: '2026-11-29T05:00:00Z', reopenedAt: null };
 
   it('shows from the press (one set tonight already reads), is gone after Until or Reopen by itself', () => {
-    assert.equal(isClosureShowing(c, Date.parse('2026-11-27T22:59:59Z')), false);
-    assert.equal(isClosureShowing(c, Date.parse('2026-11-27T23:00:00Z')), true, 'the evening before: "closed tomorrow"');
+    // Nothing asks whether it has started: a reader a second behind the database still sees the one just pressed.
+    assert.equal(isClosureShowing(c, Date.parse('2026-11-27T22:59:59Z')), true, 'the evening before: "closed tomorrow"');
     assert.equal(isClosureShowing(c, Date.parse('2026-11-29T04:59:59Z')), true);
     assert.equal(isClosureShowing(c, Date.parse('2026-11-29T05:00:00Z')), false, 'midnight after Until');
     assert.equal(isClosureShowing({ ...c, reopenedAt: '2026-11-28T15:00:00Z' }, Date.parse('2026-11-28T16:00:00Z')), false);

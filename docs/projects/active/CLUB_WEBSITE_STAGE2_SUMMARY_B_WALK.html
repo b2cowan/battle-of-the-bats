@@ -77,8 +77,8 @@ textarea { width: 100%; box-sizing: border-box; min-height: 80px; font: 14px/1.5
   <header class="card" style="gap:8px">
     <span class="eyebrow">Club Website · Stage 2 · Closed places, summarized · Session B</span>
     <h1>Closed places, summarized: the Venue library and Reopen</h1>
-    <p class="lead">The Venue library now shows what is closed in one box, a row per park. Reopen takes a park’s diamonds in one press, says plainly what stays closed, and emails each coach once. Two separate presses keep a game marked until both reopen.</p>
-    <p class="lead">Five walks, 44 steps, <b>in order</b>. Written Nov 26, 2026. Everything runs on Kestrel Bay on this computer. The emails go only to made-up addresses that can never receive mail.</p>
+    <p class="lead">The Venue library now shows what is closed in one box, grouped by day, a row per park. Reopen takes a park’s diamonds, or several ticked rows, in one press, says plainly what stays closed, and emails each coach once. Two separate presses keep a game marked until both reopen.</p>
+    <p class="lead">Six walks, 49 steps, <b>in order</b>. Written Nov 26, 2026; rewritten Nov 27 for the day headings and reopening several. Everything runs on Kestrel Bay on this computer. The emails go only to made-up addresses that can never receive mail.</p>
     <p class="progress" id="progress">Checked 0 of 0</p>
   </header>
 
@@ -86,16 +86,16 @@ textarea { width: 100%; box-sizing: border-box; min-height: 80px; font: 14px/1.5
     <h2 id="signin-h">Sign in as</h2>
     <dl class="kv">
       <dt>Where</dt><dd><code>http://localhost:3000/auth/login</code> on this computer, with the dev server running. <b>Not the staging site.</b></dd>
-      <dt>Club president</dt><dd><code>president@kestrel-bay.example.test</code> · password <code>UATPassword2026!</code> (Morgan Ashby, the owner). Walks A to E.</dd>
-      <dt>Rep coach</dt><dd><code>rep.coach@kestrel-bay.example.test</code> · password <code>UATPassword2026!</code> (Nadia Kowalczyk, head coach of the U13 Ospreys). Walk D.</dd>
-      <dt>A visitor</dt><dd>Nobody signs in. A <b>private window</b> on <code>http://localhost:3000/kestrel-bay</code>, for walk C’s last step.</dd>
+      <dt>Club president</dt><dd><code>president@kestrel-bay.example.test</code> · password <code>UATPassword2026!</code> (Morgan Ashby, the owner). Walks A to F.</dd>
+      <dt>Rep coach</dt><dd><code>rep.coach@kestrel-bay.example.test</code> · password <code>UATPassword2026!</code> (Nadia Kowalczyk, head coach of the U13 Ospreys). Walk E.</dd>
+      <dt>A visitor</dt><dd>Nobody signs in. A <b>private window</b> on <code>http://localhost:3000/kestrel-bay</code>, for the last step of walks C and D.</dd>
     </dl>
     <p class="lead">Dev-only sign-ins. Keep this page private.</p>
   </section>
 
   <section class="card" aria-labelledby="before-h">
     <h2 id="before-h">Before you start</h2>
-    <p class="note"><b>Make the day, between 6:00 a.m. and 5:30 p.m.</b> Ask me, or run these two yourself, in this order. The second clears every earlier closure, so finish walk §578 first if you’re part way through it. Walk D asks for them once more:<pre>node --env-file=.env.local scripts/seed-prospect-demo.mjs --club=kestrel
+    <p class="note"><b>Make the day, between 6:00 a.m. and 5:30 p.m.</b> Ask me, or run these two yourself, in this order. The second clears every earlier closure. Walk E asks for them once more:<pre>node --env-file=.env.local scripts/seed-prospect-demo.mjs --club=kestrel
 node --env-file=.env.local scripts/seed-on-sale-pictures-extras.mjs --summary-walk</pre></p>
     <ul class="plain">
       <li>Kestrel has five parks, every facility a diamond. <b>Lions Park</b> has Diamonds 1 to 3.</li>
@@ -112,11 +112,6 @@ node --env-file=.env.local scripts/seed-on-sale-pictures-extras.mjs --summary-wa
 
   <section id="walkHost"></section>
 
-  <section class="card" aria-labelledby="call-h">
-    <h2 id="call-h">One open call for you (not part of the walk)</h2>
-    <p><b>The “Already marked” rows (walks C and D).</b> The group is headed “Already marked”, each row then starts with the same two words, and a row shows no game time, so two games against one opponent would look alike. The words are the ones you approved before the build. Leave them, or drop the repeat and add the time?</p>
-  </section>
-
   <section class="card" aria-labelledby="sum-h">
     <h2 id="sum-h">Paste-back (all walks)</h2>
     <div class="row">
@@ -132,15 +127,15 @@ node --env-file=.env.local scripts/seed-on-sale-pictures-extras.mjs --summary-wa
 <script>
 (function () {
   "use strict";
-  var KEY = "club-website-stage2-summary-b-walk-v1";
+  var KEY = "club-website-stage2-summary-b-walk-v2";
   var PAGE = "Club Website Stage 2 · Closed places, summarized · Session B";
   var WALKS = [
  {
   "id": "A",
-  "title": "One box, one row per park",
+  "title": "One box, grouped by day",
   "job": "Kestrel Bay president · computer width · your own test",
-  "forText": "The Venue library shows what is closed in one box, and the venue table says how much of a park is closed.",
-  "passes": "Two diamonds of one press are one row, no row is a dotted line, and only a whole park reads “Closed today”.",
+  "forText": "The Venue library shows what is closed in one box under a heading for the day, and the venue table says how much of a park is closed.",
+  "passes": "Two diamonds of one press are one row, ticks appear only with two rows or more, no row repeats the day, and only a whole park reads “Closed today”.",
   "notIn": "The club site and the Close window’s preview (walked in §578).",
   "who": "president@kestrel-bay.example.test, password UATPassword2026!.",
   "where": "http://localhost:3000/kestrel-bay/admin/org/venues",
@@ -157,15 +152,15 @@ node --env-file=.env.local scripts/seed-on-sale-pictures-extras.mjs --summary-wa
    },
    {
     "d": "Press the <b>Close 2 diamonds</b> button, then <b>Done</b>.",
-    "s": "A box headed <b>Closed places</b> sits above the venue table."
+    "s": "A box headed <b>Closed places</b> sits above the venue table: a heading, <b>Today</b> with today’s date, over one row. <b>No tick boxes</b> yet."
    },
    {
     "d": "Press <b>Close a place</b>, tick <b>Pinecrest Park</b>, press its Close button, then <b>Done</b>.",
-    "s": "The same box now has two rows."
+    "s": "The same box has two rows under the one <b>Today</b> heading, now with a tick box beside the heading and each row. <b>Nothing is ticked</b>, and there is no <b>Reopen … places</b> button."
    },
    {
     "d": "Read the box.",
-    "s": "<b>Diamond 1 and Diamond 2 at Lions Park</b> over two plain lines (today, the time and Morgan Ashby; <b>2 postponed, 2 rep games marked</b>), then <b>All diamonds at Pinecrest Park</b>. Each row has one <b>Reopen</b>. No dots joining the facts."
+    "s": "<b>Diamond 1 and Diamond 2 at Lions Park</b> over two plain lines (<b>Closed at … by Morgan Ashby</b>; <b>2 postponed, 2 rep games marked</b>), then <b>All diamonds at Pinecrest Park</b>. The rows don’t repeat the day. Each row has its own <b>Reopen</b>. No dots joining the facts."
    },
    {
     "d": "Look down the venue table.",
@@ -186,23 +181,19 @@ node --env-file=.env.local scripts/seed-on-sale-pictures-extras.mjs --summary-wa
    {
     "stop": true,
     "d": "Press <b>Reopen</b> on the <b>Diamond 1 and Diamond 2 at Lions Park</b> row.",
-    "s": "<b>Reopen diamonds at Lions Park?</b> A framed list, both diamonds ticked, each with its two lines (<b>1 postponed, 1 rep game marked</b>). Under it: <b>Your site stops saying they’re closed, at once.</b>, <b>2 rep games lose their marks. Each coach gets one email: the diamonds reopened, the game wasn’t moved, keep it or move it.</b>, the 2 postponed games line, and <b>Reopen 2 diamonds and email 1 coach</b>. <b>Stop if it says 2 coaches.</b>"
+    "s": "<b>Reopen diamonds at Lions Park?</b> A framed list, both diamonds ticked, each with its two lines (<b>1 postponed, 1 rep game marked</b>). Under it: <b>Your site stops saying they’re closed, at once.</b>, <b>2 rep games lose their marks. Each coach gets one email: the diamonds reopened, the game wasn’t moved, keep it or move it.</b>, the 2 postponed games line, and <b>Reopen and email 1 coach</b>, on one row with <b>Keep it closed</b>. <b>Stop if it says 2 coaches.</b>"
    },
    {
-    "d": "Untick both diamonds.",
-    "s": "<b>Tick a diamond to reopen it.</b> and the button reads <b>Reopen</b>, switched off."
+    "d": "Untick <b>Diamond 2</b>, leaving <b>Diamond 1</b> ticked.",
+    "s": "<b>Your site stops saying Diamond 1 is closed, at once. It still says Diamond 2 at Lions Park is closed today.</b>, <b>The U13 Ospreys’ game loses its mark.</b> …, <b>The 1 postponed game stays under “Needs a new date”. Its families were emailed, so give it a new date…</b>, and <b>Reopen and email 1 coach</b>."
    },
    {
-    "d": "Tick <b>Diamond 1</b> only.",
-    "s": "<b>Your site stops saying Diamond 1 is closed, at once. It still says Diamond 2 at Lions Park is closed today.</b>, <b>The U13 Ospreys’ game loses its mark.</b> …, <b>The 1 postponed game stays under “Needs a new date”. Its families were emailed, so give it a new date…</b>, and <b>Reopen Diamond 1 and email 1 coach</b>."
-   },
-   {
-    "d": "Tick <b>Diamond 2</b> again and press <b>Reopen 2 diamonds and email 1 coach</b>.",
+    "d": "Tick <b>Diamond 2</b> again and press <b>Reopen and email 1 coach</b>.",
     "s": "<b>Diamond 1 and Diamond 2 at Lions Park reopened</b>: <b>Your site no longer says they’re closed. The U13 Ospreys’ coach was emailed.</b>, then <b>2 games still need new dates.</b> and a <b>Give them new dates</b> button."
    },
    {
     "d": "Press <b>Done</b>.",
-    "s": "The box holds only <b>All diamonds at Pinecrest Park</b>, and Lions Park has no tag."
+    "s": "The box holds only <b>All diamonds at Pinecrest Park</b>, with no tick box, and Lions Park has no tag."
    }
   ]
  },
@@ -218,12 +209,12 @@ node --env-file=.env.local scripts/seed-on-sale-pictures-extras.mjs --summary-wa
   "steps": [
    {
     "d": "Press <b>Close a place</b>, tick <b>Lions Park</b>, <b>Diamond 1</b> and <b>Diamond 2</b> (Cedar Bluff stays unticked), press the Close button, then <b>Done</b>.",
-    "s": "A <b>Diamond 1 and Diamond 2 at Lions Park</b> row is back, above Pinecrest."
+    "s": "A <b>Diamond 1 and Diamond 2 at Lions Park</b> row is back under <b>Today</b>, above Pinecrest, and the tick boxes are back."
    },
    {
     "stop": true,
     "d": "Press <b>Close a place</b>, tick <b>All our fields</b> and read the rep games.",
-    "s": "Cedar Bluff is listed and ticked. Under <b>Not changed here</b>, <b>Already marked</b> lists Marlow Heights and Port Ellery with no tick, each naming its diamond: <b>It stays marked until both reopen, and its coach isn’t emailed again.</b> <b>Stop if either has a tick box.</b>"
+    "s": "Cedar Bluff is listed and ticked. Under <b>Not changed here</b>, <b>Already marked</b> lists Marlow Heights and Port Ellery with no tick, each with its time on one line and its diamond on the next: <b>It stays marked until both reopen, and its coach isn’t emailed again.</b> <b>Stop if either has a tick box.</b>"
    },
    {
     "d": "Press the Close button.",
@@ -231,7 +222,7 @@ node --env-file=.env.local scripts/seed-on-sale-pictures-extras.mjs --summary-wa
    },
    {
     "d": "Press <b>Done</b>.",
-    "s": "<b>All our fields</b> comes first, then a tinted band across the box, <b>Also closed on their own. These stay closed if you reopen all our fields.</b>, then the Lions Park and Pinecrest rows stepped in, each with its own Reopen."
+    "s": "Under <b>Today</b>, <b>All our fields</b> comes first, then a tinted band across the box, <b>Also closed on their own. These stay closed if you reopen all our fields.</b>, then the Lions Park and Pinecrest rows stepped in, each with its own tick and Reopen."
    },
    {
     "d": "Press <b>Reopen</b> on the <b>Diamond 1 and Diamond 2 at Lions Park</b> row.",
@@ -255,18 +246,10 @@ node --env-file=.env.local scripts/seed-on-sale-pictures-extras.mjs --summary-wa
    },
    {
     "d": "Read the rest of the window.",
-    "s": "<b>2 rep games lose their marks. Each coach gets one email.</b>, <b>1 rep game stays marked while Diamond 2 at Lions Park is still closed.</b> …, and the button <b>Reopen all our fields and email 1 coach</b>."
+    "s": "<b>2 rep games lose their marks. Each coach gets one email.</b>, <b>1 rep game stays marked while Diamond 2 at Lions Park is still closed.</b> …, and the button <b>Reopen and email 1 coach</b>."
    },
    {
-    "d": "Tick <b>Reopen those two places as well</b>.",
-    "s": "<b>Your site will stop saying anything is closed, at once.</b>, <b>3 rep games lose their marks.</b> …, and <b>Reopen everything and email 1 coach</b>."
-   },
-   {
-    "d": "Untick it again.",
-    "s": "The strip and <b>Reopen all our fields and email 1 coach</b> come back."
-   },
-   {
-    "d": "Press <b>Reopen all our fields and email 1 coach</b>.",
+    "d": "Press <b>Reopen and email 1 coach</b>.",
     "s": "<b>All our fields reopened</b>: <b>The U13 Ospreys’ coach was emailed.</b>, then <b>Your site now shows this:</b> with the two park rows, then the games that still need new dates."
    },
    {
@@ -281,6 +264,52 @@ node --env-file=.env.local scripts/seed-on-sale-pictures-extras.mjs --summary-wa
  },
  {
   "id": "D",
+  "title": "Reopen several, and tomorrow",
+  "job": "Kestrel Bay president · computer width · carries on from C",
+  "forText": "Closures set for tomorrow have their own heading, and ticked rows reopen together in one press.",
+  "passes": "The box’s button counts what you ticked, one ticked row opens that row’s own window, and one press reopens several with one email to the coach.",
+  "notIn": "Ticking rows under “All our fields”, and a press where one closure fails to reopen (tests hold the words).",
+  "who": "president@kestrel-bay.example.test, password UATPassword2026!.",
+  "where": "The Venue library.",
+  "steps": [
+   {
+    "stop": true,
+    "d": "Press <b>Close a place</b>, set <b>Day</b> to tomorrow, tick <b>Harbourview Park</b>, press the Close button, then <b>Done</b>.",
+    "s": "The box has two headings: <b>Today</b> with the Lions Park and Pinecrest rows, then <b>Tomorrow</b> with <b>All diamonds at Harbourview Park</b>. In the table, Harbourview reads <b>Closed tomorrow</b>. <b>Stop if there is no Tomorrow heading.</b>"
+   },
+   {
+    "d": "Tick the <b>Harbourview Park</b> row.",
+    "s": "A <b>Reopen 1 place</b> button appears in the box’s heading."
+   },
+   {
+    "d": "Press <b>Reopen 1 place</b>.",
+    "s": "That row’s own window: <b>Reopen Harbourview Park?</b> with <b>Your site stops saying it’s closed, at once.</b>"
+   },
+   {
+    "d": "Press <b>Keep it closed</b>, then tick the box beside the <b>Today</b> heading.",
+    "s": "Both of today’s rows are ticked, Harbourview stays ticked, and the button reads <b>Reopen 3 places</b>."
+   },
+   {
+    "stop": true,
+    "d": "Press <b>Reopen 3 places</b>.",
+    "s": "<b>Reopen 3 places?</b> The three rows in the box’s order, each with its day, then <b>Your site will stop saying anything is closed, at once.</b>, <b>The U13 Ospreys’ game loses its mark.</b> …, a line that the postponed games stay under “Needs a new date”, and <b>Reopen and email 1 coach</b>. <b>Stop if it says 2 coaches or more.</b>"
+   },
+   {
+    "d": "Press <b>Reopen and email 1 coach</b>.",
+    "s": "<b>3 places reopened</b>: <b>Your site no longer says they’re closed. The U13 Ospreys’ coach was emailed.</b>, then the games that still need new dates and <b>Give them new dates</b>."
+   },
+   {
+    "d": "Press <b>Done</b>.",
+    "s": "No <b>Closed places</b> box, and no park has a tag."
+   },
+   {
+    "d": "Open <code>http://localhost:3000/kestrel-bay</code> in a private window.",
+    "s": "No closed strip at the top of the club page."
+   }
+  ]
+ },
+ {
+  "id": "E",
   "title": "Two separate presses",
   "job": "President and rep coach · computer width · starts from a fresh day",
   "forText": "A rep game with no diamond stays marked until both diamonds closed by separate presses reopen, and its coach isn’t emailed twice.",
@@ -305,7 +334,7 @@ node --env-file=.env.local scripts/seed-on-sale-pictures-extras.mjs --summary-wa
    {
     "stop": true,
     "d": "Press <b>Done</b>, then <b>Close a place</b>, tick <b>Lions Park</b>, <b>Diamond 2</b> only.",
-    "s": "Port Ellery is ticked. Cedar Bluff is under <b>Already marked</b>, with no tick: <b>Already marked: Diamond 1 at Lions Park is closed. It stays marked until both reopen, and its coach isn’t emailed again.</b> <b>Stop if it offers a tick.</b>"
+    "s": "Port Ellery is ticked. Cedar Bluff is under <b>Already marked</b>, with no tick: its time, then <b>Diamond 1 at Lions Park is closed. It stays marked until both reopen, and its coach isn’t emailed again.</b> <b>Stop if it offers a tick.</b>"
    },
    {
     "d": "Press the Close button.",
@@ -320,7 +349,7 @@ node --env-file=.env.local scripts/seed-on-sale-pictures-extras.mjs --summary-wa
     "s": "<b>The U13 Ospreys’ game loses its mark.</b> … and <b>1 rep game stays marked while Diamond 2 at Lions Park is still closed. Its coach is told when that reopens.</b>"
    },
    {
-    "d": "Press <b>Reopen Diamond 1 and email 1 coach</b>.",
+    "d": "Press <b>Reopen and email 1 coach</b>.",
     "s": "<b>Diamond 1 at Lions Park reopened</b> with <b>Your site now says Diamond 2 at Lions Park is closed today. The U13 Ospreys’ coach was emailed.</b>"
    },
    {
@@ -345,10 +374,10 @@ node --env-file=.env.local scripts/seed-on-sale-pictures-extras.mjs --summary-wa
   ]
  },
  {
-  "id": "E",
+  "id": "F",
   "title": "On a phone",
-  "job": "A phone, or a window about 390 wide · carries on from D",
-  "forText": "The box and the Reopen windows on a phone.",
+  "job": "A phone, or a window about 390 wide · carries on from E",
+  "forText": "The box, its ticks and the Reopen windows on a phone.",
   "passes": "Everything reads without sideways scrolling, and every Reopen and tick is a comfortable tap.",
   "notIn": "Pressing Reopen on the phone (the same press as the computer).",
   "who": "president@kestrel-bay.example.test, password UATPassword2026!.",
@@ -357,11 +386,15 @@ node --env-file=.env.local scripts/seed-on-sale-pictures-extras.mjs --summary-wa
    {
     "stop": true,
     "d": "As president on the phone, open the Venue library and close <b>Lions Park</b> <b>Diamond 1</b> and <b>Diamond 2</b>.",
-    "s": "One row; its name shares the top line with <b>Reopen</b>, and the facts run the full width under both. <b>Stop if the page scrolls sideways.</b>"
+    "s": "One row with no tick box; its name shares the top line with <b>Reopen</b>, and the facts run the full width under both. <b>Stop if the page scrolls sideways.</b>"
    },
    {
     "d": "Close <b>All our fields</b>.",
-    "s": "The Lions Park row sits under the band, stepped in."
+    "s": "Tick boxes appear, and the Lions Park row sits under the band, stepped in."
+   },
+   {
+    "d": "Tap the box beside the <b>Today</b> heading.",
+    "s": "Both rows are ticked, <b>Reopen everything ticked</b> appears at the top of the box, and nothing is cut off."
    },
    {
     "d": "Tap <b>Reopen</b> on <b>All our fields</b>.",
@@ -372,11 +405,7 @@ node --env-file=.env.local scripts/seed-on-sale-pictures-extras.mjs --summary-wa
     "s": "The button reads <b>Reopen everything, email 1</b> and nothing is cut off."
    },
    {
-    "d": "Tap <b>Keep it closed</b>, then <b>Reopen</b> on the Lions Park row.",
-    "s": "<b>Remove the diamonds’ own closures at Lions Park?</b> with both ticks as full rows."
-   },
-   {
-    "d": "Tap <b>Not now</b>.",
+    "d": "Tap <b>Keep it closed</b>.",
     "s": "The window closes and both closures are still listed."
    }
   ]

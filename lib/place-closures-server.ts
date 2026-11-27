@@ -95,7 +95,7 @@ export async function closuresShowing(orgId: string, now: Date = new Date()): Pr
   const at = now.toISOString();
   const { data, error } = await supabaseAdmin.from('org_place_closures')
     .select(STRIP_CLOSURE_COLUMNS)
-    .eq('org_id', orgId).is('reopened_at', null).lte('shows_from', at).gt('ends_at', at)
+    .eq('org_id', orgId).is('reopened_at', null).gt('ends_at', at)
     .order('created_at').order('press_seq');
   if (error) throw error;
   const rows = (data ?? []) as unknown as Parameters<typeof stripClosureOf>[0][];

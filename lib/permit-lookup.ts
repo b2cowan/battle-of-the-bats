@@ -142,9 +142,11 @@ export async function readPermitTimes(orgId: string, opts: {
     return q as unknown as Q;
   };
   // ONE read of the permits: by venue (an inner join on their blocks — a permit that holds time there), by id, or all.
+  // ⚠ The join NAMES its relationship: a block points at a permit twice (`permit_id`, the permit's own time, and mig 487's
+  // `from_permit_id`, a schedule's row), and an unnamed join is refused as ambiguous — which failed every by-venue read.
   const rows = opts.venueIds
     ? await fetchAllIn<PermitRow>(opts.venueIds, (c, a, b) => ranged(supabaseAdmin.from('org_permits')
-      .select(`${PERMIT_COLUMNS}, org_time_blocks!inner(org_venue_id)`).eq('org_id', orgId).in('org_time_blocks.org_venue_id', c))
+      .select(`${PERMIT_COLUMNS}, org_time_blocks!org_time_blocks_permit_id_fkey!inner(org_venue_id)`).eq('org_id', orgId).in('org_time_blocks.org_venue_id', c))
       .order('id').range(a, b))
     : opts.ids
       ? await fetchAllIn<PermitRow>(opts.ids, (c, a, b) => ranged(supabaseAdmin.from('org_permits')

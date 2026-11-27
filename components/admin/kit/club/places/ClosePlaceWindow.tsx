@@ -712,6 +712,7 @@ export default function ClosePlaceWindow({ orgSlug, eyebrow, season, initialVenu
                     : heldGames.map(g => (
                       <div key={g.id} className={s.otherRow}><div>
                         <strong>{g.opponent ? `${g.teamName} vs ${g.opponent}` : g.teamName}</strong>
+                        <span className={s.sub}>{multiDay ? `${formatShortWeekdayDate(orgDayKey(g.startsAt))} at ${closeClock(g.startsAt)}` : closeClock(g.startsAt)}</span>
                         <span className={s.sub}>{W.heldNote(g)}</span>
                       </div></div>
                     ))}

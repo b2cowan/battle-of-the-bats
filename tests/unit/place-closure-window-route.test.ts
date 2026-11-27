@@ -216,8 +216,12 @@ describe('K11 · Reopen, a set at a time (S5, S6)', () => {
     assert.equal((await harness().preview('nope')).status, 400);
   });
   it('the old one-closure door is gone: every Reopen window uses the set\'s', () => {
-    assert.doesNotMatch(read('components/admin/kit/club/places/ReopenPlaceWindow.tsx'), /place-closures\/\$\{/);
-    assert.match(read('components/admin/kit/club/places/ReopenPlaceWindow.tsx'), /place-closures\/reopen\?/);
+    // Both windows press through the one hook (`ReopenParts`).
+    for (const name of ['ReopenPlaceWindow', 'ReopenSeveralWindow']) {
+      assert.match(read(`components/admin/kit/club/places/${name}.tsx`), /useReopenSet\(/);
+    }
+    assert.doesNotMatch(read('components/admin/kit/club/places/ReopenParts.tsx'), /place-closures\/\$\{/);
+    assert.match(read('components/admin/kit/club/places/ReopenParts.tsx'), /place-closures\/reopen\?/);
   });
 });
 
@@ -255,6 +259,7 @@ describe('the guards', () => {
     const SERVER = read('lib/place-closure-window-server.ts');
     assert.match(SERVER, /if \(venues > 0 \|\| typeof seasonId !== 'string' \|\| !isUuid\(seasonId\)\) return false;/);
     assert.match(SERVER, /getLeagueSeasonById\(seasonId, org\.id\)/, 'the club\'s own season');
+    assert.match(SERVER, /fromSeason: !!season && !isFinishedLeagueSeason\(season\)/, 'and not a finished one (owner 2026-11-27)');
     assert.match(WINDOW, /const allOnly = noPlaces && frame!\.canAll;/, 'the window offers what the server says');
     assert.match(WINDOW, /\$\{seasonId \? `&from=\$\{seasonId\}` : ''\}/, 'the frame read names the season');
   });

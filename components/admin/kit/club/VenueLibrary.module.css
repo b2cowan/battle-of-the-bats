@@ -108,16 +108,20 @@ thead th.groupHead { text-align: center; padding-bottom: 0.2rem; }
 thead th.countHead { width: 1%; }
 .facilityCount { white-space: nowrap; }
 
-/* CLOSE A PLACE (Club Website Stage 2, K11; S4, the summary drawing's tabs 3–4): the closures showing, ONE box at the
-   top of the library — an amber edge, a quiet heading, a row per park and dates on hairlines. A row: its name and
-   Reopen on the first line, the two plain fact lines under the name (full width on a phone, the name and Reopen sharing
-   the 44px top line). The rows under "All our fields" (or a park) step in under a quiet band. */
+/* CLOSE A PLACE (Club Website Stage 2, K11; S4, the summary drawing's tabs 3–4; days and ticks, owner 2026-11-27): the
+   closures showing, ONE box at the top of the library — an amber edge, a quiet heading, a heading per day, a row per park
+   and dates on hairlines. A row: its tick, its name and Reopen on the first line, the plain fact lines under the name
+   (full width on a phone, the name and Reopen sharing the 44px top line). The rows under "All our fields" (or a park)
+   step in under a quiet band. One closure showing wears no ticks. */
 .closedBox {
   margin: 0 0 0.9rem; padding: 0.35rem 0.9rem 0.2rem;
   border: 1px solid var(--home-line); border-left: 3px solid var(--warning); border-radius: 8px; background: var(--card-bg);
 }
+/* The heading's line holds the button's height whether it shows or not, so ticking never moves the rows. */
+.closedTop { display: flex; align-items: center; justify-content: space-between; gap: 0.9rem; min-height: 2.75rem; }
+.closedMany { flex: none; }
 .closedHead {
-  margin: 0.45rem 0 0.2rem;
+  margin: 0;
   font-family: var(--font-data); /* type-ok: eyebrow */
   font-size: var(--type-label);
   font-weight: 700;
@@ -125,11 +129,19 @@ thead th.countHead { width: 1%; }
   text-transform: uppercase; /* type-ok: eyebrow */
   color: var(--text-secondary);
 }
+.closedDay { display: flex; align-items: center; gap: 0.65rem; padding: 0.55rem 0 0.4rem; border-top: 1px solid var(--home-line); }
+.closedDayName { margin: 0; font-size: var(--type-body); font-weight: 700; color: var(--text-primary); }
+.closedDayName label { cursor: pointer; }
+.closedTick { flex: none; margin: 0; cursor: pointer; }
 .closedRow {
   display: grid; grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: 'name go' 'facts go';
   align-items: center; gap: 0.15rem 0.9rem; padding: 0.65rem 0; border-top: 1px solid var(--home-line);
 }
+.closedPicks .closedRow { grid-template-columns: auto minmax(0, 1fr) auto; grid-template-areas: 'tick name go' '. facts go'; column-gap: 0.65rem; padding-left: 1.75rem; }
+.closedRowTick { grid-area: tick; }
+.closedName label { cursor: pointer; }
 .closedUnder { padding-left: 1.25rem; }
+.closedPicks .closedUnder { padding-left: 3rem; }
 .closedName { grid-area: name; font-weight: 650; color: var(--text-primary); }
 .closedReopen { grid-area: go; }
 .closedFacts { grid-area: facts; display: flex; flex-direction: column; }
@@ -141,7 +153,11 @@ thead th.countHead { width: 1%; }
 }
 @media (max-width: 640px) {
   .closedRow { grid-template-areas: 'name go' 'facts facts'; }
-  .closedReopen { min-height: var(--tap-min, 44px); }
+  .closedReopen, .closedMany, .closedDayName label, .closedName label { min-height: var(--tap-min, 44px); }
+  .closedDayName label, .closedName label { display: flex; align-items: center; }
+  .closedDay { padding: 0.25rem 0; }
   .closedUnder { padding-left: 0.75rem; }
+  .closedPicks .closedRow { grid-template-areas: 'tick name go' '. facts facts'; padding-left: 0; }
+  .closedPicks .closedUnder { padding-left: 1rem; }
   .closedBand { padding-left: 1.65rem; }
 }
