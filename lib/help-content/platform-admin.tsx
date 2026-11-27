@@ -1299,7 +1299,7 @@ const platformAdminHelp: HelpPageContent = {
                 <HelpDef term="Delayed">Their mail server is slow to accept it. The mail service keeps trying.</HelpDef>
                 <HelpDef term="Bounced">Refused for good: the address does not exist, or will not take mail. The red line says which (address does not exist, mailbox full, mail server refused it).</HelpDef>
                 <HelpDef term="Marked as spam">The person reported it as spam. The mail service stops sending to them.</HelpDef>
-                <HelpDef term="Not sent">Not sent at all: this address bounced or reported spam before.</HelpDef>
+                <HelpDef term="Not sent">Not sent at all. The red line says why: the address bounced or reported spam before; it is a <em>Test address</em> (an ending such as <em>.test</em> or <em>example.com</em>, which can never receive mail); or this site has no mail key. If a person typed a test address as their own, ask them for their real one.</HelpDef>
                 <HelpDef term="Failed">The mail service could not send it. Send it again from where it was first sent; if it fails again, tell the developer.</HelpDef>
                 <HelpDef term="Not confirmed">We did not hear back when we sent it. The mail service&rsquo;s own word will settle it, usually within the hour.</HelpDef>
               </HelpDefs>

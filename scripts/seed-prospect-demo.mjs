@@ -13,7 +13,8 @@
  * Phase B (scripts/lib/prospect-demo-rep.mjs, when the config has `repTeams`): the rep teams and everything under them, the
  * club's schedules, permits, club bills, shared drills, bank checks and tournaments — rebuilt every run (plan §8).
  * ⚖ WHAT IT NEVER TOUCHES: auth users, their passwords, the organization's row (name, plan, theme, logo), its public-site
- * content, its venues, anyone's club membership (pending invitations included). An open browser session survives a reset.
+ * content, its venues (except that an archived Kestrel park is brought back), anyone's club membership (pending
+ * invitations included). An open browser session survives a reset.
  * A password is set ONLY when an account is first created.
  * ⚖ WHAT IT SAVES AND PUTS BACK (owner 2026-11-25; scripts/lib/prospect-demo-access.mjs): rep team staff, house-league
  * coaches, pending team-staff invitations, and members' rep-group / tournament limits, which would otherwise go with the
@@ -279,11 +280,16 @@ if (!site) {
   ok('public site: blank contact email / mailing address filled');
 } else ok('public site content already there (left alone)');
 
-// Venues: found by name, or added (their ids stay the same across resets).
+// Venues: found by name, or added (their ids stay the same across resets). Kestrel's walks start from every park being in
+// the Venue library, and some archive them on purpose, so an archived Kestrel park is brought back. Milton's stay as left.
 const venues = {};
 for (const spec of cfg.venues) {
-  let row = await one(`venue ${spec.name}`, db.from('org_venues').select('id, name, address').eq('org_id', ORG).eq('name', spec.name).maybeSingle());
+  let row = await one(`venue ${spec.name}`, db.from('org_venues').select('id, name, address, is_active').eq('org_id', ORG).eq('name', spec.name).maybeSingle());
   if (!row) row = await one(`add venue ${spec.name}`, db.from('org_venues').insert({ org_id: ORG, name: spec.name, address: spec.address, notes: spec.notes ?? null, is_active: true }).select('id, name, address').single());
+  else if (SLUG === 'kestrel-bay' && !row.is_active) {
+    die(`bring back ${spec.name}`, (await db.from('org_venues').update({ is_active: true, updated_at: new Date().toISOString() }).eq('id', row.id).eq('org_id', ORG)).error);
+    ok(`${spec.name} was archived: brought back`);
+  }
   const facs = await one(`facilities ${spec.name}`, db.from('org_venue_facilities').select('id, name').eq('org_venue_id', row.id));
   const fac = Object.fromEntries((facs ?? []).map(f => [f.name, f.id]));
   for (const [i, name] of spec.facilities.entries()) {
@@ -679,7 +685,7 @@ const totals = sql(`SELECT (SELECT count(*) FROM league_registrations WHERE org_
     (SELECT count(*) FROM league_season_notices WHERE org_id = ${q(ORG)}) AS notices`)[0];
 console.log('  totals:', JSON.stringify(totals));
 console.log(`\n  Club:   http://localhost:3000/${SLUG}/admin    public: http://localhost:3000/${SLUG}   league: http://localhost:3000/${SLUG}/league`);
-console.log(`  Sign in: ${cfg.people.owner.email} (Owner) · ${cfg.people.admin.email} (League admin) · ${cfg.people.coach.email} (coach, ${TEAM.U11[0].name}) — the password is ${cfg.passwordEnv ?? 'MILTON_DEMO_PASSWORD'} in .env.local`);
+console.log(`  Sign in: ${cfg.people.owner.email} (Owner) · ${cfg.people.admin.email} (League admin) · ${cfg.people.coach.email} (coach, ${TEAM.U11[0].name}) — the password is ${cfg.passwordNote ?? `${cfg.passwordEnv ?? 'MILTON_DEMO_PASSWORD'} in .env.local`}`);
 console.log(`  ${cfg.people.parent.email} is the guardian contact of Ella (U9) and Owen (U11) — no account is made; the family-app invitation creates it.`);
 if (rep) {
   console.log(`\n  Rep side: ${rep.dressed.name} → http://localhost:3000/${SLUG}/coaches/teams/${rep.dressed.id}  (sign in ${cfg.repPeople.headCoach.email}; assistant ${cfg.repPeople.assistant.email})`);

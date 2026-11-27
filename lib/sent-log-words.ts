@@ -4,6 +4,7 @@
  *
  * G4 2026-10-26: Delayed's meaning carries no number of hours (the drawing's "up to 14 hours" had no source).
  */
+import { isUndeliverableAddress } from './email-undeliverable';
 
 export type SentState = 'sent' | 'unconfirmed' | 'delayed' | 'delivered' | 'bounced' | 'complained' | 'failed' | 'not_sent';
 export type SentTone = 'plain' | 'ok' | 'warn' | 'bad';
@@ -60,25 +61,45 @@ export function isBounceReason(v: unknown): v is BounceReason {
   return typeof v === 'string' && Object.prototype.hasOwnProperty.call(BOUNCE_WORDS, v);
 }
 
-/** The email window's "What to do" for a state with no bounce reason, or null when there is nothing to do. */
 /**
- * Not sent with NO reason is ours, not the mail service's: this site had no mail key, so the email never left (a dev
- * or unconfigured site). The mail service's own "not sent" always carries the suppressed reason.
+ * Not sent with NO reason is ours, not the mail service's: the email never left this site. The mail service's own
+ * "not sent" always carries the suppressed reason. Which of ours it was is read off the address (`neverLeft`).
  */
 export const NO_MAIL_KEY = {
+  chip: 'Not sent: this site has no mail key',
   short: 'This site has no mail key',
   flag: 'Not sent: this site has no mail key, so the email never left.',
   tail: 'This site has no mail key, so it never left.',
   todo: 'nothing reached them. Send it again from a site where mail is set up.',
 } as const;
 
-export function whatToDo(state: SentState, reason: BounceReason | null): string | null {
+/** A reserved test or demo address, which the sender never hands over (lib/email-undeliverable.ts). */
+export const TEST_ADDRESS = {
+  chip: 'Not sent: test address',
+  short: 'Test address',
+  flag: 'Not sent: a test address can never receive mail, so the email was never handed to the mail service.',
+  tail: 'A test address can never receive mail, so it never left.',
+  todo: 'nothing, if this was a test. If a person gave this address, ask them for their real one.',
+} as const;
+
+/** Why a Not sent email with no reason never left: its address, or else this site's missing mail key. */
+export function neverLeft(to: string) {
+  return isUndeliverableAddress(to) ? TEST_ADDRESS : NO_MAIL_KEY;
+}
+
+/** What a state means for this email (the chip's hover words): Not sent with no reason is not a bounce or a spam report. */
+export function stateMeaning(state: SentState, reason: BounceReason | null, to: string): string {
+  return state === 'not_sent' && !reason ? neverLeft(to).flag : SENT_STATES[state].meaning;
+}
+
+/** The email window's "What to do" for a state with no bounce reason, or null when there is nothing to do. */
+export function whatToDo(state: SentState, reason: BounceReason | null, to: string): string | null {
   if (reason) return BOUNCE_WORDS[reason].todo;
   switch (state) {
     case 'delivered': return 'nothing on our side. If they cannot find it, ask them to look in spam.';
     case 'delayed': return 'wait; the mail service keeps trying. If it never arrives, check the address with them.';
     case 'complained': return 'the mail service stops writing to them. Ask whether they meant to, and for another address if they still want our emails.';
-    case 'not_sent': return NO_MAIL_KEY.todo;
+    case 'not_sent': return neverLeft(to).todo;
     case 'failed': return 'send it again from where it was first sent. If it fails again, tell the developer.';
     case 'unconfirmed': return 'wait a few minutes; the mail service usually reports within the hour.';
     default: return null;
@@ -109,16 +130,16 @@ export const BOUNCE_EVENT_TAIL: Record<BounceReason, string> = {
 };
 
 /** The red line under a state in a list (E3): the short reason, for the two states that carry one; else null. */
-export function listFlag(state: SentState, reason: BounceReason | null): string | null {
+export function listFlag(state: SentState, reason: BounceReason | null, to: string): string | null {
   if (state === 'bounced') return BOUNCE_WORDS[reason ?? 'other'].short;
-  if (state === 'not_sent') return reason ? BOUNCE_WORDS[reason].short : NO_MAIL_KEY.short;
+  if (state === 'not_sent') return reason ? BOUNCE_WORDS[reason].short : neverLeft(to).short;
   return null;
 }
 
 /** The email window's flag line (E4): bounced, not sent and marked as spam say what happened; every other state has none. */
-export function windowFlag(state: SentState, reason: BounceReason | null): string | null {
+export function windowFlag(state: SentState, reason: BounceReason | null, to: string): string | null {
   if (state === 'bounced') return BOUNCE_WORDS[reason ?? 'other'].flag;
-  if (state === 'not_sent') return reason ? BOUNCE_WORDS[reason].flag : NO_MAIL_KEY.flag;
+  if (state === 'not_sent') return reason ? BOUNCE_WORDS[reason].flag : neverLeft(to).flag;
   if (state === 'complained') return `Marked as spam: ${SENT_STATES.complained.meaning.charAt(0).toLowerCase()}${SENT_STATES.complained.meaning.slice(1)}`;
   return null;
 }

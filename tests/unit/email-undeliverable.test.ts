@@ -31,6 +31,7 @@ describe('neither sender hands a reserved address to the mail service', () => {
   /** What each request to the mail service carried, as the list of its recipients. */
   const requests: string[][] = [];
   const rowStatuses: string[] = [];
+  const logOutcomes: object[] = [];
   const previousFetch = globalThis.fetch;
   const previousKey = process.env.RESEND_API_KEY;
 
@@ -50,6 +51,11 @@ describe('neither sender hands a reserved address to the mail service', () => {
 
   const load = billingTestLoader({
     '@/lib/preview-org-server': { isPreviewOrgId: async () => false },
+    './email-log': {
+      ROW_TAG: 'flhq_row', DB_TAG: 'flhq_db', logDatabaseRef: () => 'local',
+      openSentEmailRow: async () => 'log-1',
+      settleSentEmailRow: async (_id: string, outcome: object) => { logOutcomes.push(outcome); },
+    },
     '@/lib/supabase-admin': { supabaseAdmin: { from: () => ({
       insert: () => ({ select: () => ({ single: async () => ({ data: { id: 'send-1' }, error: null }) }) }),
       update: (row: { status: string }) => ({ eq: async () => { rowStatuses.push(row.status); return { error: null }; } }),
@@ -72,6 +78,13 @@ describe('neither sender hands a reserved address to the mail service', () => {
     assert.deepEqual(requests, []);
     await transport.sendEmail('real@club.ca', 's', '<p>h</p>', opts);
     assert.deepEqual(requests, [['real@club.ca']]);
+  });
+
+  it('the account-email log says Not sent for a held-back address, while the caller is answered sent', async () => {
+    logOutcomes.length = 0;
+    const result = await transport.sendEmail('a@kb.example.test', 's', '<p>h</p>', { kind: 'org_invite', orgId: null });
+    assert.equal(result.status, 'sent');
+    assert.deepEqual(logOutcomes, [{ state: 'not_sent' }]);
   });
 
   it('a batch: only the real addresses go, and an all-reserved batch makes no request', async () => {

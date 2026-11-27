@@ -3,7 +3,7 @@
 **One line:** your homepage was the last place on the internet still saying the Coaches Portal
 wasn't ready — two weeks after it launched and started taking customers.
 
-**Status:** built, awaiting owner QA. Plan: `HOMEPAGE_TRUTH_AND_ENTRY_POINTS_PLAN.md`.
+**Status:** archived 2026-11-26 as finished work. Plan: `HOMEPAGE_TRUTH_AND_ENTRY_POINTS_PLAN.md`.
 
 ---
 

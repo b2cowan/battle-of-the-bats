@@ -77,7 +77,7 @@ textarea { width: 100%; box-sizing: border-box; min-height: 80px; font: 14px/1.5
     <span class="eyebrow">Board Ready Stage 6 · Part 3b · The fixes after the card walk</span>
     <h1>Sponsorships, Part 3b: after the walk</h1>
     <p class="lead">You walked the card (47 of 47) and ruled the nine calls. This walk covers what I changed because of them: a card payment given back beside a cheque, a dispute the club loses, and the Payouts tab. Wording that changed (how long a refund takes, no Stripe code in the business’s email) shows up inside those walks.</p>
-    <p class="lead">Three walks, 29 steps, one purpose. Walk C is optional until a payout arrives. Four owner calls sit at the foot, outside the count.</p>
+    <p class="lead">Three walks, 30 steps, one purpose. Walk C is optional until a payout arrives. Four owner calls sit at the foot, outside the count.</p>
     <p class="lead">Written Nov 24, 2026. Everything runs on Dev Club Org on this computer, with Stripe’s test mode. I remove the “Walk” deals after you report.</p>
     <p class="progress" id="progress">Checked 0 of 0</p>
   </header>
@@ -216,7 +216,7 @@ textarea { width: 100%; box-sizing: border-box; min-height: 80px; font: 14px/1.5
   "title": "A dispute the club loses",
   "job": "Dev Club Org · owner window, a private window, PowerShell, the Stripe listen window",
   "forText": "A business pays by the test card that is disputed a minute later, and the club loses. The money the bank took back comes out of the club’s books (no credit note), the deal goes back to owing, the payment is marked as taken back, nobody can refund it, and the business sees it owing again. Withdrawing the deal then works.",
-  "passes": "While the dispute is open nothing changes but a notice. After the loss the deal reads Invoiced with the whole amount owing, the payment reads Taken back with no Refund button, the Ledger holds two “Card dispute lost” lines, and the deal can be withdrawn.",
+  "passes": "While the dispute is open nothing changes but a notice, and the payment’s window says why it can’t be refunded instead of offering Refund. After the loss the deal reads Invoiced with the whole amount owing, the payment reads Taken back with no Refund button, the Ledger holds two “Card dispute lost” lines, and the deal can be withdrawn.",
   "notIn": "A dispute that is later WON after the sponsor paid again (Stripe’s test mode cannot turn a loss into a win; proved by a script). A dispute that covers only part of the payment (books nothing, tells the club to record it by hand).",
   "who": "Dev Club Org’s owner (owner window), then nobody (a private window).",
   "where": "Sponsorships → Deals, the business’s link, Stripe’s test page, PowerShell in the project folder, then Accounting → Ledger (the club’s General book).",
@@ -249,6 +249,11 @@ textarea { width: 100%; box-sizing: border-box; min-height: 80px; font: 14px/1.5
    {
     "d": "Reload Walk After One’s deal page.",
     "s": "Nothing has changed while the dispute is open: the chip still reads <b>Paid</b> and <b>Still owing</b> reads <b>$0.00</b>."
+   },
+   {
+    "n": "7a",
+    "d": "Press the card payment’s row in the <b>Payments</b> card.",
+    "s": "The payment’s window has <b>no Refund button</b>. Its foot reads <b>The sponsor disputed this payment with their card company, so it can’t be refunded here. Answer the dispute in Stripe.</b>"
    },
    {
     "d": "In PowerShell, in the project folder, run <pre>node .probe/p3b-answer-dispute.cjs lose 1130.00</pre>",
@@ -388,7 +393,10 @@ textarea { width: 100%; box-sizing: border-box; min-height: 80px; font: 14px/1.5
   function save() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} }
   function el(tag, cls, html) { var n = document.createElement(tag); if (cls) n.className = cls; if (html != null) n.innerHTML = html; return n; }
   function plain(html) { var d = document.createElement("div"); d.innerHTML = html; return d.textContent.replace(/\s+/g, " ").trim(); }
-  function sid(w, i) { return w.id + "." + (i + 1); }
+  // A step added after the walk was published carries its own label ("7a"), so every other step keeps its number, and a
+  // tick already saved against it stays on the right step.
+  function num(w, i) { if (w.steps[i].n) return w.steps[i].n; var k = 0; for (var j = 0; j <= i; j++) if (!w.steps[j].n) k++; return String(k); }
+  function sid(w, i) { return w.id + "." + num(w, i); }
   function counts(w) { var n = 0; w.steps.forEach(function (s, i) { if (state.ticks[sid(w, i)]) n++; }); return { done: n, all: w.steps.length }; }
   var VWORD = { pass: "Passed", issue: "Issue", call: "Needs a call" };
   function chipOf(w) {
@@ -432,12 +440,12 @@ textarea { width: 100%; box-sizing: border-box; min-height: 80px; font: 14px/1.5
         var id = sid(w, i);
         var li = el("li", "step" + (s.stop ? " stop" : "") + (state.ticks[id] ? " done" : ""));
         var cb = el("input"); cb.type = "checkbox"; cb.id = "cb-" + id; cb.checked = !!state.ticks[id];
-        cb.setAttribute("aria-label", "Step " + (i + 1) + " done");
+        cb.setAttribute("aria-label", "Step " + num(w, i) + " done");
         cb.addEventListener("change", function () { state.ticks[id] = cb.checked; save(); li.className = "step" + (s.stop ? " stop" : "") + (cb.checked ? " done" : ""); refresh(); });
         li.appendChild(cb);
         var body = el("div", "body");
         if (s.stop || s.who) body.appendChild(el("span", "who", (s.stop ? "Stop check" : "") + (s.stop && s.who ? " · " : "") + (s.who || "")));
-        body.appendChild(el("span", "lab", (i + 1) + " · Do"));
+        body.appendChild(el("span", "lab", num(w, i) + " · Do"));
         body.appendChild(el("p", null, s.d));
         body.appendChild(el("span", "lab", "You should see"));
         body.appendChild(el("p", null, s.s));
@@ -515,7 +523,7 @@ textarea { width: 100%; box-sizing: border-box; min-height: 80px; font: 14px/1.5
   function walkSummary(w) {
     var c = counts(w), v = state.verdict[w.id];
     var lines = [w.id + " " + w.title + " · " + (v ? VWORD[v].toUpperCase() : "NO VERDICT") + " · " + c.done + " of " + c.all + " ticked"];
-    w.steps.forEach(function (s, i) { lines.push("  " + (state.ticks[sid(w, i)] ? "[x] " : "[ ] ") + (i + 1) + ". " + plain(s.d)); });
+    w.steps.forEach(function (s, i) { lines.push("  " + (state.ticks[sid(w, i)] ? "[x] " : "[ ] ") + num(w, i) + ". " + plain(s.d)); });
     var n = (state.notes[w.id] || "").trim();
     if (n) lines.push("  Notes: " + n.replace(/\n+/g, " / "));
     return lines.join("\n");

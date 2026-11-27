@@ -8,7 +8,7 @@ import {
   NO_REPLY_WORDS, REPLY_FROM_NAME, REPLY_MAX_CHARS, replySubject, replyTarget, signedFirstName, stateAfterReply,
 } from '@/lib/feedback-reply';
 import { personHref } from '@/lib/observability/sample-who';
-import { SENT_STATES, isSentState, type SentState } from '@/lib/sent-log-words';
+import { SENT_STATES, isSentState, neverLeft, type SentState } from '@/lib/sent-log-words';
 import { isUuid } from '@/lib/utils';
 import { recordOpened } from '@/lib/platform-record-opens';
 import FeedbackRecord, { type ConversationTurn, type FeedbackRecordProps } from './FeedbackRecord';
@@ -48,7 +48,7 @@ type ReplyRow = {
   id: string; staff_email: string; signed_name: string; body: string; status: string;
   account_email_id: string | null; created_at: string;
 };
-type EmailRow = { id: string; kind: string; state: string; state_at: string; created_at: string; bounce_reason: string | null };
+type EmailRow = { id: string; kind: string; recipient_email: string; state: string; state_at: string; created_at: string; bounce_reason: string | null };
 
 function requestIdOf(context: FeedbackRow['context']): string | null {
   const v = context && typeof context === 'object' ? (context as Record<string, unknown>).requestId : null;
@@ -66,9 +66,15 @@ function issueLine(count: number, orgs: number, lastSeen: string | null): string
 const stateWord = (state: SentState, at: string | null = null): ConversationTurn['state'] =>
   ({ word: SENT_STATES[state].word, tone: SENT_STATES[state].tone, at: at ? consoleClock(at) : null });
 
-/** The mail service's word for an email, with its time. */
-const stateOf = (email: EmailRow | undefined): ConversationTurn['state'] =>
-  email && isSentState(email.state) ? stateWord(email.state, email.state_at) : stateWord('sent');
+/** Not sent with no reason: the email never left this site, and the words say why. */
+const stayedHere = (email: EmailRow | undefined) => (email?.state === 'not_sent' && !email.bounce_reason ? email : null);
+
+/** The mail service's word for an email, with its time; ours when it never left. */
+const stateOf = (email: EmailRow | undefined): ConversationTurn['state'] => {
+  const ours = stayedHere(email);
+  if (ours) return { word: neverLeft(ours.recipient_email).chip, tone: 'bad', at: consoleClock(ours.state_at) };
+  return email && isSentState(email.state) ? stateWord(email.state, email.state_at) : stateWord('sent');
+};
 
 export default async function FeedbackRecordPage({ params }: { params: Promise<{ id: string }> }) {
   const auth = await requirePlatformAreaView('feedback');
@@ -100,7 +106,7 @@ export default async function FeedbackRecordPage({ params }: { params: Promise<{
       .limit(200),
     supabaseAdmin
       .from('platform_account_emails')
-      .select('id, kind, state, state_at, created_at, bounce_reason')
+      .select('id, kind, recipient_email, state, state_at, created_at, bounce_reason')
       .eq('feedback_id', id)
       .order('created_at', { ascending: true })
       .limit(200),
@@ -136,9 +142,9 @@ export default async function FeedbackRecordPage({ params }: { params: Promise<{
     const state: ConversationTurn['state'] =
       r.status === 'sent' ? stateOf(linked)
       : r.status === 'unknown' ? stateWord('unconfirmed')
-      // A failed reply whose email reads Not sent with no reason never left this site (no mail key), not a refusal.
+      // A failed reply whose email never left this site was not refused by the mail service.
       : r.status === 'failed'
-        ? { word: linked?.state === 'not_sent' && !linked.bounce_reason ? 'Not sent: this site has no mail key' : 'Not sent: the mail service refused it', tone: 'bad', at: null }
+        ? { word: stayedHere(linked) ? neverLeft(linked!.recipient_email).chip : 'Not sent: the mail service refused it', tone: 'bad', at: null }
       : { word: 'Sending', tone: 'plain', at: null };
     turns.push({ key: `reply-${r.id}`, at: r.created_at, when: consoleWhen(r.created_at), who, state, body: r.body });
   }

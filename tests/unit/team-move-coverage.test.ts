@@ -87,6 +87,16 @@ const STAYS: Record<string, string> = {
   error_events: 'telemetry',
   request_metrics_raw: 'telemetry',
   request_metrics_rollup: 'telemetry',
+  // ── Owner ruling 2026-11-26: all nine of these stay (none has a team column) ──────────────────
+  club_schedule_bill_rates: 'the rate each permit behind a club schedule’s bill was billed at (mig 489); a Coaches Portal holds no schedule or permit',
+  club_sponsor_deal_refunds: 'refunds on the club’s sponsorship deals, with their ledger lines and credit notes (mig 530); the club’s books, never a team’s',
+  league_season_time_asks: 'house league (a season’s ask for club time, mig 486)',
+  online_payment_stripe_fee_lines: 'Stripe’s own fees on the account’s Stripe balance (mig 501); online payments exclude the coach portal',
+  org_deletion_requests: 'an owner’s ask that we delete THIS organization (mig 514): about that account and kept as its record. The move does not look for an open one (a known gap, its own work)',
+  platform_charge_tax_looks: 'FieldLogicHQ staff’s mark on a sale of its own (mig 452): append-only, kept beside the tax records, never re-pointed',
+  preview_claim_records: 'the append-only record of who claimed a preview club (mig 540): about that club, never re-pointed',
+  preview_claim_tries: 'wrong claim codes tried against a preview club, cleared after a day (mig 540); a preview has no team to move',
+  preview_email_consents: 'the consent record for a preview’s one email (mig 547, CASL): FieldLogicHQ’s evidence about that preview, never a team’s',
   // ── Person records: re-derived IN THE CLUB by families_attach_people (mig 252), not moved ─────
   org_people: 'a person is org-scoped by design (mig 251); the moved rows are re-attached to the club’s people',
   org_person_emails: 'the org’s address book for its people — re-derived in the club',

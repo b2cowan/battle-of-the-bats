@@ -75,6 +75,12 @@ matters: these are the club's own days and its second paid program, and today th
 sign-up tools. Success: a registrar runs a camp from sign-up to receipt without leaving the club's space, and an
 instructor sees only their own children and only what the club chose to share. Nothing is built yet.
 
+**Club events, the first part to build (prompt written 2026-11-27).** The Events place in the club admin: the list of the
+club's own events and the one window that makes or changes an event, open to the owner, admins, the registrar and anyone
+the club gives it to, on League Plus and both Club plans. Nothing public, no calendar, no sign-ups and no money yet. Its
+first sitting draws what the earlier drawings leave open, such as an event's own page and cancelling an event, for the
+owner to rule; the second builds. Success: a club keeps its banquet, AGM and meetings in one list.
+
 **Team sign-ups for a club event (drawn and ruled 2026-11-25, all 16 asks as recommended).** An event can be signed up
 for by each family, by each team, or both. A club offers an event, such as the year-end banquet, to some or all of its own
 teams. The head coach lists who is coming (players from the roster, family contacts, staff, anyone else by name) and
@@ -85,4 +91,16 @@ initial, and pays once. Its names are deleted 60 days after the event. Outside t
 with a new "Who can enter" choice, handed to the tournament side. Why it matters: a banquet with 26 people from one team
 becomes one list and one bill instead of 26 sign-ups and a spreadsheet. Success: a coach sends the team's list in one
 sitting and the club sees every team's answer, bill and payment on the event's Who's coming. It is built after paid events
-(round 2), whose 14 asks aren't ruled yet. Nothing is built.
+(below). Nothing is built.
+
+**Paid club events (drawn and ruled 2026-11-25, all 14 asks as recommended).** Any club event can have a price, one price
+or one per kind of person (Adult $40.00, Child $15.00), and a camp is simply an event with a price, sessions and ages, so
+there is one way to pay. Sign-up is first come: a club that takes cards is paid in full at sign-up; until then the
+family's spots are held for a few days while it pays the club its usual way. A "Check your sign-up" step shows every line,
+the total and the club's refund policy before paying. A full event says "Sold out" (no waitlist). After paying, a family
+can ask to withdraw and the club decides; if the club cancels, one window refunds everyone. Prices include GST/HST,
+dinners start taxable, the club's books get a Club events heading, and the family gets a "Receipt for event tickets".
+Meal choices and food allergies are separate questions, and allergies reach only the caterer's logged list. Why it
+matters: a banquet or hosted dinner no longer has to pretend to be a camp, and the club stops chasing e-transfers in a
+spreadsheet. Success: a club sells its banquet, sees who has paid, and closes its books with the tickets and the tax
+already split. It is built as Stage 5's fourth part, before camps. Nothing is built.

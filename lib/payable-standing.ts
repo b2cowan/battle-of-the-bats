@@ -329,6 +329,46 @@ export function installmentStatuses(
   return inst.state === 'partly_paid' ? [when, 'partly_paid'] : [when];
 }
 
+export interface BillDueNext {
+  /** Everything past due on the bill, added together. 0 when nothing is late. */
+  pastDue: number;
+  /** What the next date asks for: every unpaid piece on the earliest date that is not yet past
+   *  (today included). 0 when nothing is upcoming. */
+  nextAmount: number;
+  nextDate: string | null;
+  nextDays: number | null;
+}
+
+/**
+ * What a bill asks for NOW and what it asks for NEXT — the two figures a bill's header states beside
+ * its whole balance (owner, 2026-11-26: the amount to bring to practice was needed, and the row
+ * gave only the total and a date).
+ *
+ * ⚠ LATE IS THE PIECE'S OWN BADGE, never a second date comparison here, so the header's past-due
+ * figure is always the sum of the rows that read "overdue" beneath it. Same "next" rule as the dues
+ * side's `dueNextForPlayer`: two pieces on one date are one obligation.
+ */
+export function billDueNext(
+  pieces: readonly { dueDate: string; owing: number; badge: PayableRowStatus; daysUntilDue: number }[],
+): BillDueNext {
+  let pastDue = 0;
+  let next = 0;
+  let nextDate: string | null = null;
+  let nextDays: number | null = null;
+  for (const p of pieces) {
+    if (p.badge === 'paid') continue;
+    if (p.badge === 'overdue') { pastDue += cents(p.owing); continue; }
+    if (nextDate === null || p.dueDate < nextDate) {
+      nextDate = p.dueDate;
+      nextDays = p.daysUntilDue;
+      next = cents(p.owing);
+    } else if (p.dueDate === nextDate) {
+      next += cents(p.owing);
+    }
+  }
+  return { pastDue: dollars(pastDue), nextAmount: dollars(next), nextDate, nextDays };
+}
+
 export const PAYABLE_STATUS_LABEL: Record<PayableRowStatus, string> = {
   outstanding: 'Outstanding',
   overdue:     'Overdue',

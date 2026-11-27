@@ -1,7 +1,10 @@
 # Homepage truth + entry points — Batch 1
 
-**Status:** BUILT on `dev`, uncommitted. Owner QA pending. **Batch 1.5 (2026-08-08) built on top —
-see the dated section below**: the marketing-wide sweep + the "live products lead" hierarchy.
+**Status:** ARCHIVED 2026-11-26 as finished work. Settled in the task list 2026-11-17; the walk (Owner QA
+Ledger §5.5) was closed unwalked on the owner's word 2026-10-19; the demo-door checks are moot (public demos
+retired 2026-11-26). The status lines in the dated sections below are as written at the time.
+**Batch 1.5 (2026-08-08) built on top — see the dated section below**: the marketing-wide sweep + the "live
+products lead" hierarchy.
 **Date:** 2026-08-07
 **Trigger:** owner, choosing badge copy for the demo doors — *"we need to fix that, the coaches
 portal should have been updated to behave like the tournament."*

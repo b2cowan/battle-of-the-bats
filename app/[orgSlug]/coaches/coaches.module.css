@@ -14731,6 +14731,12 @@ div.gdRow { cursor: default; }
                                                              "$1,600.00 total" at 768 */
 .payTableWrap thead th:nth-child(4) { width: 17%; }  /* Status — "36 days overdue · partly paid" */
 .payTableWrap thead th:nth-child(5) { width: 22%; }  /* the action */
+/* A bill header's Status leads with an amount. Where the table is wide, Status takes room from the
+   action column so the line stays whole; narrower than that it wraps (`.payBillStatus`). */
+@media (min-width: 1200px) {
+  .payTableWrap thead th:nth-child(4) { width: 24%; }
+  .payTableWrap thead th:nth-child(5) { width: 15%; }
+}
 /* At a tablet, 14% left a bold "Oct 28, 2026" (89px, never wrapped) 14px short of the Due column and
    spilling past it (staging sweep, 2026-10-13). Three points come from What, at 641–768 only. */
 @media (min-width: 641px) and (max-width: 768px) {
@@ -14817,6 +14823,13 @@ div.gdRow { cursor: default; }
 .payStateOverdue { color: var(--badge-danger-ink); }
 .payStatePartly  { color: var(--badge-warning-ink); }
 .payStateAhead   { color: var(--text-tertiary); }
+/* One block, so a phone card keeps both lines together opposite its "Status" label. */
+.payBillStatus { display: block; font-variant-numeric: tabular-nums; }
+.payBillStatus .payState { white-space: normal; }
+.payThenNext {
+  display: block; margin-top: 0.1rem; padding-left: calc(6px + 0.3rem); /* under the words, past the dot */
+  font-size: var(--type-support); color: var(--text-secondary);
+}
 
 /* ── The drawer: the whole commitment in one panel ──────────────────────────────────────────── */
 .payDrawer { display: block; }

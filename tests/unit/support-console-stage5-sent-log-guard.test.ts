@@ -24,7 +24,7 @@ import { findGroupsFor, runFind, type FindReaders } from '../../lib/platform-fin
 import type { PlatformRole } from '../../lib/platform-auth.ts';
 import { laterWords, timelineLines, whatHappenedTime } from '../../lib/sent-log-view.ts';
 import {
-  SENT_SEARCH_LIMIT, listFlag, looksLikeEmailAddress, windowFlag,
+  SENT_SEARCH_LIMIT, listFlag, looksLikeEmailAddress, windowFlag, SENT_STATES, neverLeft, stateMeaning, whatToDo,
 } from '../../lib/sent-log-words.ts';
 
 const ROLES: PlatformRole[] = ['super_admin', 'support', 'billing', 'product', 'growth', 'read_only'];
@@ -47,17 +47,33 @@ describe('1 · the words the screens use', () => {
   });
 
   it('flag lines: Bounced and Not sent carry their reason in a list; Marked as spam only in the window', () => {
-    assert.equal(listFlag('bounced', 'address_does_not_exist'), 'This address does not exist');
+    const to = 'sam@club.ca';
+    assert.equal(listFlag('bounced', 'address_does_not_exist', to), 'This address does not exist');
     // The mail service's own Not sent always carries the suppressed reason; Not sent with none never left this site.
-    assert.equal(listFlag('not_sent', 'suppressed'), 'This address bounced or reported spam before');
-    assert.equal(listFlag('not_sent', null), 'This site has no mail key');
-    assert.equal(windowFlag('not_sent', null), 'Not sent: this site has no mail key, so the email never left.');
-    assert.equal(listFlag('delivered', null), null);
-    assert.equal(listFlag('complained', null), null);
-    assert.equal(windowFlag('bounced', 'address_does_not_exist'), 'Bounced: the receiving mail server says this address does not exist.');
-    assert.match(windowFlag('complained', null) ?? '', /^Marked as spam: the person reported it as spam/);
-    assert.equal(windowFlag('delivered', null), null);
-    assert.equal(windowFlag('delayed', null), null);
+    assert.equal(listFlag('not_sent', 'suppressed', to), 'This address bounced or reported spam before');
+    assert.equal(listFlag('not_sent', null, to), 'This site has no mail key');
+    assert.equal(windowFlag('not_sent', null, to), 'Not sent: this site has no mail key, so the email never left.');
+    assert.equal(listFlag('delivered', null, to), null);
+    assert.equal(listFlag('complained', null, to), null);
+    assert.equal(windowFlag('bounced', 'address_does_not_exist', to), 'Bounced: the receiving mail server says this address does not exist.');
+    assert.match(windowFlag('complained', null, to) ?? '', /^Marked as spam: the person reported it as spam/);
+    assert.equal(windowFlag('delivered', null, to), null);
+    assert.equal(windowFlag('delayed', null, to), null);
+  });
+
+  it('a held-back test address says so, in the list, the window, the hover words and the timeline', () => {
+    const to = 'sam@kb.example.test';
+    assert.equal(listFlag('not_sent', null, to), 'Test address');
+    assert.equal(neverLeft(to).chip, 'Not sent: test address');
+    assert.match(windowFlag('not_sent', null, to) ?? '', /^Not sent: a test address can never receive mail/);
+    assert.match(whatToDo('not_sent', null, to) ?? '', /^nothing, if this was a test\./);
+    assert.equal(stateMeaning('not_sent', null, to), windowFlag('not_sent', null, to));
+    const at = '2026-11-26T14:00:00.000Z';
+    const lines = timelineLines({ to, sentAt: at, stateAt: at, state: 'not_sent', bounceReason: null, timeline: [] });
+    assert.deepEqual(lines.map(l => l.text), ['A test address can never receive mail, so it never left.']);
+    // The mail service's own Not sent keeps its reason, whatever the address.
+    assert.equal(listFlag('not_sent', 'suppressed', to), 'This address bounced or reported spam before');
+    assert.equal(stateMeaning('not_sent', 'suppressed', to), SENT_STATES.not_sent.meaning);
   });
 
   it('a Delivered that was delayed first says so; nothing else does', () => {
@@ -79,7 +95,7 @@ describe('1 · the words the screens use', () => {
   it('drawing E4: Sent, then Bounced 2 seconds later, for good, with the reason', () => {
     const sentAt = '2026-10-26T13:20:00.000Z';
     const lines = timelineLines({
-      sentAt, state: 'bounced', stateAt: '2026-10-26T13:20:02.000Z', bounceReason: 'address_does_not_exist',
+      to: 'sam@club.ca', sentAt, state: 'bounced', stateAt: '2026-10-26T13:20:02.000Z', bounceReason: 'address_does_not_exist',
       timeline: [{ state: 'bounced', at: '2026-10-26T13:20:02.000Z', bounceReason: 'address_does_not_exist' }],
     });
     assert.equal(lines.length, 2);
@@ -90,7 +106,7 @@ describe('1 · the words the screens use', () => {
   });
 
   it('Not sent and Failed never claim to have been handed to the mail service; Not confirmed says it was', () => {
-    const base = { sentAt: '2026-10-26T13:20:00.000Z', stateAt: '2026-10-26T13:20:00.000Z', bounceReason: null, timeline: [] };
+    const base = { to: 'sam@club.ca', sentAt: '2026-10-26T13:20:00.000Z', stateAt: '2026-10-26T13:20:00.000Z', bounceReason: null, timeline: [] };
     assert.deepEqual(timelineLines({ ...base, state: 'not_sent' }).map(l => l.text.startsWith('Sent to')), [false]);
     assert.deepEqual(timelineLines({ ...base, state: 'failed' }).map(l => l.text.startsWith('Sent to')), [false]);
     assert.equal(timelineLines({ ...base, state: 'unconfirmed' })[0].text, 'Sent to the mail service');

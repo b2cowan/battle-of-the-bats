@@ -15,7 +15,7 @@ import type { SentEmail } from '@/lib/sent-log';
 import { timelineLines, whatHappenedTime, type SentWindowEmail } from '@/lib/sent-log-view';
 import {
   EMAIL_WINDOW_FOOT, NO_EMAILS_FOR_PERSON, SENT_EMAIL_FAILED, SENT_LOG_FAILED, SENT_LOG_FOOT, SENT_STATES, listFlag, recordingStartedLine,
-  whatToDo, windowFlag, type SentTone,
+  stateMeaning, whatToDo, windowFlag, type SentTone,
 } from '@/lib/sent-log-words';
 import kit from '../console.module.css';
 import styles from './sent-emails.module.css';
@@ -23,13 +23,13 @@ import styles from './sent-emails.module.css';
 const TONE_CHIP: Record<SentTone, string> = { plain: kit.chipQuiet, ok: kit.chipOk, warn: kit.chipWarn, bad: kit.chipBad };
 
 /** "Delivered 9:50 a.m." - the state word as a chip, its time beside it, and a red line under Bounced and Not sent. */
-export function SentWhat({ row, flag = true }: { row: Pick<SentEmail, 'state' | 'stateAt' | 'bounceReason' | 'wasDelayed'>; flag?: boolean }) {
+export function SentWhat({ row, flag = true }: { row: Pick<SentEmail, 'to' | 'state' | 'stateAt' | 'bounceReason' | 'wasDelayed'>; flag?: boolean }) {
   const def = SENT_STATES[row.state];
-  const reason = flag ? listFlag(row.state, row.bounceReason) : null;
+  const reason = flag ? listFlag(row.state, row.bounceReason, row.to) : null;
   return (
     <>
       <span className={styles.what}>
-        <span className={`${kit.chip} ${TONE_CHIP[def.tone]}`} title={def.meaning}>{def.word}</span>
+        <span className={`${kit.chip} ${TONE_CHIP[def.tone]}`} title={stateMeaning(row.state, row.bounceReason, row.to)}>{def.word}</span>
         <span className={styles.whatTime}>{whatHappenedTime(row)}</span>
       </span>
       {reason && <span className={styles.flag}>{reason}</span>}
@@ -60,8 +60,8 @@ export function SentEmailWindow({ id, from, onClose }: { id: string; from: 'log'
   }, [id, from]);
 
   const email = answer?.email;
-  const flag = email ? windowFlag(email.state, email.bounceReason) : null;
-  const todo = email ? whatToDo(email.state, email.bounceReason) : null;
+  const flag = email ? windowFlag(email.state, email.bounceReason, email.to) : null;
+  const todo = email ? whatToDo(email.state, email.bounceReason, email.to) : null;
 
   return (
     <KitDialog

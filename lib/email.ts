@@ -147,9 +147,10 @@ export async function sendEmail(
     ? opts.logId ?? await log.openSentEmailRow({ kind: opts.kind as LoggedEmailKind, to, orgId: opts.orgId, askedBy: opts.askedBy, feedbackId: opts.feedbackId })
     : null;
 
-  // A reserved test or demo address is never handed to the mail service (lib/email-undeliverable.ts).
+  // A reserved test or demo address is never handed to the mail service (lib/email-undeliverable.ts). The caller is
+  // answered `sent`; the account-email log says Not sent, and the console reads the address to say it was a test one.
   if (isUndeliverableAddress(to)) {
-    if (log && logId) await log.settleSentEmailRow(logId, {});
+    if (log && logId) await log.settleSentEmailRow(logId, { state: 'not_sent' });
     return { status: 'sent', logId };
   }
 

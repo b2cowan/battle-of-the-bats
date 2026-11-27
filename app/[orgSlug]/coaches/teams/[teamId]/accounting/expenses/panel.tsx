@@ -28,8 +28,8 @@ import CoachEmptyState from '@/components/coaches/CoachEmptyState';
 import { ledgerReversalPreview } from '@/lib/expense-ledger';
 import {
   installmentStatus, installmentStatuses, installmentLabel, PAYABLE_STATUS_LABEL, PAYABLE_STATUS_ORDER,
-  PAYABLE_STATUS_DEFAULT, effectivePayerId,
-  type CommitmentStanding, type AppliedPayment, type PayableRowStatus,
+  PAYABLE_STATUS_DEFAULT, effectivePayerId, billDueNext,
+  type BillDueNext, type CommitmentStanding, type AppliedPayment, type PayableRowStatus,
 } from '@/lib/payable-standing';
 import { nextPayment } from '@/lib/bill-next-payment';
 import { whyPlanStrandsPaidMoney } from '@/lib/payable-scope-edit';
@@ -498,6 +498,8 @@ interface PayBill {
   nextBadge: PayableRowStatus | null;
   nextDays: number | null;
   nextPartly: boolean;
+  /** Past-due and next-date amounts for the header's Status cell — from every piece, like `owing`. */
+  dueNext: BillDueNext;
   /** Aimed at by the header's Record a payment when the bill is folded. */
   nextInstallmentId: string | null;
   nextOwing: number;
@@ -3534,12 +3536,12 @@ function MoneyRecordsPanel({
 
     /* Everything the OTHER controls admit — the tag chip and the Item dropdown. Status is applied
        after the counts are taken, which is the whole point of doing it in two passes. */
-    /* ⚠ A DRAFT IS NOT A BILL (/simplify). The seven fields below describe a bill's NEXT unpaid
+    /* ⚠ A DRAFT IS NOT A BILL (/simplify). The eight fields below describe a bill's NEXT unpaid
        payment, and nothing knows them until Status has narrowed the pieces in the second pass — so
        the draft type omits them rather than seeding placeholders that are always overwritten. It is
        now structurally impossible to read a bill's `next*` figures before they are real. */
     type PayBillDraft = Omit<PayBill,
-      'pieces' | 'nextDue' | 'nextBadge' | 'nextDays' | 'nextPartly' | 'nextInstallmentId' | 'nextOwing'>;
+      'pieces' | 'nextDue' | 'nextBadge' | 'nextDays' | 'nextPartly' | 'dueNext' | 'nextInstallmentId' | 'nextOwing'>;
     /**
      * ⚠ THE TAG FILTER IS RECORDED HERE AND APPLIED IN PASS TWO, not applied here. The Tags
      * dropdown has to count what ticking an option WOULD show, which means walking the bills the
@@ -3719,6 +3721,7 @@ function MoneyRecordsPanel({
         nextBadge: next?.badge ?? null,
         nextDays: next?.daysUntilDue ?? null,
         nextPartly: next?.partlyPaid ?? false,
+        dueNext: billDueNext(pieces),
         nextInstallmentId: next?.installmentId ?? null,
         nextOwing: next?.owing ?? 0,
       });
@@ -4299,8 +4302,10 @@ function MoneyRecordsPanel({
     }
     /* ⚖ 'all' IS THE WHOLE BOOK ("See the whole book", owner 2026-11-27): every narrowing this sitting
        holds goes, not the kind alone — the panel stays mounted, so a dues "View" pressed earlier would
-       otherwise still be on it. The date window is not a narrowing and is left as the coach has it. */
+       otherwise still be on it. And the dates go to Whole season (owner 2026-11-27), so the link means
+       what it says; the saved habit is not overwritten. */
     if (wantedFilter === 'all') {
+      setDatePreset('season');
       setSelectedCategories(new Set());
       setSelectedItems(new Set());
       setFilterTagIds(new Set());
@@ -6467,16 +6472,22 @@ function MoneyRecordsPanel({
    * whole left half of the row to this sentence, so it can afford the FIGURE instead of the label —
    * same structure, same separator, more use. Omitted, the wording is byte-identical to before, so
    * the list is untouched by construction rather than by promise.
+   *
+   * `amount` LEADS the sentence — "$660.00 · 7 days overdue" — and only a bill's header passes it
+   * (owner, 2026-11-26): a piece row's figure is already in its Owing cell.
    */
   function payStatusText(
-    badge: PayableRowStatus, days: number, partly: boolean, remaining?: number,
+    badge: PayableRowStatus, days: number, partly: boolean,
+    { remaining, amount }: { remaining?: number; amount?: number } = {},
   ): ReactNode {
     const tone = badge === 'paid' ? styles.payStatePaid
       : badge === 'overdue' ? styles.payStateOverdue
       : partly ? styles.payStatePartly : styles.payStateAhead;
-    const words = badge === 'paid' ? 'Paid'
+    const when = badge === 'paid' ? 'Paid'
       : badge === 'overdue' ? `${Math.abs(days)} days overdue`
       : days === 0 ? 'Due today' : `In ${days} days`;
+    // Mid-sentence after a figure, so "In 36 days" and "Due today" lose their capital.
+    const words = amount === undefined ? when : `${fmt(amount)} · ${when.toLowerCase()}`;
     const aside = !partly || badge === 'paid' ? ''
       : remaining === undefined ? ' · partly paid'
       : ` · ${fmt(remaining)} still owing`;
@@ -6484,6 +6495,29 @@ function MoneyRecordsPanel({
       <span className={`${styles.payState} ${tone}`}>
         <span className={styles.payStateDot} aria-hidden />
         {words}{aside}
+      </span>
+    );
+  }
+
+  /**
+   * A BILL HEADER'S STATUS CELL — what is owed now and what comes next, beside the whole balance in
+   * Owing. A late bill leads with everything past due (aged by its oldest payment) and names the next
+   * payment beneath; a bill that is not late says its next amount and how soon.
+   */
+  function payBillStatus(bill: PayBill) {
+    if (!bill.nextBadge) return payStatusText('paid', 0, false);
+    const { pastDue, nextAmount, nextDate, nextDays } = bill.dueNext;
+    const late = pastDue > 0;
+    return (
+      <span className={styles.payBillStatus}>
+        {payStatusText(bill.nextBadge, bill.nextDays ?? 0, bill.nextPartly, {
+          amount: late ? pastDue : nextAmount,
+        })}
+        {late && nextDate && (
+          <span className={styles.payThenNext}>
+            Next {fmt(nextAmount)} · {nextDays === 0 ? 'due today' : fmtDate(nextDate)}
+          </span>
+        )}
       </span>
     );
   }
@@ -6644,11 +6678,7 @@ function MoneyRecordsPanel({
             ? <span className={styles.payTotalUnder}>over the total</span>
             : bill.paid > 0 && <span className={styles.payTotalUnder}>{fmt(bill.total)} total</span>}
         </td>
-        <td className={styles.td} data-label="Status">
-          {bill.nextBadge
-            ? payStatusText(bill.nextBadge, bill.nextDays ?? 0, bill.nextPartly)
-            : payStatusText('paid', 0, false)}
-        </td>
+        <td className={styles.td} data-label="Status">{payBillStatus(bill)}</td>
         {/* ⚠⚠ `.cardActionCell`, NOT `.cardActionCorner` — and that is the 2026-09-03 ruling being
             FOLLOWED rather than departed from. The corner pin is for an *icon-only* trailing cell:
             it lifts a lone chevron out of the card's flow so it costs no height. This cell also
@@ -8086,7 +8116,7 @@ function MoneyRecordsPanel({
                           st,
                           daysBetweenDateStrings(today, inst.dueDate),
                           inst.state === 'partly_paid',
-                          inst.remaining,
+                          { remaining: inst.remaining },
                         )}
                       </span>
                       <span className={styles.payDrawerAmt}>{fmt(inst.amount)}</span>

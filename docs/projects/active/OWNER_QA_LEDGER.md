@@ -26914,6 +26914,10 @@ republished; tick positions unchanged).
 
 **✅ CLOSED 2026-10-27 on the owner's word** (*"mark qa 404 and 405 as complete"*). The per-step results were not recorded, so this is a close, not a counted pass. **Steps that need a payout stay Held** (A3 read "No payouts yet…" while Stripe's first daily automatic payout was still ahead) and move to the Amplify dev end-to-end pass with F1–F2, which must now **include payouts that show up on this tab** — the checklist is in the plan (§0 "12d-2 build state", "Amplify end-to-end pass: payouts"). A defect found there is a new item, not a re-open of this walk.
 **Addendum 2026-11-18 (Stripe-owned pricing, §541):** A9 (held for the payout test) corrected and the walk republished at the same link (version 2): the payout line "Processing fee returned" is now "FieldLogicHQ’s fee returned" (renamed in Stripe-owned pricing Stage 3, on every account, old ones included), and the list gains the three names the product also prints: "Refund to the bank account", "Refund didn’t reach the card", "From a payout that didn’t arrive". Step order unchanged, so ticks stay in place.
+**Addendum 2026-11-25, per-step results pasted by the owner:** 37 of 37 ticked, all six parts Pass (A 16/16 · B 4/4 · C 2/2 · D 10/10 · E 3/3 · F 2/2), every optional step ticked "Did it", none "Held". The paste does not say when the steps were walked. Read the same day against the code and the club's Stripe test account: **A12 and A13** had nothing to open (UAT Rep Club's 8 payouts, 2026-10-28 to 11-24, are all automatic and Paid); **C1 and D1–D10** describe the draft terms, which version 2026-11-24 replaced on 11-23 (`374bf845c`). The 2026-10-27 close stands.
+**✅ Payout steps passed, owner 2026-11-25** (asked whether A3 and A5–A11 had been checked with payouts on screen: *"yes, mark as passed"*). **A3 and A5–A11 passed** on UAT Rep Club's account; these are the payout test's payout steps, so setting that club's payouts up again is open. **A12 and A13 stay Held** (nothing to open).
+
+**✅ CLOSED 2026-11-26 on the owner's word** (*"close walks 404 and 405"*). Nothing further is owed from this walk, including the terms emails (F1–F2) the board still listed and the steps held above. A close, not a new pass: the results recorded above stand as they are.
 <!-- /§404 -->
 
 ## §405 · Club Tier · Stage 12d-2, leaving online payments and the console — **every ending tells the club what is outstanding and never touches its Stripe account: Disconnect counts families and teams still owing, the pay pages open right now (they close), bank debits clearing and open card disputes with their due date; cancel says "Online payments stop now" and that the Stripe account stays the club's; a downgrade says "Online payments stop on …" and that payouts stay connected; the deletion request shows "Your online payments" and waits for disputes and debits; a club moved to a plan without online payments keeps its card as "Online payments off", its refunds and its disputes, and its families can't start a new payment (nor a cancelled club's); an ending the owner didn't choose is warned on the card. The support team reads a club's online payments on a read-only tab (Account, Terms, Last 30 days, Clearing, Open disputes; "Show the player", logged; Stripe messages we couldn't process; fees billed, no Retry) and every club's trouble on Health › Online payments ("Needs a look"), Super admin, Billing and Support only; the operator's Delete names the money in flight and cannot be confirmed**
@@ -26930,6 +26934,8 @@ republished; tick positions unchanged).
 
 **✅ CLOSED 2026-10-27 on the owner's word** (*"mark qa 404 and 405 as complete"*). The per-step results were not recorded, so this is a close, not a counted pass. **Held steps stay Held** (B3, G, and the steps that follow walk §404's payouts) and move to the Amplify dev end-to-end pass; the payouts that pass must show are listed in the plan (§0 "12d-2 build state", "Amplify end-to-end pass: payouts"). A defect found there is a new item, not a re-open of this walk.
 - **§405 addendum — reads differently since Stripe-owned pricing Stage 4 (2026-11-18).** The fee steps describe screens that were removed with the Stripe fees FieldLogicHQ billed back: **F5** (the "Fees billed to the club" card) is gone from the Online payments tab; **F2**'s "in Stripe's fees so far" is now the dispute fees Stripe took from the club's own balance; **F11** and **C1**'s Delete no longer wait for Stripe fees not yet billed or an unpaid fee invoice (they wait for open disputes and clearing debits only). The **A** steps (Disconnect's counts) had no fee line and are unchanged. The walk's HTML is rewritten to match; the close above stands.
+
+**✅ CLOSED 2026-11-26 on the owner's word** (*"close walks 404 and 405"*). Nothing further is owed from this walk, including its held steps (the Disconnect counts with a family's page paid, B3, the ending emails); this replaces the 2026-10-27 line that moved them to a later pass. A close, not a counted pass: those steps are not recorded as walked.
 <!-- /§405 -->
 
 ## §406 · Public tournament pages · Stage 0 · D1, the publish gate — **a division the organizer has not published shows no games, scores or records on any public page: the tournament home, the live-scores strip, Schedule, Standings (its teams sit at 0-0), Teams (0-0-0, no next game), Playoffs, a game's own link (not found), a team's page and its share image, and the data the pages load; publishing it brings every one back at once, and the admin preview shows what families see**
@@ -28859,8 +28865,9 @@ performed over the shared working tree. The original walk result is not claimed 
 
 **Left out (pinned by tests):** a send the email service never answers; a send long enough to go in several turns; a business whose payments are all refunded or disputed.
 
-**✅ PASSED 2026-11-25, 37 of 37** (paste-back; A 7/7, B 16/16, C 7/7, D 7/7; no notes came back). No owner calls in this walk. Next: the commit at the owner's yes.
+**✅ PASSED 2026-11-25, 37 of 37** (paste-back; A 7/7, B 16/16, C 7/7, D 7/7; no notes came back). No owner calls in this walk. Committed 2026-11-25: `cc5929057` (the three fixes of walk A) and `efca2e9d3` (Offer again).
 <!-- /§566 -->
+
 
 ## §567 · Club website · Stage 1 · Game day on the club home — **on a day with games the club's home shows them after Open now (live now, later today, latest results, not being played today; a running tournament as one row), the house league schedule, standings and season page update their scores by themselves within 30 seconds, the Tournaments card says "Games today", and the site editor says how many rep teams show their games**
 <!-- §567 -->
@@ -28884,6 +28891,10 @@ Committed 2026-11-25, ahead of the walk (owner: "yes commit now").
 **✅ B PASSED 2026-11-25** (owner, asked whether the standings changed without a reload at steps 8 and 9: "yes both times"). Note: dev's last score for Lynx v Mariners is not the one steps 9–10 name; the automatic update is what B tests. **A, B and C passed; only D is owed**, after a push to staging.
 
 **Closed for now 2026-11-25** (owner: "walk b was done, we can hold d until our push to staging, close this walk for now"). Stage 1 is ticked; walk D (the staging edge check, plan §9) runs after the push and is §567's only owed item.
+
+**2026-11-26: walk D can run.** The push happened and the staging build succeeded (dev job 419, `7aee5a9dd`, finished 3:04 p.m. Toronto), which contains this stage. D is not walked yet.
+
+**✅ COMPLETE 2026-11-26, PASSED on the owner's word** (*"mark walk 567 as complete and successful"*). Walks A–D are complete; no step results were pasted for D. Nothing further is owed.
 <!-- /§567 -->
 
 ## §568 · Club website · Track P · Session P2 · Prospect clubs, making a preview, the marking — **the owner makes a prospect’s own club from platform admin (a Growth staff member never sees the page), every refusal shows under its field, the club is made in one step with its made-up season, rep teams, an unlisted one-day tournament whose first game is live at the meeting time and three “(sample)” sponsors; every page of it carries the band, the footer line and “(preview)” in its title, Register says “Registration isn’t open on this preview”, and the owner removes it by hand from its record**
@@ -28897,13 +28908,13 @@ Committed 2026-11-25, ahead of the walk (owner: "yes commit now").
 **Walks:** A Prospect clubs and making one, every refusal in place (22) · B every page of the preview says so, and Register is closed (11) · C removing it by hand until Session P4’s removal ships (4).
 
 **Left out (pinned by tests):** the five-open cap window, a crafted sign-up post refused on the server, the refused share images and calendar feed, a logo whose bytes are not the image it claims, a lost answer after the club was made.
+
 **Paste-back 2026-11-25, 37 of 37 ticked (A 22/22 · B 11/11 · C 4/4, all marked Passed), no notes.** Read the same day on dev:
 - **C holds:** Oakridge's club is gone and its preview record is stamped Removed (9:50 p.m. Toronto).
 - **Open, A16, A18 and B7:** the record's meeting is **Dec 17 at 9:00 a.m.**, not "today, about five minutes from now" (A13); the club was made at 9:46 p.m. and removed at 9:50 p.m. With that meeting the removal date is not today plus 30, the list does not read "Today", and the tournament's first game cannot show "Live now". Whether the date was picked by hand or the window saved another one than was entered is the question to the owner.
 
-**✅ CLOSED 2026-11-25 on the owner's word** (asked whether they picked Dec 17 themselves: *"yes i did, you can close the walk"*). The window saved the date as entered. With that meeting the tournament's live game at meeting time (B7) was not seen in this walk.
+**Walked 2026-11-25. ✅ CLOSED 2026-11-25 on the owner's word** (asked whether they picked Dec 17 themselves: *"yes i did, you can close the walk"*). The window saved the date as entered. With that meeting the tournament's live game at meeting time (B7) was not seen in this walk.
 <!-- /§568 -->
-
 
 ## §569 · Board Ready Stage 6 · Part 4b · One spelling for e-transfer — **labels and the starts of sentences read "E-transfer", inside a sentence "e-transfer" (method words in a sentence read lowercase), on the coach, club, house league and tournament money screens and their help**
 <!-- §569 -->
@@ -28958,6 +28969,8 @@ Committed 2026-11-25 as two commits (owner: "commit the sweep and the data chang
 **Walks:** A "Send the link again" when nothing will be emailed, and the old link’s page (18) · B the sponsor’s bank asks, then disputes (10) · C the bank closes its question (6).
 
 **Left out (pinned by tests or probes):** private links in error reports (a dev probe, 2026-11-26); paying on a club’s own web address (no such address on dev); family and team chips, emails and records for a bank question; a reason that has run out and a missing mailing address.
+
+**✅ PASSED 2026-11-26, 34 of 34** (owner paste-back; A 18/18, B 10/10, C 6/6; no notes came back). No owner calls in this walk. The code was committed before the walk (`9bb07dce9`, `4ad82d76c`, `b8041295d`). Staging's test-mode club-payments webhook was switched off for walks B and C (2026-11-26, owner's yes): staging runs older code on the same dev database and wrote the notice first, in the old words.
 <!-- /§572 -->
 
 ## §573 · Club website · Stage 2 · Session 2C · Close a place, what families and coaches see — **while a place is closed, a strip at the top of every club page says so (never a tournament's) and goes by itself at the end of the day; the rep game there reads "Place closed" for families and "Needs a new date" for its coach until the coach moves it or the place reopens; the public house league schedule puts "Needs a new date" first for a week; the help explains it all**
@@ -29009,7 +29022,7 @@ Committed 2026-11-26, ahead of the walk (owner: "simplify and commit"): `d3d1bcc
 <!-- §576 -->
 **Walk published 2026-11-26.** [Interactive walk](https://claude.ai/artifact/WoaUgqxo7PhCAPxnsTHQu8) (walks A–F, 43 steps; 3 owner calls outside the count) · [repository HTML](BOARD_READY_STAGE6_FIXES_A_WALK.html). Migration 542 on dev. Plan: `BOARD_READY_PLAN.md` §5 Stage 6 (Part A). Drawing: `BOARD_READY_STAGE6_FIXES_A_DASHBOARD_REFUND_DRAWING.html` (all seven asks A, 2026-11-25).
 
-**Where:** staging, `https://dev.fieldlogichq.ca` (once its build after the push has finished), Dev Club Org, dev data, Stripe test mode (UAT Rep Club cannot take card payments). **Sign in:** `owner@dev.local` / `devpass123` (notifications paused for this login); Needs attention in a private window as `p3-treasurer@dev.local` / `devpass123` (ticks a Terms box once). Walk data is the six “Walk 542” deals (`.probe/fixes-a-walk.json`). Walks D and E use PowerShell in the project folder on this computer (`.probe/fixes-a-walk-stripe.mjs pendingready` | `again`).
+**Where:** staging, `https://dev.fieldlogichq.ca` (once its build after the push has finished), Dev Club Org, dev data, Stripe test mode (UAT Rep Club cannot take card payments). **Sign in:** `owner@dev.local` / `devpass123` (Pause notifications was on for this login when the walk was written; check it before walking); Needs attention in a private window as `p3-treasurer@dev.local` / `devpass123` (ticks a Terms box once). Walk data is the six “Walk 542” deals (`.probe/fixes-a-walk.json`). Walks D and E use PowerShell in the project folder on this computer (`.probe/fixes-a-walk-stripe.mjs pendingready` | `again`).
 
 **Walks:** A part of the money went back: finish, credit note, Needs attention clears (10) · B all of it, still owed: deal, sponsor page, invoice (7) · C ended with the fee kept (7) · D a refund still on its way (3) · E a real refund in the club’s Stripe dashboard, then Offer again (9; whether the Express dashboard offers Refund is the one thing not yet proven) · F finishing at 390 wide, the credit note with fee rows (7).
 
@@ -29088,6 +29101,8 @@ Committed 2026-11-26, ahead of the walk (owner: "simplify and commit"): `d3d1bcc
 **Walks:** A owing again after a card refund (5) · B part owing, and a reversed card (7) · C finish the refund in one press, double click and Back (14) · D “They still owe it”, then the sponsor’s side (8) · E Payouts hint and help (5).
 
 **Left out:** a refund still on its way (the page shows no sum; a test covers it); paying again by card; the invoice PDF and emails.
+
+**✅ PASSED 2026-11-27, 39 of 39** (owner paste-back; A 5/5, B 7/7, C 14/14, D 8/8, E 5/5; no notes came back). No owner calls in this walk. The code was committed before the result came back (`9679c827d`, `612641e5b`). Walk D used up Again Dental’s unfinished refund, so it can't be walked again on that deal.
 <!-- /§580 -->
 
 ## §581 · Club schedules · Stage 2 · A field in parts — **a field the club splits into two sides (or four quarters) is booked, billed, sent, read and used as a place of its own: the Venue library splits it and locks the split while a side is booked; New schedule cuts each side as its own slot at half a practice and half the price; the grid has a row per side, the PDF a column; a coach's practice says "Field 1, side A"; another schedule leaves out the time a finished one holds and Find the time offers the free side; a permit's Used counts a side at half with one note; house league's games and practices on club time say the side, a side holds one team, a hand-added game lands on side A then side B, and the club's send keeps one team a side; a field that is not split reads as before**

@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {
   commitmentStanding, installmentStatus, installmentStatuses, installmentsInScope, scopeChoiceIsMeaningful,
   PAYABLE_STATUS_DEFAULT,
-  installmentLabel, paymentLabel, effectivePayerId, paymentMovedTeamCash,
+  installmentLabel, paymentLabel, effectivePayerId, paymentMovedTeamCash, billDueNext,
   type PayableInstallment, type PayablePayment, type EditScope,
 } from '../../lib/payable-standing.ts';
 
@@ -505,5 +505,38 @@ describe('effectivePayerId / paymentMovedTeamCash — the payer is the payment�
   test('the standing carries the payer through, so a screen reads ONE object', () => {
     const s = commitmentStanding([inst({ amount: 200 })], [pay({ amount: 200, paidByPlayerId: 'blake' })]);
     assert.equal(s.payments[0].paidByPlayerId, 'blake');
+  });
+});
+
+describe('billDueNext — what a bill asks for now, and next', () => {
+  const piece = (dueDate: string, owing: number, badge: 'paid' | 'partly_paid' | 'overdue' | 'outstanding', daysUntilDue = 0) =>
+    ({ dueDate, owing, badge, daysUntilDue });
+
+  test('adds every late piece together and names only the next date', () => {
+    assert.deepEqual(billDueNext([
+      piece('2026-10-19', 100.1, 'paid'),
+      piece('2026-11-01', 660.2, 'overdue', -25),
+      piece('2026-11-19', 0.1, 'overdue', -7),
+      piece('2027-01-01', 330, 'outstanding', 36),
+      piece('2027-02-01', 495, 'outstanding', 67),
+    ]), { pastDue: 660.3, nextAmount: 330, nextDate: '2027-01-01', nextDays: 36 });
+  });
+
+  test('two pieces on the next date are one amount, in any order, part-paid included', () => {
+    assert.deepEqual(billDueNext([
+      piece('2027-02-01', 495, 'outstanding', 67),
+      piece('2027-01-01', 330, 'outstanding', 36),
+      piece('2027-01-01', 70, 'partly_paid', 36),
+    ]), { pastDue: 0, nextAmount: 400, nextDate: '2027-01-01', nextDays: 36 });
+  });
+
+  test('due today is next, not past due', () => {
+    assert.deepEqual(billDueNext([piece('2026-11-26', 210, 'outstanding', 0)]),
+      { pastDue: 0, nextAmount: 210, nextDate: '2026-11-26', nextDays: 0 });
+  });
+
+  test('nothing unpaid asks for nothing', () => {
+    assert.deepEqual(billDueNext([piece('2026-10-01', 450, 'paid')]),
+      { pastDue: 0, nextAmount: 0, nextDate: null, nextDays: null });
   });
 });

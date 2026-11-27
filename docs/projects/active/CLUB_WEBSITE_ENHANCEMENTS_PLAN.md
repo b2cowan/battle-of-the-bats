@@ -329,6 +329,10 @@ prompt → the build → `/simplify`, `/review`, `/legal` or `/accounting` where
   is built with its photo from the start. *(Club events, E9: the one photo question is this stage's; camps ask it in
   the same words. P1–P5 ruled 2026-11-25: optional, blank = No; one Yes names the website and the club's own social
   pages; camp and team answers separate; changeable after the lock while Your sign-up works; fixed, versioned words.)*
+  *(Drawing prompt written 2026-11-27: [CLUB_WEBSITE_STAGE3_DRAWING_PROMPT.md](CLUB_WEBSITE_STAGE3_DRAWING_PROMPT.md) —
+  `/legal` and `/strategy` heard first, the walk and the census, then the drawing finishing Stage 0's tab 11 and idea
+  7's frames, with three tensions to settle: what shows publicly before News, "albums per event" against A15, and the
+  "News and Photos" permission ahead of Team structure.)*
 - [ ] **Stage 4 — News (idea 4).** Third tenant: the automatic posts and the admin's own. *(Club events, E1–E3: the
   home's "Coming up" rows, the News page opening with "Coming up", the News tab shown for a coming event alone; no
   Events tab.)*
@@ -1254,7 +1258,8 @@ the demos follow the product and are curated with `/demos`, never as a build ste
 - 2026-11-25 — **Stage 1 closed: the walk passed A, B and C (§567); Stage 1 ticked.** Walk D (does the staging edge
   hold the games check, §9) is held until the push to staging (owner: "close this walk for now"). Next on this ladder:
   Stage 2 (field status), which starts with its count of typed-only games (dev, counts only) and its drawing session;
-  Track P continues with Session P3 beside it.
+  Track P continues with Session P3 beside it. *(2026-11-26: the owner marked §567 complete and successful, walk D
+  included; no step results were pasted for D.)*
 - 2026-11-25 — **Track P Session P2 built: Prospect clubs, Make one, the sample and the marking (T2–T6; drawing tabs 2,
   3, 5).** Nothing committed at writing; the owner's word commits it through a private index. **Migration 536**
   (`organization_previews.sport` + `.province_code`, and `make_preview_club(...)`, the ONE creation step, SECURITY

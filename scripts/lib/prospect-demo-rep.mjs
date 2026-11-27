@@ -336,6 +336,29 @@ export async function buildRep(ctx) {
   await insertAll('rep_teams', teams.map(t => ({ id: t.id, org_id: ORG, name: t.name, slug: t.slug, sport: cfg.sport, division: t.age,
     color: TEAM_COLORS[t.i % TEAM_COLORS.length], group_id: groupId[groupOf(t)], is_archived: false,
     description: t.isDressed ? `Our ${t.key} team: fall ball in September and October, Sunday dome practices all winter, three spring tournaments.` : null })));
+  // The club's logo as every team's crest, so the sidebar's team tile shows the Bats mark, not initials (owner 2026-11-24).
+  // The crest is the team's own picture (`pdf_settings.logoDataUrl`, a PNG of 256 px or less) with its shape and version
+  // beside it — the arithmetic of `lib/team-crest.ts` `crestFacts`, repeated here because an .mjs cannot import it.
+  // Best effort: a club with no logo yet, or no network, keeps the colour/initials tile.
+  try {
+    const logoUrl = (await one('org logo', db.from('organizations').select('logo_url').eq('id', ORG)))[0]?.logo_url;
+    if (logoUrl && /^https:\/\//.test(logoUrl)) {
+      const res = await fetch(logoUrl);
+      if (!res.ok) throw new Error(`logo fetch ${res.status}`);
+      const sharp = (await import('sharp')).default;
+      const png = await sharp(Buffer.from(await res.arrayBuffer())).resize(256, 256, { fit: 'inside', withoutEnlargement: true }).png().toBuffer();
+      const meta = await sharp(png).metadata();
+      const crest = {
+        logoDataUrl: `data:image/png;base64,${png.toString('base64')}`,
+        logoAspect: Math.round((meta.width / meta.height) * 1000) / 1000,
+        logoVersion: crypto.createHash('sha1').update(png).digest('hex').slice(0, 12),
+      };
+      for (const t of teams) die('team crest', (await db.from('rep_teams').update({ pdf_settings: crest }).eq('id', t.id)).error);
+      ok(`team crest: the club logo on ${teams.length} teams`);
+    }
+  } catch (err) {
+    console.warn(`  ⚠ The team crests were not set (${err instanceof Error ? err.message : err}); the teams show their colour and initials.`);
+  }
   const tryouts = new Set(cfg.repTryoutsOpen?.teams ?? []);
   await insertAll('rep_program_years', teams.map(t => {
     const [from, to] = yearsOf(t);

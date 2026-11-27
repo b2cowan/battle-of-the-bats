@@ -271,8 +271,8 @@ One unit of work, which may land as several commits. Grep for `demo-org`, `demo-
       owner closes it after the release.
 - [ ] **Owner step, after the release:** delete `NEXT_PUBLIC_SEE_IT_LIVE_DOORS` from the Amplify console (inert once Phase 3 is
       live; tidy only).
-- **Left for the owner:** the spelling check's failure message still names "the demo sandboxes' dock lines and tour
-  narration" (`scripts/check-spelling-consistency.mjs`, a gate script: changes only on the owner's word).
+- The spelling check's failure message no longer names the demo sandboxes: `7aee5a9dd`, its own commit, on the owner's
+  word (2026-11-26).
 - **Carried, not part of this step:** the Terms and Privacy demo sentences (`/legal`, next versions).
 
 ## Architectural Decisions

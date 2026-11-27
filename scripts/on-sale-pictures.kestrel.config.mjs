@@ -10,8 +10,6 @@
  *
  * ⚠ DEV ONLY. The seed refuses any database that is not the dev project and any slug that is not `kestrel-bay`.
  */
-import crypto from 'node:crypto';
-
 const D = 'kestrel-bay.example.test';
 const YEAR = Number(new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Toronto', year: 'numeric' }).format(new Date()));
 
@@ -30,11 +28,10 @@ export default {
     mailingAddress: 'Kestrel Bay Softball Association, PO Box 120, Kestrel Bay, ON',
   },
 
-  /** No account here is ever signed into by a person: the capture script signs in with a one-time link made on dev. The
-   *  password is set once, on creation, from KESTREL_PICTURES_PASSWORD if it is in .env.local, otherwise a random one
-   *  nobody keeps. */
-  passwordEnv: 'KESTREL_PICTURES_PASSWORD',
-  password: process.env.KESTREL_PICTURES_PASSWORD || crypto.randomBytes(24).toString('base64url'),
+  /** QA walks sign in here by hand, so these accounts take the standing UAT password (owner 2026-11-25). Dev database
+   *  only. The capture script signs in with a one-time link made on dev. Set once, on creation. */
+  password: 'UATPassword2026!',
+  passwordNote: 'UATPassword2026! (the standing UAT password)',
   people: {
     owner: { email: `president@${D}`, role: 'owner', name: 'Morgan Ashby', title: 'President' },
     admin: { email: `league@${D}`, role: 'league_admin', name: 'Priya Raman', title: 'League Administrator' },

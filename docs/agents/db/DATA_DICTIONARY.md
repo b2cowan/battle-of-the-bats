@@ -11590,10 +11590,10 @@ The **platform control plane** — the tables behind `/platform-admin/` that Fie
 **`feedback_id`** (uuid, nullable, FK → `feedback_submissions` ON DELETE SET NULL) — set on the "Feedback received" and reply emails, so the feedback record's conversation shows them.
 
 <!-- dict:col:platform_account_emails.resend_id -->
-**`resend_id`** (text, nullable) — the mail service's number (Resend id), shown in the email's window. NULL until Resend answered, when it never did, or for a reserved test address, which is never handed over (`lib/email-undeliverable.ts`): that row keeps `state='sent'` and no callback ever follows.
+**`resend_id`** (text, nullable) — the mail service's number (Resend id), shown in the email's window. NULL until Resend answered, when it never did, or for a reserved test address, which is never handed over (`lib/email-undeliverable.ts`).
 
 <!-- dict:col:platform_account_emails.state -->
-**`state`** (text, NOT NULL, default `sent`) — `sent` | `unconfirmed` | `delayed` | `delivered` | `bounced` | `complained` | `failed` | `not_sent`. The console's words: Sent · Not confirmed · Delayed · Delivered · Bounced · Marked as spam · Failed · Not sent. `not_sent` = Resend suppressed it (the address bounced or complained before) or this site has no mail key; `failed` = Resend refused or could not send it.
+**`state`** (text, NOT NULL, default `sent`) — `sent` | `unconfirmed` | `delayed` | `delivered` | `bounced` | `complained` | `failed` | `not_sent`. The console's words: Sent · Not confirmed · Delayed · Delivered · Bounced · Marked as spam · Failed · Not sent. `not_sent` = Resend suppressed it (the address bounced or complained before; `bounce_reason` = `suppressed`), or, with no reason, it never left this site: the recipient is a reserved test address (`lib/email-undeliverable.ts`) or this site has no mail key (the console tells the two apart by `recipient_email`; rows written for a test address before 2026-11-26 read `sent`); `failed` = Resend refused or could not send it.
 
 <!-- dict:col:platform_account_emails.state_at -->
 **`state_at`** (timestamptz, NOT NULL) — when the current state happened (the callback payload's `created_at`, or our own clock for a sender outcome).
