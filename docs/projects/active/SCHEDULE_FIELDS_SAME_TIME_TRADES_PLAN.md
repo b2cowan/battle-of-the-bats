@@ -634,6 +634,33 @@ Migration first. Drawn together with Stage 3.
         not triggered** (customer bookkeeping), said so the owner can disagree. **Walk §581** published
         (https://claude.ai/artifact/5Es159enb523YWCApKPDBp, 50 steps; fixture `.probe/schedule-parts-walk/fixture.mjs` on dev,
         teardown after). **Stage 3's build prompt** written under Stage 3. Tests: 5,552 of the related tests pass; typecheck clean.
+- [x] **Walk §581 passed 2026-11-27, 50 of 50** (owner: "that walk is already done"; the ledger holds the detail).
+- [x] **Faults found by the walk’s check, fixed 2026-11-27** (owner: "can you check and fix those 3?"; tests
+      `tests/unit/schedule-parts-walk-faults.test.ts`). **1 (serious, predates Stage 2, in the 11-24 release’s code):** a
+      schedule’s own house-league **games** held its time (only practices carried their slot), so a regenerate dropped
+      those slots from house league and Send the changes would move or take off the games and could cancel practices. The
+      pool now reads `league_games.slot_use_id` (`gameSlotOf`) and the builder leaves its own out; the clash rule is
+      unchanged. Reproduced on dev through the real read: 6 of the walk schedule’s slots held against itself before, 0
+      after. Production counts the same day: no club schedules and no game on club time, so no one was affected. **2:**
+      Generate games said a side’s share as the game length; a time part now carries `slotMinutes`. **3:** Find the time
+      read the form’s own side as the whole field. It keeps the part (`placesHeld`, `lib/permit-time.ts`), and so that the
+      found side can be saved, two rows on different sides of one field at one time are no longer refused
+      (`overlappingBlocks`) and two permits’ settling leaves the other side (`settleOverlaps`); the keep rule still trims
+      by field, as before.
+      **`/review` before the commit (2026-11-27; four lenses, then one over the fixes).** Fixed: **High**, leaving a game
+      out entirely let a slot cut shorter than its game (or a game hand-extended past its slot) give the next slot to a rep
+      team: an own game now never holds its own slot, holds any other it runs into while its slot stays, and holds nothing
+      when its slot goes or no end is stored (`heldSlots`, `ownGame`); a family member's game stays an ordinary booking; the
+      keep rule compares by side for a row holding its own past, so an untouched side row is no longer split in two (this
+      replaces "trims by field, as before" above). **For the owner:** a regenerate is still a fresh hand-out: an unlocked
+      slot with a saved game can go to a rep team, and Send then moves the game with house league's time or takes it off,
+      as it does practices (lock the slot to keep it). Whether a slot with a saved game should be kept is not ruled.
+      **Accepted:** a game that already started today no longer holds its slot against a regenerate (practices the same);
+      Send does not move a game left running past a shortened slot (practices the same). **Older limits, not fixed:** Find
+      the time offers no side when the form's other side covers only part of the permit's hours, and a found whole-field
+      row can span time the form holds, which the save refuses; two permits sharing one side, the later row naming both
+      sides loses both on those days. Typecheck, lint, spelling, the automatic checks and the related tests pass; not
+      browser-checked.
 - [x] **2D design check, applied 2026-11-26** (owner: "I agree with your recommendations", both asks of
       `claude.ai/artifact/EVyadHYH81Ga9zMtaNNwyq` as recommended; source `SCHEDULE_PARTS_2D_DESIGN_CHECK.html`): the Used
       line is the Use band's one note, total first (`heldUnusedWords` over the whole list; the workbook one note too);

@@ -21,7 +21,7 @@
  * `zonedWallClockToUtc` (daylight saving included), and a booking is an instant pair, exactly as the clash rule reads it.
  */
 import { ORG_TIME_ZONE, addCalendarDays, zonedWallClockToUtc } from './timezone.ts';
-import { WHOLE, byQuarter, partsOverlap } from './field-parts.ts';
+import { WHOLE, byQuarter, maskProp, masksOn, partsOverlap, rowsShareGround } from './field-parts.ts';
 
 const MIN = 60_000;
 
@@ -48,6 +48,9 @@ export interface TimeBlock {
   fromDate: string | null;
   untilDate: string | null;
 }
+
+/** A block as a schedule's row has it: a field may be named in parts (Club schedules Stage 2). A permit's never is. */
+export type PartBlock = TimeBlock & { parts?: Readonly<Record<string, readonly number[]>> | null };
 
 /** A day with no time held. `venueIds`: the parks a SCHEDULE's date off closes (`org_time_date_off_venues`, mig 488);
  *  absent or empty = ALL VENUES (a permit's own dates off never name parks: they close the permit's time, all of it). */
@@ -125,6 +128,34 @@ export function blockUnits(block: Pick<TimeBlock, 'venueId' | 'facilityIds'>, ve
 /** Does a block hold this facility? (A booking with no facility set is answered by `coversBooking`.) */
 function blockHoldsFacility(block: TimeBlock, facilityId: string, venueFacilities: VenueFacilities): boolean {
   return blockUnits(block, venueFacilities).includes(facilityId);
+}
+
+/**
+ * Every place some rows of time hold, day by day, as bookings (a venue with no facilities is the venue itself): the time
+ * New schedule's form holds before it is saved, which Find the time never offers again. A field a row names in parts holds
+ * only those, so side B on the form leaves side A to be found. The rows are a request body: only the club's own places
+ * count, and a facility that is not at the venue is dropped (never read as "all of it").
+ */
+export function placesHeld(time: Omit<PermitTime, 'id' | 'blocks'> & { blocks: readonly PartBlock[] }, venueFacilities: VenueFacilities): BookingPlace[] {
+  const permit: PermitTime = { id: 'held', ...time };
+  const out: BookingPlace[] = [];
+  for (const raw of time.blocks) {
+    // A venue the club doesn't have cannot overlap a permit, so a stuffed list costs nothing.
+    const atVenue = venueFacilities.get(raw.venueId);
+    if (!atVenue) continue;
+    const facilityIds = raw.facilityIds.filter(f => atVenue.includes(f));
+    if (raw.facilityIds.length && !facilityIds.length) continue;
+    const b = { ...raw, facilityIds };
+    const units = blockUnits(b, venueFacilities);
+    for (const day of blockDates(permit, b)) {
+      const w = windowOn(day, b);
+      if (!(w.endMs > w.startMs)) continue;
+      for (const u of units) {
+        for (const mask of u ? masksOn(b, u) : [WHOLE]) out.push({ venueId: b.venueId, facilityId: u, ...maskProp(mask), startMs: w.startMs, endMs: w.endMs });
+      }
+    }
+  }
+  return out;
 }
 
 // ── 1. The permit's answer ───────────────────────────────────────────────────────────────────────
@@ -644,14 +675,18 @@ export function datesOffTaken<B extends BookingPlace>(
 // ── The record's own checks (the form holds, the route refuses — one rule) ───────────────────────────
 
 /** The hours a permit's blocks overlap each other on one place — never allowed: a place's hour is held once. */
-export function overlappingBlocks(permit: Pick<PermitTime, 'blocks'>, venueFacilities: VenueFacilities): [string, string] | null {
+export function overlappingBlocks(
+  /** Two rows on different ground (side A, side B) never overlap. */
+  permit: { blocks: readonly PartBlock[] },
+  venueFacilities: VenueFacilities,
+): [string, string] | null {
   const bs = permit.blocks;
   for (let i = 0; i < bs.length; i++) {
     for (let j = i + 1; j < bs.length; j++) {
       const a = bs[i], b = bs[j];
       if (a.venueId !== b.venueId) continue;
       const ua = blockUnits(a, venueFacilities), ub = blockUnits(b, venueFacilities);
-      if (!ua.some(u => ub.includes(u))) continue;
+      if (!ua.some(u => ub.includes(u) && (u === null || rowsShareGround(a, b, u)))) continue;
       if (!a.weekdays.some(d => b.weekdays.includes(d))) continue;
       const aFrom = a.fromDate ?? '0000-01-01', aTo = a.untilDate ?? '9999-12-31';
       const bFrom = b.fromDate ?? '0000-01-01', bTo = b.untilDate ?? '9999-12-31';

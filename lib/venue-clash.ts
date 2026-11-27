@@ -98,6 +98,15 @@ export interface ClubBooking {
    * lane, "teams at once" — are one booking of the club's with its teams, never a clash with each other (P11-04a).
    */
   clubSlotOf?: string | null;
+  /**
+   * On a house-league GAME on a division's game time (mig 409): that club slot (`league_games.slot_use_id`). Read by the
+   * schedule builder only, so a schedule's own games never hold its own time (a regenerate would drop the slot from house
+   * league, and Send the changes would then move or take off the game). Deliberately not `clubSlotOf`: the rule still
+   * compares a game with a team's practice on the same slot.
+   */
+  gameSlotOf?: string | null;
+  /** The row stored no end (or one at or before its start): `endMs` is the default length, not something anyone typed. */
+  endAssumed?: boolean;
 }
 
 /** Another booking, as the line may describe it — and nothing more (Ask 5). */
@@ -185,7 +194,7 @@ export function tryoutSessionBooking(row: {
 export function leagueBooking(row: {
   id: string; kind: 'game' | 'practice'; scheduled_at: string | null; ends_at?: string | null; status?: string | null;
   org_venue_id?: string | null; org_venue_facility_id?: string | null; club_schedule_slot_id?: string | null;
-  section_mask?: number | null;
+  section_mask?: number | null; slot_use_id?: string | null;
 }, names: { season: string; venue?: string | null; facility?: string | null }): ClubBooking | null {
   if (row.status === 'cancelled' || row.status === 'postponed') return null;
   const w = windowOf(row.scheduled_at, row.ends_at);
@@ -196,6 +205,8 @@ export function leagueBooking(row: {
     venueName: names.venue ?? null, facilityName: names.facility ?? null,
     // A practice handed out from house league's club time (Stage 11b): its own slot never clashes with it.
     clubSlotOf: row.club_schedule_slot_id ?? null,
+    gameSlotOf: row.slot_use_id ?? null,
+    ...(row.ends_at && Date.parse(row.ends_at) > w.startMs ? {} : { endAssumed: true }),
   };
 }
 

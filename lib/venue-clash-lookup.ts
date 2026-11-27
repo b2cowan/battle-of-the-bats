@@ -275,7 +275,8 @@ async function readClubPool(orgId: string, fromMs: number, toMs: number): Promis
       .gte('starts_at', fromIso).lte('starts_at', toIso)
       .order('id').range(a, b)),
     fetchAll<LeagueRow>((a, b) => supabaseAdmin.from('league_games')
-      .select('id, season_id, scheduled_at, ends_at, status, org_venue_id, org_venue_facility_id, section_mask')
+      // A game's slot is `slot_use_id` (mig 409): without it a schedule's own games read as someone else's booking.
+      .select('id, season_id, scheduled_at, ends_at, status, org_venue_id, org_venue_facility_id, section_mask, slot_use_id')
       .eq('org_id', orgId).not('org_venue_id', 'is', null)
       .gte('scheduled_at', fromIso).lte('scheduled_at', toIso)
       .order('id').range(a, b)),

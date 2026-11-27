@@ -468,6 +468,9 @@ export async function readRequestPrices(orgId: string, permitId: string | null, 
  */
 export async function engineContext(orgId: string, p: {
   slotIds: readonly string[];
+  /** Of `slotIds`, the asking schedule's own — where its house-league games are its own (absent: all of them). A family
+   *  member's slot is not among the slots read, so a game on it stays an ordinary booking. */
+  gameSlotIds?: readonly string[];
   teamIds: readonly string[];
   fromMs: number;
   toMs: number;
@@ -501,9 +504,14 @@ export async function engineContext(orgId: string, p: {
     p.prices ?? readPrices(orgId, p.permitId, p.rowPermits),
   ]);
   const ownEvent = (slot: string | null | undefined) => !!slot && own.has(slot);
+  const gameSlots = new Set(p.gameSlotIds ?? p.slotIds);
+  const ownGameOn = (slot: string | null | undefined) => !!slot && gameSlots.has(slot);
   const poolBookings: PoolBooking[] = pool.bookings
-    .filter(b => !ownEvent(b.clubSlotOf))
-    .map(b => ({ key: b.key, venueId: b.venueId, facilityId: b.facilityId, sectionMask: b.sectionMask ?? WHOLE, startMs: b.startMs, endMs: b.endMs, ownerName: b.ownerName, kind: b.kind }));
+    // (Its own game with no stored end runs to its slot's end, as Send the changes reads it: it holds nothing.)
+    .filter(b => !ownEvent(b.clubSlotOf) && !(b.endAssumed && ownGameOn(b.gameSlotOf)))
+    .map(b => ({ key: b.key, venueId: b.venueId, facilityId: b.facilityId, sectionMask: b.sectionMask ?? WHOLE, startMs: b.startMs, endMs: b.endMs, ownerName: b.ownerName, kind: b.kind,
+      // This schedule's own house-league games: `heldSlots` keeps each one off its own slot, never off a neighbour.
+      ...(ownGameOn(b.gameSlotOf) ? { ownGame: true } : {}) }));
   // OTHER SCHEDULES (Stage 2, Session 2D — the owed item). This schedule and its family never count: they are its own (the
   // family is cut apart by `familyClashes`). Another schedule's FINAL slot joins the pool with since when it has held the
   // time (`heldSlots` decides who takes it), named by the schedule — pushed AFTER the bookings, so where a team's sent
@@ -1019,7 +1027,7 @@ export async function scheduleView(orgId: string, loaded: LoadedSchedule, canMon
     // House league is always named when a slot holds it, whether or not the club still has house league.
     readClubTeams(orgId, { houseLeague: true }),
     // The family's practices are never "a booking already on the books" here: `familyShown` names them by part (Phase 8).
-    engineContext(orgId, { slotIds: [...loaded.slots.map(s => s.id), ...(opts.familySlotIds ?? [])], teamIds: [], fromMs, toMs, permitId, rowPermits: loaded.time.blocks.map(b => b.permitId), finalSlotsAt: [...new Set(loaded.slots.map(s => s.venueId))] }),
+    engineContext(orgId, { slotIds: [...loaded.slots.map(s => s.id), ...(opts.familySlotIds ?? [])], gameSlotIds: loaded.slots.map(s => s.id), teamIds: [], fromMs, toMs, permitId, rowPermits: loaded.time.blocks.map(b => b.permitId), finalSlotsAt: [...new Set(loaded.slots.map(s => s.venueId))] }),
     resolvePersonNamer(orgId, [row.sent_by, row.finalized_by]),
     row.state === 'final' ? waitingAsksOfSchedule(orgId, row.id) : Promise.resolve([]),
     billed ? scheduleMoney(orgId, row.id, row.allocation_id!) : Promise.resolve(null),

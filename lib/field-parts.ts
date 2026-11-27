@@ -300,6 +300,10 @@ export function ticksOfPlaces(p: RowPlaces): string[] {
 export const masksOn = (p: { parts?: Readonly<Record<string, readonly number[]>> | null }, facilityId: string): readonly number[] =>
   p.parts?.[facilityId]?.length ? p.parts[facilityId] : [WHOLE];
 
+/** Do two rows hold any of one field's ground? Side A and side B share none; the whole field meets each of its parts. */
+export const rowsShareGround = (a: Parameters<typeof masksOn>[0], b: Parameters<typeof masksOn>[0], facilityId: string): boolean =>
+  masksOn(a, facilityId).some(x => masksOn(b, facilityId).some(y => partsOverlap(x, y)));
+
 /** A mask's place in the order a field lists them: whole, A–B, C–D, A, B, C, D (the cut, the kept merge and the grid). */
 export const maskRank = (mask: number | null | undefined): number => LEGAL[4].indexOf(maskOf(mask));
 

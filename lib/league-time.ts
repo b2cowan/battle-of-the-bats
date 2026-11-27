@@ -76,6 +76,8 @@ export interface LeagueTimePart {
   lastDay: string;
   /** One week's minutes (one slot a week); a part counts its share of the field's time (a side half, round 1 Ask 9 A). */
   minutes: number;
+  /** How long one slot lasts, start to end: what a game on it runs. Never a part's share (`minutes` is). */
+  slotMinutes: number;
   use: LeagueUse | null;
 }
 
@@ -284,10 +286,11 @@ export function groupLeagueTime(p: {
         part.slotIds.push(s.id);
         part.lastDay = s.day;
       } else {
+        const slotMinutes = minutesOf(s.end) - minutesOf(s.start);
         parts.set(key, {
           key, blockKey, weekday: s.weekday, start: s.start, end: s.end, place, ...(field ? { field } : {}),
           slotIds: [s.id], firstDay: s.day, lastDay: s.day,
-          minutes: (minutesOf(s.end) - minutesOf(s.start)) * partFactor(s.sectionMask), use: s.use,
+          minutes: slotMinutes * partFactor(s.sectionMask), slotMinutes, use: s.use,
         });
       }
     }

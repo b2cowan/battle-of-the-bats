@@ -17,7 +17,7 @@
  */
 import { addCalendarDays, isCalendarDate } from './timezone';
 import { blockUnits, clock, weekdayOf, type PlaceUnit, type TimeBlock, type VenueFacilities } from './permit-time';
-import { WHOLE, maskOf, masksOn } from './field-parts';
+import { WHOLE, maskOf, masksOn, rowsShareGround } from './field-parts';
 
 /** A row of the schedule's time as the form sends it. Facilities are listed (empty = a venue with none, the venue itself). */
 export interface PermitRowBlock {
@@ -29,6 +29,8 @@ export interface PermitRowBlock {
   fromDate: string | null;
   untilDate: string | null;
   permitId?: string | null;
+  /** A field named in parts (Club schedules Stage 2); absent, every field whole. */
+  parts?: Readonly<Record<string, readonly number[]>> | null;
 }
 
 /** Days a later permit's rows lost to an earlier one, at one park. */
@@ -59,7 +61,8 @@ function firstDay(from: string, until: string, weekdays: readonly number[]): str
   return null;
 }
 
-const sameFacilities = (a: readonly string[], b: readonly string[]) => (!a.length && !b.length) || a.some(f => b.includes(f));
+/** The fields two rows both hold ground on (side A beside side B shares none). */
+const sharedFields = (a: PermitRowBlock, b: PermitRowBlock) => a.facilityIds.filter(f => b.facilityIds.includes(f) && rowsShareGround(a, b, f));
 
 /**
  * Each later permit's rows less what an earlier permit's rows already hold — the same venue, a facility in common, a
@@ -89,12 +92,13 @@ export function settleOverlaps<B extends PermitRowBlock>(blocks: readonly B[], o
           const hi = untilOf(p) < untilOf(w) ? untilOf(p) : untilOf(w);
           const weekdays = p.weekdays.filter(d => w.weekdays.includes(d));
           // (`daysIn` is empty when there is no weekday in common or the dates don't meet.)
-          const clash = p.venueId === w.venueId && sameFacilities(p.facilityIds, w.facilityIds)
+          const facilities = sharedFields(p, w);
+          // (Two rows naming no field are the whole venue each.)
+          const clash = p.venueId === w.venueId && (facilities.length > 0 || (!p.facilityIds.length && !w.facilityIds.length))
             && clock(p.startTime) < clock(w.endTime) && clock(w.startTime) < clock(p.endTime);
           const days = clash ? daysIn(lo, hi, weekdays) : [];
           if (!days.length) { next.push(p); continue; }
-          const facilities = p.facilityIds.filter(f => w.facilityIds.includes(f));
-          const otherFacilities = p.facilityIds.filter(f => !w.facilityIds.includes(f));
+          const otherFacilities = p.facilityIds.filter(f => !facilities.includes(f));
           const otherDays = p.weekdays.filter(d => !weekdays.includes(d));
           // The facilities the earlier permit doesn't hold here keep the row whole; so do its other weekdays.
           if (otherFacilities.length) next.push({ ...p, facilityIds: otherFacilities });

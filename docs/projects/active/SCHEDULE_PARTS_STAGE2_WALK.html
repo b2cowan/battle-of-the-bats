@@ -147,13 +147,13 @@ textarea { width: 100%; box-sizing: border-box; min-height: 80px; font: 14px/1.5
   "job": "Club owner · computer width · Venue library",
   "forText": "The club splits a field into two sides in the Venue library, a field with a booked side cannot be re-split, and a field can be quartered.",
   "passes": "Field 1 reads “Two sides, A and B”, Field 3 is locked with a line that says why, and Field 4 reads “Four quarters, A to D”.",
-  "notIn": "Field 1 being locked once a side is booked: that is the third step of walk C, after the schedule exists.",
+  "notIn": "Field 1 being locked once a side is booked: that is the fourth step of walk C, after the schedule exists.",
   "who": "uat-club-owner@uat-rep-club.local, password UATPassword2026!.",
   "where": "http://localhost:3000/uat-rep-club/admin/org/venues (Organization › Venue library).",
   "steps": [
    {
     "stop": true,
-    "d": "Open <b>Organization › Venue library<\/b> and press the pencil beside <b>Parts Walk Park<\/b>.",
+    "d": "Open <b>Organization › Venue library<\/b>, open <b>Parts Walk Park<\/b> and press the pencil at the top of its window.",
     "s": "Four facility rows: <b>Field 1<\/b>, <b>Field 2<\/b>, <b>Field 3<\/b> and <b>Field 4<\/b>. Each has a name, a kind and a third box for the split. Field 1, Field 2 and Field 4 read <b>Not split<\/b>; Field 3 reads <b>Two sides<\/b>. <b>Stop if there is no Parts Walk Park<\/b>: the walk’s data was not made."
    },
    {
@@ -165,8 +165,8 @@ textarea { width: 100%; box-sizing: border-box; min-height: 80px; font: 14px/1.5
     "s": "Its split box is greyed out and a line above the rows says <b>Field 3 has bookings on its sides, so it stays in two sides.<\/b> (The house-league time that is already on Field 3’s sides is what locks it.)"
    },
    {
-    "d": "On the <b>Field 4<\/b> row choose <b>Four quarters<\/b>, then press the pencil again to close the edit.",
-    "s": "The venue’s card now reads <b>Two sides, A and B<\/b> under Field 1 and Field 3, <b>Four quarters, A to D<\/b> under Field 4, and nothing under Field 2."
+    "d": "On the <b>Field 4<\/b> row choose <b>Four quarters<\/b>, then press the tick at the top to close the edit.",
+    "s": "The venue’s window now reads <b>Two sides, A and B<\/b> under Field 1 and Field 3, <b>Four quarters, A to D<\/b> under Field 4, and nothing under Field 2."
    }
   ]
  },
@@ -181,7 +181,7 @@ textarea { width: 100%; box-sizing: border-box; min-height: 80px; font: 14px/1.5
   "where": "http://localhost:3000/uat-rep-club/admin/schedules (Schedules).",
   "steps": [
    {
-    "d": "Open <b>Schedules<\/b> and press <b>New schedule<\/b>.",
+    "d": "Open <b>Schedules<\/b>, press <b>New schedule<\/b>, then <b>Start blank<\/b>.",
     "s": "A window <b>New schedule<\/b>, “Step 1 of 2 · settings”, with a <b>Permits<\/b> field that reads “No permit: type the time below”."
    },
    {
@@ -202,11 +202,15 @@ textarea { width: 100%; box-sizing: border-box; min-height: 80px; font: 14px/1.5
    },
    {
     "d": "Press <b>Generate drafts<\/b>.",
-    "s": "“Step 2 of 2 · drafts for Parts walk · rep time” with ranked drafts. The first draft card names the places its practices use: <b>Field 1, side A<\/b> and <b>Field 1, side B<\/b> as two places, apart from <b>Field 2<\/b>. <b>If a card names only “Field 1” with no side, that is an Issue.<\/b>"
+    "s": "“Step 2 of 2 · drafts for Parts walk · rep time” with three drafts, <b>Youngest earliest<\/b> chosen. An amber line says <b>2 teams short: 32 of 64 slots handed out<\/b>: that is expected here, because each team gets one practice a day. The draft cards do not name fields."
    },
    {
-    "d": "Press once on the empty part of a draft card (not on a button or a word).",
+    "d": "Press once on the empty part of the <b>Best overall<\/b> card (not on a button or a word).",
     "s": "The whole card takes the chosen border, as it did before this stage. A press anywhere on the card picks it."
+   },
+   {
+    "d": "Above the list beside the cards, press <b>By day<\/b>.",
+    "s": "Under <b>Mon, Jan 4<\/b>, <b>Field 1, side A<\/b> and <b>Field 1, side B<\/b> have rows of their own, apart from <b>Field 2<\/b>. At 7:00 p.m. <b>15U AAA<\/b> is on side B and <b>13U AAA<\/b> on Field 2; the other rows read <b>Open<\/b>. Under <b>Wed, Jan 6<\/b> both teams are on <b>Field 1, side A<\/b>. <b>If a row reads only “Field 1” with no side, that is an Issue.<\/b>"
    },
    {
     "d": "Press <b>Save as a draft<\/b>.",
@@ -214,11 +218,11 @@ textarea { width: 100%; box-sizing: border-box; min-height: 80px; font: 14px/1.5
    },
    {
     "d": "Open the <b>Grid<\/b> and go to the week of Mon, Jan 4, 2027.",
-    "s": "Under <b>Field 1<\/b> there is a row for <b>side A<\/b> and a row for <b>side B<\/b>, each under the field and slightly in; <b>Field 2<\/b> has its one row. Monday has practices on both of Field 1’s side rows; Wednesday has them on side A only."
+    "s": "Under <b>Field 1<\/b> there is a row for <b>side A<\/b> and a row for <b>side B<\/b>, each under the field and slightly in; <b>Field 2<\/b> has its one row. On Monday, <b>15U AAA<\/b> is on the side B row at 7:00 p.m. and <b>13U AAA<\/b> on Field 2; the side A row is open. On Wednesday both teams are on the side A row."
    },
    {
     "d": "Open the <b>Bill<\/b> tile (the window <b>Bill the teams<\/b>). Read each team’s line and the hint under <b>Split<\/b>. Write down each team’s full-field hours. Do not save a bill: press Cancel.",
-    "s": "The hint reads <b>Each field at the permit’s price: a full field $20.00 an hour, a half field or one side $10.00<\/b>. Each team’s line has a count of full-field slots beside a count of half-field slots (for example “12 full + 8 half”) and a number of full-field hours. A side counts half."
+    "s": "The hint reads <b>Each field at the permit’s price: a full field $20.00 an hour, a half field or one side $10.00<\/b>. <b>13U AAA<\/b>’s line reads <b>8 full + 8 half · 12 full-field hours<\/b>; <b>15U AAA<\/b>’s reads <b>16 half-field slots · 8 full-field hours<\/b>. A side counts half."
    },
    {
     "d": "On the schedule’s page open <b>Export<\/b> and choose <b>PDF<\/b>, then open the file.",
@@ -230,41 +234,41 @@ textarea { width: 100%; box-sizing: border-box; min-height: 80px; font: 14px/1.5
   "id": "C",
   "title": "Send it, and the coach reads the side",
   "job": "Club owner and the 13U AAA coach · carries on from B",
-  "forText": "After the club finalizes the schedule, a coach’s practice names the side, a field with a booked side is locked in the Venue library, and a change that only swaps one side for the other is sent to the coaches naming both sides.",
-  "passes": "The coach’s practice says “Field 1, side A” (or side B), Field 1 is locked, and the email preview names both sides of the swap.",
+  "forText": "After the club finalizes the schedule, a coach’s practice names the side, a field with a booked side is locked in the Venue library, and a move from one side to the other is sent to the coaches naming both sides.",
+  "passes": "The coach’s practice says “Field 1, side A” (or side B), Field 1 is locked, and the email preview names both sides of the move.",
   "notIn": "Anything a family reads (a change of side alone tells families nothing, by your ruling of Nov 26), and the email as it arrives in an inbox: the made-up addresses cannot receive mail.",
-  "who": "uat-club-owner@uat-rep-club.local for steps 1, 2, 4 and 5; uat-club-coach-13aaa@uat-rep-club.local (or uat-club-coach-15aaa@uat-rep-club.local) for step 3. Password UATPassword2026!.",
+  "who": "uat-club-owner@uat-rep-club.local for steps 1, 2 and 4–6; uat-club-coach-13aaa@uat-rep-club.local (or uat-club-coach-15aaa@uat-rep-club.local) for step 3. Password UATPassword2026!.",
   "where": "The draft schedule from walk B; then http://localhost:3000/uat-rep-club/coaches (13U AAA’s Schedule).",
   "steps": [
    {
     "who": "Club owner",
     "d": "On the schedule’s page press <b>Send<\/b> and choose <b>Final now<\/b>.",
-    "s": "The window is titled <b>Finalize and send<\/b> and lists the two teams. Its button reads <b>Finalize and send to 2<\/b> (or the count of coaches the club has on those teams)."
+    "s": "The window stays titled <b>Send the schedule<\/b>. A line says sending makes <b>32 slots<\/b> real bookings, <b>Who is told · 4 coaches<\/b> lists 13U AAA and 15U AAA, and the button reads <b>Send to 4<\/b>."
    },
    {
     "who": "Club owner",
-    "d": "Press <b>Finalize and send<\/b>.",
+    "d": "Press <b>Send to 4<\/b>.",
     "s": "A notice “Sent to … people on 2 teams.” and the page now shows <b>Final<\/b>."
    },
    {
     "who": "Coach",
     "d": "Sign in as <code>uat-club-coach-13aaa@uat-rep-club.local<\/code>, open <b>13U AAA<\/b> › <b>Schedule<\/b>, and open a practice at Parts Walk Park on Field 1. If 13U AAA has none on Field 1, use the 15U AAA coach instead.",
-    "s": "The practice’s sheet says <b>Where<\/b> <b>Parts Walk Park · Field 1, side A<\/b> (or <b>side B<\/b>). The same practice in the Schedule list reads the same."
+    "s": "The practice’s sheet has a line with a map pin: <b>Parts Walk Park · Field 1, side A<\/b> (or <b>side B<\/b>). The Schedule list rows name no place."
    },
    {
     "who": "Club owner",
-    "d": "Back as the owner, open <b>Organization › Venue library<\/b>, press the pencil beside <b>Parts Walk Park<\/b> and look at Field 1.",
-    "s": "Field 1’s split box is now greyed out, with the line <b>Field 1 has bookings on its sides, so it stays in two sides.<\/b> Field 2 is still free to change."
+    "d": "Back as the owner, open <b>Organization › Venue library<\/b>, open <b>Parts Walk Park<\/b>, press the pencil and look at Field 1.",
+    "s": "Field 1’s split box is now greyed out, with one line for both locked fields: <b>Field 1 and Field 3 have bookings on their parts, so each stays split as it is.<\/b> Field 2 is still free to change."
    },
    {
     "who": "Club owner",
-    "d": "Open the schedule’s <b>Grid<\/b>, find a Monday where one team is on Field 1’s side A row and the other on its side B row at the same time, and drag one onto the other to swap them. (Or open the slot and use <b>Swap with…<\/b>.)",
-    "s": "The two teams trade rows, and the page shows <b>Changed since sent<\/b>."
+    "d": "Open the schedule’s <b>Grid<\/b> on the week of Mon, Jan 4. Drag <b>15U AAA<\/b>’s Monday 7:00 p.m. practice from the side B row onto the open 7:00 p.m. slot in the side A row, and choose <b>This week only<\/b>.",
+    "s": "15U AAA is now on the side A row, and the page shows <b>Changed since sent<\/b>."
    },
    {
     "who": "Club owner",
-    "d": "Press <b>Send the changes<\/b> and, in its window, open <b>See 13U AAA’s email<\/b>. Then press Cancel: send nothing.",
-    "s": "The email preview names the move with <b>both sides<\/b>: from <b>Parts Walk Park · Field 1, side A<\/b> to <b>Field 1, side B<\/b> (or the reverse). It does not just say “Field 1”."
+    "d": "Press <b>Send the changes<\/b> and, in its window, open <b>See Jordan Reyes’ email<\/b> (15U AAA’s head coach). Then press Cancel: send nothing.",
+    "s": "The email preview names the move with <b>both sides<\/b>: from <b>Parts Walk Park · Field 1, side B<\/b> to <b>Field 1, side A<\/b>. It does not just say “Field 1”."
    }
   ]
  },
@@ -272,8 +276,8 @@ textarea { width: 100%; box-sizing: border-box; min-height: 80px; font: 14px/1.5
   "id": "D",
   "title": "Other schedules see the sides",
   "job": "Club owner · computer width · carries on from C",
-  "forText": "A second new schedule leaves out the time the finished schedule already holds and says which schedule holds it; Find the time offers “Field 1, side B” where only side A is held; the permit’s Used figure counts a side at half and carries one note.",
-  "passes": "Wednesday’s free side B is the only Field 1 time offered, the held time is named, and the permit’s Used and its note agree with the bill.",
+  "forText": "A second new schedule leaves out the time the finished schedule already holds; Find the time offers “Field 1, side B” where only side A is held; the permit’s Used figure counts a side at half and carries one note.",
+  "passes": "Wednesday’s free side B is the only Field 1 time offered, the held slots are counted, and the permit’s Used and its note agree with the bill.",
   "notIn": "Finishing the second schedule: it is never saved.",
   "who": "uat-club-owner@uat-rep-club.local, password UATPassword2026!.",
   "where": "http://localhost:3000/uat-rep-club/admin/schedules, then http://localhost:3000/uat-rep-club/admin/permits.",
@@ -292,27 +296,23 @@ textarea { width: 100%; box-sizing: border-box; min-height: 80px; font: 14px/1.5
    },
    {
     "d": "Press <b>Generate drafts<\/b>.",
-    "s": "Drafts appear. Each card has a line that it leaves out slots another booking already holds, and the line names <b>Parts walk · rep time<\/b>, the finished schedule that holds them. The only Field 1 time handed out is Wednesday side B."
-   },
-   {
-    "d": "Press once on the empty part of a draft card.",
-    "s": "The card takes the chosen border: a press anywhere on the card still picks it."
+    "s": "Drafts appear. Each card has a line <b>Leaves out the … slots bookings already hold<\/b>. It names nobody, because more than one booking holds them. The only Field 1 time handed out is Wednesday side B."
    },
    {
     "d": "Go back to settings and open the door <b>Find the time across every permit<\/b>.",
     "s": "The window <b>Find the time<\/b>, a list with the columns <b>Facility · Permit · Free<\/b>, and a count line. It looks the same as it always has."
    },
    {
-    "d": "Under <b>Days<\/b> choose Wed only.",
-    "s": "A row for <b>Field 1, side B<\/b> at Parts Walk Park, under <b>Parts walk · rep time<\/b>, reading <b>8 evenings free of 8<\/b>. Side A offers no free evening: it is held."
-   },
-   {
     "d": "Close Find the time, then close the New schedule window without saving.",
     "s": "The Schedules list has no <b>Parts walk second<\/b>: nothing was saved."
    },
    {
-    "d": "Open <b>Permits<\/b> and open <b>Parts walk · rep time<\/b>. Read <b>Used<\/b> and the note under the figures.",
-    "s": "<b>Used<\/b> reads hours of 48 h (booked time, a side counting half). Under the figures there is <b>one<\/b> note (none at all if every slot has a team), total first: “Of the … h unused, … h is held by a schedule and no team has it yet: open slots on Parts walk · rep time.” Add the two teams’ full-field hours from the bill in walk B: the sum matches Used. <b>If it differs, write both numbers in Notes: that is a finding.<\/b>"
+    "d": "Press <b>New schedule<\/b> again, then <b>Start blank<\/b>, tick <b>no<\/b> permit, open <b>Find the time across every permit<\/b> and under <b>Days<\/b> choose Wed only.",
+    "s": "At Parts Walk Park, <b>Field 1 (whole)<\/b> reads <b>0 days free of 8<\/b>, and <b>Field 1, side B<\/b> under it reads <b>8 evenings free of 8<\/b>. There is no side A row: it is held. (It has to be a fresh window: Find the time never offers time your open form already holds, and step 3 put side B on that one.)"
+   },
+   {
+    "d": "Close that window without saving. Open <b>Permits<\/b> and open <b>Parts walk · rep time<\/b>. Read the three figures and the note under them.",
+    "s": "<b>Held<\/b> 48 h, <b>Booked<\/b> 20 h (42%), <b>Unused<\/b> 28 h, a side counting half (Booked is the two teams’ 12 + 8 hours from walk B). One note under them: of the 28 h unused, <b>20 h<\/b> is held by a schedule and no team has it yet, <b>19.5 h<\/b> as open slots and <b>0.5 h<\/b> waiting to be sent (your unsent move from walk C). <b>If a number differs, write both in Notes: that is a finding.<\/b>"
    }
   ]
  },
@@ -329,13 +329,13 @@ textarea { width: 100%; box-sizing: border-box; min-height: 80px; font: 14px/1.5
    {
     "stop": true,
     "who": "League admin",
-    "d": "Sign in as the league admin. Open <b>House league › Parts walk league 2027 › Schedule<\/b>, choose the division <b>U10 Parts<\/b>, and open <b>Tools<\/b> (⋯) › <b>House league’s time<\/b>.",
+    "d": "Sign in as the league admin. Open <b>House league › Parts walk league 2027 › Schedule<\/b> (U10 Parts is its only division) and open <b>Tools<\/b> (⋯) › <b>House league’s time<\/b>.",
     "s": "The window says the time is <b>Given by the club in Parts walk · house league<\/b>. Two rows: Tuesdays <b>U10 Parts games<\/b> with <b>Field 3 in two sides<\/b>, and Thursdays <b>U10 Parts practice time<\/b> with <b>Field 2<\/b>. <b>Stop if there is no such season<\/b>: the data was not made."
    },
    {
     "who": "League admin",
     "d": "Close it and open <b>Tools<\/b> › <b>Generate games<\/b>.",
-    "s": "Step 1 reads the game time from House league’s time and counts each side as its own slot: two games can be played at once on Field 3, one on each side (8 Tuesdays × 2 hours × 2 sides = 32 slots). “Each game is 60 minutes, the length of a slot.”"
+    "s": "Step 1 reads the game time from House league’s time and counts each side as its own slot: two games can be played at once on Field 3, one on each side (8 Tuesdays × 2 hours × 2 sides = 32 slots). The line at the foot should say 60 minutes. <b>Known bug, found Nov 27: it reads 30 minutes.<\/b> No need to report it."
    },
    {
     "who": "League admin",
@@ -344,7 +344,7 @@ textarea { width: 100%; box-sizing: border-box; min-height: 80px; font: 14px/1.5
    },
    {
     "who": "League admin",
-    "d": "Press <b>Save<\/b>.",
+    "d": "Press <b>Save 6 games<\/b>.",
     "s": "“Saved 6 games as a draft.” and a <b>Draft<\/b> tag on the Schedule page."
    },
    {
@@ -369,12 +369,12 @@ textarea { width: 100%; box-sizing: border-box; min-height: 80px; font: 14px/1.5
    },
    {
     "who": "League admin",
-    "d": "Press <b>Hand out practices<\/b>. If <b>Tell the families their practice times<\/b> opens, press <b>Not yet<\/b>.",
-    "s": "The Practices list shows Thursday practices at 6:00 and 7:00 p.m. at <b>Parts Walk Park · Field 2<\/b> with no side, two teams at each time."
+    "d": "Press <b>Hand out practices<\/b>. A window about telling families opens and says there’s nobody to tell: press <b>Close<\/b>.",
+    "s": "In <b>List<\/b> view each Thursday is one row, <b>Practices · 4 teams<\/b>, at <b>Parts Walk Park · Field 2<\/b> with no side. Open one: two teams at 6:00 p.m. and two at 7:00."
    },
    {
     "who": "Club owner",
-    "d": "Sign in as the club owner, open <b>Organization › Venue library<\/b>, press the pencil beside <b>Parts Walk Park<\/b> and set Field 2 to <b>Two sides<\/b>.",
+    "d": "Sign in as the club owner, open <b>Organization › Venue library<\/b>, press the pencil beside <b>Parts Walk Park<\/b> and set Field 2 to <b>Two sides<\/b> (open the venue, then the pencil).",
     "s": "It saves with no refusal: the practices on Field 2 are on the whole field, and a whole-field booking does not lock a split."
    },
    {
@@ -385,17 +385,18 @@ textarea { width: 100%; box-sizing: border-box; min-height: 80px; font: 14px/1.5
    },
    {
     "who": "Club owner",
-    "d": "Keep the settings change the window offers.",
+    "stop": true,
+    "d": "<b>HOLD steps 12–15: known bug, found Nov 27.<\/b> Keeping this change would move house league’s saved games off their time and cancel practices. Once it is fixed: press <b>Generate drafts<\/b>, <b>Keep this draft<\/b>, then <b>Regenerate<\/b>.",
     "s": "The schedule page shows <b>Changed since sent<\/b>. Nothing has gone to anyone."
    },
    {
     "who": "Club owner",
     "d": "Press <b>Send the changes<\/b>, read the window, and press the button to send.",
-    "s": "The window lists U10 Parts’ practices as moved from <b>Field 2<\/b> to <b>Field 2, side A<\/b> or <b>Field 2, side B<\/b>. After the send, a notice that it was sent."
+    "s": "Each team’s practices read as moved from <b>Field 2<\/b> to <b>Field 2, side A<\/b> or <b>side B<\/b>, and <b>no game moves<\/b>. The button reads <b>Send to 0 people<\/b> (nobody has registered). After the send, a notice that it was sent."
    },
    {
     "who": "League admin",
-    "d": "Sign in as the league admin and open the division’s practices (the Thursdays).",
+    "d": "Sign in as the league admin and open each Thursday’s <b>Practices<\/b> row in <b>List<\/b> view.",
     "s": "At each time two practices, one at <b>Parts Walk Park · Field 2, side A<\/b> and one at <b>Field 2, side B<\/b>: one team a side. <b>None is cancelled.<\/b>"
    },
    {
@@ -405,7 +406,7 @@ textarea { width: 100%; box-sizing: border-box; min-height: 80px; font: 14px/1.5
    },
    {
     "who": "League admin",
-    "d": "Add a game by hand: <b>Add<\/b> › <b>Game<\/b>, Reds against Blues, on the last Tuesday (Feb 23, 2027) at 6:00 p.m., venue <b>Parts Walk Park<\/b>, <b>Field 3<\/b>. Save it.",
+    "d": "Add a game by hand: <b>Add Event<\/b> › <b>Game<\/b>, Reds against Blues, on the last Tuesday (Feb 23, 2027) at 6:00 p.m., venue <b>Parts Walk Park<\/b>, <b>Field 3<\/b>. Save it.",
     "s": "The window offers whole fields only (Field 3, no sides to pick). The game saves, and its place reads <b>Parts Walk Park · Field 3, side A<\/b>: it landed on the side of the game time."
    },
    {
@@ -416,7 +417,7 @@ textarea { width: 100%; box-sizing: border-box; min-height: 80px; font: 14px/1.5
    {
     "who": "League admin",
     "d": "Open <b>Changes to send<\/b>.",
-    "s": "The two added games are listed with their sides: <b>Field 3, side A<\/b> and <b>Field 3, side B<\/b>. Do not send them."
+    "s": "The two added games are listed as added (<b>Reds vs Blues · Tue, Feb 23: added<\/b>, and Greens vs Golds). This window names no place: the sides are read in the List view. Do not send them."
    }
   ]
  },
@@ -435,7 +436,7 @@ textarea { width: 100%; box-sizing: border-box; min-height: 80px; font: 14px/1.5
     "s": "Six fields, <b>Field 1<\/b> to <b>Field 6<\/b>, one row each at Lakeshore Dome. No side rows, no “side A”, no “whole” anywhere."
    },
    {
-    "d": "Open <b>Organization › Venue library<\/b> and look at the <b>Lakeshore Dome<\/b> card.",
+    "d": "Open <b>Organization › Venue library<\/b> and open <b>Lakeshore Dome<\/b>.",
     "s": "Its six fields read as plain names, with no “Two sides” or “Four quarters” line under any of them."
    }
   ]

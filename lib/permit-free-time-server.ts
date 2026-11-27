@@ -21,33 +21,11 @@ import { takesFrom } from './club-schedule-engine';
 import { maskProp, sectionsOf } from './field-parts';
 import { readPermitTimes } from './permit-lookup';
 import { permitIssuers } from './permit-server';
-import { blockDates, blockUnits, windowOn, type BookingPlace, type PermitTime } from './permit-time';
+import { placesHeld, type BookingPlace, type PartBlock, type PermitTime } from './permit-time';
 import { freeTime, type FreeFilters, type FreeTime, type TakenTime } from './permit-free-time';
 
 /** The time the asking schedule already holds, when it is not saved yet (New schedule's rows): its own dates and dates off. */
-export type OwnTime = Omit<PermitTime, 'id'>;
-
-/** Every place this time holds, day by day, as bookings (a venue with no facilities is the venue itself). */
-function ownBookings(own: OwnTime, venueFacilities: ReadonlyMap<string, readonly string[]>): BookingPlace[] {
-  const permit: PermitTime = { id: 'own', ...own };
-  const out: BookingPlace[] = [];
-  for (const raw of own.blocks) {
-    // The form's rows are a request body: only the club's own places count. A venue no permit holds cannot overlap a permit;
-    // a facility that is not at the venue is dropped (never read as "all of it"), so a stuffed list costs nothing.
-    const atVenue = venueFacilities.get(raw.venueId);
-    if (!atVenue) continue;
-    const facilityIds = raw.facilityIds.filter(f => atVenue.includes(f));
-    if (raw.facilityIds.length && !facilityIds.length) continue;
-    const b = { ...raw, facilityIds };
-    const units = blockUnits(b, venueFacilities);
-    for (const day of blockDates(permit, b)) {
-      const w = windowOn(day, b);
-      if (!(w.endMs > w.startMs)) continue;
-      for (const u of units) out.push({ venueId: b.venueId, facilityId: u, startMs: w.startMs, endMs: w.endMs });
-    }
-  }
-  return out;
-}
+export type OwnTime = Omit<PermitTime, 'id' | 'blocks'> & { blocks: readonly PartBlock[] };
 
 /**
  * The club's free time in the filters. `scheduleId`: a saved schedule asking (Add time) — the FAMILY's first schedule
@@ -85,7 +63,7 @@ export async function readFreeTime(orgId: string, filters: FreeFilters, opts: { 
     if (s.familyId === opts.scheduleId || takesFrom(s, null)) booked.push(s);
     else drafts.push(s);
   }
-  if (opts.own) booked.push(...ownBookings(opts.own, venueFacilities));
+  if (opts.own) booked.push(...placesHeld(opts.own, venueFacilities));
 
   return freeTime({
     permits: times.permits.map(p => ({

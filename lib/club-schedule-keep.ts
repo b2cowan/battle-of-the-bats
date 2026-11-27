@@ -171,7 +171,14 @@ export function timeKeeping(
       for (let i = 0; i < askedCount; i++) {
         if (trimmed.has(i)) continue;
         const a = blocks[i];
-        const meets = [...brought.values()].some(j => overlappingBlocks({ blocks: [withDates(a, range()), withDates(blocks[j], range())] }, o.venueFacilities));
+        // A row that holds past slots of its own is that side's row: it starts today only if it shares their GROUND (an
+        // untouched side B row is never trimmed for side A's past). A row holding none starts today on the same FIELD,
+        // whichever sides the two name.
+        const holdsPast = slots.some(x => at.get(x.stored.key) === i && x.slot.day < o.pastFrom!);
+        const meets = [...brought.values()].some(j => {
+          const pair = [withDates(a, range()), withDates(blocks[j], range())];
+          return overlappingBlocks({ blocks: holdsPast ? pair : pair.map(b => ({ ...b, parts: null })) }, o.venueFacilities);
+        });
         if (!meets) continue;
         trimmed.add(i);
         blocks[i] = { ...a, fromDate: maxDay(a.fromDate ?? startsOn, o.pastFrom) };

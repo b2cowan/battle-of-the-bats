@@ -151,8 +151,8 @@ export function cutSlots(time: ScheduleTime, opts: {
   for (const list of opts.venueFacilities.values()) list.forEach((f, i) => order.set(f, i));
   const out = new Map<string, Slot>();
   // The parts cut so far on each field (Stage 2): a part is never cut over ground another slot of the cut already holds
-  // at an overlapping time — two rows naming one field are refused before the cut (`overlappingBlocks`), so this only
-  // guards; the database's floor refuses it too, but a refusal there reads "changed" to the club, never a builder's
+  // at an overlapping time — two rows holding one piece of ground are refused before the cut (`overlappingBlocks`), so
+  // this only guards; the database's floor refuses it too, but a refusal there reads "changed" to the club, never a builder's
   // sentence. Whole fields keep the key's own rule (one slot per place and start), exactly as before.
   // Only a field some row names in parts is watched; every other place is cut exactly as before.
   const split = new Set(time.blocks.flatMap(b => Object.entries(b.parts ?? {}).filter(([, m]) => m?.length).map(([f]) => `${b.venueId}|${f}`)));
@@ -218,12 +218,23 @@ export interface PoolBooking {
   kind?: string | null;
   /** Another schedule's FINAL slot only (Session 2D): since when it has held the time. Absent on a booking. */
   heldSince?: number | null;
+  /** A house-league game on one of the asking schedule's OWN slots (`heldSlots` says what it still holds). */
+  ownGame?: boolean;
 }
+
+/** One slot's identity on the books: its place, part and start. */
+const placeStart = (s: { venueId: string | null; facilityId: string | null; sectionMask?: number | null; startMs: number }) =>
+  `${s.venueId}|${s.facilityId ?? ''}|${maskOf(s.sectionMask)}|${s.startMs}`;
 
 /**
  * The slots a booking already holds: at the slot's venue, overlapping it, on its facility (or the venue itself). A
  * booking with no facility set holds nothing here — it is "busy then", the clash rule's softer finding, which the
  * calendar still marks; holding every field for it would hand out none of them.
+ *
+ * ⚖ THE SCHEDULE'S OWN GAMES (`ownGame`) never hold the slot they sit on, or a regenerate would drop it from house league.
+ * Where that slot is still among `slots` (same place, part and start) the game stays where it is, so it holds any OTHER
+ * slot it runs into (a slot cut shorter than its game). Where it isn't, the game moves or leaves with its time when the
+ * changes are sent, and holds nothing.
  */
 export function heldSlots(
   slots: readonly Slot[], bookings: readonly PoolBooking[],
@@ -232,12 +243,15 @@ export function heldSlots(
 ): Map<string, PoolBooking> {
   const bucket = byVenueDay(bookings);
   const out = new Map<string, PoolBooking>();
+  const cutAt = new Set(slots.map(placeStart));
   for (const s of slots) {
     // The earliest booking in the list wins (engineContext lists the bookings before other schedules' slots, so a team's
     // practice on another schedule's slot is the name said).
     let hit = -1;
     const mine = mineSince?.(s);
-    const takes = (b: PoolBooking) => b.heldSince === undefined || takesFrom({ state: 'final', heldSince: b.heldSince }, mine);
+    const here = placeStart(s);
+    const stays = (b: PoolBooking) => !b.ownGame || (cutAt.has(placeStart(b)) && placeStart(b) !== here);
+    const takes = (b: PoolBooking) => stays(b) && (b.heldSince === undefined || takesFrom({ state: 'final', heldSince: b.heldSince }, mine));
     for (const k of venueDays(s.venueId, s.startMs, s.endMs)) {
       for (const i of bucket.get(k) ?? []) {
         if (hit !== -1 && i >= hit) break;

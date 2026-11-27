@@ -206,7 +206,7 @@ export default function GenerateGamesWindow({
       // c1: the division's game time, as House league's time gave it.
       const slots = gameRows.reduce((n, r) => n + slotCount(r.row), 0);
       const dates = [...new Set(gameRows.map(r => r.dates))].join('; ');
-      const lengths = new Set(gameRows.flatMap(r => r.row.parts.map(p => p.minutes)));
+      const lengths = new Set(gameRows.flatMap(r => r.row.parts.map(p => p.slotMinutes)));
       body = <>
         {errorLine}
         {divisionLine}

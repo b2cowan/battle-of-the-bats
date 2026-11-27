@@ -29098,7 +29098,9 @@ Committed 2026-11-26, ahead of the walk (owner: "simplify and commit"): `d3d1bcc
 
 **Data:** `.probe/schedule-parts-walk/fixture.mjs` (dev only, re-runnable, touches no password), run 2026-11-27: Parts Walk Park (Fields 1–4, Field 3 in two sides and locked), permits "Parts walk · rep time" and "Parts walk · house league time", a finished house-league schedule (48 slots), season "Parts walk league 2027" with division U10 Parts and four teams; dates Jan 4 – Feb 25, 2027. Teardown after the walk: the same file with `--teardown` (schedules first, then the venue).
 
-**Walks:** A the split (4) · B New schedule, drafts, grid, bill, PDF (11) · C Send and the coach (6) · D other schedules, Find the time, Used (9) · E house league on club time, rulings A and B (18) · F no split field reads as before (2).
+**Walks:** A the split (4) · B New schedule, drafts, grid, bill, PDF (12) · C Send and the coach (6) · D other schedules, Find the time, Used (8) · E house league on club time, rulings A and B (18) · F no split field reads as before (2).
 
 **Left out:** a house-league practice with no free side reading "cancelled" (needs three teams at once on one slot; the tests hold it; the word ruled 2026-11-27); email as it arrives (made-up addresses: the Send window's preview only); four quarters gets one look.
+
+**✅ PASSED 2026-11-27, 50 of 50** (owner paste-back, then "that walk is already done"; A 4/4, B 12/12, C 6/6, D 8/8, E 18/18, F 2/2; no notes came back). No owner calls in this walk. The same day a check of the walk against the code corrected the wording of 23 steps and found three faults, all fixed the same day (the plan’s Stage 2, "Faults found by the walk’s check"); the fixes came after the walk and were not walked.
 <!-- /§581 -->
